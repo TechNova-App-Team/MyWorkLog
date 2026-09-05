@@ -19,12 +19,22 @@ const AUSBILDER_PUB_KEY = 'berichtsheft_ausbilder_pub';
 function bhL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
 function bhIsLocked(report) {
-    return !!(report && report.approval && report.approval.state === 'approved');
+    // Eine „veraltete" Freigabe (Server-Pruefsumme passt nicht mehr zum
+    // Inhalt — die Woche wurde nach dem Abzeichnen geaendert) sperrt NICHT:
+    // der Inhalt ist ohnehin schon ein anderer, die Woche muss neu freigegeben
+    // werden. Siehe freigabenEinspielen() in bh-b2b-ui.js.
+    return !!(report && report.approval && report.approval.state === 'approved' && !report.approval.stale);
 }
 
 function bhApprovalBadge(report) {
     const a = report && report.approval;
     if (!a) return '';
+    if (a.state === 'approved' && a.stale) {
+        return '<span class="badge badge-warning" title="' +
+            escapeHtml(bhL('Diese Woche wurde nach der Freigabe geändert und muss erneut freigegeben werden.',
+                'This week was changed after approval and needs to be approved again.')) + '">' +
+            escapeHtml(bhL('Freigabe veraltet', 'Approval outdated')) + '</span>';
+    }
     if (a.state === 'approved') {
         return '<span class="badge badge-signed" title="' +
             escapeHtml(bhL('Freigegeben von ', 'Approved by ') + (a.by || '')) + '">' +

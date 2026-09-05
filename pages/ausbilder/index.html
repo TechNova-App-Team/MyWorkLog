@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.0"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.7.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.1"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.7.1"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -514,13 +514,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.7.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.7.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.7.1"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.7.1"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.0"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.1"></script>
 
     <script>
     (function () {
@@ -1014,20 +1014,24 @@
             return null;
         }
 
-        // Wartet auf den ersten Blick des Ausbilders: abgeschlossen und noch
-        // gar keine Entscheidung. Eine zurueckgegebene Woche liegt beim Azubi,
-        // zaehlt hier also nicht mit — sie bleibt aber bedienbar (die Knoepfe
-        // stehen weiter da), damit der Ausbilder sie nach der Ueberarbeitung
-        // abzeichnen kann.
+        // Braucht den Blick des Ausbilders: abgeschlossen und entweder noch
+        // gar nicht entschieden ODER nach einer Freigabe geaendert. Eine
+        // zurueckgegebene Woche liegt beim Azubi, zaehlt hier nicht mit — die
+        // Knoepfe bleiben aber, damit sie nach der Ueberarbeitung abgezeichnet
+        // werden kann.
         function istOffen(b) {
-            return b.status !== 'incomplete' && !b.freigabe;
+            return b.status !== 'incomplete' && (!b.freigabe || b.veraendert);
         }
 
         function kontoKarte(b) {
             var f = b.freigabe;
-            var st = f && f.entscheidung === 'approved' ? 'approved'
+            var st = b.veraendert ? 'geaendert'
+                : f && f.entscheidung === 'approved' ? 'approved'
                 : f && f.entscheidung === 'rejected' ? 'rejected' : 'open';
-            var stL = stateLabel(st === 'open' ? '' : st);
+            var stL = st === 'geaendert'
+                ? ['s-no', abL('Nach der Freigabe geändert', 'Changed after approval')]
+                : stateLabel(st === 'open' ? '' : st);
+            var randKlasse = st === 'geaendert' ? ' is-rejected' : (st !== 'open' ? ' is-' + st : '');
             var chev = '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
             var fuss;
@@ -1039,7 +1043,14 @@
                 var wann = f && f.erstellt_at ? ' ' + abL('am ', 'on ') + fmtDate(String(f.erstellt_at).slice(0, 10)) : '';
                 fuss = '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>';
             } else {
-                fuss = '<div class="abk-actions">' +
+                if (st === 'geaendert') {
+                    fuss = '<p class="abk-hint" style="color:var(--warning)">' + abL(
+                        'Diese Woche wurde nach Ihrer Freigabe geändert. Bitte erneut prüfen.',
+                        'This week was changed after your approval. Please review it again.') + '</p>';
+                } else {
+                    fuss = '';
+                }
+                fuss += '<div class="abk-actions">' +
                     '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + '</button>' +
                     '<button type="button" class="ab-btn ab-btn-primary" data-k="approve">' + abL('Bestätigen', 'Approve') + '</button>' +
                     '</div>' +
@@ -1053,7 +1064,7 @@
             }
 
             return '<div class="ab-wk abk-card" data-bid="' + esc(b.id) + '">' +
-                '<div class="ab-wk-card' + (st !== 'open' ? ' is-' + st : '') + '">' +
+                '<div class="ab-wk-card' + randKlasse + '">' +
                 '<div class="ab-wk-head" role="button" tabindex="0" aria-expanded="false">' +
                 '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + b.kw + '</span>' +
                 '<span class="ab-wk-sub">' + esc(fmtRange(b.datum_von, b.datum_bis)) + '</span>' +
@@ -1120,6 +1131,8 @@
                     bericht_id: bid, entscheidung: entscheidung,
                     anmerkung: note || '', erstellt_at: new Date().toISOString()
                 };
+                // Die frische Freigabe deckt den jetzigen Inhalt ab.
+                bericht.veraendert = false;
                 renderKonto();
             } catch (e) {
                 kontoBusy(card, false);

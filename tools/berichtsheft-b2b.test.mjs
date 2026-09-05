@@ -193,9 +193,44 @@ ok(s1 !== s2, 'geaenderter Inhalt → andere Summe (Schritt-2-Fundament)');
 ok(await B.pruefsumme({ jahr: 1, kw: 1 }) === await B.pruefsumme({ jahr: 1, kw: 1, inhalt: {} }),
     'fehlendes inhalt zaehlt wie leeres Objekt');
 
+// ── berichtKern deckt sich mit berichtZuZeile ──────────────────────────
+// Der Azubi hasht ueber berichtKern(report), der Ausbilder ueber die
+// Server-Zeile. Beide muessen exakt dieselbe Summe ergeben, sonst meldet
+// jede abgezeichnete Woche „geaendert".
+gruppe('berichtKern <-> berichtZuZeile — identische Grundlage');
+const rep = {
+    id: 7, year: 2, week: 10, dateFrom: '2026-03-02', dateTo: '2026-03-06',
+    activities: 'Woche 10', mode: 'weekly', instruction: 'AD', school: 'IT', department: 'Netz',
+    hours: 38, status: 'complete', source: 'local'
+};
+const kern = I.berichtKern(rep);
+const zk = I.berichtZuZeile(rep, 'B', 'AZ');
+ok(JSON.stringify(kern.inhalt) === JSON.stringify(zk.inhalt), 'inhalt identisch');
+ok(kern.jahr === zk.jahr && kern.kw === zk.kw
+    && kern.datum_von === zk.datum_von && kern.datum_bis === zk.datum_bis,
+    'jahr / kw / datum identisch');
+// Die Summe aus dem lokalen Bericht == Summe aus der (gespiegelten) Server-Zeile
+const summeLokal = await B.pruefsumme(kern);
+const summeServer = await B.pruefsumme({
+    jahr: zk.jahr, kw: zk.kw, datum_von: zk.datum_von, datum_bis: zk.datum_bis, inhalt: zk.inhalt
+});
+ok(summeLokal === summeServer, 'Azubi- und Ausbilder-Pruefsumme stimmen ueberein');
+
+// ── berichtVeraendert ─────────────────────────────────────────────────
+gruppe('berichtVeraendert');
+const approvedReport = Object.assign({}, rep, { approval: { state: 'approved', pruefsumme: summeLokal } });
+ok(await B.berichtVeraendert(approvedReport) === false, 'unveraenderte Woche → false');
+const editedReport = Object.assign({}, rep, { activities: 'jetzt anders', approval: { state: 'approved', pruefsumme: summeLokal } });
+ok(await B.berichtVeraendert(editedReport) === true, 'nach Textaenderung → true');
+ok(await B.berichtVeraendert(Object.assign({}, rep, { approval: { state: 'approved' } })) === false,
+    'ohne gespeicherte Pruefsumme (alte Freigabe) → false, keine falsche Warnung');
+ok(await B.berichtVeraendert(Object.assign({}, rep, { approval: { state: 'rejected', pruefsumme: 'x' } })) === false,
+    'rejected → false (nur approved wird geprueft)');
+ok(await B.berichtVeraendert(rep) === false, 'ohne approval → false');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
-ok(bestanden > 50, `es sind genug Pruefungen gelaufen (${bestanden})`);
+ok(bestanden >= 58, `es sind genug Pruefungen gelaufen (${bestanden})`);
 
 console.log(`\nbh-b2b: ${bestanden} ok, ${fehlgeschlagen} fehlgeschlagen`);
 process.exit(fehlgeschlagen ? 1 : 0);

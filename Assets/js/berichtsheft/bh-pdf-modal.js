@@ -228,7 +228,9 @@ function buildIhkCtx(report) {
         // im PDF nicht vor — eine freigegebene Woche druckte exakt wie eine, die
         // nie jemand gesehen hat. Genau die Information, fuer die der ganze
         // Freigabe-Weg existiert, fiel beim Ausdruck weg.
-        approval: report.approval || null
+        // `stale` = die Woche wurde nach dem Abzeichnen geaendert; dann darf die
+        // alte Unterschrift NICHT aufs Blatt (sie deckt einen anderen Inhalt ab).
+        approval: (report.approval && !report.approval.stale) ? report.approval : null
     };
 }
 

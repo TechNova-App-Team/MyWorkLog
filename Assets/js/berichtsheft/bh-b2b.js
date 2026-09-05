@@ -105,28 +105,48 @@
     const STATUS_ERLAUBT = ['incomplete', 'complete', 'signed'];
     const QUELLE_ERLAUBT = ['local', 'cloud', 'status-only'];
 
-    function berichtZuZeile(report, betriebId, azubiId) {
+    // Der Kern eines Berichts — genau die Felder, die in die Pruefsumme
+    // eingehen. EINE Stelle, weil Azubi und Ausbilder identisch hashen
+    // muessen: der Ausbilder aus der Server-Zeile, der Azubi aus seinem
+    // lokalen Bericht ueber berichtInhalt(). Driftet das auseinander, meldet
+    // jede abgezeichnete Woche faelschlich „geaendert".
+    function berichtInhalt(report) {
         return {
-            betrieb_id: betriebId,
-            azubi_id: azubiId,
-            client_id: String(report.id),
+            activities: report.activities || '',
+            mode: report.mode || 'weekly',
+            dailyActivities: report.dailyActivities || null,
+            dailyHours: report.dailyHours || null,
+            dailySchool: report.dailySchool || null,
+            instruction: report.instruction || '',
+            school: report.school || '',
+            department: report.department || '',
+            hours: report.hours || 0,
+            form: report.form || null,
+            umfang: report.umfang || null
+        };
+    }
+
+    function berichtKern(report) {
+        return {
             jahr: ganzzahl(report.year, 1, 5, 1),
             kw: ganzzahl(report.week, 1, 53, 1),
             datum_von: report.dateFrom || null,
             datum_bis: report.dateTo || null,
-            inhalt: {
-                activities: report.activities || '',
-                mode: report.mode || 'weekly',
-                dailyActivities: report.dailyActivities || null,
-                dailyHours: report.dailyHours || null,
-                dailySchool: report.dailySchool || null,
-                instruction: report.instruction || '',
-                school: report.school || '',
-                department: report.department || '',
-                hours: report.hours || 0,
-                form: report.form || null,
-                umfang: report.umfang || null
-            },
+            inhalt: berichtInhalt(report)
+        };
+    }
+
+    function berichtZuZeile(report, betriebId, azubiId) {
+        const kern = berichtKern(report);
+        return {
+            betrieb_id: betriebId,
+            azubi_id: azubiId,
+            client_id: String(report.id),
+            jahr: kern.jahr,
+            kw: kern.kw,
+            datum_von: kern.datum_von,
+            datum_bis: kern.datum_bis,
+            inhalt: kern.inhalt,
             status: STATUS_ERLAUBT.indexOf(report.status) !== -1 ? report.status : 'incomplete',
             quelle: QUELLE_ERLAUBT.indexOf(report.source) !== -1 ? report.source : 'local',
             ki_erzeugt: !!(report.aiGenerated || report.source === 'cloud'),
@@ -412,6 +432,20 @@
         return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
+    /**
+     * Hat sich ein lokaler Bericht seit seiner Server-Freigabe geaendert?
+     * Nur fuer einen Bericht mit `report.approval` (server, approved) sinnvoll.
+     * Fehlt die gespeicherte Pruefsumme (Freigabe aus der Zeit vor v6.7.0),
+     * → false: ohne Vergleich lieber keine falsche Warnung.
+     */
+    async function bhb2bBerichtVeraendert(report) {
+        const a = report && report.approval;
+        if (!a || a.state !== 'approved' || !a.pruefsumme) return false;
+        try {
+            return (await bhb2bPruefsumme(berichtKern(report))) !== a.pruefsumme;
+        } catch (e) { return false; }
+    }
+
     // ── Sammelansicht fuer den Ausbilder ────────────────────────────
     /**
      * Alle Azubis des Betriebs mit ihren Berichten und der jeweils neuesten
@@ -447,6 +481,21 @@
                     .filter(b => b.azubi_id === m.user_id)
                     .map(b => Object.assign({}, b, { freigabe: letzte[b.id] || null }))
             }));
+
+            // „geaendert" = zuletzt bestaetigt, aber der Inhalt hasht heute
+            // anders als in der Freigabe hinterlegt. DAS ist die
+            // Revisionssicherheit: eine nachtraeglich geaenderte, bereits
+            // abgezeichnete Woche faellt hier auf.
+            for (const az of azubis) {
+                for (const b of az.berichte) {
+                    b.veraendert = false;
+                    const f = b.freigabe;
+                    if (f && f.entscheidung === 'approved' && f.pruefsumme) {
+                        try { b.veraendert = (await bhb2bPruefsumme(b)) !== f.pruefsumme; }
+                        catch (e) { /* ohne Vergleich lieber keine Warnung */ }
+                    }
+                }
+            }
             return { betrieb: st.name, azubis: azubis };
         } catch (e) {
             console.warn('[B2B] Sammelansicht:', e && e.message);
@@ -521,8 +570,9 @@
         freigabenRunter: bhb2bFreigabenRunter,
         freigabeSchreiben: bhb2bFreigabeSchreiben,
         pruefsumme: bhb2bPruefsumme,
+        berichtVeraendert: bhb2bBerichtVeraendert,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch }
     };
 })();

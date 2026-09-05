@@ -256,19 +256,30 @@
     // Serverseitige Freigaben in den lokalen Bestand ziehen. Der Server
     // gewinnt: nur Berichte anfassen, zu denen es wirklich eine Freigabe
     // gibt — eine lokale Link-Freigabe ohne Server-Gegenstueck bleibt.
-    function freigabenEinspielen(map) {
+    //
+    // Weicht der lokale Inhalt von der Pruefsumme der Freigabe ab (die Woche
+    // wurde nach dem Abzeichnen doch noch geaendert — anderes Geraet, Import),
+    // wird `approval.stale` gesetzt: die Freigabe bleibt sichtbar, aber der
+    // Eintrag wird NICHT gesperrt und nicht auf „signed" gestellt. Der Rest
+    // der Seite (bhIsLocked, Badge) liest `stale`.
+    async function freigabenEinspielen(map) {
         if (!map || typeof reports === 'undefined' || !Array.isArray(reports)) return 0;
         let n = 0;
-        reports.forEach(function (r) {
+        for (const r of reports) {
             const a = map[String(r.id)];
-            if (!a) return;
+            if (!a) continue;
+            if (a.state === 'approved' && a.pruefsumme && BHB2B.berichtVeraendert) {
+                try {
+                    a.stale = await BHB2B.berichtVeraendert(Object.assign({}, r, { approval: a }));
+                } catch (e) { a.stale = false; }
+            }
             const vorher = JSON.stringify(r.approval || null);
             r.approval = a;
             // status spiegeln wie im Link-Weg (bh-freigabe.js)
-            if (a.state === 'approved') r.status = 'signed';
+            if (a.state === 'approved' && !a.stale) r.status = 'signed';
             else if (r.status === 'signed') r.status = 'complete';
             if (JSON.stringify(r.approval) !== vorher) n++;
-        });
+        }
         if (n && typeof saveToStorage === 'function') saveToStorage();
         return n;
     }
@@ -342,7 +353,7 @@
             if (netzfehler) return;
             await berichteHochladen();
             const map = await BHB2B.freigabenRunter();
-            const geaendert = freigabenEinspielen(map);
+            const geaendert = await freigabenEinspielen(map);
             if (geaendert) {
                 if (typeof loadReports === 'function') loadReports();
                 else if (typeof updateUI === 'function') updateUI();
