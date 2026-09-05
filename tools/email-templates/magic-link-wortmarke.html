@@ -1,0 +1,192 @@
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  MAGIC-LINK-MAIL, VARIANTE MIT GROSSER WORTMARKE
+  Supabase → Authentication → Emails → Magic Link (Message body)
+
+  IDEE: Die Marke traegt der Kopf, nicht ein Bild. "MYWORKLOG" steht als
+  ueberformatiges Wort ganz oben und uebernimmt die Rolle, die auf Websites
+  ein grosser Hintergrund-Schriftzug hat. Kosten: null Bytes, null Bilder,
+  null blockierbare Ressourcen.
+
+  🔴 WARUM DAS WORT NICHT WIRKLICH IM HINTERGRUND LIEGT
+  Ein echter Hintergrund-Schriftzug braucht `position:absolute` und
+  `overflow:hidden`. Outlook rendert mit der Word-Engine und kennt beides
+  nicht — dort wuerde das Wort ueber den Text laufen oder die Tabelle
+  sprengen. Deshalb steht es im normalen Fluss, als eigene Zeile. Optisch
+  dasselbe Ergebnis, nur ohne die Ebene, die reissen kann.
+
+  🔴 WARUM GENAU 72px
+  Kein Client garantiert dieselbe Schrift. Gerechnet gegen die breiteste
+  plausible Fallback-Schrift (DejaVu Bold unter Linux, Faktor ~0.76em):
+      56px → 365px    64px → 417px    72px → 469px
+      80px → 522px  ← passt NICHT mehr in die 520px Innenbreite
+  Bei 72px bleiben 51px Luft. Groesser waere nur dann sicher, wenn man
+  clippen koennte — und genau das kann Outlook nicht. Die Groesse ist also
+  gerechnet, nicht geschaetzt; wer den Text aendert, muss neu rechnen
+  (tools/email-template.test.mjs prueft die Laenge).
+
+  Alles Uebrige (Tabellen statt flex, kein SVG, keine externe Schrift, keine
+  Jahreszahl, kein Motion) wie in magic-link.html — Begruendungen stehen dort.
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Anmelden bei MyWorkLog</title>
+<style>
+  body { margin:0 !important; padding:0 !important; width:100% !important; }
+  table { border-collapse:collapse; }
+  img { border:0; line-height:100%; outline:none; text-decoration:none; }
+  a { color:#3d5c85; }
+
+  @media (max-width:620px) {
+    .wrap { width:100% !important; }
+    .pad  { padding-left:24px !important; padding-right:24px !important; }
+    /* Die Wortmarke MUSS mit schrumpfen: 72px auf einem 320px-Schirm waere
+       doppelt so breit wie die Karte. */
+    .mark { font-size:38px !important; letter-spacing:-1px !important; }
+    .h1   { font-size:22px !important; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .bg    { background-color:#0e1014 !important; }
+    .card  { background-color:#171a20 !important; }
+    .txt   { color:#e6e8ec !important; }
+    .muted { color:#9aa1ad !important; }
+    .rule  { border-color:#272c35 !important; }
+    .url   { background-color:#0e1014 !important; color:#9aa1ad !important; border-color:#272c35 !important; }
+    /* Im Dunkeln muss die Wortmarke HELLER als die Karte sein, sonst
+       verschwindet sie. Derselbe Hexwert wie hell waere unsichtbar. */
+    .mark  { color:#303a4a !important; }
+  }
+</style>
+</head>
+<body class="bg" style="margin:0; padding:0; background-color:#f2f4f7;">
+
+<div style="display:none; font-size:1px; color:#f2f4f7; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+  Dein Anmelde-Link für MyWorkLog — gültig für eine einmalige Anmeldung.
+  &#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="bg" style="background-color:#f2f4f7;">
+  <tr>
+    <td align="center" style="padding:40px 12px 44px;">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="wrap" style="width:600px; max-width:600px;">
+        <tr>
+          <td class="card" style="background-color:#ffffff; border-radius:18px;">
+
+            <!-- Kopf: die Wortmarke traegt die Seite. Kein zweites "MyWorkLog"
+                 in der Ueberschrift darunter — die Marke steht schon hier, und
+                 sie zweimal zu schreiben liest sich wie ein Serienbrief. -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="pad" style="padding:44px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <div class="mark" style="font-size:72px; line-height:0.92; font-weight:800; letter-spacing:-3px; color:#c9d5e6;">
+                    MYWORKLOG
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Die Akzentlinie sitzt direkt unter dem Wort und bindet es an
+                   den Inhalt. Kurz, nicht ueber die volle Breite: eine Kante
+                   ueber alles waere wieder der Vorgabewert jeder Vorlage. -->
+              <tr>
+                <td class="pad" style="padding:22px 40px 0;">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr><td width="56" style="width:56px; height:3px; line-height:3px; font-size:0; background-color:#5578a8; border-radius:2px;">&nbsp;</td></tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:24px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <h1 class="h1 txt" style="margin:0 0 10px; font-size:24px; line-height:1.3; font-weight:700; letter-spacing:-0.4px; color:#15181e;">
+                    Dein Anmelde-Link
+                  </h1>
+                  <p class="txt" style="margin:0; font-size:15px; line-height:1.65; color:#3f454f;">
+                    Klick auf den Knopf, dann bist du angemeldet. Ein Passwort brauchst du nicht.
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:26px 40px 0;">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" bgcolor="#3d5c85" style="border-radius:10px;">
+                        <a href="{{ .ConfirmationURL }}"
+                           style="display:inline-block; padding:14px 30px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; font-weight:600; line-height:1; color:#ffffff; text-decoration:none; border-radius:10px;">
+                          Jetzt anmelden
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:26px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="muted" style="margin:0 0 8px; font-size:12.5px; line-height:1.6; color:#6b7280;">
+                    Falls der Knopf nicht reagiert, kopier diese Adresse in deinen Browser:
+                  </p>
+                  <p class="url" style="margin:0; padding:12px 14px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11.5px; line-height:1.6; color:#6b7280; background-color:#f6f7f9; border:1px solid #e6e8ec; border-radius:8px; word-break:break-all;">
+                    {{ .ConfirmationURL }}
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:26px 40px 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr><td class="rule" style="height:1px; line-height:1px; font-size:0; border-top:1px solid #ebedf0;">&nbsp;</td></tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:20px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="muted" style="margin:0; font-size:12.5px; line-height:1.65; color:#6b7280;">
+                    Der Link funktioniert nur einmal und läuft danach ab. Hast du dich nicht
+                    angemeldet, kannst du diese Nachricht einfach löschen — ohne den Link
+                    passiert nichts.
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:16px 40px 40px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="muted" style="margin:0; font-size:12.5px; line-height:1.65; color:#9aa1ad;">
+                    <span style="font-weight:600;">English:</span> Use the button above to sign in to
+                    MyWorkLog — no password needed. The link works once and then expires. If you did
+                    not request it, you can delete this message.
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td class="pad" style="padding:22px 40px 0; text-align:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <p class="muted" style="margin:0; font-size:11.5px; line-height:1.7; color:#9aa1ad;">
+              <a href="https://myworklog.de/" style="color:#9aa1ad; text-decoration:underline;">myworklog.de</a> &nbsp;·&nbsp;
+              <a href="https://myworklog.de/Impressum/" style="color:#9aa1ad; text-decoration:underline;">Impressum</a> &nbsp;·&nbsp;
+              <a href="https://myworklog.de/DSGVO/" style="color:#9aa1ad; text-decoration:underline;">Datenschutz</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
