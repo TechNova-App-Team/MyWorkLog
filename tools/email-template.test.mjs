@@ -41,9 +41,13 @@ for (const DATEI of DATEIEN) {
     {
         const treffer = (h.match(/\{\{\s*\.ConfirmationURL\s*\}\}/g) || []).length;
         ok('ConfirmationURL steht drin', treffer === 2, treffer + '× (Knopf + Fallback)');
-        ok('keine erfundenen Variablen',
-           (h.match(/\{\{\s*\.\w+/g) || []).every(v => /ConfirmationURL/.test(v)),
-           [...new Set(h.match(/\{\{\s*\.\w+/g) || [])].join(', '));
+        // Nur Variablen, die Supabase fuer die Magic-Link-Vorlage wirklich
+        // liefert (Doku: ConfirmationURL, Token, TokenHash, SiteURL,
+        // RedirectTo, Data, Email). IP, Geraet oder Zeitpunkt gibt es NICHT —
+        // wer die in die Mail schreibt, erfindet sie.
+        const ERLAUBT = ['ConfirmationURL', 'Email'];
+        const benutzt = [...new Set((h.match(/\{\{\s*\.(\w+)/g) || []).map(v => v.replace(/\{\{\s*\./, '')))];
+        ok('nur belegte Variablen', benutzt.every(v => ERLAUBT.includes(v)), benutzt.join(', '));
         ok('der Knopf zeigt auf die Variable, nicht auf eine feste Adresse',
            /href="\{\{\s*\.ConfirmationURL\s*\}\}"/.test(h));
     }
@@ -113,7 +117,9 @@ for (const DATEI of DATEIEN) {
         // Jeder Link muss absolut sein: in einer Mail gibt es keine Basis-URL.
         const hrefs = [...h.matchAll(/href="([^"]+)"/g)].map(m => m[1])
                         .filter(u => !u.includes('ConfirmationURL'));
-        ok('alle Links absolut', hrefs.every(u => /^https:\/\//.test(u)), hrefs.join(' '));
+        // mailto: ist absolut, nur eben kein https — in einer Mail gibt es
+        // keine Basis-URL, relative Pfade fuehren ins Leere.
+        ok('alle Links absolut', hrefs.every(u => /^(https:\/\/|mailto:)/.test(u)), hrefs.join(' '));
         ok('Gegenprobe — es gibt ueberhaupt Links', hrefs.length >= 3, hrefs.length + ' Links');
     }
 
