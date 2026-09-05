@@ -1223,6 +1223,24 @@
         setTimeout(updateCloudSyncChip, 600);
         setInterval(updateCloudSyncChip, 60000);
 
+        // ?cloud=login — kommt vom Panel "Betrieb & IHK" auf /berichtsheft/.
+        // Ohne das landet ein ausgeloggter Nutzer nur im Dashboard und findet
+        // den Anmelde-Dialog nicht (der steckt in den Einstellungen).
+        // openCloudLoginModal ist in config/supabase-config.js so gepatcht,
+        // dass es die Supabase-Bibliothek bei Bedarf erst nachlaedt.
+        if (/[?&]cloud=login(?:&|$)/.test(location.search)) {
+            history.replaceState(null, '', location.pathname);
+            var n = 0;
+            var t = setInterval(function () {
+                if (typeof window.openCloudLoginModal === 'function') {
+                    clearInterval(t);
+                    window.openCloudLoginModal();
+                } else if (++n > 40) {
+                    clearInterval(t);
+                }
+            }, 250);
+        }
+
         // Hook: nach jedem save() Cloud-Reminder triggern (mit Delay damit save() nicht blockiert)
         if (typeof window.save === 'function' && !window._saveCloudPromptHooked) {
             const _origSave = window.save;

@@ -5,13 +5,143 @@
    Tokens: alle aus basis.css :root — kein eigener Hexwert, sonst faellt die
    Regel im Standalone-Kontext auf ihren Initialwert zurueck. */
 
+/* #b2bCard traegt selbst KEINE Optik — je nach Zustand rendert bh-b2b-ui.js
+   eine Klasse: .b2b-panel (voller Kasten, Mitglied/aufgeklappt),
+   .is-teaser (eine Zeile), .is-mini (Haarlinie nach dem Ausblenden). */
 #b2bCard {
-    /* wie .card, aber die fadeUp-Animation der .card-Regel stoert hier nicht */
+    margin-bottom: 20px;
+}
+
+.b2b-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 20px 22px;
-    margin-bottom: 20px;
+}
+
+/* Teaser: eine ruhige Zeile, klickbar, mit Wegklick-Kreuz daneben. */
+#b2bCard.is-teaser {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 2px 6px 2px 14px;
+    background: var(--bg-input);
+}
+
+.b2b-teaser {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 4px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: left;
+    transition: color 0.15s var(--ease);
+}
+
+.b2b-teaser:hover {
+    color: var(--text-main);
+}
+
+.b2b-teaser .icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.b2b-chev {
+    width: 15px;
+    height: 15px;
+    margin-left: auto;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* Haarlinie nach dem Ausblenden — minimal, aber wiederfindbar. */
+#b2bCard.is-mini {
+    margin-bottom: 14px;
+}
+
+.b2b-mini-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 2px;
+    background: none;
+    border: 0;
+    border-bottom: 1px dashed var(--border);
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    text-align: left;
+    transition: color 0.15s var(--ease);
+}
+
+.b2b-mini-btn:hover {
+    color: var(--text-muted);
+}
+
+.b2b-mini-btn .icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+/* Wegklick-Kreuz, in Teaser und aufgeklappt gleich. */
+.b2b-x {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    flex-shrink: 0;
+    background: none;
+    border: 0;
+    border-radius: var(--radius-xs);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.b2b-x:hover {
+    color: var(--text-main);
+    background: var(--bg-hover);
+}
+
+.b2b-x svg {
+    width: 15px;
+    height: 15px;
+}
+
+.b2b-teaser:active,
+.b2b-mini-btn:active,
+.b2b-x:active {
+    transform: scale(0.97);
+}
+
+/* Aufgeklappt: sanftes Einblenden des Inhalts (selten gesehen). */
+.b2b-panel.is-open {
+    animation: b2bIn 0.18s var(--ease-out) both;
+}
+
+@keyframes b2bIn {
+    from { opacity: 0; transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .b2b-panel.is-open { animation: none; }
 }
 
 .b2b-head {
@@ -19,6 +149,12 @@
     align-items: center;
     gap: 9px;
     margin-bottom: 12px;
+}
+
+/* Das X in der aufgeklappten Kopfzeile sitzt ganz rechts, nach der Pille. */
+.b2b-head .b2b-x {
+    margin-left: 4px;
+    margin-right: -6px;
 }
 
 .b2b-head .icon {

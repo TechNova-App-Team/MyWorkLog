@@ -15,6 +15,17 @@
     function b2bL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
     const STATUS_KEY = 'bh_b2b_status';   // letzter bekannter Stand, gegen Fehlalarm bei Funkloch
+    const ZU_KEY = 'bh_b2b_zu';           // Nutzer hat die Nicht-Mitglied-Karte ausgeblendet
+
+    function istZu() { try { return localStorage.getItem(ZU_KEY) === '1'; } catch (e) { return false; } }
+    function setZu(v) {
+        try { v ? localStorage.setItem(ZU_KEY, '1') : localStorage.removeItem(ZU_KEY); } catch (e) { /* Privatmodus */ }
+    }
+
+    // Nur in dieser Sitzung: hat der Nutzer den Teaser aufgeklappt?
+    let expandiert = false;
+    // Zuletzt bekannter Nicht-Mitglied-Typ (true = nicht angemeldet).
+    let nmAnon = true;
 
     function statusMerken(s) {
         try {
@@ -37,37 +48,73 @@
 
     // ── Rendern ──────────────────────────────────────────────────────
 
-    function schale(pillOn, pillText, inner) {
+    // Der Schliess-Knopf sitzt in JEDER Nicht-Mitglied-Ansicht: eine
+    // Feature-Werbung auf einem Werkzeug, das ohne Konto laeuft, darf man
+    // wegklicken koennen. Mitglieder sehen keinen — dort ist es Status.
+    const X_BTN =
+        '<button type="button" class="b2b-x" onclick="b2bZu()" aria-label="' +
+        b2bL('Ausblenden', 'Hide') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
+
+    function schale(pillOn, pillText, inner, mitX) {
         return '' +
             '<div class="b2b-head">' +
             '<svg class="icon"><use href="#i-tie"/></svg>' +
             '<span class="b2b-title">' + b2bL('Betrieb &amp; IHK', 'Company &amp; chamber') + '</span>' +
             '<span class="b2b-pill ' + (pillOn ? 'is-on' : 'is-off') + '">' + esc(pillText) + '</span>' +
+            (mitX ? X_BTN : '') +
             '</div>' + inner;
     }
 
+    // Dismissed → nur noch eine Haarlinie, immer noch anklickbar.
+    function zeigeMini() {
+        el().className = 'is-mini';
+        el().innerHTML =
+            '<button type="button" class="b2b-mini-btn" onclick="b2bWieder()">' +
+            '<svg class="icon"><use href="#i-tie"/></svg>' +
+            '<span>' + b2bL('Berichtsheft mit einem Ausbildungsbetrieb verbinden',
+                'Connect this training record to a company') + '</span>' +
+            '</button>';
+        el().hidden = false;
+    }
+
+    // Standard fuer Nicht-Mitglieder: eine kompakte Zeile, kein Kasten.
+    function zeigeTeaser() {
+        el().className = 'is-teaser';
+        el().innerHTML =
+            '<button type="button" class="b2b-teaser" onclick="b2bAufklappen()">' +
+            '<svg class="icon"><use href="#i-tie"/></svg>' +
+            '<span>' + b2bL('Mit dem Ausbildungsbetrieb verbinden', 'Connect to your training company') + '</span>' +
+            '<svg class="b2b-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' +
+            '</button>' + X_BTN;
+        el().hidden = false;
+    }
+
     function zeigeAnon() {
+        el().className = 'b2b-panel is-open';
         el().innerHTML = schale(false, b2bL('Nicht verbunden', 'Not connected'),
             '<div class="b2b-body">' +
             b2bL(
-                'Melde dich in MyWorkLog an, um dein Berichtsheft mit deinem Ausbildungsbetrieb zu teilen. Dein Ausbilder zeichnet die Wochen dann direkt ab.',
-                'Sign in to MyWorkLog to share your training record with your company. Your trainer then signs off the weeks directly.'
+                'Diese Verbindung braucht ein MyWorkLog-Konto. Danach gibst du hier den Einladungscode deines Betriebs ein — oder legst als Ausbilder selbst einen Betrieb an.',
+                'This connection needs a MyWorkLog account. After that you enter your company’s invite code here — or, as a trainer, create a company yourself.'
             ) +
             '<span class="b2b-muted">' + b2bL(
                 'Ohne Konto bleibt alles wie bisher — der Link- und QR-Weg zum Ausbilder funktioniert weiter.',
                 'Without an account nothing changes — the link and QR route to your trainer still works.'
             ) + '</span>' +
             '<div class="b2b-actions" style="margin-top:12px;">' +
-            '<a class="btn btn-secondary" href="/">' +
+            '<a class="btn btn-secondary" href="/?cloud=login">' +
             '<svg class="icon"><use href="#i-refresh"/></svg><span>' +
             b2bL('In MyWorkLog anmelden', 'Sign in to MyWorkLog') + '</span></a>' +
-            '</div></div>');
+            '</div></div>', true);
         el().hidden = false;
     }
 
     let segRolle = 'azubi';
 
     function zeigeFrei() {
+        el().className = 'b2b-panel is-open';
         const azubiAktiv = segRolle === 'azubi';
         const form = azubiAktiv
             ? ('<div class="b2b-form" id="b2bForm">' +
@@ -107,11 +154,12 @@
             b2bL('Ich bin Azubi', 'I am an apprentice') + '</button>' +
             '<button class="' + (!azubiAktiv ? 'is-active' : '') + '" onclick="b2bSeg(\'ausbilder\')">' +
             b2bL('Ich bin Ausbilder', 'I am a trainer') + '</button>' +
-            '</div>' + form);
+            '</div>' + form, true);
         el().hidden = false;
     }
 
     function zeigeAzubi(st, offline) {
+        el().className = 'b2b-panel';
         el().innerHTML = schale(true, b2bL('Verbunden', 'Connected'),
             '<div class="b2b-body">' +
             b2bL('Deine Berichte werden mit ', 'Your reports are shared with ') +
@@ -152,6 +200,7 @@
                 '</div>';
         }).join('');
 
+        el().className = 'b2b-panel';
         el().innerHTML = schale(true, b2bL('Verbunden', 'Connected'),
             '<div class="b2b-body">' +
             '<strong>' + esc(st.name) + '</strong> · ' + b2bL('Ausbilder', 'Trainer') +
@@ -176,7 +225,19 @@
         else toast(msg, 'error');
     }
 
+    // Nicht-Mitglied: welche der drei Ansichten (mini / teaser / offen)?
+    function nichtMitglied(anon) {
+        nmAnon = anon;
+        if (istZu() && !expandiert) { zeigeMini(); return; }
+        if (!expandiert) { zeigeTeaser(); return; }
+        anon ? zeigeAnon() : zeigeFrei();
+    }
+
     // ── Aktionen ─────────────────────────────────────────────────────
+
+    window.b2bAufklappen = function () { expandiert = true; nmAnon ? zeigeAnon() : zeigeFrei(); };
+    window.b2bZu = function () { setZu(true); expandiert = false; zeigeMini(); };
+    window.b2bWieder = function () { setZu(false); expandiert = true; nmAnon ? zeigeAnon() : zeigeFrei(); };
 
     window.b2bSeg = function (rolle) {
         segRolle = rolle;
@@ -366,7 +427,7 @@
         try {
             if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) {
                 statusMerken(null);
-                zeigeAnon();
+                nichtMitglied(true);
                 return;
             }
 
@@ -382,13 +443,13 @@
                     st = erinnerung; netzfehler = true;
                 } else {
                     statusMerken(null);
-                    zeigeFrei();
+                    nichtMitglied(false);
                     return;
                 }
             }
             if (!st && netzfehler) {
                 const erinnerung = statusErinnerung();
-                if (!erinnerung) { zeigeFrei(); return; }
+                if (!erinnerung) { nichtMitglied(false); return; }
                 st = erinnerung;
             }
 
