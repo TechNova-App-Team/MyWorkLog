@@ -446,11 +446,27 @@
         } catch (e) { return false; }
     }
 
+    // Prueft die prev_pruefsumme-Kette einer nach erstellt_at sortierten
+    // Freigabe-Liste EINES Berichts. Jede Freigabe verweist mit
+    // `prev_pruefsumme` auf die `pruefsumme` der vorigen — die erste auf null.
+    // Ergebnis: { ok, befund }. `freigaben` ist serverseitig append-only, ein
+    // Bruch hier heisst also entweder ein Datenbank-Eingriff oder ein Fehler
+    // in freigabeSchreiben().
+    function ketteVerifizieren(liste) {
+        for (let i = 0; i < liste.length; i++) {
+            const erwartet = i === 0 ? null : (liste[i - 1].pruefsumme || null);
+            const ist = liste[i].prev_pruefsumme || null;
+            if (ist !== erwartet) return { ok: false, befund: 'kette-unterbrochen', bei: i };
+        }
+        return { ok: true, befund: 'ok' };
+    }
+
     // ── Sammelansicht fuer den Ausbilder ────────────────────────────
     /**
-     * Alle Azubis des Betriebs mit ihren Berichten und der jeweils neuesten
-     * Freigabe. → { betrieb, azubis: [{ userId, name, berichte: [{ …zeile, freigabe }] }] }
-     * oder null, wenn das Konto kein Ausbilder ist.
+     * Alle Azubis des Betriebs mit ihren Berichten, der jeweils neuesten
+     * Freigabe (`freigabe`), dem vollen Verlauf (`verlauf`, aelteste zuerst)
+     * und den Ketten- und Aenderungsbefunden (`ketteOk`, `veraendert`).
+     * → { betrieb, azubis: [...] } oder null, wenn das Konto kein Ausbilder ist.
      */
     async function bhb2bAzubiBerichte() {
         const st = await bhb2bStatus();
@@ -463,23 +479,32 @@
                 sb.from('berichte').select('*')
                     .eq('betrieb_id', st.betriebId)
                     .order('jahr', { ascending: true }).order('kw', { ascending: true }),
-                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, erstellt_at')
+                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, prev_pruefsumme, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
-                    .order('erstellt_at', { ascending: true })   // aeltere zuerst → neuere ueberschreibt
+                    .order('erstellt_at', { ascending: true })   // aelteste zuerst
             ]);
             if (mitg.error || ber.error || fr.error) {
                 console.warn('[B2B] Sammelansicht:', (mitg.error || ber.error || fr.error).message);
                 return null;
             }
-            const letzte = {};
-            (fr.data || []).forEach(f => { letzte[f.bericht_id] = f; });
+            const verlauf = {};
+            (fr.data || []).forEach(f => { (verlauf[f.bericht_id] = verlauf[f.bericht_id] || []).push(f); });
 
             const azubis = (mitg.data || []).map(m => ({
                 userId: m.user_id,
                 name: m.anzeige_name || '',
                 berichte: (ber.data || [])
                     .filter(b => b.azubi_id === m.user_id)
-                    .map(b => Object.assign({}, b, { freigabe: letzte[b.id] || null }))
+                    .map(b => {
+                        const v = verlauf[b.id] || [];
+                        const kette = ketteVerifizieren(v);
+                        return Object.assign({}, b, {
+                            freigabe: v.length ? v[v.length - 1] : null,
+                            verlauf: v,
+                            ketteOk: kette.ok,
+                            ketteBefund: kette.befund
+                        });
+                    })
             }));
 
             // „geaendert" = zuletzt bestaetigt, aber der Inhalt hasht heute
@@ -573,6 +598,6 @@
         berichtVeraendert: bhb2bBerichtVeraendert,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren }
     };
 })();

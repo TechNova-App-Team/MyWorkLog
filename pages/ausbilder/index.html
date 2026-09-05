@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.1"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.7.1"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.2"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.7.2"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -210,6 +210,20 @@
         .abk-azubi-name { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em; }
         .abk-azubi-count { margin-left: auto; font-size: 0.78rem; color: var(--text-faint); }
         .abk-hint { margin-top: 12px; font-size: 0.83rem; color: var(--text-faint); }
+        .abk-hinweis {
+            margin-top: 14px; padding: 10px 13px; border-radius: var(--radius-sm);
+            font-size: 0.83rem; line-height: 1.55; color: var(--text-muted);
+            background: var(--bg-raise); border: 1px solid var(--border);
+        }
+        .abk-hinweis.is-warn {
+            color: var(--text-main);
+            background: rgba(var(--warning-rgb), 0.10);
+            border-color: rgba(var(--warning-rgb), 0.35);
+        }
+        .abk-verlauf { margin-top: 12px; font-size: 0.82rem; }
+        .abk-verlauf summary { cursor: pointer; color: var(--text-muted); }
+        .abk-verlauf ul { margin: 8px 0 0; padding-left: 18px; color: var(--text-muted); line-height: 1.7; }
+        .abk-kette-warn { color: var(--danger); font-weight: 600; }
         .abk-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
         .abk-actions .ab-btn { padding: 10px 14px; font-size: 0.86rem; }
         .abk-reject { margin-top: 12px; }
@@ -514,13 +528,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.7.1"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.7.1"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.7.2"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.7.2"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.1"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.2"></script>
 
     <script>
     (function () {
@@ -1063,6 +1077,25 @@
                     '</div></div>';
             }
 
+            // Prüfverlauf: erst ab der zweiten Entscheidung interessant, oder
+            // wenn die prev_pruefsumme-Kette bricht (Datenbank-Eingriff).
+            var verlaufHTML = '';
+            var v = b.verlauf || [];
+            if (v.length > 1 || b.ketteOk === false) {
+                var eintraege = v.map(function (fx) {
+                    return '<li>' + esc(fmtDate(String(fx.erstellt_at).slice(0, 10))) + ' — ' +
+                        (fx.entscheidung === 'approved' ? abL('bestätigt', 'approved') : abL('zurückgegeben', 'sent back')) +
+                        (fx.ausbilder_name ? ' · ' + esc(fx.ausbilder_name) : '') +
+                        (fx.anmerkung ? ': ' + esc(fx.anmerkung) : '') + '</li>';
+                }).join('');
+                verlaufHTML = '<details class="abk-verlauf"' + (b.ketteOk === false ? ' open' : '') + '>' +
+                    '<summary>' + abL('Prüfverlauf', 'Review history') + ' (' + v.length + ')' +
+                    (b.ketteOk === false
+                        ? ' — <span class="abk-kette-warn">' + abL('Kette unterbrochen', 'chain broken') + '</span>'
+                        : '') +
+                    '</summary><ul>' + eintraege + '</ul></details>';
+            }
+
             return '<div class="ab-wk abk-card" data-bid="' + esc(b.id) + '">' +
                 '<div class="ab-wk-card' + randKlasse + '">' +
                 '<div class="ab-wk-head" role="button" tabindex="0" aria-expanded="false">' +
@@ -1075,6 +1108,7 @@
                 '<hr class="ab-rule" style="margin:16px 0;">' +
                 weekBodyHTML(zeileZuWoche(b)) +
                 (f && f.anmerkung ? '<p class="ab-wk-note">' + esc(f.anmerkung) + '</p>' : '') +
+                verlaufHTML +
                 fuss +
                 '</div></div></div>';
         }
@@ -1082,7 +1116,31 @@
         function renderKonto() {
             var d = kontoDaten;
             var offenGesamt = 0;
-            d.azubis.forEach(function (a) { a.berichte.forEach(function (b) { if (istOffen(b)) offenGesamt++; }); });
+            var aeltesteOffen = null;
+            d.azubis.forEach(function (a) {
+                a.berichte.forEach(function (b) {
+                    if (!istOffen(b)) return;
+                    offenGesamt++;
+                    if (b.datum_bis && (!aeltesteOffen || b.datum_bis < aeltesteOffen)) aeltesteOffen = b.datum_bis;
+                });
+            });
+            // §14 Abs. 1 Nr. 4 BBiG: mindestens monatliche Pruefung. Ab ~5 Wochen
+            // ist die aelteste offene Woche sicher ueberfaellig.
+            var ueberfaellig = aeltesteOffen &&
+                (Date.now() - new Date(aeltesteOffen + 'T12:00:00').getTime()) > 35 * 864e5;
+
+            var hinweis = '';
+            if (offenGesamt && ueberfaellig) {
+                hinweis = '<div class="abk-hinweis is-warn">' + abL(
+                    'Die älteste unbearbeitete Woche ist vom ' + fmtDate(aeltesteOffen) +
+                    ' und damit über einen Monat alt. Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen.',
+                    'The oldest unreviewed week is from ' + fmtDate(aeltesteOffen) +
+                    ', more than a month ago. Under §14 BBiG training records must be reviewed at least monthly.') + '</div>';
+            } else if (offenGesamt) {
+                hinweis = '<div class="abk-hinweis">' + abL(
+                    'Ausbildungsnachweise sollten nach §14 BBiG mindestens monatlich geprüft werden.',
+                    'Training records should be reviewed at least monthly under §14 BBiG.') + '</div>';
+            }
 
             var kopf = '<div class="abk-head">' +
                 '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') + '</p>' +
@@ -1091,7 +1149,7 @@
                     ? abL(offenGesamt + (offenGesamt === 1 ? ' Woche wartet' : ' Wochen warten') + ' auf Ihre Freigabe.',
                           offenGesamt + (offenGesamt === 1 ? ' week is' : ' weeks are') + ' waiting for your approval.')
                     : abL('Alle eingereichten Wochen sind abgezeichnet.', 'All submitted weeks are signed off.')) +
-                '</p></div>';
+                '</p>' + hinweis + '</div>';
 
             var koerper;
             if (!d.azubis.length) {

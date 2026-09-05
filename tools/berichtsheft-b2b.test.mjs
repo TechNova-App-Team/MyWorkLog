@@ -228,9 +228,29 @@ ok(await B.berichtVeraendert(Object.assign({}, rep, { approval: { state: 'reject
     'rejected → false (nur approved wird geprueft)');
 ok(await B.berichtVeraendert(rep) === false, 'ohne approval → false');
 
+// ── ketteVerifizieren ─────────────────────────────────────────────────
+gruppe('ketteVerifizieren — prev_pruefsumme-Kette');
+ok(I.ketteVerifizieren([]).ok === true, 'leere Liste → ok');
+ok(I.ketteVerifizieren([{ pruefsumme: 'A', prev_pruefsumme: null }]).ok === true,
+    'erste Freigabe mit prev = null → ok');
+ok(I.ketteVerifizieren([{ pruefsumme: 'A', prev_pruefsumme: 'irgendwas' }]).ok === false,
+    'erste Freigabe mit prev != null → Bruch');
+ok(I.ketteVerifizieren([
+    { pruefsumme: 'A', prev_pruefsumme: null },
+    { pruefsumme: 'B', prev_pruefsumme: 'A' },
+    { pruefsumme: 'C', prev_pruefsumme: 'B' }
+]).ok === true, 'intakte Kette über drei Freigaben → ok');
+const bruch = I.ketteVerifizieren([
+    { pruefsumme: 'A', prev_pruefsumme: null },
+    { pruefsumme: 'B', prev_pruefsumme: 'A' },
+    { pruefsumme: 'C', prev_pruefsumme: 'X' }   // sollte 'B' sein
+]);
+ok(bruch.ok === false && bruch.befund === 'kette-unterbrochen' && bruch.bei === 2,
+    'Bruch an Position 2 wird erkannt');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
-ok(bestanden >= 58, `es sind genug Pruefungen gelaufen (${bestanden})`);
+ok(bestanden >= 62, `es sind genug Pruefungen gelaufen (${bestanden})`);
 
 console.log(`\nbh-b2b: ${bestanden} ok, ${fehlgeschlagen} fehlgeschlagen`);
 process.exit(fehlgeschlagen ? 1 : 0);
