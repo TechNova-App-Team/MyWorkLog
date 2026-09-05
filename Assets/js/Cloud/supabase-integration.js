@@ -74,7 +74,20 @@ class SupabaseCloudSync {
      */
     initializeClient() {
         if (window.supabase && window.supabase.createClient) {
-            this.client = window.supabase.createClient(this.supabaseUrl, this.anonKey);
+            // 🔴 `experimental.passkey` ist Pflicht, sonst gibt es die Methoden
+            // GAR NICHT: ohne das Flag ist `auth.signInWithPasskey` schlicht
+            // undefined, und ein Aufruf stirbt an "is not a function" — nicht an
+            // einer Fehlermeldung, die auf die fehlende Einstellung hinweist.
+            // Serverseitig sind Passkeys seit dem 04.09.2026 aktiv (RP-ID
+            // myworklog.de). Die Bibliothek braucht dafuer mindestens 2.105.0;
+            // der CDN-Verweis @supabase/supabase-js@2 liefert aktuell 2.115.0.
+            //
+            // Supabase nennt die API ausdruecklich experimentell. Deshalb wird
+            // ihre Existenz vor jedem Aufruf geprueft (passkeySupported), statt
+            // sich darauf zu verlassen.
+            this.client = window.supabase.createClient(this.supabaseUrl, this.anonKey, {
+                auth: { experimental: { passkey: true } }
+            });
             console.log('[Supabase] Client erfolgreich initialisiert');
         } else {
             console.error('[Supabase] Supabase CDN nicht geladen. Bitte Supabase JS Library laden.');
@@ -202,6 +215,88 @@ class SupabaseCloudSync {
             console.error('[Auth] signInWithOtp Fehler:', error);
             throw error;
         }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       PASSKEYS (WebAuthn)
+
+       Warum das der bequemste Weg ist: keine Mail, kein Passwort, kein fremder
+       Anbieter. Der Nutzer bestaetigt mit Fingerabdruck, Gesicht oder PIN.
+       Supabase benutzt "discoverable credentials" — die Anmeldung braucht
+       deshalb KEINE Eingabe der Adresse, der Schluesselbund kennt das Konto.
+
+       🔴 Ein Passkey ist kein Weg fuer die ERSTE Anmeldung. Anlegen kann ihn
+       nur, wer schon ein bestaetigtes Konto hat und gerade angemeldet ist. Wer
+       sich zum ersten Mal anmeldet, braucht weiter Magic Link oder OAuth. Die
+       Oberflaeche muss das sagen, sonst sucht jemand einen Knopf, der fuer ihn
+       noch gar nicht funktionieren kann.
+       ══════════════════════════════════════════════════════════════════════ */
+
+    /**
+     * Kann dieses Geraet ueberhaupt Passkeys — und kennt die Bibliothek sie?
+     * Beides pruefen: die API ist als experimentell gekennzeichnet und kann in
+     * einer aelteren CDN-Fassung fehlen, und WebAuthn braucht einen sicheren
+     * Kontext (HTTPS oder localhost).
+     */
+    passkeySupported() {
+        if (typeof window.PublicKeyCredential === 'undefined') return false;
+        if (!window.isSecureContext) return false;
+        return !!(this.client && this.client.auth && typeof this.client.auth.signInWithPasskey === 'function');
+    }
+
+    /**
+     * Anmelden mit einem bereits angelegten Passkey.
+     * @returns {Promise<Object>} data mit session und user
+     */
+    async loginWithPasskey() {
+        if (!this.client) throw new Error('Supabase Client nicht verfügbar');
+        if (!this.passkeySupported()) throw new Error('Passkeys werden auf diesem Gerät nicht unterstützt');
+
+        const { data, error } = await this.client.auth.signInWithPasskey();
+        if (error) {
+            console.error('[Auth] Passkey-Anmeldung fehlgeschlagen:', error.message);
+            throw error;
+        }
+        console.log('[Auth] Mit Passkey angemeldet');
+        return data;
+    }
+
+    /**
+     * Legt fuer das ANGEMELDETE Konto einen Passkey auf diesem Geraet an.
+     * @returns {Promise<Object>} Metadaten des neuen Passkeys
+     */
+    async registerPasskey() {
+        if (!this.client) throw new Error('Supabase Client nicht verfügbar');
+        if (!this.user) throw new Error('Zum Einrichten eines Passkeys musst du angemeldet sein');
+        if (!this.passkeySupported()) throw new Error('Passkeys werden auf diesem Gerät nicht unterstützt');
+
+        const { data, error } = await this.client.auth.registerPasskey();
+        if (error) {
+            console.error('[Auth] Passkey anlegen fehlgeschlagen:', error.message);
+            throw error;
+        }
+        return data;
+    }
+
+    /** Die Passkeys des angemeldeten Kontos. Leere Liste, wenn es keine gibt. */
+    async listPasskeys() {
+        if (!this.client || !this.user) return [];
+        const pk = this.client.auth.passkey;
+        if (!pk || typeof pk.list !== 'function') return [];
+        try {
+            const { data, error } = await pk.list();
+            if (error) return [];
+            return Array.isArray(data) ? data : [];
+        } catch (e) { return []; }
+    }
+
+    /** Entfernt einen Passkey. Der Schluessel auf dem Geraet bleibt dabei liegen
+        und muss dort getrennt geloescht werden — das gehoert in den Hinweistext. */
+    async deletePasskey(passkeyId) {
+        if (!this.client || !this.user) throw new Error('Nicht angemeldet');
+        const { error } = await this.client.auth.passkey.delete({ passkeyId });
+        if (error) throw error;
+        return true;
     }
 
     /**

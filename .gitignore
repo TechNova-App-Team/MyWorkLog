@@ -1,9 +1,6 @@
 # ─────────────────────────────────────────────
 # MyWorkLog .gitignore
 # ─────────────────────────────────────────────
-# Regel: alles, was nicht zur Production-PWA gehört
-# oder Secrets/internes Wissen leaken könnte → raus.
-# ─────────────────────────────────────────────
 
 # ─── Secrets & Env ────────────────────────────
 .env
@@ -17,34 +14,21 @@ secrets.json
 *.crt
 *.csr
 credentials.json
-service-account*.json
-firebase-adminsdk*.json
-# Cloudflare Worker lokale Secrets / wrangler State
 .wrangler/
 .dev.vars
 wrangler.toml.local
 
 # ─── Dependencies ─────────────────────────────
 node_modules/
-jspm_packages/
-bower_components/
 .npm
-.yarn/
-.pnp.*
 
 # ─── Build / Cache / Coverage ─────────────────
 dist/
 build/
 out/
 .cache/
-.parcel-cache/
-.next/
-.nuxt/
-.vite/
-.turbo/
 coverage/
 .nyc_output/
-*.tsbuildinfo
 .eslintcache
 .stylelintcache
 
@@ -52,10 +36,6 @@ coverage/
 *.log
 logs/
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-pnpm-debug.log*
 
 # ─── Test-Artefakte ───────────────────────────
 tests/
@@ -64,7 +44,6 @@ TESTING.md
 *.spec.js
 jest.config.js
 junit.xml
-playwright-report/
 test-results/
 
 # ─── IDE / Editor ─────────────────────────────
@@ -106,8 +85,6 @@ $RECYCLE.BIN/
 .~lock.*
 
 # ─── KI-Assistenten / Workspace-Configs ───────
-# CLAUDE.md enthält interne Projekt-Konventionen
-# und ist nichts für die Public.
 .claude/
 CLAUDE.md
 .cursor/
@@ -116,7 +93,6 @@ CLAUDE.md
 .github/copilot/
 
 # ─── Interne Dev-Tools (nicht für End-User) ───
-# Python-Scripts, die nur lokal laufen
 dead_storage_hunter.py
 repo-tracker.py
 *.pyc
@@ -126,15 +102,12 @@ __pycache__/
 venv/
 
 # ─── Interne Doku & Reports ───────────────────
-# Internes Wissen, Roadmaps, Reviews — nichts für public
 SECURITY-FIX.md
 SECURITY-AUDIT*.md
 TODO.md
 NOTES.md
 SCRATCH.md
 ROADMAP*.md
-# Interne READMEs (Workdocs)
-README´s/
 
 # ─── DB / SQL / Migrations ────────────────────
 # RLS-Policies und Schemas leaken Backend-Logik
@@ -151,48 +124,32 @@ backup_*.json
 export_*.json
 
 # ─── Persoenliche Notizen (bleiben lokal) ─────
-# Ideen-/Backlog-Sammlung, nicht fuers oeffentliche Repo.
 # Achtung: gitignored heisst auch "git checkout holt sie NICHT zurueck".
 /IDEEN.txt
 
 # ─── Sonstiges ────────────────────────────────
 .eslintignore
 .prettierignore
-.vagrant/
-.docker/
-docker-compose.override.yml
 
 # ─── Cloudflare Worker (NIEMALS committen) ────
 # Repo ist ÖFFENTLICH. Worker-Quellcode bleibt lokal.
 workers/
 
 # ─── GENERIERTE ARTEFAKTE ─────────────────────
-# Werden beim Deploy von Cloudflare aus den Quellen gebaut (npm run build).
 # Nicht committen — sonst laege der Code doppelt im Repo.
-#
 # ⚠️ Der fuehrende Slash ist PFLICHT: "index.html" wuerde auch saemtliche
 #    pages/*/index.html erschlagen (alle 16 Standalone-Seiten!).
 # ⚠️ KEINE Inline-Kommentare hinter dem Pattern — .gitignore kennt die nicht,
 #    das "#" wird Teil des Patterns und die Regel greift stillschweigend nicht.
-
-# gebaut aus index.template.html + components/**/*.html
 /index.html
-
-# gebaut aus den deutschen Quellen + tools/i18n/dict/
 /pages/en/
 
-# Lokal bauen: npm run build:index  (laeuft auch als postinstall)
-
-# ─── graphify (Code-Wissensgraph, lokales Werkzeug) ────────
-# graph.html/graph.json sind eine vollstaendige Karte des Quellcodes und rund
-# 5 MB gross. Cloudflare Pages liefert ALLES aus, was im Repo liegt — committed
-# waere der Graph also unter myworklog.de/graphify-out/ oeffentlich abrufbar.
-# Der Ordner wird lokal aus dem Code erzeugt (`graphify update .`) und gehoert
-# damit ohnehin nicht ins Repo.
+# ─── graphify (Code-Wissensgraph) ─────────────
+# Wird lokal erzeugt und ist rund 5 MB gross. Cloudflare liefert alles aus,
+# was im Repo liegt — der Graph waere sonst oeffentlich abrufbar.
 /graphify-out/
 
 # ─── Hier NICHT ignorieren (Whitelist) ────────
-# Falls obige Patterns zu breit greifen:
 !Rechtliches/SECURITY.md
 !Rechtliches/PRIVACY.md
 !README.md
@@ -201,27 +158,16 @@ workers/
 AGENTS.md
 .codex/
 
-# Lokale Demo-/Testdatei, nicht fuer GitHub
-WEATHER_DEMO.txt
-notes.txt
+# Lokale Dateien, Demos und Notizen, nicht fuer GitHub
+/Lokales/
 
-# Frueher standen hier 22 Junctions, die pages/* unter ihren Clean-URL-Namen
-# in den Projektstamm gespiegelt haben, damit der lokale Server /berichtsheft/
-# findet. Die Liste war handgepflegt: jede neue Seite brauchte eine Zeile,
-# und ohne die haette `git add -A` denselben Inhalt ein zweites Mal committet.
-# Portman kann das inzwischen selbst (mode "overlay:pages" in sites.conf plus
-# _redirects) - im Projekt liegt dafuer nichts mehr herum.
-
-# Screenshots, die im Projektwurzel-Verzeichnis abgelegt werden (z.B. zum Zeigen im Chat)
+# Screenshots, die im Projektwurzel-Verzeichnis abgelegt werden
 /image.png
 /image*.png
 
-# Code-Bericht: erzeugt tools/repo-report.mjs in `npm run build`.
-# Bauartefakt wie index.html und pages/en/, kein Quelltext.
+# Code-Bericht: Bauartefakt, kein Quelltext.
 pages/repo-report/index.html
 # Rohausgabe des alten Python-Skripts, falls es noch jemand startet.
 /repo-report.html
 
-# Lokale Synchronisationsskripte (rclone / Google Drive)
 deploy.ps1
-

@@ -1734,6 +1734,24 @@
                         </button>
                     </div>
 
+                    <!-- Passkeys. Nur sichtbar, wenn angemeldet UND das Geraet
+                         WebAuthn kann — renderPasskeySection() entscheidet das.
+                         Anlegen geht nur mit bestehendem Konto, deshalb steht der
+                         Abschnitt hier und nicht im Anmelde-Dialog. -->
+                    <div class="settings-section" id="passkeySection" style="margin-top:1.5rem; display:none;">
+                        <div class="settings-section-title">Passkeys</div>
+                        <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin:0 0 0.9rem;">
+                            Melde dich künftig mit Fingerabdruck, Gesicht oder Geräte-PIN an — ohne
+                            Passwort und ohne E-Mail. Der Schlüssel bleibt auf dem Gerät.
+                        </p>
+                        <div id="passkeyList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:0.9rem;"></div>
+                        <button id="passkeyAddBtn" class="settings-btn" style="width:100%;" onclick="handlePasskeyRegister()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M10.9 12.1A6 6 0 0 0 4 18v2h7"/><circle cx="17.5" cy="14.5" r="2.5"/><path d="M17.5 17v5l1.5-1.5L17.5 19"/></svg>
+                            <span>Passkey auf diesem Gerät einrichten</span>
+                        </button>
+                        <div id="passkeyMessage" style="display:none; margin-top:0.7rem;" class="cl-message"></div>
+                    </div>
+
                     <div class="settings-hint" style="margin-top:1.25rem; display:flex; align-items:flex-start; gap:8px;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:3px; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                         <span>Daten werden <strong>nicht</strong> automatisch synchronisiert. Nutze die Buttons zum manuellen Hoch- oder Runterladen.</span>
@@ -1848,6 +1866,19 @@
                 </div>
                 <h2 class="cl-title">Cloud Sync</h2>
                 <p class="cl-subtitle">Melde dich an, um deine Arbeitszeiten<br>sicher zu synchronisieren</p>
+            </div>
+
+            <!-- Passkey: der schnellste Weg fuer alle, die schon einen haben.
+                 Steht bewusst OBEN, aber mit einem Satz darunter, der sagt, dass
+                 er einmalig eingerichtet werden muss — sonst sucht jemand beim
+                 ersten Besuch einen Knopf, der fuer ihn noch nichts tun kann.
+                 Wird per JS ausgeblendet, wenn das Geraet kein WebAuthn kann. -->
+            <div id="cloud-passkey-block" class="cl-passkey" style="display:none;">
+                <button type="button" id="cloud-login-passkey" class="cl-btn cl-btn-passkey">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M10.9 12.1A6 6 0 0 0 4 18v2h7"/><circle cx="17.5" cy="14.5" r="2.5"/><path d="M17.5 17v5l1.5-1.5L17.5 19"/></svg>
+                    <span>Mit Passkey anmelden</span>
+                </button>
+                <p class="cl-passkey-hint">Ohne Passwort, mit Fingerabdruck oder Gesicht. Einmalig einrichten unter Einstellungen &rarr; Cloud.</p>
             </div>
 
             <!-- Form -->

@@ -467,6 +467,96 @@
             }
             console.log('[Cloud Sync] User abgemeldet');
         }
+
+        renderPasskeySection(isLoggedIn);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       PASSKEYS
+
+       Der Abschnitt erscheint nur, wenn beides zutrifft: angemeldet UND das
+       Geraet kann WebAuthn. Ein Einrichten-Knopf fuer jemanden, der nicht
+       angemeldet ist, waere eine Zusage ohne Deckung — Supabase laesst einen
+       Passkey nur fuer ein bestehendes, bestaetigtes Konto anlegen.
+       ══════════════════════════════════════════════════════════════════════ */
+
+    function passkeyMoeglich() {
+        return !!(window.cloudSync
+                  && typeof window.cloudSync.passkeySupported === 'function'
+                  && window.cloudSync.passkeySupported());
+    }
+
+    async function renderPasskeySection(isLoggedIn) {
+        const box = document.getElementById('passkeySection');
+        if (!box) return;
+
+        if (!isLoggedIn || !passkeyMoeglich()) { box.style.display = 'none'; return; }
+        box.style.display = '';
+
+        const liste = document.getElementById('passkeyList');
+        if (!liste) return;
+
+        let keys = [];
+        try { keys = await window.cloudSync.listPasskeys(); } catch (e) { keys = []; }
+
+        if (!keys.length) {
+            liste.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; margin:0;">Noch keiner eingerichtet.</p>`;
+            return;
+        }
+
+        // esc() gegen den vom Authenticator gelieferten Namen: der kommt von
+        // aussen (AAGUID-Zuordnung) und ist kein Text aus unserem Code.
+        liste.innerHTML = keys.map(k => {
+            const name = esc(k.friendly_name || 'Passkey');
+            const seit = k.created_at ? new Date(k.created_at).toLocaleDateString('de-DE') : '';
+            return `<div style="display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid var(--border); border-radius:10px;">
+                <span style="flex:1; font-size:0.85rem;">${name}${seit ? ` <span style="color:var(--text-muted); font-size:0.78rem;">seit ${seit}</span>` : ''}</span>
+                <button type="button" class="settings-btn" style="padding:5px 10px; font-size:0.75rem; width:auto;" onclick="handlePasskeyDelete('${esc(k.id)}')">Entfernen</button>
+            </div>`;
+        }).join('');
+    }
+
+    function passkeyMeldung(text, art) {
+        const el = document.getElementById('passkeyMessage');
+        if (!el) return;
+        el.textContent = text;
+        el.className = 'cl-message ' + (art || '');
+        el.style.display = 'block';
+    }
+
+    async function handlePasskeyRegister() {
+        const btn = document.getElementById('passkeyAddBtn');
+        if (!window.cloudSync) return;
+        const original = btn ? btn.innerHTML : '';
+        try {
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span>Warte auf Bestätigung…</span>'; }
+            const pk = await window.cloudSync.registerPasskey();
+            passkeyMeldung('Passkey eingerichtet' + (pk && pk.friendly_name ? ': ' + pk.friendly_name : '')
+                           + '. Beim nächsten Anmelden reicht jetzt Fingerabdruck oder Gesicht.', 'success');
+            await renderPasskeySection(true);
+        } catch (e) {
+            passkeyMeldung(typeof authFehlerText === 'function' ? authFehlerText(e)
+                                                                : (e && e.message) || 'Fehlgeschlagen', 'error');
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = original; }
+        }
+    }
+
+    async function handlePasskeyDelete(passkeyId) {
+        if (!window.cloudSync) return;
+        try {
+            await window.cloudSync.deletePasskey(passkeyId);
+            // 🔴 Der Schluessel im Schluesselbund des Geraets bleibt liegen —
+            // den kann eine Webseite nicht loeschen. Ohne diesen Satz taucht er
+            // bei der naechsten Anmeldung wieder in der Auswahl auf und tut
+            // dann nichts, was wie ein Fehler aussieht.
+            passkeyMeldung('Passkey entfernt. Im Schlüsselbund deines Geräts liegt er weiterhin — '
+                           + 'dort musst du ihn getrennt löschen.', 'success');
+            await renderPasskeySection(true);
+        } catch (e) {
+            passkeyMeldung(typeof authFehlerText === 'function' ? authFehlerText(e)
+                                                                : (e && e.message) || 'Fehlgeschlagen', 'error');
+        }
     }
     
     function createCloudSyncButtons() {
