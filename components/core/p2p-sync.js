@@ -995,18 +995,19 @@
     function p2pSetupPeerEvents(peer) {
         // ICE Diagnostik: Verbindungszustand überwachen
         try {
-            if (peer._pc) {
-                peer._pc.addEventListener('iceconnectionstatechange', () => {
-                    console.log(`🧊 ICE Connection: ${peer._pc.iceConnectionState}`);
-                    p2pLog('Netzwerk: ' + p2pIceLabel(peer._pc.iceConnectionState));
+            const pc = peer._pc;
+            if (pc) {
+                pc.addEventListener('iceconnectionstatechange', () => {
+                    console.log(`🧊 ICE Connection: ${pc.iceConnectionState}`);
+                    p2pLog('Netzwerk: ' + p2pIceLabel(pc.iceConnectionState));
                 });
-                peer._pc.addEventListener('icegatheringstatechange', () => {
-                    console.log(`🧊 ICE Gathering: ${peer._pc.iceGatheringState}`);
+                pc.addEventListener('icegatheringstatechange', () => {
+                    console.log(`🧊 ICE Gathering: ${pc.iceGatheringState}`);
                 });
-                peer._pc.addEventListener('connectionstatechange', () => {
-                    console.log(`🧊 Connection State: ${peer._pc.connectionState}`);
+                pc.addEventListener('connectionstatechange', () => {
+                    console.log(`🧊 Connection State: ${pc.connectionState}`);
                 });
-                peer._pc.addEventListener('icecandidate', (event) => {
+                pc.addEventListener('icecandidate', (event) => {
                     if (event.candidate) {
                         const c = event.candidate.candidate;
                         const type = c.includes('typ relay') ? '🔄 RELAY' : c.includes('typ srflx') ? '📡 STUN' : '🏠 HOST';
