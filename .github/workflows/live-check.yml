@@ -35,7 +35,38 @@ jobs:
       # Lauf die VORIGE Fassung und meldet Fehler, die schon behoben sind.
       - name: Auf den Deploy warten
         if: github.event_name == 'push'
-        run: sleep 180
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Warte auf Cloudflare Pages Deploy..."
+          for i in {1..30}; do
+            # Pruefung ueber Check-Runs (Cloudflare Pages nutzt die GitHub Apps API)
+            CONCLUSION=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }}/check-runs --jq '.check_runs[]? | select(.name == "Cloudflare Pages") | .conclusion' || echo "")
+            
+            if [ "$CONCLUSION" = "success" ]; then
+              echo "Deploy abgeschlossen!"
+              exit 0
+            elif [ "$CONCLUSION" = "failure" ] || [ "$CONCLUSION" = "cancelled" ] || [ "$CONCLUSION" = "timed_out" ]; then
+              echo "Deploy fehlgeschlagen ($CONCLUSION)!"
+              exit 1
+            fi
+            
+            # Fallback auf Commit Statuses (falls es als klassischer Status gemeldet wird)
+            STATE=$(gh api repos/${{ github.repository }}/commits/${{ github.sha }}/status --jq '.statuses[]? | select(.context == "Cloudflare Pages") | .state' || echo "")
+            
+            if [ "$STATE" = "success" ]; then
+              echo "Deploy abgeschlossen (Status)!"
+              exit 0
+            elif [ "$STATE" = "error" ] || [ "$STATE" = "failure" ]; then
+              echo "Deploy fehlgeschlagen ($STATE)!"
+              exit 1
+            fi
+            
+            echo "Noch nicht fertig... warte 10s (Versuch $i/30)"
+            sleep 10
+          done
+          echo "Timeout nach 5 Minuten."
+          exit 1
 
       - name: Sitemap, Dateien und Weiterleitungen pruefen
         run: node tools/live-check.mjs https://myworklog.de
