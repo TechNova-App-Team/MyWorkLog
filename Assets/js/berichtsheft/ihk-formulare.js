@@ -45,6 +45,10 @@
         blockUnterwHwk: 'Unterweisungen bzw. überbetriebliche Unterweisungen (z. B. im Handwerk), betrieblicher Unterricht, sonstige Schulungen',
         blockUnterwMuc: 'Unterweisungen, Lehrgespräche, betrieblicher Unterricht, sonstige Schulungen',
         blockSchule:    'Themen des Berufsschulunterrichts',
+        // Zweizeilig wie im Vordruck — die Zeilen stehen im Spaltenkopf
+        // untereinander, nicht als ein Satz.
+        arpKopf1:       'Lfd. Nr.:',
+        arpKopf2:       'Bezug zum Ausbildungsrahmenplan',
         blockSchuleMuc: 'Berufsschule (Unterrichtsthemen)',
         stunden:        'Stunden',
         fussnote:       '*  Wie lange wurde welche Tätigkeit ausgeübt?',
@@ -166,6 +170,39 @@
             signatures: [T.sigAzubi, T.sigAusbilder]
         },
 
+        // Wortlaut und Aufbau aus dem amtlichen Vordruck
+        // „Ausbildungsnachweis mit Bezug zum Ausbildungsrahmenplan
+        // (wöchentlich)" (ihk.de, Urheber laut Dokument-Metadaten IHK zu Kiel).
+        //
+        // 🔴 Der erste Entwurf hat den ARP-Bezug als VIERTEN Kasten gebaut —
+        // das war geraten. Im echten Bogen ist er eine SPALTE in jedem der
+        // drei Kaesten, zwischen Titel und Stunden. Auch der Titel ist ein
+        // eigener, kein „(wöchentlich)" mit Untertitel.
+        //
+        // Die Spalte bleibt LEER, wie die ARP-Spalte im Tages-Vordruck: die
+        // Zuordnung zur Rahmenplan-Position traegt der Azubi von Hand ein.
+        // Dafuer gibt es kein Eingabefeld, und eine erfundene Nummer waere
+        // schlimmer als eine leere Spalte.
+        'neu-w-arp': {
+            label: 'Neufassung — wöchentlich mit ARP-Bezug',
+            labelEn: 'Revised version — weekly, with training-plan reference',
+            hint: 'Zusatzspalte „Lfd. Nr. / Bezug zum Ausbildungsrahmenplan" je Block',
+            hintEn: 'Extra column for the training-plan item in every block',
+            title: 'Ausbildungsnachweis mit Bezug zum Ausbildungsrahmenplan (wöchentlich)',
+            cadence: 'weekly',
+            kopf: KOPF_NEU,
+            hoursCol: true,
+            arpCol: true,
+            cover: 'dihk',
+            blocks: [
+                { title: T.blockBetrieb,   src: 'activities',  minH: 78 },
+                { title: T.blockUnterwHwk, src: 'instruction', minH: 42 },
+                { title: T.blockSchule,    src: 'school',      minH: 42 }
+            ],
+            confirmLine: T.bestaetigung1,
+            signatures: [T.sigAzubi, T.sigAusbilder]
+        },
+
         'neu-t-arp': {
             label: 'Neufassung — täglich mit ARP-Bezug',
             labelEn: 'Revised version — daily, with training-plan reference',
@@ -217,7 +254,7 @@
     const IHK_KAMMERN = [
         { id: 'dihk',       name: 'DIHK-Muster (Standard)',            forms: ['dihk-w', 'dihk-t'],                       verified: true },
         { id: 'muenchen',   name: 'IHK für München und Oberbayern',    forms: ['muc-w', 'dihk-t'],                        verified: true },
-        { id: 'koeln',      name: 'IHK Köln',                          forms: ['neu-w', 'neu-t', 'neu-t-arp'],            verified: true },
+        { id: 'koeln',      name: 'IHK Köln',                          forms: ['neu-w', 'neu-t', 'neu-w-arp', 'neu-t-arp'], verified: true },
         { id: 'frankfurt',  name: 'IHK Frankfurt am Main',             forms: ['neu-w', 'neu-t'],                         verified: true },
         { id: 'nuernberg',  name: 'IHK Nürnberg für Mittelfranken',    forms: ['dihk-w', 'dihk-t'],                       verified: false },
         { id: 'berlin',     name: 'IHK Berlin',                        forms: ['dihk-w', 'dihk-t'],                       verified: false },
@@ -230,7 +267,7 @@
         { id: 'bremen',     name: 'Handelskammer Bremen',              forms: ['dihk-w', 'dihk-t'],                       verified: false },
         { id: 'leipzig',    name: 'IHK zu Leipzig',                    forms: ['dihk-w', 'dihk-t'],                       verified: false },
         { id: 'dresden',    name: 'IHK Dresden',                       forms: ['dihk-w', 'dihk-t'],                       verified: false },
-        { id: 'andere',     name: 'Andere / nicht aufgeführt',         forms: ['dihk-w', 'dihk-t', 'neu-w', 'neu-t', 'neu-t-arp', 'muc-w'], verified: false }
+        { id: 'andere',     name: 'Andere / nicht aufgeführt',         forms: ['dihk-w', 'dihk-t', 'neu-w', 'neu-t', 'neu-w-arp', 'neu-t-arp', 'muc-w'], verified: false }
     ];
 
     function getKammer(id) {
@@ -321,6 +358,8 @@
             kopfRows: kopfRows,
             hoursCol: !!tpl.hoursCol,
             hoursHead: T.stunden,
+            arpCol: !!tpl.arpCol,
+            arpHead: [T.arpKopf1, T.arpKopf2],
             footnote: tpl.footnote || null,
             confirmLine: tpl.confirmLine || null,
             sigStyle: tpl.sigStyle || 'line',
@@ -426,10 +465,14 @@
                 h += '<div class="fm-block">' +
                      '<div class="fm-block-head">' +
                        '<span class="fm-block-title">' + esc(sec.title) + '</span>' +
+                       (model.arpCol ? '<span class="fm-block-arp">' +
+                          esc(model.arpHead[0]) + '<br>' + esc(model.arpHead[1]) + '</span>' : '') +
                        (model.hoursCol ? '<span class="fm-block-hours">' + esc(model.hoursHead) + '</span>' : '') +
                      '</div>' +
                      '<div class="fm-block-body" style="min-height:' + (sec.minH * 0.9).toFixed(0) + 'px">' +
                        '<div class="fm-block-text">' + linesHtml(sec.lines) + '</div>' +
+                       // Die ARP-Spalte bleibt leer: sie wird von Hand ausgefuellt.
+                       (model.arpCol ? '<div class="fm-block-aval"></div>' : '') +
                        (model.hoursCol ? '<div class="fm-block-hval">' + esc(sec.hours) + '</div>' : '') +
                      '</div></div>';
             } else {
@@ -495,6 +538,7 @@
     const PDF = {
         ML: 20, MR: 15, MT: 16, MB: 14,     // Rand links breiter: Lochung/Heftung
         HOURS_W: 22,                         // Breite der Stunden-Spalte
+        ARP_W: 34,                           // Breite der ARP-Spalte (nur neu-w-arp)
         DAY_W: 24,                           // Breite der Wochentag-Spalte
         LH: 4.2,                             // Zeilenhoehe im Fliesstext
         HEAD_H: 11,                          // Hoehe einer Kopf-Zelle
@@ -572,11 +616,12 @@
     // dafuer — Messung und Zeichnung duerfen nicht auseinanderlaufen.
     function wrapBlock(doc, model, sec, CW) {
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
+        const aw = model.arpCol ? PDF.ARP_W : 0;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
         const out = [];
         sec.lines.forEach(l => {
             if (!l) { out.push(''); return; }
-            doc.splitTextToSize(l, CW - hw - 5).forEach(w => out.push(w));
+            doc.splitTextToSize(l, CW - hw - aw - 5).forEach(w => out.push(w));
         });
         return out;
     }
@@ -679,13 +724,28 @@
         doc.setFillColor(238, 238, 238);
         doc.rect(PDF.ML, y, CW, PDF.BAR_H, 'FD');
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
+        const aw = model.arpCol ? PDF.ARP_W : 0;
         if (hw) {
             doc.line(PDF.ML + CW - hw, y, PDF.ML + CW - hw, y + PDF.BAR_H);
             doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
             doc.text(model.hoursHead, PDF.ML + CW - hw / 2, y + 4.8, { align: 'center' });
         }
+        if (aw) {
+            // 🔴 „Bezug zum Ausbildungsrahmenplan" ist bei 6,4 pt 35,9 mm breit,
+            // die Spalte nur 34 — als eine Zeile gesetzt lief die Beschriftung
+            // ueber BEIDE Trennlinien. Deshalb umbrechen lassen (der amtliche
+            // Bogen trennt an derselben Stelle) und die Zeilen im Kopf zentrieren.
+            doc.line(PDF.ML + CW - hw - aw, y, PDF.ML + CW - hw - aw, y + PDF.BAR_H);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(5.6);
+            const mx = PDF.ML + CW - hw - aw / 2;
+            const zeilen = [];
+            model.arpHead.forEach(t => doc.splitTextToSize(t, aw - 3).forEach(z => zeilen.push(z)));
+            const zh = 2.1;
+            const start = y + (PDF.BAR_H - zeilen.length * zh) / 2 + 1.6;
+            zeilen.forEach((z, i) => doc.text(z, mx, start + i * zh, { align: 'center' }));
+        }
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        const t = doc.splitTextToSize(title, CW - hw - 4);
+        const t = doc.splitTextToSize(title, CW - hw - aw - 4);
         doc.text(t[0], PDF.ML + 2, y + (t.length > 1 ? 3.4 : 4.8));
         if (t.length > 1) {
             doc.setFontSize(7.2);
@@ -696,6 +756,7 @@
 
     function drawTextBlock(doc, model, sec, y, CW, contentBottom, nextPage) {
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
+        const aw = model.arpCol ? PDF.ARP_W : 0;
         const lines = wrapBlock(doc, model, sec, CW);
 
         // Der Block laeuft ueber Seiten weiter, statt Zeilen abzuschneiden.
@@ -718,6 +779,9 @@
             y = blockHeadBar(doc, model, first ? sec.title : sec.title + ' (Fortsetzung)', y, CW);
             doc.rect(PDF.ML, y, CW, boxH, 'S');
             if (hw) doc.line(PDF.ML + CW - hw, y, PDF.ML + CW - hw, y + boxH);
+            // Die ARP-Spalte bekommt ihre Trennlinie, bleibt aber leer —
+            // die Rahmenplan-Position traegt der Azubi von Hand ein.
+            if (aw) doc.line(PDF.ML + CW - hw - aw, y, PDF.ML + CW - hw - aw, y + boxH);
 
             doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
             chunk.forEach((ln, i) => doc.text(ln, PDF.ML + 2.5, y + 4.6 + i * PDF.LH));

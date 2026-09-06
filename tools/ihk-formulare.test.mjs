@@ -104,6 +104,20 @@ const ERWARTET = {
     'neu-t-arp': [
         'Ausgeführte Arbeiten, Unterricht usw.', 'Gesamtstunden', 'Ggf. ausbildende Abteilung:',
     ],
+    // Wortlaut 1:1 aus dem amtlichen .doc „Ausbildungsnachweis mit Bezug zum
+    // Ausbildungsrahmenplan (wöchentlich)" (ihk.de, Blob 1371652).
+    'neu-w-arp': [
+        'Ausbildungsnachweis mit Bezug zum Ausbildungsrahmenplan (wöchentlich)',
+        'Name des/der Auszubildenden:', 'Ausbildungsjahr:', 'Ggf. ausbildende Abteilung:',
+        'Ausbildungswoche vom:', 'bis:',
+        'Betriebliche Tätigkeiten',
+        'Unterweisungen bzw. überbetriebliche Unterweisungen (z. B. im Handwerk), betrieblicher Unterricht, sonstige Schulungen',
+        'Themen des Berufsschulunterrichts',
+        'Lfd. Nr.:', 'Bezug zum Ausbildungsrahmenplan', 'Stunden',
+        'Durch die nachfolgende Unterschrift wird die Richtigkeit und Vollständigkeit der obigen Angaben bestätigt.',
+        'Datum, Unterschrift Auszubildende/r',
+        'Datum, Unterschrift Ausbildende/r oder Ausbilder/in',
+    ],
     'muc-w': [
         'Ausbildungsnachweis', 'Ausbildungsabteilung:', 'Berufsschule (Unterrichtsthemen)',
         'Unterweisungen, Lehrgespräche, betrieblicher Unterricht, sonstige Schulungen',
@@ -154,6 +168,45 @@ check('ARP: Einzelstunden im PDF', arp.pdf.includes('7,25'), '');
 check('ARP: Einzelstunden in der Vorschau', arp.html.includes('7,25'), '');
 check('ARP: Gesamtstunden-Summe im PDF', arp.pdf.includes('40'), '');
 
+// Die woechentliche ARP-Variante: derselbe Bogen wie neu-w, aber jeder der
+// DREI Kaesten bekommt eine Zusatzspalte fuer die Rahmenplan-Position.
+//
+// 🔴 Der erste Entwurf hatte daraus einen VIERTEN Kasten gemacht — geraten,
+// nicht gelesen. Der amtliche Vordruck hat drei Kaesten mit je drei Spalten.
+// Deshalb zaehlt der erste Check die Kaesten und der zweite die Spaltenkoepfe.
+const warp = render('neu-w-arp');
+check('neu-w-arp: drei Bloecke wie die Neufassung', warp.model.sections.length === 3,
+    warp.model.sections.map((s) => s.title).join(' | '));
+// Ueber „Lfd. Nr.:" gezaehlt, nicht ueber die zweite Kopfzeile: die wird
+// umgebrochen (siehe unten) und steht deshalb nie als ganzes Stueck da.
+check('neu-w-arp: der ARP-Spaltenkopf steht ueber JEDEM Block',
+    warp.pdf.split('\n').filter((s) => s === 'Lfd. Nr.:').length === 3,
+    String(warp.pdf.split('\n').filter((s) => s === 'Lfd. Nr.:').length));
+check('neu-w-arp: dasselbe in der Vorschau',
+    (warp.html.match(/fm-block-arp/g) || []).length === 3,
+    String((warp.html.match(/fm-block-arp/g) || []).length));
+check('neu-w-arp: die ARP-Spalte bleibt leer (wird von Hand gefuellt)',
+    warp.html.includes('<div class="fm-block-aval"></div>'), '');
+check('neu-w-arp: die Wocheninhalte stehen trotzdem drin',
+    warp.pdf.includes('Testumgebung aufgesetzt') && warp.pdf.includes('IT-Systeme')
+    && warp.pdf.includes('Unterweisung Arbeitssicherheit'), '');
+check('neu-w-arp: zwei Unterschriften wie die Neufassung',
+    warp.model.signatures.length === 2, String(warp.model.signatures.length));
+check('neu-w-arp: eigener Titel, kein Untertitel',
+    warp.model.subtitle === null, String(warp.model.subtitle));
+// 🔴 „Bezug zum Ausbildungsrahmenplan" ist breiter als die 34-mm-Spalte. Als
+// EINE Zeile gesetzt lief die Beschriftung ueber beide Trennlinien — im
+// Bildschirm-Screenshot kaum zu sehen, auf Papier falsch. Steht die volle
+// Zeichenfolge wieder als ein Stueck im PDF, wurde der Umbruch entfernt.
+check('neu-w-arp: der ARP-Spaltenkopf wird umgebrochen, nicht ueberstehen gelassen',
+    !warp.pdf.split('\n').some((z) => z === 'Bezug zum Ausbildungsrahmenplan'), '');
+// Gegenprobe: neu-w hat KEINE ARP-Spalte. Ohne diese Zeile waere ein Lauf, der
+// den Spaltenkopf nirgends findet, nicht von einem kaputten Vergleich zu
+// unterscheiden.
+check('Gegenprobe: neu-w traegt keine ARP-Spalte',
+    n.model.arpCol === false && !n.pdf.includes('Bezug zum Ausbildungsrahmenplan')
+    && !n.html.includes('fm-block-arp'), '');
+
 // Keine erfundenen Stunden in Bloecken, fuer die es keine Zahl gibt.
 check('nur der erste Block traegt eine Stundenzahl',
     w.model.sections.filter((s) => s.hours).length === 1,
@@ -163,7 +216,7 @@ check('nur der erste Block traegt eine Stundenzahl',
 // Der amtliche Vordruck ist einseitig. Rutscht der letzte Block auf Seite 2,
 // bleibt darunter eine halbe leere Seite — genau das war der erste Entwurf.
 console.log('\nEine normale Woche passt auf ein Blatt');
-for (const formId of ['dihk-w', 'neu-w', 'muc-w', 'dihk-t', 'neu-t', 'neu-t-arp']) {
+for (const formId of ['dihk-w', 'neu-w', 'neu-w-arp', 'muc-w', 'dihk-t', 'neu-t', 'neu-t-arp']) {
     const r = render(formId, { heftNr: '', adresse: '' });
     const ohneDeckblatt = r.rec.pages - (r.model.cover ? 1 : 0);
     check(`${formId}: eine Seite`, ohneDeckblatt === 1, `${ohneDeckblatt} Seiten`);
@@ -278,7 +331,12 @@ check('es gibt ueberhaupt PDF-Text zu pruefen', mit.pdf.length > 500, String(mit
 // Der Vermerk landet an der Zeile des AUSBILDERS, nicht an der des Azubis.
 // Ueber den Wortlaut gesucht, weil die Vordrucke 2 bis 4 Zeilen in
 // unterschiedlicher Reihenfolge haben.
-for (const formId of ['dihk-w', 'dihk-t', 'neufassung-w', 'ihk-muenchen']) {
+// 🔴 Hier standen bis v6.7.9 `neufassung-w` und `ihk-muenchen` — beides KEINE
+// Vordruck-Ids. `buildIhkFormModel()` faellt bei unbekannter Id aufs DIHK-Muster
+// zurueck, der Lauf hat also dreimal dasselbe Blatt geprueft und dabei gruen
+// gemeldet. Deshalb darunter die Gegenprobe, dass jede Id wirklich existiert.
+for (const formId of ['dihk-w', 'dihk-t', 'neu-w', 'muc-w', 'neu-w-arp', 'neu-t-arp']) {
+    check(`${formId}: die Id gibt es ueberhaupt`, !!window.IHK_FORMS[formId], '');
     const r = render(formId, { approval: FREIGABE });
     const idx = r.model.signatures.findIndex(s => s.indexOf('Ausbilder') >= 0);
     check(`${formId}: es gibt eine Ausbilder-Zeile`, idx >= 0, r.model.signatures.join(' | '));
