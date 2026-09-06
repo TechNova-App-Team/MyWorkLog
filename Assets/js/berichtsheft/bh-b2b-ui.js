@@ -125,6 +125,9 @@
                 '<div class="b2b-hint">' + b2bL(
                     'Den Einladungscode bekommst du von deinem Ausbilder oder Ausbildungsbetrieb.',
                     'You get the invite code from your trainer or company.') + '</div>' +
+                '<div class="b2b-warn">' + b2bL(
+                    'Tritt nur mit einem Code bei, den du von deinem echten Ausbilder hast. Wer einen Betrieb anlegt, wird von MyWorkLog nicht geprüft — nach dem Beitritt sieht dieser Betrieb deine Berichte.',
+                    'Only join with a code you got from your actual trainer. MyWorkLog does not verify who creates a company — after joining, that company can read your reports.') + '</div>' +
                 '<div class="b2b-fehler" id="b2bFehler" hidden></div>' +
                 '<div class="b2b-actions">' +
                 '<button class="btn btn-primary" id="b2bJoinBtn" onclick="b2bBeitreten()">' +
@@ -138,6 +141,9 @@
                 '<div class="b2b-hint">' + b2bL(
                     'Du wirst der erste Ausbilder. Danach lädst du deine Azubis mit einem Code ein.',
                     'You become the first trainer. Then you invite your apprentices with a code.') + '</div>' +
+                '<div class="b2b-warn">' + b2bL(
+                    'MyWorkLog prüft nicht, ob Sie bei diesem Betrieb beschäftigt sind. Der Eintrag ist selbst angelegt und ersetzt keine Bestätigung der Kammer.',
+                    'MyWorkLog does not verify that you work at this company. The entry is self-created and is not a chamber confirmation.') + '</div>' +
                 '<div class="b2b-fehler" id="b2bFehler" hidden></div>' +
                 '<div class="b2b-actions">' +
                 '<button class="btn btn-primary" id="b2bFoundBtn" onclick="b2bBetriebAnlegen()">' +
@@ -155,6 +161,35 @@
             '<button class="' + (!azubiAktiv ? 'is-active' : '') + '" onclick="b2bSeg(\'ausbilder\')">' +
             b2bL('Ich bin Ausbilder', 'I am a trainer') + '</button>' +
             '</div>' + form, true);
+        el().hidden = false;
+    }
+
+    // Der Azubi bestaetigt EINMAL, dass der Betrieb der richtige ist. Beitreten
+    // heisst „dieser Betrieb darf meine Berichte lesen" — und wer einen Betrieb
+    // anlegt, wird nirgends geprueft. Vor der Bestaetigung wird nichts
+    // hochgeladen.
+    const OK_KEY = 'bh_b2b_ok';
+    function bestaetigt() { try { return localStorage.getItem(OK_KEY); } catch (e) { return null; } }
+    function setBestaetigt(id) { try { localStorage.setItem(OK_KEY, id); } catch (e) { /* Privatmodus */ } }
+
+    function zeigeBestaetigen(st) {
+        el().className = 'b2b-panel is-open';
+        el().innerHTML = schale(false, b2bL('Bitte bestätigen', 'Please confirm'),
+            '<div class="b2b-body">' +
+            b2bL('Du bist beigetreten bei ', 'You joined ') +
+            '<strong>' + esc(st.name || b2bL('einem Betrieb ohne Namen', 'a company with no name')) + '</strong>' +
+            b2bL('. Ab der Bestätigung kann dieser Betrieb deine Berichte lesen und abzeichnen.',
+                '. Once confirmed, this company can read and sign off your reports.') +
+            '<span class="b2b-muted">' + b2bL(
+                'Der Name ist frei gewählt und von MyWorkLog nicht geprüft. Stimmt er nicht mit deinem Ausbildungsbetrieb überein, löse die Verbindung.',
+                'The name is freely chosen and not verified by MyWorkLog. If it does not match your training company, disconnect.') + '</span>' +
+            '<div class="b2b-actions" style="margin-top:14px;">' +
+            '<button class="btn btn-primary" onclick="b2bBestaetigen()">' +
+            '<svg class="icon"><use href="#i-check"/></svg><span>' +
+            b2bL('Ja, das ist mein Betrieb', 'Yes, that is my company') + '</span></button>' +
+            '<button class="btn btn-ghost" onclick="b2bVerbindungLoesen()">' +
+            b2bL('Nein, Verbindung lösen', 'No, disconnect') + '</button>' +
+            '</div></div>');
         el().hidden = false;
     }
 
@@ -242,6 +277,14 @@
     window.b2bSeg = function (rolle) {
         segRolle = rolle;
         zeigeFrei();
+    };
+
+    window.b2bBestaetigen = async function () {
+        try {
+            const st = await BHB2B.status(true);
+            if (st) setBestaetigt(st.betriebId);
+        } catch (e) { /* ohne Status nichts merken */ }
+        await aktualisieren(true);
     };
 
     window.b2bBeitreten = async function () {
@@ -413,7 +456,10 @@
         if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) return;
         try {
             const st = await BHB2B.status();
-            if (st && st.rolle === 'azubi') await BHB2B.berichtHoch(report);
+            // Ohne Gegenbestaetigung geht nichts an den Betrieb (siehe zeigeBestaetigen).
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.berichtHoch(report);
+            }
         } catch (e) { /* egal */ }
     };
 
@@ -467,7 +513,8 @@
                 return;
             }
 
-            // Azubi
+            // Azubi — vor der Gegenbestaetigung wird NICHTS hochgeladen.
+            if (bestaetigt() !== st.betriebId) { zeigeBestaetigen(st); return; }
             zeigeAzubi(st, netzfehler);
             if (netzfehler) return;
             await berichteHochladen();
