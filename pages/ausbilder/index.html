@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.4"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.7.4"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.5"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.7.5"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -166,6 +166,7 @@
         }
         .ab-wk-card.is-approved { border-color: rgba(var(--success-rgb), 0.4); }
         .ab-wk-card.is-rejected { border-color: rgba(var(--warning-rgb), 0.4); }
+        .ab-wk-card.is-geaendert { border-color: rgba(var(--danger-rgb), 0.4); }
 
         .ab-wk-head {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -195,21 +196,210 @@
             font-size: 0.82rem; color: var(--text-muted);
         }
 
-        /* ── Kontobasierter Weg (Sammelansicht) ──────────────────── */
-        .abk-head { margin-bottom: 22px; }
-        .abk-load, .abk-empty {
+        /* ── Kontobasierter Weg (Sammelansicht / Cockpit) ────────── */
+        /* Die 680px der .ab-wrap sind die Lesebreite EINES Nachweises.
+           Die Uebersicht ist ein anderes Format und darf breiter. */
+        .ab-wrap.is-konto { max-width: 940px; }
+
+        .abk-load {
             font-size: 0.92rem; color: var(--text-muted); line-height: 1.6;
             padding: 14px 0;
         }
-        .abk-azubi { margin-top: 26px; }
-        .abk-azubi:first-of-type { margin-top: 20px; }
-        .abk-azubi-head {
-            display: flex; align-items: baseline; gap: 10px;
-            padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+        /* Der Abstand kommt hier aus dem gap — die .ab-wk + .ab-wk-Regel des
+           Fragment-Wegs wuerde ihn sonst verdoppeln. */
+        .abk-wochen { display: flex; flex-direction: column; gap: 10px; }
+        .abk-wochen .ab-wk + .ab-wk { margin-top: 0; }
+
+        /* Kopf: Monogramm, Name, Aktion — bewusst nicht zentriert. */
+        .abk-kopf {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+            padding-bottom: 22px; border-bottom: 1px solid var(--border);
         }
-        .abk-azubi-name { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em; }
-        .abk-azubi-count { margin-left: auto; font-size: 0.78rem; color: var(--text-faint); }
+        .abk-firma-mono {
+            display: grid; place-items: center; flex: 0 0 auto;
+            width: 48px; height: 48px; border-radius: 14px;
+            background: rgba(var(--primary-rgb), 0.13);
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            color: var(--primary);
+            font-size: 1rem; font-weight: 700; letter-spacing: 0.02em;
+        }
+        .abk-kopf-text { min-width: 0; }
+        .abk-firma {
+            font-size: clamp(1.45rem, 4vw, 1.9rem); font-weight: 700;
+            letter-spacing: -0.028em; line-height: 1.1; margin-top: 3px;
+            overflow-wrap: anywhere;
+        }
+        /* .ab-btn ist im Fragment-Weg ein Leisten-Knopf (`flex: 1 1 0`) und
+           steht WEITER UNTEN im Stylesheet — bei gleicher Spezifitaet gewinnt
+           die spaetere Regel. Deshalb hier zwei Klassen, nicht eine. */
+        .abk-kopf .abk-einladen {
+            margin-left: auto; flex: 0 0 auto;
+            padding: 9px 15px; font-size: 0.85rem;
+        }
+        .abk-kopf .abk-einladen svg { width: 16px; height: 16px; }
+        .abk-kopf .abk-einladen:active { transform: scale(0.97); }
+
+        /* Kennzahlen. Eine Kachel traegt die eigentliche Frage und ist
+           breiter — drei gleiche Spalten waeren die generische Loesung. */
+        .abk-kacheln {
+            display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px;
+            margin-top: 20px;
+        }
+        .abk-kachel {
+            min-width: 0;
+            display: flex; flex-direction: column; gap: 2px;
+            padding: 15px 17px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+        .abk-wert {
+            font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+            font-size: 1.55rem; font-weight: 600; line-height: 1.1;
+            letter-spacing: -0.02em; color: var(--text-main);
+        }
+        .abk-label { font-size: 0.76rem; color: var(--text-faint); line-height: 1.4; }
+        /* Status faerbt nur, wenn es etwas zu sagen gibt — nie Farbe allein,
+           die Beschriftung steht immer daneben. */
+        .abk-kachel.is-auf { border-color: rgba(var(--primary-rgb), 0.32); }
+        .abk-kachel.is-auf .abk-wert { color: var(--primary); }
+        .abk-kachel.is-warn { border-color: rgba(var(--warning-rgb), 0.38); }
+        .abk-kachel.is-warn .abk-wert { color: var(--warning); }
+        .abk-kachel.is-ruhig .abk-wert { color: var(--text-faint); }
+
+        .abk-hinweis {
+            display: flex; gap: 10px; align-items: flex-start;
+            margin-top: 14px; padding: 11px 14px; border-radius: var(--radius-sm);
+            font-size: 0.83rem; line-height: 1.55; color: var(--text-muted);
+            background: var(--bg-raise); border: 1px solid var(--border);
+        }
+        .abk-hinweis svg { width: 16px; height: 16px; flex: 0 0 auto; margin-top: 1px; }
+        .abk-hinweis.is-warn {
+            color: var(--text-main);
+            background: rgba(var(--warning-rgb), 0.09);
+            border-color: rgba(var(--warning-rgb), 0.32);
+        }
+        .abk-hinweis.is-warn svg { color: var(--warning); }
+
+        /* Einladungscode direkt hier — vorher musste man ins Berichtsheft. */
+        .abk-einl {
+            margin-top: 14px; padding: 16px 18px;
+            background: var(--bg-card); border: 1px solid var(--border-strong);
+            border-radius: var(--radius);
+        }
+        .abk-einl-t {
+            font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--text-faint);
+        }
+        .abk-einl-code { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+        .abk-einl-code code {
+            font-family: var(--font-mono); font-size: 1.35rem; font-weight: 600;
+            letter-spacing: 0.08em; color: var(--primary);
+        }
+        .abk-einl-s { margin-top: 10px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; overflow-wrap: anywhere; }
+        .abk-einl-lade { font-size: 0.85rem; color: var(--text-muted); }
+        .abk-kopieren { padding: 6px 12px; font-size: 0.78rem; }
+
+        /* Leerzustand ohne Azubis: ein Anfang, keine Sackgasse. */
+        .abk-start {
+            margin-top: 26px; padding: 30px 26px; text-align: center;
+            background: var(--bg-card); border: 1px dashed var(--border-strong);
+            border-radius: var(--radius);
+        }
+        .abk-start-t { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.015em; }
+        .abk-start-s {
+            max-width: 46ch; margin: 9px auto 18px; font-size: 0.88rem;
+            line-height: 1.65; color: var(--text-muted);
+        }
+        /* Gruen heisst auf dieser Seite „bestaetigen" (.ab-btn-primary). Ein
+           „Code erzeugen" ist keine Bestaetigung — dafuer der Marken-Akzent.
+           Zwei Klassen, weil .ab-btn weiter unten im Stylesheet steht. */
+        .abk-start .abk-cta {
+            flex: 0 0 auto; padding: 11px 20px; font-size: 0.88rem;
+            background: rgba(var(--primary-rgb), 0.14);
+            border-color: rgba(var(--primary-rgb), 0.34);
+            color: var(--primary);
+        }
+        .abk-start .abk-cta:hover { background: rgba(var(--primary-rgb), 0.2); }
+        .abk-start .abk-cta:active { transform: scale(0.97); }
+
+        /* Azubi-Karte */
+        .abk-azubi {
+            margin-top: 22px; padding: 18px 20px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius);
+            animation: abkIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .abk-azubi:nth-of-type(2) { animation-delay: 0.05s; }
+        .abk-azubi:nth-of-type(3) { animation-delay: 0.1s; }
+        .abk-azubi:nth-of-type(n+4) { animation-delay: 0.15s; }
+        @keyframes abkIn { from { opacity: 0; transform: translateY(6px); } }
+
+        .abk-azubi-head {
+            display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+            padding-bottom: 13px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
+        }
+        .abk-avatar {
+            display: grid; place-items: center; flex: 0 0 auto;
+            width: 32px; height: 32px; border-radius: 10px;
+            background: var(--bg-raise); border: 1px solid var(--border-strong);
+            font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+        }
+        .abk-azubi-name { font-size: 1.02rem; font-weight: 650; letter-spacing: -0.012em; }
+        .abk-azubi-meta { font-size: 0.78rem; color: var(--text-faint); }
+        .abk-azubi-stand {
+            margin-left: auto; flex: 0 0 auto;
+            font-size: 0.74rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+            color: var(--text-faint); border: 1px solid var(--border-strong);
+        }
+        .abk-azubi-stand.is-offen {
+            color: var(--primary); border-color: rgba(var(--primary-rgb), 0.32);
+            background: rgba(var(--primary-rgb), 0.1);
+        }
+
+        /* Zusammensetzung der eingereichten Wochen. KEIN Fortschritt gegen
+           eine Gesamtdauer — die steht nirgends, der Nenner waere erfunden. */
+        .abk-bar {
+            display: flex; gap: 2px; height: 6px; margin-bottom: 10px;
+            border-radius: 3px; overflow: hidden; background: var(--bg-raise);
+        }
+        /* Farbrollen — gelten gleich im Balken, in der Legende und in den
+           Wochen-Pillen darunter: gruen = abgezeichnet, gelb = liegt beim
+           Azubi, rot = eine abgezeichnete Woche wurde nachtraeglich
+           geaendert (der eigentliche Alarm), blass-lila = noch keine
+           Entscheidung. */
+        .abk-seg { display: block; height: 100%; border-radius: 2px; }
+        .abk-seg.is-ok { background: var(--success); }
+        .abk-seg.is-zurueck { background: var(--warning); }
+        .abk-seg.is-warn { background: var(--danger); }
+        .abk-seg.is-offen { background: rgba(var(--primary-rgb), 0.55); }
+        .abk-legende { display: flex; flex-wrap: wrap; gap: 6px 15px; margin-bottom: 16px; }
+        .abk-leg {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.76rem; color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        .abk-leg i { width: 7px; height: 7px; border-radius: 2px; flex: 0 0 auto; }
+        .abk-leg i.is-ok { background: var(--success); }
+        .abk-leg i.is-zurueck { background: var(--warning); }
+        .abk-leg i.is-warn { background: var(--danger); }
+        .abk-leg i.is-offen { background: rgba(var(--primary-rgb), 0.55); }
+
+        /* Passend dazu die Pille der geaenderten Woche — sie trug bisher
+           dieselbe Farbe wie eine Rueckgabe, obwohl es der staerkere Befund ist. */
+        .ab-wk-state.s-alarm { color: var(--danger); background: rgba(var(--danger-rgb), 0.14); }
+
+        .abk-leer { font-size: 0.86rem; color: var(--text-muted); line-height: 1.65; }
         .abk-hint { margin-top: 12px; font-size: 0.83rem; color: var(--text-faint); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .abk-azubi { animation: none; }
+        }
+        @media (max-width: 640px) {
+            .abk-kacheln { grid-template-columns: 1fr 1fr; }
+            .abk-kacheln .abk-kachel:first-child { grid-column: 1 / -1; }
+            .abk-kopf .abk-einladen { margin-left: 0; flex: 1 1 auto; }
+            .abk-azubi { padding: 15px 14px; }
+        }
         .abk-hinweis {
             margin-top: 14px; padding: 10px 13px; border-radius: var(--radius-sm);
             font-size: 0.83rem; line-height: 1.55; color: var(--text-muted);
@@ -528,13 +718,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.7.4"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.7.4"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.7.5"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.7.5"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.4"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.5"></script>
 
     <script>
     (function () {
@@ -1043,9 +1233,9 @@
                 : f && f.entscheidung === 'approved' ? 'approved'
                 : f && f.entscheidung === 'rejected' ? 'rejected' : 'open';
             var stL = st === 'geaendert'
-                ? ['s-no', abL('Nach der Freigabe geändert', 'Changed after approval')]
+                ? ['s-alarm', abL('Nach der Freigabe geändert', 'Changed after approval')]
                 : stateLabel(st === 'open' ? '' : st);
-            var randKlasse = st === 'geaendert' ? ' is-rejected' : (st !== 'open' ? ' is-' + st : '');
+            var randKlasse = st === 'geaendert' ? ' is-geaendert' : (st !== 'open' ? ' is-' + st : '');
             var chev = '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
             var fuss;
@@ -1113,66 +1303,205 @@
                 '</div></div></div>';
         }
 
-        function renderKonto() {
-            var d = kontoDaten;
-            var offenGesamt = 0;
-            var aeltesteOffen = null;
-            d.azubis.forEach(function (a) {
-                a.berichte.forEach(function (b) {
-                    if (!istOffen(b)) return;
-                    offenGesamt++;
-                    if (b.datum_bis && (!aeltesteOffen || b.datum_bis < aeltesteOffen)) aeltesteOffen = b.datum_bis;
-                });
+        // Aus einer Person ein Monogramm: erste Buchstaben von Vor- und Nachname.
+        function monogramm(name) {
+            var teile = String(name || '').trim().split(/\s+/).filter(Boolean);
+            if (!teile.length) return '?';
+            if (teile.length === 1) return teile[0].slice(0, 2).toUpperCase();
+            return (teile[0][0] + teile[teile.length - 1][0]).toUpperCase();
+        }
+
+        // Alle Zahlen EINMAL ableiten — sonst rechnet jede Stelle ein bisschen
+        // anders und die Kacheln widersprechen den Karten darunter.
+        function zahlenFuer(berichte) {
+            var z = { eingereicht: 0, offen: 0, abgezeichnet: 0, zurueck: 0, geaendert: 0, inArbeit: 0,
+                      lehrjahr: 0, zuletzt: null, aeltesteOffen: null };
+            berichte.forEach(function (b) {
+                if (b.jahr > z.lehrjahr) z.lehrjahr = b.jahr;
+                if (b.datum_bis && (!z.zuletzt || b.datum_bis > z.zuletzt)) z.zuletzt = b.datum_bis;
+                if (b.status === 'incomplete') { z.inArbeit++; return; }
+                z.eingereicht++;
+                if (b.veraendert) z.geaendert++;
+                else if (b.freigabe && b.freigabe.entscheidung === 'approved') z.abgezeichnet++;
+                else if (b.freigabe && b.freigabe.entscheidung === 'rejected') z.zurueck++;
+                if (istOffen(b)) {
+                    z.offen++;
+                    if (b.datum_bis && (!z.aeltesteOffen || b.datum_bis < z.aeltesteOffen)) z.aeltesteOffen = b.datum_bis;
+                }
             });
-            // §14 Abs. 1 Nr. 4 BBiG: mindestens monatliche Pruefung. Ab ~5 Wochen
-            // ist die aelteste offene Woche sicher ueberfaellig.
-            var ueberfaellig = aeltesteOffen &&
-                (Date.now() - new Date(aeltesteOffen + 'T12:00:00').getTime()) > 35 * 864e5;
+            // 🔴 `offen` UEBERSCHNEIDET sich mit `geaendert` (eine nachtraeglich
+            // geaenderte Woche braucht wieder eine Entscheidung). Als Zaehler ist
+            // das richtig, fuer den Balken nicht: dort muss jede Woche in GENAU
+            // einem Segment liegen, sonst summiert er ueber 100 %.
+            z.unentschieden = z.eingereicht - z.abgezeichnet - z.geaendert - z.zurueck;
+            return z;
+        }
 
-            var hinweis = '';
-            if (offenGesamt && ueberfaellig) {
-                hinweis = '<div class="abk-hinweis is-warn">' + abL(
-                    'Die älteste unbearbeitete Woche ist vom ' + fmtDate(aeltesteOffen) +
-                    ' und damit über einen Monat alt. Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen.',
-                    'The oldest unreviewed week is from ' + fmtDate(aeltesteOffen) +
-                    ', more than a month ago. Under §14 BBiG training records must be reviewed at least monthly.') + '</div>';
-            } else if (offenGesamt) {
-                hinweis = '<div class="abk-hinweis">' + abL(
-                    'Ausbildungsnachweise sollten nach §14 BBiG mindestens monatlich geprüft werden.',
-                    'Training records should be reviewed at least monthly under §14 BBiG.') + '</div>';
-            }
+        // Zusammensetzung der EINGEREICHTEN Wochen. Bewusst kein Fortschritt
+        // gegen eine Gesamtdauer: die Vertragslaufzeit steht nirgends, ein
+        // Nenner waere hier erfunden.
+        function anteilsBalken(z) {
+            if (!z.eingereicht) return '';
+            var p = function (n) { return (n / z.eingereicht * 100).toFixed(2) + '%'; };
+            var seg = '';
+            if (z.abgezeichnet) seg += '<span class="abk-seg is-ok" style="width:' + p(z.abgezeichnet) + '"></span>';
+            if (z.geaendert) seg += '<span class="abk-seg is-warn" style="width:' + p(z.geaendert) + '"></span>';
+            if (z.zurueck) seg += '<span class="abk-seg is-zurueck" style="width:' + p(z.zurueck) + '"></span>';
+            if (z.unentschieden) seg += '<span class="abk-seg is-offen" style="width:' + p(z.unentschieden) + '"></span>';
+            // Reihenfolge der Legende = Reihenfolge der Segmente. Sonst sucht
+            // man beim Lesen jedes Mal, welche Farbe wo im Balken liegt.
+            var teile = [];
+            if (z.abgezeichnet) teile.push('<span class="abk-leg"><i class="is-ok"></i>' +
+                z.abgezeichnet + ' ' + abL('abgezeichnet', 'signed off') + '</span>');
+            if (z.geaendert) teile.push('<span class="abk-leg"><i class="is-warn"></i>' +
+                z.geaendert + ' ' + abL('nachträglich geändert', 'changed later') + '</span>');
+            if (z.zurueck) teile.push('<span class="abk-leg"><i class="is-zurueck"></i>' +
+                z.zurueck + ' ' + abL('zurückgegeben', 'sent back') + '</span>');
+            if (z.unentschieden) teile.push('<span class="abk-leg"><i class="is-offen"></i>' +
+                z.unentschieden + ' ' + abL('offen', 'open') + '</span>');
+            return '<div class="abk-bar" role="img" aria-label="' +
+                esc(z.eingereicht + ' ' + abL('eingereichte Wochen', 'submitted weeks')) + '">' + seg + '</div>' +
+                '<div class="abk-legende">' + teile.join('') + '</div>';
+        }
 
-            var kopf = '<div class="abk-head">' +
-                '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') + '</p>' +
-                '<h1 class="ab-title">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
-                '<p class="ab-lead">' + (offenGesamt
-                    ? abL(offenGesamt + (offenGesamt === 1 ? ' Woche wartet' : ' Wochen warten') + ' auf Ihre Freigabe.',
-                          offenGesamt + (offenGesamt === 1 ? ' week is' : ' weeks are') + ' waiting for your approval.')
-                    : abL('Alle eingereichten Wochen sind abgezeichnet.', 'All submitted weeks are signed off.')) +
-                '</p>' + hinweis + '</div>';
+        function kachel(wert, label, ton) {
+            return '<div class="abk-kachel' + (ton ? ' is-' + ton : '') + '">' +
+                '<span class="abk-wert">' + wert + '</span>' +
+                '<span class="abk-label">' + label + '</span></div>';
+        }
+
+        function azubiKarte(az) {
+            var z = zahlenFuer(az.berichte);
+            var name = az.name || abL('Azubi ohne Namen', 'Apprentice, no name');
+
+            var meta = [];
+            if (z.lehrjahr) meta.push(z.lehrjahr + abL('. Lehrjahr', ' year'));
+            if (z.zuletzt) meta.push(abL('zuletzt ', 'last ') + fmtDate(z.zuletzt));
+            if (z.inArbeit) meta.push(z.inArbeit + abL(' in Arbeit', ' in progress'));
 
             var koerper;
-            if (!d.azubis.length) {
-                koerper = '<p class="abk-empty">' + abL(
-                    'Noch keine Azubis. Ihre Azubis treten mit einem Einladungscode bei — den erzeugen Sie im Berichtsheft unter „Betrieb & IHK".',
-                    'No apprentices yet. They join with an invite code, which you create in the report book under "Company & chamber".') + '</p>';
+            if (!az.berichte.length) {
+                koerper = '<p class="abk-leer">' + abL(
+                    'Noch keine Woche eingereicht. Sobald ' + name + ' im Berichtsheft eine Woche abschließt, erscheint sie hier zum Abzeichnen.',
+                    'No week submitted yet. As soon as ' + name + ' completes a week in the report book, it shows up here for signing.') + '</p>';
             } else {
-                koerper = d.azubis.map(function (az) {
-                    var offen = az.berichte.filter(istOffen).length;
-                    var karten = az.berichte.length
-                        ? az.berichte.map(kontoKarte).join('')
-                        : '<p class="abk-empty">' + abL('Noch keine Berichte eingereicht.', 'No reports submitted yet.') + '</p>';
-                    return '<section class="abk-azubi">' +
-                        '<div class="abk-azubi-head">' +
-                        '<span class="abk-azubi-name">' + esc(az.name || abL('Azubi ohne Namen', 'Apprentice, no name')) + '</span>' +
-                        '<span class="abk-azubi-count">' + (offen
-                            ? abL(offen + ' offen', offen + ' open')
-                            : abL('nichts offen', 'nothing open')) + '</span>' +
-                        '</div>' + karten + '</section>';
-                }).join('');
+                koerper = anteilsBalken(z) +
+                    '<div class="abk-wochen">' + az.berichte.map(kontoKarte).join('') + '</div>';
+            }
+
+            return '<section class="abk-azubi">' +
+                '<header class="abk-azubi-head">' +
+                '<span class="abk-avatar" aria-hidden="true">' + esc(monogramm(name)) + '</span>' +
+                '<span class="abk-azubi-name">' + esc(name) + '</span>' +
+                (meta.length ? '<span class="abk-azubi-meta">' + esc(meta.join(' · ')) + '</span>' : '') +
+                '<span class="abk-azubi-stand' + (z.offen ? ' is-offen' : '') + '">' + (z.offen
+                    ? abL(z.offen + ' offen', z.offen + ' open')
+                    : abL('nichts offen', 'nothing open')) + '</span>' +
+                '</header>' + koerper + '</section>';
+        }
+
+        function renderKonto() {
+            var d = kontoDaten;
+            var alle = [];
+            d.azubis.forEach(function (a) { alle = alle.concat(a.berichte); });
+            var g = zahlenFuer(alle);
+
+            // §14 Abs. 1 Nr. 4 BBiG: mindestens monatliche Pruefung. Ab ~5 Wochen
+            // ist die aelteste offene Woche sicher ueberfaellig.
+            var ueberfaellig = g.aeltesteOffen &&
+                (Date.now() - new Date(g.aeltesteOffen + 'T12:00:00').getTime()) > 35 * 864e5;
+
+            var hinweis = '';
+            if (g.offen && ueberfaellig) {
+                hinweis = '<div class="abk-hinweis is-warn">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>' +
+                    '<span>' + abL(
+                    'Die älteste unbearbeitete Woche ist vom ' + fmtDate(g.aeltesteOffen) +
+                    ' und damit über einen Monat alt. Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen.',
+                    'The oldest unreviewed week is from ' + fmtDate(g.aeltesteOffen) +
+                    ', more than a month ago. Under §14 BBiG training records must be reviewed at least monthly.') + '</span></div>';
+            } else if (g.offen) {
+                hinweis = '<div class="abk-hinweis"><span>' + abL(
+                    'Ausbildungsnachweise sollten nach §14 BBiG mindestens monatlich geprüft werden.',
+                    'Training records should be reviewed at least monthly under §14 BBiG.') + '</span></div>';
+            }
+
+            var n = d.azubis.length;
+            var kopf = '<header class="abk-kopf">' +
+                '<span class="abk-firma-mono" aria-hidden="true">' + esc(monogramm(d.betrieb)) + '</span>' +
+                '<div class="abk-kopf-text">' +
+                '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') + '</p>' +
+                '<h1 class="abk-firma">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
+                '</div>' +
+                '<button type="button" class="ab-btn ab-btn-ghost abk-einladen" onclick="abkEinladen()">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
+                '<span>' + abL('Azubi einladen', 'Invite apprentice') + '</span></button>' +
+                '</header>' +
+                '<div class="abk-kacheln">' +
+                kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
+                                             : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
+                       g.offen ? (ueberfaellig ? 'warn' : 'auf') : 'ruhig') +
+                kachel(n, n === 1 ? abL('Azubi', 'apprentice') : abL('Azubis', 'apprentices')) +
+                kachel(g.abgezeichnet, abL('abgezeichnet', 'signed off')) +
+                '</div>' + hinweis +
+                '<div id="abkEinladung"></div>';
+
+            var koerper;
+            if (!n) {
+                koerper = '<section class="abk-start">' +
+                    '<h2 class="abk-start-t">' + abL('Noch keine Azubis verbunden', 'No apprentices connected yet') + '</h2>' +
+                    '<p class="abk-start-s">' + abL(
+                        'Erzeugen Sie einen Einladungscode und geben Sie ihn Ihrem Azubi. Er trägt ihn im Berichtsheft unter „Betrieb & IHK" ein — danach erscheinen seine Wochen hier.',
+                        'Create an invite code and pass it to your apprentice. They enter it in the report book under “Company & chamber” — after that their weeks show up here.') + '</p>' +
+                    '<button type="button" class="ab-btn abk-cta" onclick="abkEinladen()">' +
+                    '<span>' + abL('Einladungscode erzeugen', 'Create invite code') + '</span></button>' +
+                    '</section>';
+            } else {
+                koerper = d.azubis.map(azubiKarte).join('');
             }
             $('abKonto').innerHTML = kopf + koerper;
         }
+
+        // ── Einladen (bisher nur im Berichtsheft moeglich) ───────────
+        var einladungOffen = false;
+
+        window.abkEinladen = async function () {
+            var box = $('abkEinladung');
+            if (!box) return;
+            if (einladungOffen) { box.innerHTML = ''; einladungOffen = false; return; }
+            einladungOffen = true;
+            box.innerHTML = '<div class="abk-einl"><p class="abk-einl-lade">' +
+                abL('Code wird erzeugt …', 'Creating code …') + '</p></div>';
+            var code;
+            try { code = await BHB2B.einladungErstellen(14); }
+            catch (e) {
+                box.innerHTML = '<div class="abk-einl"><p class="abk-einl-lade" style="color:var(--danger)">' +
+                    esc((e && e.message) || abL('Code konnte nicht erzeugt werden.', 'Could not create a code.')) + '</p></div>';
+                return;
+            }
+            var link = location.origin + abL('/berichtsheft/', '/en/berichtsheft/');
+            box.innerHTML = '<div class="abk-einl">' +
+                '<p class="abk-einl-t">' + abL('Einladungscode', 'Invite code') + '</p>' +
+                '<div class="abk-einl-code"><code>' + esc(code) + '</code>' +
+                '<button type="button" class="ab-btn ab-btn-ghost abk-kopieren" onclick="abkCodeKopieren(\'' + esc(code) + '\')">' +
+                '<span>' + abL('Kopieren', 'Copy') + '</span></button></div>' +
+                '<p class="abk-einl-s">' + abL(
+                    'Gültig 14 Tage, einmal einlösbar. Ihr Azubi öffnet ' + link +
+                    ' und trägt den Code unter „Betrieb & IHK" ein.',
+                    'Valid for 14 days, single use. Your apprentice opens ' + link +
+                    ' and enters the code under “Company & chamber”.') + '</p>' +
+                '</div>';
+            var c = box.querySelector('.abk-einl');
+            if (c) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        };
+
+        window.abkCodeKopieren = async function (code) {
+            try {
+                await navigator.clipboard.writeText(code);
+                var b = document.querySelector('.abk-kopieren span');
+                if (b) { b.textContent = abL('Kopiert', 'Copied'); setTimeout(function () { b.textContent = abL('Kopieren', 'Copy'); }, 1800); }
+            } catch (e) { /* dann eben von Hand */ }
+        };
 
         function kontoBusy(card, on) {
             card.querySelectorAll('button').forEach(function (b) { b.disabled = on; });
@@ -1246,6 +1575,9 @@
         async function bootKonto() {
             show('abIntro', false);
             show('abKonto', true);
+            // Die 680px sind eine LESEBREITE fuer den einzelnen Nachweis. Das
+            // Konto-Cockpit ist eine Uebersicht und braucht mehr.
+            document.querySelector('.ab-wrap').classList.add('is-konto');
             $('abHeadNote').textContent = abL('Betrieb', 'Company');
             $('abKonto').innerHTML = '<p class="abk-load">' + abL('Wird geladen …', 'Loading …') + '</p>';
 
