@@ -408,7 +408,7 @@
     }
 
     // === ICE CONFIG (shared) ===
-    // 🔴 Jeder Eintrag hier kostet Wartezeit: mit trickle:false gibt SimplePeer den
+    //  Jeder Eintrag hier kostet Wartezeit: mit trickle:false gibt SimplePeer den
     // Code ERST raus, wenn das ICE-Gathering über ALLE Server durch ist. Ein Ziel,
     // das nicht antwortet, blockiert den kompletten Handshake.
     // Gemessen (Chrome, gathering bis 'complete'):
@@ -519,7 +519,7 @@
     }
 
     async function p2pTestTURN() {
-        console.log('🧪 TURN Server Test gestartet...');
+        console.log(' TURN Server Test gestartet...');
         p2pLog('Teste Relay-Server …');
         const config = p2pGetIceConfig();
         const pc = new RTCPeerConnection(config);
@@ -532,7 +532,7 @@
             const timeout = setTimeout(() => {
                 pc.close();
                 const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
-                console.log('🧪 TURN Test Ergebnis:', result);
+                console.log(' TURN Test Ergebnis:', result);
                 p2pLog(result.working
                     ? `Relay OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} lokal`
                     : `Kein Relay: ${candidates.srflx} STUN, ${candidates.host} lokal`);
@@ -545,13 +545,13 @@
                     if (c.includes('typ relay')) { candidates.relay++; relayDetails.push(c); }
                     else if (c.includes('typ srflx')) candidates.srflx++;
                     else if (c.includes('typ host')) candidates.host++;
-                    console.log(`🧊 [TEST] ${c.includes('typ relay') ? '🔄 RELAY' : c.includes('typ srflx') ? '📡 STUN' : '🏠 HOST'}: ${c.substring(0, 80)}...`);
+                    console.log(` [TEST] ${c.includes('typ relay') ? ' RELAY' : c.includes('typ srflx') ? ' STUN' : ' HOST'}: ${c.substring(0, 80)}...`);
                 }
                 if (!event.candidate) {
                     clearTimeout(timeout);
                     pc.close();
                     const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
-                    console.log('🧪 TURN Test Ergebnis:', result);
+                    console.log(' TURN Test Ergebnis:', result);
                     p2pLog(result.working
                         ? `Relay OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} lokal`
                         : `Kein Relay: ${candidates.srflx} STUN, ${candidates.host} lokal`);
@@ -565,7 +565,7 @@
             } catch (e) {
                 clearTimeout(timeout);
                 pc.close();
-                console.error('🧪 TURN Test Error:', e);
+                console.error(' TURN Test Error:', e);
                 p2pLog('Relay-Test fehlgeschlagen: ' + e.message);
                 resolve({ ...candidates, working: false, error: e.message });
             }
@@ -692,7 +692,7 @@
             return;
         }
 
-        console.log('🏗️ P2P Host: Erstelle Offer mit trickle:false...');
+        console.log('️ P2P Host: Erstelle Offer mit trickle:false...');
 
         const peer = new SimplePeer({
             initiator: true,
@@ -707,8 +707,8 @@
             if (p2pSync.offerGenerated) return;
             p2pSync.offerGenerated = true;
 
-            console.log(`📡 Host: Offer nach ${secs}s (${viaTimeout ? 'Timeout-Pfad' : 'Gathering komplett'})`);
-            console.log(`🧊 ICE: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
+            console.log(` Host: Offer nach ${secs}s (${viaTimeout ? 'Timeout-Pfad' : 'Gathering komplett'})`);
+            console.log(` ICE: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
             p2pSync.iceDiag = sdpDiag;
 
             if (!sdpDiag.total) {
@@ -737,7 +737,7 @@
                 };
                 if (ownPub) payload.k = ownPub;
                 const compressed = await p2pCompress(payload);
-                console.log(`📦 Offer komprimiert: ${JSON.stringify(signalData).length} → ${compressed.length} Zeichen`);
+                console.log(` Offer komprimiert: ${JSON.stringify(signalData).length} → ${compressed.length} Zeichen`);
 
                 document.getElementById('p2pHostSpinner').style.display = 'none';
                 document.getElementById('p2pHostReady').style.display = '';
@@ -745,7 +745,7 @@
                 document.getElementById('p2pOfferCode').value = compressed;
                 p2pSetIceSummary('p2pHostIceSummary', sdpDiag);
             } catch (e) {
-                console.error('❌ Offer-Kompression fehlgeschlagen:', e);
+                console.error(' Offer-Kompression fehlgeschlagen:', e);
                 showCustomMessage('Code fehlgeschlagen', 'Der Einladungscode konnte nicht erstellt werden: ' + e.message, 'error');
             }
         });
@@ -792,7 +792,7 @@
 
         try {
             const offerPayload = await p2pDecompress(input);
-            console.log('📥 Client: Offer dekomprimiert. Version:', offerPayload.v, 'Type:', offerPayload.t);
+            console.log(' Client: Offer dekomprimiert. Version:', offerPayload.v, 'Type:', offerPayload.t);
 
             if (!offerPayload || !offerPayload.s || offerPayload.t !== 'offer') {
                 throw new Error('Ungültiger Einladungscode (kein offer)');
@@ -833,8 +833,8 @@
                 if (p2pSync.answerGenerated) return;
                 p2pSync.answerGenerated = true;
 
-                console.log(`📡 Client: Answer nach ${secs}s (${viaTimeout ? 'Timeout-Pfad' : 'Gathering komplett'})`);
-                console.log(`🧊 ICE: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
+                console.log(` Client: Answer nach ${secs}s (${viaTimeout ? 'Timeout-Pfad' : 'Gathering komplett'})`);
+                console.log(` ICE: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
                 p2pSync.iceDiag = sdpDiag;
 
                 if (gatherBox) gatherBox.style.display = 'none';
@@ -863,7 +863,7 @@
                     // sonst glaubt der Host an einen Schluessel, den es nicht gibt.
                     if (ownPub && p2pSync.crypto.active) payload.k = ownPub;
                     const compressed = await p2pCompress(payload);
-                    console.log(`📦 Answer komprimiert: ${compressed.length} Zeichen`);
+                    console.log(` Answer komprimiert: ${compressed.length} Zeichen`);
 
                     // Show answer code
                     document.getElementById('p2pAnswerCodeBox').style.display = '';
@@ -871,7 +871,7 @@
                     p2pSetIceSummary('p2pClientIceSummary', sdpDiag);
                     btn.textContent = 'Antwort-Code erzeugt';
                 } catch (e) {
-                    console.error('❌ Answer-Kompression fehlgeschlagen:', e);
+                    console.error(' Answer-Kompression fehlgeschlagen:', e);
                     showCustomMessage('Code fehlgeschlagen', 'Der Antwort-Code konnte nicht erstellt werden.', 'error');
                 }
             });
@@ -879,7 +879,7 @@
             p2pSync.peer = peer;
 
             // Signal the offer to our peer NACH setup (this triggers answer generation)
-            console.log('📡 Client: Signalisiere Offer an Peer...');
+            console.log(' Client: Signalisiere Offer an Peer...');
             peer.signal(offerPayload.s);
 
             const devInfo = document.getElementById('p2pDeviceInfo');
@@ -889,7 +889,7 @@
             }
 
         } catch (e) {
-            console.error('❌ Offer-Verarbeitung fehlgeschlagen:', e);
+            console.error(' Offer-Verarbeitung fehlgeschlagen:', e);
             showCustomMessage('Code ungültig', 'Der Einladungscode konnte nicht gelesen werden: ' + e.message, 'error');
             btn.textContent = 'Code verarbeiten';
             btn.disabled = false;
@@ -911,7 +911,7 @@
 
         try {
             const answerPayload = await p2pDecompress(input);
-            console.log('📥 Host: Answer dekomprimiert. Version:', answerPayload.v, 'Type:', answerPayload.t);
+            console.log(' Host: Answer dekomprimiert. Version:', answerPayload.v, 'Type:', answerPayload.t);
 
             if (!answerPayload || !answerPayload.s || answerPayload.t !== 'answer') {
                 throw new Error('Ungültiger Antwort-Code (kein answer)');
@@ -928,9 +928,9 @@
             // Check RTCPeerConnection state
             const pc = p2pSync.peer._pc;
             if (pc) {
-                console.log('📊 Host RTCPeerConnection State:', pc.signalingState, '| ICE:', pc.iceConnectionState);
+                console.log(' Host RTCPeerConnection State:', pc.signalingState, '| ICE:', pc.iceConnectionState);
                 if (pc.signalingState !== 'have-local-offer') {
-                    console.error('❌ Falsche Signaling-State:', pc.signalingState, '(erwartet: have-local-offer)');
+                    console.error(' Falsche Signaling-State:', pc.signalingState, '(erwartet: have-local-offer)');
                     throw new Error('Verbindung ist in falschem Zustand (' + pc.signalingState + '). Bitte klicke "Daten senden" erneut und generiere einen neuen Code.');
                 }
             }
@@ -980,12 +980,12 @@
             p2pRenderCryptoState();
 
             // Signal the answer to our peer (this completes the handshake!)
-            console.log('📡 Host: Signalisiere Answer an Peer...');
+            console.log(' Host: Signalisiere Answer an Peer...');
             p2pSync.peer.signal(answerPayload.s);
-            console.log('✅ Host: Answer signalisiert. Warte auf connect...');
+            console.log(' Host: Answer signalisiert. Warte auf connect...');
 
         } catch (e) {
-            console.error('❌ Answer-Verarbeitung fehlgeschlagen:', e);
+            console.error(' Answer-Verarbeitung fehlgeschlagen:', e);
             showCustomMessage('Verbindung fehlgeschlagen', e.message, 'error');
             p2pSync.answerApplied = false; // allow retry
         }
@@ -998,27 +998,27 @@
             const pc = peer._pc;
             if (pc) {
                 pc.addEventListener('iceconnectionstatechange', () => {
-                    console.log(`🧊 ICE Connection: ${pc.iceConnectionState}`);
+                    console.log(` ICE Connection: ${pc.iceConnectionState}`);
                     p2pLog('Netzwerk: ' + p2pIceLabel(pc.iceConnectionState));
                 });
                 pc.addEventListener('icegatheringstatechange', () => {
-                    console.log(`🧊 ICE Gathering: ${pc.iceGatheringState}`);
+                    console.log(` ICE Gathering: ${pc.iceGatheringState}`);
                 });
                 pc.addEventListener('connectionstatechange', () => {
-                    console.log(`🧊 Connection State: ${pc.connectionState}`);
+                    console.log(` Connection State: ${pc.connectionState}`);
                 });
                 pc.addEventListener('icecandidate', (event) => {
                     if (event.candidate) {
                         const c = event.candidate.candidate;
-                        const type = c.includes('typ relay') ? '🔄 RELAY' : c.includes('typ srflx') ? '📡 STUN' : '🏠 HOST';
-                        console.log(`🧊 ICE Candidate: ${type} | ${c.substring(0, 100)}`);
+                        const type = c.includes('typ relay') ? ' RELAY' : c.includes('typ srflx') ? ' STUN' : ' HOST';
+                        console.log(` ICE Candidate: ${type} | ${c.substring(0, 100)}`);
                     }
                 });
             }
         } catch(e) { console.warn('ICE Diagnostik konnte nicht initialisiert werden:', e); }
 
         peer.on('connect', () => {
-            console.log('✅ P2P VERBUNDEN! Rolle:', p2pSync.role);
+            console.log(' P2P VERBUNDEN! Rolle:', p2pSync.role);
             p2pSync.connected = true;
             p2pSync.syncStats = { sent: 0, received: 0, merged: 0 };
 
@@ -1076,12 +1076,12 @@
 
                 p2pHandleMessage(wire);
             }).catch(e => {
-                console.error('❌ P2P Message Error:', e);
+                console.error(' P2P Message Error:', e);
             });
         });
 
         peer.on('error', (err) => {
-            console.error('❌ P2P Peer Error:', err);
+            console.error(' P2P Peer Error:', err);
             p2pLog('Fehler: ' + err.message);
             // Clear connecting animation
             if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
@@ -1106,18 +1106,18 @@
 
                 if (diag.host === 0) {
                     msgText = 'Dein Gerät versteckt sich im lokalen Netzwerk. Die Geräte können sich daher nicht sehen, obwohl sie im selben WLAN sind!\n\n' +
-                        '👉 Nutzt du NordVPN? Gehe dort in die Einstellungen und schalte "Zugriff auf lokales Netzwerk zulassen" EIN (oder "Unsichtbarkeit im LAN" aus).\n' +
-                        '👉 Nutzt du AdGuard (Stealth Mode) oder uBlock Origin? Schalte dort zwingend "WebRTC blockieren" für diese Seite AUS.\n\n' +
+                        ' Nutzt du NordVPN? Gehe dort in die Einstellungen und schalte "Zugriff auf lokales Netzwerk zulassen" EIN (oder "Unsichtbarkeit im LAN" aus).\n' +
+                        ' Nutzt du AdGuard (Stealth Mode) oder uBlock Origin? Schalte dort zwingend "WebRTC blockieren" für diese Seite AUS.\n\n' +
                         'Sobald dein Browser sein Heimnetzwerk wieder sehen darf, klappt die Verbindung sofort.';
                 }
 
                 showCustomMessage('Verbindung fehlgeschlagen', msgText + diagText, 'error');
-                console.error('🔍 P2P Diagnostik:', diag);
+                console.error(' P2P Diagnostik:', diag);
             }
         });
 
         peer.on('close', () => {
-            console.log('🔴 P2P Verbindung geschlossen');
+            console.log(' P2P Verbindung geschlossen');
             p2pSync.connected = false;
             p2pCryptoReset();
             p2pRenderCryptoState();
@@ -1269,7 +1269,7 @@
                 break;
 
             case 'sync-handshake':
-                console.log('🤝 Sync-Handshake empfangen:', msg);
+                console.log(' Sync-Handshake empfangen:', msg);
                 p2pLog(`Gegenstelle "${msg.deviceName}" meldet ${msg.entryCount} Einträge`);
                 p2pReceivedChunks = [];
                 p2pExpectedChunks = 0;
@@ -1277,7 +1277,7 @@
                 break;
 
             case 'sync-chunk':
-                console.log(`📦 Chunk ${msg.chunkIndex + 1}/${msg.totalChunks} empfangen (${msg.entries.length} Einträge)`);
+                console.log(` Chunk ${msg.chunkIndex + 1}/${msg.totalChunks} empfangen (${msg.entries.length} Einträge)`);
                 p2pReceivedChunks.push(...msg.entries);
                 p2pExpectedChunks = msg.totalChunks;
                 p2pSync.syncStats.received += msg.entries.length;
@@ -1289,7 +1289,7 @@
                 break;
 
             case 'sync-complete':
-                console.log('✅ Sync-Complete empfangen. Merging', p2pReceivedChunks.length, 'Einträge...');
+                console.log(' Sync-Complete empfangen. Merging', p2pReceivedChunks.length, 'Einträge...');
                 p2pUpdateProgress(85, 'Merge läuft...');
                 p2pLog('Führe Einträge zusammen …');
 
@@ -1324,7 +1324,7 @@
                 break;
 
             case 'sync-ack':
-                console.log('✅ Sync-ACK empfangen:', msg);
+                console.log(' Sync-ACK empfangen:', msg);
                 p2pUpdateProgress(100, 'Bestätigt!');
                 p2pLog(`Gegenstelle bestätigt: ${msg.received} empfangen, ${msg.merged} übernommen`);
                 p2pSync.lastSyncTime = Date.now();
@@ -1385,7 +1385,7 @@
         });
 
         save();
-        console.log(`✅ Smart-Merge: ${newCount} neu, ${updatedCount} aktualisiert, ${skippedCount} übersprungen`);
+        console.log(` Smart-Merge: ${newCount} neu, ${updatedCount} aktualisiert, ${skippedCount} übersprungen`);
         return { new: newCount, updated: updatedCount, skipped: skippedCount };
     }
 
