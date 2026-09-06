@@ -1096,16 +1096,22 @@
             if (err.message === 'Connection failed.' || err.code === 'ERR_ICE_CONNECTION_FAILURE') {
                 const diag = p2pSync.iceDiag || { host: '?', srflx: '?', relay: '?' };
                 const hasRelay = diag.relay > 0;
-                const diagText = `\n\nNetzwerkwege: ${diag.host} lokal, ${diag.srflx} über STUN, ${diag.relay} über Relay`;
-                const turnHint = hasRelay
-                    ? '\n• Ein Relay war verfügbar, die Gegenstelle blieb aber unerreichbar'
-                    : '\n• Kein Relay verfügbar — dann klappt es nur im selben Netzwerk';
-
-                showCustomMessage('Verbindung fehlgeschlagen',
-                    'Die direkte Verbindung kam nicht zustande.' + turnHint + '\n' +
+                const diagText = `\n\n(Diagnose: ${diag.host} lokal, ${diag.srflx} öffentlich, ${diag.relay} Relay)`;
+                
+                let msgText = 'Die direkte Verbindung kam nicht zustande.\n' +
+                    (hasRelay ? '• Ein Relay war verfügbar, die Gegenstelle blieb aber unerreichbar\n' : '• Kein Relay verfügbar — dann klappt es nur im selben Netzwerk\n') +
                     '• Firewall oder striktes NAT blockiert den Aufbau\n' +
                     '• VPN aktiv? Dann ausschalten und neu versuchen\n' +
-                    '• Beide Geräte im selben WLAN? Dann sollte es direkt gehen' + diagText, 'error');
+                    '• Beide Geräte im selben WLAN? Dann sollte es direkt gehen';
+
+                if (diag.host === 0) {
+                    msgText = 'Dein Gerät versteckt sich im lokalen Netzwerk. Die Geräte können sich daher nicht sehen, obwohl sie im selben WLAN sind!\n\n' +
+                        '👉 Nutzt du NordVPN? Gehe dort in die Einstellungen und schalte "Zugriff auf lokales Netzwerk zulassen" EIN (oder "Unsichtbarkeit im LAN" aus).\n' +
+                        '👉 Nutzt du AdGuard (Stealth Mode) oder uBlock Origin? Schalte dort zwingend "WebRTC blockieren" für diese Seite AUS.\n\n' +
+                        'Sobald dein Browser sein Heimnetzwerk wieder sehen darf, klappt die Verbindung sofort.';
+                }
+
+                showCustomMessage('Verbindung fehlgeschlagen', msgText + diagText, 'error');
                 console.error('🔍 P2P Diagnostik:', diag);
             }
         });
