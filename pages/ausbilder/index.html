@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.7"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.7.7"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.8"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.7.8"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -242,6 +242,30 @@
             font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em;
         }
         .abk-ungeprueft { margin-top: 5px; font-size: 0.75rem; color: var(--text-faint); line-height: 1.5; }
+        .abk-domok {
+            display: inline-flex; align-items: center; gap: 5px; margin-top: 5px;
+            font-size: 0.75rem; color: var(--success); font-weight: 600;
+        }
+        .abk-domok svg { width: 13px; height: 13px; }
+        .abk-kopf .abk-domain-btn { flex: 0 0 auto; padding: 9px 15px; font-size: 0.85rem; }
+        .abk-dom-zeile { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .abk-dom-input { flex: 1 1 200px; min-width: 0; }
+        .abk-dom-zeile .abk-dom-save { flex: 0 0 auto; padding: 9px 15px; font-size: 0.83rem; }
+        /* Die drei DNS-Angaben als Paare — abtippen ist hier der Normalfall. */
+        .abk-dom-dns {
+            display: grid; grid-template-columns: auto 1fr; gap: 6px 12px;
+            align-items: center; margin-top: 12px; padding: 12px 14px;
+            background: var(--bg-raise); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+        }
+        .abk-dom-label {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--text-faint);
+        }
+        .abk-dom-dns code {
+            font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-main);
+            overflow-wrap: anywhere;
+        }
         .abk-kopf .abk-einladen svg { width: 16px; height: 16px; }
         .abk-kopf .abk-einladen:active { transform: scale(0.97); }
 
@@ -319,14 +343,14 @@
         /* Gruen heisst auf dieser Seite „bestaetigen" (.ab-btn-primary). Ein
            „Code erzeugen" ist keine Bestaetigung — dafuer der Marken-Akzent.
            Zwei Klassen, weil .ab-btn weiter unten im Stylesheet steht. */
-        .abk-start .abk-cta {
+        .abk-start .abk-cta, .abk-einl .abk-cta {
             flex: 0 0 auto; padding: 11px 20px; font-size: 0.88rem;
             background: rgba(var(--primary-rgb), 0.14);
             border-color: rgba(var(--primary-rgb), 0.34);
             color: var(--primary);
         }
-        .abk-start .abk-cta:hover { background: rgba(var(--primary-rgb), 0.2); }
-        .abk-start .abk-cta:active { transform: scale(0.97); }
+        .abk-start .abk-cta:hover, .abk-einl .abk-cta:hover { background: rgba(var(--primary-rgb), 0.2); }
+        .abk-start .abk-cta:active, .abk-einl .abk-cta:active { transform: scale(0.97); }
 
         /* Azubi-Karte */
         .abk-azubi {
@@ -724,13 +748,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.7.7"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.7.7"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.7.8"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.7.8"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.7"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.8"></script>
 
     <script>
     (function () {
@@ -1439,13 +1463,19 @@
                 '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') +
                 '<span class="abk-exp">' + abL('Experimentell', 'Experimental') + '</span></p>' +
                 '<h1 class="abk-firma">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
-                '<p class="abk-ungeprueft">' + abL(
-                    'Selbst angelegt — MyWorkLog prüft weder den Betrieb noch Ihre Rolle darin.',
-                    'Self-created — MyWorkLog verifies neither the company nor your role in it.') + '</p>' +
+                (d.domainOk
+                    ? '<p class="abk-domok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+                      abL('Domain nachgewiesen: ', 'Domain proven: ') + esc(d.domain) + '</p>'
+                    : '<p class="abk-ungeprueft">' + abL(
+                        'Selbst angelegt — MyWorkLog prüft weder den Betrieb noch Ihre Rolle darin.',
+                        'Self-created — MyWorkLog verifies neither the company nor your role in it.') + '</p>') +
                 '</div>' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-einladen" onclick="abkEinladen()">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
                 '<span>' + abL('Azubi einladen', 'Invite apprentice') + '</span></button>' +
+                (d.domainOk ? '' :
+                    '<button type="button" class="ab-btn ab-btn-ghost abk-domain-btn" onclick="abkDomain()">' +
+                    '<span>' + abL('Domain nachweisen', 'Prove domain') + '</span></button>') +
                 '</header>' +
                 '<div class="abk-kacheln">' +
                 kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
@@ -1454,7 +1484,7 @@
                 kachel(n, n === 1 ? abL('Azubi', 'apprentice') : abL('Azubis', 'apprentices')) +
                 kachel(g.abgezeichnet, abL('abgezeichnet', 'signed off')) +
                 '</div>' + hinweis +
-                '<div id="abkEinladung"></div>';
+                '<div id="abkEinladung"></div><div id="abkDomain"></div>';
 
             var koerper;
             if (!n) {
@@ -1503,6 +1533,96 @@
                 '</div>';
             var c = box.querySelector('.abk-einl');
             if (c) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        };
+
+        // ── Domain-Nachweis ─────────────────────────────────────────
+        // Der einzige Beleg, den MyWorkLog wirklich pruefen kann: wer den
+        // TXT-Eintrag setzen kann, kontrolliert die Domain. Das ist kein
+        // Beweis, dass jemand Ausbilder ist — aber es schliesst aus, dass
+        // ein Fremder eine Firma unter fremdem Namen fuehrt.
+        var domainOffen = false;
+
+        function domainPanel(d, meldung, tonRot) {
+            var token = d.domainToken || '';
+            var dom = d.domain || '';
+            return '<div class="abk-einl">' +
+                '<p class="abk-einl-t">' + abL('Domain nachweisen', 'Prove domain') + '</p>' +
+                '<p class="abk-einl-s" style="margin-top:6px;">' + abL(
+                    'Tragen Sie die Domain Ihrer Firma ein und hinterlegen Sie den TXT-Eintrag unten in deren DNS. Danach prüfen wir ihn — nicht Sie.',
+                    'Enter your company domain and add the TXT record below to its DNS. We then check it — not you.') + '</p>' +
+                '<div class="abk-dom-zeile">' +
+                '<input class="ab-input abk-dom-input" id="abkDomInput" placeholder="musterfirma.de" ' +
+                'autocapitalize="off" autocorrect="off" spellcheck="false" value="' + esc(dom) + '">' +
+                '<button type="button" class="ab-btn ab-btn-ghost abk-dom-save" onclick="abkDomainSpeichern()">' +
+                '<span>' + abL('Übernehmen', 'Save') + '</span></button>' +
+                '</div>' +
+                (dom
+                    ? '<div class="abk-dom-dns">' +
+                      '<span class="abk-dom-label">' + abL('Name', 'Name') + '</span>' +
+                      '<code>_myworklog.' + esc(dom) + '</code>' +
+                      '<span class="abk-dom-label">' + abL('Typ', 'Type') + '</span><code>TXT</code>' +
+                      '<span class="abk-dom-label">' + abL('Wert', 'Value') + '</span>' +
+                      '<code>' + esc(token) + '</code>' +
+                      '</div>' +
+                      '<div class="abk-actions">' +
+                      '<button type="button" class="ab-btn ab-btn-ghost" onclick="abkDomainKopieren(\'' + esc(token) + '\')">' +
+                      '<span>' + abL('Wert kopieren', 'Copy value') + '</span></button>' +
+                      '<button type="button" class="ab-btn abk-cta abk-dom-check" onclick="abkDomainPruefen()">' +
+                      '<span>' + abL('Jetzt prüfen', 'Check now') + '</span></button>' +
+                      '</div>'
+                    : '') +
+                (meldung ? '<p class="abk-einl-s" style="color:var(--' + (tonRot ? 'danger' : 'success') + ')">' +
+                    esc(meldung) + '</p>' : '') +
+                '<p class="abk-einl-s">' + abL(
+                    'DNS-Änderungen brauchen manchmal ein paar Minuten. Der Nachweis erlischt, wenn Sie die Domain ändern.',
+                    'DNS changes can take a few minutes. The proof lapses when you change the domain.') + '</p>' +
+                '</div>';
+        }
+
+        window.abkDomain = function () {
+            var box = $('abkDomain');
+            if (!box) return;
+            if (domainOffen) { box.innerHTML = ''; domainOffen = false; return; }
+            domainOffen = true;
+            box.innerHTML = domainPanel(kontoDaten, '', false);
+            box.querySelector('.abk-einl').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        };
+
+        window.abkDomainSpeichern = async function () {
+            var feld = $('abkDomInput');
+            if (!feld) return;
+            try {
+                var neu = await BHB2B.domainSetzen(feld.value);
+                kontoDaten.domain = neu;
+                kontoDaten.domainOk = false;
+                var st = await BHB2B.status(true);
+                if (st) kontoDaten.domainToken = st.domainToken;
+                $('abkDomain').innerHTML = domainPanel(kontoDaten, '', false);
+            } catch (e) {
+                $('abkDomain').innerHTML = domainPanel(kontoDaten, (e && e.message) || 'Fehler', true);
+            }
+        };
+
+        window.abkDomainPruefen = async function () {
+            var btn = document.querySelector('.abk-dom-check span');
+            if (btn) btn.textContent = abL('Wird geprüft …', 'Checking …');
+            try {
+                var r = await BHB2B.domainPruefen();
+                if (r && r.ok) {
+                    kontoDaten.domainOk = true;
+                    domainOffen = false;
+                    renderKonto();
+                    return;
+                }
+                $('abkDomain').innerHTML = domainPanel(kontoDaten,
+                    (r && r.fehler) || abL('Kein passender TXT-Eintrag gefunden.', 'No matching TXT record found.'), true);
+            } catch (e) {
+                $('abkDomain').innerHTML = domainPanel(kontoDaten, (e && e.message) || 'Fehler', true);
+            }
+        };
+
+        window.abkDomainKopieren = async function (wert) {
+            try { await navigator.clipboard.writeText(wert); } catch (e) { /* von Hand */ }
         };
 
         window.abkCodeKopieren = async function (code) {

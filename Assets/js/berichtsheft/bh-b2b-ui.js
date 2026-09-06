@@ -179,6 +179,20 @@
     function bestaetigt() { try { return localStorage.getItem(OK_KEY); } catch (e) { return null; } }
     function setBestaetigt(id) { try { localStorage.setItem(OK_KEY, id); } catch (e) { /* Privatmodus */ } }
 
+    // Der einzige Beleg, den die App wirklich pruefen kann. Er steht dort, wo
+    // der Azubi entscheidet — nicht im Kleingedruckten danach.
+    function domainZeile(st) {
+        if (st.domainOk) {
+            return '<span class="b2b-domok">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+                b2bL('Domain nachgewiesen: ', 'Domain proven: ') + esc(st.domain) + '</span>';
+        }
+        return '<span class="b2b-domno">' + b2bL(
+            'Kein Domain-Nachweis — der Betriebsname ist frei gewählt.',
+            'No domain proof — the company name is freely chosen.') + '</span>';
+    }
+
     function zeigeBestaetigen(st) {
         el().className = 'b2b-panel is-open';
         el().innerHTML = schale(false, b2bL('Bitte bestätigen', 'Please confirm'),
@@ -187,9 +201,10 @@
             '<strong>' + esc(st.name || b2bL('einem Betrieb ohne Namen', 'a company with no name')) + '</strong>' +
             b2bL('. Ab der Bestätigung kann dieser Betrieb deine Berichte lesen und abzeichnen.',
                 '. Once confirmed, this company can read and sign off your reports.') +
+            domainZeile(st) +
             '<span class="b2b-muted">' + b2bL(
-                'Der Name ist frei gewählt und von MyWorkLog nicht geprüft. Stimmt er nicht mit deinem Ausbildungsbetrieb überein, löse die Verbindung.',
-                'The name is freely chosen and not verified by MyWorkLog. If it does not match your training company, disconnect.') + '</span>' +
+                'Stimmt der Betrieb nicht mit deinem Ausbildungsbetrieb überein, löse die Verbindung.',
+                'If the company does not match your training company, disconnect.') + '</span>' +
             '<div class="b2b-actions" style="margin-top:14px;">' +
             '<button class="btn btn-primary" onclick="b2bBestaetigen()">' +
             '<svg class="icon"><use href="#i-check"/></svg><span>' +

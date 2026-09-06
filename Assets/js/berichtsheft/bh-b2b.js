@@ -213,15 +213,24 @@
             const row = data && data[0];
             if (!row) { statusCache = { at: Date.now(), wert: null }; return null; }
 
-            let name = '';
-            const bt = await sb.from('betriebe').select('name').eq('id', row.betrieb_id).maybeSingle();
-            if (bt && bt.data) name = bt.data.name || '';
+            // Den Token braucht nur der Ausbilder (er traegt ihn ins DNS ein).
+            const spalten = row.rolle === 'ausbilder'
+                ? 'name, domain, domain_token, domain_verifiziert_at'
+                : 'name, domain, domain_verifiziert_at';
+            let b = null;
+            const bt = await sb.from('betriebe').select(spalten).eq('id', row.betrieb_id).maybeSingle();
+            if (bt && bt.data) b = bt.data;
 
             const wert = {
                 betriebId: row.betrieb_id,
-                name: name,
+                name: (b && b.name) || '',
                 rolle: row.rolle,
-                anzeigeName: row.anzeige_name || ''
+                anzeigeName: row.anzeige_name || '',
+                domain: (b && b.domain) || '',
+                domainToken: (b && b.domain_token) || '',
+                // Nur wahr, wenn der Server den Nachweis gesetzt hat — der
+                // Client kann das Feld nicht schreiben (Trigger auf betriebe).
+                domainOk: !!(b && b.domain && b.domain_verifiziert_at)
             };
             statusCache = { at: Date.now(), wert: wert };
             return wert;
@@ -567,7 +576,10 @@
                     }
                 }
             }
-            return { betrieb: st.name, azubis: azubis };
+            return {
+                betrieb: st.name, azubis: azubis, betriebId: st.betriebId,
+                domain: st.domain, domainToken: st.domainToken, domainOk: st.domainOk
+            };
         } catch (e) {
             console.warn('[B2B] Sammelansicht:', e && e.message);
             return null;
@@ -654,6 +666,41 @@
         return true;
     }
 
+    // ── Domain-Nachweis (Ausbilder) ─────────────────────────────────
+    // Der Nachweis selbst entsteht NICHT hier, sondern in der Edge Function
+    // `domain-pruefen`. Diese Datei traegt nur die Domain ein und stoesst die
+    // Pruefung an — `domain_verifiziert_at` kann der Client nicht schreiben.
+
+    /** Domain hinterlegen (setzt einen bestehenden Nachweis zurueck). */
+    async function bhb2bDomainSetzen(domain) {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sauber = String(domain || '').trim().toLowerCase()
+            .replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+        if (sauber && !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(sauber)) {
+            throw new Error('Das sieht nicht nach einer Domain aus (z. B. musterfirma.de).');
+        }
+        const sb = await client();
+        const { error } = await sb.from('betriebe')
+            .update({ domain: sauber || null }).eq('id', st.betriebId);
+        if (error) throw new Error(error.message);
+        statusVergessen();
+        return sauber;
+    }
+
+    /** Pruefung anstossen. → { ok, domain, geprueft, gefunden, fehler } */
+    async function bhb2bDomainPruefen() {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sb = await client();
+        const { data, error } = await sb.functions.invoke('domain-pruefen', {
+            body: { betrieb_id: st.betriebId }
+        });
+        if (error) throw new Error(error.message || 'Pruefung nicht erreichbar.');
+        statusVergessen();
+        return data;
+    }
+
     // ── Austritt ─────────────────────────────────────────────────────
     async function bhb2bAustreten() {
         const st = await bhb2bStatus(true);
@@ -686,6 +733,8 @@
         berichtVeraendert: bhb2bBerichtVeraendert,
         freigabePruefen: bhb2bFreigabePruefen,
         freigabeVerlauf: bhb2bFreigabeVerlauf,
+        domainSetzen: bhb2bDomainSetzen,
+        domainPruefen: bhb2bDomainPruefen,
         austreten: bhb2bAustreten,
         // fuer Tests
         _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText }
