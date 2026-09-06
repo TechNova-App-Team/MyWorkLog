@@ -56,11 +56,17 @@
         b2bL('Ausblenden', 'Hide') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
         'stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
 
+    // Die Betriebs-Anbindung ist neu und traegt kein Versprechen: es gibt
+    // keine Stelle, die einen Ausbilder bestaetigt. Das Etikett steht in
+    // JEDER Ansicht der Karte, nicht nur im Kleingedruckten.
+    const EXP = '<span class="b2b-exp">' + b2bL('Experimentell', 'Experimental') + '</span>';
+
     function schale(pillOn, pillText, inner, mitX) {
         return '' +
             '<div class="b2b-head">' +
             '<svg class="icon"><use href="#i-tie"/></svg>' +
             '<span class="b2b-title">' + b2bL('Betrieb &amp; IHK', 'Company &amp; chamber') + '</span>' +
+            EXP +
             '<span class="b2b-pill ' + (pillOn ? 'is-on' : 'is-off') + '">' + esc(pillText) + '</span>' +
             (mitX ? X_BTN : '') +
             '</div>' + inner;
@@ -85,6 +91,7 @@
             '<button type="button" class="b2b-teaser" onclick="b2bAufklappen()">' +
             '<svg class="icon"><use href="#i-tie"/></svg>' +
             '<span>' + b2bL('Mit dem Ausbildungsbetrieb verbinden', 'Connect to your training company') + '</span>' +
+            EXP +
             '<svg class="b2b-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' +
             '</button>' + X_BTN;
