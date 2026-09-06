@@ -1106,7 +1106,7 @@
 
                 if (diag.host === 0) {
                     msgText = 'Dein Gerät versteckt sich im lokalen Netzwerk. Die Geräte können sich daher nicht sehen, obwohl sie im selben WLAN sind!\n\n' +
-                        ' Nutzt du NordVPN? Gehe dort in die Einstellungen und schalte "Zugriff auf lokales Netzwerk zulassen" EIN (oder "Unsichtbarkeit im LAN" aus).\n' +
+                        ' Nutzt du NordVPN? Gehe dort in die Einstellungen (Verbindung) und schalte "Unsichtbarkeit im LAN" AUS (am PC) bzw. die "Lokale Netzwerk-Erkennung" EIN (am Handy). Alternativ das VPN für den kurzen Moment des Syncs pausieren.\n' +
                         ' Nutzt du AdGuard (Stealth Mode) oder uBlock Origin? Schalte dort zwingend "WebRTC blockieren" für diese Seite AUS.\n\n' +
                         'Sobald dein Browser sein Heimnetzwerk wieder sehen darf, klappt die Verbindung sofort.';
                 }
