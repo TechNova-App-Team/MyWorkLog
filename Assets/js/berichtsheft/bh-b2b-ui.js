@@ -549,11 +549,29 @@
                 return;
             }
 
-            // Azubi — vor der Gegenbestaetigung wird NICHTS hochgeladen.
-            if (bestaetigt() !== st.betriebId) { zeigeBestaetigen(st); return; }
-            zeigeAzubi(st, netzfehler);
+            // 🔴 Die Gegenbestaetigung gilt nur fuer den HINWEG. Sie ist die
+            // Zustimmung des Azubis, dass seine Berichte an diesen Betrieb
+            // gehen — vor ihr wird nichts hochgeladen.
+            //
+            // Der RUECKWEG hing bis v6.9.2 am selben `return` und fiel damit
+            // komplett aus: eine Rueckgabe des Ausbilders erreichte das Geraet
+            // nie, `report.approval` blieb leer, und in „Meine Berichtshefte"
+            // fehlten Badge, Begruendung und Farbmarke. Sichtbar war die
+            // Entscheidung nur in der Detailansicht, weil
+            // b2bFuelleFreigabeVerlauf() sie direkt vom Server holt und diesen
+            // Gatter gar nicht kennt — genau die gemeldete Asymmetrie
+            // („taucht nur unter Freigabe-Verlauf auf").
+            //
+            // Das war auch sachlich falsch herum: eine Entscheidung ueber den
+            // EIGENEN Bericht ist die Information des Azubis. Sie ihm
+            // vorzuenthalten, weil auf DIESEM Geraet ein Haken fehlt, haelt
+            // ihn genau von dem ab, worum gebeten wurde. Und ohne den Haken
+            // gaebe es die Freigabe gar nicht — hochgeladen wurde der Bericht
+            // ja irgendwann, sonst haette der Ausbilder nichts zu entscheiden.
+            const offen = bestaetigt() !== st.betriebId;
+            if (offen) zeigeBestaetigen(st); else zeigeAzubi(st, netzfehler);
             if (netzfehler) return;
-            await berichteHochladen();
+            if (!offen) await berichteHochladen();
             const map = await BHB2B.freigabenRunter();
             const geaendert = await freigabenEinspielen(map);
             if (geaendert) {
