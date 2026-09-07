@@ -711,8 +711,27 @@ async function unlockVault(password) {
         }
         derivedKey = await importMasterKey(masterRaw);
         masterRaw.fill(0);
-        const rec = await vsGetEntries();
-        entries = rec ? JSON.parse(await decrypt(rec, derivedKey)) : [];
+        if (legacyVault && legacyVault.entries) {
+            // vaultMeta kam nicht aus IndexedDB, sondern als Spiegel aus der
+            // Cloud-Freigabe (bootVault: kein lokaler Tresor vorhanden). Die
+            // Eintraege stecken deshalb in legacyVault.entries, nicht in
+            // IndexedDB — vsGetEntries() liefert hier immer leer. Erst
+            // entschluesseln, dann als echten Tresor ablegen (wie bei der
+            // v1-Migration unten, nur ohne den Formatwechsel).
+            entries = JSON.parse(await decrypt(legacyVault.entries, derivedKey));
+            if (legacyVault.categories) {
+                try {
+                    const parsed = JSON.parse(await decrypt(legacyVault.categories, derivedKey));
+                    if (Array.isArray(parsed)) await vsPutCategories(await encrypt(JSON.stringify(parsed), derivedKey));
+                } catch (e) { /* ohne Kategorien weitermachen */ }
+            }
+            await vsPutEntries(await encrypt(JSON.stringify(entries), derivedKey));
+            await vsPutMeta(vaultMeta);
+            legacyVault = null;
+        } else {
+            const rec = await vsGetEntries();
+            entries = rec ? JSON.parse(await decrypt(rec, derivedKey)) : [];
+        }
     } else {
         // Format v1: Eintraege haengen direkt am Passwort-Schluessel.
         try {
