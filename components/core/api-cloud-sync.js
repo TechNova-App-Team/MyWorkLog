@@ -434,8 +434,14 @@
         const logoutBtn = document.getElementById('cloudSyncLogoutBtn');
         const uploadBtn = document.getElementById('cloudSyncUploadBtn');
         const downloadBtn = document.getElementById('cloudSyncDownloadBtn');
+        const deleteBtn = document.getElementById('cloudSyncDeleteBtn');
         const statusDiv = document.getElementById('cloudSyncStatus');
-        
+
+        // Nur sichtbar, wenn angemeldet — abgemeldet gäbe es nichts zu
+        // löschen, und ein Knopf, der dann nur einen Fehler wirft, sieht aus
+        // wie ein kaputtes Feature.
+        if (deleteBtn) deleteBtn.style.display = (isLoggedIn && user) ? 'block' : 'none';
+
         if (isLoggedIn && user) {
             if (loginBtn) loginBtn.style.display = 'none';
             if (logoutBtn) logoutBtn.style.display = 'block';
@@ -587,6 +593,32 @@
         }
     }
     
+    // Löscht den Cloud-Spiegel dieses Kontos. Der Knopf sagt bewusst
+    // „Cloud-Daten", nicht „Konto" — deleteCloudData() räumt die eine
+    // `users`-Zeile, nicht das Konto, nicht den Schatten-Tresor und nicht die
+    // gemeinsamen Betriebs-Tabellen. Die Begründung dafür steht dort.
+    async function handleCloudDeleteData() {
+        if (!window.cloudSync) return;
+
+        // Zwei Sätze, weil der zweite die Erwartung geradezieht: „Cloud-Daten
+        // löschen" liest sich sonst wie „Konto löschen".
+        if (!confirm('Alle in der Cloud gespeicherten Daten dieses Kontos löschen?\n\n' +
+            'Die Daten auf diesem Gerät bleiben erhalten. Dein Konto bleibt bestehen — ' +
+            'du kannst jederzeit wieder hochladen.')) return;
+
+        const btn = document.getElementById('cloudSyncDeleteBtn');
+        const originalHTML = btn ? btn.innerHTML : '';
+
+        try {
+            await window.cloudSync.deleteCloudData();
+            if (btn) cloudBtnSuccess(btn, originalHTML);
+            if (typeof updateCloudSyncChip === 'function') updateCloudSyncChip();
+        } catch (error) {
+            console.error('[Cloud] Löschen fehlgeschlagen:', error);
+            if (btn) cloudBtnError(btn, originalHTML);
+        }
+    }
+
     // SVG-Icons für State-Wechsel (kein Emoji).
     // Wolke bleibt fix, nur der Pfeil animiert — Richtung passend zu Upload/Download.
     const CLOUD_ICON_LOADING_UP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><g class="cloud-arrow-move up"><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></g></svg>';

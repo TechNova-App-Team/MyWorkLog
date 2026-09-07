@@ -146,6 +146,69 @@ try {
     const fremd = await az(`betriebe?select=id`);
     ok(Array.isArray(fremd.body) && fremd.body.every(b => b.id === betriebId),
         'Azubi sieht ausschliesslich den eigenen Betrieb');
+
+    // ── Momentaufnahme an der Freigabe (Grundlage des Aenderungsvergleichs) ──
+    const snap = await tr(`freigaben?bericht_id=eq.${berichtId}&select=inhalt`);
+    ok(snap.status === 200, 'Spalte freigaben.inhalt existiert und ist lesbar');
+
+    const zweite = await tr('freigaben', {
+        method: 'POST', body: JSON.stringify({
+            bericht_id: berichtId, betrieb_id: betriebId, ausbilder_id: trId,
+            entscheidung: 'rejected', anmerkung: 'E2E bitte KW-Angabe ergaenzen',
+            pruefsumme: 'ps-2', prev_pruefsumme: 'ps-1',
+            inhalt: { activities: 'E2E Woche' },
+        }),
+    });
+    ok(zweite.status === 201 && zweite.body?.[0]?.inhalt?.activities === 'E2E Woche',
+        'Entscheidung speichert den gesehenen Stand mit');
+
+    // Der Azubi bessert nach — das ist der Fall, den der Vergleich zeigen soll.
+    await az(`berichte?id=eq.${berichtId}`, {
+        method: 'PATCH', body: JSON.stringify({ inhalt: { activities: 'E2E Woche, KW 20 ergaenzt' } }),
+    });
+    const nachher = await tr(`berichte?id=eq.${berichtId}&select=inhalt`);
+    ok(nachher.body?.[0]?.inhalt?.activities === 'E2E Woche, KW 20 ergaenzt',
+        'Ausbilder sieht den nachgebesserten Stand');
+    ok(nachher.body[0].inhalt.activities !== zweite.body[0].inhalt.activities,
+        'Vorher- und Nachher-Stand unterscheiden sich wirklich (sonst prueft der Vergleich nichts)');
+
+    // ── Loeschen: Grabstein statt Hard-Delete, solange Freigaben haengen ──
+    const grab = await az(`berichte?id=eq.${berichtId}`, {
+        method: 'PATCH', body: JSON.stringify({ geloescht_at: '2001-01-01T00:00:00Z' }),
+    });
+    ok(grab.status === 200, 'Azubi darf seinen Bericht als geloescht markieren');
+    const gz = grab.body?.[0]?.geloescht_at;
+    ok(gz && Math.abs(Date.now() - new Date(gz).getTime()) < 120000,
+        'geloescht_at kommt vom Server-Trigger, nicht vom Client (2001 wurde verworfen)');
+
+    const nachGrab = await tr(`berichte?betrieb_id=eq.${betriebId}&geloescht_at=is.null&select=id`);
+    ok(Array.isArray(nachGrab.body) && !nachGrab.body.some(b => b.id === berichtId),
+        'Der Filter des Cockpits blendet den Grabstein aus');
+    const freigabenDa = await tr(`freigaben?bericht_id=eq.${berichtId}&select=id`);
+    ok((freigabenDa.body || []).length === 2,
+        'Die Freigaben ueberleben den Grabstein (Nachweiskette des Ausbilders)');
+
+    // Neu angelegt heisst wieder sichtbar — der Upsert muss den Grabstein loesen.
+    await az(`berichte?id=eq.${berichtId}`, {
+        method: 'PATCH', body: JSON.stringify({ geloescht_at: null }),
+    });
+    const wieder = await tr(`berichte?betrieb_id=eq.${betriebId}&geloescht_at=is.null&select=id`);
+    ok((wieder.body || []).some(b => b.id === berichtId),
+        'geloescht_at zuruecksetzen macht die Woche wieder sichtbar');
+
+    // Ohne Freigaben faellt die Zeile ganz weg — der zweite Loeschweg.
+    const frei = await az('berichte', {
+        method: 'POST', body: JSON.stringify({
+            betrieb_id: betriebId, azubi_id: azId, client_id: 'e2e-2', jahr: 1, kw: 21,
+            datum_von: '2026-05-18', datum_bis: '2026-05-22',
+            inhalt: { activities: 'ohne Freigabe' }, status: 'complete', quelle: 'local',
+        }),
+    });
+    const freiId = frei.body?.[0]?.id;
+    const hart = await az(`berichte?id=eq.${freiId}`, { method: 'DELETE', prefer: 'return=minimal' });
+    ok(hart.status === 204 || hart.status === 200, 'Bericht ohne Freigabe wird hart geloescht');
+    const weg = await tr(`berichte?id=eq.${freiId}&select=id`);
+    ok((weg.body || []).length === 0, 'und ist danach auch fuer den Ausbilder weg');
 } finally {
     const rm = await tr(`betriebe?id=eq.${betriebId}`, { method: 'DELETE', prefer: 'return=minimal' });
     ok(rm.status === 204 || rm.status === 200, 'Aufraeumen: Testbetrieb geloescht (Cascade)');

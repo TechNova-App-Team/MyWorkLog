@@ -298,6 +298,82 @@ const z1 = I.berichtZuZeile({ id: 'r1', jahr: 1, kw: 1 }, 'b1', 'az1');
 ok(z1.geloescht_at === null, 'geloescht_at wird explizit null gesetzt (hebt Soft-Delete auf)');
 ok('geloescht_at' in z1, 'geloescht_at ist vorhanden (nicht undefined)');
 
+// ── inhaltDiff: der Aenderungsvergleich ───────────────────────────────
+gruppe('inhaltDiff — Feldvergleich');
+
+const vorher = {
+    activities: 'Server gepatcht', mode: 'weekly', instruction: 'AD',
+    school: '', department: 'IT', hours: 38, form: 'saetze', umfang: 'mittel',
+    dailyActivities: null, dailyHours: null, dailySchool: null
+};
+
+ok(I.inhaltDiff(vorher, vorher).length === 0, 'gleicher Inhalt → kein Befund');
+ok(I.inhaltDiff(null, null).length === 0, 'zweimal nichts → kein Befund');
+
+const d1 = I.inhaltDiff(vorher, Object.assign({}, vorher, { activities: 'Server gepatcht und dokumentiert' }));
+ok(d1.length === 1 && d1[0].feld === 'activities' && d1[0].art === 'geaendert',
+    'geaenderter Text → genau ein Befund, Art "geaendert"');
+ok(d1[0].vorher === 'Server gepatcht' && d1[0].nachher === 'Server gepatcht und dokumentiert',
+    'Vorher- und Nachher-Wert stehen im Befund');
+
+const d2 = I.inhaltDiff(vorher, Object.assign({}, vorher, { school: 'IT-Systeme' }));
+ok(d2.length === 1 && d2[0].art === 'neu', 'leer → gefuellt ist "neu", nicht "geaendert"');
+const d3 = I.inhaltDiff(vorher, Object.assign({}, vorher, { department: '' }));
+ok(d3.length === 1 && d3[0].art === 'entfernt', 'gefuellt → leer ist "entfernt"');
+
+ok(I.inhaltDiff(vorher, Object.assign({}, vorher, { hours: 38 })).length === 0,
+    'gleiche Zahl → kein Befund');
+ok(I.inhaltDiff(vorher, Object.assign({}, vorher, { hours: 40 })).length === 1,
+    'andere Zahl → Befund');
+
+// null / undefined / '' / {} sind derselbe Zustand "nichts". Ohne diese
+// Gleichsetzung meldet JEDER Bericht im Wochenmodus drei Tagesfelder als
+// geaendert, sobald eine Seite sie als {} statt null liefert.
+ok(I.inhaltDiff({ school: null }, { school: '' }).length === 0, 'null und "" sind dasselbe Nichts');
+ok(I.inhaltDiff({ dailyHours: null }, { dailyHours: {} }).length === 0, 'null und {} sind dasselbe Nichts');
+
+gruppe('inhaltDiff — Tagesfelder');
+
+const tagA = { mode: 'daily', activities: 'Mo … Di …',
+    dailyActivities: { monday: 'Kabel gezogen', tuesday: 'Doku' }, dailyHours: { monday: 8 } };
+const tagB = { mode: 'daily', activities: 'Mo … Di … NEU',
+    dailyActivities: { monday: 'Kabel gezogen', tuesday: 'Doku erweitert' }, dailyHours: { monday: 8 } };
+const dt = I.inhaltDiff(tagA, tagB);
+ok(dt.length === 1 && dt[0].feld === 'dailyActivities' && dt[0].tag === 'tuesday',
+    'geaenderter Tag wird auf den Tag genau benannt');
+ok(!dt.some(e => e.feld === 'activities'),
+    'im Tagesmodus wird der abgeleitete Wochentext NICHT doppelt gemeldet');
+
+const dt2 = I.inhaltDiff(tagA, Object.assign({}, tagA, { dailySchool: { friday: true } }));
+ok(dt2.length === 1 && dt2[0].feld === 'dailySchool' && dt2[0].tag === 'friday' && dt2[0].nachher === true,
+    'Berufsschul-Schalter je Tag wird erfasst');
+
+gruppe('inhaltDiff — die Invariante');
+
+// 🔴 Die Karte zeigt „geaendert" anhand der PRUEFSUMME und den Vergleich
+// darunter. Waere der Vergleich leer, waehrend die Summe abweicht, stuende
+// dort eine Warnung ueber einer leeren Liste — das sieht aus wie ein Fehler
+// in der Anzeige. Faengt jedes Feld ab, das spaeter zu berichtInhalt() dazu-
+// kommt, ohne dass jemand an DIFF_FELDER gedacht hat.
+const felder = Object.keys(I.berichtInhalt({}));
+let invarianteOk = 0;
+for (const f of felder) {
+    const a = I.berichtInhalt({});
+    const b = I.berichtInhalt({});
+    b[f] = (typeof a[f] === 'number') ? 99 : { geaendert: true };
+    const summeAnders = I.kanonisch(a) !== I.kanonisch(b);
+    if (summeAnders && I.inhaltDiff(a, b).length > 0) invarianteOk++;
+}
+ok(invarianteOk === felder.length,
+    `jedes Feld aus berichtInhalt() erzeugt einen Befund (${invarianteOk}/${felder.length})`);
+ok(felder.length >= 10, `es gibt ueberhaupt Felder zu pruefen (${felder.length})`);
+
+// Gegenprobe zur Invariante: ein Feld, das DIFF_FELDER nicht kennt, faellt
+// in den 'sonstiges'-Auffangzweig statt lautlos zu verschwinden.
+const dx = I.inhaltDiff({ ganzNeuesFeld: 'a' }, { ganzNeuesFeld: 'b' });
+ok(dx.length === 1 && dx[0].feld === 'sonstiges',
+    'unbekanntes Feld faellt in den Auffangzweig, statt zu verschwinden');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
 ok(bestanden >= 72, `es sind genug Pruefungen gelaufen (${bestanden})`);

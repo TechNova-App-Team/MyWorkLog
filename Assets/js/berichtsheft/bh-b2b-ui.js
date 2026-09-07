@@ -485,6 +485,20 @@
         } catch (e) { /* egal */ }
     };
 
+    // Gegenstueck zu b2bOnReportSaved: was lokal weg ist, gehoert auch im
+    // Betrieb weg. Ohne diesen Weg blieb eine geloeschte Woche fuer immer im
+    // Ausbilder-Cockpit stehen — sichtbar nur DORT, also nie beim Azubi, der
+    // sie geloescht hat.
+    window.b2bOnReportDeleted = async function (id) {
+        if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) return;
+        try {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.berichtLoeschen(id);
+            }
+        } catch (e) { /* egal */ }
+    };
+
     // ── Zustand bestimmen und rendern ───────────────────────────────
 
     let laeuft = false;

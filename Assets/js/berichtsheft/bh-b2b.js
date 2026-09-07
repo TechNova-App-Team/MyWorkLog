@@ -149,7 +149,11 @@
             inhalt: kern.inhalt,
             status: STATUS_ERLAUBT.indexOf(report.status) !== -1 ? report.status : 'incomplete',
             quelle: QUELLE_ERLAUBT.indexOf(report.source) !== -1 ? report.source : 'local',
-            ki_erzeugt: !!(report.aiGenerated || report.source === 'cloud')
+            ki_erzeugt: !!(report.aiGenerated || report.source === 'cloud'),
+            // Muss MIT in den Upsert: legt der Azubi eine geloeschte Woche neu
+            // an, traegt die vorhandene Zeile (Konflikt auf azubi_id,jahr,kw)
+            // sonst weiter ihren Grabstein und bleibt beim Ausbilder unsichtbar.
+            geloescht_at: null
             // created_at / updated_at setzt der Trigger berichte_serverzeit auf
             // Serverzeit — hier NICHTS mitschicken (ein kaputter Client-Wert
             // liesse sonst den ganzen Upsert an der Typpruefung scheitern).
@@ -373,6 +377,51 @@
         }
     }
 
+    /**
+     * Einen lokal geloeschten Bericht auch serverseitig entfernen.
+     * Wirft nie — dieselbe Zurueckhaltung wie beim Hochladen, das Geraet
+     * ist die Wahrheit. → true/false.
+     *
+     * 🔴 Zwei Wege, und welcher gilt, entscheidet die Freigabe-Historie:
+     * ohne `freigaben` verschwindet die Zeile ganz; mit `freigaben` bleibt sie
+     * als Grabstein (`geloescht_at`) stehen. Ein Hard-Delete wuerde ueber
+     * `on delete cascade` die abgezeichneten Freigaben mitreissen — genau die
+     * append-only-Kette, an der die Revisionssicherheit haengt. Der Ausbilder
+     * behaelt damit den Nachweis, dass er etwas abgezeichnet hat, auch wenn
+     * der Azubi den Bericht bei sich wegwirft.
+     */
+    async function bhb2bBerichtLoeschen(clientId) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'azubi' || !clientId) return false;
+        try {
+            const sb = await client();
+            const u = await benutzer(sb);
+            if (!u) return false;
+
+            const be = await sb.from('berichte').select('id')
+                .eq('azubi_id', u.id).eq('client_id', String(clientId)).limit(1);
+            if (be.error || !be.data || !be.data[0]) return false;
+            const berichtId = be.data[0].id;
+
+            // `head: true` holt nur die Anzahl, nicht die Zeilen.
+            const zaehl = await sb.from('freigaben')
+                .select('id', { count: 'exact', head: true })
+                .eq('bericht_id', berichtId);
+            const hatFreigaben = !zaehl.error && (zaehl.count || 0) > 0;
+
+            const { error } = hatFreigaben
+                ? await sb.from('berichte')
+                    .update({ geloescht_at: new Date().toISOString() })
+                    .eq('id', berichtId)
+                : await sb.from('berichte').delete().eq('id', berichtId);
+            if (error) { console.warn('[B2B] Bericht loeschen:', error.message); return false; }
+            return true;
+        } catch (e) {
+            console.warn('[B2B] Bericht loeschen:', e && e.message);
+            return false;
+        }
+    }
+
     /** Mehrere Berichte. → { ok, fehler }. */
     async function bhb2bBerichteHoch(reports) {
         let ok = 0, fehler = 0;
@@ -409,6 +458,7 @@
                 sb.from('berichte')
                     .select('id, client_id')
                     .eq('azubi_id', u.id)
+                    .is('geloescht_at', null)   // Grabsteine tragen keine Freigabe mehr
             ]);
             if (e1 || e2) { console.warn('[B2B] Freigaben:', (e1 || e2).message); return {}; }
 
@@ -501,6 +551,98 @@
         } catch (e) { return false; }
     }
 
+    // ── Aenderungsvergleich ──────────────────────────────────────────
+    //
+    // Die Pruefsumme beantwortet „hat sich etwas geaendert". Sie kann nie
+    // beantworten „WAS hat sich geaendert" — dafuer braucht es den Vorher-Stand,
+    // und der liegt seit v6.8.3 als `freigaben.inhalt` an der Entscheidung
+    // (append-only, also nicht nachtraeglich passend zu machen).
+    //
+    // Das Ergebnis ist bewusst SPRACHNEUTRAL: Feldschluessel und Art, keine
+    // Beschriftungen. Die Ausbilder-Seite ist zweisprachig, ein hier erzeugter
+    // deutscher Satz waere auf /en/ nicht mehr einzufangen.
+    //
+    // → [{ feld, tag?, art: 'geaendert'|'neu'|'entfernt', vorher, nachher }]
+
+    const TAGE = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    // Reihenfolge der Ausgabe — nicht alphabetisch, sondern so, wie ein
+    // Ausbilder den Bericht liest.
+    const DIFF_FELDER = ['activities', 'instruction', 'school', 'department',
+        'hours', 'mode', 'form', 'umfang'];
+
+    function leer(v) {
+        return v === null || v === undefined || v === '' ||
+            (typeof v === 'object' && Object.keys(v).length === 0);
+    }
+
+    function gleich(a, b) {
+        if (leer(a) && leer(b)) return true;
+        return kanonisch(a === undefined ? null : a) === kanonisch(b === undefined ? null : b);
+    }
+
+    function art(vorher, nachher) {
+        if (leer(vorher)) return 'neu';
+        if (leer(nachher)) return 'entfernt';
+        return 'geaendert';
+    }
+
+    function bhb2bInhaltDiff(vorher, nachher) {
+        const a = vorher || {}, b = nachher || {};
+        const out = [];
+
+        for (const f of DIFF_FELDER) {
+            // Im Tagesmodus ist `activities` nur der zusammengesetzte Text der
+            // Tagesfelder (combineDailyToWeeklyText). Ihn zusaetzlich zu melden
+            // wuerde jede Tagesaenderung doppelt anzeigen.
+            if (f === 'activities' && a.mode === 'daily' && b.mode === 'daily') continue;
+            if (!gleich(a[f], b[f])) {
+                out.push({ feld: f, art: art(a[f], b[f]), vorher: a[f], nachher: b[f] });
+            }
+        }
+
+        for (const t of TAGE) {
+            for (const f of ['dailyActivities', 'dailyHours', 'dailySchool']) {
+                const va = (a[f] || {})[t], vb = (b[f] || {})[t];
+                if (!gleich(va, vb)) {
+                    out.push({ feld: f, tag: t, art: art(va, vb), vorher: va, nachher: vb });
+                }
+            }
+        }
+
+        // 🔴 Der Vergleich darf nie leer sein, waehrend die Pruefsumme
+        // „geaendert" sagt — sonst zeigt die Karte eine Warnung und darunter
+        // nichts, und das sieht aus wie ein Fehler in der Anzeige. Faengt jedes
+        // Feld ab, das spaeter zu `berichtInhalt()` dazukommt, ohne dass
+        // jemand an diese Liste gedacht hat.
+        //
+        // Verglichen wird die NORMALISIERTE Form, nicht das rohe Objekt: oben
+        // gelten null, '' und {} als derselbe Zustand „nichts", `kanonisch()`
+        // unterscheidet sie aber. Ohne diesen Gleichlauf meldete jeder Bericht,
+        // dessen leere Tagesfelder mal als null und mal als {} ankommen, ein
+        // „Weitere Angaben geändert" ohne jede Aenderung.
+        if (!out.length && kanonisch(normalisiert(a, b)) !== kanonisch(normalisiert(b, a))) {
+            out.push({ feld: 'sonstiges', art: 'geaendert' });
+        }
+        return out;
+    }
+
+    // Alles Leere WEGLASSEN und das abgeleitete `activities` im Tagesmodus
+    // ebenso — genau die zwei Regeln, nach denen oben Feld fuer Feld
+    // verglichen wird. Weglassen statt auf null setzen, weil „Feld fehlt" und
+    // „Feld ist leer" oben derselbe Zustand sind; ein `null` waere hier ein
+    // Unterschied zu einem gar nicht vorhandenen Schluessel.
+    // `gegen` ist die andere Seite, weil der Tagesmodus nur zaehlt, wenn BEIDE
+    // ihn tragen.
+    function normalisiert(o, gegen) {
+        const out = {};
+        for (const k of Object.keys(o || {})) {
+            if (leer(o[k])) continue;
+            if (k === 'activities' && o.mode === 'daily' && (gegen || {}).mode === 'daily') continue;
+            out[k] = o[k];
+        }
+        return out;
+    }
+
     // Prueft die prev_pruefsumme-Kette einer nach erstellt_at sortierten
     // Freigabe-Liste EINES Berichts. Jede Freigabe verweist mit
     // `prev_pruefsumme` auf die `pruefsumme` der vorigen — die erste auf null.
@@ -533,8 +675,9 @@
                     .eq('betrieb_id', st.betriebId).eq('rolle', 'azubi'),
                 sb.from('berichte').select('*')
                     .eq('betrieb_id', st.betriebId)
+                    .is('geloescht_at', null)   // vom Azubi geloescht → nicht mehr im Cockpit
                     .order('jahr', { ascending: true }).order('kw', { ascending: true }),
-                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, prev_pruefsumme, erstellt_at')
+                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
                     .order('erstellt_at', { ascending: true })   // aelteste zuerst
             ]);
@@ -562,18 +705,31 @@
                     })
             }));
 
-            // „geaendert" = zuletzt bestaetigt, aber der Inhalt hasht heute
-            // anders als in der Freigabe hinterlegt. DAS ist die
-            // Revisionssicherheit: eine nachtraeglich geaenderte, bereits
-            // abgezeichnete Woche faellt hier auf.
+            // Der Inhalt hasht heute anders als in der letzten Entscheidung
+            // hinterlegt. Dieselbe Messung, zwei sehr verschiedene Befunde —
+            // und WELCHER es ist, haengt allein an der Entscheidung davor:
+            //   nach 'approved' → `veraendert`: eine abgezeichnete Woche wurde
+            //     nachtraeglich angefasst. Das ist der Warnfall, an dem die
+            //     Revisionssicherheit haengt.
+            //   nach 'rejected' → `nachgebessert`: der Azubi hat getan, worum
+            //     gebeten wurde, und neu eingereicht. Das ist der Normalfall —
+            //     und er lag bis v6.8.3 unsichtbar unter „zurueckgegeben".
+            // Dazu der Vergleich selbst (`diff`), sofern die Entscheidung eine
+            // Momentaufnahme traegt (nicht bei Freigaben vor v6.8.3).
             for (const az of azubis) {
                 for (const b of az.berichte) {
                     b.veraendert = false;
+                    b.nachgebessert = false;
+                    b.diff = null;
                     const f = b.freigabe;
-                    if (f && f.entscheidung === 'approved' && f.pruefsumme) {
-                        try { b.veraendert = (await bhb2bPruefsumme(b)) !== f.pruefsumme; }
-                        catch (e) { /* ohne Vergleich lieber keine Warnung */ }
-                    }
+                    if (!f || !f.pruefsumme) continue;
+                    let abweichend = false;
+                    try { abweichend = (await bhb2bPruefsumme(b)) !== f.pruefsumme; }
+                    catch (e) { continue; }   // ohne Vergleich lieber keine Warnung
+                    if (!abweichend) continue;
+                    if (f.entscheidung === 'approved') b.veraendert = true;
+                    else if (f.entscheidung === 'rejected') b.nachgebessert = true;
+                    if (f.inhalt) b.diff = bhb2bInhaltDiff(f.inhalt, b.inhalt);
                 }
             }
             return {
@@ -660,6 +816,10 @@
             anmerkung: anmerkung || '',
             pruefsumme: pruefsumme,
             prev_pruefsumme: prev,
+            // Der Stand, den der Ausbilder gesehen hat. Grundlage des
+            // Aenderungsvergleichs, wenn der Azubi nachbessert und erneut
+            // einreicht — die Pruefsumme daneben sagt nur DASS, nicht WAS.
+            inhalt: (bericht && bericht.inhalt) || null,
             signatur: signatur
         });
         if (error) throw new Error(error.message);
@@ -727,16 +887,18 @@
         azubiBerichte: bhb2bAzubiBerichte,
         berichtHoch: bhb2bBerichtHoch,
         berichteHoch: bhb2bBerichteHoch,
+        berichtLoeschen: bhb2bBerichtLoeschen,
         freigabenRunter: bhb2bFreigabenRunter,
         freigabeSchreiben: bhb2bFreigabeSchreiben,
         pruefsumme: bhb2bPruefsumme,
         berichtVeraendert: bhb2bBerichtVeraendert,
+        inhaltDiff: bhb2bInhaltDiff,
         freigabePruefen: bhb2bFreigabePruefen,
         freigabeVerlauf: bhb2bFreigabeVerlauf,
         domainSetzen: bhb2bDomainSetzen,
         domainPruefen: bhb2bDomainPruefen,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, inhaltDiff: bhb2bInhaltDiff }
     };
 })();

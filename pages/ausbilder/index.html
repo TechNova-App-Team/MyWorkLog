@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.8.2"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.8.2"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.9.0"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -167,6 +167,7 @@
         .ab-wk-card.is-approved { border-color: rgba(var(--success-rgb), 0.4); }
         .ab-wk-card.is-rejected { border-color: rgba(var(--warning-rgb), 0.4); }
         .ab-wk-card.is-geaendert { border-color: rgba(var(--danger-rgb), 0.4); }
+        .ab-wk-card.is-nachgebessert { border-color: rgba(var(--primary-rgb), 0.4); }
 
         .ab-wk-head {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -417,6 +418,55 @@
         /* Passend dazu die Pille der geaenderten Woche — sie trug bisher
            dieselbe Farbe wie eine Rueckgabe, obwohl es der staerkere Befund ist. */
         .ab-wk-state.s-alarm { color: var(--danger); background: rgba(var(--danger-rgb), 0.14); }
+        /* Ueberarbeitet: wartet auf den Ausbilder wie eine unentschiedene
+           Woche, war aber schon einmal bei ihm. Deshalb DIESELBE Farbe wie
+           „offen" (Akzent), nur ausgefuellt statt nur umrandet — kein fuenfter
+           Farbwert, der eine Bedeutung behaupten wuerde, die es nicht gibt. */
+        .ab-wk-state.s-neu { color: var(--primary); background: var(--primary-dim); }
+
+        /* Aenderungsvergleich nach einer Rueckgabe oder Freigabe. */
+        .abk-diff {
+            margin-top: 12px; padding: 12px 14px;
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
+            border-radius: var(--radius-sm);
+            background: rgba(var(--primary-rgb), 0.06);
+        }
+        .abk-diff summary {
+            cursor: pointer; font-size: 0.83rem; font-weight: 600;
+            color: var(--text-main);
+        }
+        .abk-diff-liste { list-style: none; margin: 10px 0 0; padding: 0; }
+        .abk-diff-zeile {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 2px 8px;
+            padding: 7px 0;
+            font-size: 0.82rem; line-height: 1.5;
+            border-top: 1px solid var(--border);
+        }
+        .abk-diff-zeile:first-child { border-top: 0; padding-top: 0; }
+        .abk-diff-feld { color: var(--text-muted); font-weight: 600; }
+        .abk-diff-alt {
+            color: var(--text-faint); text-decoration: line-through;
+            text-decoration-thickness: 1px;
+        }
+        .abk-diff-neu { color: var(--text-main); }
+        /* Der Pfeil traegt keine eigene Aussage — auf einer Spalte liegt der
+           Vorher-Wert ohnehin ueber dem Nachher-Wert. Er erscheint erst, wenn
+           beide nebeneinander stehen und die Leserichtung mehrdeutig wird. */
+        .abk-diff-pfeil { display: none; color: var(--text-faint); }
+        @media (min-width: 620px) {
+            .abk-diff-zeile {
+                grid-template-columns: minmax(84px, 22%) minmax(0, 1fr) auto minmax(0, 1fr);
+                align-items: baseline;
+            }
+            .abk-diff-pfeil { display: inline; }
+            /* „neu" und „entfernt" haben nur EINEN Wert. Ohne diese Regel
+               rutscht er in die Vorher-Spalte und der Rest der Zeile bleibt
+               leer — das liest sich wie eine Loeschung, die es nicht gab. */
+            .abk-diff-feld + .abk-diff-neu { grid-column: 2 / -1; }
+            .abk-diff-feld + .abk-diff-alt:last-child { grid-column: 2 / -1; }
+        }
 
         .abk-leer { font-size: 0.86rem; color: var(--text-muted); line-height: 1.65; }
         .abk-hint { margin-top: 12px; font-size: 0.83rem; color: var(--text-faint); }
@@ -748,13 +798,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.8.2"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.8.2"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.9.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.9.0"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.8.2"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.0"></script>
 
     <script>
     (function () {
@@ -1249,23 +1299,94 @@
         }
 
         // Braucht den Blick des Ausbilders: abgeschlossen und entweder noch
-        // gar nicht entschieden ODER nach einer Freigabe geaendert. Eine
-        // zurueckgegebene Woche liegt beim Azubi, zaehlt hier nicht mit — die
-        // Knoepfe bleiben aber, damit sie nach der Ueberarbeitung abgezeichnet
-        // werden kann.
+        // gar nicht entschieden, nach einer Freigabe geaendert ODER nach einer
+        // Rueckgabe ueberarbeitet. Eine zurueckgegebene Woche, an der noch
+        // niemand gearbeitet hat, liegt beim Azubi und zaehlt hier nicht mit —
+        // die Knoepfe bleiben aber, damit sie jederzeit abgezeichnet werden kann.
         function istOffen(b) {
-            return b.status !== 'incomplete' && (!b.freigabe || b.veraendert);
+            return b.status !== 'incomplete' && (!b.freigabe || b.veraendert || b.nachgebessert);
+        }
+
+        // ── Aenderungsvergleich ──────────────────────────────────────────
+        // BHB2B.inhaltDiff() liefert bewusst nur Feldschluessel und Art. Die
+        // Beschriftung entsteht erst hier, weil diese Seite zweisprachig ist —
+        // ein im Modul erzeugter deutscher Satz waere auf /en/ nicht mehr
+        // einzufangen.
+        var DIFF_LABEL = {
+            activities:      ['Tätigkeiten der Woche', 'Activities this week'],
+            instruction:     ['Unterweisungen', 'Instruction given'],
+            school:          ['Berufsschule', 'Vocational school'],
+            department:      ['Abteilung', 'Department'],
+            hours:           ['Stunden', 'Hours'],
+            mode:            ['Erfassungsart', 'Entry mode'],
+            form:            ['Schreibform', 'Writing style'],
+            umfang:          ['Umfang', 'Level of detail'],
+            dailyActivities: ['Tätigkeiten', 'Activities'],
+            dailyHours:      ['Stunden', 'Hours'],
+            dailySchool:     ['Berufsschule', 'Vocational school'],
+            sonstiges:       ['Weitere Angaben', 'Other details']
+        };
+
+        function diffLabel(d) {
+            var l = DIFF_LABEL[d.feld];
+            var name = l ? abL(l[0], l[1]) : d.feld;
+            return d.tag ? dayLabel(d.tag) + ' · ' + name : name;
+        }
+
+        // Lange Fliesstexte werden gekuerzt — der Vergleich soll zeigen, DASS
+        // und WO etwas anders ist. Den vollen Wortlaut liest man im Bericht
+        // darueber, der ohnehin auf derselben Karte steht.
+        function diffWert(v) {
+            if (v === true) return abL('ja', 'yes');
+            if (v === false) return abL('nein', 'no');
+            if (v === null || v === undefined || v === '') return '—';
+            var s = String(v).replace(/\s+/g, ' ').trim();
+            if (!s) return '—';
+            return s.length > 240 ? s.slice(0, 240) + '…' : s;
+        }
+
+        function diffHTML(b) {
+            var d = b.diff;
+            if (!d || !d.length) return '';
+            var f = b.freigabe;
+            var wann = f && f.erstellt_at ? fmtDate(String(f.erstellt_at).slice(0, 10)) : '';
+            var titel = b.veraendert
+                ? abL('Geändert seit Ihrer Freigabe', 'Changed since your approval')
+                : abL('Geändert seit Ihrer Rückgabe', 'Changed since you sent it back');
+
+            var zeilen = d.map(function (e) {
+                var neu = e.art === 'neu', weg = e.art === 'entfernt';
+                return '<li class="abk-diff-zeile">' +
+                    '<span class="abk-diff-feld">' + esc(diffLabel(e)) + '</span>' +
+                    (neu ? '' : '<span class="abk-diff-alt">' + esc(diffWert(e.vorher)) + '</span>') +
+                    (neu || weg ? '' : '<span class="abk-diff-pfeil" aria-hidden="true">→</span>') +
+                    (weg ? '' : '<span class="abk-diff-neu">' + esc(diffWert(e.nachher)) + '</span>') +
+                    '</li>';
+            }).join('');
+
+            // Standardmaessig offen: der Ausbilder oeffnet diese Karte genau
+            // deshalb. Ein zugeklapptes <details> waere hier eine Huerde vor
+            // der Information, wegen der er ueberhaupt hinsieht.
+            return '<details class="abk-diff" open>' +
+                '<summary>' + esc(titel) + (wann ? ' (' + esc(wann) + ')' : '') +
+                ' · ' + d.length + '</summary>' +
+                '<ul class="abk-diff-liste">' + zeilen + '</ul></details>';
         }
 
         function kontoKarte(b) {
             var f = b.freigabe;
             var st = b.veraendert ? 'geaendert'
+                : b.nachgebessert ? 'nachgebessert'
                 : f && f.entscheidung === 'approved' ? 'approved'
                 : f && f.entscheidung === 'rejected' ? 'rejected' : 'open';
             var stL = st === 'geaendert'
                 ? ['s-alarm', abL('Nach der Freigabe geändert', 'Changed after approval')]
+                : st === 'nachgebessert'
+                ? ['s-neu', abL('Überarbeitet', 'Revised')]
                 : stateLabel(st === 'open' ? '' : st);
-            var randKlasse = st === 'geaendert' ? ' is-geaendert' : (st !== 'open' ? ' is-' + st : '');
+            var randKlasse = st === 'geaendert' ? ' is-geaendert'
+                : st === 'nachgebessert' ? ' is-nachgebessert'
+                : (st !== 'open' ? ' is-' + st : '');
             var chev = '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
             var fuss;
@@ -1281,6 +1402,10 @@
                     fuss = '<p class="abk-hint" style="color:var(--warning)">' + abL(
                         'Diese Woche wurde nach Ihrer Freigabe geändert. Bitte erneut prüfen.',
                         'This week was changed after your approval. Please review it again.') + '</p>';
+                } else if (st === 'nachgebessert') {
+                    fuss = '<p class="abk-hint">' + abL(
+                        'Sie hatten diese Woche zurückgegeben. Sie wurde überarbeitet und liegt wieder bei Ihnen.',
+                        'You sent this week back. It has been revised and is waiting for you again.') + '</p>';
                 } else {
                     fuss = '';
                 }
@@ -1328,6 +1453,10 @@
                 '<hr class="ab-rule" style="margin:16px 0;">' +
                 weekBodyHTML(zeileZuWoche(b)) +
                 (f && f.anmerkung ? '<p class="ab-wk-note">' + esc(f.anmerkung) + '</p>' : '') +
+                // Der Vergleich steht direkt unter der eigenen Anmerkung: die
+                // Frage lautet „hat er getan, worum ich gebeten habe" — beides
+                // gehoert nebeneinander, nicht durch den Verlauf getrennt.
+                diffHTML(b) +
                 verlaufHTML +
                 fuss +
                 '</div></div></div>';
@@ -1344,7 +1473,8 @@
         // Alle Zahlen EINMAL ableiten — sonst rechnet jede Stelle ein bisschen
         // anders und die Kacheln widersprechen den Karten darunter.
         function zahlenFuer(berichte) {
-            var z = { eingereicht: 0, offen: 0, abgezeichnet: 0, zurueck: 0, geaendert: 0, inArbeit: 0,
+            var z = { eingereicht: 0, offen: 0, abgezeichnet: 0, zurueck: 0, geaendert: 0,
+                      ueberarbeitet: 0, inArbeit: 0,
                       lehrjahr: 0, zuletzt: null, aeltesteOffen: null };
             berichte.forEach(function (b) {
                 if (b.jahr > z.lehrjahr) z.lehrjahr = b.jahr;
@@ -1352,6 +1482,11 @@
                 if (b.status === 'incomplete') { z.inArbeit++; return; }
                 z.eingereicht++;
                 if (b.veraendert) z.geaendert++;
+                // Eine ueberarbeitete Woche traegt zwar noch die Rueckgabe als
+                // letzte Entscheidung, liegt aber nicht mehr beim Azubi. Sie
+                // faellt deshalb bewusst in KEINEN der drei Zweige und landet
+                // ueber `unentschieden` dort, wo sie hingehoert: bei den offenen.
+                else if (b.nachgebessert) z.ueberarbeitet++;
                 else if (b.freigabe && b.freigabe.entscheidung === 'approved') z.abgezeichnet++;
                 else if (b.freigabe && b.freigabe.entscheidung === 'rejected') z.zurueck++;
                 if (istOffen(b)) {
@@ -1387,8 +1522,16 @@
                 z.geaendert + ' ' + abL('nachträglich geändert', 'changed later') + '</span>');
             if (z.zurueck) teile.push('<span class="abk-leg"><i class="is-zurueck"></i>' +
                 z.zurueck + ' ' + abL('zurückgegeben', 'sent back') + '</span>');
+            // Ueberarbeitete Wochen liegen im selben Segment (sie warten auf
+            // eine Entscheidung), verdienen aber einen eigenen Hinweis — sonst
+            // sieht der Ausbilder nicht, dass ein Teil davon schon einmal bei
+            // ihm war. Ein FUENFTES Farbsegment waere die schlechtere Loesung:
+            // die Seite hat vier Semantik-Farben, die fuenfte muesste erfunden
+            // werden und traegt keine eigene Bedeutung im Ablauf.
             if (z.unentschieden) teile.push('<span class="abk-leg"><i class="is-offen"></i>' +
-                z.unentschieden + ' ' + abL('offen', 'open') + '</span>');
+                z.unentschieden + ' ' + abL('offen', 'open') +
+                (z.ueberarbeitet ? ' (' + z.ueberarbeitet + ' ' + abL('überarbeitet', 'revised') + ')' : '') +
+                '</span>');
             return '<div class="abk-bar" role="img" aria-label="' +
                 esc(z.eingereicht + ' ' + abL('eingereichte Wochen', 'submitted weeks')) + '">' + seg + '</div>' +
                 '<div class="abk-legende">' + teile.join('') + '</div>';
@@ -1646,10 +1789,17 @@
                 await BHB2B.freigabeSchreiben(bid, entscheidung, note || '', bericht);
                 bericht.freigabe = {
                     bericht_id: bid, entscheidung: entscheidung,
-                    anmerkung: note || '', erstellt_at: new Date().toISOString()
+                    anmerkung: note || '', inhalt: bericht.inhalt,
+                    erstellt_at: new Date().toISOString()
                 };
-                // Die frische Freigabe deckt den jetzigen Inhalt ab.
+                // Die frische Freigabe deckt den jetzigen Inhalt ab — damit ist
+                // auch jeder Aenderungsbefund erledigt, nicht nur `veraendert`.
+                // Bliebe `diff` stehen, zeigte die Karte nach dem Bestaetigen
+                // weiter „geändert seit Ihrer Rückgabe" gegen einen Stand, den
+                // es nicht mehr gibt.
                 bericht.veraendert = false;
+                bericht.nachgebessert = false;
+                bericht.diff = null;
                 renderKonto();
             } catch (e) {
                 kontoBusy(card, false);

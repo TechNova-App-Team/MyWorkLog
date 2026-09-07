@@ -367,6 +367,23 @@
             border-color: rgba(255,255,255,0.2);
             transform: translateY(-1px);
         }
+        /* Loeschen. Steht bewusst NACH `.settings-btn:hover` — gleiche
+           Spezifitaet (0,2,0), also entscheidet die Reihenfolge; weiter oben
+           eingefuegt waere die Regel wirkungslos.
+           `color-mix` statt `rgba(var(--danger-rgb), …)`: ein `--danger-rgb`
+           gibt es in core.css NICHT (nur in den Standalone-Seiten), und ein
+           undefiniertes var() macht die Flaeche transparent statt rot. */
+        .settings-btn-danger {
+            color: var(--danger);
+            border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+            background: color-mix(in srgb, var(--danger) 9%, transparent);
+        }
+        .settings-btn-danger:hover {
+            background: color-mix(in srgb, var(--danger) 16%, transparent);
+            border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+            transform: none;   /* Bewegung gehoert in :active, nicht in :hover */
+        }
+        .settings-btn-danger:active { transform: translateY(1px); }
         @keyframes cloud-btn-shake {
             0%,100% { transform: translateX(0); }
             15%      { transform: translateX(-6px); }

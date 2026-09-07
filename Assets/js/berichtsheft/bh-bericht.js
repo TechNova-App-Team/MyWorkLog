@@ -399,8 +399,7 @@ function deleteReport(id) {
     if (el) { el.classList.add('ais-confirming'); return; }
     // fallback if data-id not found
     if (!confirm('Möchtest du diesen Bericht wirklich löschen?')) return;
-    reports = reports.filter(r => r.id !== id);
-    saveToStorage(); updateUI(); showToast('Bericht gelöscht', 'info');
+    entferneBericht(id);
 }
 
 function cancelDeleteReport(id) {
@@ -409,8 +408,17 @@ function cancelDeleteReport(id) {
 }
 
 function confirmDeleteReport(id) {
+    entferneBericht(id);
+}
+
+// Beide Loeschwege laufen hier zusammen. Vorher stand die Zeile zweimal da und
+// der Cloud-Aufruf haette an zwei Stellen nachgetragen werden muessen — genau
+// die Sorte Loch, durch die der Server-Loeschvorgang jahrelang gefehlt hat:
+// wer die Arbeit tut, protokolliert sie, nicht der Klick-Handler.
+function entferneBericht(id) {
     reports = reports.filter(r => r.id !== id);
     saveToStorage(); updateUI(); showToast('Bericht gelöscht', 'info');
+    if (typeof b2bOnReportDeleted === 'function') b2bOnReportDeleted(id);
 }
 
 // ═══════════════════════════════════════

@@ -25,8 +25,8 @@ const CLOUD_OPT_IN_KEYS = {};
    (Assets/js/berichtsheft/vault-cloud.js, Tabelle `schatten_vault`).
 
    Warum er hier RAUS muss und nicht einfach zusaetzlich mitfahren kann: dieser
-   Sync laedt den KOMPLETTEN localStorage als einen Blob hoch, alle fuenf
-   Minuten automatisch (AutoSyncManager) — und laedt nie von selbst herunter.
+   Sync laedt den KOMPLETTEN localStorage als EINEN Blob hoch — und laedt nie
+   von selbst herunter.
    Zwei angemeldete Geraete ueberschreiben sich damit gegenseitig. Liefe der
    Tresor auf beiden Wegen, wuerde der Blob den frisch abgeglichenen Stand des
    anderen Geraets beim naechsten Durchlauf wieder ueberbuegeln — zwei Wege auf
@@ -568,6 +568,42 @@ class SupabaseCloudSync {
             console.error('[Cloud] downloadFromCloud Fehler:', error.message || error);
             throw error;
         }
+    }
+
+    /**
+     * Löscht den Cloud-Spiegel dieses Kontos — die Zeile in `users`.
+     *
+     * 🔴 Was hier bewusst NICHT mitgelöscht wird:
+     *  - `schatten_vault` — eigene Tabelle, eigener Weg (vault-cloud.js), und
+     *    der Tresor wird im Schatten-Berichtsheft selbst entsorgt.
+     *  - die B2B-Tabellen (`berichte`, `freigaben`, `betrieb_mitglieder`) —
+     *    dort liegt ein GEMEINSAMES Dokument. Eine Freigabe, die ein Ausbilder
+     *    unterschrieben hat, ist sein Nachweis; der Azubi kann sie nicht
+     *    einseitig aus dessen Cockpit räumen. Wer den Betrieb verlassen will,
+     *    tut das über „Verbindung lösen" im Berichtsheft.
+     *  - das Konto selbst. Ein Client kann `auth.users` nicht löschen, und ein
+     *    Knopf, der es verspricht, wäre eine Zusage ohne Deckung.
+     * Die Formulierung im Knopf muss genau das sagen: Sync-Daten, nicht Konto.
+     *
+     * @returns {Promise<Object>} { success }
+     */
+    async deleteCloudData() {
+        if (!this.user) throw new Error('Kein User eingeloggt. Bitte zuerst anmelden.');
+        if (!this.client) throw new Error('Supabase Client nicht verfügbar');
+
+        const { error } = await this.client.from('users').delete().eq('id', this.user.id);
+        if (error) throw new Error(`Löschen fehlgeschlagen (${error.code}): ${error.message}`);
+
+        // Der Zeitstempel behauptet sonst weiter eine Sicherung, die es
+        // nicht mehr gibt — und die Backup-Erinnerung bliebe still.
+        try {
+            if (localStorage.getItem('mwl_last_backup_kind') === 'cloud') {
+                localStorage.removeItem('mwl_last_export');
+                localStorage.removeItem('mwl_last_backup_kind');
+            }
+        } catch (e) { /* Speicher gesperrt — kein Grund, das Löschen zu verlieren */ }
+
+        return { success: true };
     }
 
     /**
