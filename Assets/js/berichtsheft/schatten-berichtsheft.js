@@ -1066,7 +1066,7 @@ function syncCloudMirror() {
             // Und derselbe Spiegel in die eigene Tabelle. Der localStorage-Key
             // bleibt trotzdem: er ist der Uebernahmeweg fuer Staende, die noch
             // aus dem alten Blob-Sync stammen (bootVault liest beide).
-            if (isVaultCloudSyncOn() && typeof vcPush === 'function') vcPush(mirror);
+            if (isVaultCloudSyncOn() && typeof window.vcPush === 'function') window.vcPush(mirror);
         });
     } catch (e) { /* Spiegel ist optional */ }
 }
@@ -4674,9 +4674,9 @@ async function bootVault() {
     // runter, sondern wird beim ersten Speichern in die neue Tabelle gehoben.
     // Ist die Cloud nicht erreichbar, liefert vcPull() null und alles laeuft
     // weiter wie ohne Netz.
-    if (isVaultCloudSyncOn() && typeof vcPull === 'function') {
+    if (isVaultCloudSyncOn() && typeof window.vcPull === 'function') {
         try {
-            const fern = await vcPull();
+            const fern = await window.vcPull();
             if (fern) {
                 const a = Date.parse(mirror && mirror.updatedAt || '') || 0;
                 const b = Date.parse(fern.updatedAt || '') || 0;
