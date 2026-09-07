@@ -347,7 +347,7 @@ function renderReports() {
             : '<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:4px;font-weight:700;">WÖCHENTL.</span>';
 
         return `
-                    <div class="report-item visible" data-id="${report.id}"
+                    <div class="report-item visible${bhApprovalKlasse(report)}" data-id="${report.id}"
                          onclick="${bulkMode ? `toggleSelect('${report.id}')` : `viewReport('${report.id}')`}"
                          ${isSelected ? 'style="border-color: var(--primary); background: rgba(var(--primary-rgb), 0.08);"' : ''}>
                         ${bulkMode ? `<div style="display:flex;align-items:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;"></div>` : ''}

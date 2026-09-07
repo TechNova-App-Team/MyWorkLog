@@ -28,6 +28,27 @@ function bhIsLocked(report) {
     return !!(a && a.state === 'approved' && !a.stale && a.sigStatus !== 'ungueltig');
 }
 
+// Der Freigabe-Zustand als Klasse auf der Listenkarte. Ein Badge geht in der
+// Zeile unter — dort stehen schon Modus, Status und die Kennzahlen, und der
+// Nutzer sieht in „Meine Berichtshefte" auf einen Blick nur die Farbe.
+//
+// 🔴 Die Reihenfolge der Abfragen ist DIESELBE wie in bhApprovalBadge() und
+// muss es bleiben: sonst traegt eine Karte den roten Rand und daneben das
+// gelbe Badge. Wer hier einen Zustand ergaenzt, ergaenzt ihn dort mit.
+//
+// Farbrollen wie in /ausbilder/ — gruen = abgezeichnet, gelb = liegt beim
+// Azubi (zurueckgegeben), rot = die Freigabe traegt nicht mehr (nachtraeglich
+// geaendert oder Signatur ungueltig).
+function bhApprovalKlasse(report) {
+    const a = report && report.approval;
+    if (!a) return '';
+    if (a.state === 'approved' && a.sigStatus === 'ungueltig') return ' fb-alarm';
+    if (a.state === 'approved' && a.stale) return ' fb-alarm';
+    if (a.state === 'approved') return ' fb-ok';
+    if (a.state === 'rejected') return ' fb-zurueck';
+    return '';
+}
+
 function bhApprovalBadge(report) {
     const a = report && report.approval;
     if (!a) return '';

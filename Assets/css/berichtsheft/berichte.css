@@ -67,6 +67,38 @@
     border-color: var(--border);
 }
 
+/* Freigabe-Zustand auf der Listenkarte (Klasse aus bhApprovalKlasse()).
+   Gruen = abgezeichnet, gelb = zurueckgegeben, rot = die Freigabe traegt
+   nicht mehr — dieselben Rollen wie in /ausbilder/.
+
+   🔴 Steht bewusst NACH `.report-item:hover`: gleiche Spezifitaet (0,2,0),
+   also entscheidet die Reihenfolge. Weiter oben eingefuegt bliebe der Rand
+   beim Ueberfahren wirkungslos.
+   Und bewusst nur `border-color` + Randstreifen, KEIN `background`: sonst
+   schluckt der Zustand die Hover-Rueckmeldung, und eine zurueckgegebene
+   Woche fuehlt sich als einzige nicht mehr anklickbar an. */
+.report-item.fb-zurueck { border-color: rgba(var(--warning-rgb), 0.45); }
+.report-item.fb-alarm   { border-color: rgba(var(--danger-rgb), 0.45); }
+.report-item.fb-ok      { border-color: rgba(var(--success-rgb), 0.32); }
+
+/* Der Streifen liegt im Kasten (`.report-item` hat `overflow: hidden`), also
+   ohne negative Ausrichtung. `border-radius` braucht er keinen — die Ecken
+   beschneidet der Elternteil. */
+.report-item.fb-zurueck::before,
+.report-item.fb-alarm::before,
+.report-item.fb-ok::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+}
+.report-item.fb-zurueck::before { background: var(--warning); }
+.report-item.fb-alarm::before   { background: var(--danger); }
+.report-item.fb-ok::before      { background: var(--success); }
+/* Kein zusaetzliches padding-left: die Zeile hat schon 16px, der Streifen ist
+   3px breit und liegt darin. Ein Aufschlag wuerde markierte Karten gegen
+   unmarkierte verschieben — in einer Liste faellt genau das auf. */
+
 .report-week {
     font-family: var(--font-mono);
     font-weight: 700;
