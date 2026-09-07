@@ -266,6 +266,19 @@
                 'Die Sammelansicht deiner Azubis und die offenen Freigaben liegen in der Ausbilder-Ansicht.',
                 'The overview of your apprentices and the open approvals are in the trainer view.') + '</span>' +
             '</div>' +
+            // 🔴 „Meine Berichtshefte" darunter liegt in localStorage und
+            // gehoert dem GERAET, nicht dem angemeldeten Konto. Als Ausbilder
+            // wird diese Liste nie abgeglichen: der Hochlade-Weg ist auf die
+            // Azubi-Rolle beschraenkt (bhb2bBerichtHoch), und Freigaben holt
+            // nur der Azubi-Zweig. Eine Rueckgabe erscheint hier also nie —
+            // die Liste sieht dabei exakt aus wie eine, an der nichts
+            // auszusetzen ist. Genau so gemeldet („geht immer noch ned"),
+            // waehrend in Wahrheit nur das falsche Konto angemeldet war.
+            // Also hinschreiben, statt es plausibel aussehen zu lassen.
+            (eigeneBerichte() ? '<span class="b2b-muted" style="display:block;margin-top:10px;">' + b2bL(
+                'Die Berichte weiter unten liegen auf diesem Gerät und gehören nicht zu diesem Ausbilder-Konto. Sie werden nicht mit dem Betrieb abgeglichen — Freigaben und Rückgaben erscheinen dort erst, wenn das Azubi-Konto angemeldet ist.',
+                'The reports below are stored on this device and do not belong to this trainer account. They are not synced with the company — approvals and returns only appear there once the apprentice account is signed in.') +
+                '</span>' : '') +
             (liste ? '<div class="b2b-codes">' + liste + '</div>' : '') +
             '<div class="b2b-actions" style="margin-top:12px;">' +
             '<a class="btn btn-primary" href="' + b2bL('/ausbilder/', '/en/ausbilder/') + '">' +
@@ -274,6 +287,13 @@
             '<svg class="icon"><use href="#i-plus"/></svg><span>' + b2bL('Neuer Einladungscode', 'New invite code') + '</span></button>' +
             '</div>');
         el().hidden = false;
+    }
+
+    // Liegen auf diesem Geraet ueberhaupt Berichte? `reports` ist ein Global
+    // aus bh-basis.js und existiert erst nach loadReports() — der typeof-Guard
+    // ist deshalb noetig, nicht vorsichtshalber gesetzt.
+    function eigeneBerichte() {
+        return typeof reports !== 'undefined' && Array.isArray(reports) && reports.length > 0;
     }
 
     function fehlerZeigen(msg) {
