@@ -1,0 +1,707 @@
+/* druck-responsive.css — Teil von /berichtsheft/
+   Druckausgabe, alle Breakpoints, reduzierte Bewegung, Scrollbalken,
+   Seiteneinstieg, Links, Textauswahl.
+   Laedt zuletzt: die Media Queries muessen die Regeln der Dateien davor schlagen.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+/* ═══════════════════════════════════════════════
+   PRINT STYLES
+   ═══════════════════════════════════════════════ */
+@media print {
+    body {
+        background: #fff;
+        color: #000;
+        padding: 0;
+        font-size: 12pt;
+    }
+
+    .bg-mesh,
+    .header,
+    .actions-row,
+    .search-filter-bar,
+    .top-bar,
+    .calendar-section,
+    .stats-grid,
+    .toast,
+    .autosave-indicator,
+    .confetti-container,
+    .ai-studio-fab,
+    .ai-studio,
+    .ai-studio-backdrop,
+    .mode-toggle-wrap,
+    .modal-close,
+    .report-actions,
+    .btn-icon,
+    .kbd-hint,
+    .ai-suggestions,
+    .quality-meter {
+        display: none !important;
+    }
+
+    .card,
+    .report-item,
+    .modal-content {
+        background: #fff;
+        border: 1px solid #ddd;
+        box-shadow: none;
+        color: #000;
+    }
+
+    .report-item {
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .modal {
+        position: static;
+        background: none;
+        backdrop-filter: none;
+    }
+
+    .modal.active .modal-content {
+        transform: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE DESIGN — MOBILE FIRST
+   ═══════════════════════════════════════════════ */
+
+/* --- EXTRA SMALL: < 360px --- */
+@media (max-width: 359px) {
+    :root {
+        --radius: 10px;
+        --radius-sm: 6px;
+    }
+
+    body {
+        font-size: 13px;
+    }
+
+    .page-wrap {
+        padding: 0 8px;
+        max-width: 100%;
+    }
+
+    .container {
+        gap: 12px;
+        padding-bottom: 60px;
+    }
+
+    .header {
+        padding: 16px 0 12px;
+        margin-bottom: 16px;
+    }
+
+    .header-left {
+        gap: 4px;
+    }
+
+    .page-title {
+        font-size: 1rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.75rem;
+    }
+
+    .header-right {
+        gap: 6px;
+    }
+
+    .theme-toggle,
+    .btn-vault {
+        width: 32px;
+        height: 32px;
+    }
+
+    .btn-back {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+    }
+
+    .btn-back span {
+        display: none;
+    }
+
+    .mode-toggle-wrap {
+        gap: 8px;
+    }
+
+    .streak-fire {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+
+    .progress-circle {
+        width: 35px;
+        height: 35px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+
+    .stat-card {
+        padding: 10px 12px;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+
+    .stat-value {
+        font-size: 0.95rem;
+    }
+
+    .card {
+        padding: 12px;
+        margin: 0 -8px;
+        border-radius: 0;
+    }
+
+    .cal-cell {
+        width: 14px;
+        height: 14px;
+    }
+
+    .actions-row {
+        gap: 4px;
+    }
+
+    .actions-row .btn {
+        font-size: 0.65rem;
+        padding: 6px 8px;
+    }
+
+    .actions-row .kbd-hint {
+        display: none;
+    }
+
+    .search-filter-bar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .search-field {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .report-item {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .report-actions {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .modal-content {
+        padding: 14px 12px;
+    }
+
+    .ai-studio {
+        width: calc(100% + 16px);
+        border-left: none;
+        border-radius: 0;
+        margin: 0 -8px;
+    }
+
+    .ai-studio-fab {
+        bottom: 8px;
+        right: 8px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .ai-studio-fab .icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* Day Cards */
+    .ais-day-card {
+        margin-bottom: 10px;
+    }
+
+    .ais-day-card-header {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .ais-day-name {
+        font-size: 0.85rem;
+    }
+
+    .ais-day-hours {
+        font-size: 0.75rem;
+        padding: 3px 8px;
+    }
+
+    .ais-day-action {
+        width: 24px;
+        height: 24px;
+    }
+
+    .ais-day-entries {
+        padding: 8px 12px;
+        gap: 6px;
+    }
+
+    .ais-day-entries li {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+    }
+
+    .ais-preview-content {
+        padding: 10px 0;
+    }
+}
+
+/* --- SMALL: 360px - 480px --- */
+@media (min-width: 360px) and (max-width: 480px) {
+    body {
+        font-size: 13.5px;
+    }
+
+    .page-wrap {
+        padding: 0 10px;
+    }
+
+    .container {
+        gap: 14px;
+        padding-bottom: 70px;
+    }
+
+    .header {
+        padding: 18px 0 14px;
+        margin-bottom: 18px;
+    }
+
+    .page-title {
+        font-size: 1.1rem;
+    }
+
+    .page-subtitle {
+        font-size: 0.78rem;
+    }
+
+    .theme-toggle,
+    .btn-vault {
+        width: 34px;
+        height: 34px;
+    }
+
+    .btn-back {
+        padding: 7px 11px;
+        font-size: 0.75rem;
+    }
+
+    .btn-back span {
+        display: none;
+    }
+
+    .streak-fire {
+        padding: 12px 14px;
+    }
+
+    .progress-circle {
+        width: 40px;
+        height: 40px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 12px 14px;
+    }
+
+    .stat-label {
+        font-size: 0.68rem;
+    }
+
+    .stat-value {
+        font-size: 1.05rem;
+    }
+
+    .card {
+        padding: 14px;
+    }
+
+    .cal-cell {
+        width: 16px;
+        height: 16px;
+    }
+
+    .actions-row {
+        gap: 5px;
+    }
+
+    .actions-row .btn {
+        font-size: 0.7rem;
+        padding: 7px 10px;
+    }
+
+    .actions-row .kbd-hint {
+        display: none;
+    }
+
+    .search-filter-bar {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .report-item {
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .report-actions {
+        flex-direction: column;
+    }
+
+    .modal-content {
+        padding: 16px 14px;
+    }
+
+    .ai-studio {
+        width: 100%;
+        border-left: none;
+        border-radius: 0;
+    }
+
+    .ai-studio-fab {
+        bottom: 10px;
+        right: 10px;
+        width: 42px;
+        height: 42px;
+    }
+
+    .ai-studio-fab .icon {
+        width: 17px;
+        height: 17px;
+    }
+
+    .ais-prof-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    /* Day Cards */
+    .ais-day-card {
+        margin-bottom: 12px;
+        border-radius: 8px;
+    }
+
+    .ais-day-card-header {
+        padding: 12px 14px;
+        gap: 8px;
+    }
+
+    .ais-day-name {
+        font-size: 0.9rem;
+    }
+
+    .ais-day-hours {
+        font-size: 0.8rem;
+        padding: 4px 9px;
+    }
+
+    .ais-day-action {
+        width: 26px;
+        height: 26px;
+    }
+
+    .ais-day-entries {
+        padding: 10px 14px;
+        gap: 7px;
+    }
+
+    .ais-day-entries li {
+        padding: 7px 9px;
+        font-size: 0.78rem;
+    }
+
+    .ais-day-school {
+        font-size: 0.78rem;
+        padding: 9px 14px;
+    }
+
+    .ais-preview-content {
+        padding: 12px 10px;
+    }
+}
+
+/* --- MEDIUM: 481px - 768px --- */
+@media (min-width: 481px) and (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    .page-wrap {
+        padding: 0 14px;
+    }
+
+    .container {
+        gap: 16px;
+        padding-bottom: 80px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 0 18px;
+        margin-bottom: 20px;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .page-title {
+        font-size: 1.3rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 14px 16px;
+    }
+
+    .top-bar {
+        grid-template-columns: 1fr;
+    }
+
+    .actions-row {
+        gap: 6px;
+    }
+
+    .actions-row .btn {
+        font-size: 0.78rem;
+        padding: 8px 12px;
+    }
+
+    .actions-row .kbd-hint {
+        display: none;
+    }
+
+    .search-filter-bar {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .card {
+        padding: 16px;
+    }
+
+    .report-item {
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .report-actions {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .ai-studio {
+        width: 100%;
+        border-left: none;
+        border-radius: 8px;
+    }
+
+    .ai-studio-fab {
+        bottom: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .ai-studio-fab .icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Day Cards */
+    .ais-day-card {
+        margin-bottom: 14px;
+        border-radius: 10px;
+    }
+
+    .ais-day-card-header {
+        padding: 14px 16px;
+        gap: 10px;
+    }
+
+    .ais-day-name {
+        font-size: 1rem;
+    }
+
+    .ais-day-hours {
+        font-size: 0.88rem;
+        padding: 5px 12px;
+    }
+
+    .ais-day-action {
+        width: 28px;
+        height: 28px;
+    }
+
+    .ais-day-entries {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .ais-day-entries li {
+        padding: 8px 12px;
+        font-size: 0.82rem;
+    }
+
+    .ais-day-school {
+        font-size: 0.82rem;
+        padding: 10px 16px;
+    }
+
+    .ais-preview-content {
+        padding: 14px 12px;
+    }
+}
+
+/* --- TABLET & UP: 769px+ --- */
+@media (min-width: 769px) and (max-width: 1023px) {
+    .page-wrap {
+        padding: 0 18px;
+        max-width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* --- DESKTOP: 1024px+ --- */
+@media (min-width: 1024px) {
+    /* Use default desktop styles */
+}
+
+/* --- REDUCED MOTION --- */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .report-item {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* --- PAGE ENTRY ANIMATION --- */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.header {
+    animation: fadeUp 0.4s var(--ease-out) both;
+}
+
+.mode-toggle-wrap {
+    animation: fadeUp 0.4s 0.05s var(--ease-out) both;
+}
+
+.top-bar {
+    animation: fadeUp 0.4s 0.1s var(--ease-out) both;
+}
+
+.stats-grid {
+    animation: fadeUp 0.4s 0.15s var(--ease-out) both;
+}
+
+.calendar-section {
+    animation: fadeUp 0.4s 0.2s var(--ease-out) both;
+}
+
+.actions-row {
+    animation: fadeUp 0.4s 0.25s var(--ease-out) both;
+}
+
+.search-filter-bar {
+    animation: fadeUp 0.4s 0.3s var(--ease-out) both;
+}
+
+.card {
+    animation: fadeUp 0.4s 0.35s var(--ease-out) both;
+}
+
+/* --- LINK STYLES --- */
+a {
+    color: var(--primary-light);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- SELECTION --- */
+::selection {
+    background: rgba(var(--primary-rgb), 0.25);
+    color: var(--text-main);
+}

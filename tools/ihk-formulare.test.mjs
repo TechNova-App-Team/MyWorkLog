@@ -104,6 +104,20 @@ const ERWARTET = {
     'neu-t-arp': [
         'Ausgeführte Arbeiten, Unterricht usw.', 'Gesamtstunden', 'Ggf. ausbildende Abteilung:',
     ],
+    // Wortlaut 1:1 aus dem amtlichen .doc „Ausbildungsnachweis mit Bezug zum
+    // Ausbildungsrahmenplan (wöchentlich)" (ihk.de, Blob 1371652).
+    'neu-w-arp': [
+        'Ausbildungsnachweis mit Bezug zum Ausbildungsrahmenplan (wöchentlich)',
+        'Name des/der Auszubildenden:', 'Ausbildungsjahr:', 'Ggf. ausbildende Abteilung:',
+        'Ausbildungswoche vom:', 'bis:',
+        'Betriebliche Tätigkeiten',
+        'Unterweisungen bzw. überbetriebliche Unterweisungen (z. B. im Handwerk), betrieblicher Unterricht, sonstige Schulungen',
+        'Themen des Berufsschulunterrichts',
+        'Lfd. Nr.:', 'Bezug zum Ausbildungsrahmenplan', 'Stunden',
+        'Durch die nachfolgende Unterschrift wird die Richtigkeit und Vollständigkeit der obigen Angaben bestätigt.',
+        'Datum, Unterschrift Auszubildende/r',
+        'Datum, Unterschrift Ausbildende/r oder Ausbilder/in',
+    ],
     'muc-w': [
         'Ausbildungsnachweis', 'Ausbildungsabteilung:', 'Berufsschule (Unterrichtsthemen)',
         'Unterweisungen, Lehrgespräche, betrieblicher Unterricht, sonstige Schulungen',
@@ -154,6 +168,45 @@ check('ARP: Einzelstunden im PDF', arp.pdf.includes('7,25'), '');
 check('ARP: Einzelstunden in der Vorschau', arp.html.includes('7,25'), '');
 check('ARP: Gesamtstunden-Summe im PDF', arp.pdf.includes('40'), '');
 
+// Die woechentliche ARP-Variante: derselbe Bogen wie neu-w, aber jeder der
+// DREI Kaesten bekommt eine Zusatzspalte fuer die Rahmenplan-Position.
+//
+// 🔴 Der erste Entwurf hatte daraus einen VIERTEN Kasten gemacht — geraten,
+// nicht gelesen. Der amtliche Vordruck hat drei Kaesten mit je drei Spalten.
+// Deshalb zaehlt der erste Check die Kaesten und der zweite die Spaltenkoepfe.
+const warp = render('neu-w-arp');
+check('neu-w-arp: drei Bloecke wie die Neufassung', warp.model.sections.length === 3,
+    warp.model.sections.map((s) => s.title).join(' | '));
+// Ueber „Lfd. Nr.:" gezaehlt, nicht ueber die zweite Kopfzeile: die wird
+// umgebrochen (siehe unten) und steht deshalb nie als ganzes Stueck da.
+check('neu-w-arp: der ARP-Spaltenkopf steht ueber JEDEM Block',
+    warp.pdf.split('\n').filter((s) => s === 'Lfd. Nr.:').length === 3,
+    String(warp.pdf.split('\n').filter((s) => s === 'Lfd. Nr.:').length));
+check('neu-w-arp: dasselbe in der Vorschau',
+    (warp.html.match(/fm-block-arp/g) || []).length === 3,
+    String((warp.html.match(/fm-block-arp/g) || []).length));
+check('neu-w-arp: die ARP-Spalte bleibt leer (wird von Hand gefuellt)',
+    warp.html.includes('<div class="fm-block-aval"></div>'), '');
+check('neu-w-arp: die Wocheninhalte stehen trotzdem drin',
+    warp.pdf.includes('Testumgebung aufgesetzt') && warp.pdf.includes('IT-Systeme')
+    && warp.pdf.includes('Unterweisung Arbeitssicherheit'), '');
+check('neu-w-arp: zwei Unterschriften wie die Neufassung',
+    warp.model.signatures.length === 2, String(warp.model.signatures.length));
+check('neu-w-arp: eigener Titel, kein Untertitel',
+    warp.model.subtitle === null, String(warp.model.subtitle));
+// 🔴 „Bezug zum Ausbildungsrahmenplan" ist breiter als die 34-mm-Spalte. Als
+// EINE Zeile gesetzt lief die Beschriftung ueber beide Trennlinien — im
+// Bildschirm-Screenshot kaum zu sehen, auf Papier falsch. Steht die volle
+// Zeichenfolge wieder als ein Stueck im PDF, wurde der Umbruch entfernt.
+check('neu-w-arp: der ARP-Spaltenkopf wird umgebrochen, nicht ueberstehen gelassen',
+    !warp.pdf.split('\n').some((z) => z === 'Bezug zum Ausbildungsrahmenplan'), '');
+// Gegenprobe: neu-w hat KEINE ARP-Spalte. Ohne diese Zeile waere ein Lauf, der
+// den Spaltenkopf nirgends findet, nicht von einem kaputten Vergleich zu
+// unterscheiden.
+check('Gegenprobe: neu-w traegt keine ARP-Spalte',
+    n.model.arpCol === false && !n.pdf.includes('Bezug zum Ausbildungsrahmenplan')
+    && !n.html.includes('fm-block-arp'), '');
+
 // Keine erfundenen Stunden in Bloecken, fuer die es keine Zahl gibt.
 check('nur der erste Block traegt eine Stundenzahl',
     w.model.sections.filter((s) => s.hours).length === 1,
@@ -163,7 +216,7 @@ check('nur der erste Block traegt eine Stundenzahl',
 // Der amtliche Vordruck ist einseitig. Rutscht der letzte Block auf Seite 2,
 // bleibt darunter eine halbe leere Seite — genau das war der erste Entwurf.
 console.log('\nEine normale Woche passt auf ein Blatt');
-for (const formId of ['dihk-w', 'neu-w', 'muc-w', 'dihk-t', 'neu-t', 'neu-t-arp']) {
+for (const formId of ['dihk-w', 'neu-w', 'neu-w-arp', 'muc-w', 'dihk-t', 'neu-t', 'neu-t-arp']) {
     const r = render(formId, { heftNr: '', adresse: '' });
     const ohneDeckblatt = r.rec.pages - (r.model.cover ? 1 : 0);
     check(`${formId}: eine Seite`, ohneDeckblatt === 1, `${ohneDeckblatt} Seiten`);
@@ -218,6 +271,87 @@ check('HTML aus Nutzertext wird maskiert',
     !boese.html.includes('<img src=x') && !boese.html.includes('<script>x'), '');
 check('Vorschau enthaelt die Kastenstruktur',
     boese.html.includes('fm-block-head') && boese.html.includes('fm-sig-line'), '');
+
+// ═══ 8. Digitale Freigabe steht auf dem Blatt ═══════════════════════════════
+// Bis v6.5.2 kam `approval` im ganzen PDF-Pfad nicht vor: eine freigegebene
+// Woche druckte exakt wie eine, die nie jemand gesehen hat — genau die
+// Information, fuer die der Freigabe-Weg ueberhaupt existiert, fiel beim
+// Ausdruck weg. Das faellt in einer Vorfuehrung sofort auf und in der App nie.
+console.log('\nDigitale Freigabe im Vordruck');
+
+// Gegenprobe zur Seitenzaehlung oben: mit genug Text MUSS der Bogen ueberlaufen.
+// Ohne diese Zeile waere eine Messung, die immer 1 liefert, nicht von einer
+// funktionierenden zu unterscheiden.
+{
+    const viel = Array.from({ length: 80 }, (_, i) => 'Zeile ' + i + ' der Woche.').join('\n');
+    const r = render('dihk-w', { activities: viel });
+    const inhalt = r.rec.pages - (r.model.cover ? 1 : 0);
+    check('Gegenprobe: sehr viel Text laeuft auf Seite 2 ueber', inhalt > 1,
+        'Inhaltsseiten: ' + inhalt);
+}
+
+const FREIGABE = {
+    state: 'approved', by: 'Maria Musterfrau',
+    at: '2026-09-03T10:15:00.000Z',
+    note: '', pub: 'PUBKEY', sig: 'a1b2-c3d4_e5f6g7h8i9', trust: 'known',
+};
+
+const ohne = render('dihk-w');
+const mit = render('dihk-w', { approval: FREIGABE });
+
+check('ohne Freigabe steht nichts davon auf dem Blatt',
+    !ohne.pdf.includes('Digital freigegeben') && !ohne.html.includes('fm-sig-appr'),
+    ohne.pdf.slice(0, 120));
+check('mit Freigabe steht der Name im PDF', mit.pdf.includes('Maria Musterfrau'), mit.pdf);
+check('mit Freigabe steht das Datum im PDF (lokal, nicht per toISOString verschoben)',
+    mit.pdf.includes('Digital freigegeben 03.09.2026'), mit.pdf);
+check('die Kennung ist kurz und alphanumerisch',
+    mit.model.approval.kennung === 'A1B2C3D4E5F6', mit.model.approval.kennung);
+check('der Hinweis wertet die Freigabe nicht zur Unterschrift auf',
+    mit.pdf.includes('ersetzt die eigenhändige Unterschrift nicht'), '');
+check('die Vorschau zeigt dasselbe wie das PDF',
+    mit.html.includes('Maria Musterfrau') && mit.html.includes('fm-sig-appr')
+    && mit.html.includes('fm-sig-note'), '');
+
+// Eine Rueckgabe ist ein Zwischenstand und gehoert nicht in ein Dokument, das
+// abgeheftet wird.
+const zurueck = render('dihk-w', { approval: { ...FREIGABE, state: 'rejected' } });
+check('eine Rueckgabe erscheint NICHT auf dem Blatt',
+    zurueck.model.approval === null && !zurueck.pdf.includes('Digital freigegeben'), '');
+
+// 🔴 jsPDF-Standardschriften koennen nur WinAnsi (CP1252). Ein Haken oder Pfeil
+// kaeme als falsches Glyph heraus — im Browser sieht der String richtig aus,
+// der Fehler entsteht erst beim Schreiben ins PDF.
+const ueberWinAnsi = [...mit.pdf].filter(c => c.codePointAt(0) > 0xFF);
+check('kein Zeichen ueber U+00FF im PDF-Text',
+    ueberWinAnsi.length === 0, 'gefunden: ' + [...new Set(ueberWinAnsi)].join(' '));
+// Gegenprobe: der Lauf sieht ueberhaupt Text, sonst prueft die Zeile darueber nichts.
+check('es gibt ueberhaupt PDF-Text zu pruefen', mit.pdf.length > 500, String(mit.pdf.length));
+
+// Der Vermerk landet an der Zeile des AUSBILDERS, nicht an der des Azubis.
+// Ueber den Wortlaut gesucht, weil die Vordrucke 2 bis 4 Zeilen in
+// unterschiedlicher Reihenfolge haben.
+// 🔴 Hier standen bis v6.7.9 `neufassung-w` und `ihk-muenchen` — beides KEINE
+// Vordruck-Ids. `buildIhkFormModel()` faellt bei unbekannter Id aufs DIHK-Muster
+// zurueck, der Lauf hat also dreimal dasselbe Blatt geprueft und dabei gruen
+// gemeldet. Deshalb darunter die Gegenprobe, dass jede Id wirklich existiert.
+for (const formId of ['dihk-w', 'dihk-t', 'neu-w', 'muc-w', 'neu-w-arp', 'neu-t-arp']) {
+    check(`${formId}: die Id gibt es ueberhaupt`, !!window.IHK_FORMS[formId], '');
+    const r = render(formId, { approval: FREIGABE });
+    const idx = r.model.signatures.findIndex(s => s.indexOf('Ausbilder') >= 0);
+    check(`${formId}: es gibt eine Ausbilder-Zeile`, idx >= 0, r.model.signatures.join(' | '));
+    check(`${formId}: die Freigabe steht im PDF`, r.pdf.includes('Digital freigegeben'), '');
+    // Eine Woche muss weiterhin auf EIN Blatt passen — der Vermerk darf den
+    // Bogen nicht auf Seite 2 schieben.
+    //
+    // 🔴 Das Deckblatt abziehen. `drawCover()` ruft `addPage()`, jedes Modell
+    // traegt eines — `rec.pages` ist damit NIE 1, und eine Zusicherung auf 1 faellt
+    // durch, ohne dass am Layout etwas falsch ist. Gemessen wird die Zahl der
+    // INHALTSSEITEN.
+    const inhalt = r.rec.pages - (r.model.cover ? 1 : 0);
+    check(`${formId}: eine Woche bleibt eine Seite`, inhalt === 1,
+        'Inhaltsseiten: ' + inhalt + ' (gesamt ' + r.rec.pages + ')');
+}
 
 console.log(fails ? `\n${fails} Pruefung(en) fehlgeschlagen\n` : '\nAlle Pruefungen bestanden\n');
 process.exit(fails ? 1 : 0);

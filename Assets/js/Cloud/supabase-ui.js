@@ -7,6 +7,77 @@
  * @version 1.0.0
  */
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ANMELDE-FEHLER IN KLARTEXT
+
+   Bisher stand hier `Fehler: ${error.message}` — also der englische Rohtext von
+   GoTrue. Bei "email rate limit exceeded" liest ein Nutzer damit eine Meldung,
+   die weder sagt, was los ist, noch was er tun kann.
+
+   🔴 Und genau dieser Fall ist NICHT selten: der eingebaute Mailversand von
+   Supabase erlaubt auf dem Free-Plan zwei Mails pro Stunde — fuer das ganze
+   PROJEKT, nicht pro Nutzer. Am 04.09.2026 standen in den Auth-Logs zwischen
+   19:27 und 19:31 fuenf aufeinanderfolgende 429 auf /otp, nachdem um 19:22 und
+   19:23 zwei Links rausgegangen waren. Wer danach kam, bekam nie eine Mail und
+   meldete "meine Adresse geht nicht" — der Verdacht fiel auf den Mailanbieter
+   (GMX), obwohl gar keine Mail losgeschickt wurde.
+
+   Deshalb nennt die Meldung beides: den Grund UND den Weg, der sofort
+   funktioniert (OAuth verschickt keine Mail und faellt nie unter das Limit).
+   ══════════════════════════════════════════════════════════════════════════ */
+function authFehlerText(error) {
+    const roh = String((error && (error.message || error.error_description)) || '');
+    const code = (error && (error.status || error.code)) || 0;
+    const s = roh.toLowerCase();
+
+    if (code === 429 || s.includes('rate limit') || s.includes('too many requests')) {
+        return 'Gerade wurden zu viele Anmelde-Mails verschickt. Versuch es in etwa einer '
+             + 'Stunde noch einmal — oder melde dich mit Google, GitHub oder Discord an, '
+             + 'dafür braucht es keine E-Mail.';
+    }
+    /* Passkeys. Der haeufigste Fall ist harmlos: der Nutzer bricht den
+       System-Dialog ab. Das wirft ein NotAllowedError — auch dann, wenn auf dem
+       Geraet gar kein passender Schluessel liegt. Die beiden Faelle sind vom
+       Browser NICHT zu unterscheiden, deshalb nennt der Text beide. */
+    if (s.includes('notallowederror') || s.includes('operation either timed out')) {
+        return 'Die Passkey-Anmeldung wurde abgebrochen — oder auf diesem Gerät '
+             + 'liegt noch keiner für MyWorkLog. Richte ihn einmalig in den '
+             + 'Einstellungen unter Cloud ein.';
+    }
+    if (s.includes('webauthn_credential_not_found') || s.includes('credential not found')) {
+        return 'Dieser Passkey gehört zu keinem Konto hier. Melde dich einmal '
+             + 'anders an und richte ihn danach neu ein.';
+    }
+    if (s.includes('webauthn_credential_exists')) {
+        return 'Für dieses Gerät gibt es hier schon einen Passkey.';
+    }
+    if (s.includes('webauthn_challenge_expired') || s.includes('challenge_not_found')) {
+        return 'Der Vorgang hat zu lange gedauert. Versuch es noch einmal.';
+    }
+    if (s.includes('too_many_passkeys')) {
+        return 'Für dieses Konto sind bereits die maximal möglichen Passkeys eingerichtet.';
+    }
+    if (s.includes('passkey_disabled')) {
+        return 'Passkeys sind für dieses Konto gerade nicht verfügbar.';
+    }
+    if (s.includes('nicht unterstützt')) return roh;
+    if (s.includes('expired') || s.includes('invalid or has expired') || s.includes('token not found')) {
+        return 'Dieser Anmelde-Link ist abgelaufen oder wurde schon benutzt. '
+             + 'Fordere einen neuen an.';
+    }
+    if (s.includes('invalid email') || s.includes('unable to validate email')) {
+        return 'Diese E-Mail-Adresse sieht nicht gültig aus. Bitte prüfe die Schreibweise.';
+    }
+    if (s.includes('signups not allowed') || s.includes('signup is disabled')) {
+        return 'Neue Anmeldungen sind gerade abgeschaltet.';
+    }
+    /* fetch() wirft bei fehlender Verbindung ein TypeError ohne brauchbaren Text. */
+    if (s.includes('failed to fetch') || s.includes('networkerror') || s.includes('load failed')) {
+        return 'Keine Verbindung zum Server. Prüfe deine Internetverbindung.';
+    }
+    return roh ? 'Anmeldung fehlgeschlagen: ' + roh : 'Anmeldung fehlgeschlagen.';
+}
+
 class SupabaseCloudSyncUI {
     constructor(cloudSyncInstance) {
         this.sync = cloudSyncInstance;
@@ -89,6 +160,13 @@ class SupabaseCloudSyncUI {
         if (googleBtn) {
             googleBtn.addEventListener('click', () => this.handleGoogleLogin());
         }
+
+        // Passkey
+        const passkeyBtn = document.getElementById('cloud-login-passkey');
+        if (passkeyBtn) {
+            passkeyBtn.addEventListener('click', () => this.handlePasskeyLogin());
+        }
+        this.updatePasskeyVisibility();
         
         // Sync Buttons sind jetzt in Settings Modal - keine Event Listener nötig hier
         // Sie werden über onclick Handler in index.html aufgerufen
@@ -207,18 +285,14 @@ class SupabaseCloudSyncUI {
 
             // Success Message
             this.showMessage(
-                '✅ Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link.',
+                'Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link.',
                 'success'
             );
 
             // Form clearnen
             this.emailInput.value = '';
         } catch (error) {
-            // Error Message
-            this.showMessage(
-                `❌ Fehler: ${error.message}`,
-                'error'
-            );
+            this.showMessage(authFehlerText(error), 'error');
             console.error('Login error:', error);
         } finally {
             // UI zurücksetzen
@@ -226,6 +300,46 @@ class SupabaseCloudSyncUI {
             submitText.style.display = 'inline';
             loadingSpan.style.display = 'none';
         }
+    }
+
+    /**
+     * Handler für die Anmeldung mit Passkey.
+     *
+     * Anders als bei OAuth verlaesst der Nutzer die Seite NICHT — die Anmeldung
+     * passiert im System-Dialog und ist danach sofort fertig. Der Knopf muss
+     * deshalb selbst zuruecksetzen; es gibt keinen Seitenwechsel, der das
+     * nebenbei erledigt.
+     */
+    async handlePasskeyLogin() {
+        const btn = document.getElementById('cloud-login-passkey');
+        if (!btn) return;
+        const original = btn.innerHTML;
+
+        try {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Warte auf Bestätigung…</span>';
+            await this.sync.loginWithPasskey();
+            /* Kein Erfolgs-Text: onAuthStateChanged schliesst den Dialog sofort,
+               eine Meldung waere nur ein Aufblitzen. */
+        } catch (error) {
+            this.showMessage(authFehlerText(error), 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = original;
+        }
+    }
+
+    /**
+     * Zeigt den Passkey-Knopf nur, wenn er auch etwas tun kann. Ein Knopf, der
+     * auf diesem Geraet nichts bewirken kann, ist schlimmer als keiner.
+     */
+    updatePasskeyVisibility() {
+        const btn = document.getElementById('cloud-login-passkey');
+        const block = document.getElementById('cloud-passkey-block');
+        const kann = this.sync && typeof this.sync.passkeySupported === 'function'
+                     && this.sync.passkeySupported();
+        if (block) block.style.display = kann ? '' : 'none';
+        if (btn) btn.style.display = kann ? '' : 'none';
     }
 
     /**
@@ -241,7 +355,7 @@ class SupabaseCloudSyncUI {
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithDiscord();
         } catch (error) {
-            this.showMessage(`❌ Discord Login fehlgeschlagen: ${error.message}`, 'error');
+            this.showMessage('Discord-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
             discordBtn.disabled = false;
             discordBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');
@@ -261,7 +375,7 @@ class SupabaseCloudSyncUI {
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGitHub();
         } catch (error) {
-            this.showMessage(`❌ GitHub Login fehlgeschlagen: ${error.message}`, 'error');
+            this.showMessage('GitHub-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
             githubBtn.disabled = false;
             githubBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');
@@ -281,7 +395,7 @@ class SupabaseCloudSyncUI {
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGoogle();
         } catch (error) {
-            this.showMessage(`❌ Google Login fehlgeschlagen: ${error.message}`, 'error');
+            this.showMessage('Google-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
             googleBtn.disabled = false;
             googleBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');

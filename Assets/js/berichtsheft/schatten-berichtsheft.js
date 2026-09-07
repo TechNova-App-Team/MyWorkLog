@@ -1062,6 +1062,11 @@ function syncCloudMirror() {
             if (catRec) mirror.categories = { iv: catRec.iv, data: catRec.data };
             try { localStorage.setItem(STORE_KEY, JSON.stringify(mirror)); }
             catch (e) { console.warn('[Tresor] Cloud-Spiegel konnte nicht geschrieben werden:', e && e.name); }
+
+            // Und derselbe Spiegel in die eigene Tabelle. Der localStorage-Key
+            // bleibt trotzdem: er ist der Uebernahmeweg fuer Staende, die noch
+            // aus dem alten Blob-Sync stammen (bootVault liest beide).
+            if (isVaultCloudSyncOn() && typeof vcPush === 'function') vcPush(mirror);
         });
     } catch (e) { /* Spiegel ist optional */ }
 }
@@ -4659,6 +4664,26 @@ async function bootVault() {
         const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
         if (raw && raw.salt && raw.pwHash && raw.entries) mirror = raw;
     } catch (e) { /* kaputter Key: wie kein Tresor behandeln */ }
+
+    // Der Stand aus der eigenen Tabelle. Er wird HIER geholt, nicht erst beim
+    // Entsperren: die Entscheidung "anlegen oder entsperren" und der Vergleich
+    // der Zeitstempel brauchen ihn schon.
+    //
+    // Gewonnen hat der neuere der beiden Spiegel. Der localStorage-Spiegel kann
+    // ein Stand aus dem alten Blob-Sync sein — der faellt damit nicht hinten
+    // runter, sondern wird beim ersten Speichern in die neue Tabelle gehoben.
+    // Ist die Cloud nicht erreichbar, liefert vcPull() null und alles laeuft
+    // weiter wie ohne Netz.
+    if (isVaultCloudSyncOn() && typeof vcPull === 'function') {
+        try {
+            const fern = await vcPull();
+            if (fern) {
+                const a = Date.parse(mirror && mirror.updatedAt || '') || 0;
+                const b = Date.parse(fern.updatedAt || '') || 0;
+                if (!mirror || b > a) mirror = fern;
+            }
+        } catch (e) { /* ohne Cloud weitermachen */ }
+    }
 
     if (!vaultMeta) {
         // Kein Tresor in IndexedDB — steht noch einer im localStorage?

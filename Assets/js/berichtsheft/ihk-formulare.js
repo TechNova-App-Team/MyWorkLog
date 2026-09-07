@@ -45,6 +45,10 @@
         blockUnterwHwk: 'Unterweisungen bzw. überbetriebliche Unterweisungen (z. B. im Handwerk), betrieblicher Unterricht, sonstige Schulungen',
         blockUnterwMuc: 'Unterweisungen, Lehrgespräche, betrieblicher Unterricht, sonstige Schulungen',
         blockSchule:    'Themen des Berufsschulunterrichts',
+        // Zweizeilig wie im Vordruck — die Zeilen stehen im Spaltenkopf
+        // untereinander, nicht als ein Satz.
+        arpKopf1:       'Lfd. Nr.:',
+        arpKopf2:       'Bezug zum Ausbildungsrahmenplan',
         blockSchuleMuc: 'Berufsschule (Unterrichtsthemen)',
         stunden:        'Stunden',
         fussnote:       '*  Wie lange wurde welche Tätigkeit ausgeübt?',
@@ -54,7 +58,15 @@
         sigAusbilder:   'Datum, Unterschrift Ausbildende/r oder Ausbilder/in',
         sigVertreter:   'Datum, Unterschrift gesetzliche/r Vertreter/in',
         sigWeitere:     'Datum, weitere Sichtvermerke (z. B. Lehrer/in)',
-        fortsetzung:    'Raum für zusätzliche Berichte'
+        fortsetzung:    'Raum für zusätzliche Berichte',
+        // Digitale Freigabe. Der Wortlaut wertet bewusst NICHT auf: die Freigabe
+        // ist im Berichtsheft erfasst und nachvollziehbar, aber sie ist keine
+        // eigenhändige Unterschrift und kein Identitätsnachweis (der Schlüssel
+        // des Ausbilders ist nirgends beglaubigt — siehe Kopf von mwl-sign.js).
+        // Diese Ehrlichkeit steht so auch in der Oberfläche und bleibt.
+        freigabeKopf:   'Digital freigegeben',
+        freigabeKennung: 'Kennung',
+        freigabeHinweis: 'Digitale Freigabe im Berichtsheft erfasst. Sie ersetzt die eigenhändige Unterschrift nicht.'
     };
 
     const TAGE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -158,6 +170,39 @@
             signatures: [T.sigAzubi, T.sigAusbilder]
         },
 
+        // Wortlaut und Aufbau aus dem amtlichen Vordruck
+        // „Ausbildungsnachweis mit Bezug zum Ausbildungsrahmenplan
+        // (wöchentlich)" (ihk.de, Urheber laut Dokument-Metadaten IHK zu Kiel).
+        //
+        // 🔴 Der erste Entwurf hat den ARP-Bezug als VIERTEN Kasten gebaut —
+        // das war geraten. Im echten Bogen ist er eine SPALTE in jedem der
+        // drei Kaesten, zwischen Titel und Stunden. Auch der Titel ist ein
+        // eigener, kein „(wöchentlich)" mit Untertitel.
+        //
+        // Die Spalte bleibt LEER, wie die ARP-Spalte im Tages-Vordruck: die
+        // Zuordnung zur Rahmenplan-Position traegt der Azubi von Hand ein.
+        // Dafuer gibt es kein Eingabefeld, und eine erfundene Nummer waere
+        // schlimmer als eine leere Spalte.
+        'neu-w-arp': {
+            label: 'Neufassung — wöchentlich mit ARP-Bezug',
+            labelEn: 'Revised version — weekly, with training-plan reference',
+            hint: 'Zusatzspalte „Lfd. Nr. / Bezug zum Ausbildungsrahmenplan" je Block',
+            hintEn: 'Extra column for the training-plan item in every block',
+            title: 'Ausbildungsnachweis mit Bezug zum Ausbildungsrahmenplan (wöchentlich)',
+            cadence: 'weekly',
+            kopf: KOPF_NEU,
+            hoursCol: true,
+            arpCol: true,
+            cover: 'dihk',
+            blocks: [
+                { title: T.blockBetrieb,   src: 'activities',  minH: 78 },
+                { title: T.blockUnterwHwk, src: 'instruction', minH: 42 },
+                { title: T.blockSchule,    src: 'school',      minH: 42 }
+            ],
+            confirmLine: T.bestaetigung1,
+            signatures: [T.sigAzubi, T.sigAusbilder]
+        },
+
         'neu-t-arp': {
             label: 'Neufassung — täglich mit ARP-Bezug',
             labelEn: 'Revised version — daily, with training-plan reference',
@@ -209,7 +254,7 @@
     const IHK_KAMMERN = [
         { id: 'dihk',       name: 'DIHK-Muster (Standard)',            forms: ['dihk-w', 'dihk-t'],                       verified: true },
         { id: 'muenchen',   name: 'IHK für München und Oberbayern',    forms: ['muc-w', 'dihk-t'],                        verified: true },
-        { id: 'koeln',      name: 'IHK Köln',                          forms: ['neu-w', 'neu-t', 'neu-t-arp'],            verified: true },
+        { id: 'koeln',      name: 'IHK Köln',                          forms: ['neu-w', 'neu-t', 'neu-w-arp', 'neu-t-arp'], verified: true },
         { id: 'frankfurt',  name: 'IHK Frankfurt am Main',             forms: ['neu-w', 'neu-t'],                         verified: true },
         { id: 'nuernberg',  name: 'IHK Nürnberg für Mittelfranken',    forms: ['dihk-w', 'dihk-t'],                       verified: false },
         { id: 'berlin',     name: 'IHK Berlin',                        forms: ['dihk-w', 'dihk-t'],                       verified: false },
@@ -222,7 +267,7 @@
         { id: 'bremen',     name: 'Handelskammer Bremen',              forms: ['dihk-w', 'dihk-t'],                       verified: false },
         { id: 'leipzig',    name: 'IHK zu Leipzig',                    forms: ['dihk-w', 'dihk-t'],                       verified: false },
         { id: 'dresden',    name: 'IHK Dresden',                       forms: ['dihk-w', 'dihk-t'],                       verified: false },
-        { id: 'andere',     name: 'Andere / nicht aufgeführt',         forms: ['dihk-w', 'dihk-t', 'neu-w', 'neu-t', 'neu-t-arp', 'muc-w'], verified: false }
+        { id: 'andere',     name: 'Andere / nicht aufgeführt',         forms: ['dihk-w', 'dihk-t', 'neu-w', 'neu-t', 'neu-w-arp', 'neu-t-arp', 'muc-w'], verified: false }
     ];
 
     function getKammer(id) {
@@ -263,6 +308,36 @@
         return out;
     }
 
+    // Aus report.approval wird das, was aufs Blatt kann.
+    //
+    // Bewusst NUR bei state === 'approved'. Eine Rueckgabe ist ein Zwischenstand
+    // und gehoert nicht in ein Dokument, das abgeheftet wird — sie steht in der
+    // App, wo der Azubi sie bearbeiten kann.
+    //
+    // 🔴 Keine Zeichen ueber U+00FF: jsPDF-Standardschriften koennen nur WinAnsi,
+    // ein Haken oder Pfeil kaeme als falsches Glyph heraus. Deshalb Wortlaut
+    // statt Symbol, und als Trenner ein Komma statt eines Mittelpunkts.
+    function normalizeApproval(a) {
+        if (!a || a.state !== 'approved') return null;
+        let datum = '';
+        if (a.at) {
+            const d = new Date(a.at);
+            // Lokale Datumsteile: toISOString() rechnet nach UTC und schiebt ein
+            // mitteleuropaeisches Mitternachtsdatum auf den Vortag.
+            if (!isNaN(d.getTime())) {
+                datum = String(d.getDate()).padStart(2, '0') + '.' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+            }
+        }
+        return {
+            by: String(a.by || '').trim(),
+            datum: datum,
+            // Kurzkennung der Signatur: genug, um einen Ausdruck dem Eintrag in
+            // der App zuzuordnen, ohne eine 90-Zeichen-Zeile aufs Blatt zu setzen.
+            kennung: String(a.sig || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase()
+        };
+    }
+
     function buildIhkFormModel(formId, ctx) {
         const tpl = IHK_FORMS[formId] || IHK_FORMS['dihk-w'];
         const val = k => (ctx && ctx[k] != null && ctx[k] !== '') ? String(ctx[k]) : '';
@@ -283,10 +358,13 @@
             kopfRows: kopfRows,
             hoursCol: !!tpl.hoursCol,
             hoursHead: T.stunden,
+            arpCol: !!tpl.arpCol,
+            arpHead: [T.arpKopf1, T.arpKopf2],
             footnote: tpl.footnote || null,
             confirmLine: tpl.confirmLine || null,
             sigStyle: tpl.sigStyle || 'line',
             signatures: tpl.signatures.slice(),
+            approval: normalizeApproval(ctx && ctx.approval),
             continueTitle: T.fortsetzung,
             sections: []
         };
@@ -387,10 +465,14 @@
                 h += '<div class="fm-block">' +
                      '<div class="fm-block-head">' +
                        '<span class="fm-block-title">' + esc(sec.title) + '</span>' +
+                       (model.arpCol ? '<span class="fm-block-arp">' +
+                          esc(model.arpHead[0]) + '<br>' + esc(model.arpHead[1]) + '</span>' : '') +
                        (model.hoursCol ? '<span class="fm-block-hours">' + esc(model.hoursHead) + '</span>' : '') +
                      '</div>' +
                      '<div class="fm-block-body" style="min-height:' + (sec.minH * 0.9).toFixed(0) + 'px">' +
                        '<div class="fm-block-text">' + linesHtml(sec.lines) + '</div>' +
+                       // Die ARP-Spalte bleibt leer: sie wird von Hand ausgefuellt.
+                       (model.arpCol ? '<div class="fm-block-aval"></div>' : '') +
                        (model.hoursCol ? '<div class="fm-block-hval">' + esc(sec.hours) + '</div>' : '') +
                      '</div></div>';
             } else {
@@ -421,13 +503,25 @@
 
         const per = model.sigStyle === 'dated' ? model.signatures.length : 2;
         const wPct = (100 / per).toFixed(4) + '%';
+        // Vorschau und PDF lesen dasselbe Modell — sie koennen nicht
+        // auseinanderlaufen. Was hier steht, muss auch drawSignatures() zeigen.
+        const slot = model.approval ? ausbilderSlot(model) : -1;
+        const a = model.approval;
         h += '<div class="fm-sigs' + (model.sigStyle === 'dated' ? ' fm-sigs-dated' : '') + '">' +
-             model.signatures.map(s =>
+             model.signatures.map((s, i) =>
                 '<div class="fm-sig" style="width:' + wPct + '">' +
                 (model.sigStyle === 'dated' ? '<div class="fm-sig-date">Datum:</div>' : '') +
+                (i === slot
+                    ? '<div class="fm-sig-appr">' +
+                      esc(T.freigabeKopf + (a.datum ? ' ' + a.datum : '')) +
+                      (a.by ? '<br>' + esc(a.by) : '') +
+                      (a.kennung ? '<br>' + esc(T.freigabeKennung + ' ' + a.kennung) : '') +
+                      '</div>'
+                    : '') +
                 '<div class="fm-sig-line"></div>' +
                 '<div class="fm-sig-lab">' + esc(s) + '</div></div>').join('') +
              '</div>';
+        if (model.approval) h += '<div class="fm-sig-note">' + esc(T.freigabeHinweis) + '</div>';
 
         h += '</div>';
         return h;
@@ -444,6 +538,7 @@
     const PDF = {
         ML: 20, MR: 15, MT: 16, MB: 14,     // Rand links breiter: Lochung/Heftung
         HOURS_W: 22,                         // Breite der Stunden-Spalte
+        ARP_W: 34,                           // Breite der ARP-Spalte (nur neu-w-arp)
         DAY_W: 24,                           // Breite der Wochentag-Spalte
         LH: 4.2,                             // Zeilenhoehe im Fliesstext
         HEAD_H: 11,                          // Hoehe einer Kopf-Zelle
@@ -521,11 +616,12 @@
     // dafuer — Messung und Zeichnung duerfen nicht auseinanderlaufen.
     function wrapBlock(doc, model, sec, CW) {
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
+        const aw = model.arpCol ? PDF.ARP_W : 0;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
         const out = [];
         sec.lines.forEach(l => {
             if (!l) { out.push(''); return; }
-            doc.splitTextToSize(l, CW - hw - 5).forEach(w => out.push(w));
+            doc.splitTextToSize(l, CW - hw - aw - 5).forEach(w => out.push(w));
         });
         return out;
     }
@@ -628,13 +724,28 @@
         doc.setFillColor(238, 238, 238);
         doc.rect(PDF.ML, y, CW, PDF.BAR_H, 'FD');
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
+        const aw = model.arpCol ? PDF.ARP_W : 0;
         if (hw) {
             doc.line(PDF.ML + CW - hw, y, PDF.ML + CW - hw, y + PDF.BAR_H);
             doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
             doc.text(model.hoursHead, PDF.ML + CW - hw / 2, y + 4.8, { align: 'center' });
         }
+        if (aw) {
+            // 🔴 „Bezug zum Ausbildungsrahmenplan" ist bei 6,4 pt 35,9 mm breit,
+            // die Spalte nur 34 — als eine Zeile gesetzt lief die Beschriftung
+            // ueber BEIDE Trennlinien. Deshalb umbrechen lassen (der amtliche
+            // Bogen trennt an derselben Stelle) und die Zeilen im Kopf zentrieren.
+            doc.line(PDF.ML + CW - hw - aw, y, PDF.ML + CW - hw - aw, y + PDF.BAR_H);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(5.6);
+            const mx = PDF.ML + CW - hw - aw / 2;
+            const zeilen = [];
+            model.arpHead.forEach(t => doc.splitTextToSize(t, aw - 3).forEach(z => zeilen.push(z)));
+            const zh = 2.1;
+            const start = y + (PDF.BAR_H - zeilen.length * zh) / 2 + 1.6;
+            zeilen.forEach((z, i) => doc.text(z, mx, start + i * zh, { align: 'center' }));
+        }
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-        const t = doc.splitTextToSize(title, CW - hw - 4);
+        const t = doc.splitTextToSize(title, CW - hw - aw - 4);
         doc.text(t[0], PDF.ML + 2, y + (t.length > 1 ? 3.4 : 4.8));
         if (t.length > 1) {
             doc.setFontSize(7.2);
@@ -645,6 +756,7 @@
 
     function drawTextBlock(doc, model, sec, y, CW, contentBottom, nextPage) {
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
+        const aw = model.arpCol ? PDF.ARP_W : 0;
         const lines = wrapBlock(doc, model, sec, CW);
 
         // Der Block laeuft ueber Seiten weiter, statt Zeilen abzuschneiden.
@@ -667,6 +779,9 @@
             y = blockHeadBar(doc, model, first ? sec.title : sec.title + ' (Fortsetzung)', y, CW);
             doc.rect(PDF.ML, y, CW, boxH, 'S');
             if (hw) doc.line(PDF.ML + CW - hw, y, PDF.ML + CW - hw, y + boxH);
+            // Die ARP-Spalte bekommt ihre Trennlinie, bleibt aber leer —
+            // die Rahmenplan-Position traegt der Azubi von Hand ein.
+            if (aw) doc.line(PDF.ML + CW - hw - aw, y, PDF.ML + CW - hw - aw, y + boxH);
 
             doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
             chunk.forEach((ln, i) => doc.text(ln, PDF.ML + 2.5, y + 4.6 + i * PDF.LH));
@@ -794,14 +909,40 @@
         return y;
     }
 
+    // Welche Unterschriftszeile gehoert dem Ausbilder? Ueber den Wortlaut statt
+    // ueber den Index 1: die Vordrucke haben 2 bis 4 Zeilen in verschiedener
+    // Reihenfolge, und ein fester Index waere still falsch, sobald eine Kammer
+    // dazukommt. "Auszubildende/-r" enthaelt "Ausbilder" nicht — die Woerter
+    // trennen sauber.
+    function ausbilderSlot(model) {
+        const i = model.signatures.findIndex(s => s.indexOf('Ausbilder') >= 0);
+        return i >= 0 ? i : 0;
+    }
+
     function sigBlockHeight(model) {
-        if (model.sigStyle === 'dated') return 26;
-        return Math.ceil(model.signatures.length / 2) * 17;
+        // Der Hinweis unter dem Block braucht eine eigene Zeile. Ohne diese
+        // Reserve schoebe er sich in die Fusszeile — feste mm-Hoehen sind hier
+        // genau die Falle, gegen die allocateBlocks() gebaut wurde.
+        const extra = model.approval ? 6 : 0;
+        if (model.sigStyle === 'dated') return 26 + extra;
+        return Math.ceil(model.signatures.length / 2) * 17 + extra;
     }
 
     function drawSignatures(doc, model, y, CW) {
         doc.setLineWidth(0.3);
         doc.setFont('helvetica', 'normal');
+        const slot = model.approval ? ausbilderSlot(model) : -1;
+
+        // Die drei Zeilen der Freigabe stehen UEBER der Linie, in dem Raum, der
+        // sonst leer bleibt. Deshalb waechst die Zeilenhoehe nicht.
+        const freigabe = (x, oben) => {
+            doc.setFontSize(6);
+            const a = model.approval;
+            doc.text(T.freigabeKopf + (a.datum ? ' ' + a.datum : ''), x, oben);
+            if (a.by) doc.text(a.by, x, oben + 3);
+            if (a.kennung) doc.text(T.freigabeKennung + ' ' + a.kennung, x, oben + 6);
+        };
+
         if (model.sigStyle === 'dated') {
             const n = model.signatures.length;
             const w = CW / n;
@@ -809,6 +950,7 @@
                 const x = PDF.ML + i * w;
                 doc.setFontSize(8);
                 doc.text('Datum:', x, y + 4);
+                if (i === slot) freigabe(x, y + 8);
                 doc.line(x, y + 16, x + w - 6, y + 16);
                 doc.setFontSize(7.5);
                 doc.text(s, x, y + 20);
@@ -818,10 +960,16 @@
             model.signatures.forEach((s, i) => {
                 const x = PDF.ML + (i % 2) * w;
                 const ry = y + Math.floor(i / 2) * 17;
+                if (i === slot) freigabe(x, ry + 2.5);
                 doc.line(x, ry + 10, x + w - 8, ry + 10);
                 doc.setFontSize(7.5);
                 doc.text(s, x, ry + 13.6);
             });
+        }
+
+        if (model.approval) {
+            doc.setFontSize(6);
+            doc.text(T.freigabeHinweis, PDF.ML, y + sigBlockHeight(model) - 1.5);
         }
     }
 

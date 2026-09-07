@@ -1,0 +1,532 @@
+/* ai-studio-eingaben.css — Teil von /berichtsheft/
+   Stimmung, Taetigkeits-Chips, Schreibform mit Live-Beispiel, Umfang,
+   Tagesnotizen, Berufsauswahl, Lehrjahr, Wochenplan-Feld.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+
+.ais-mood-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+}
+
+.ais-mood-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 3px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-light);
+    background: var(--bg-hover);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    user-select: none;
+}
+
+.ais-mood-card:hover {
+    border-color: var(--border-hover);
+    background: var(--bg-elevated);
+}
+
+.ais-mood-card.sel {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+}
+
+.ais-mood-card .mood-icon {
+    font-size: 1.3rem;
+    line-height: 1;
+}
+
+.ais-mood-card .mood-icon-svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
+}
+
+.ais-mood-card.sel .mood-icon-svg {
+    color: var(--primary-light);
+}
+
+.ais-mood-card .mood-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    line-height: 1.2;
+}
+
+.ais-mood-card.sel .mood-label {
+    color: var(--primary-light);
+}
+
+/* Activity chips */
+.ais-act-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ais-act-chip {
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border-light);
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    font-size: 0.74rem;
+    cursor: pointer;
+    transition: all 0.14s;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.ais-act-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
+
+.ais-act-chip.sel {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+    color: var(--primary-light);
+    font-weight: 600;
+}
+
+.ais-act-none {
+    font-size: 0.77rem;
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* Schreibform */
+.ais-form-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.ais-form-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 9px 4px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.ais-form-card:hover {
+    border-color: var(--primary);
+}
+
+.ais-form-card.sel {
+    background: var(--primary-dim);
+    border-color: var(--primary);
+}
+
+.ais-form-card-icon {
+    width: 16px;
+    height: 16px;
+    stroke: var(--text-muted);
+    stroke-width: 1.7;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ais-form-card.sel .ais-form-card-icon {
+    stroke: var(--primary-light);
+}
+
+.ais-form-card-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.ais-form-card.sel .ais-form-card-name {
+    color: var(--primary-light);
+}
+
+.ais-form-card-desc {
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    line-height: 1.2;
+}
+
+/* Live-Beispiel: laeuft durch dieselbe Engine wie die echte Generierung */
+.ais-form-bsp {
+    margin-top: 8px;
+    padding: 9px 11px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--primary);
+    border-radius: var(--radius-xs);
+}
+
+.ais-form-bsp-lbl {
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+}
+
+.ais-form-bsp-zeile {
+    margin: 0 0 3px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.ais-form-bsp-zeile:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+    .ais-form-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Umfang */
+.ais-umfang-row {
+    display: flex;
+    gap: 6px;
+}
+
+.ais-umfang-chip {
+    flex: 1;
+    padding: 8px 4px;
+    text-align: center;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.ais-umfang-chip:hover {
+    border-color: var(--primary);
+}
+
+.ais-umfang-chip.sel {
+    background: var(--primary-dim);
+    border-color: var(--primary);
+    color: var(--primary-light);
+}
+
+.ais-form-hint {
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.ais-form-hint:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.ais-collapse-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 11px 16px;
+    border-top: 1px solid var(--border-light);
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.ais-collapse-hdr:hover {
+    background: var(--bg-hover);
+}
+
+.ais-collapse-hdr-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ais-collapse-hdr-icon {
+    font-size: 1rem;
+}
+
+.ais-collapse-hdr-icon-svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: var(--text-muted);
+}
+
+.ais-collapse-hdr-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.ais-collapse-hdr-sub {
+    font-size: 0.67rem;
+    color: var(--text-dim);
+    margin-top: 1px;
+}
+
+.ais-collapse-arrow {
+    color: var(--text-dim);
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.ais-collapse-hdr.open .ais-collapse-arrow {
+    transform: rotate(180deg);
+}
+
+.ais-collapse-body {
+    display: none;
+}
+
+.ais-collapse-body.open {
+    display: block;
+}
+
+/* Day notes */
+.ais-day-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 16px;
+}
+
+.ais-day-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ais-day-note-lbl {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    width: 24px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.ais-day-note-inp {
+    flex: 1;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: var(--text-main);
+    font-size: 0.78rem;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.ais-day-note-inp:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.ais-day-note-inp::placeholder {
+    color: var(--text-dim);
+    font-style: italic;
+}
+
+/* Beruf picker */
+.ais-beruf-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-hover);
+    border: 1.5px solid var(--border-light);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+.ais-beruf-display:hover {
+    border-color: var(--primary);
+}
+
+.ais-beruf-display.has-prof {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+}
+
+.ais-beruf-icon {
+    font-size: 1.3rem;
+}
+
+.ais-beruf-name {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.ais-beruf-change {
+    font-size: 0.67rem;
+    color: var(--text-dim);
+}
+
+.ais-beruf-picker {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.ais-beruf-picker.open {
+    display: flex;
+}
+
+.ais-beruf-search {
+    padding: 8px 12px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.82rem;
+    font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ais-beruf-search:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.ais-beruf-grid2 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.ais-beruf-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 8px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-hover);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.12s;
+}
+
+.ais-beruf-opt:hover {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+}
+
+.ais-beruf-opt.sel {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+}
+
+.ais-beruf-opt-icon {
+    font-size: 1.1rem;
+}
+
+.ais-beruf-opt-name {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* Lehrjahr buttons */
+.ais-lehrjahr-row {
+    display: flex;
+    gap: 6px;
+}
+
+.ais-lj-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border-light);
+    background: var(--bg-hover);
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    user-select: none;
+}
+
+.ais-lj-btn:hover {
+    border-color: var(--border-hover);
+}
+
+.ais-lj-btn.sel {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+    color: var(--primary-light);
+}
+
+/* Week textarea */
+.ais-week-textarea {
+    width: 100%;
+    background: var(--bg-hover);
+    border: 1.5px solid var(--border-light);
+    border-radius: 12px;
+    padding: 11px 13px;
+    color: var(--text-main);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    resize: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.ais-week-textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.ais-week-textarea::placeholder {
+    color: var(--text-dim);
+    font-style: italic;
+}
+

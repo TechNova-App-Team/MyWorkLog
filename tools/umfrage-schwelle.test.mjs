@@ -13,7 +13,10 @@ import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 const UMFRAGE = 'components/umfrage/umfrage.js';
-const SEITE = 'pages/berichtsheft/index.html';
+// Seit v6.5.0 liegt die Logik der Berichtsheft-Seite in eigenen Dateien; vorher
+// stand alles inline in pages/berichtsheft/index.html.
+const HINWEIS = 'Assets/js/berichtsheft/cv2-hinweis.js';
+const UEBERSICHT = 'Assets/js/berichtsheft/bh-uebersicht.js';
 
 let ok = 0;
 const fehler = [];
@@ -63,11 +66,13 @@ pruefe('wer abgestimmt hat, sieht ihn trotz Nutzung nicht',
   bannerBei({ berichtsheft_reports: '[{"id":"x"}]', mwl_umfrage_voted: '2026-08-30' }) === 'none');
 
 // ── Teil 2: die Ankuendigung auf der Berichtsheft-Seite ──────────────────────
-// Der Block ist ein IIFE im Seitenquelltext; hier wird die Bedingung geprueft,
-// nicht das Rendern — es genuegt, dass die Schwelle VOR dem Aufbau steht.
-const seite = fs.readFileSync(SEITE, 'utf8');
-const block = seite.slice(seite.indexOf("const KEY = 'ais_cloud_v2_announcement_dismissed'"));
+// Der Block ist ein IIFE; hier wird die Bedingung geprueft, nicht das Rendern —
+// es genuegt, dass die Schwelle VOR dem Aufbau steht.
+const hinweis = fs.readFileSync(HINWEIS, 'utf8');
+const block = hinweis.slice(hinweis.indexOf("const KEY = 'ais_cloud_v2_announcement_dismissed'"));
 const bisInit = block.slice(0, block.indexOf('function init('));
+pruefe('die Ankuendigungs-Datei enthaelt ueberhaupt den Block (sonst prueft alles darunter nichts)',
+  block.length > 200 && bisInit.length > 100);
 
 console.log('\nCloud-KI-Ankuendigung');
 pruefe('liest den Berichtsbestand, bevor sie etwas anzeigt',
@@ -85,7 +90,8 @@ pruefe('liest den Speicher direkt, nicht das reports-Global',
 // Der Banner wird sonst nur beim Laden ausgewertet. Wer seinen ersten Bericht in
 // derselben Sitzung anlegt, saehe ihn erst beim naechsten Aufruf.
 console.log('\nNachzieher beim Speichern');
-const speicher = seite.slice(seite.indexOf('function saveToStorage()'));
+const uebersicht = fs.readFileSync(UEBERSICHT, 'utf8');
+const speicher = uebersicht.slice(uebersicht.indexOf('function saveToStorage()'));
 pruefe('saveToStorage() wertet den Banner neu aus',
   /umfApplyBanner\(\)/.test(speicher.slice(0, speicher.indexOf('function updateUI'))),
   'sonst erscheint der Banner erst beim naechsten Laden');
