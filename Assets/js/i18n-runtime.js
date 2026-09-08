@@ -414,7 +414,19 @@
     '2. Weihnachtsfeiertag': 'Boxing Day',
     'Silvester': "New Year's Eve",
     'Weltkindertag': "World Children's Day",
-    'Internationaler Frauentag': "International Women's Day"
+    'Internationaler Frauentag': "International Women's Day",
+
+    // ── IHK-PDF-Import (bh-ihk-import.js) ──
+    // Der Name des Vordrucks bleibt deutsch: es ist die Bezeichnung eines
+    // deutschen Behoerdenformulars, wie bei den IHK-Vordrucken.
+    'Bitte eine PDF-Datei auswählen.': 'Please choose a PDF file.',
+    'PDF-Engine wird noch geladen. Bitte einen Moment warten und erneut versuchen.':
+      'The PDF engine is still loading. Please wait a moment and try again.',
+    'Es konnten keine auswertbaren Tagesberichte in der PDF gefunden werden. Möglicherweise ist das Format abweichend.':
+      'No readable daily reports were found in this PDF. The format may differ from the expected one.',
+    'Geprüft & Unterschrieben': 'Checked & signed',
+    'Fertiggestellt': 'Completed',
+    'Bereits vorhanden': 'Already there'
   };
 
   // ─── Muster für Text mit eingesetzten Werten ───────────────────────────
@@ -422,6 +434,16 @@
   // ("vor 2d", "Ø Saldo: +1.5h"), braucht ein Muster. Reihenfolge zählt:
   // spezifische Regeln vor allgemeinen, sonst frisst die allgemeine zuerst.
   var RULES = [
+    // ── IHK-PDF-Import: Zahl steht vorne, deshalb kein MAP-Eintrag moeglich ──
+    [/^(\d+) Wochen gefunden$/g, '$1 weeks found'],
+    [/^(\d+) Wochen importieren$/g, 'Import $1 weeks'],
+    [/^(\d+) Woche importieren$/g, 'Import $1 week'],
+    [/^Fehler beim Lesen der PDF: (.*)$/g, 'Could not read the PDF: $1'],
+    // Zwei Regeln statt einer Gruppe: das deutsche Plural-"e" ist nicht das
+    // englische "s", ein $2-Durchreichen ergaebe "3 reporte imported".
+    [/^(\d+) Berichte importiert$/g, '$1 reports imported'],
+    [/^(\d+) Bericht importiert$/g, '$1 report imported'],
+
     // ── P2P Geräte-Sync: Texte mit eingesetzten Zahlen (können nicht ins MAP) ──
     // 🔴 Jede Zeile aus p2pLog() traegt ein Zeitstempel-Praefix "[HH:MM:SS] ".
     // Ein reines ^-Anker-Muster trifft deshalb NIE — die Gruppe (TS)? faengt es

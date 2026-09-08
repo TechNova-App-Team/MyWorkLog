@@ -248,6 +248,8 @@ async function editReport(id) {
             renderAISuggestions('daily');
         }, 50);
         document.getElementById('reportActivities').value = report.activities || '';
+        const dailyText = Object.values(report.dailyActivities).join('\n').trim();
+        updateQualityMeter(dailyText);
     } else {
         document.getElementById('reportActivities').value = report.activities;
         document.getElementById('charCount').textContent = report.activities.length + ' Zeichen';
@@ -269,8 +271,12 @@ function viewReport(id) {
         'signed': '<span class="badge badge-signed" style="font-size: 0.8rem; padding: 5px 14px;">&#10003; Unterschrieben</span>'
     }[report.status];
 
-    const wordCount = (report.activities + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
-    const quality = calculateQuality(report.activities);
+    const textForStats = report.mode === 'daily' 
+        ? Object.values(report.dailyActivities || {}).join('\n').trim() 
+        : report.activities;
+        
+    const wordCount = (textForStats + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
+    const quality = calculateQuality(textForStats);
 
     const content = `
                 <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">

@@ -1,0 +1,339 @@
+/* ═══ IHK PDF IMPORT OVERLAY ═══ */
+/* Stile angelehnt an foto-import.css für ein konsistentes Look & Feel */
+
+.ihk-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+}
+
+.ihk-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ihk-box {
+    background: var(--bg-deep);
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    border-radius: var(--radius);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--border);
+    display: flex;
+    flex-direction: column;
+    transform: translateY(20px) scale(0.98);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    overflow: hidden;
+}
+
+.ihk-overlay.active .ihk-box {
+    transform: translateY(0) scale(1);
+}
+
+.ihk-head {
+    display: flex;
+    align-items: flex-start;
+    padding: 1.5rem;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    background: var(--bg-surface);
+}
+
+.ihk-head-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ihk-head-text h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.ihk-head-text p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.ihk-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ihk-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-main);
+}
+
+.ihk-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.ihk-error {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+/* --- Step 1: Dropzone --- */
+.ihk-drop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    text-align: center;
+}
+
+.ihk-drop:hover, .ihk-drop.dragover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.02);
+}
+
+.ihk-drop-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--primary);
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.ihk-drop-main {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.ihk-drop-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: block;
+}
+
+.ihk-facts {
+    margin: 1.5rem 0 0 0;
+    padding: 0 0 0 1.25rem;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.ihk-facts li {
+    margin-bottom: 0.5rem;
+}
+
+/* --- Step 2: Busy --- */
+.ihk-busy-text {
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.ihk-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.ihk-bar {
+    height: 100%;
+    background: var(--primary);
+    width: 0%;
+    transition: width 0.3s;
+    border-radius: 3px;
+}
+
+.ihk-hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* --- Step 3: Result --- */
+.ihk-meta {
+    background: var(--bg-surface);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.ihk-meta-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.ihk-meta-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.2rem;
+}
+
+.ihk-meta-val {
+    font-weight: 600;
+}
+
+.ihk-weeks-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.ihk-weeks-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.ihk-weeks-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ihk-weeks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 350px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+    padding-right: 0.5rem;
+}
+
+.ihk-week-card {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+}
+
+.ihk-week-card:hover {
+    border-color: var(--primary-light);
+}
+
+.ihk-week-card.selected {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.02);
+}
+
+.ihk-week-card.duplicate {
+    opacity: 0.6;
+}
+
+.ihk-week-card.duplicate:hover {
+    opacity: 0.8;
+}
+
+.ihk-week-check {
+    margin-right: 1rem;
+}
+
+.ihk-week-info {
+    flex: 1;
+}
+
+.ihk-week-dates {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.15rem;
+}
+
+.ihk-week-details {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    display: flex;
+    gap: 0.75rem;
+}
+
+.ihk-week-duplicate-badge {
+    font-size: 0.7rem;
+    background: rgba(var(--warning-rgb), 0.15);
+    color: var(--warning);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.ihk-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+    .ihk-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .ihk-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .ihk-actions button {
+        width: 100%;
+    }
+}

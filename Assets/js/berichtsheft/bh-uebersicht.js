@@ -79,7 +79,10 @@ function updateStats() {
     const completionRate = totalReports > 0 ? Math.round((completeReports / totalReports) * 100) : 0;
 
     const totalWords = reports.reduce((sum, r) => {
-        const words = (r.activities + ' ' + (r.school || '')).split(/\s+/).filter(w => w.length > 0).length;
+        let textForStats = r.mode === 'daily' 
+            ? Object.values(r.dailyActivities || {}).join(' ') 
+            : (r.activities || '');
+        const words = (textForStats + ' ' + (r.school || '')).split(/\s+/).filter(w => w.length > 0).length;
         return sum + words;
     }, 0);
     // Die Karte heißt "Ø Wörter/Woche" — also durch Wochen teilen, nicht durch
@@ -104,25 +107,46 @@ function updateStreak() {
         return;
     }
 
-    // Find all documented weeks as "year-week" keys, sorted descending
-    const weekKeys = [...new Set(reports.map(r => {
-        const y = new Date().getFullYear(); // Simplify: use current year context
-        return r.year * 100 + r.week;
-    }))].sort((a, b) => b - a);
+    const getMonday = (date) => {
+        const d = new Date(date);
+        const day = d.getDay() || 7;
+        d.setDate(d.getDate() - day + 1);
+        return d;
+    };
 
-    // Current week
-    const now = new Date();
-    const currentWeek = getWeekNumber(now);
+    const formatYMD = (d) => {
+        return d.getFullYear() + '-' + 
+               String(d.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(d.getDate()).padStart(2, '0');
+    };
+
+    let checkDate = getMonday(new Date());
     let streak = 0;
-    let checkWeek = currentWeek;
+    
+    // Zuerst checken wir die aktuelle Woche
+    let foundThisWeek = reports.some(r => r.dateFrom === formatYMD(checkDate) || (!r.dateFrom && r.week === getWeekNumber(checkDate)));
+    
+    // Grace-Period: Wenn diese Woche noch leer ist, schauen wir, ob letzte Woche was da ist
+    if (!foundThisWeek) {
+        checkDate.setDate(checkDate.getDate() - 7);
+        let foundLastWeek = reports.some(r => r.dateFrom === formatYMD(checkDate) || (!r.dateFrom && r.week === getWeekNumber(checkDate)));
+        if (!foundLastWeek) {
+            document.getElementById('streakNum').textContent = '0';
+            return;
+        }
+    }
 
-    // Count consecutive weeks backwards
+    // Ab hier zählen wir exakt chronologisch rückwärts
     for (let i = 0; i < 200; i++) {
-        const found = reports.some(r => r.week === checkWeek);
+        const dateStr = formatYMD(checkDate);
+        const w = getWeekNumber(checkDate);
+        
+        // Matcht primär über das exakte Datum, Fallback für alte Einträge über die Kalenderwoche
+        const found = reports.some(r => r.dateFrom === dateStr || (!r.dateFrom && r.week === w));
+        
         if (found) {
             streak++;
-            checkWeek--;
-            if (checkWeek <= 0) checkWeek = 52; // wrap around
+            checkDate.setDate(checkDate.getDate() - 7);
         } else {
             break;
         }
@@ -301,25 +325,24 @@ function renderReports() {
         return matchesSearch && matchesYear && matchesStatus;
     });
 
+    const getSortKey = (r) => {
+        if (r.dateFrom) return r.dateFrom;
+        return `${r.year}-${r.week.toString().padStart(2, '0')}`;
+    };
+
     // Sort
     switch (sortOrder) {
         case 'newest':
-            filtered.sort((a, b) => {
-                if (a.year !== b.year) return b.year - a.year;
-                return b.week - a.week;
-            });
+            filtered.sort((a, b) => getSortKey(b).localeCompare(getSortKey(a)));
             break;
         case 'oldest':
-            filtered.sort((a, b) => {
-                if (a.year !== b.year) return a.year - b.year;
-                return a.week - b.week;
-            });
+            filtered.sort((a, b) => getSortKey(a).localeCompare(getSortKey(b)));
             break;
         case 'week-asc':
-            filtered.sort((a, b) => a.week - b.week);
+            filtered.sort((a, b) => a.week - b.week || getSortKey(a).localeCompare(getSortKey(b)));
             break;
         case 'week-desc':
-            filtered.sort((a, b) => b.week - a.week);
+            filtered.sort((a, b) => b.week - a.week || getSortKey(b).localeCompare(getSortKey(a)));
             break;
     }
 
