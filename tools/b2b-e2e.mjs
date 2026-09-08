@@ -101,6 +101,36 @@ try {
     const j = await rpc(azTok, 'einladung_einloesen', { p_code: code, p_anzeige_name: 'E2E Azubi' });
     ok(j.status === 200 && j.body === betriebId, 'einladung_einloesen verbindet den Azubi');
 
+    // ── Einladungscodes wegraeumen (Policy einl_delete) ──────────────────
+    // Ein versehentlich erzeugter Code muss weg koennen. Ein EINGELOESTER
+    // nicht: er belegt, auf welchem Weg der Azubi in den Betrieb kam.
+    const wegCode = 'E2E-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    await tr('einladungen', {
+        method: 'POST', body: JSON.stringify({
+            code: wegCode, betrieb_id: betriebId, rolle: 'azubi', erstellt_von: trId,
+            laeuft_ab: new Date(Date.now() + 864e5).toISOString(),
+        }),
+    });
+    const codeWeg = await tr(`einladungen?code=eq.${wegCode}&benutzt_von=is.null`, { method: 'DELETE' });
+    ok(Array.isArray(codeWeg.body) && codeWeg.body.length === 1, 'Ausbilder loescht einen unbenutzten Code');
+    const wegNach = await tr(`einladungen?code=eq.${wegCode}&select=code`);
+    ok((wegNach.body || []).length === 0, 'und er ist danach wirklich weg');
+
+    // Der oben eingeloeste `code` darf NICHT verschwinden. PostgREST meldet
+    // ein von RLS verworfenes DELETE nicht als Fehler, sondern als 0 Zeilen —
+    // deshalb wird hier BEIDES geprueft.
+    const benutztWeg = await tr(`einladungen?code=eq.${code}`, { method: 'DELETE' });
+    ok(Array.isArray(benutztWeg.body) && benutztWeg.body.length === 0,
+        'DELETE auf einen eingeloesten Code loescht nichts (Policy)');
+    const nochDa = await tr(`einladungen?code=eq.${code}&select=code,benutzt_von`);
+    ok((nochDa.body || []).length === 1 && nochDa.body[0].benutzt_von,
+        'der eingeloeste Code steht weiterhin als Nachweis da');
+
+    // Gegenprobe: der Azubi darf ueberhaupt keine Codes anfassen.
+    const azWeg = await az(`einladungen?code=eq.${code}`, { method: 'DELETE' });
+    ok(!Array.isArray(azWeg.body) || azWeg.body.length === 0,
+        'Azubi kann keinen Code loeschen');
+
     const rp = await az('berichte', {
         method: 'POST', body: JSON.stringify({
             betrieb_id: betriebId, azubi_id: azId, client_id: 'e2e-1', jahr: 1, kw: 20,

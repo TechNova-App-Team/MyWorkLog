@@ -248,12 +248,25 @@
                 : e.abgelaufen
                     ? b2bL('abgelaufen', 'expired')
                     : b2bL('offen bis ', 'valid until ') + datumKurz(e.laeuftAb);
+            // Loeschen nur, solange der Code nicht eingeloest ist — ein
+            // benutzter Code belegt, auf welchem Weg ein Azubi in den Betrieb
+            // kam. Dieselbe Grenze steht in der Policy `einl_delete`; hier
+            // wird sie nur angezeigt.
+            const loeschbar = !e.benutzt;
             return '<div class="b2b-code ' + (e.benutzt || e.abgelaufen ? 'is-used' : '') + '">' +
                 '<code>' + esc(e.code) + '</code>' +
                 (e.benutzt || e.abgelaufen ? ''
                     : '<button class="b2b-copy" onclick="b2bCodeKopieren(\'' + esc(e.code) + '\')">' +
                       b2bL('Kopieren', 'Copy') + '</button>') +
                 '<span class="b2b-code-state">' + esc(zustand) + '</span>' +
+                (loeschbar
+                    ? '<button class="b2b-code-weg" onclick="b2bCodeLoeschen(\'' + esc(e.code) + '\')" ' +
+                      'aria-label="' + esc(b2bL('Code ', 'Code ') + e.code + b2bL(' löschen', ' delete')) + '" ' +
+                      'title="' + esc(b2bL('Code löschen', 'Delete code')) + '">' +
+                      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+                      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                      '<path d="M18 6 6 18M6 6l12 12"/></svg></button>'
+                    : '') +
                 '</div>';
         }).join('');
 
@@ -358,6 +371,22 @@
         } catch (e) {
             fehlerZeigen(e && e.message || b2bL('Anlegen fehlgeschlagen.', 'Could not create.'));
             if (btn) btn.disabled = false;
+        }
+    };
+
+    // Bewusst mit Rueckfrage: der Code ist unwiederbringlich weg, und wer ihn
+    // schon verschickt hat, macht damit still eine Einladung ungueltig, die
+    // beim Azubi noch im Chat steht.
+    window.b2bCodeLoeschen = async function (code) {
+        if (!confirm(b2bL('Einladungscode ', 'Delete invite code ') + code +
+            b2bL(' löschen? Wer ihn schon bekommen hat, kann damit nicht mehr beitreten.',
+                 '? Anyone who already received it will no longer be able to join.'))) return;
+        try {
+            await BHB2B.einladungLoeschen(code);
+            toast(b2bL('Code gelöscht.', 'Code deleted.'), 'success');
+            await aktualisieren(true);
+        } catch (e) {
+            toast(e && e.message || b2bL('Code konnte nicht gelöscht werden.', 'Could not delete the code.'), 'error');
         }
     };
 

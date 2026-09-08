@@ -51,7 +51,22 @@ function stampFile(file) {
   let out = raw.replace(RE, (_m, pre, url, post) => pre + url + '?v=' + version + post);
   for (const re of VERSION_RES) out = out.replace(re, (_m, pre, post) => pre + version + post);
   if (out === raw) return 0;
-  fs.writeFileSync(file, out);
+  // 🔴 Atomar schreiben, nicht direkt. Dieses Werkzeug schreibt beim Bump 22
+  // Quelldateien neu; ein `writeFileSync` darauf ist erst leer, dann halb, dann
+  // ganz. Wer dieselbe Datei in dem Moment liest — ein Test, ein Editor, ein
+  // parallel laufender Build — bekommt einen Torso und meldet einen Fehler, den
+  // es im Code nicht gibt. Genau so sind am 2026-09-07 zweimal Tests
+  // durchgefallen, die einzeln und danach wieder sauber liefen.
+  // rename() im selben Verzeichnis ist auf allen hier benutzten Systemen
+  // atomar: der Leser sieht entweder die alte oder die neue Datei, nie eine
+  // halbe. Das Temporaerfile liegt bewusst DANEBEN, nicht in %TEMP% —
+  // ueber Laufwerksgrenzen hinweg ist rename() kein Rename mehr.
+  // Endung bewusst `.stamp.tmp`: `.gitignore` sperrt `*.tmp` (Z. 82). Mit
+  // `-tmp` griffe die Regel NICHT, und ein nach einem Abbruch liegen
+  // gebliebener Torso landete beim naechsten `git add -A` des Hooks im Commit.
+  const tmp = file + '.stamp.tmp';
+  fs.writeFileSync(tmp, out);
+  fs.renameSync(tmp, file);
   return (out.match(new RegExp('\\?v=' + version.replace(/\./g, '\\.'), 'g')) || []).length;
 }
 

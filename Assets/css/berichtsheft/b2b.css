@@ -374,6 +374,38 @@
     text-decoration: line-through;
 }
 
+/* Code wegraeumen. Zurueckhaltend, weil er neben dem Code steht und nicht die
+   Hauptaktion ist — Farbe bekommt er erst beim Ueberfahren. */
+.b2b-code-weg {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 auto;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;   /* ein <button> erbt die Schrift NICHT */
+    transition: color 0.15s var(--ease), background 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.b2b-code-weg svg { width: 14px; height: 14px; }
+.b2b-code-weg:hover,
+.b2b-code-weg:focus-visible {
+    color: var(--danger);
+    background: rgba(var(--danger-rgb), 0.10);
+    border-color: rgba(var(--danger-rgb), 0.32);
+}
+/* Auf Touch gibt es kein :hover — der Knopf muss dort von sich aus sichtbar
+   sein, sonst ist er unerreichbar (er ist ohnehin schon klein). */
+@media (hover: none) {
+    .b2b-code-weg { color: var(--text-muted); border-color: var(--border); }
+}
+
 .b2b-copy {
     appearance: none;
     border: 1px solid var(--border);

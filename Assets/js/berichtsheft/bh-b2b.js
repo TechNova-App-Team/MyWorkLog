@@ -334,6 +334,34 @@
         }));
     }
 
+    /**
+     * Einen noch nicht eingeloesten Einladungscode wegraeumen (Vertipper,
+     * versehentlich erzeugt, nicht mehr gebraucht).
+     *
+     * 🔴 Ein BENUTZTER Code bleibt: er ist der Beleg, auf welchem Weg ein
+     * Azubi in den Betrieb gekommen ist. Die Policy `einl_delete` setzt das
+     * durch (`benutzt_von is null`) — der Aufruf hier prueft es nur, um einen
+     * verstaendlichen Satz statt einer stillen 0-Zeilen-Antwort zu liefern.
+     * PostgREST meldet ein von RLS verworfenes DELETE naemlich NICHT als
+     * Fehler, sondern als „nichts geloescht".
+     */
+    async function bhb2bEinladungLoeschen(code) {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sb = await client();
+        const { data, error } = await sb.from('einladungen')
+            .delete()
+            .eq('code', String(code || ''))
+            .eq('betrieb_id', st.betriebId)
+            .is('benutzt_von', null)
+            .select('code');
+        if (error) throw new Error(error.message);
+        if (!data || !data.length) {
+            throw new Error('Dieser Code wurde bereits eingelöst und bleibt als Nachweis stehen.');
+        }
+        return true;
+    }
+
     /** Azubis des Betriebs (nur Ausbilder). */
     async function bhb2bAzubiListe() {
         const st = await bhb2bStatus();
@@ -882,6 +910,7 @@
         betriebGruenden: bhb2bBetriebGruenden,
         einladungEinloesen: bhb2bEinladungEinloesen,
         einladungErstellen: bhb2bEinladungErstellen,
+        einladungLoeschen: bhb2bEinladungLoeschen,
         einladungenListe: bhb2bEinladungenListe,
         azubiListe: bhb2bAzubiListe,
         azubiBerichte: bhb2bAzubiBerichte,

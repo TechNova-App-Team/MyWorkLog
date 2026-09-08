@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.3"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.9.3"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.4"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.9.4"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -328,7 +328,23 @@
         }
         .abk-einl-s { margin-top: 10px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; overflow-wrap: anywhere; }
         .abk-einl-lade { font-size: 0.85rem; color: var(--text-muted); }
-        .abk-kopieren { padding: 6px 12px; font-size: 0.78rem; }
+        /* 🔴 `.ab-btn { flex: 1 1 0; padding: 14px 16px }` steht WEITER UNTEN
+           (~Z. 515) und hat dieselbe Spezifitaet (0,1,0) — eine einklassige
+           `.abk-*`-Regel hier oben verliert deshalb, ohne dass etwas meckert.
+           Genau die Falle steht in CLAUDE.md. Zwei Klassen, dann gewinnt die
+           Absicht. `.abk-kopieren` war davon schon betroffen (der Knopf war
+           auf .ab-btn-Groesse statt auf 6px/12px). */
+        .abk-einl-code .abk-kopieren,
+        .abk-einl-code .abk-verwerfen { flex: 0 0 auto; padding: 6px 12px; font-size: 0.78rem; }
+        .abk-einl-code .abk-verwerfen {
+            color: var(--danger);
+            border-color: rgba(var(--danger-rgb), 0.32);
+        }
+        .abk-einl-code .abk-verwerfen:hover {
+            background: rgba(var(--danger-rgb), 0.10);
+            border-color: rgba(var(--danger-rgb), 0.5);
+        }
+        .abk-einl-code .abk-verwerfen:disabled { opacity: 0.5; cursor: default; }
 
         /* Leerzustand ohne Azubis: ein Anfang, keine Sackgasse. */
         .abk-start {
@@ -798,13 +814,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.9.3"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.9.3"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.9.4"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.9.4"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.3"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.4"></script>
 
     <script>
     (function () {
@@ -1667,7 +1683,13 @@
                 '<p class="abk-einl-t">' + abL('Einladungscode', 'Invite code') + '</p>' +
                 '<div class="abk-einl-code"><code>' + esc(code) + '</code>' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-kopieren" onclick="abkCodeKopieren(\'' + esc(code) + '\')">' +
-                '<span>' + abL('Kopieren', 'Copy') + '</span></button></div>' +
+                '<span>' + abL('Kopieren', 'Copy') + '</span></button>' +
+                // Der Knopf steht bewusst NEBEN dem frisch erzeugten Code:
+                // „aus Versehen erstellt" merkt man in genau dieser Sekunde,
+                // und ein Code, den man nicht mehr los wird, steht sonst fuer
+                // immer in der Liste im Berichtsheft.
+                '<button type="button" class="ab-btn ab-btn-ghost abk-verwerfen" onclick="abkCodeVerwerfen(\'' + esc(code) + '\')">' +
+                '<span>' + abL('Verwerfen', 'Discard') + '</span></button></div>' +
                 '<p class="abk-einl-s">' + abL(
                     'Gültig 14 Tage, einmal einlösbar. Ihr Azubi öffnet ' + link +
                     ' und trägt den Code unter „Betrieb & IHK" ein.',
@@ -1676,6 +1698,30 @@
                 '</div>';
             var c = box.querySelector('.abk-einl');
             if (c) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        };
+
+        // Einen noch nicht eingeloesten Code wieder wegraeumen. Ein bereits
+        // eingeloester bleibt stehen — er belegt, auf welchem Weg ein Azubi
+        // in den Betrieb gekommen ist; die Policy einl_delete setzt das durch.
+        window.abkCodeVerwerfen = async function (code) {
+            var box = $('abkEinladung');
+            if (!box) return;
+            var btn = box.querySelector('.abk-verwerfen');
+            if (btn) btn.disabled = true;
+            try {
+                await BHB2B.einladungLoeschen(code);
+                box.innerHTML = '<div class="abk-einl"><p class="abk-einl-lade">' +
+                    abL('Code verworfen.', 'Code discarded.') + '</p></div>';
+                einladungOffen = false;
+            } catch (e) {
+                if (btn) btn.disabled = false;
+                var p = document.createElement('p');
+                p.className = 'abk-einl-s';
+                p.style.color = 'var(--danger)';
+                p.textContent = (e && e.message) ||
+                    abL('Code konnte nicht gelöscht werden.', 'Could not delete the code.');
+                box.querySelector('.abk-einl').appendChild(p);
+            }
         };
 
         // ── Domain-Nachweis ─────────────────────────────────────────
