@@ -30,7 +30,7 @@ function saveToStorage() {
         if (typeof umfApplyBanner === 'function') umfApplyBanner();
     } catch (e) {
         console.error('Fehler beim Speichern:', e);
-        showToast('Speichern fehlgeschlagen', 'error');
+        showToast(L('Speichern fehlgeschlagen', 'Saving failed'), 'error');
     }
 }
 
@@ -185,7 +185,9 @@ function updateProgress() {
     document.getElementById('progressBarFill').style.width = percent + '%';
 
     // Sub text
-    document.getElementById('progressSub').textContent = `${documentedWeeks} von ${maxWeeks} Wochen dokumentiert`;
+    document.getElementById('progressSub').textContent = L(
+        `${documentedWeeks} von ${maxWeeks} Wochen dokumentiert`,
+        `${documentedWeeks} of ${maxWeeks} weeks documented`);
 }
 
 // ═══════════════════════════════════════
@@ -229,9 +231,14 @@ function renderCalendarHeatmap() {
         }
     });
 
-    const STATUS_TEXT = { signed: 'Unterschrieben', complete: 'Vollständig', incomplete: 'Entwurf' };
+    const STATUS_TEXT = {
+        signed: L('Unterschrieben', 'Signed'),
+        complete: L('Vollständig', 'Complete'),
+        incomplete: L('Entwurf', 'Draft')
+    };
     const STATUS_CLASS = { signed: 'signed', complete: 'complete', incomplete: 'draft' };
-    const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    const MONTHS = L('Jan Feb Mär Apr Mai Jun Jul Aug Sep Okt Nov Dez',
+        'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec').split(' ');
     const totalWeeks = isoWeeksInYear(year);
     const currentWeek = year === nowYear ? getWeekNumber(new Date()) : -1;
 
@@ -251,7 +258,9 @@ function renderCalendarHeatmap() {
         const cells = weeks.map(w => {
             const status = weekMap[w] || null;
             const mon = isoWeekMonday(year, w);
-            const label = `KW ${w} (ab ${mon.getUTCDate()}.${mon.getUTCMonth() + 1}.) — ${status ? STATUS_TEXT[status] : 'kein Bericht'}`;
+            const dm = `${mon.getUTCDate()}.${mon.getUTCMonth() + 1}.`;
+            const statusLabel = status ? STATUS_TEXT[status] : L('kein Bericht', 'no report');
+            const label = L(`KW ${w} (ab ${dm}) — ${statusLabel}`, `CW ${w} (from ${dm}) — ${statusLabel}`);
             return `<button type="button" class="cal-cell${status ? ' ' + STATUS_CLASS[status] : ''}${w === currentWeek ? ' is-now' : ''}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w})"><span class="cal-cell-tooltip">${label}</span></button>`;
         }).join('');
         return `<div class="cal-month" style="flex-grow:${weeks.length}"><span class="cal-month-label">${MONTHS[m]}</span><div class="cal-month-weeks">${cells}</div></div>`;
@@ -349,25 +358,27 @@ function renderReports() {
     if (filtered.length === 0) {
         list.innerHTML = '';
         emptyState.style.display = 'block';
-        reportCount.textContent = '0 Berichte';
+        reportCount.textContent = L('0 Berichte', '0 reports');
         return;
     }
 
     emptyState.style.display = 'none';
-    reportCount.textContent = `${filtered.length} Bericht${filtered.length !== 1 ? 'e' : ''}`;
+    reportCount.textContent = filtered.length === 1
+        ? L('1 Bericht', '1 report')
+        : L(`${filtered.length} Berichte`, `${filtered.length} reports`);
 
     list.innerHTML = filtered.map((report, index) => {
         const statusBadge = {
-            'incomplete': '<span class="badge badge-warning">In Bearbeitung</span>',
-            'complete': '<span class="badge badge-success">Vollständig</span>',
-            'signed': '<span class="badge badge-signed">&#10003; Unterschrieben</span>'
+            'incomplete': `<span class="badge badge-warning">${L('In Bearbeitung', 'In progress')}</span>`,
+            'complete': `<span class="badge badge-success">${L('Vollständig', 'Complete')}</span>`,
+            'signed': `<span class="badge badge-signed">&#10003; ${L('Unterschrieben', 'Signed')}</span>`
         }[report.status];
 
         const wordCount = (report.activities + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
         const isSelected = selectedIds.has(report.id);
         const modeBadge = report.mode === 'daily'
-            ? '<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:4px;font-weight:700;">TÄGLICH</span>'
-            : '<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:4px;font-weight:700;">WÖCHENTL.</span>';
+            ? `<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:4px;font-weight:700;">${L('TÄGLICH', 'DAILY')}</span>`
+            : `<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:4px;font-weight:700;">${L('WÖCHENTL.', 'WEEKLY')}</span>`;
 
         return `
                     <div class="report-item visible${bhApprovalKlasse(report)}" data-id="${report.id}"
@@ -375,17 +386,17 @@ function renderReports() {
                          ${isSelected ? 'style="border-color: var(--primary); background: rgba(var(--primary-rgb), 0.08);"' : ''}>
                         ${bulkMode ? `<div style="display:flex;align-items:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;"></div>` : ''}
                         <div class="report-week">
-                            KW ${report.week}<br>
-                            <small style="font-size: 0.65rem; opacity: 0.8;">${report.year}. Jahr</small>
+                            ${L('KW', 'CW')} ${report.week}<br>
+                            <small style="font-size: 0.65rem; opacity: 0.8;">${L(`${report.year}. Jahr`, `Year ${report.year}`)}</small>
                         </div>
                         <div class="report-content">
                             <div class="report-title">
-                                ${escapeHtml(report.department || 'Ausbildungsnachweis')}
+                                ${escapeHtml(report.department || L('Ausbildungsnachweis', 'Training record'))}
                             </div>
                             <div class="report-meta">
                                 <span><svg class="icon" style="width:12px;height:12px"><use href="#i-calendar"/></svg> ${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</span>
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-clock"/></svg> ${report.hours || 0} Std.</span>
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> ${wordCount} Wörter</span>
+                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-clock"/></svg> ${report.hours || 0} ${L('Std.', 'hrs')}</span>
+                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> ${wordCount} ${L('Wörter', 'words')}</span>
                                 ${modeBadge}
                                 ${statusBadge}
                                 ${bhApprovalBadge(report)}
@@ -394,16 +405,16 @@ function renderReports() {
                         </div>
                         ${!bulkMode ? `
                         <div class="report-actions" onclick="event.stopPropagation()">
-                            <button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="Freigabe durch Ausbilder"><svg class="icon"><use href="#i-tie"/></svg></button>
-                            <button class="btn-icon" onclick="editReport('${report.id}')" title="Bearbeiten"><svg class="icon"><use href="#i-edit"/></svg></button>
-                            <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="Duplizieren"><svg class="icon"><use href="#i-copy"/></svg></button>
-                            <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="Als PDF exportieren"><svg class="icon"><use href="#i-file"/></svg></button>
-                            <button class="btn-icon danger" onclick="deleteReport('${report.id}')" title="Löschen"><svg class="icon"><use href="#i-trash"/></svg></button>
+                            <button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="${L('Freigabe durch Ausbilder', 'Trainer sign-off')}"><svg class="icon"><use href="#i-tie"/></svg></button>
+                            <button class="btn-icon" onclick="editReport('${report.id}')" title="${L('Bearbeiten', 'Edit')}"><svg class="icon"><use href="#i-edit"/></svg></button>
+                            <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="${L('Duplizieren', 'Duplicate')}"><svg class="icon"><use href="#i-copy"/></svg></button>
+                            <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="${L('Als PDF exportieren', 'Export as PDF')}"><svg class="icon"><use href="#i-file"/></svg></button>
+                            <button class="btn-icon danger" onclick="deleteReport('${report.id}')" title="${L('Löschen', 'Delete')}"><svg class="icon"><use href="#i-trash"/></svg></button>
                         </div>
                         <div class="ais-del-confirm-strip" onclick="event.stopPropagation()">
-                            <span class="ais-del-confirm-label">Löschen?</span>
-                            <button class="ais-del-btn-nein" onclick="cancelDeleteReport('${report.id}')">Nein</button>
-                            <button class="ais-del-btn-ja" onclick="confirmDeleteReport('${report.id}')">Ja</button>
+                            <span class="ais-del-confirm-label">${L('Löschen?', 'Delete?')}</span>
+                            <button class="ais-del-btn-nein" onclick="cancelDeleteReport('${report.id}')">${L('Nein', 'No')}</button>
+                            <button class="ais-del-btn-ja" onclick="confirmDeleteReport('${report.id}')">${L('Ja', 'Yes')}</button>
                         </div>` : ''}
                     </div>
                 `;

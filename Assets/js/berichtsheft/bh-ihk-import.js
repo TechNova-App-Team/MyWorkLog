@@ -92,12 +92,13 @@ function ihkFileSelected(input) {
 
 async function ihkHandleFile(file) {
     if (file.type !== 'application/pdf') {
-        ihkShowError('Bitte eine PDF-Datei auswählen.');
+        ihkShowError(L('Bitte eine PDF-Datei auswählen.', 'Please choose a PDF file.'));
         return;
     }
 
     if (!ihkPdfLoaded || !window.pdfjsLib) {
-        ihkShowError('PDF-Engine wird noch geladen. Bitte einen Moment warten und erneut versuchen.');
+        ihkShowError(L('PDF-Engine wird noch geladen. Bitte einen Moment warten und erneut versuchen.',
+            'The PDF engine is still loading. Please wait a moment and try again.'));
         return;
     }
 
@@ -171,7 +172,7 @@ async function ihkHandleFile(file) {
         
     } catch (e) {
         console.error('PDF Parse Error:', e);
-        ihkShowError('Fehler beim Lesen der PDF: ' + e.message);
+        ihkShowError(L('Fehler beim Lesen der PDF: ', 'Error reading the PDF: ') + e.message);
     }
 }
 
@@ -414,7 +415,8 @@ function ihkProcessExtractedText(pagesText) {
     console.log(`DEBUG: Total parsed weeks in Map: ${ihkParsedWeeks.length}`);
     
     if (ihkParsedWeeks.length === 0) {
-        ihkShowError('Es konnten keine auswertbaren Tagesberichte in der PDF gefunden werden. Möglicherweise ist das Format abweichend.');
+        ihkShowError(L('Es konnten keine auswertbaren Tagesberichte in der PDF gefunden werden. Möglicherweise ist das Format abweichend.',
+            'No readable daily records were found in the PDF. The format may differ from what is expected.'));
         return;
     }
     
@@ -461,11 +463,13 @@ function ihkShowResult(meta) {
         card.innerHTML = `
             <input type="checkbox" class="ihk-week-check" value="${idx}" ${isDuplicate ? '' : 'checked'}>
             <div class="ihk-week-info">
-                <span class="ihk-week-dates">KW ${week.week} (${df} - ${dt})</span>
+                <span class="ihk-week-dates">${L('KW', 'CW')} ${week.week} (${df} - ${dt})</span>
                 <div class="ihk-week-details">
-                    <span>${week.hours.toFixed(1)} Std.</span>
-                    ${week.status === 'signed' ? '<span style="color:var(--success);">Geprüft & Unterschrieben</span>' : '<span>Fertiggestellt</span>'}
-                    ${isDuplicate ? '<span class="ihk-week-duplicate-badge">Bereits vorhanden</span>' : ''}
+                    <span>${week.hours.toFixed(1)} ${L('Std.', 'hrs')}</span>
+                    ${week.status === 'signed'
+                        ? `<span style="color:var(--success);">${L('Geprüft & Unterschrieben', 'Reviewed & signed')}</span>`
+                        : `<span>${L('Fertiggestellt', 'Completed')}</span>`}
+                    ${isDuplicate ? `<span class="ihk-week-duplicate-badge">${L('Bereits vorhanden', 'Already there')}</span>` : ''}
                 </div>
             </div>
         `;
@@ -480,16 +484,20 @@ function ihkShowResult(meta) {
         list.appendChild(card);
     });
     
-    document.getElementById('ihkWeeksTitle').textContent = `${ihkParsedWeeks.length} Wochen gefunden`;
+    document.getElementById('ihkWeeksTitle').textContent = L(`${ihkParsedWeeks.length} Wochen gefunden`,
+        `${ihkParsedWeeks.length} weeks found`);
     
     // Button state
     const btn = document.getElementById('ihkBtnImport');
-    btn.textContent = `${ihkParsedWeeks.length - duplicateCount} Wochen importieren`;
-    
+    const importLabel = (n) => n === 1
+        ? L('1 Woche importieren', 'Import 1 week')
+        : L(`${n} Wochen importieren`, `Import ${n} weeks`);
+    btn.textContent = importLabel(ihkParsedWeeks.length - duplicateCount);
+
     // Listen for changes to update button
     list.addEventListener('change', () => {
         const checked = list.querySelectorAll('input:checked').length;
-        btn.textContent = `${checked} Woche${checked !== 1 ? 'n' : ''} importieren`;
+        btn.textContent = importLabel(checked);
         btn.disabled = checked === 0;
     });
 }
@@ -517,8 +525,9 @@ function ihkExecuteImport() {
     if (checkedBoxes.length === 0) return;
     
     if (typeof reports === 'undefined' || typeof saveToStorage !== 'function') {
-        bhAlert('Import nicht möglich',
-            'Der Berichtsheft-Speicher ist auf dieser Seite nicht verfügbar. Es wurde nichts importiert und nichts geändert — lade die Seite neu und versuche es erneut.');
+        bhAlert(L('Import nicht möglich', 'Import not possible'),
+            L('Der Berichtsheft-Speicher ist auf dieser Seite nicht verfügbar. Es wurde nichts importiert und nichts geändert — lade die Seite neu und versuche es erneut.',
+              'The report-book storage is not available on this page. Nothing was imported and nothing was changed — reload the page and try again.'));
         return;
     }
     
@@ -555,7 +564,11 @@ function ihkExecuteImport() {
     }
 
     if (typeof updateUI === 'function') updateUI();
-    if (typeof showToast === 'function') showToast(`${importCount} Bericht${importCount !== 1 ? 'e' : ''} importiert`, 'success');
+    if (typeof showToast === 'function') showToast(
+        importCount === 1
+            ? L('1 Bericht importiert', '1 report imported')
+            : L(`${importCount} Berichte importiert`, `${importCount} reports imported`),
+        'success');
     
     closeIhkImport();
     

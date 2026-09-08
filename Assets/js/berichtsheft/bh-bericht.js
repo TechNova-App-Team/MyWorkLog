@@ -70,7 +70,7 @@ function getWeekDates(weekNum, year) {
 
 function openNewReportModal() {
     editingId = null;
-    document.getElementById('modalTitle').textContent = 'Neuen Bericht erstellen';
+    document.getElementById('modalTitle').textContent = L('Neuen Bericht erstellen', 'Create new report');
     document.getElementById('reportForm').reset();
 
     // Set current week
@@ -178,7 +178,7 @@ function saveReport(event) {
     closeReportModal();
     clearDraft();
 
-    showToast(editingId ? 'Bericht aktualisiert' : 'Bericht erstellt', 'success');
+    showToast(editingId ? L('Bericht aktualisiert', 'Report updated') : L('Bericht erstellt', 'Report created'), 'success');
 
     // B2B: bei einem Azubi den Bericht in die Betriebs-Tabelle spiegeln.
     // Guard, weil bh-b2b-ui.js nur mit geladenem Supabase-Config etwas tut.
@@ -205,18 +205,21 @@ async function editReport(id) {
         // muss der Ausbilder. Das ist der Kern der Revisionssicherheit und
         // bewusst so: sonst waere die Sperre nur ein Vorschlag.
         if (report.approval && report.approval.server) {
-            await bhAlert('Diese Woche ist abgezeichnet',
-                (report.approval.by || 'Dein Ausbilder') + ' hat die Woche bestätigt. Zum Ändern muss dein Ausbilder sie erst zurückgeben.');
+            await bhAlert(L('Diese Woche ist abgezeichnet', 'This week has been signed off'),
+                (report.approval.by || L('Dein Ausbilder', 'Your trainer'))
+                + L(' hat die Woche bestätigt. Zum Ändern muss dein Ausbilder sie erst zurückgeben.',
+                    ' has approved this week. To change it, your trainer has to return it first.'));
             return;
         }
         // Lokale Freigabe (Link-/QR-Weg): die liegt in den eigenen Daten, der
         // Nutzer kann sie aufheben — die Warnung soll ihn nur davor bewahren,
         // das versehentlich zu tun.
         const weiter = await bhConfirm({
-            title: 'Bestätigte Woche bearbeiten?',
-            text: (report.approval.by || 'Der Ausbilder') + ' hat diese Woche bestätigt. Beim Bearbeiten entfällt die Bestätigung, '
-                + 'und die Woche muss erneut freigegeben werden.',
-            confirmText: 'Trotzdem bearbeiten'
+            title: L('Bestätigte Woche bearbeiten?', 'Edit an approved week?'),
+            text: (report.approval.by || L('Der Ausbilder', 'The trainer'))
+                + L(' hat diese Woche bestätigt. Beim Bearbeiten entfällt die Bestätigung, und die Woche muss erneut freigegeben werden.',
+                    ' has approved this week. Editing removes the approval, and the week has to be approved again.'),
+            confirmText: L('Trotzdem bearbeiten', 'Edit anyway')
         });
         if (!weiter) return;
         delete report.approval;
@@ -226,7 +229,7 @@ async function editReport(id) {
     }
 
     editingId = id;
-    document.getElementById('modalTitle').textContent = 'Bericht bearbeiten';
+    document.getElementById('modalTitle').textContent = L('Bericht bearbeiten', 'Edit report');
     document.getElementById('reportYear').value = report.year;
     document.getElementById('reportWeek').value = report.week;
     document.getElementById('reportDateFrom').value = report.dateFrom;
@@ -252,7 +255,7 @@ async function editReport(id) {
         updateQualityMeter(dailyText);
     } else {
         document.getElementById('reportActivities').value = report.activities;
-        document.getElementById('charCount').textContent = report.activities.length + ' Zeichen';
+        document.getElementById('charCount').textContent = report.activities.length + L(' Zeichen', ' characters');
         updateQualityMeter(report.activities);
         renderAISuggestions('weekly');
     }
@@ -266,9 +269,9 @@ function viewReport(id) {
     if (!report) return;
 
     const statusText = {
-        'incomplete': '<span class="badge badge-warning" style="font-size: 0.8rem; padding: 5px 14px;">In Bearbeitung</span>',
-        'complete': '<span class="badge badge-success" style="font-size: 0.8rem; padding: 5px 14px;">Vollständig</span>',
-        'signed': '<span class="badge badge-signed" style="font-size: 0.8rem; padding: 5px 14px;">&#10003; Unterschrieben</span>'
+        'incomplete': `<span class="badge badge-warning" style="font-size: 0.8rem; padding: 5px 14px;">${L('In Bearbeitung', 'In progress')}</span>`,
+        'complete': `<span class="badge badge-success" style="font-size: 0.8rem; padding: 5px 14px;">${L('Vollständig', 'Complete')}</span>`,
+        'signed': `<span class="badge badge-signed" style="font-size: 0.8rem; padding: 5px 14px;">&#10003; ${L('Unterschrieben', 'Signed')}</span>`
     }[report.status];
 
     const textForStats = report.mode === 'daily' 
@@ -280,38 +283,38 @@ function viewReport(id) {
 
     const content = `
                 <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
-                    <h2 style="margin-bottom: 0.5rem; font-size: 1.5rem; letter-spacing: -0.5px;">Ausbildungsnachweis</h2>
-                    <p style="color: var(--text-muted); font-size: 0.9rem;">KW ${report.week} • ${report.year}. Ausbildungsjahr</p>
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.5rem; letter-spacing: -0.5px;">${L('Ausbildungsnachweis', 'Training record')}</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">${L(`KW ${report.week} • ${report.year}. Ausbildungsjahr`, `CW ${report.week} • Training year ${report.year}`)}</p>
                     <div style="margin-top: 0.75rem;">${statusText}</div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border: 1px solid var(--border);">
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Zeitraum</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Zeitraum', 'Period')}</div>
                         <div style="font-weight: 600; font-size: 0.95rem;">${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Abteilung</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Abteilung', 'Department')}</div>
                         <div style="font-weight: 600; font-size: 0.95rem;">${escapeHtml(report.department || '-')}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Stunden</div>
-                        <div style="font-weight: 600; font-size: 0.95rem;">${report.hours || 0} Std.</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Stunden', 'Hours')}</div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${report.hours || 0} ${L('Std.', 'hrs')}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Wörter</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Wörter', 'Words')}</div>
                         <div style="font-weight: 600; font-size: 0.95rem;">${wordCount}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Qualität</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Qualität', 'Quality')}</div>
                         <div style="font-weight: 700; font-size: 0.95rem; color: ${quality >= 80 ? 'var(--success)' : quality >= 50 ? 'var(--warning)' : 'var(--danger)'};">${quality}%</div>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 2rem;">
                     <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
-                        <svg class="icon" style="width:16px;height:16px"><use href="#i-clipboard"/></svg> Ausgeführte Tätigkeiten
-                        ${report.mode === 'daily' ? '<span style="font-size:0.68rem;padding:2px 8px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:5px;font-weight:700;">TÄGLICH / IHK</span>' : '<span style="font-size:0.68rem;padding:2px 8px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:5px;font-weight:700;">WÖCHENTLICH</span>'}
+                        <svg class="icon" style="width:16px;height:16px"><use href="#i-clipboard"/></svg> ${L('Ausgeführte Tätigkeiten', 'Activities carried out')}
+                        ${report.mode === 'daily' ? `<span style="font-size:0.68rem;padding:2px 8px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:5px;font-weight:700;">${L('TÄGLICH / IHK', 'DAILY / IHK')}</span>` : `<span style="font-size:0.68rem;padding:2px 8px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:5px;font-weight:700;">${L('WÖCHENTLICH', 'WEEKLY')}</span>`}
                     </h3>
                     ${report.mode === 'daily' && report.dailyActivities ? `
                         <div style="display:flex;flex-direction:column;gap:0.75rem;">
@@ -322,13 +325,13 @@ function viewReport(id) {
         if (!text && !isSchool) return '';
 
         let displayText = text || '';
-        if (isSchool && text) displayText = '[Berufsschule] ' + text;
-        else if (isSchool) displayText = 'Berufsschule';
+        if (isSchool && text) displayText = L('[Berufsschule] ', '[Vocational school] ') + text;
+        else if (isSchool) displayText = L('Berufsschule', 'Vocational school');
 
         return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isSchool ? 'rgba(var(--primary-rgb), 0.4)' : 'var(--border)'};border-radius:var(--radius-sm);overflow:hidden;${isSchool ? 'border-left:3px solid var(--primary);' : ''}">
                                     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:${isSchool ? 'rgba(var(--primary-rgb), 0.05)' : 'rgba(255,255,255,0.02)'};border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;">
                                         <span>${day.name}</span>
-                                        ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${hrs} Std.</span>` : ''}
+                                        ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${hrs} ${L('Std.', 'hrs')}</span>` : ''}
                                     </div>
                                     <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(displayText)}</div>
                                 </div>`;
@@ -340,7 +343,7 @@ function viewReport(id) {
                 ${report.school ? `
                 <div style="margin-bottom: 2rem;">
                     <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--cyan); display: flex; align-items: center; gap: 8px;">
-                        <svg class="icon" style="width:16px;height:16px"><use href="#i-book"/></svg> Berufsschule
+                        <svg class="icon" style="width:16px;height:16px"><use href="#i-book"/></svg> ${L('Berufsschule', 'Vocational school')}
                     </h3>
                     <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem;">${escapeHtml(report.school)}</div>
                 </div>
@@ -350,16 +353,16 @@ function viewReport(id) {
 
                 <div style="display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="editReport('${report.id}'); closeViewModal();">
-                        <svg class="icon"><use href="#i-edit"/></svg> Bearbeiten
+                        <svg class="icon"><use href="#i-edit"/></svg> ${L('Bearbeiten', 'Edit')}
                     </button>
                     <button class="btn btn-secondary" onclick="duplicateReport('${report.id}'); closeViewModal();">
-                        <svg class="icon"><use href="#i-copy"/></svg> Duplizieren
+                        <svg class="icon"><use href="#i-copy"/></svg> ${L('Duplizieren', 'Duplicate')}
                     </button>
                     <button class="btn btn-secondary" onclick="exportReportPDF('${report.id}')">
-                        <svg class="icon"><use href="#i-file"/></svg> PDF Export
+                        <svg class="icon"><use href="#i-file"/></svg> ${L('PDF Export', 'PDF export')}
                     </button>
                     <button class="btn btn-secondary" onclick="window.print()">
-                        <svg class="icon"><use href="#i-file"/></svg> Drucken
+                        <svg class="icon"><use href="#i-file"/></svg> ${L('Drucken', 'Print')}
                     </button>
                 </div>
             `;
@@ -408,9 +411,10 @@ async function deleteReport(id) {
     if (el) { el.classList.add('ais-confirming'); return; }
     // fallback if data-id not found
     const ok = await bhConfirm({
-        title: 'Bericht löschen?',
-        text: 'Der Eintrag wird aus der Liste entfernt. Das lässt sich nicht rückgängig machen.',
-        confirmText: 'Bericht löschen'
+        title: L('Bericht löschen?', 'Delete report?'),
+        text: L('Der Eintrag wird aus der Liste entfernt. Das lässt sich nicht rückgängig machen.',
+            'The entry is removed from the list. This cannot be undone.'),
+        confirmText: L('Bericht löschen', 'Delete report')
     });
     if (!ok) return;
     entferneBericht(id);
@@ -431,7 +435,7 @@ function confirmDeleteReport(id) {
 // wer die Arbeit tut, protokolliert sie, nicht der Klick-Handler.
 function entferneBericht(id) {
     reports = reports.filter(r => r.id !== id);
-    saveToStorage(); updateUI(); showToast('Bericht gelöscht', 'info');
+    saveToStorage(); updateUI(); showToast(L('Bericht gelöscht', 'Report deleted'), 'info');
     if (typeof b2bOnReportDeleted === 'function') b2bOnReportDeleted(id);
 }
 
@@ -460,22 +464,7 @@ function duplicateReport(id) {
     reports.push(newReport);
     saveToStorage();
     updateUI();
-    showToast('Bericht dupliziert (KW ' + newReport.week + ')', 'success');
-}
-
-function duplicateLastReport() {
-    if (reports.length === 0) {
-        showToast('Kein Bericht zum Duplizieren vorhanden.', 'info');
-        return;
-    }
-
-    // Find the most recent report
-    const sorted = [...reports].sort((a, b) => {
-        if (a.year !== b.year) return b.year - a.year;
-        return b.week - a.week;
-    });
-
-    duplicateReport(sorted[0].id);
+    showToast(L('Bericht dupliziert (KW ', 'Report duplicated (CW ') + newReport.week + ')', 'success');
 }
 
 // ═══════════════════════════════════════
@@ -546,7 +535,9 @@ function confirmBulkDelete() {
     saveToStorage();
     toggleBulkMode();
     updateUI();
-    showToast(`${count} Berichte gelöscht`, 'info');
+    showToast(count === 1
+        ? L('1 Bericht gelöscht', '1 report deleted')
+        : L(`${count} Berichte gelöscht`, `${count} reports deleted`), 'info');
 }
 
 function bulkExportPDF() {
