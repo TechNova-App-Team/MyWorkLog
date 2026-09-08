@@ -351,16 +351,11 @@ function executePDFExport() {
 }
 
 function executePDFExportAll() {
-    if (reports.length === 0) {
-        showToast('Keine Berichte vorhanden.', 'info');
-        return;
+    _savePDFPersonalCfg();
+    if (typeof exportBulkPDFCore === 'function') {
+        exportBulkPDFCore();
+    } else {
+        showToast('Bulk Export ist nicht verfügbar.', 'error');
     }
-    let delay = 0;
-    const sorted = [...reports].sort((a, b) => a.year !== b.year ? a.year - b.year : a.week - b.week);
-    sorted.forEach((r, i) => {
-        setTimeout(() => exportReportPDFCore(r.id), delay);
-        delay += 450;
-    });
-    showToast(`${sorted.length} Berichte werden exportiert...`, 'info');
 }
 

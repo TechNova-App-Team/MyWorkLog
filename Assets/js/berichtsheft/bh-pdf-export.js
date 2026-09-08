@@ -24,15 +24,20 @@ function exportReportPDFCore(id) {
     const { jsPDF } = jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
 
-    // Amtlicher Vordruck: eigener Renderer, eigenes Modell.
-    if (isFormStyle() && typeof ihkFormToPdf === 'function') {
+    const isForm = isFormStyle();
+    if (isForm && typeof ihkFormToPdf === 'function') {
         const model = currentIhkModel(report);
         ihkFormToPdf(doc, model);
-        doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
-        showToast('PDF exportiert', 'success');
-        return;
+    } else {
+        renderSingleReportToDoc(doc, report);
     }
 
+    doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
+    showToast('PDF exportiert', 'success');
+}
+
+// ── RENDER SINGLE REPORT ───────────────────────────────────────────────
+function renderSingleReportToDoc(doc, report) {
     const PH = doc.internal.pageSize.getHeight(); // 297
     const PW = doc.internal.pageSize.getWidth();  // 210
     const ML = 14, MR = 14, CW = PW - ML - MR;  // margins + content width
@@ -50,7 +55,6 @@ function exportReportPDFCore(id) {
     const statusLabel = { incomplete: 'Entwurf', complete: 'Vollständig', signed: 'Unterschrieben' }[report.status] || 'Entwurf';
 
     // ── THEME TOKENS ──────────────────────────────────────────────────────
-    // Exactly matches the HTML preview CSS
     const THEMES = {
         ihk: {
             pageBg: null,              // white (default)
@@ -381,9 +385,6 @@ function exportReportPDFCore(id) {
             PW / 2, PH - 5, { align: 'center' }
         );
     }
-
-    doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
-    showToast('PDF exportiert', 'success');
 }
 
 function exportAllPDF() {
@@ -605,5 +606,158 @@ function exportSummaryPDF() {
 
     doc.save(`Ausbildungsnachweis_Jahresbericht_${year}.pdf`);
     showToast('Jahresbericht als PDF exportiert', 'success');
+}
+
+// ── BULK EXPORT ─────────────────────────────────────────────────────────
+async function exportBulkPDFCore() {
+    if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
+        showToast('PDF nicht verfügbar.', 'error');
+        return;
+    }
+    
+    // UI-Overlay fuer Loading State (muss sofort im DOM sein, bevor das schwere Fetching/Rendering anläuft)
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100vw';
+    overlay.style.height = '100vh';
+    overlay.style.background = 'rgba(0,0,0,0.85)';
+    overlay.style.zIndex = '999999';
+    overlay.style.display = 'flex';
+    overlay.style.flexDirection = 'column';
+    overlay.style.justifyContent = 'center';
+    overlay.style.alignItems = 'center';
+    overlay.style.color = 'white';
+    overlay.style.fontFamily = 'inherit';
+    
+    const spinner = document.createElement('div');
+    spinner.style.border = '4px solid rgba(255,255,255,0.1)';
+    spinner.style.borderTop = '4px solid #fff';
+    spinner.style.borderRadius = '50%';
+    spinner.style.width = '40px';
+    spinner.style.height = '40px';
+    spinner.style.animation = 'spin 1s linear infinite';
+    spinner.style.marginBottom = '20px';
+    
+    if (!document.getElementById('bulk-spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'bulk-spinner-style';
+        style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+        document.head.appendChild(style);
+    }
+
+    const progressText = document.createElement('div');
+    progressText.id = 'pdfBulkProgress';
+    progressText.textContent = 'Lade Daten aus der Cloud...';
+    
+    overlay.appendChild(spinner);
+    overlay.appendChild(progressText);
+    document.body.appendChild(overlay);
+    
+    let bulkReports = [];
+    try {
+        // 1. Fetching von Supabase (Priorität, wenn angemeldet)
+        if (window.BHB2B && BHB2B.angemeldet()) {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi') {
+                const sb = window.supabase;
+                const { data: { user } } = await sb.auth.getUser();
+                if (user) {
+                    const { data: berichte, error } = await sb.from('berichte')
+                        .select('*')
+                        .eq('azubi_id', user.id)
+                        .in('status', ['complete', 'signed'])
+                        .is('geloescht_at', null)
+                        .order('datum_von', { ascending: true });
+                    
+                    if (!error && berichte) {
+                        const approvals = await BHB2B.freigabenRunter();
+                        bulkReports = berichte.map(row => {
+                            const rep = Object.assign({
+                                id: row.client_id,
+                                year: row.jahr,
+                                week: row.kw,
+                                dateFrom: row.datum_von,
+                                dateTo: row.datum_bis,
+                                status: row.status,
+                                source: row.quelle,
+                                aiGenerated: row.ki_erzeugt
+                            }, row.inhalt);
+                            if (approvals[rep.id]) {
+                                rep.approval = approvals[rep.id];
+                            }
+                            return rep;
+                        });
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('Bulk Fetch Error:', e);
+    }
+
+    // 2. Fallback auf lokale Reports
+    if (bulkReports.length === 0) {
+        bulkReports = [...(window.reports || [])]
+            .filter(r => r.status === 'complete' || r.status === 'signed')
+            .sort((a, b) => {
+                const da = new Date(a.dateFrom || 0);
+                const db = new Date(b.dateFrom || 0);
+                return da - db;
+            });
+    }
+
+    if (bulkReports.length === 0) {
+        document.body.removeChild(overlay);
+        showToast('Keine vollständigen oder unterschriebenen Berichte gefunden.', 'error');
+        return;
+    }
+
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    let isFirstPage = true;
+    const isForm = isFormStyle();
+    
+    // Kleiner Sleep für UI Updates
+    const yieldUI = () => new Promise(r => setTimeout(r, 10));
+
+    // 3. Rendering-Loop
+    for (let i = 0; i < bulkReports.length; i++) {
+        const report = bulkReports[i];
+        progressText.textContent = `Generiere PDF: Woche ${i + 1} von ${bulkReports.length}...`;
+        await yieldUI();
+
+        if (!isFirstPage) {
+            doc.addPage();
+        }
+        isFirstPage = false;
+
+        if (isForm && typeof ihkFormToPdf === 'function') {
+            const model = currentIhkModel(report);
+            ihkFormToPdf(doc, model);
+        } else {
+            // Wir überschreiben die doc.save Funktion temporär, da renderSingleReportToDoc doc.save aufruft.
+            const originalSave = doc.save;
+            doc.save = function() {}; // No-op during bulk
+            
+            // UI Toasts während des Bulks unterdrücken
+            const originalShowToast = window.showToast;
+            window.showToast = function() {};
+
+            renderSingleReportToDoc(doc, report);
+            
+            // Restore functions
+            doc.save = originalSave;
+            window.showToast = originalShowToast;
+        }
+    }
+
+    progressText.textContent = 'Speichere PDF...';
+    await yieldUI();
+    
+    doc.save(`Ausbildungsnachweis_Komplett.pdf`);
+    document.body.removeChild(overlay);
+    showToast(`${bulkReports.length} Wochen als Bulk-PDF exportiert`, 'success');
 }
 
