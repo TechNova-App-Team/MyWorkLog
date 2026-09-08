@@ -494,17 +494,22 @@
     }
 
     function deleteSchoolSubject(subject) {
-        const question = scL(`Fach "${subject}" wirklich löschen?`, `Really delete the subject "${subject}"?`);
-        if (confirm(question)) {
-            delete data.settings.school.grades[subject];
-            save();
-            renderSchoolGradesInputs();
-        }
+        showCustomConfirm(
+            scL('Fach löschen?', 'Delete subject?'),
+            scL(`Alle Noten im Fach „${subject}" werden mitgelöscht. Das lässt sich nicht rückgängig machen.`,
+                `All grades in "${subject}" will be deleted as well. This cannot be undone.`),
+            () => {
+                delete data.settings.school.grades[subject];
+                save();
+                renderSchoolGradesInputs();
+            }, null,
+            { danger: true, confirmText: scL('Fach löschen', 'Delete subject'), cancelText: scL('Abbrechen', 'Cancel') });
     }
 
-    function renameSchoolSubject(oldName) {
-        const label = scL(`Neuer Name für "${oldName}":`, `New name for "${oldName}":`);
-        const newName = prompt(label, oldName);
+    async function renameSchoolSubject(oldName) {
+        const label = scL(`Neuer Name für „${oldName}"`, `New name for "${oldName}"`);
+        const newName = await showCustomPrompt(scL('Fach umbenennen', 'Rename subject'), label, oldName,
+            { confirmText: scL('Umbenennen', 'Rename'), cancelText: scL('Abbrechen', 'Cancel') });
         if (newName && newName.trim() && newName !== oldName) {
             data.settings.school.grades[newName.trim()] = data.settings.school.grades[oldName];
             delete data.settings.school.grades[oldName];

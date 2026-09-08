@@ -194,7 +194,7 @@ function saveReport(event) {
 // EDIT / VIEW / DELETE
 // ═══════════════════════════════════════
 
-function editReport(id) {
+async function editReport(id) {
     const report = reports.find(r => r.id === id);
     if (!report) return;
 
@@ -205,17 +205,20 @@ function editReport(id) {
         // muss der Ausbilder. Das ist der Kern der Revisionssicherheit und
         // bewusst so: sonst waere die Sperre nur ein Vorschlag.
         if (report.approval && report.approval.server) {
-            alert('Diese Woche wurde von ' + (report.approval.by || 'deinem Ausbilder') +
-                ' abgezeichnet.\n\nZum Ändern muss dein Ausbilder sie zurückgeben.');
+            await bhAlert('Diese Woche ist abgezeichnet',
+                (report.approval.by || 'Dein Ausbilder') + ' hat die Woche bestätigt. Zum Ändern muss dein Ausbilder sie erst zurückgeben.');
             return;
         }
         // Lokale Freigabe (Link-/QR-Weg): die liegt in den eigenen Daten, der
         // Nutzer kann sie aufheben — die Warnung soll ihn nur davor bewahren,
         // das versehentlich zu tun.
-        if (!confirm('Diese Woche wurde von ' + (report.approval.by || 'dem Ausbilder') +
-            ' bestätigt und ist deshalb gesperrt.\n\n' +
-            'Wenn Sie sie jetzt bearbeiten, entfällt die Bestätigung und die Woche muss erneut freigegeben werden.\n\n' +
-            'Trotzdem bearbeiten?')) return;
+        const weiter = await bhConfirm({
+            title: 'Bestätigte Woche bearbeiten?',
+            text: (report.approval.by || 'Der Ausbilder') + ' hat diese Woche bestätigt. Beim Bearbeiten entfällt die Bestätigung, '
+                + 'und die Woche muss erneut freigegeben werden.',
+            confirmText: 'Trotzdem bearbeiten'
+        });
+        if (!weiter) return;
         delete report.approval;
         report.status = 'complete';
         saveToStorage();
@@ -394,11 +397,16 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function deleteReport(id) {
+async function deleteReport(id) {
     const el = document.querySelector(`.report-item[data-id="${id}"]`);
     if (el) { el.classList.add('ais-confirming'); return; }
     // fallback if data-id not found
-    if (!confirm('Möchtest du diesen Bericht wirklich löschen?')) return;
+    const ok = await bhConfirm({
+        title: 'Bericht löschen?',
+        text: 'Der Eintrag wird aus der Liste entfernt. Das lässt sich nicht rückgängig machen.',
+        confirmText: 'Bericht löschen'
+    });
+    if (!ok) return;
     entferneBericht(id);
 }
 

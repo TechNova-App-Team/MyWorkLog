@@ -1237,10 +1237,23 @@ async function applyBackupObject(parsed) {
         return false;
     }
     const replacing = !isFirstTime();
-    const msg = replacing
-        ? L('Dies ersetzt deinen AKTUELLEN Tresor unwiderruflich durch das importierte Backup. Falls nötig, exportiere vorher ein Backup des aktuellen Stands. Fortfahren?', 'This irreversibly replaces your CURRENT vault with the imported backup. If needed, export a backup of the current state first. Continue?')
-        : L('Backup importieren und als deinen Tresor einrichten?', 'Import backup and set it up as your vault?');
-    if (!window.confirm(msg)) return false;
+    const ok = replacing
+        ? await mwlConfirm({
+            title: L('Aktuellen Tresor ersetzen?', 'Replace current vault?'),
+            text: L('Der bestehende Tresor wird unwiderruflich durch das Backup ersetzt. Wenn du den aktuellen Stand behalten willst, brich hier ab und exportiere ihn zuerst.',
+                    'The existing vault is irreversibly replaced by the backup. If you want to keep the current state, cancel here and export it first.'),
+            confirmText: L('Tresor ersetzen', 'Replace vault'),
+            cancelText: L('Abbrechen', 'Cancel')
+        })
+        : await mwlConfirm({
+            title: L('Backup einrichten?', 'Set up backup?'),
+            text: L('Das Backup wird importiert und als dein Tresor eingerichtet.',
+                    'The backup will be imported and set up as your vault.'),
+            danger: false,
+            confirmText: L('Importieren', 'Import'),
+            cancelText: L('Abbrechen', 'Cancel')
+        });
+    if (!ok) return false;
 
     try {
         await vsClearAll();
@@ -1504,8 +1517,14 @@ async function driveRestoreFrom(fileId) {
 
 async function driveDeleteFrom(fileId, label) {
     const D = window.SchattenDrive;
-    if (!window.confirm(L('Sicherung vom ' + label + ' endgültig aus Google Drive löschen?',
-                          'Permanently delete the backup from ' + label + ' in Google Drive?'))) return;
+    const ok = await mwlConfirm({
+        title: L('Sicherung endgültig löschen?', 'Permanently delete backup?'),
+        text: L('Die Sicherung vom ' + label + ' wird aus Google Drive entfernt. Sie lässt sich danach nicht wiederherstellen.',
+                'The backup from ' + label + ' will be removed from Google Drive. It cannot be restored afterwards.'),
+        confirmText: L('Sicherung löschen', 'Delete backup'),
+        cancelText: L('Abbrechen', 'Cancel')
+    });
+    if (!ok) return;
     try {
         await D.deleteBackup(fileId);
         showToast(L('Sicherung gelöscht', 'Backup deleted'), 'success');
@@ -3496,7 +3515,14 @@ async function deleteCustomCategory(id) {
                 used + ' entries use this category — change those first, then delete'), 'warning');
         return;
     }
-    if (!window.confirm(L('Kategorie „' + cat.label + '" löschen?', 'Delete the category “' + cat.label + '”?'))) return;
+    const ok = await mwlConfirm({
+        title: L('Kategorie löschen?', 'Delete category?'),
+        text: L('Die Kategorie „' + cat.label + '" wird entfernt. Deine Einträge bleiben erhalten.',
+                'The category “' + cat.label + '” will be removed. Your entries stay.'),
+        confirmText: L('Kategorie löschen', 'Delete category'),
+        cancelText: L('Abbrechen', 'Cancel')
+    });
+    if (!ok) return;
 
     customCategories = customCategories.filter(c => c.id !== id);
     try {
@@ -3587,11 +3613,20 @@ const TEMPLATES = {
     ),
 };
 
-function insertTemplate() {
+async function insertTemplate() {
     const category = document.getElementById('entryCategory').value;
     const textarea = document.getElementById('entryText');
     const skeleton = TEMPLATES[category] || TEMPLATES.other;
-    if (textarea.value.trim() && !window.confirm(L('Vorhandenen Text durch die Vorlage ersetzen?', 'Replace existing text with the template?'))) return;
+    if (textarea.value.trim()) {
+        const ok = await mwlConfirm({
+            title: L('Text durch Vorlage ersetzen?', 'Replace text with template?'),
+            text: L('Was du bisher geschrieben hast, wird überschrieben.',
+                    'What you have written so far will be overwritten.'),
+            confirmText: L('Ersetzen', 'Replace'),
+            cancelText: L('Abbrechen', 'Cancel')
+        });
+        if (!ok) return;
+    }
     textarea.value = skeleton;
     textarea.focus();
 }

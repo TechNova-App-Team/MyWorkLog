@@ -533,7 +533,7 @@
         });
     }
 
-    function handleAction(action, id, ts) {
+    async function handleAction(action, id, ts) {
         if (action === 'switch') {
             if (switchPreset(id)) {
                 renderLayoutManager();
@@ -549,11 +549,12 @@
             toast('Gespeichert', 'Aktuelles Layout in Preset übernommen.', 'success');
         } else if (action === 'rename') {
             var pr = presetById(id); if (!pr) return;
-            var name = prompt('Neuer Name:', pr.name);
+            var name = await showCustomPrompt('Preset umbenennen', 'Wie soll die Ansicht heißen?', pr.name);
             if (name && name.trim()) { renamePreset(id, name.trim()); renderLayoutManager(); }
         } else if (action === 'delete') {
             var pd = presetById(id); if (!pd) return;
-            if (confirm('Preset "' + pd.name + '" wirklich löschen?')) {
+            if (await appConfirm('Preset löschen?', 'Die Ansicht „' + pd.name + '" wird entfernt. Deine Einträge bleiben davon unberührt.',
+                { danger: true, confirmText: 'Preset löschen' })) {
                 deletePreset(id);
                 renderLayoutManager();
             }
@@ -562,7 +563,7 @@
             renderLayoutManager();
             closeLayoutManager();
         } else if (action === 'create') {
-            var name = prompt('Name für neuen Preset:');
+            var name = await showCustomPrompt('Neues Preset', 'Wie soll die Ansicht heißen?', '', { placeholder: 'z. B. Wochenübersicht' });
             if (!name || !name.trim()) return;
             var preset = createPreset(name.trim());
             switchPreset(preset.id);

@@ -529,8 +529,9 @@
         }
     }
 
-    function supportFeatureRequest() {
-        const idea = prompt('💡 Was wünschst du dir in MyWorkLog?');
+    async function supportFeatureRequest() {
+        const idea = await showCustomPrompt('Feature-Wunsch', 'Was wünschst du dir in MyWorkLog?', '',
+            { placeholder: 'Deine Idee', confirmText: 'Absenden' });
         if (idea && idea.trim()) {
             // DSGVO: Feature requests send minimal data only (just the idea text)
             if (typeof emailjs !== 'undefined') {
@@ -592,7 +593,7 @@
         window._quickTemplates = templates;
     }
 
-    function applyQuickTemplate(index) {
+    async function applyQuickTemplate(index) {
         const t = window._quickTemplates[index];
         if (!t) return;
 
@@ -602,7 +603,10 @@
         // Check for duplicate
         const existing = (data.entries || []).find(e => e.date === todayStr && e.type === t.type);
         if (existing) {
-            if (!confirm(`Heute gibt es bereits einen ${t.type}-Eintrag. Trotzdem hinzufügen?`)) return;
+            const weiter = await appConfirm('Eintrag doppelt anlegen?',
+                `Für heute gibt es bereits einen Eintrag vom Typ „${t.type}". Ein zweiter wird zusätzlich gezählt.`,
+                { confirmText: 'Trotzdem anlegen' });
+            if (!weiter) return;
         }
 
         const expected = (data.settings && data.settings.hours) ? (data.settings.hours[now.getDay()] || 8) : 8;

@@ -602,9 +602,11 @@
 
         // Zwei Sätze, weil der zweite die Erwartung geradezieht: „Cloud-Daten
         // löschen" liest sich sonst wie „Konto löschen".
-        if (!confirm('Alle in der Cloud gespeicherten Daten dieses Kontos löschen?\n\n' +
+        const ok = await appConfirm('Alle Cloud-Daten dieses Kontos löschen?',
             'Die Daten auf diesem Gerät bleiben erhalten. Dein Konto bleibt bestehen — ' +
-            'du kannst jederzeit wieder hochladen.')) return;
+            'du kannst jederzeit wieder hochladen.',
+            { danger: true, confirmText: 'Cloud-Daten löschen' });
+        if (!ok) return;
 
         const btn = document.getElementById('cloudSyncDeleteBtn');
         const originalHTML = btn ? btn.innerHTML : '';

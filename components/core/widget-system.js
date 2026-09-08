@@ -143,12 +143,15 @@
         };
 
         editorRoot.querySelector('#resetNavEditor').onclick = () => {
-            if (!confirm('Navbar auf Standard zurücksetzen?')) return;
-            data.settings.nav = null; // will reset on next render
-            save();
-            renderSidebarNav();
-            renderNavEditor();
-            showCustomMessage('🔁 Zurückgesetzt', 'Navbar zurückgesetzt', 'info');
+            showCustomConfirm('Navigation zurücksetzen?',
+                'Deine eigene Reihenfolge und Sichtbarkeit der Einträge geht dabei verloren.',
+                () => {
+                    data.settings.nav = null; // will reset on next render
+                    save();
+                    renderSidebarNav();
+                    renderNavEditor();
+                    showCustomMessage('🔁 Zurückgesetzt', 'Navbar zurückgesetzt', 'info');
+                }, null, { danger: true, confirmText: 'Zurücksetzen' });
         };
     }
 

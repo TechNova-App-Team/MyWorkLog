@@ -23,8 +23,8 @@
          
          return Math.max(0, Math.min(100, progress));
     }
-    function addSchoolSubjectInput() {
-        const subject = prompt('Fachname eingeben (z.B. "Mathematik", "Englisch"):');
+    async function addSchoolSubjectInput() {
+        const subject = await showCustomPrompt('Fach hinzufuegen', 'Wie heisst das Fach?', '', { placeholder: 'z. B. Mathematik' });
         if (subject && subject.trim()) {
             const cleanSubject = subject.trim();
             if (!data.settings.school.grades[cleanSubject]) {
@@ -37,8 +37,9 @@
         }
     }
 
-    function deleteSchoolSubject(subject) {
-        if (confirm(`Möchtest du das Fach "${subject}" wirklich löschen? Alle Noten in diesem Fach werden gelöscht.`)) {
+    async function deleteSchoolSubject(subject) {
+        if (await appConfirm('Fach löschen?', `Alle Noten im Fach „${subject}" werden mitgelöscht. Das lässt sich nicht rückgängig machen.`,
+            { danger: true, confirmText: 'Fach löschen' })) {
             delete data.settings.school.grades[subject];
             save();
             renderSchoolGradesInputs();
@@ -46,8 +47,8 @@
         }
     }
 
-    function renameSchoolSubject(oldSubject) {
-        const newSubject = prompt(`Neuer Name für "${oldSubject}":`, oldSubject);
+    async function renameSchoolSubject(oldSubject) {
+        const newSubject = await showCustomPrompt('Fach umbenennen', `Neuer Name für „${oldSubject}"`, oldSubject);
         if (newSubject && newSubject.trim()) {
             const cleanNewSubject = newSubject.trim();
             if (cleanNewSubject === oldSubject) {

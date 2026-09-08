@@ -167,7 +167,7 @@
             if (shortcutManager && shortcutManager.shortcuts[id] && Array.isArray(shortcutManager.shortcuts[id].keys)) {
                 recordedKeys = shortcutManager.shortcuts[id].keys;
             } else {
-                alert('Bitte drücke eine Tastenkombination');
+                showCustomMessage('Keine Tastenkombination', 'Drücke die gewünschte Kombination, bevor du speicherst.', 'error');
                 return;
             }
         }
@@ -190,7 +190,7 @@
         } catch (e) { console.warn('Fehler beim Speichern von allowInInput', e); }
         
         if (result.conflicts && result.conflicts.length > 0) {
-            alert('Warnung: Diese Tastenkombination ist bereits belegt!');
+            showCustomMessage('Kombination ist doppelt', 'Diese Tastenkombination ist bereits belegt — sie löst jetzt zwei Aktionen aus.', 'error');
         }
         
         // Schließe Modal
@@ -209,13 +209,15 @@
     }
     
     function resetShortcutsToDefaults() {
-        if (confirm('Alle Shortcuts auf Standard zurücksetzen?')) {
-            if (shortcutManager) {
-                shortcutManager.resetToDefaults();
-                renderShortcutsPanel();
-                showCustomMessage('✅ Erfolg', 'Shortcuts wurden zurückgesetzt.', 'success');
-            }
-        }
+        showCustomConfirm('Shortcuts zurücksetzen?',
+            'Alle eigenen Tastenkombinationen gehen dabei verloren und die Standardbelegung gilt wieder.',
+            () => {
+                if (shortcutManager) {
+                    shortcutManager.resetToDefaults();
+                    renderShortcutsPanel();
+                    showCustomMessage('✅ Erfolg', 'Shortcuts wurden zurückgesetzt.', 'success');
+                }
+            }, null, { danger: true, confirmText: 'Zurücksetzen' });
     }
     
     // ============================================
@@ -315,13 +317,19 @@
         }
     }
 
-    function confirmAndClearLocalData() {
-        // First confirmation
-        const ok = confirm('Achtung — alle lokalen Daten werden gelöscht. Diese Aktion ist unwiderruflich. Fortfahren?');
+    // Zwei Stufen mit Absicht: die erste Frage kann man wegklicken, die zweite
+    // verlangt ein getipptes Wort. Beides bleibt beim Umbau auf den eigenen
+    // Dialog erhalten — die Sicherung liegt in der Tipp-Bestaetigung, nicht in
+    // der Sperrigkeit des Systemfensters.
+    async function confirmAndClearLocalData() {
+        const ok = await appConfirm('Alle lokalen Daten löschen?',
+            'Zeiteinträge, Einstellungen und Sicherungen auf diesem Gerät werden entfernt. Das lässt sich nicht rückgängig machen.',
+            { danger: true, confirmText: 'Weiter' });
         if (!ok) return;
 
-        // Second explicit confirmation: require the user to type LÖSCHEN
-        const txt = prompt('Gib zur Bestätigung LÖSCHEN ein (Großschreibung erforderlich):');
+        const txt = await showCustomPrompt('Löschen bestätigen',
+            'Tippe LÖSCHEN in Großbuchstaben, um fortzufahren.', '',
+            { placeholder: 'LÖSCHEN', confirmText: 'Endgültig löschen' });
         if (txt !== 'LÖSCHEN') {
             showCustomMessage('Abgebrochen', 'Löschvorgang wurde abgebrochen. Die Eingabe stimmte nicht überein.', 'info');
             return;

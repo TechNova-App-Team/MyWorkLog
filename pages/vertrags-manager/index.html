@@ -14,8 +14,8 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/vertrags-manager/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/vertrags-manager/">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.5"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.9.5"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.6"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.9.6"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1280,7 +1280,9 @@
             .payslip-payout-amount { color: #000 !important; text-shadow: none !important; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.9.5"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.9.6"></script>
+    <!-- Rueckfragen als Dialog der Seite statt window.confirm (mwlConfirm). -->
+    <script defer src="/Assets/js/mwl-dialog.js?v=6.9.6"></script>
 </head>
 <body>
     <!-- Background -->
@@ -2757,11 +2759,16 @@
             closeBenefitsModal();
         }
 
-        function removeBenefit(index) {
+        async function removeBenefit(index) {
             const c = getActive();
             if (!c) return;
             const b = c.benefits[index];
-            if (!confirm(`Benefit "${b.name}" wirklich entfernen?`)) return;
+            const ok = await mwlConfirm({
+                title: 'Benefit entfernen?',
+                text: `„${b.name}" wird aus diesem Vertrag entfernt.`,
+                confirmText: 'Entfernen'
+            });
+            if (!ok) return;
             c.benefits.splice(index, 1);
             saveData();
             updateUI();
@@ -2957,13 +2964,18 @@
             updateUI();
         }
 
-        function deleteContract(id, e) {
+        async function deleteContract(id, e) {
             e.stopPropagation();
             if (appData.contracts.length <= 1) {
                 showToast('Mindestens ein Vertrag muss bestehen bleiben', 'error');
                 return;
             }
-            if (!confirm('Diesen Vertrag und alle zugehörigen Daten unwiderruflich löschen?')) return;
+            const ok = await mwlConfirm({
+                title: 'Vertrag löschen?',
+                text: 'Der Vertrag und alle zugehörigen Angaben werden entfernt. Das lässt sich nicht rückgängig machen.',
+                confirmText: 'Vertrag löschen'
+            });
+            if (!ok) return;
             appData.contracts = appData.contracts.filter(c => c.id !== id);
             if (appData.activeContractId === id) appData.activeContractId = appData.contracts[0].id;
             saveData();

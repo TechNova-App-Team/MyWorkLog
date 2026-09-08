@@ -363,7 +363,7 @@ function stopTimerAndSave() {
 }
 
 function resetTimer() {
-    if (confirm('Timer wirklich zurücksetzen?')) {
+    const zuruecksetzen = () => {
         if (window.timer) {
             timer.running = false;
             timer.paused = 0;
@@ -373,6 +373,13 @@ function resetTimer() {
             saveTimerState();
             updateUI();
         }
+    };
+    if (typeof showCustomConfirm === 'function') {
+        showCustomConfirm('Timer zurücksetzen?',
+            'Die laufende Messung und alle Pausen dieser Sitzung werden verworfen.',
+            zuruecksetzen, null, { danger: true, confirmText: 'Zurücksetzen' });
+    } else {
+        zuruecksetzen();
     }
 }
 

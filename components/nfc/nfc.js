@@ -385,11 +385,14 @@ function nfcSimulateMissedCheckout() {
 // ─── Chip zurücksetzen ────────────────────────────────────────────────────
 
 function nfcResetChip() {
-    if (!confirm('NFC-Konfiguration zurücksetzen?\n\nDer Chip bleibt programmiert – die App "vergisst" ihn nur.')) return;
-    localStorage.removeItem(NFC_CHIP_KEY);
-    localStorage.removeItem(NFC_SESSION_KEY);
-    localStorage.removeItem(NFC_LOG_KEY);
-    nfcDetectPlatform();
+    showCustomConfirm('NFC-Konfiguration zurücksetzen?',
+        'Der Chip bleibt programmiert — die App vergisst ihn nur und fragt beim nächsten Scan neu.',
+        () => {
+            localStorage.removeItem(NFC_CHIP_KEY);
+            localStorage.removeItem(NFC_SESSION_KEY);
+            localStorage.removeItem(NFC_LOG_KEY);
+            nfcDetectPlatform();
+        }, null, { danger: true, confirmText: 'Zurücksetzen' });
 }
 
 // ─── Flash-Overlay ────────────────────────────────────────────────────────

@@ -153,17 +153,22 @@
         hideTimer = setTimeout(hide, t === 'error' ? 5000 : 3500);
     }
 
-    function showCustomConfirm(title, message, onConfirm, onCancel) {
+    function showCustomConfirm(title, message, onConfirm, onCancel, opts) {
         const modal = document.getElementById('customMessageModal');
         const titleEl = document.getElementById('customMessageTitle');
         const contentEl = document.getElementById('customMessageContent');
         const confirmBtn = document.getElementById('customMessageBtnConfirm');
         const cancelBtn = document.getElementById('customMessageBtnCancel');
+        const inputEl = document.getElementById('customMessageInput');
 
+        const o = opts || {};
         titleEl.innerText = title;
         contentEl.innerText = message;
-        titleEl.style.color = 'var(--primary)';
-        confirmBtn.style.background = 'var(--primary)';
+        titleEl.style.color = o.danger ? 'var(--danger)' : 'var(--primary)';
+        confirmBtn.style.background = o.danger ? 'var(--danger)' : 'var(--primary)';
+        confirmBtn.innerText = o.confirmText || 'OK';
+        cancelBtn.innerText = o.cancelText || 'Abbrechen';
+        if (inputEl) inputEl.style.display = 'none';
 
         customModalCallback = { onConfirm, onCancel };
 
@@ -171,12 +176,99 @@
         // z-index Bump damit Confirm über offenem Settings-Modal landet.
         modal.style.zIndex = '9999';
         modal.classList.add('active');
+        confirmBtn.focus();
+        bindCustomModalKeys();
+    }
+
+    // Escape bricht ab, Enter bestaetigt — das konnte `confirm()` von Haus aus,
+    // und ohne diese zwei Tasten fuehlt sich der eigene Dialog wie ein Rueckschritt
+    // an. In der Capture-Phase, damit die Tastenkuerzel der App nicht zusaetzlich
+    // feuern, solange die Rueckfrage offen steht.
+    let customModalKeyHandler = null;
+    function bindCustomModalKeys() {
+        if (customModalKeyHandler) return;
+        customModalKeyHandler = function (e) {
+            const inputEl = document.getElementById('customMessageInput');
+            if (inputEl && inputEl.style.display !== 'none' && e.target === inputEl) return;  // das Feld regelt sich selbst
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeCustomModal(false); }
+            else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); closeCustomModal(true); }
+        };
+        document.addEventListener('keydown', customModalKeyHandler, true);
+    }
+    function unbindCustomModalKeys() {
+        if (!customModalKeyHandler) return;
+        document.removeEventListener('keydown', customModalKeyHandler, true);
+        customModalKeyHandler = null;
+    }
+
+    // Dieselbe Rueckfrage als Promise. `showCustomConfirm` arbeitet mit
+    // Rueckrufen; das passt nicht auf die Stellen, die frueher
+    // `if (!confirm(...)) return;` mitten in einer Funktion stehen hatten —
+    // dort wird der Rest sonst zur verschachtelten Fortsetzung. Mit
+    // `if (!await appConfirm(...)) return;` bleibt der Ablauf, wie er war.
+    function appConfirm(title, message, opts) {
+        return new Promise(resolve => {
+            showCustomConfirm(title, message, () => resolve(true), () => resolve(false), opts);
+        });
+    }
+
+    // Ersatz fuer window.prompt: derselbe Dialog, nur mit Eingabefeld.
+    // Gibt ein Promise auf den Text (oder null bei Abbruch) zurueck — die
+    // Aufrufstellen lesen sich damit fast wie vorher (`await showCustomPrompt(...)`
+    // statt `prompt(...)`), und der Rueckgabewert hat dieselbe Bedeutung:
+    // null = abgebrochen, '' = leer bestaetigt.
+    function showCustomPrompt(title, message, defaultValue, opts) {
+        const modal = document.getElementById('customMessageModal');
+        const titleEl = document.getElementById('customMessageTitle');
+        const contentEl = document.getElementById('customMessageContent');
+        const confirmBtn = document.getElementById('customMessageBtnConfirm');
+        const cancelBtn = document.getElementById('customMessageBtnCancel');
+        const inputEl = document.getElementById('customMessageInput');
+        const o = opts || {};
+
+        titleEl.innerText = title;
+        contentEl.innerText = message || '';
+        titleEl.style.color = 'var(--primary)';
+        confirmBtn.style.background = 'var(--primary)';
+        confirmBtn.innerText = o.confirmText || 'OK';
+        cancelBtn.innerText = o.cancelText || 'Abbrechen';
+        cancelBtn.style.display = 'block';
+
+        inputEl.style.display = 'block';
+        inputEl.value = defaultValue == null ? '' : String(defaultValue);
+        inputEl.placeholder = o.placeholder || '';
+        // Enter im Feld bestaetigt. Ohne das muss man mit der Maus zum Knopf —
+        // bei window.prompt reichte die Eingabetaste, und genau das erwartet man.
+        inputEl.onkeydown = (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); closeCustomModal(true); }
+            else if (e.key === 'Escape') { e.preventDefault(); closeCustomModal(false); }
+        };
+
+        modal.style.zIndex = '9999';
+        modal.classList.add('active');
+        setTimeout(() => { inputEl.focus(); inputEl.select(); }, 40);
+        bindCustomModalKeys();
+
+        return new Promise(resolve => { customModalResolve = resolve; });
     }
 
     function closeCustomModal(confirmed) {
         const modal = document.getElementById('customMessageModal');
+        const inputEl = document.getElementById('customMessageInput');
         modal.classList.remove('active');
         modal.style.zIndex = '';
+        unbindCustomModalKeys();
+
+        // Erst den Wert sichern, dann das Feld raeumen: der naechste Dialog
+        // erbt sonst die Eingabe des vorigen.
+        const wert = inputEl && inputEl.style.display !== 'none' ? inputEl.value : null;
+        if (inputEl) { inputEl.style.display = 'none'; inputEl.onkeydown = null; inputEl.value = ''; }
+
+        if (customModalResolve) {
+            const r = customModalResolve;
+            customModalResolve = null;
+            r(confirmed ? (wert == null ? '' : wert) : null);
+        }
 
         if (customModalCallback) {
             if (confirmed && customModalCallback.onConfirm) {
