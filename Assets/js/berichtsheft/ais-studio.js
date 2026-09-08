@@ -816,11 +816,11 @@ function validateIHKCompliance(week) {
         if (istFliess) {
             const laenge = (day.entries[0] || '').length;
             if (laenge < 120) {
-                issues.push(`${day.name}: Absatz sehr kurz (${laenge} Zeichen)`);
+                issues.push(L(`${day.name}: Absatz sehr kurz (${laenge} Zeichen)`, `${day.name}: paragraph very short (${laenge} characters)`));
                 allDaysHaveMin = false;
             }
         } else if (day.entries.length < minProTag) {
-            issues.push(`${day.name}: ${day.entries.length} statt ${minProTag} Einträge`);
+            issues.push(L(`${day.name}: ${day.entries.length} statt ${minProTag} Einträge`, `${day.name}: ${day.entries.length} instead of ${minProTag} entries`));
             allDaysHaveMin = false;
         }
     }
@@ -833,12 +833,12 @@ function validateIHKCompliance(week) {
     const varietyRatio = uniqueEntries.size / Math.max(allEntries.length, 1);
     if (varietyRatio >= 0.9) score += 20;
     else if (varietyRatio >= 0.7) score += 15;
-    else { score += 5; issues.push('Zu viele ähnliche Einträge — mehr Variation empfohlen'); }
+    else { score += 5; issues.push(L('Zu viele ähnliche Einträge — mehr Variation empfohlen', 'Too many similar entries — more variety recommended')); }
 
     // 3. Check hours (should be ~40h/week for 5 days)
     const expectedHours = week.days.length * 8;
     if (Math.abs(week.totalHours - expectedHours) <= 2) score += 15;
-    else { score += 5; issues.push(`Stundenzahl (${week.totalHours}h) weicht von ${expectedHours}h ab`); }
+    else { score += 5; issues.push(L(`Stundenzahl (${week.totalHours}h) weicht von ${expectedHours}h ab`, `Hours (${week.totalHours}h) differ from ${expectedHours}h`)); }
 
     // 4. Berufsschultag. Wer in den Optionen ausdruecklich "Kein" gewaehlt hat,
     //    bekommt dafuer keinen Abzug — die Meldung waere ein Vorwurf fuer eine
@@ -846,7 +846,7 @@ function validateIHKCompliance(week) {
     const hasSchoolDay = week.days.some(d => d.isSchoolDay);
     const schultagGewollt = !Array.isArray(state.schoolDayIndices) || state.schoolDayIndices.length > 0;
     if (hasSchoolDay || !schultagGewollt) score += 15;
-    else { score += 5; issues.push('Kein Berufsschultag — IHK empfiehlt Berufsschuleinträge'); }
+    else { score += 5; issues.push(L('Kein Berufsschultag — IHK empfiehlt Berufsschuleinträge', 'No vocational school day — the IHK recommends school entries')); }
 
     // 5. Check entry length (not too short)
     let goodLength = true;
@@ -860,18 +860,18 @@ function validateIHKCompliance(week) {
         }
     }
     if (goodLength) score += 15;
-    else { score += 5; issues.push('Einige Einträge zu kurz — mindestens 15 Zeichen empfohlen'); }
+    else { score += 5; issues.push(L('Einige Einträge zu kurz — mindestens 15 Zeichen empfohlen', 'Some entries too short — at least 15 characters recommended')); }
 
     // 6. Department mentioned
     if (week.department) score += 5;
-    else issues.push('Keine Abteilung angegeben');
+    else issues.push(L('Keine Abteilung angegeben', 'No department given'));
 
     // 7. Profession-specific content
     if (week.profession && PROFESSIONS[week.profession]) score += 10;
-    else { score += 5; issues.push('Kein spezifischer Beruf gewählt'); }
+    else { score += 5; issues.push(L('Kein spezifischer Beruf gewählt', 'No specific occupation chosen')); }
 
     const status = score >= 85 ? 'pass' : score >= 60 ? 'warn' : 'fail';
-    const statusText = score >= 85 ? 'IHK-Konform' : score >= 60 ? 'Verbesserung empfohlen' : 'Nicht ausreichend';
+    const statusText = score >= 85 ? L('IHK-Konform', 'IHK-compliant') : score >= 60 ? L('Verbesserung empfohlen', 'Improvement recommended') : L('Nicht ausreichend', 'Not sufficient');
 
     return {
         score: Math.min(score, maxScore),
@@ -948,9 +948,9 @@ function renderPreview(week) {
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span class="ais-day-hours">${day.hours}h</span>
                             <div class="ais-day-card-actions">
-                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${day.index})" title="Lokal neu generieren (frei, kein Limit)"><svg class="icon icon-sm"><use href="#i-zap"/></svg></button>
-                                <button class="ais-day-action ais-day-action-cloud" onclick="AIStudio.regenerateDayCloud(${day.index})" title="Mit Cloud-KI neu (zählt 1/20)"><svg class="icon icon-sm"><use href="#i-sparkles"/></svg></button>
-                                <button class="ais-day-action" onclick="AIStudio.insertDay(${day.index})" title="Einzeln einfügen"><svg class="icon icon-sm"><use href="#i-download"/></svg></button>
+                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${day.index})" title="${L('Lokal neu generieren (frei, kein Limit)', 'Regenerate locally (free, no limit)')}"><svg class="icon icon-sm"><use href="#i-zap"/></svg></button>
+                                <button class="ais-day-action ais-day-action-cloud" onclick="AIStudio.regenerateDayCloud(${day.index})" title="${L('Mit Cloud-KI neu (zählt 1/20)', 'Regenerate with cloud AI (counts 1/20)')}"><svg class="icon icon-sm"><use href="#i-sparkles"/></svg></button>
+                                <button class="ais-day-action" onclick="AIStudio.insertDay(${day.index})" title="${L('Einzeln einfügen', 'Insert individually')}"><svg class="icon icon-sm"><use href="#i-download"/></svg></button>
                             </div>
                         </div>
                     </div>
@@ -978,7 +978,7 @@ function renderPreview(week) {
         if (text) {
             text.textContent = ihk.issues.length > 0
                 ? ihk.issues.slice(0, 2).join('. ')
-                : 'Alle Einträge erfüllen die IHK-Richtlinien.';
+                : L('Alle Einträge erfüllen die IHK-Richtlinien.', 'All entries meet the IHK guidelines.');
         }
     }
 
@@ -1020,13 +1020,13 @@ function renderHistory() {
                             <div class="ais-history-item-header">
                                 <span class="ais-history-item-prof">${bhIcon(item.professionIcon)} ${escapeHtml(item.professionName || item.profession)}</span>
                                 <span class="ais-history-item-date">${dateStr}</span>
-                                <button class="ais-del-trigger" onclick="event.stopPropagation(); AIStudio.deleteFromHistory(${origIdx});" title="Löschen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+                                <button class="ais-del-trigger" onclick="event.stopPropagation(); AIStudio.deleteFromHistory(${origIdx});" title="${L('Löschen', 'Delete')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                             </div>
-                            <div class="ais-history-item-preview">KW ${item.calendarWeek || '?'} • ${item.days?.length || 0} Tage • ${preview}</div>
+                            <div class="ais-history-item-preview">${L('KW', 'CW')} ${item.calendarWeek || '?'} • ${item.days?.length || 0} ${L('Tage', 'days')} • ${preview}</div>
                             <div class="ais-del-confirm-strip" onclick="event.stopPropagation()">
-                                <span class="ais-del-confirm-label">Löschen?</span>
-                                <button class="ais-del-btn-nein" onclick="AIStudio.cancelDeleteHistory(${origIdx})">Nein</button>
-                                <button class="ais-del-btn-ja" onclick="AIStudio.confirmDeleteHistory(${origIdx})">Ja</button>
+                                <span class="ais-del-confirm-label">${L('Löschen?', 'Delete?')}</span>
+                                <button class="ais-del-btn-nein" onclick="AIStudio.cancelDeleteHistory(${origIdx})">${L('Nein', 'No')}</button>
+                                <button class="ais-del-btn-ja" onclick="AIStudio.confirmDeleteHistory(${origIdx})">${L('Ja', 'Yes')}</button>
                             </div>
                         </div>`;
         }).join('');
@@ -1137,7 +1137,7 @@ function _doFillForm(week) {
             hoursInput.value = week.totalHours || (week.days.length * 8);
         }
 
-        showToast('Alle Einträge in Tagesfelder eingefügt', 'success');
+        showToast(L('Alle Einträge in Tagesfelder eingefügt', 'All entries added to the day fields'), 'success');
     });
 }
 
@@ -1176,7 +1176,7 @@ function _fillSingleDay(dayData, dayIndex) {
             if (typeof toggleSchoolDay === 'function') toggleSchoolDay(schoolCb);
         }
         if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
-        showToast(`${dayData.name} in Tagesfeld eingefügt`, 'success');
+        showToast(L(`${dayData.name} in Tagesfeld eingefügt`, `${dayData.name} added to the day field`), 'success');
     });
 }
 
@@ -1405,13 +1405,13 @@ function _updateRateLimitUI() {
     let txt, cls = '';
 
     if (s.remaining === 0) {
-        txt = `Tageslimit ${s.count}/${RATE_LIMIT_DAILY} — fällt zurück auf lokale Engine`;
+        txt = L(`Tageslimit ${s.count}/${RATE_LIMIT_DAILY} — fällt zurück auf lokale Engine`, `Daily limit ${s.count}/${RATE_LIMIT_DAILY} — falling back to the local engine`);
         cls = 'limit';
     } else if (s.cooldownMs > 0) {
         txt = `Cooldown ${Math.ceil(s.cooldownMs / 1000)}s · ${s.count}/${RATE_LIMIT_DAILY} heute`;
         cls = 'cooldown';
     } else if (s.remaining <= 3) {
-        txt = `Noch ${s.remaining} von ${RATE_LIMIT_DAILY} heute übrig`;
+        txt = L(`Noch ${s.remaining} von ${RATE_LIMIT_DAILY} heute übrig`, `${s.remaining} of ${RATE_LIMIT_DAILY} left today`);
         cls = 'warning';
     } else {
         txt = `${s.count}/${RATE_LIMIT_DAILY} heute`;
@@ -1866,12 +1866,12 @@ function toggleSundayReminder(checked) {
     const chk = document.getElementById('aisSundayReminderChk');
     if (checked) {
         if (!('Notification' in window)) {
-            showToast('Dein Browser unterstützt keine Benachrichtigungen', 'error');
+            showToast(L('Dein Browser unterstützt keine Benachrichtigungen', 'Your browser does not support notifications'), 'error');
             if (chk) chk.checked = false;
             return;
         }
         if (Notification.permission === 'denied') {
-            showToast('Browser hat Notifications blockiert — siehe Anleitung unter dem Toggle', 'error');
+            showToast(L('Browser hat Notifications blockiert — siehe Anleitung unter dem Toggle', 'The browser blocked notifications — see the instructions below the toggle'), 'error');
             if (chk) chk.checked = false;
             _updateReminderHelp();
             return;
@@ -1879,7 +1879,7 @@ function toggleSundayReminder(checked) {
         const enable = () => {
             state.sundayReminder = true;
             try { localStorage.setItem(STORAGE_KEYS.sundayReminder, '1'); } catch (e) { }
-            showToast('Reminder aktiviert — Sonntag 18 Uhr', 'success');
+            showToast(L('Reminder aktiviert — Sonntag 18 Uhr', 'Reminder enabled — Sunday 6 pm'), 'success');
             _scheduleSundayCheck();
             _updateReminderHelp();
         };
@@ -1891,16 +1891,16 @@ function toggleSundayReminder(checked) {
                 if (p === 'granted') {
                     enable();
                 } else if (p === 'denied') {
-                    showToast('Du hast Benachrichtigungen abgelehnt — siehe Anleitung unter dem Toggle', 'warning');
+                    showToast(L('Du hast Benachrichtigungen abgelehnt — siehe Anleitung unter dem Toggle', 'You declined notifications — see the instructions below the toggle'), 'warning');
                     if (chk) chk.checked = false;
                     _updateReminderHelp();
                 } else {
-                    showToast('Ohne Erlaubnis kein Reminder möglich', 'warning');
+                    showToast(L('Ohne Erlaubnis kein Reminder möglich', 'No reminder possible without permission'), 'warning');
                     if (chk) chk.checked = false;
                 }
             }).catch(err => {
                 console.warn('[AIStudio] requestPermission failed:', err);
-                showToast('Permission konnte nicht abgefragt werden — siehe Anleitung', 'error');
+                showToast(L('Permission konnte nicht abgefragt werden — siehe Anleitung', 'The permission could not be requested — see the instructions'), 'error');
                 if (chk) chk.checked = false;
                 _updateReminderHelp();
             });
@@ -1908,7 +1908,7 @@ function toggleSundayReminder(checked) {
     } else {
         state.sundayReminder = false;
         try { localStorage.setItem(STORAGE_KEYS.sundayReminder, '0'); } catch (e) { }
-        showToast('Reminder deaktiviert', 'success');
+        showToast(L('Reminder deaktiviert', 'Reminder disabled'), 'success');
     }
 }
 
@@ -1997,7 +1997,7 @@ function _renderActivityChips(professionId) {
     const grid = document.getElementById('aisActivityGrid');
     if (!grid) return;
     const prof = PROFESSIONS[professionId];
-    if (!prof) { grid.innerHTML = '<span class="ais-act-none">Kein Beruf gewählt</span>'; return; }
+    if (!prof) { grid.innerHTML = `<span class="ais-act-none">${L('Kein Beruf gewählt', 'No occupation chosen')}</span>`; return; }
 
     // Build activity suggestions from yearTasks + objects
     const lj = state.lehrjahr || 2;
@@ -2366,11 +2366,11 @@ async function generate() {
             profileBody.classList.add('open');
             profileHdr?.classList.add('open');
         }
-        showToast('Bitte wähle zuerst deinen Beruf im Profil', 'warning');
+        showToast(L('Bitte wähle zuerst deinen Beruf im Profil', 'Please choose your occupation in the profile first'), 'warning');
         return;
     }
     if (state.selectedDays.length === 0) {
-        showToast('Bitte wähle mindestens einen Tag', 'warning');
+        showToast(L('Bitte wähle mindestens einen Tag', 'Please choose at least one day'), 'warning');
         return;
     }
 
@@ -2412,11 +2412,11 @@ async function generate() {
         const _planSchule = _parseWochenplan(customPrompt).schoolDays
             .filter(i => state.selectedDays.includes(i));
         if (_planSchule.length > 0 && _planSchule.join() !== state.schoolDayIndices.join()) {
-            const DAY_NAMES_P = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+            const DAY_NAMES_P = L('Montag Dienstag Mittwoch Donnerstag Freitag', 'Monday Tuesday Wednesday Thursday Friday').split(' ');
             state.schoolDayIndices = [..._planSchule];
             updateSchoolDayChips();
             _saveAiSettings();
-            showToast('Berufsschultag laut deinem Text: ' + _planSchule.map(i => DAY_NAMES_P[i]).join(', '), 'info');
+            showToast(L('Berufsschultag laut deinem Text: ', 'Vocational school day per your text: ') + _planSchule.map(i => DAY_NAMES_P[i]).join(', '), 'info');
         }
 
         const genOptions = {
@@ -2459,11 +2459,11 @@ async function generate() {
                 } catch (apiErr) {
                     console.warn('[AIStudio] Cloud-KI failed, using local engine:', apiErr.message);
                     if (apiErr.message.includes('Tageslimit')) {
-                        showToast('Tageslimit erreicht — es läuft die lokale Engine', 'warning');
+                        showToast(L('Tageslimit erreicht — es läuft die lokale Engine', 'Daily limit reached — the local engine is running'), 'warning');
                     } else if (apiErr.message.includes('Burst-Limit')) {
-                        showToast(apiErr.message + ' Nutze solange die lokale Engine.', 'warning');
+                        showToast(apiErr.message + L(' Nutze solange die lokale Engine.', ' Using the local engine in the meantime.'), 'warning');
                     } else if (apiErr.message.includes('Proxy nicht erreichbar')) {
-                        showToast('Cloud-KI Proxy offline — es läuft die lokale Engine', 'warning');
+                        showToast(L('Cloud-KI Proxy offline — es läuft die lokale Engine', 'Cloud AI proxy offline — the local engine is running'), 'warning');
                     }
                     await new Promise(r => setTimeout(r, 300));
                     week = generateWeek(state.selectedProfession, genOptions);
@@ -2488,11 +2488,13 @@ async function generate() {
         switchTab('preview');
         renderPreview(week);
 
-        showToast(usedCloud ? `${week.days.length} Tage mit Cloud KI generiert` : `${week.days.length} Tage lokal generiert`, 'success');
+        showToast(usedCloud
+            ? L(`${week.days.length} Tage mit Cloud KI generiert`, `${week.days.length} days generated with cloud AI`)
+            : L(`${week.days.length} Tage lokal generiert`, `${week.days.length} days generated locally`), 'success');
         _genSuccess = true;
     } catch (e) {
         console.error('[AIStudio] Generation error:', e);
-        showToast('Fehler bei der Generierung: ' + e.message, 'error');
+        showToast(L('Fehler bei der Generierung: ', 'Error during generation: ') + e.message, 'error');
     } finally {
         state.isGenerating = false;
         stopBtnProgress(_genSuccess);
@@ -2534,7 +2536,7 @@ function regenerateDay(dayIdx) {
     if (result.schoolTopic) state.generatedEntries.days[dayArrayIndex].schoolTopic = result.schoolTopic;
 
     renderPreview(state.generatedEntries);
-    showToast(`${day.name} lokal neu generiert`, 'info');
+    showToast(L(`${day.name} lokal neu generiert`, `${day.name} regenerated locally`), 'info');
 }
 
 // Cloud-Variante: zählt gegen das Rate-Limit (Cooldown + 1/20),
@@ -2542,11 +2544,11 @@ function regenerateDay(dayIdx) {
 async function regenerateDayCloud(dayIdx) {
     if (!state.generatedEntries || !state.selectedProfession) return;
     if (state.isGenerating) {
-        showToast('Bitte warten — eine Generierung läuft schon.', 'warning');
+        showToast(L('Bitte warten — eine Generierung läuft schon.', 'Please wait — a generation is already running.'), 'warning');
         return;
     }
     if (!state.useCloud) {
-        showToast('Cloud-KI ist aus. Schalte den Lokal-Toggle um oder nutze "Lokal neu".', 'warning');
+        showToast(L('Cloud-KI ist aus. Schalte den Lokal-Toggle um oder nutze "Lokal neu".', 'Cloud AI is off. Flip the local toggle or use "Regenerate locally".'), 'warning');
         return;
     }
 
@@ -2563,7 +2565,7 @@ async function regenerateDayCloud(dayIdx) {
         return;
     }
     if (_rl.reason === 'daily') {
-        showToast(_rl.message + ' Nutze "Lokal neu" für freie Iteration.', 'warning');
+        showToast(_rl.message + L(' Nutze "Lokal neu" für freie Iteration.', ' Use "Regenerate locally" for free iteration.'), 'warning');
         _updateRateLimitUI();
         return;
     }
@@ -2574,7 +2576,7 @@ async function regenerateDayCloud(dayIdx) {
 
     state.isGenerating = true;
     _updateRateLimitUI();
-    showToast(`${day.name} wird neu generiert…`, 'info');
+    showToast(L(`${day.name} wird neu generiert…`, `Regenerating ${day.name} …`), 'info');
 
     try {
         // Counter VOR dem Call hochzählen — Fehlversuche zählen mit (Pool-Schutz)
@@ -2596,7 +2598,7 @@ async function regenerateDayCloud(dayIdx) {
         });
 
         const newDay = result.days.find(d => d.index === dayIdx) || result.days[0];
-        if (!newDay) throw new Error('Cloud-KI lieferte keinen Tag zurück.');
+        if (!newDay) throw new Error(L('Cloud-KI lieferte keinen Tag zurück.', 'Cloud AI returned no day.'));
 
         state.generatedEntries.days[dayArrayIndex] = {
             ...state.generatedEntries.days[dayArrayIndex],
@@ -2605,10 +2607,10 @@ async function regenerateDayCloud(dayIdx) {
             schoolTopic: newDay.schoolTopic ?? state.generatedEntries.days[dayArrayIndex].schoolTopic,
         };
         renderPreview(state.generatedEntries);
-        showToast(`${day.name} mit Cloud-KI neu generiert`, 'success');
+        showToast(L(`${day.name} mit Cloud-KI neu generiert`, `${day.name} regenerated with cloud AI`), 'success');
     } catch (e) {
         console.warn('[AIStudio] regenerateDayCloud failed:', e.message);
-        showToast('Cloud-KI Fehler: ' + e.message + ' — versuche "Lokal neu" daneben.', 'error');
+        showToast(L('Cloud-KI Fehler: ', 'Cloud AI error: ') + e.message + L(' — versuche "Lokal neu" daneben.', ' — try "Regenerate locally" next to it.'), 'error');
     } finally {
         state.isGenerating = false;
         _updateRateLimitUI();
@@ -2627,12 +2629,12 @@ function shuffleEntries() {
         day.entries = shuffleArray(day.entries);
     }
     renderPreview(state.generatedEntries);
-    showToast('Einträge gemischt', 'info');
+    showToast(L('Einträge gemischt', 'Entries shuffled'), 'info');
 }
 
 function insertAll() {
     if (!state.generatedEntries) {
-        showToast('Keine Einträge zum Einfügen vorhanden', 'warning');
+        showToast(L('Keine Einträge zum Einfügen vorhanden', 'No entries to add'), 'warning');
         return;
     }
     fillFormWithGeneratedWeek(state.generatedEntries);
@@ -2652,7 +2654,7 @@ function loadFromHistory(idx) {
     switchTab('preview');
     renderPreview(state.generatedEntries);
     renderHistory();
-    showToast('Verlaufs-Eintrag geladen', 'info');
+    showToast(L('Verlaufs-Eintrag geladen', 'History entry loaded'), 'info');
 }
 
 function deleteFromHistory(idx) {
@@ -2670,7 +2672,7 @@ function confirmDeleteHistory(idx) {
     state.generationHistory.splice(idx, 1);
     try { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.generationHistory)); } catch (e) { }
     renderHistory();
-    showToast('Verlaufs-Eintrag gelöscht', 'info');
+    showToast(L('Verlaufs-Eintrag gelöscht', 'History entry deleted'), 'info');
 }
 
 

@@ -17,7 +17,7 @@ function exportReportPDFCore(id) {
     if (!report) return;
 
     if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-        showToast('PDF nicht verfügbar. Nutze die Druckfunktion.', 'error');
+        showToast(L('PDF nicht verfügbar. Nutze die Druckfunktion.', 'PDF not available. Use the print function.'), 'error');
         return;
     }
 
@@ -33,7 +33,7 @@ function exportReportPDFCore(id) {
     }
 
     doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
-    showToast('PDF exportiert', 'success');
+    showToast(L('PDF exportiert', 'PDF exported'), 'success');
 }
 
 // ── RENDER SINGLE REPORT ───────────────────────────────────────────────
@@ -387,231 +387,10 @@ function renderSingleReportToDoc(doc, report) {
     }
 }
 
-function exportAllPDF() {
-    openPDFModal(null);
-}
-
-// Legacy: Export comprehensive summary as single PDF
-function exportSummaryPDF() {
-    if (reports.length === 0) {
-        showToast('Keine Berichte vorhanden.', 'info');
-        return;
-    }
-
-    if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-        showToast('PDF nicht verfügbar.', 'error');
-        return;
-    }
-
-    const { jsPDF } = jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    const sorted = [...reports].sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.week - b.week;
-    });
-
-    // ═══════════════════════════════════════════════════════
-    // PROFESSIONAL COVER PAGE
-    // ═══════════════════════════════════════════════════════
-    // Dark background
-    doc.setFillColor(13, 11, 26);
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-    // Gradient accent (purple→cyan)
-    doc.setFillColor(168, 85, 247);
-    doc.rect(0, 0, pageWidth, 6, 'F');
-
-    // Logo/Branding
-    doc.setFontSize(14);
-    doc.setTextColor(168, 85, 247);
-    doc.setFont(undefined, 'bold');
-    doc.text('MW', 20, 30);
-
-    // Title
-    doc.setFontSize(28);
-    doc.setTextColor(255, 255, 255);
-    doc.setFont(undefined, 'bold');
-    doc.text('Ausbildungsnachweis', pageWidth / 2, 60, { align: 'center' });
-    doc.text('Jahresbericht', pageWidth / 2, 85, { align: 'center' });
-
-    // Decorative line
-    doc.setDrawColor(6, 182, 212);
-    doc.setLineWidth(1);
-    doc.line(60, 95, 150, 95);
-
-    // Info section
-    doc.setFontSize(11);
-    doc.setTextColor(168, 200, 255, 0.7);
-
-    const totalWeeks = sorted.length;
-    const totalHours = sorted.reduce((sum, r) => sum + (r.hours || 0), 0);
-    const year = sorted[0]?.year || new Date().getFullYear();
-
-    doc.text(`${totalWeeks} Wochen dokumentiert`, pageWidth / 2, 115, { align: 'center' });
-    doc.text(`${totalHours} Stunden Ausbildung`, pageWidth / 2, 125, { align: 'center' });
-    doc.text(`${year}. Ausbildungsjahr`, pageWidth / 2, 135, { align: 'center' });
-
-    // Footer on cover
-    doc.setFontSize(8);
-    doc.setTextColor(120, 114, 150);
-    doc.text('MyWorkLog Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 15, { align: 'center' });
-    doc.setFontSize(7);
-    doc.setTextColor(80, 80, 100);
-    doc.text(`Erstellt: ${new Date().toLocaleDateString((window.mwlLocale ? window.mwlLocale() : document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE'), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    // ═══════════════════════════════════════════════════════
-    // TABLE OF CONTENTS
-    // ═══════════════════════════════════════════════════════
-    doc.addPage();
-
-    doc.setFillColor(168, 85, 247);
-    doc.rect(15, 10, 2, 8, 'F');
-    doc.setFontSize(14);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'bold');
-    doc.text('Übersicht', 22, 16);
-
-    doc.setFontSize(10);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'normal');
-    let tocY = 30;
-    sorted.forEach((report, idx) => {
-        // Wortlaut statt Zeichen: 'complete' und 'signed' waren beide '✓' (nicht unterscheidbar),
-        // und U+2713 liegt nicht in WinAnsiEncoding — jsPDF setzt dafür ein falsches Glyph.
-        const statusLabel = { 'incomplete': 'Entwurf', 'complete': 'Vollständig', 'signed': 'Unterschrieben' }[report.status] || 'Entwurf';
-        const line = `KW ${String(report.week).padStart(2, '0')} — ${report.department || 'Keine Abteilung angegeben'} — ${report.hours || 0} Std. — ${statusLabel}`;
-        doc.text(line, 20, tocY);
-        tocY += 6;
-        if (tocY > 270) { doc.addPage(); tocY = 20; }
-    });
-
-    // ═══════════════════════════════════════════════════════
-    // SUMMARY STATISTICS PAGE
-    // ═══════════════════════════════════════════════════════
-    doc.addPage();
-
-    doc.setFillColor(6, 182, 212);
-    doc.rect(15, 10, 2, 8, 'F');
-    doc.setFontSize(14);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'bold');
-    doc.text('Statistiken', 22, 16);
-
-    let statY = 35;
-
-    // Stat cards background
-    doc.setFillColor(245, 254, 255);
-    doc.roundedRect(15, statY, 88, 30, 2, 2, 'F');
-    doc.roundedRect(107, statY, 88, 30, 2, 2, 'F');
-
-    // Stat 1: Total weeks
-    doc.setFontSize(12);
-    doc.setTextColor(168, 85, 247);
-    doc.setFont(undefined, 'bold');
-    doc.text('Wochen', 20, statY + 8);
-    doc.setFontSize(18);
-    doc.text(String(totalWeeks), 20, statY + 22);
-
-    // Stat 2: Total hours
-    doc.setFontSize(12);
-    doc.setTextColor(6, 182, 212);
-    doc.setFont(undefined, 'bold');
-    doc.text('Gesamtstunden', 112, statY + 8);
-    doc.setFontSize(18);
-    doc.text(String(totalHours), 112, statY + 22);
-
-    // Department breakdown
-    statY += 45;
-    doc.setFillColor(168, 85, 247);
-    doc.rect(15, statY - 2, 2, 6, 'F');
-    doc.setFontSize(11);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'bold');
-    doc.text('Abteilungsverteilung', 24, statY + 2);
-
-    statY += 12;
-    const deptMap = {};
-    sorted.forEach(r => {
-        const dept = r.department || 'Unbekannt';
-        deptMap[dept] = (deptMap[dept] || 0) + (r.hours || 0);
-    });
-
-    doc.setFontSize(9);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'normal');
-    Object.entries(deptMap).forEach(([dept, hours]) => {
-        doc.text(`• ${dept}: ${hours} Std.`, 20, statY);
-        statY += 6;
-    });
-
-    // Status breakdown
-    statY += 8;
-    doc.setFillColor(6, 182, 212);
-    doc.rect(15, statY - 2, 2, 6, 'F');
-    doc.setFontSize(11);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'bold');
-    doc.text('Status', 24, statY + 2);
-
-    statY += 12;
-    const statusMap = { incomplete: 0, complete: 0, signed: 0 };
-    sorted.forEach(r => statusMap[r.status || 'incomplete']++);
-
-    doc.setFontSize(9);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'normal');
-    doc.text(`• Entwürfe: ${statusMap.incomplete}`, 20, statY);
-    doc.text(`• Verarbeitet: ${statusMap.complete}`, 20, statY + 6);
-    doc.text(`• Signiert: ${statusMap.signed}`, 20, statY + 12);
-
-    // ═══════════════════════════════════════════════════════
-    // FINAL PAGE: SIGNATURES
-    // ═══════════════════════════════════════════════════════
-    doc.addPage();
-
-    doc.setFillColor(168, 85, 247);
-    doc.rect(15, 10, 2, 8, 'F');
-    doc.setFontSize(14);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'bold');
-    doc.text('Bestätigung', 22, 16);
-
-    let sigY = 50;
-    doc.setFontSize(10);
-    doc.setTextColor(40, 30, 60);
-    doc.setFont(undefined, 'normal');
-    doc.text('Der/Die Auszubildende bestätigt die Korrektheit der dokumentierten Tätigkeiten.', 20, sigY);
-
-    sigY += 35;
-    doc.setDrawColor(120, 114, 150);
-    doc.setLineWidth(0.3);
-    doc.line(20, sigY, 90, sigY);
-
-    doc.setFontSize(8);
-    doc.setTextColor(120, 114, 150);
-    doc.text('Auszubildende/r', 20, sigY + 7);
-    doc.text('Datum: ___________', 20, sigY + 12);
-
-    doc.line(110, sigY, 180, sigY);
-    doc.text('Ausbilder/in', 110, sigY + 7);
-    doc.text('Datum: ___________', 110, sigY + 12);
-
-    // Footer
-    doc.setFontSize(7);
-    doc.setTextColor(168, 85, 247);
-    doc.text('MyWorkLog • Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-    doc.save(`Ausbildungsnachweis_Jahresbericht_${year}.pdf`);
-    showToast('Jahresbericht als PDF exportiert', 'success');
-}
-
 // ── BULK EXPORT ─────────────────────────────────────────────────────────
 async function exportBulkPDFCore() {
     if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-        showToast('PDF nicht verfügbar.', 'error');
+        showToast(L('PDF nicht verfügbar.', 'PDF not available.'), 'error');
         return;
     }
     
@@ -649,7 +428,7 @@ async function exportBulkPDFCore() {
 
     const progressText = document.createElement('div');
     progressText.id = 'pdfBulkProgress';
-    progressText.textContent = 'Lade Daten aus der Cloud...';
+    progressText.textContent = L('Lade Daten aus der Cloud...', 'Loading data from the cloud …');
     
     overlay.appendChild(spinner);
     overlay.appendChild(progressText);
@@ -714,7 +493,8 @@ async function exportBulkPDFCore() {
 
     if (bulkReports.length === 0) {
         document.body.removeChild(overlay);
-        showToast('Keine vollständigen oder unterschriebenen Berichte gefunden.', 'error');
+        showToast(L('Keine vollständigen oder unterschriebenen Berichte gefunden.',
+            'No complete or signed reports found.'), 'error');
         return;
     }
 
@@ -729,7 +509,8 @@ async function exportBulkPDFCore() {
     // 3. Rendering-Loop
     for (let i = 0; i < bulkReports.length; i++) {
         const report = bulkReports[i];
-        progressText.textContent = `Generiere PDF: Woche ${i + 1} von ${bulkReports.length}...`;
+        progressText.textContent = L(`Generiere PDF: Woche ${i + 1} von ${bulkReports.length}...`,
+            `Generating PDF: week ${i + 1} of ${bulkReports.length} …`);
         await yieldUI();
 
         if (!isFirstPage) {
@@ -757,11 +538,13 @@ async function exportBulkPDFCore() {
         }
     }
 
-    progressText.textContent = 'Speichere PDF...';
+    progressText.textContent = L('Speichere PDF...', 'Saving PDF …');
     await yieldUI();
-    
+
     doc.save(`Ausbildungsnachweis_Komplett.pdf`);
     document.body.removeChild(overlay);
-    showToast(`${bulkReports.length} Wochen als Bulk-PDF exportiert`, 'success');
+    showToast(bulkReports.length === 1
+        ? L('1 Woche als Bulk-PDF exportiert', '1 week exported as a bulk PDF')
+        : L(`${bulkReports.length} Wochen als Bulk-PDF exportiert`, `${bulkReports.length} weeks exported as a bulk PDF`), 'success');
 }
 

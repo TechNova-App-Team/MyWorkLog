@@ -245,12 +245,20 @@ function renderAISuggestions(mode) {
     const detected = detectProfessions(department, currentText);
     if (detected && detected.length > 0) {
         const profName = detected[0].key;
-        const nameMap = { software: 'IT-Entwicklung', sysadmin: 'Systemadministration', kaufmann: 'Kaufmännisch', handwerk_bau: 'Bau/Handwerk', handwerk_holz: 'Holztechnik/Tischlerei', elektro: 'Elektrotechnik', gastronomie: 'Gastronomie/Bäckerei', pflege: 'Pflege/Gesundheit', kfz: 'KFZ-Technik', friseur: 'Friseurhandwerk', einzelhandel: 'Einzelhandel', lager: 'Lagerlogistik', medien: 'Mediengestaltung', garten: 'Garten-/Landschaftsbau', metall: 'Metalltechnik', chemie: 'Chemie/Labor' };
-        contextNote.innerHTML = `AI erkennt: <strong>${nameMap[profName] || profName}</strong> — Vorschläge werden generiert, nie wiederholt.`;
+        const nameMap = L(
+            { software: 'IT-Entwicklung', sysadmin: 'Systemadministration', kaufmann: 'Kaufmännisch', handwerk_bau: 'Bau/Handwerk', handwerk_holz: 'Holztechnik/Tischlerei', elektro: 'Elektrotechnik', gastronomie: 'Gastronomie/Bäckerei', pflege: 'Pflege/Gesundheit', kfz: 'KFZ-Technik', friseur: 'Friseurhandwerk', einzelhandel: 'Einzelhandel', lager: 'Lagerlogistik', medien: 'Mediengestaltung', garten: 'Garten-/Landschaftsbau', metall: 'Metalltechnik', chemie: 'Chemie/Labor' },
+            { software: 'IT development', sysadmin: 'System administration', kaufmann: 'Commercial', handwerk_bau: 'Construction / trades', handwerk_holz: 'Woodworking / joinery', elektro: 'Electrical engineering', gastronomie: 'Catering / bakery', pflege: 'Care / health', kfz: 'Automotive', friseur: 'Hairdressing', einzelhandel: 'Retail', lager: 'Warehouse logistics', medien: 'Media design', garten: 'Landscaping / gardening', metall: 'Metalworking', chemie: 'Chemistry / lab' });
+        contextNote.innerHTML = L(
+            `AI erkennt: <strong>${nameMap[profName] || profName}</strong> — Vorschläge werden generiert, nie wiederholt.`,
+            `AI detects: <strong>${nameMap[profName] || profName}</strong> — suggestions are generated, never repeated.`);
     } else if (department) {
-        contextNote.innerHTML = `${bhIcon('')} Tippe z.B. deinen Beruf oder Tätigkeiten — die AI erkennt es automatisch.`;
+        contextNote.innerHTML = `${bhIcon('')} ` + L(
+            'Tippe z.B. deinen Beruf oder Tätigkeiten — die AI erkennt es automatisch.',
+            'Type your occupation or activities, for example — the AI picks it up automatically.');
     } else {
-        contextNote.innerHTML = `${bhIcon('')} Gib eine Abteilung ein (z.B. &quot;Bäckerei&quot;, &quot;Maurer&quot;, &quot;IT&quot;) — die AI denkt mit.`;
+        contextNote.innerHTML = `${bhIcon('')} ` + L(
+            'Gib eine Abteilung ein (z.B. &quot;Bäckerei&quot;, &quot;Maurer&quot;, &quot;IT&quot;) — die AI denkt mit.',
+            'Enter a department (e.g. &quot;bakery&quot;, &quot;bricklaying&quot;, &quot;IT&quot;) — the AI takes it from there.');
     }
 }
 
@@ -263,7 +271,7 @@ function insertAISuggestion(chipEl, mode) {
         const textarea = document.getElementById('reportActivities');
         const current = textarea.value.trim();
         textarea.value = current ? current + '\n' + fullText : fullText;
-        document.getElementById('charCount').textContent = textarea.value.length + ' Zeichen';
+        document.getElementById('charCount').textContent = textarea.value.length + L(' Zeichen', ' characters');
         updateQualityMeter(textarea.value);
     } else {
         let target = activeDailyField;
@@ -281,7 +289,7 @@ function insertAISuggestion(chipEl, mode) {
         }
     }
 
-    showToast('AI-Vorschlag eingefügt', 'success');
+    showToast(L('AI-Vorschlag eingefügt', 'AI suggestion added'), 'success');
     setTimeout(() => renderAISuggestions(mode), 400);
 }
 

@@ -31,11 +31,11 @@ function applyTemplate(templateId) {
     // Slight delay so modal is visible
     setTimeout(() => {
         document.getElementById('reportActivities').value = template.content;
-        document.getElementById('charCount').textContent = template.content.length + ' Zeichen';
+        document.getElementById('charCount').textContent = template.content.length + L(' Zeichen', ' characters');
         updateQualityMeter(template.content);
     }, 100);
 
-    showToast(`Vorlage "${template.name}" geladen`, 'success');
+    showToast(L(`Vorlage "${template.name}" geladen`, `Template "${template.name}" loaded`), 'success');
 }
 
 // ═══════════════════════════════════════
@@ -79,11 +79,12 @@ async function restoreDraft() {
 
         if (hasContent) {
             const wieder = await bhConfirm({
-                title: 'Ungespeicherten Entwurf wiederherstellen?',
-                text: 'Beim letzten Mal ist ein Bericht offen geblieben. Du kannst dort weitermachen oder mit einem leeren Formular starten.',
+                title: L('Ungespeicherten Entwurf wiederherstellen?', 'Restore unsaved draft?'),
+                text: L('Beim letzten Mal ist ein Bericht offen geblieben. Du kannst dort weitermachen oder mit einem leeren Formular starten.',
+                    'A report was left open last time. You can continue there or start with a blank form.'),
                 danger: false,
-                confirmText: 'Wiederherstellen',
-                cancelText: 'Neu anfangen'
+                confirmText: L('Wiederherstellen', 'Restore'),
+                cancelText: L('Neu anfangen', 'Start fresh')
             });
             if (wieder) {
                 document.getElementById('reportYear').value = draft.year || 1;

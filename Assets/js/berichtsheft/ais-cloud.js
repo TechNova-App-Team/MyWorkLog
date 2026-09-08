@@ -89,11 +89,15 @@ const RateLimit = {
         const s = this.status();
         if (s.remaining <= 0) return {
             ok: false, reason: 'daily',
-            message: `Tageslimit erreicht (${RATE_LIMIT_DAILY} Generationen). Morgen geht's weiter — nutze solange die lokale Engine.`,
+            message: L(
+                `Tageslimit erreicht (${RATE_LIMIT_DAILY} Generationen). Morgen geht's weiter — nutze solange die lokale Engine.`,
+                `Daily limit reached (${RATE_LIMIT_DAILY} generations). It resets tomorrow — use the local engine until then.`),
         };
         if (s.cooldownMs > 0) return {
             ok: false, reason: 'cooldown',
-            message: `Bitte noch ${Math.ceil(s.cooldownMs / 1000)}s warten, dann wieder generieren.`,
+            message: L(
+                `Bitte noch ${Math.ceil(s.cooldownMs / 1000)}s warten, dann wieder generieren.`,
+                `Please wait another ${Math.ceil(s.cooldownMs / 1000)}s, then generate again.`),
             cooldownMs: s.cooldownMs,
         };
         return { ok: true };
@@ -515,7 +519,7 @@ async function generateWithCloud(professionId, options) {
             // Retry-After (in s) unterscheidet Burst-Limit (10-Min-Window) von Tageslimit.
             const retryAfter = parseInt(response.headers.get('Retry-After') || '0', 10);
             if (retryAfter > 0 && retryAfter < 900) {
-                throw new Error(`Burst-Limit erreicht — in ca. ${Math.ceil(retryAfter / 60)} Min wieder verfügbar.`);
+                throw new Error(L(`Burst-Limit erreicht — in ca. ${Math.ceil(retryAfter / 60)} Min wieder verfügbar.`, `Burst limit reached — available again in about ${Math.ceil(retryAfter / 60)} min.`));
             }
             // Tageslimit: Client-Counter auf MAX synchronisieren, damit UI das Limit zeigt.
             try {
@@ -528,7 +532,7 @@ async function generateWithCloud(professionId, options) {
             } catch (e) { }
             throw new Error('Tageslimit erreicht — morgen geht\'s weiter, nutze solange die lokale Engine.');
         }
-        if (response.status === 403) throw new Error('Proxy nicht erreichbar (403). Worker-URL oder CORS prüfen.');
+        if (response.status === 403) throw new Error(L('Proxy nicht erreichbar (403). Worker-URL oder CORS prüfen.', 'Proxy unreachable (403). Check the worker URL or CORS.'));
         throw new Error(`Cloud-KI Fehler (${response.status}): ${errMsg}`);
     }
 
@@ -588,7 +592,7 @@ async function generateWithCloud(professionId, options) {
     if (_parseErr) {
         console.error('[AIStudio] JSON nicht reparierbar:', _parseErr.message);
         console.error('[AIStudio] Roh-Antwort des Modells (vollständig):\n' + textContent);
-        throw new Error('Cloud-KI hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
+        throw new Error(L('Cloud-KI hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.', 'Cloud AI returned invalid JSON. Please try again.'));
     }
 
     // Tolerantes Parsing: kleine Modelle liefern oft EIN Objekt statt Array,
@@ -803,7 +807,7 @@ async function generateWithCloud(professionId, options) {
     }
 
     if (week.days.length === 0) {
-        throw new Error('Keine gültigen Tage in der Cloud-KI-Antwort.');
+        throw new Error(L('Keine gültigen Tage in der Cloud-KI-Antwort.', 'No valid days in the cloud AI response.'));
     }
 
     // Hybrid-Fallback: fehlt die KI noch Tage (z.B. Modell hat trotz Retry

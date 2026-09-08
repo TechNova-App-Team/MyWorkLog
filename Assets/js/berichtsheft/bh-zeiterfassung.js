@@ -89,7 +89,7 @@ function fillDailyFromTracking() {
 function autoFillFromTimeTracker() {
     const timeTrackerData = localStorage.getItem('tg_pro_data');
     if (!timeTrackerData) {
-        showToast('Keine TimeTracker-Daten gefunden.', 'error');
+        showToast(L('Keine TimeTracker-Daten gefunden.', 'No TimeTracker data found.'), 'error');
         return;
     }
 
@@ -97,13 +97,13 @@ function autoFillFromTimeTracker() {
     try {
         data = JSON.parse(timeTrackerData);
     } catch (e) {
-        showToast('Fehler beim Lesen der TimeTracker-Daten.', 'error');
+        showToast(L('Fehler beim Lesen der TimeTracker-Daten.', 'Error reading the TimeTracker data.'), 'error');
         return;
     }
     const entries = data.entries || [];
 
     if (entries.length === 0) {
-        showToast('Keine Einträge im TimeTracker.', 'info');
+        showToast(L('Keine Einträge im TimeTracker.', 'No entries in the TimeTracker.'), 'info');
         return;
     }
 
@@ -160,10 +160,12 @@ function autoFillFromTimeTracker() {
     if (imported > 0) {
         saveToStorage();
         updateUI();
-        showToast(`${imported} Berichte importiert`, 'success');
+        showToast(imported === 1
+            ? L('1 Bericht importiert', '1 report imported')
+            : L(`${imported} Berichte importiert`, `${imported} reports imported`), 'success');
         launchConfetti();
     } else {
-        showToast('Alle Wochen bereits dokumentiert.', 'info');
+        showToast(L('Alle Wochen bereits dokumentiert.', 'All weeks already documented.'), 'info');
     }
 }
 

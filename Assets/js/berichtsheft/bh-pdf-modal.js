@@ -12,11 +12,16 @@ let _pdfCurrentStyle = 'form';
 let _pdfActiveTheme = null;
 
 const PDF_LABELS = {
-    form: 'IHK-Vordruck',
+    form: L('IHK-Vordruck', 'IHK form'),
     ihk: 'IHK Classic',
     modern: 'Modern Dark',
-    clean: 'Schlicht'
+    clean: L('Schlicht', 'Plain')
 };
+
+// Badge unter der Vorschau: Name der Vorlage + Wort fuer "Darstellung".
+function pdfBadgeLabel(style) {
+    return (PDF_LABELS[style] || '') + L(' Format', ' layout');
+}
 
 const DAYS_MAP = {
     monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch',
@@ -46,7 +51,7 @@ function openPDFModal(id) {
     _pdfCurrentStyle = PDF_LABELS[saved.style] ? saved.style : 'form';
     document.querySelectorAll('.pdf-style-card').forEach(c =>
         c.classList.toggle('selected', c.dataset.style === _pdfCurrentStyle));
-    document.getElementById('pdfPreviewBadge').textContent = PDF_LABELS[_pdfCurrentStyle] + ' Format';
+    document.getElementById('pdfPreviewBadge').textContent = pdfBadgeLabel(_pdfCurrentStyle);
     document.getElementById('pdfDocPreview').className = 'pdf-doc style-' + _pdfCurrentStyle;
     populateIhkSelects(saved.kammer, saved.formular);
     document.getElementById('pdfOptCover').classList.toggle('on', !!saved.cover);
@@ -55,16 +60,18 @@ function openPDFModal(id) {
     if (id) {
         const r = reports.find(x => x.id === id);
         if (r) {
-            subtitle.textContent = `KW ${r.week} · ${r.year}. Ausbildungsjahr · ${formatDate(r.dateFrom)} – ${formatDate(r.dateTo)}`;
+            subtitle.textContent = L(
+                `KW ${r.week} · ${r.year}. Ausbildungsjahr · ${formatDate(r.dateFrom)} – ${formatDate(r.dateTo)}`,
+                `CW ${r.week} · Training year ${r.year} · ${formatDate(r.dateFrom)} – ${formatDate(r.dateTo)}`);
             // Pre-fill department if beruf empty
             if (!saved.beruf && r.department) document.getElementById('pdfBeruf').value = r.department;
         }
         // Hide "Alle KWs" button, show single export
         document.getElementById('pdfExportAllBtn').style.display = 'none';
         document.getElementById('pdfExportBtn').textContent = '';
-        document.getElementById('pdfExportBtn').innerHTML = '<svg class="icon"><use href="#i-file"/></svg> Als PDF herunterladen';
+        document.getElementById('pdfExportBtn').innerHTML = '<svg class="icon"><use href="#i-file"/></svg> ' + L('Als PDF herunterladen', 'Download as PDF');
     } else {
-        subtitle.textContent = 'Alle Berichte als Jahresbericht exportieren';
+        subtitle.textContent = L('Alle Berichte als Jahresbericht exportieren', 'Export all reports as a yearly report');
         document.getElementById('pdfExportAllBtn').style.display = '';
     }
 
@@ -83,7 +90,7 @@ function selectPDFStyle(style, el) {
     _pdfCurrentStyle = style;
     document.querySelectorAll('.pdf-style-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
-    document.getElementById('pdfPreviewBadge').textContent = PDF_LABELS[style] + ' Format';
+    document.getElementById('pdfPreviewBadge').textContent = pdfBadgeLabel(style);
     const doc = document.getElementById('pdfDocPreview');
     doc.className = 'pdf-doc style-' + style;
     syncPDFPanels();
@@ -245,7 +252,7 @@ function updatePDFPreview() {
     _savePDFPersonalCfg();
     const report = _pdfCurrentId ? reports.find(r => r.id === _pdfCurrentId) : reports[0];
     if (!report) {
-        document.getElementById('pdfDocPreview').innerHTML = '<div style="padding:30px;text-align:center;font-size:9px;color:#888;font-family:Arial">Kein Bericht ausgewählt</div>';
+        document.getElementById('pdfDocPreview').innerHTML = `<div style="padding:30px;text-align:center;font-size:9px;color:#888;font-family:Arial">${L('Kein Bericht ausgewählt', 'No report selected')}</div>`;
         return;
     }
 
@@ -344,7 +351,7 @@ function executePDFExport() {
     _savePDFPersonalCfg();
     const targetId = _pdfCurrentId || (reports[0] ? reports[0].id : null);
     if (!targetId) {
-        showToast('Keine Berichte vorhanden.', 'info');
+        showToast(L('Keine Berichte vorhanden.', 'No reports yet.'), 'info');
         return;
     }
     exportReportPDFCore(targetId);
@@ -355,7 +362,7 @@ function executePDFExportAll() {
     if (typeof exportBulkPDFCore === 'function') {
         exportBulkPDFCore();
     } else {
-        showToast('Bulk Export ist nicht verfügbar.', 'error');
+        showToast(L('Bulk Export ist nicht verfügbar.', 'Bulk export is not available.'), 'error');
     }
 }
 
