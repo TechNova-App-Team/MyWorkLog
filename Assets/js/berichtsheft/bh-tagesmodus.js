@@ -126,13 +126,14 @@ function updateDailyTotalHours() {
     const inputs = document.querySelectorAll('.daily-hours-input');
     let total = 0;
     inputs.forEach(inp => total += parseFloat(inp.value) || 0);
+    total = Math.round(total * 100) / 100;
     const el = document.getElementById('dailyTotalHours');
-    if (el) el.textContent = total.toFixed(1);
+    if (el) el.textContent = total;
 
     // Also sync to the main hours field
     const hoursField = document.getElementById('reportHours');
     if (hoursField && currentMode === 'daily') {
-        hoursField.value = total.toFixed(1);
+        hoursField.value = total;
     }
 }
 
