@@ -46,6 +46,15 @@
         if (typeof showToast === 'function') showToast(msg, art || 'info');
     }
 
+    // Rueckfrage in der Gestaltung der Seite (bh-ui-helfer.js). Die Datei wird
+    // NACH dieser geladen — deshalb erst beim Klick nachsehen, nicht hier oben.
+    // Fehlt sie wider Erwarten, bleibt die Browser-Rueckfrage: eine Loeschung
+    // ohne jede Rueckfrage waere die schlechtere Notlage.
+    function frage(o) {
+        if (typeof bhConfirm === 'function') return bhConfirm(o);
+        return Promise.resolve(confirm([o.title, o.code, o.text].filter(Boolean).join('\n\n')));
+    }
+
     // ── Rendern ──────────────────────────────────────────────────────
 
     // Der Schliess-Knopf sitzt in JEDER Nicht-Mitglied-Ansicht: eine
@@ -378,9 +387,14 @@
     // schon verschickt hat, macht damit still eine Einladung ungueltig, die
     // beim Azubi noch im Chat steht.
     window.b2bCodeLoeschen = async function (code) {
-        if (!confirm(b2bL('Einladungscode ', 'Delete invite code ') + code +
-            b2bL(' löschen? Wer ihn schon bekommen hat, kann damit nicht mehr beitreten.',
-                 '? Anyone who already received it will no longer be able to join.'))) return;
+        const ok = await frage({
+            title: b2bL('Einladungscode löschen?', 'Delete invite code?'),
+            text: b2bL('Wer ihn schon bekommen hat, kann damit nicht mehr beitreten. Bereits verbundene Azubis bleiben im Betrieb.',
+                       'Anyone who already received it will no longer be able to join. Trainees already connected stay in the company.'),
+            code: code,
+            confirmText: b2bL('Code löschen', 'Delete code')
+        });
+        if (!ok) return;
         try {
             await BHB2B.einladungLoeschen(code);
             toast(b2bL('Code gelöscht.', 'Code deleted.'), 'success');
@@ -414,9 +428,13 @@
     };
 
     window.b2bVerbindungLoesen = async function () {
-        if (!confirm(b2bL(
-            'Verbindung zum Betrieb lösen? Deine Berichte bleiben hier erhalten. Bereits abgezeichnete Wochen behalten ihre Bestätigung.',
-            'Disconnect from the company? Your reports stay here. Weeks already signed off keep their approval.'))) return;
+        const ok = await frage({
+            title: b2bL('Verbindung zum Betrieb lösen?', 'Disconnect from the company?'),
+            text: b2bL('Deine Berichte bleiben hier erhalten. Bereits abgezeichnete Wochen behalten ihre Bestätigung.',
+                       'Your reports stay here. Weeks already signed off keep their approval.'),
+            confirmText: b2bL('Verbindung lösen', 'Disconnect')
+        });
+        if (!ok) return;
         try {
             await BHB2B.austreten();
             toast(b2bL('Verbindung gelöst.', 'Disconnected.'), 'info');
