@@ -506,7 +506,8 @@ function ihkExecuteImport() {
     if (checkedBoxes.length === 0) return;
     
     if (typeof reports === 'undefined' || typeof saveToStorage !== 'function') {
-        alert('Interner Fehler: Berichtsheft-Speicher nicht gefunden.');
+        bhAlert('Import nicht möglich',
+            'Der Berichtsheft-Speicher ist auf dieser Seite nicht verfügbar. Es wurde nichts importiert und nichts geändert — lade die Seite neu und versuche es erneut.');
         return;
     }
     
