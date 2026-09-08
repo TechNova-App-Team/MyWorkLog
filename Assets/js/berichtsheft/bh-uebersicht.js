@@ -367,6 +367,19 @@ function renderReports() {
         ? L('1 Bericht', '1 report')
         : L(`${filtered.length} Berichte`, `${filtered.length} reports`);
 
+    let isB2BMitglied = false;
+    try {
+        const cached = localStorage.getItem('bh_b2b_status');
+        if (cached) {
+            const st = JSON.parse(cached);
+            if (st.rolle === 'ausbilder') {
+                isB2BMitglied = true;
+            } else if (st.rolle === 'azubi') {
+                isB2BMitglied = (localStorage.getItem('bh_b2b_ok') === st.betriebId);
+            }
+        }
+    } catch(e) {}
+
     list.innerHTML = filtered.map((report, index) => {
         const statusBadge = {
             'incomplete': `<span class="badge badge-warning">${L('In Bearbeitung', 'In progress')}</span>`,
@@ -374,7 +387,10 @@ function renderReports() {
             'signed': `<span class="badge badge-signed">&#10003; ${L('Unterschrieben', 'Signed')}</span>`
         }[report.status];
 
-        const wordCount = (report.activities + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
+        let textForWords = report.mode === 'daily' 
+            ? Object.values(report.dailyActivities || {}).join(' ') 
+            : (report.activities || '');
+        const wordCount = (textForWords + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
         const isSelected = selectedIds.has(report.id);
         const modeBadge = report.mode === 'daily'
             ? `<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:4px;font-weight:700;">${L('TÄGLICH', 'DAILY')}</span>`
@@ -405,7 +421,7 @@ function renderReports() {
                         </div>
                         ${!bulkMode ? `
                         <div class="report-actions" onclick="event.stopPropagation()">
-                            <button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="${L('Freigabe durch Ausbilder', 'Trainer sign-off')}"><svg class="icon"><use href="#i-tie"/></svg></button>
+                            ${!isB2BMitglied ? `<button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="${L('Freigabe durch Ausbilder', 'Trainer sign-off')}"><svg class="icon"><use href="#i-tie"/></svg></button>` : ''}
                             <button class="btn-icon" onclick="editReport('${report.id}')" title="${L('Bearbeiten', 'Edit')}"><svg class="icon"><use href="#i-edit"/></svg></button>
                             <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="${L('Duplizieren', 'Duplicate')}"><svg class="icon"><use href="#i-copy"/></svg></button>
                             <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="${L('Als PDF exportieren', 'Export as PDF')}"><svg class="icon"><use href="#i-file"/></svg></button>
