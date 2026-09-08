@@ -264,6 +264,17 @@ function ihkProcessExtractedText(pagesText) {
                     school: '',
                     hours: 0,
                     status: status,
+                    // 🔴 Herkunft MUSS mitfahren. Eine so importierte Woche wurde bei
+                    // der IHK bereits gefuehrt, oft schon abgezeichnet — ohne diese
+                    // Marke laeuft sie im Ausbilder-Cockpit als "wartet auf Ihre
+                    // Freigabe" und erzeugt Arbeit, die es nicht gibt. Das Vokabel
+                    // steht in QUELLE_ERLAUBT (bh-b2b.js) und im DB-CHECK
+                    // berichte_quelle_check — wer es hier aendert, zieht beide nach.
+                    source: 'ihk-import',
+                    // Der Stand, den das PDF behauptet. Getrennt von `status`, weil
+                    // `status` der Azubi spaeter aendern kann; dies bleibt der Befund
+                    // aus dem Dokument.
+                    ihkSigned: status === 'signed',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     _rawText: '' // Für Debug/Weiterverarbeitung
@@ -512,11 +523,13 @@ function ihkExecuteImport() {
     }
     
     let importCount = 0;
-    
+    const importierte = [];
+
     checkedBoxes.forEach(cb => {
         const idx = parseInt(cb.value, 10);
         const week = ihkParsedWeeks[idx];
         if (week) {
+            importierte.push(week);
             // Extra prüfen ob Duplikat überschrieben werden soll
             const existingIdx = reports.findIndex(r => r.year === week.year && r.week === week.week);
             if (existingIdx !== -1) {
@@ -532,6 +545,15 @@ function ihkExecuteImport() {
     
     // Speichern und UI aktualisieren
     saveToStorage();
+
+    // 🔴 Erst nach saveToStorage(): der Betrieb muss die importierten Wochen
+    // auch bekommen. saveReport() stoesst b2bOnReportSaved() an, der Import
+    // laeuft aber daran vorbei — ohne diese Schleife lagen sie bis zum
+    // naechsten Bearbeiten nur lokal auf dem Geraet.
+    if (typeof b2bOnReportSaved === 'function') {
+        importierte.forEach(function (w) { b2bOnReportSaved(w); });
+    }
+
     if (typeof updateUI === 'function') updateUI();
     if (typeof showToast === 'function') showToast(`${importCount} Bericht${importCount !== 1 ? 'e' : ''} importiert`, 'success');
     

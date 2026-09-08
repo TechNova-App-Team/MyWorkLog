@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.7"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.9.7"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.8"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.9.8"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
@@ -279,6 +279,11 @@
             display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px;
             margin-top: 20px;
         }
+        /* Die IHK-Kachel gibt es nur, wenn es solche Wochen gibt. Dann sind es
+           vier — ohne diese Regel faellt die vierte allein in eine zweite Reihe
+           und sieht aus, als fehle etwas daneben. `:has()` statt einer Klasse am
+           Container, weil das Markup je Zustand anders viele Kinder hat. */
+        .abk-kacheln:has(.abk-kachel.is-ihk) { grid-template-columns: 1.5fr 1fr 1fr 1.4fr; }
         .abk-kachel {
             min-width: 0;
             display: flex; flex-direction: column; gap: 2px;
@@ -299,6 +304,9 @@
         .abk-kachel.is-warn { border-color: rgba(var(--warning-rgb), 0.38); }
         .abk-kachel.is-warn .abk-wert { color: var(--warning); }
         .abk-kachel.is-ruhig .abk-wert { color: var(--text-faint); }
+        /* Herkunft, keine Bewertung — deshalb Neutralton wie im Balkensegment. */
+        .abk-kachel.is-ihk { border-style: dashed; }
+        .abk-kachel.is-ihk .abk-wert { color: var(--text-muted); }
 
         .abk-hinweis {
             display: flex; gap: 10px; align-items: flex-start;
@@ -384,10 +392,42 @@
         .abk-azubi:nth-of-type(n+4) { animation-delay: 0.15s; }
         @keyframes abkIn { from { opacity: 0; transform: translateY(6px); } }
 
+        /* 🔴 Der Kopf ist jetzt ein <summary>. Ohne diesen Reset traegt es die
+           Aufklapp-Pfeilspitze des Browsers UND `display: list-item` schlaegt
+           das flex — der Kopf faellt dann in eine Textzeile zusammen. */
         .abk-azubi-head {
             display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
             padding-bottom: 13px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
+            cursor: pointer; list-style: none;
         }
+        .abk-azubi-head::-webkit-details-marker { display: none; }
+        .abk-azubi-head::marker { content: ''; }
+        .abk-azubi-head:hover .abk-azubi-name { color: var(--primary); }
+        /* Der Chevron sitzt rechts und dreht sich beim Aufklappen. margin-left:
+           auto statt einer Spalte — der Kopf ist flex-wrap, eine feste Spur
+           wuerde beim Umbruch danebenliegen. */
+        .abk-azubi-chev {
+            width: 17px; height: 17px; margin-left: auto; flex: 0 0 auto;
+            color: var(--text-faint);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .abk-azubi[open] > .abk-azubi-head .abk-azubi-chev { transform: rotate(180deg); }
+
+        /* Die erledigten Wochen liegen hinter einem Klick — sie sind der Grund,
+           warum die Seite bei mehreren Azubis unlesbar wurde. */
+        .abk-rest { margin-top: 12px; }
+        .abk-rest > summary {
+            cursor: pointer; list-style: none;
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 13px; border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem; color: var(--text-muted);
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        .abk-rest > summary::-webkit-details-marker { display: none; }
+        .abk-rest > summary::marker { content: ''; }
+        .abk-rest > summary:hover { border-color: var(--border-hover, var(--primary)); color: var(--text-main); }
+        .abk-rest[open] > summary { margin-bottom: 12px; }
         .abk-avatar {
             display: grid; place-items: center; flex: 0 0 auto;
             width: 32px; height: 32px; border-radius: 10px;
@@ -416,13 +456,62 @@
            Wochen-Pillen darunter: gruen = abgezeichnet, gelb = liegt beim
            Azubi, rot = eine abgezeichnete Woche wurde nachtraeglich
            geaendert (der eigentliche Alarm), blass-lila = noch keine
-           Entscheidung. */
+           Entscheidung.
+           Die fuenfte Rolle ist bewusst KEINE Semantik-Farbe: eine aus dem
+           IHK-Portal uebernommene, dort schon abgezeichnete Woche ist kein
+           Zustand im Freigabe-Ablauf, sondern eine HERKUNFT. Sie bekommt
+           deshalb einen Neutralton — faerbte man sie gruen, behauptete die
+           Seite, der Ausbilder haette hier abgezeichnet. */
         .abk-seg { display: block; height: 100%; border-radius: 2px; }
         .abk-seg.is-ok { background: var(--success); }
         .abk-seg.is-zurueck { background: var(--warning); }
         .abk-seg.is-warn { background: var(--danger); }
         .abk-seg.is-offen { background: rgba(var(--primary-rgb), 0.55); }
+        .abk-seg.is-ihk { background: var(--text-faint); }
         .abk-legende { display: flex; flex-wrap: wrap; gap: 6px 15px; margin-bottom: 16px; }
+
+        /* Wochen-Streifen: eine Zelle je Kalenderwoche, Luecken sichtbar.
+           Zellen und Monatsmarken teilen sich dieselbe Spaltenzahl (--wz-n),
+           damit eine Marke nicht neben ihrer Woche stehen kann. */
+        .abk-wz-wrap { margin-bottom: 16px; }
+        .abk-wz-kopf {
+            display: flex; justify-content: space-between; align-items: baseline;
+            gap: 12px; margin-bottom: 7px;
+            font-size: 0.76rem; color: var(--text-faint);
+            font-variant-numeric: tabular-nums;
+        }
+        .abk-wz-luecke { color: var(--warning); }
+        /* Bei vielen Wochen scrollt der Streifen in SICH — nie die Seite.
+           min-width: 0 auf dem Kind, sonst waechst das Raster den Kasten auf. */
+        .abk-wz-scroll { overflow-x: auto; min-width: 0; padding-bottom: 2px; }
+        .abk-wz-grid, .abk-wz-achse {
+            display: grid; grid-template-columns: repeat(var(--wz-n), minmax(9px, 1fr));
+            gap: 2px; min-width: 100%;
+        }
+        .abk-wz {
+            height: 22px; border-radius: 2px; background: var(--bg-raise);
+            transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .abk-wz:hover { transform: scaleY(1.18); }
+        /* Dieselben Rollen wie im Balken darueber — eine Farbe, eine Bedeutung. */
+        .abk-wz.is-approved { background: var(--success); }
+        .abk-wz.is-ihk { background: var(--text-faint); }
+        .abk-wz.is-rejected { background: var(--warning); }
+        .abk-wz.is-geaendert { background: var(--danger); }
+        .abk-wz.is-open { background: rgba(var(--primary-rgb), 0.55); }
+        .abk-wz.is-arbeit { background: rgba(var(--primary-rgb), 0.22); }
+        /* Die Luecke ist kein Zustand, sondern ein Fehlen: kein Farbwert,
+           sondern ein leerer Kasten mit Umriss. Sonst liest man sie als
+           fuenften Status. */
+        .abk-wz.is-luecke {
+            background: transparent;
+            border: 1px dashed rgba(var(--warning-rgb), 0.45);
+        }
+        .abk-wz-achse { margin-top: 5px; }
+        .abk-wz-m {
+            font-size: 0.62rem; color: var(--text-faint); line-height: 1;
+            white-space: nowrap; overflow: visible;
+        }
         .abk-leg {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 0.76rem; color: var(--text-muted);
@@ -433,6 +522,7 @@
         .abk-leg i.is-zurueck { background: var(--warning); }
         .abk-leg i.is-warn { background: var(--danger); }
         .abk-leg i.is-offen { background: rgba(var(--primary-rgb), 0.55); }
+        .abk-leg i.is-ihk { background: var(--text-faint); }
 
         /* Passend dazu die Pille der geaenderten Woche — sie trug bisher
            dieselbe Farbe wie eine Rueckgabe, obwohl es der staerkere Befund ist. */
@@ -442,6 +532,15 @@
            „offen" (Akzent), nur ausgefuellt statt nur umrandet — kein fuenfter
            Farbwert, der eine Bedeutung behaupten wuerde, die es nicht gibt. */
         .ab-wk-state.s-neu { color: var(--primary); background: var(--primary-dim); }
+        /* Herkunftsmarke, kein Zustand — deshalb Neutralton und ein gestrichelter
+           Rand statt einer Flaeche: sie soll lesbar sein, aber nicht mit den
+           vier Ablauf-Farben um Aufmerksamkeit konkurrieren. */
+        .ab-wk-state.s-ihk {
+            color: var(--text-muted); background: transparent;
+            border: 1px dashed var(--border);
+        }
+        .ab-wk-card.is-ihk { border-style: dashed; }
+        .ab-wk-card.is-ihk .ab-wk-head { opacity: 0.85; }
 
         /* Aenderungsvergleich nach einer Rueckgabe oder Freigabe. */
         .abk-diff {
@@ -494,7 +593,11 @@
             .abk-azubi { animation: none; }
         }
         @media (max-width: 640px) {
-            .abk-kacheln { grid-template-columns: 1fr 1fr; }
+            /* Auch die Vier-Kachel-Variante faellt hier auf zwei Spalten zurueck —
+               die Regel oben ist spezifischer und muss deshalb mit umgeschaltet
+               werden, sonst quetscht sie vier Kacheln in eine Handy-Zeile. */
+            .abk-kacheln,
+            .abk-kacheln:has(.abk-kachel.is-ihk) { grid-template-columns: 1fr 1fr; }
             .abk-kacheln .abk-kachel:first-child { grid-column: 1 / -1; }
             .abk-kopf .abk-einladen { margin-left: 0; flex: 1 1 auto; }
             .abk-azubi { padding: 15px 14px; }
@@ -817,13 +920,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.9.7"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.9.7"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.9.8"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.9.8"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.7"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.8"></script>
 
     <script>
     (function () {
@@ -1322,7 +1425,24 @@
         // Rueckgabe ueberarbeitet. Eine zurueckgegebene Woche, an der noch
         // niemand gearbeitet hat, liegt beim Azubi und zaehlt hier nicht mit —
         // die Knoepfe bleiben aber, damit sie jederzeit abgezeichnet werden kann.
+        // 🔴 Eine Woche, die den Status "Unterschrieben" traegt, ist bereits
+        // abgezeichnet — nur eben NICHT in dieser App. Sie als "wartet auf Ihre
+        // Freigabe" zu fuehren ist ein Widerspruch: das Berichtsheft zeigt sie
+        // demselben Menschen gleichzeitig als unterschrieben an.
+        //
+        // 🔴 Die Bedingung haengt am STATUS, nicht an der Herkunft. Ein erster
+        // Anlauf verlangte zusaetzlich `quelle === 'ihk-import'` und griff damit
+        // bei keiner einzigen echten Zeile: alles, was vor der Einfuehrung der
+        // Herkunftsmarke importiert wurde, traegt `quelle = 'local'` (gemessen:
+        // 36 signed + 17 complete, alle 'local'). Wer eine Bedingung an ein Feld
+        // haengt, das es erst seit gestern gibt, schliesst den Bestand aus.
+        // `quelle` verfeinert deshalb nur noch den TEXT, nicht die Entscheidung.
+        function schonUnterschrieben(b) {
+            return b.status === 'signed' && !b.freigabe;
+        }
+
         function istOffen(b) {
+            if (schonUnterschrieben(b)) return false;
             return b.status !== 'incomplete' && (!b.freigabe || b.veraendert || b.nachgebessert);
         }
 
@@ -1394,17 +1514,26 @@
 
         function kontoKarte(b) {
             var f = b.freigabe;
-            var st = b.veraendert ? 'geaendert'
+            // Der IHK-Zweig steht VOR allen anderen: die Woche wartet auf nichts,
+            // also darf sie auch nicht als offen erscheinen. Sobald hier doch
+            // eine Freigabe liegt, gewinnt die (schonUnterschrieben prueft auf !freigabe).
+            var st = schonUnterschrieben(b) ? 'ihk'
+                : b.veraendert ? 'geaendert'
                 : b.nachgebessert ? 'nachgebessert'
                 : f && f.entscheidung === 'approved' ? 'approved'
                 : f && f.entscheidung === 'rejected' ? 'rejected' : 'open';
-            var stL = st === 'geaendert'
+            var stL = st === 'ihk'
+                ? ['s-ihk', b.quelle === 'ihk-import'
+                    ? abL('Bei der IHK abgezeichnet', 'Signed off at the IHK')
+                    : abL('Bereits unterschrieben', 'Already signed')]
+                : st === 'geaendert'
                 ? ['s-alarm', abL('Nach der Freigabe geändert', 'Changed after approval')]
                 : st === 'nachgebessert'
                 ? ['s-neu', abL('Überarbeitet', 'Revised')]
                 : stateLabel(st === 'open' ? '' : st);
             var randKlasse = st === 'geaendert' ? ' is-geaendert'
                 : st === 'nachgebessert' ? ' is-nachgebessert'
+                : st === 'ihk' ? ' is-ihk'
                 : (st !== 'open' ? ' is-' + st : '');
             var chev = '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
@@ -1413,6 +1542,29 @@
                 fuss = '<p class="abk-hint">' + abL(
                     'Noch nicht abgeschlossen — der Azubi arbeitet daran.',
                     'Not finished yet — the apprentice is still working on it.') + '</p>';
+            } else if (st === 'ihk') {
+                // 🔴 Die Knoepfe bleiben. Ein erster Anlauf hat sie hier
+                // weggelassen — falsch: "unterschrieben" ist eine ANGABE aus dem
+                // Berichtsheft, kein Nachweis in diesem System. Der Ausbilder
+                // muss trotzdem gegenzeichnen koennen, sonst nimmt die Seite ihm
+                // eine Entscheidung ab, die ihm gehoert. Sie steht nur nicht mehr
+                // auf seiner Aufgabenliste.
+                fuss = '<p class="abk-hint">' + (b.quelle === 'ihk-import'
+                    ? abL('Aus dem IHK-Portal übernommen und dort bereits abgezeichnet. Für Sie ist hier nichts zu tun — Sie können trotzdem gegenzeichnen.',
+                          'Imported from the IHK portal and already signed off there. Nothing for you to do — you can still counter-sign.')
+                    : abL('Im Berichtsheft als unterschrieben eingetragen, aber nicht von Ihnen in dieser App. Sie können hier gegenzeichnen.',
+                          'Marked as signed in the report book, but not by you in this app. You can counter-sign here.')) + '</p>' +
+                    '<div class="abk-actions">' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + '</button>' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="approve">' + abL('Gegenzeichnen', 'Counter-sign') + '</button>' +
+                    '</div>' +
+                    '<div class="abk-reject" hidden>' +
+                    '<textarea class="ab-textarea abk-note" placeholder="' +
+                    abL('Was soll geändert werden?', 'What needs changing?') + '"></textarea>' +
+                    '<div class="abk-actions">' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject-cancel">' + abL('Abbrechen', 'Cancel') + '</button>' +
+                    '<button type="button" class="ab-btn ab-btn-primary" data-k="reject-do">' + abL('Zurückgeben', 'Send back') + '</button>' +
+                    '</div></div>';
             } else if (st === 'approved') {
                 var wann = f && f.erstellt_at ? ' ' + abL('am ', 'on ') + fmtDate(String(f.erstellt_at).slice(0, 10)) : '';
                 fuss = '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>';
@@ -1493,13 +1645,18 @@
         // anders und die Kacheln widersprechen den Karten darunter.
         function zahlenFuer(berichte) {
             var z = { eingereicht: 0, offen: 0, abgezeichnet: 0, zurueck: 0, geaendert: 0,
-                      ueberarbeitet: 0, inArbeit: 0,
+                      ueberarbeitet: 0, inArbeit: 0, ihk: 0, ihkGesamt: 0,
                       lehrjahr: 0, zuletzt: null, aeltesteOffen: null };
             berichte.forEach(function (b) {
                 if (b.jahr > z.lehrjahr) z.lehrjahr = b.jahr;
                 if (b.datum_bis && (!z.zuletzt || b.datum_bis > z.zuletzt)) z.zuletzt = b.datum_bis;
+                if (b.quelle === 'ihk-import') z.ihkGesamt++;
                 if (b.status === 'incomplete') { z.inArbeit++; return; }
                 z.eingereicht++;
+                // Vor allen anderen Zweigen: eine im IHK-Portal bereits
+                // abgezeichnete Woche gehoert in GENAU dieses Segment, sonst
+                // faellt sie ueber `unentschieden` doch wieder unter "offen".
+                if (schonUnterschrieben(b)) { z.ihk++; return; }
                 if (b.veraendert) z.geaendert++;
                 // Eine ueberarbeitete Woche traegt zwar noch die Rueckgabe als
                 // letzte Entscheidung, liegt aber nicht mehr beim Azubi. Sie
@@ -1517,7 +1674,7 @@
             // geaenderte Woche braucht wieder eine Entscheidung). Als Zaehler ist
             // das richtig, fuer den Balken nicht: dort muss jede Woche in GENAU
             // einem Segment liegen, sonst summiert er ueber 100 %.
-            z.unentschieden = z.eingereicht - z.abgezeichnet - z.geaendert - z.zurueck;
+            z.unentschieden = z.eingereicht - z.abgezeichnet - z.geaendert - z.zurueck - z.ihk;
             return z;
         }
 
@@ -1529,6 +1686,12 @@
             var p = function (n) { return (n / z.eingereicht * 100).toFixed(2) + '%'; };
             var seg = '';
             if (z.abgezeichnet) seg += '<span class="abk-seg is-ok" style="width:' + p(z.abgezeichnet) + '"></span>';
+            // Das IHK-Segment ist die begruendete Ausnahme zur Notiz-Regel "kein
+            // fuenftes Segment": anders als eine ueberarbeitete Woche wartet es
+            // auf gar nichts. Es traegt deshalb KEINE der vier Semantik-Farben
+            // (die sind Zustaende im Freigabe-Ablauf), sondern einen Neutralton —
+            // Herkunft ist keine Bewertung.
+            if (z.ihk) seg += '<span class="abk-seg is-ihk" style="width:' + p(z.ihk) + '"></span>';
             if (z.geaendert) seg += '<span class="abk-seg is-warn" style="width:' + p(z.geaendert) + '"></span>';
             if (z.zurueck) seg += '<span class="abk-seg is-zurueck" style="width:' + p(z.zurueck) + '"></span>';
             if (z.unentschieden) seg += '<span class="abk-seg is-offen" style="width:' + p(z.unentschieden) + '"></span>';
@@ -1537,6 +1700,13 @@
             var teile = [];
             if (z.abgezeichnet) teile.push('<span class="abk-leg"><i class="is-ok"></i>' +
                 z.abgezeichnet + ' ' + abL('abgezeichnet', 'signed off') + '</span>');
+            // Der Zusatz nennt die Herkunft nur, wenn sie bekannt ist — der
+            // Bestand vor der Herkunftsmarke traegt sie nicht, und "bei der IHK"
+            // waere dort eine Behauptung.
+            if (z.ihk) teile.push('<span class="abk-leg"><i class="is-ihk"></i>' +
+                z.ihk + ' ' + abL('bereits unterschrieben', 'already signed') +
+                (z.ihkGesamt ? ' (' + z.ihkGesamt + ' ' + abL('aus der IHK', 'from the IHK') + ')' : '') +
+                '</span>');
             if (z.geaendert) teile.push('<span class="abk-leg"><i class="is-warn"></i>' +
                 z.geaendert + ' ' + abL('nachträglich geändert', 'changed later') + '</span>');
             if (z.zurueck) teile.push('<span class="abk-leg"><i class="is-zurueck"></i>' +
@@ -1556,13 +1726,101 @@
                 '<div class="abk-legende">' + teile.join('') + '</div>';
         }
 
+        // ── Wochen-Streifen ──────────────────────────────────────────────
+        // Eine Zelle je Kalenderwoche zwischen der ERSTEN und der LETZTEN
+        // eingereichten Woche. Bewusst nicht ueber die Vertragslaufzeit: die
+        // steht nirgends, ein Nenner "52 von 156" waere erfunden (CLAUDE.md).
+        // Die Luecken INNERHALB der Spanne sind dagegen echt gemessen — genau
+        // sie sind die Information, die eine Liste nicht hergibt.
+        //
+        // 🔴 Der Streifen ist EINE Reihe, kein 2D-Raster. Das ist Absicht: bei
+        // zwei Reihen laege dieselbe Spalte in verschiedenen Wochen und jede
+        // Beschriftung darunter waere eine Luege (CLAUDE.md, Stunden-Heatmap).
+        // Die Monatsmarken liegen deshalb im SELBEN Grid wie die Zellen und
+        // koennen nicht verrutschen.
+        function montagVon(iso) {
+            var d = new Date(iso + 'T12:00:00');
+            if (isNaN(d)) return null;
+            // ISO: Montag ist Tag 1, Sonntag 7.
+            var tag = (d.getDay() + 6) % 7;
+            d.setDate(d.getDate() - tag);
+            return d;
+        }
+
+        function isoDatum(d) {
+            // Lokal formatieren, nie toISOString() — das rechnet nach UTC und
+            // verschiebt in Europa jedes Datum um einen Tag (CLAUDE.md).
+            var m = d.getMonth() + 1, t = d.getDate();
+            return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (t < 10 ? '0' : '') + t;
+        }
+
+        function wochenStreifen(berichte) {
+            var mitDatum = berichte.filter(function (b) { return b.datum_von; });
+            if (mitDatum.length < 2) return '';
+
+            // Zuordnung Montag → Bericht. Zwei Berichte in derselben Woche sind
+            // moeglich (Split), der staerkere Befund gewinnt.
+            var rang = { ihk: 1, approved: 2, open: 3, rejected: 4, geaendert: 5 };
+            var proWoche = {};
+            var min = null, max = null;
+            mitDatum.forEach(function (b) {
+                var mo = montagVon(b.datum_von);
+                if (!mo) return;
+                if (!min || mo < min) min = mo;
+                if (!max || mo > max) max = mo;
+                var st = schonUnterschrieben(b) ? 'ihk'
+                    : b.veraendert ? 'geaendert'
+                    : b.freigabe && b.freigabe.entscheidung === 'approved' ? 'approved'
+                    : b.freigabe && b.freigabe.entscheidung === 'rejected' ? 'rejected'
+                    : b.status === 'incomplete' ? 'arbeit' : 'open';
+                var k = isoDatum(mo);
+                if (!proWoche[k] || (rang[st] || 0) > (rang[proWoche[k]] || 0)) proWoche[k] = st;
+            });
+            if (!min || !max) return '';
+
+            var zellen = '', marken = '', spalten = 0, letzterMonat = -1, luecken = 0;
+            for (var d = new Date(min); d <= max; d.setDate(d.getDate() + 7)) {
+                spalten++;
+                var k = isoDatum(d), st = proWoche[k];
+                if (!st) luecken++;
+                var titel = d.toLocaleDateString(abLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
+                zellen += '<span class="abk-wz' + (st ? ' is-' + st : ' is-luecke') +
+                    '" title="' + esc(titel) + '"></span>';
+                // Monatswechsel bekommt eine Marke — in derselben Spalte.
+                if (d.getMonth() !== letzterMonat) {
+                    letzterMonat = d.getMonth();
+                    marken += '<span class="abk-wz-m">' +
+                        esc(d.toLocaleDateString(abLocale(), { month: 'short' })) + '</span>';
+                } else {
+                    marken += '<span class="abk-wz-m"></span>';
+                }
+            }
+            if (spalten < 3) return '';
+
+            var fuss = luecken
+                ? '<span class="abk-wz-luecke">' + luecken + ' ' +
+                  abL(luecken === 1 ? 'Woche ohne Eintrag' : 'Wochen ohne Eintrag',
+                      luecken === 1 ? 'week with no entry' : 'weeks with no entry') + '</span>'
+                : '<span>' + abL('Keine Lücke in diesem Zeitraum', 'No gap in this period') + '</span>';
+
+            return '<div class="abk-wz-wrap">' +
+                '<div class="abk-wz-kopf">' +
+                '<span>' + abL('Wochen im Verlauf', 'Weeks over time') + '</span>' + fuss + '</div>' +
+                '<div class="abk-wz-scroll">' +
+                '<div class="abk-wz-grid" style="--wz-n:' + spalten + '" role="img" aria-label="' +
+                esc(abL(spalten + ' Wochen von ', spalten + ' weeks from ') + fmtDate(isoDatum(min)) +
+                    abL(' bis ', ' to ') + fmtDate(isoDatum(max))) + '">' + zellen + '</div>' +
+                '<div class="abk-wz-achse" style="--wz-n:' + spalten + '" aria-hidden="true">' + marken + '</div>' +
+                '</div></div>';
+        }
+
         function kachel(wert, label, ton) {
             return '<div class="abk-kachel' + (ton ? ' is-' + ton : '') + '">' +
                 '<span class="abk-wert">' + wert + '</span>' +
                 '<span class="abk-label">' + label + '</span></div>';
         }
 
-        function azubiKarte(az) {
+        function azubiKarte(az, vieleAzubis) {
             var z = zahlenFuer(az.berichte);
             var name = az.name || abL('Azubi ohne Namen', 'Apprentice, no name');
 
@@ -1577,19 +1835,51 @@
                     'Noch keine Woche eingereicht. Sobald ' + name + ' im Berichtsheft eine Woche abschließt, erscheint sie hier zum Abzeichnen.',
                     'No week submitted yet. As soon as ' + name + ' completes a week in the report book, it shows up here for signing.') + '</p>';
             } else {
-                koerper = anteilsBalken(z) +
-                    '<div class="abk-wochen">' + az.berichte.map(kontoKarte).join('') + '</div>';
+                // 🔴 Nicht mehr ALLE Wochen als Karten. Bei fuenf Azubis mit je
+                // einem Ausbildungsjahr waren das ueber 250 Karten am Stueck —
+                // die Seite war danach nicht mehr zu ueberblicken, und das, was
+                // der Ausbilder tun muss, verschwand zwischen dem, was erledigt
+                // ist. Direkt sichtbar ist deshalb nur, was eine Entscheidung
+                // braucht; der Rest liegt EINEN Klick entfernt und bleibt dabei
+                // im DOM (die Aktionsknoepfe darin funktionieren also weiter).
+                // Der Wochen-Streifen daruerber zeigt weiterhin ALLE Wochen — er
+                // ist eine Zeile hoch und wird von der Menge nicht voller.
+                var offene = az.berichte.filter(istOffen);
+                var rest = az.berichte.filter(function (b) { return !istOffen(b); });
+
+                var liste = offene.length
+                    ? '<div class="abk-wochen">' + offene.map(kontoKarte).join('') + '</div>'
+                    : '<p class="abk-leer">' + abL(
+                        'Keine Woche wartet auf eine Entscheidung.',
+                        'No week is waiting for a decision.') + '</p>';
+
+                if (rest.length) {
+                    liste += '<details class="abk-rest">' +
+                        '<summary>' + abL(
+                            rest.length === 1 ? '1 erledigte Woche anzeigen' : rest.length + ' erledigte Wochen anzeigen',
+                            rest.length === 1 ? 'Show 1 completed week' : 'Show ' + rest.length + ' completed weeks') +
+                        '</summary>' +
+                        '<div class="abk-wochen">' + rest.map(kontoKarte).join('') + '</div>' +
+                        '</details>';
+                }
+                koerper = anteilsBalken(z) + wochenStreifen(az.berichte) + liste;
             }
 
-            return '<section class="abk-azubi">' +
-                '<header class="abk-azubi-head">' +
+            // Aufklappbar, damit mehrere Azubis nebeneinander lesbar bleiben.
+            // Ab vier Azubis standardmaessig zu — die Kopfzeile traegt mit dem
+            // Stand-Chip schon die Antwort auf "wo ist Arbeit?", man muss dafuer
+            // nichts oeffnen.
+            var offenAuf = !vieleAzubis;
+            return '<details class="abk-azubi"' + (offenAuf ? ' open' : '') + '>' +
+                '<summary class="abk-azubi-head">' +
                 '<span class="abk-avatar" aria-hidden="true">' + esc(monogramm(name)) + '</span>' +
                 '<span class="abk-azubi-name">' + esc(name) + '</span>' +
                 (meta.length ? '<span class="abk-azubi-meta">' + esc(meta.join(' · ')) + '</span>' : '') +
                 '<span class="abk-azubi-stand' + (z.offen ? ' is-offen' : '') + '">' + (z.offen
                     ? abL(z.offen + ' offen', z.offen + ' open')
                     : abL('nichts offen', 'nothing open')) + '</span>' +
-                '</header>' + koerper + '</section>';
+                '<svg class="abk-azubi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+                '</summary>' + koerper + '</details>';
         }
 
         function renderKonto() {
@@ -1644,7 +1934,11 @@
                                              : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
                        g.offen ? (ueberfaellig ? 'warn' : 'auf') : 'ruhig') +
                 kachel(n, n === 1 ? abL('Azubi', 'apprentice') : abL('Azubis', 'apprentices')) +
-                kachel(g.abgezeichnet, abL('abgezeichnet', 'signed off')) +
+                kachel(g.abgezeichnet, abL('von Ihnen abgezeichnet', 'signed off by you')) +
+                // Nur zeigen, wenn es sie gibt: eine Kachel mit dauerhafter Null
+                // ist eine Frage, die sich niemand gestellt hat.
+                (g.ihk ? kachel(g.ihk, abL('bereits unterschrieben · nicht von Ihnen',
+                                           'already signed · not by you'), 'ihk') : '') +
                 '</div>' + hinweis +
                 '<div id="abkEinladung"></div><div id="abkDomain"></div>';
 
@@ -1659,7 +1953,10 @@
                     '<span>' + abL('Einladungscode erzeugen', 'Create invite code') + '</span></button>' +
                     '</section>';
             } else {
-                koerper = d.azubis.map(azubiKarte).join('');
+                // Ab vier Azubis starten die Karten zugeklappt — sonst scrollt
+                // man an jedem Namen ein ganzes Ausbildungsjahr vorbei.
+                var viele = d.azubis.length >= 4;
+                koerper = d.azubis.map(function (a) { return azubiKarte(a, viele); }).join('');
             }
             $('abKonto').innerHTML = kopf + koerper;
         }
@@ -2023,7 +2320,11 @@
         // Test-Sichtfenster auf den kontobasierten Weg — nur lokal, damit er
         // sich mit gestubbtem BHB2B im Browser gegenpruefen laesst.
         if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-            window.__abKonto = { bootKonto: bootKonto, renderKonto: renderKonto, zeileZuWoche: zeileZuWoche };
+            window.__abKonto = { bootKonto: bootKonto, renderKonto: renderKonto, zeileZuWoche: zeileZuWoche,
+                // Ohne Setter laesst sich renderKonto() nicht mit gestellten Daten
+                // aufrufen — kontoDaten ist eine Modulvariable. Alle Zustaende
+                // (auch der IHK-Fall) brauchen sonst ein echtes Konto samt Server.
+                setDaten: function (d) { kontoDaten = d; renderKonto(); } };
         }
 
         if (document.readyState === 'loading') {

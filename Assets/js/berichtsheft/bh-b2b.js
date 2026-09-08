@@ -103,7 +103,10 @@
     }
 
     const STATUS_ERLAUBT = ['incomplete', 'complete', 'signed'];
-    const QUELLE_ERLAUBT = ['local', 'cloud', 'status-only'];
+    // 'ihk-import' seit v6.9.8: aus dem IHK-PDF-Export uebernommene Woche.
+    // Muss mit dem DB-CHECK berichte_quelle_check uebereinstimmen, sonst
+    // verwirft PostgREST den Upsert — beide Seiten zusammen aendern.
+    const QUELLE_ERLAUBT = ['local', 'cloud', 'status-only', 'ihk-import'];
 
     // Der Kern eines Berichts — genau die Felder, die in die Pruefsumme
     // eingehen. EINE Stelle, weil Azubi und Ausbilder identisch hashen
@@ -704,7 +707,13 @@
                 sb.from('berichte').select('*')
                     .eq('betrieb_id', st.betriebId)
                     .is('geloescht_at', null)   // vom Azubi geloescht → nicht mehr im Cockpit
-                    .order('jahr', { ascending: true }).order('kw', { ascending: true }),
+                    // 🔴 NICHT nach jahr/kw sortieren. `jahr` ist das LEHRJAHR
+                    // (1-5), nicht das Kalenderjahr, und die KW-Nummer ist keine
+                    // Zeitachse: wer am 1.9. anfaengt, hat KW 36-52 VOR KW 1-35
+                    // desselben Lehrjahrs. Nach kw aufsteigend stand der Januar
+                    // dann vor dem September. `datum_von` ist das echte Datum.
+                    // Dieselbe Falle wie in der Berichtsheft-Uebersicht (v6.9.12).
+                    .order('datum_von', { ascending: true }),
                 sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
                     .order('erstellt_at', { ascending: true })   // aelteste zuerst
