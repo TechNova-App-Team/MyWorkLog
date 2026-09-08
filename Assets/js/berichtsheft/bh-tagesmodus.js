@@ -105,7 +105,7 @@ function renderDailyFields() {
                                 <span class="toggle-track"></span>
                             </label>
                             <div class="day-hours">
-                                <input type="number" step="0.25" min="0" max="12" value="8" 
+                                <input type="number" step="any" min="0" max="12" value="8" 
                                        id="daily_hours_${i}" class="daily-hours-input" data-day="${day.key}" 
                                        oninput="updateDailyTotalHours()">
                                 <span>Std.</span>

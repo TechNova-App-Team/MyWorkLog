@@ -173,7 +173,7 @@
             } else {
                 html += '<div class="jm-grid-block"><span class="jm-lbl">' + L('Soll-Stunden pro Tag', 'Target hours per day') + '</span><div class="jm-grid">' + jobDayGrid(job, 'hours') + '</div></div>';
                 html += '<div class="jm-grid-block"><span class="jm-lbl">' + L('Pause ab (Std)', 'Break from (hrs)') + '</span>' +
-                    '<input type="number" min="0" step="0.25" class="glass-input jm-thresh" data-job="' + job.id + '" value="' + ((job.break && job.break.thresh) != null ? job.break.thresh : 6) + '" style="max-width:120px;"></div>';
+                    '<input type="number" min="0" step="any" class="glass-input jm-thresh" data-job="' + job.id + '" value="' + ((job.break && job.break.thresh) != null ? job.break.thresh : 6) + '" style="max-width:120px;"></div>';
                 html += '<div class="jm-grid-block"><span class="jm-lbl">' + L('Pausenzeiten pro Wochentag (Min)', 'Break times per weekday (min)') + '</span><div class="jm-grid">' + jobDayGrid(job, 'break') + '</div></div>';
             }
             html += '</div>';
