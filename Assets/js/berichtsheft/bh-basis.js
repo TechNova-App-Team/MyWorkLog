@@ -178,3 +178,32 @@ const templates = [
 • Qualitätssicherung der Datenbestände`
     }
 ];
+
+// ═══════════════════════════════════════
+// AUSBILDUNGSJAHR-BERECHNUNG
+// ═══════════════════════════════════════
+// Bestimmt das exakte Ausbildungsjahr (1–4) stichtagsgenau anhand des
+// Ausbildungsbeginns. Als Stichtag der Woche gilt der Donnerstag (ISO-Regel
+// der 4-Tage-Mehrheit einer Arbeitswoche).
+function ihkCalculateAusbildungsjahr(dRef, sDate, baseYearFallback) {
+    if (sDate && !isNaN(sDate.getTime()) && dRef && !isNaN(dRef.getTime())) {
+        if (dRef < sDate) return 1;
+        let yr = 1;
+        for (let y = 1; y <= 4; y++) {
+            const anniv = new Date(sDate.getFullYear() + y, sDate.getMonth(), sDate.getDate());
+            if (dRef >= anniv) {
+                yr = y + 1;
+            } else {
+                break;
+            }
+        }
+        return Math.min(Math.max(yr, 1), 4);
+    }
+    if (baseYearFallback && dRef && !isNaN(dRef.getTime())) {
+        const yearDiff = dRef.getFullYear() - baseYearFallback;
+        // Standard in Deutschland: Ausbildungsbeginn meist 1. September (Monat 8 im 0-basierten Date)
+        const yr = yearDiff + (dRef.getMonth() >= 8 ? 1 : 0);
+        return Math.min(Math.max(yr, 1), 4);
+    }
+    return 1;
+}

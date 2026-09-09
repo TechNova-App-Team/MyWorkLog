@@ -7,6 +7,7 @@ const IHK_PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pd
 const IHK_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 let ihkParsedWeeks = [];
+let ihkParsedMeta = null;
 let ihkPdfLoaded = false;
 
 // --- UI Steuerung ---
@@ -17,6 +18,7 @@ function openIhkImport() {
     
     // Reset state
     ihkParsedWeeks = [];
+    ihkParsedMeta = null;
     document.getElementById('ihkFileInput').value = '';
     document.getElementById('ihkError').style.display = 'none';
     ihkSetStep('start');
@@ -193,11 +195,38 @@ function ihkProcessExtractedText(pagesText) {
     
     // Bestimme das Basis-Jahr der Ausbildung aus dem Startdatum
     let baseYear = new Date().getFullYear();
-    const mStart = page1.match(/Ausbildungsbeginn[\s\|]*([0-9]{2}\.[0-9]{2}\.[0-9]{4})/);
+    let startDate = null;
+    const mStart = page1.match(/Ausbildungsbeginn[\s\|:]*([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4})/i);
     if (mStart) {
-        const parts = mStart[1].split('.');
-        baseYear = parseInt(parts[2], 10);
+        meta.start = mStart[1].trim();
+        const parts = meta.start.split('.');
+        const sDay = parseInt(parts[0], 10);
+        const sMonth = parseInt(parts[1], 10);
+        const sYear = parseInt(parts[2], 10);
+        if (!isNaN(sDay) && !isNaN(sMonth) && !isNaN(sYear)) {
+            startDate = new Date(sYear, sMonth - 1, sDay);
+            baseYear = sYear;
+        }
     }
+    const mEnd = page1.match(/(?:Ausbildungsende|Ende\s+der\s+Ausbildung)[\s\|:]*([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{4})/i);
+    if (mEnd) meta.end = mEnd[1].trim();
+
+    if (!startDate) {
+        try {
+            const pcfg = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}');
+            if (pcfg && pcfg.beginn) {
+                const bStr = String(pcfg.beginn).trim();
+                if (bStr.includes('.')) {
+                    const [d, m, y] = bStr.split('.').map(Number);
+                    if (y && m && d) { startDate = new Date(y, m - 1, d); baseYear = y; }
+                } else if (bStr.includes('-')) {
+                    const [y, m, d] = bStr.split('-').map(Number);
+                    if (y && m && d) { startDate = new Date(y, m - 1, d); baseYear = y; }
+                }
+            }
+        } catch (e) {}
+    }
+    ihkParsedMeta = meta;
     
     // 2. Tagesberichte parsen (Seiten nach dem Inhaltsverzeichnis, idR ab S. 6)
     // Wir suchen nach dem Start-Muster: "Ausbildungswoche | DD.MM.YYYY bis DD.MM.YYYY"
@@ -223,21 +252,23 @@ function ihkProcessExtractedText(pagesText) {
             const dateTo = `${endParts[2]}-${endParts[1]}-${endParts[0]}`;
             
             // Finde KW
-            const d = new Date(startParts[2], parseInt(startParts[1])-1, startParts[0]);
+            const d = new Date(parseInt(startParts[2], 10), parseInt(startParts[1], 10)-1, parseInt(startParts[0], 10));
             
             // Die IHK PDF hat KW, wir berechnen sie
             // (Verwende die Hilfsfunktion aus bh-bericht.js)
             const weekNum = typeof getWeekNumber === 'function' ? getWeekNumber(d) : 1;
             
-            // Berechne Ausbildungsjahr basierend auf Start
-            let yearNum = 1;
-            if (baseYear) {
-                const yearDiff = parseInt(startParts[2]) - baseYear;
-                // Grobe Schätzung (1. Jahr bis August Folgejahr etc.)
-                // Für echte App-Logik: wenn Monat >= 9 (September) im Startjahr -> 1. Jahr
-                yearNum = yearDiff + (parseInt(startParts[1]) >= 8 ? 1 : 0);
-                if (yearNum < 1) yearNum = 1;
-                if (yearNum > 4) yearNum = 4;
+            // Berechne Ausbildungsjahr basierend auf Startdatum oder expliziter Nennung
+            let yearNum = null;
+            const mYear = pageText.match(/Ausbildungsjahr[\s\|:]*([1-4])/i) || pageText.match(/([1-4])\.\s*Ausbildungsjahr/i);
+            if (mYear) {
+                yearNum = parseInt(mYear[1], 10);
+            }
+            if (!yearNum || isNaN(yearNum)) {
+                const wThursday = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3);
+                yearNum = typeof ihkCalculateAusbildungsjahr === 'function'
+                    ? ihkCalculateAusbildungsjahr(wThursday, startDate, baseYear)
+                    : (baseYear ? Math.min(4, Math.max(1, parseInt(startParts[2], 10) - baseYear + (d.getMonth() >= 8 ? 1 : 0))) : 1);
             }
             
             // Status parsen
@@ -430,6 +461,23 @@ function ihkProcessExtractedText(pagesText) {
     }, 400);
 }
 
+function ihkFindReportIndex(list, week) {
+    if (!Array.isArray(list) || !week) return -1;
+    if (week.dateFrom) {
+        const byDate = list.findIndex(r => r.dateFrom === week.dateFrom);
+        if (byDate !== -1) return byDate;
+    }
+    const wCalYear = parseInt(String(week.dateFrom || '').slice(0, 4), 10);
+    if (Number.isFinite(wCalYear) && week.week) {
+        const byCalWeek = list.findIndex(r => {
+            const rCalYear = parseInt(String(r.dateFrom || '').slice(0, 4), 10);
+            return rCalYear === wCalYear && r.week === week.week;
+        });
+        if (byCalWeek !== -1) return byCalWeek;
+    }
+    return list.findIndex(r => r.year === week.year && r.week === week.week);
+}
+
 function ihkShowResult(meta) {
     ihkSetStep('result');
     
@@ -448,7 +496,7 @@ function ihkShowResult(meta) {
         // Prüfe auf Duplikate in den bestehenden reports (bh-basis.js -> reports array)
         let isDuplicate = false;
         if (typeof reports !== 'undefined') {
-            isDuplicate = reports.some(r => r.year === week.year && r.week === week.week);
+            isDuplicate = ihkFindReportIndex(reports, week) !== -1;
         }
         
         if (isDuplicate) duplicateCount++;
@@ -540,7 +588,7 @@ function ihkExecuteImport() {
         if (week) {
             importierte.push(week);
             // Extra prüfen ob Duplikat überschrieben werden soll
-            const existingIdx = reports.findIndex(r => r.year === week.year && r.week === week.week);
+            const existingIdx = ihkFindReportIndex(reports, week);
             if (existingIdx !== -1) {
                 // Behalte die ID des alten Berichts
                 week.id = reports[existingIdx].id;
@@ -551,6 +599,19 @@ function ihkExecuteImport() {
             importCount++;
         }
     });
+    
+    // Deckblatt-Metadaten in pdf_personal_cfg sichern falls noch leer
+    if (ihkParsedMeta && ihkParsedMeta.start && ihkParsedMeta.start !== '-') {
+        try {
+            const pcfg = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}');
+            let pChanged = false;
+            if (!pcfg.beginn) { pcfg.beginn = ihkParsedMeta.start; pChanged = true; }
+            if (!pcfg.name && ihkParsedMeta.name && ihkParsedMeta.name !== '-') { pcfg.name = ihkParsedMeta.name; pChanged = true; }
+            if (!pcfg.beruf && ihkParsedMeta.beruf && ihkParsedMeta.beruf !== '-') { pcfg.beruf = ihkParsedMeta.beruf; pChanged = true; }
+            if (!pcfg.betrieb && ihkParsedMeta.betrieb && ihkParsedMeta.betrieb !== '-') { pcfg.betrieb = ihkParsedMeta.betrieb; pChanged = true; }
+            if (pChanged) localStorage.setItem('pdf_personal_cfg', JSON.stringify(pcfg));
+        } catch (e) {}
+    }
     
     // Speichern und UI aktualisieren
     saveToStorage();

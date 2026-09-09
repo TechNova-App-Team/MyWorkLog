@@ -8,10 +8,69 @@
 // CORE DATA OPERATIONS
 // ═══════════════════════════════════════
 
+function ihkAutoRepairReportYears(repList) {
+    if (!Array.isArray(repList) || !repList.length) return false;
+
+    let startDate = null;
+    try {
+        const pcfg = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}');
+        if (pcfg && pcfg.beginn) {
+            const bStr = String(pcfg.beginn).trim();
+            if (bStr.includes('.')) {
+                const [d, m, y] = bStr.split('.').map(Number);
+                if (y && m && d) startDate = new Date(y, m - 1, d);
+            } else if (bStr.includes('-')) {
+                const [y, m, d] = bStr.split('-').map(Number);
+                if (y && m && d) startDate = new Date(y, m - 1, d);
+            }
+        }
+    } catch (e) {}
+
+    // Wenn kein Startdatum in pdf_personal_cfg: Bestimme Ausbildungsbeginn
+    // aus dem frühesten IHK-Import-Bericht. Liegt dieser im September oder später,
+    // begann die Ausbildung frühestens im September (und nicht am 1. August).
+    if (!startDate) {
+        const ihkReports = repList.filter(r => r.source === 'ihk-import' && r.dateFrom);
+        if (ihkReports.length > 0) {
+            const sortedDates = ihkReports.map(r => r.dateFrom).sort();
+            const [ey, em, ed] = sortedDates[0].split('-').map(Number);
+            if (ey && em >= 9) {
+                startDate = new Date(ey, em - 1, 1);
+            }
+        }
+    }
+
+    if (!startDate || isNaN(startDate.getTime())) return false;
+    if (typeof ihkCalculateAusbildungsjahr !== 'function') return false;
+
+    let changed = false;
+    repList.forEach(r => {
+        if (r.source === 'ihk-import' && r.dateFrom) {
+            const [ry, rm, rd] = r.dateFrom.split('-').map(Number);
+            if (ry && rm && rd) {
+                const monday = new Date(ry, rm - 1, rd);
+                const thursday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 3);
+                const correctYear = ihkCalculateAusbildungsjahr(thursday, startDate);
+                if (r.year !== correctYear) {
+                    r.year = correctYear;
+                    changed = true;
+                }
+            }
+        }
+    });
+
+    return changed;
+}
+
 function loadReports() {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         reports = stored ? JSON.parse(stored) : [];
+        if (ihkAutoRepairReportYears(reports)) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+            } catch (e) {}
+        }
     } catch (e) {
         console.error('Fehler beim Laden:', e);
         reports = [];
