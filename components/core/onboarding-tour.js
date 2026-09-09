@@ -8,10 +8,18 @@
 
     function _isMobile() { return window.innerWidth < 1024; }
 
+    // Helper to resolve icon to SVG if mwlIcon is available
+    function _renderTourIcon(icon) {
+        if (!icon) return '';
+        if (typeof icon === 'string' && icon.indexOf('<svg') !== -1) return icon;
+        if (typeof mwlIcon === 'function') return mwlIcon(icon, 22);
+        return icon;
+    }
+
     // Desktop steps (original — unchanged)
     const desktopSteps = [
         {
-            icon: '👋',
+            icon: 'sparkles',
             title: 'Willkommen bei MyWorkLog',
             text: 'Diese Tour führt dich Schritt für Schritt durch die App. Du lernst alle wichtigen Bereiche und Funktionen kennen.',
             target: null,
@@ -19,7 +27,7 @@
             position: 'center'
         },
         {
-            icon: '📊',
+            icon: 'barChart',
             title: 'Dein Dashboard',
             text: 'Hier siehst du deine wichtigsten Kennzahlen auf einen Blick — Wochensaldo, Monatssaldo, Gleitzeitkonto und Tagesdurchschnitt.',
             target: '#dashboardGrid',
@@ -27,7 +35,7 @@
             position: 'bottom'
         },
         {
-            icon: '📈',
+            icon: 'trendingUp',
             title: 'Trend & Verteilung',
             text: 'Der Wochenverlauf zeigt dir, wie sich dein Saldo entwickelt. Das Donut-Diagramm zeigt die Verteilung deiner Eintragstypen.',
             target: '[data-item-id="charts"]',
@@ -35,7 +43,7 @@
             position: 'top'
         },
         {
-            icon: '✍️',
+            icon: 'filePen',
             title: 'Eintrag erfassen',
             text: 'Wähle Datum, Typ und gib Start/Ende oder Stunden ein. Die „Jetzt"-Buttons setzen die aktuelle Uhrzeit. Entwürfe werden automatisch gespeichert.',
             target: '[data-item-id="entry-form"]',
@@ -43,7 +51,7 @@
             position: 'top'
         },
         {
-            icon: '📈',
+            icon: 'gauge',
             title: 'Performance Analyse',
             text: 'Hier findest du detaillierte Auswertungen: Soll-Ist-Vergleich, Projektverteilung, Wochentag-Analyse und Produktivitäts-Heatmap.',
             target: '#view-performance',
@@ -51,7 +59,7 @@
             position: 'bottom'
         },
         {
-            icon: '📆',
+            icon: 'calendarDays',
             title: 'Jahresübersicht',
             text: 'Die Heatmap zeigt dir das ganze Jahr. Grün = produktive Tage, Rot = weniger produktive Tage. Dazu gibt es KI-Insights über deine Muster.',
             target: '#view-yearview',
@@ -59,7 +67,7 @@
             position: 'bottom'
         },
         {
-            icon: '🎓',
+            icon: 'graduationCap',
             title: 'IHK & Ausbildung',
             text: 'Verwalte deine Ausbildungsdaten, Prüfungstermine und Noten. Der Compliance-Check prüft Ruhezeiten und Arbeitszeitgrenzen.',
             target: '#view-ihk',
@@ -67,7 +75,7 @@
             position: 'bottom'
         },
         {
-            icon: '🏆',
+            icon: 'award',
             title: 'Ziele & Fokus',
             text: 'Setze persönliche Ziele wie „100h Überstunden" oder „50 positive Wochen". Jedes erreichte Ziel bringt dir ein Achievement-Badge.',
             target: '#view-goals',
@@ -75,7 +83,7 @@
             position: 'bottom'
         },
         {
-            icon: '🔍',
+            icon: 'history',
             title: 'Daten & Historie',
             text: 'Alle deine Einträge — filterbar nach Datum, Typ und Projekt. Exportiere als CSV oder JSON für Excel, Audits oder Backups.',
             target: '#view-history',
@@ -83,7 +91,7 @@
             position: 'bottom'
         },
         {
-            icon: '⚙️',
+            icon: 'settings',
             title: 'Sidebar — Dein Menü',
             text: 'Über die Sidebar erreichst du alle Bereiche, Einstellungen, Export, Backup und externe Tools wie Berichtsheft.',
             target: '#sidebar',
@@ -91,7 +99,7 @@
             position: 'right'
         },
         {
-            icon: '🎉',
+            icon: 'partyPopper',
             title: 'Du bist startklar!',
             text: 'Du kennst jetzt alle wichtigen Bereiche. Starte mit dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg!',
             target: null,
@@ -103,7 +111,7 @@
     // Mobile steps — optimiert für Handy-Layout
     const mobileSteps = [
         {
-            icon: '👋',
+            icon: 'sparkles',
             title: 'Willkommen!',
             text: 'Swipe links/rechts oder tippe auf "Weiter" um durch die Tour zu gehen. Du lernst alle wichtigen Bereiche deiner App kennen.',
             target: null,
@@ -111,7 +119,7 @@
             position: 'center'
         },
         {
-            icon: '📊',
+            icon: 'barChart',
             title: 'Dashboard — Deine Übersicht',
             text: 'Hier siehst du Wochensaldo, Monatssaldo, Gleitzeitkonto und mehr. Scrolle runter für Diagramme und das Eintragsformular.',
             target: '#dashboardGrid',
@@ -119,7 +127,7 @@
             position: 'bottom-sheet'
         },
         {
-            icon: '✍️',
+            icon: 'filePen',
             title: 'Eintrag erfassen',
             text: 'Scrolle im Dashboard runter zum Formular. Wähle Datum & Typ, gib Start- und Endzeit ein. Die „Jetzt"-Buttons setzen die aktuelle Uhrzeit.',
             target: '[data-item-id="entry-form"]',
@@ -127,7 +135,7 @@
             position: 'bottom-sheet'
         },
         {
-            icon: '📈',
+            icon: 'gauge',
             title: 'Analyse',
             text: 'Tippe in der unteren Leiste auf „Analyse" für Soll-Ist-Vergleiche, Projektverteilung und Produktivitäts-Heatmap.',
             target: '#mobNav-performance',
@@ -135,7 +143,7 @@
             position: 'above-nav'
         },
         {
-            icon: '📋',
+            icon: 'history',
             title: 'Historie',
             text: 'Alle deine Einträge — filterbar nach Datum, Typ und Projekt. Hier kannst du auch einzelne Einträge bearbeiten oder löschen.',
             target: '#mobNav-history',
@@ -143,7 +151,7 @@
             position: 'above-nav'
         },
         {
-            icon: '📆',
+            icon: 'calendarDays',
             title: 'Jahresübersicht',
             text: 'Die Heatmap zeigt dir das ganze Jahr auf einen Blick. Grün = produktive Tage, Rot = weniger. Dazu KI-Insights.',
             target: '#mobNav-yearview',
@@ -151,7 +159,7 @@
             position: 'above-nav'
         },
         {
-            icon: '🎯',
+            icon: 'target',
             title: 'Ziele & Achievements',
             text: 'Setze persönliche Ziele wie „100h Überstunden". Jedes erreichte Ziel bringt dir ein Badge!',
             target: '#mobNav-goals',
@@ -159,18 +167,18 @@
             position: 'above-nav'
         },
         {
-            icon: '☰',
+            icon: 'menu',
             title: 'Menü & Einstellungen',
-            text: 'Tippe oben links auf das Menü-Icon (☰) für weitere Bereiche: IHK, Berichtsheft, Export, Backup und Einstellungen.',
+            text: 'Tippe oben links auf das Menü-Icon für weitere Bereiche: IHK, Berichtsheft, Export, Backup und Einstellungen.',
             target: null,
             tab: 'dashboard',
             position: 'center',
             action: 'show-menu-hint'
         },
         {
-            icon: '🎉',
+            icon: 'partyPopper',
             title: 'Du bist startklar!',
-            text: 'Du kennst jetzt alle Bereiche! Starte auf dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg! 🚀',
+            text: 'Du kennst jetzt alle Bereiche! Starte auf dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg!',
             target: null,
             tab: 'dashboard',
             position: 'center'
@@ -202,7 +210,7 @@
     function launchTourConfetti() {
         const c = document.getElementById('tourConfetti');
         if (!c) return;
-        const colors = ['#a855f7','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#fff'];
+        const colors = ['var(--primary)','var(--school)','var(--success)','var(--holiday)','var(--danger)','#ec4899','#fff'];
         const shapes = ['■','●','▲','★','♦','◆'];
         for (let i = 0; i < 120; i++) {
             const p = document.createElement('div');
@@ -295,8 +303,7 @@
 
                 overlay.appendChild(svg);
             } else {
-                overlay.style.background = 'rgba(0,0,0,0.7)';
-                overlay.style.backdropFilter = 'blur(4px)';
+                overlay.style.background = 'rgba(0,0,0,0.75)';
             }
 
             overlay.onclick = (e) => { if (e.target === overlay || e.target.tagName === 'svg' || e.target.tagName === 'rect') nextOnboardingStep(); };
@@ -309,50 +316,54 @@
             tooltip.style.cssText = `
                 position:fixed;z-index:10001;
                 width:${isBSheet ? '100vw' : '380px'};max-width:${isBSheet ? '100vw' : '90vw'};
-                background:rgba(15,15,25,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-                border:1px solid rgba(255,255,255,0.1);border-radius:${isBSheet ? '18px 18px 0 0' : '16px'};
-                box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(var(--primary-rgb),0.08);
+                background:linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep);
+                backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+                border:1px solid var(--border);border-radius:${isBSheet ? '18px 18px 0 0' : '16px'};
+                box-shadow:0 24px 60px rgba(0,0,0,0.5),0 0 40px rgba(var(--primary-rgb),0.08);
                 padding:0;overflow:hidden;opacity:0;transition:opacity .3s,transform .3s;
-                transform:translateY(${isBSheet ? '20px' : '10px'});font-family:inherit;
+                transform:translateY(${isBSheet ? '20px' : '10px'});font-family:inherit;color:var(--text-main);
             `;
 
             // Progress bar
             const progressPerc = ((onboardingStep + 1) / total * 100);
-            const progressBar = '<div style="height:3px;background:rgba(255,255,255,0.05);"><div style="height:100%;width:' + progressPerc + '%;background:linear-gradient(90deg,var(--primary),#06b6d4);border-radius:0 3px 3px 0;transition:width .5s;"></div></div>';
+            const progressBar = '<div style="height:3px;background:var(--border);"><div style="height:100%;width:' + progressPerc + '%;background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),0.7));border-radius:0 3px 3px 0;transition:width .5s;"></div></div>';
 
             // Dots
             let dots = '';
             for (let i = 0; i < total; i++) {
-                const cls = i === onboardingStep ? 'background:var(--primary);box-shadow:0 0 8px var(--primary);transform:scale(1.3);' : (i < onboardingStep ? 'background:#10b981;' : 'background:rgba(255,255,255,0.15);');
+                const cls = i === onboardingStep ? 'background:var(--primary);box-shadow:0 0 8px var(--primary);transform:scale(1.3);' : (i < onboardingStep ? 'background:var(--success);' : 'background:var(--border);');
                 dots += '<button onclick="jumpToStep(' + i + ')" style="width:7px;height:7px;border-radius:50%;border:none;cursor:pointer;padding:0;transition:all .3s;' + cls + '"></button>';
             }
 
             // Back button
-            const backBtn = onboardingStep > 0 ? '<button onclick="previousOnboardingStep()" style="padding:8px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;" onmouseover="this.style.background=\'rgba(255,255,255,.12)\'" onmouseout="this.style.background=\'rgba(255,255,255,.06)\'">←</button>' : '';
+            const backIcon = typeof mwlIcon === 'function' ? mwlIcon('chevronLeft', 16) : '←';
+            const backBtn = onboardingStep > 0 ? '<button onclick="previousOnboardingStep()" aria-label="Zurück" style="padding:8px 16px;border-radius:10px;background:rgba(var(--primary-rgb),0.08);border:1px solid var(--border);color:var(--text-main);font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;" onmouseover="this.style.background=\'rgba(var(--primary-rgb),.16)\';this.style.borderColor=\'var(--primary)\'" onmouseout="this.style.background=\'rgba(var(--primary-rgb),.08)\';this.style.borderColor=\'var(--border)\'">' + backIcon + '</button>' : '';
 
             // Next/Finish button
+            const nextArrow = typeof mwlIcon === 'function' ? mwlIcon('arrowRight', 16) : '→';
+            const checkIcon = typeof mwlIcon === 'function' ? mwlIcon('check', 16) : '✓';
             const nextBtn = onboardingStep < total - 1 ?
-                '<button onclick="nextOnboardingStep()" style="padding:8px 20px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#06b6d4);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(var(--primary-rgb),0.3);" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'none\'">Weiter →</button>' :
-                '<button onclick="endOnboardingTour()" style="padding:8px 20px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(16,185,129,0.3);" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'none\'">✓ Fertig!</button>';
+                '<button onclick="nextOnboardingStep()" style="padding:8px 20px;border-radius:10px;background:var(--primary);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(var(--primary-rgb),0.3);display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.filter=\'brightness(1.08)\'" onmouseout="this.style.transform=\'none\';this.style.filter=\'none\'"><span>Weiter</span>' + nextArrow + '</button>' :
+                '<button onclick="endOnboardingTour()" style="padding:8px 20px;border-radius:10px;background:var(--success);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(16,185,129,0.3);display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.filter=\'brightness(1.08)\'" onmouseout="this.style.transform=\'none\';this.style.filter=\'none\'">' + checkIcon + '<span>Fertig!</span></button>';
 
             tooltip.innerHTML = progressBar +
                 '<div style="padding:1.5rem 1.5rem 1.25rem;">' +
                     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:.75rem;">' +
-                        '<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(var(--primary-rgb),0.15),rgba(6,182,212,0.15));border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">' + step.icon + '</div>' +
+                        '<div style="width:44px;height:44px;border-radius:12px;background:rgba(var(--primary-rgb),0.12);border:1px solid rgba(var(--primary-rgb),0.28);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + _renderTourIcon(step.icon) + '</div>' +
                         '<div>' +
-                            '<h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">' + step.title + '</h3>' +
-                            '<span style="font-size:.75rem;color:rgba(255,255,255,0.35);">Schritt ' + (onboardingStep + 1) + ' von ' + total + '</span>' +
+                            '<h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text-main);">' + step.title + '</h3>' +
+                            '<span style="font-size:.75rem;color:var(--text-muted);opacity:0.8;">Schritt ' + (onboardingStep + 1) + ' von ' + total + '</span>' +
                         '</div>' +
                     '</div>' +
-                    '<p style="margin:0 0 1.25rem;font-size:.9rem;line-height:1.65;color:rgba(255,255,255,0.6);">' + step.text + '</p>' +
+                    '<p style="margin:0 0 1.25rem;font-size:.9rem;line-height:1.65;color:var(--text-muted);">' + step.text + '</p>' +
                     '<div style="display:flex;align-items:center;justify-content:space-between;">' +
                         '<div style="display:flex;gap:5px;align-items:center;">' + dots + '</div>' +
                         '<div style="display:flex;gap:8px;">' + backBtn + nextBtn + '</div>' +
                     '</div>' +
                 '</div>' +
                 '<div style="padding:0 1.5rem .75rem;display:flex;justify-content:space-between;align-items:center;">' +
-                    '<span style="font-size:.72rem;color:rgba(255,255,255,0.2);">' + (isMob ? '← Swipe → · Tippe zum Überspringen' : '← → Pfeiltasten · Esc zum Beenden') + '</span>' +
-                    '<button onclick="endOnboardingTour()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:.72rem;cursor:pointer;font-family:inherit;padding:2px 4px;" onmouseover="this.style.color=\'rgba(255,255,255,.5)\'" onmouseout="this.style.color=\'rgba(255,255,255,.25)\'">Überspringen</button>' +
+                    '<span style="font-size:.72rem;color:var(--text-muted);opacity:0.7;">' + (isMob ? 'Swipe links/rechts · Tippe zum Überspringen' : 'Pfeiltasten links/rechts · Esc zum Beenden') + '</span>' +
+                    '<button onclick="endOnboardingTour()" style="background:none;border:none;color:var(--text-muted);font-size:.72rem;cursor:pointer;font-family:inherit;padding:2px 4px;opacity:0.85;" onmouseover="this.style.color=\'var(--text-main)\';this.style.opacity=\'1\'" onmouseout="this.style.color=\'var(--text-muted)\';this.style.opacity=\'0.85\'">Überspringen</button>' +
                 '</div>';
 
             document.body.appendChild(tooltip);
@@ -481,7 +492,7 @@
         // Switch back to dashboard
         if (typeof switchTab === 'function') switchTab('dashboard');
         if (onboardingStep >= _getSteps().length - 1) launchTourConfetti();
-        showCustomMessage('✅ Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken! 🚀', 'success');
+        showCustomMessage('Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken!', 'success');
     }
 
     function highlightElement(selector) {
