@@ -54,7 +54,8 @@
     // ── Datenbasis ──────────────────────────────────────────────────────────
 
     function upVacationMode() {
-        return (typeof getVacationMode === 'function') ? getVacationMode() : 'days';
+        if (typeof getVacationMode === 'function') return getVacationMode();
+        return (data.settings && data.settings.vacation && data.settings.vacation.mode) || 'days';
     }
 
     function upRefHours() {
@@ -75,26 +76,45 @@
         var currentYear = new Date().getFullYear();
         var isFuture = year > currentYear;
 
-        // Pro-rata gilt nur fuer das laufende Jahr (Eintritt mitten im Jahr).
-        var entitlement = total;
-        if (!isFuture && typeof calculateProRataVacation === 'function') {
-            try { entitlement = calculateProRataVacation(total); } catch (e) { entitlement = total; }
-        }
+        // Entitlement and carried-over vacation:
+        // Match Dashboard logic: total vacation = v.total + carriedOver.
+        // Live dashboard and yearview do not prorate mid-year, so we use
+        // total directly to keep all counters 100% consistent across views.
+        var carriedOver = isFuture ? 0 : (parseFloat(v.carriedOver || 0) || 0);
+        var totalBudget = total + carriedOver;
 
         var used = isFuture ? 0 : (parseFloat(v.used) || 0);
-        var remaining = Math.max(0, entitlement - used);
+        var remaining = Math.max(0, totalBudget - used);
 
         var ref = upRefHours();
         var toDays = function (x) { return upVacationMode() === 'hours' ? (ref > 0 ? x / ref : 0) : x; };
+
+        // Überstundensaldo (Gleitzeit-Saldo) ermitteln wie auf dem Dashboard
+        var overtimeHours = 0;
+        if (typeof getRawSaldo === 'function') {
+            overtimeHours = getRawSaldo();
+        } else {
+            (Array.isArray(data.entries) ? data.entries : []).forEach(function (e) {
+                if (e) overtimeHours += (parseFloat(e.diff) || 0);
+            });
+        }
+        overtimeHours = Math.round(overtimeHours * 100) / 100;
+        var overtimeDays = overtimeHours > 0 ? Math.floor(toDays(overtimeHours) + 1e-9) : 0;
+        var remainingDays = Math.floor(toDays(remaining) + 1e-9);
 
         return {
             mode: upVacationMode(),
             refHours: ref,
             isFuture: isFuture,
-            entitlement: entitlement,
+            entitlement: total,
+            carriedOver: carriedOver,
+            totalBudget: totalBudget,
             used: used,
             remaining: remaining,
-            remainingDays: Math.floor(toDays(remaining) + 1e-9)
+            remainingDays: remainingDays,
+            overtimeHours: overtimeHours,
+            overtimeDays: overtimeDays,
+            totalPlanableDays: remainingDays + overtimeDays
         };
     }
 
@@ -109,27 +129,51 @@
         return map;
     }
 
-    function upBookedSet() {
-        var set = {};
+    function upIsOvertimeEntry(e) {
+        if (!e) return false;
+        var t = (e.type || '').toLowerCase();
+        if (t === 'gleittag' || t === 'overtime' || t === 'zeitausgleich') return true;
+        if (t.indexOf('überstund') !== -1 || t.indexOf('ueberstund') !== -1) return true;
+        if (e.info && typeof e.info === 'string') {
+            var info = e.info.toLowerCase();
+            if (t !== 'vacation' && (info.indexOf('überstundenabbau') !== -1 || info.indexOf('gleittag') !== -1)) return true;
+        }
+        return false;
+    }
+
+    function upIsVacationEntry(e) {
+        return !!(e && e.type === 'vacation' && !upIsOvertimeEntry(e));
+    }
+
+    function upEntryMaps() {
+        var vac = {}, ot = {};
         (data.entries || []).forEach(function (e) {
-            if (e && e.type === 'vacation' && e.date) set[e.date] = true;
+            if (!e || !e.date) return;
+            if (upIsVacationEntry(e)) {
+                vac[e.date] = true;
+            } else if (upIsOvertimeEntry(e)) {
+                ot[e.date] = true;
+            }
         });
-        return set;
+        return { vacation: vac, overtime: ot };
     }
 
     // Tagesraster fuer das Jahr plus je 31 Tage Rand — sonst faende der Planer
     // die Weihnachts-/Neujahrs-Bruecke ueber die Jahresgrenze nicht.
-    function upBuildDays(year, holidayMap, bookedSet) {
+    function upBuildDays(year, holidayMap, entryMaps) {
         var days = [];
         var d = new Date(year - 1, 11, 1);
         var end = new Date(year + 1, 0, 31);
         var hours = (data.settings && data.settings.hours) || {};
+        var vacMap = (entryMaps && entryMaps.vacation) || {};
+        var otMap = (entryMaps && entryMaps.overtime) || {};
 
         while (d <= end) {
             var key = upKey(d);
             var dow = d.getDay();
             var hol = holidayMap[key] || null;
-            var booked = !!bookedSet[key];
+            var booked = !!vacMap[key];
+            var overtime = !!otMap[key];
             var noDuty = !((hours[dow] || 0) > 0);
 
             days.push({
@@ -139,13 +183,14 @@
                 dow: dow,
                 holiday: hol,
                 booked: booked,
+                overtime: overtime,
                 // Feiertag, der auf einen Arbeitstag faellt — nur DER spart
                 // wirklich einen Urlaubstag. Faellt er auf Samstag/Sonntag,
                 // bringt er null und darf keine Empfehlung begruenden.
                 holGain: !!hol && !noDuty,
                 // "kostet keinen weiteren Urlaubstag": Feiertag, dienstfreier
-                // Wochentag oder bereits gebuchter Urlaub.
-                free: !!hol || noDuty || booked
+                // Wochentag, bereits gebuchter Urlaub oder Überstundenabbau.
+                free: !!hol || noDuty || booked || overtime
             });
             d.setDate(d.getDate() + 1);
         }
@@ -167,6 +212,38 @@
         }
 
         var cands = [];
+
+        function addCand(startDayIdx, endDayIdx, why, isHolidayBridge) {
+            var gapDays = [];
+            var valid = true;
+            for (var x = startDayIdx; x <= endDayIdx; x++) {
+                if (days[x].free) continue;
+                if (days[x].key < todayKey || days[x].year !== year) { valid = false; break; }
+                gapDays.push(days[x]);
+            }
+            if (!valid || !gapDays.length) return;
+            var cost = gapDays.length;
+            if (cost < 1 || cost > budgetDays) return;
+
+            var a = startDayIdx - 1; while (a >= 0 && days[a].free) a--; a++;
+            var b = endDayIdx + 1; while (b < days.length && days[b].free) b++; b--;
+            if (a < 0 || b >= days.length || b <= a) return;
+
+            var gain = b - a + 1;
+            if (gain <= cost) return;
+
+            cands.push({
+                from: days[a], to: days[b],
+                cost: cost, gain: gain,
+                ratio: gain / cost,
+                holidays: why ? [why] : [],
+                isHolidayBridge: !!isHolidayBridge,
+                gapDays: gapDays.slice(),
+                gapRanges: [{ s: days[startDayIdx].key, e: days[endDayIdx].key }]
+            });
+        }
+
+        // 1. Reguläre Brücken (ganze Gaps & Multi-Gap Merges)
         for (var g = 0; g < gaps.length; g++) {
             var cost = 0;
             for (var m = 0; m < UP_MAX_MERGE && g + m < gaps.length; m++) {
@@ -194,36 +271,92 @@
                 var gain = b - a + 1;
                 if (gain <= cost) continue;
 
-                // Nur Feiertage zaehlen, die auf einen Arbeitstag fallen.
-                // Ohne einen solchen ist das kein Brueckentag, sondern schlicht
-                // "nimm eine Woche frei" — das gilt fuer jede Woche im Jahr und
-                // waere als Empfehlung nur vorgetaeuschte Erkenntnis. Ohne die
-                // Regel schlug der Planer vier beliebige August-Wochen vor;
-                // mit blosser "Feiertag in der Naehe"-Pruefung immer noch
-                // Wochen neben dem 3.10.2026 (Samstag) und 1.11.2026 (Sonntag).
-                var names = [];
+                var holNames = [];
+                var weekendHolNames = [];
                 for (var h = a; h <= b; h++) {
                     var hn = upHolidayName(days[h].holiday);
-                    if (days[h].holGain && names.indexOf(hn) === -1) names.push(hn);
+                    if (days[h].holiday) {
+                        if (days[h].holGain && holNames.indexOf(hn) === -1) holNames.push(hn);
+                        else if (!days[h].holGain && weekendHolNames.indexOf(hn) === -1) weekendHolNames.push(hn);
+                    }
                 }
-                if (!names.length) continue;
 
-                cands.push({
-                    from: days[a], to: days[b],
-                    cost: cost, gain: gain,
-                    ratio: gain / cost,
-                    holidays: names,
-                    gapDays: gapDays.slice(),
-                    gapRanges: (function () {
-                        var r = [];
-                        for (var q = 0; q <= m; q++) r.push({ s: days[gaps[g + q].start].key, e: days[gaps[g + q].end].key });
-                        return r;
-                    })()
-                });
+                if (holNames.length > 0) {
+                    // Echter Brückentag
+                    cands.push({
+                        from: days[a], to: days[b],
+                        cost: cost, gain: gain,
+                        ratio: gain / cost,
+                        holidays: holNames,
+                        isHolidayBridge: true,
+                        gapDays: gapDays.slice(),
+                        gapRanges: (function () {
+                            var r = [];
+                            for (var q = 0; q <= m; q++) r.push({ s: days[gaps[g + q].start].key, e: days[gaps[g + q].end].key });
+                            return r;
+                        })()
+                    });
+                } else if (weekendHolNames.length > 0 && cost <= 5) {
+                    // Brücke zu Wochenend-Feiertag (z.B. Tag der Deutschen Einheit)
+                    cands.push({
+                        from: days[a], to: days[b],
+                        cost: cost, gain: gain,
+                        ratio: gain / cost,
+                        holidays: [weekendHolNames.join(', ') + ' (' + upL('Wochenende', 'Weekend') + ')'],
+                        isHolidayBridge: false,
+                        gapDays: gapDays.slice(),
+                        gapRanges: (function () {
+                            var r = [];
+                            for (var q = 0; q <= m; q++) r.push({ s: days[gaps[g + q].start].key, e: days[gaps[g + q].end].key });
+                            return r;
+                        })()
+                    });
+                } else if (m === 0 && cost <= 5 && gain / cost >= 1.5) {
+                    // Zusammenhängende Urlaubswoche (z.B. 5 Tage für 9 Tage frei)
+                    cands.push({
+                        from: days[a], to: days[b],
+                        cost: cost, gain: gain,
+                        ratio: gain / cost,
+                        holidays: [cost >= 4 ? upL('Urlaubswoche', 'Vacation week') : upL('Verlängertes Wochenende', 'Long weekend')],
+                        isHolidayBridge: false,
+                        gapDays: gapDays.slice(),
+                        gapRanges: [{ s: days[gaps[g].start].key, e: days[gaps[g].end].key }]
+                    });
+                }
             }
         }
 
-        cands.sort(function (x, y) { return (y.ratio - x.ratio) || (y.gain - x.gain) || (x.cost - y.cost); });
+        // 2. Verlängerte Wochenenden innerhalb eines Gaps (Freitag frei ODER Montag frei)
+        for (var g = 0; g < gaps.length; g++) {
+            var gap = gaps[g];
+            if (gap.len >= 3) {
+                // Freitag (letzter Tag des Gaps):
+                var friIdx = gap.end;
+                if (days[friIdx].dow === 5) {
+                    var satSunHol = null;
+                    for (var hf = friIdx + 1; hf <= Math.min(days.length - 1, friIdx + 2); hf++) {
+                        if (days[hf].holiday) satSunHol = upHolidayName(days[hf].holiday);
+                    }
+                    var whyFri = satSunHol ? satSunHol + ' (' + upL('Brückentag', 'Bridge day') + ')' : upL('Verlängertes Wochenende (Freitag)', 'Long weekend (Friday)');
+                    addCand(friIdx, friIdx, whyFri, !!satSunHol);
+                }
+                // Montag (erster Tag des Gaps):
+                var monIdx = gap.start;
+                if (days[monIdx].dow === 1) {
+                    var monSatSunHol = null;
+                    for (var hm = Math.max(0, monIdx - 2); hm < monIdx; hm++) {
+                        if (days[hm].holiday) monSatSunHol = upHolidayName(days[hm].holiday);
+                    }
+                    var whyMon = monSatSunHol ? monSatSunHol + ' (' + upL('Brückentag', 'Bridge day') + ')' : upL('Verlängertes Wochenende (Montag)', 'Long weekend (Monday)');
+                    addCand(monIdx, monIdx, whyMon, !!monSatSunHol);
+                }
+            }
+        }
+
+        cands.sort(function (x, y) {
+            if (x.isHolidayBridge !== y.isHolidayBridge) return x.isHolidayBridge ? -1 : 1;
+            return (y.ratio - x.ratio) || (y.gain - x.gain) || (x.cost - y.cost);
+        });
 
         // Nur ueberschneidungsfreie Vorschlaege — sonst schlagen wir Tage
         // mehrfach vor und die Kostensumme waere gelogen.
@@ -291,8 +424,10 @@
         var year = upState.year;
         var budget = upBudget(year);
         var holidayMap = upHolidayMap(year);
-        var days = upBuildDays(year, holidayMap, upBookedSet());
-        var suggestions = upFindSuggestions(days, budget.remainingDays, year);
+        var entryMaps = upEntryMaps();
+        var days = upBuildDays(year, holidayMap, entryMaps);
+        var planableDays = Math.max(budget.remainingDays + (budget.overtimeDays || 0), 1);
+        var suggestions = upFindSuggestions(days, planableDays, year);
 
         upState.days = days;
         upState.suggestions = suggestions;
@@ -306,7 +441,22 @@
         var set = function (id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; };
         set('upStatRemaining', upFmtBalance(budget.remaining, budget));
         set('upStatUsed', upFmtBalance(budget.used, budget));
-        set('upStatTotal', upFmtBalance(budget.entitlement, budget));
+        set('upStatTotal', upFmtBalance(budget.totalBudget, budget));
+
+        var totalEl = document.getElementById('upStatTotal');
+        if (totalEl) {
+            totalEl.title = budget.carriedOver > 0
+                ? upL('Inkl. ' + upFmtBalance(budget.carriedOver, budget) + ' Resturlaub aus dem Vorjahr',
+                       'Incl. ' + upFmtBalance(budget.carriedOver, budget) + ' carried-over leave from previous year')
+                : '';
+        }
+
+        var otEl = document.getElementById('upStatOvertime');
+        if (otEl) {
+            var otSign = budget.overtimeHours > 0 ? '+' : (budget.overtimeHours < 0 ? '−' : '');
+            var nf = new Intl.NumberFormat(upLocale(), { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            otEl.textContent = otSign + nf.format(Math.abs(budget.overtimeHours));
+        }
 
         var unit = document.getElementById('upStatUnit');
         if (unit) unit.textContent = budget.mode === 'hours' ? upL('Stunden', 'hours') : upL('Tage', 'days');
@@ -317,6 +467,11 @@
                 note.textContent = upL(
                     'Voller Jahresanspruch — im nächsten Jahr ist noch nichts verbraucht.',
                     'Full annual entitlement. Nothing used yet next year.'
+                );
+            } else if (budget.carriedOver > 0) {
+                note.textContent = upL(
+                    'Inkl. ' + upFmtBalance(budget.carriedOver, budget) + ' Resturlaub aus dem Vorjahr. Resturlaub verfällt in der Regel zum 31. Dezember ' + year + '.',
+                    'Incl. ' + upFmtBalance(budget.carriedOver, budget) + ' carried-over leave from previous year. Remaining leave usually expires on 31 December ' + year + '.'
                 );
             } else {
                 note.textContent = upL(
@@ -344,11 +499,11 @@
             return;
         }
 
-        if (budget.remainingDays < 1) {
+        if (budget.remainingDays < 1 && budget.overtimeDays < 1) {
             host.appendChild(upEmptyState(
-                upL('Kein Resturlaub', 'No leave remaining'),
-                upL('Für ' + year + ' ist nichts mehr übrig. Prüfe den Jahresanspruch in den Einstellungen oder plane für das nächste Jahr.',
-                    'Nothing left for ' + year + '. Check your annual entitlement in settings or plan for next year.'),
+                upL('Kein Kontingent verfügbar', 'No quota available'),
+                upL('Für ' + year + ' ist weder Resturlaub noch ein Überstundenguthaben vorhanden.',
+                    'For ' + year + ' neither remaining leave nor flextime overtime is available.'),
                 upL('Urlaubsanspruch prüfen', 'Check entitlement'),
                 'openSettings()'
             ));
@@ -379,6 +534,28 @@
             ? s.holidays.join(', ')
             : upL('Verlängertes Wochenende', 'Long weekend');
 
+        var canBookOvertime = budget.overtimeHours >= (s.cost * budget.refHours);
+        var bookButtons = '';
+        if (canBookOvertime && budget.mode === 'hours') {
+            bookButtons =
+                '<div class="up-sug__btns">' +
+                    '<button type="button" class="up-sug__book" onclick="upBookSuggestion(' + idx + ', \'vacation\')" title="' + esc(upL('Als Urlaub buchen', 'Book as leave')) + '">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+                        esc(upL('Urlaub', 'Leave')) +
+                    '</button>' +
+                    '<button type="button" class="up-sug__book up-sug__book--ot" onclick="upBookSuggestion(' + idx + ', \'gleittag\')" title="' + esc(upL('Als Gleittag (Überstundenabbau) buchen', 'Book as flextime (overtime reduction)')) + '">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+                        esc(upL('Gleittag', 'Flextime')) +
+                    '</button>' +
+                '</div>';
+        } else {
+            bookButtons =
+                '<button type="button" class="up-sug__book" onclick="upBookSuggestion(' + idx + ', \'vacation\')">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+                    esc(upL('Eintragen', 'Book')) +
+                '</button>';
+        }
+
         card.innerHTML =
             '<div class="up-sug__rank" aria-hidden="true">' + (idx + 1) + '</div>' +
             '<div class="up-sug__main">' +
@@ -393,10 +570,7 @@
             '<div class="up-sug__side">' +
                 '<div class="up-sug__ratio"><span class="up-sug__ratio-num">' + esc(ratio) + '×</span>' +
                 '<span class="up-sug__ratio-lbl">' + esc(upL('Ausbeute', 'return')) + '</span></div>' +
-                '<button type="button" class="up-sug__book" onclick="upBookSuggestion(' + idx + ')">' +
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
-                    esc(upL('Eintragen', 'Book')) +
-                '</button>' +
+                bookButtons +
             '</div>';
         return card;
     }
@@ -473,6 +647,9 @@
                     if (sug[key]) {
                         cell.classList.add('up-d--sug');
                         label = upL('Vorschlag ', 'Suggestion ') + sug[key] + ' — ' + upL('Urlaubstag', 'vacation day');
+                    } else if (info.overtime) {
+                        cell.classList.add('up-d--overtime');
+                        label = upL('Überstunden', 'Overtime');
                     } else if (info.booked) {
                         cell.classList.add('up-d--vac');
                         label = upL('Gebuchter Urlaub', 'Booked leave');
@@ -496,18 +673,21 @@
 
     // ── Aktionen ────────────────────────────────────────────────────────────
 
-    function upBookSuggestion(idx) {
+    function upBookSuggestion(idx, bookingType) {
         var s = upState.suggestions[idx];
         if (!s) return;
 
+        var isOvertime = bookingType === 'gleittag';
+        var isMix = bookingType === 'mix';
         var keys = s.gapDays.map(function (d) { return d.key; });
         var existing = (data.entries || []).filter(function (e) { return keys.indexOf(e.date) !== -1; });
 
         var doBook = function () {
             var hours = (data.settings && data.settings.hours) || {};
             var ref = upRefHours();
+            var remVac = upBudget(upState.year).remainingDays;
 
-            // Bestehende Eintraege an diesen Tagen weichen dem Urlaub —
+            // Bestehende Eintraege an diesen Tagen weichen dem gebuchten Tag —
             // gleiches Verhalten wie bookPeriod().
             if (existing.length) {
                 data.entries = data.entries.filter(function (e) { return keys.indexOf(e.date) === -1; });
@@ -515,14 +695,27 @@
 
             s.gapDays.forEach(function (d) {
                 var expected = (hours[d.dow] || 0) > 0 ? hours[d.dow] : ref;
+                var currentType = isOvertime ? 'gleittag' : 'vacation';
+                
+                if (isMix) {
+                    if (remVac > 0) {
+                        currentType = 'vacation';
+                        remVac--;
+                    } else {
+                        currentType = 'gleittag';
+                    }
+                }
+                
+                var isOt = currentType === 'gleittag';
+
                 data.entries.push({
                     id: Date.now() + Math.random(),
                     date: d.key,
-                    type: 'vacation',
-                    worked: expected,
+                    type: isOt ? 'gleittag' : 'vacation',
+                    worked: isOt ? 0 : expected,
                     expected: expected,
-                    diff: 0,
-                    info: 'Urlaub (Brückentag)',
+                    diff: isOt ? -expected : 0,
+                    info: isOt ? 'Gleittag (Überstundenabbau)' : 'Urlaub (Brückentag)',
                     isPeriod: true,
                     breakMins: 0,
                     shiftEnd: '',
@@ -532,22 +725,35 @@
 
             if (typeof recalculateVacationUsed === 'function') recalculateVacationUsed();
             if (typeof save === 'function') save();
-            if (typeof mwlEvent === 'function') mwlEvent('urlaubsplaner_gebucht', { tage: s.cost });
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof mwlEvent === 'function') mwlEvent(isMix ? 'urlaubsplaner_mix_gebucht' : (isOvertime ? 'urlaubsplaner_gleittag_gebucht' : 'urlaubsplaner_gebucht'), { tage: s.cost });
 
             renderUrlaubsplaner();
-            showCustomMessage(
-                upL('Eingetragen', 'Booked'),
-                upL(s.cost + ' Urlaubstag(e) eingetragen — ' + s.gain + ' Tage am Stück frei.',
-                    s.cost + ' vacation day(s) booked. ' + s.gain + ' days off in a row.'),
-                'success'
-            );
+            var successTitle = isMix ? upL('Urlaub & Gleitzeit eingetragen', 'Leave & Flextime booked') : (isOvertime ? upL('Gleittag eingetragen', 'Flextime booked') : upL('Urlaub eingetragen', 'Leave booked'));
+            var successMsg = isMix
+                ? upL(s.cost + ' Tage kombiniert eingetragen — ' + s.gain + ' Tage am Stück frei.',
+                      s.cost + ' mixed days booked. ' + s.gain + ' days off in a row.')
+                : (isOvertime
+                    ? upL(s.cost + ' Gleittag(e) eingetragen — ' + s.gain + ' Tage am Stück frei.',
+                          s.cost + ' flextime day(s) booked. ' + s.gain + ' days off in a row.')
+                    : upL(s.cost + ' Urlaubstag(e) eingetragen — ' + s.gain + ' Tage am Stück frei.',
+                          s.cost + ' vacation day(s) booked. ' + s.gain + ' days off in a row.'));
+
+            showCustomMessage(successTitle, successMsg, 'success');
         };
 
         if (existing.length) {
+            var confirmMsg = isMix
+                ? upL(existing.length + ' vorhandene Einträge in diesem Zeitraum werden überschrieben.',
+                      existing.length + ' existing entries in this range will be overwritten.')
+                : (isOvertime
+                    ? upL(existing.length + ' vorhandene Einträge in diesem Zeitraum werden durch Gleittage ersetzt.',
+                          existing.length + ' existing entries in this range will be replaced by flextime.')
+                    : upL(existing.length + ' vorhandene Einträge in diesem Zeitraum werden durch Urlaub ersetzt.',
+                          existing.length + ' existing entries in this range will be replaced by leave.'));
             showCustomConfirm(
                 upL('Vorhandene Einträge überschreiben?', 'Overwrite existing entries?'),
-                upL(existing.length + ' vorhandene Einträge in diesem Zeitraum werden durch Urlaub ersetzt.',
-                    existing.length + ' existing entries in this range will be replaced by leave.'),
+                confirmMsg,
                 doBook, null
             );
         } else {
