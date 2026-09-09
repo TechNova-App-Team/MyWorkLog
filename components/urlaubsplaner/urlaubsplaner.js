@@ -8,9 +8,8 @@
     // Daraus folgt die maximale Vorschlagsgroesse; 3 deckt Ostern und
     // Weihnachten/Neujahr ab, ohne absurde Monatsbloecke zu erzeugen.
     var UP_MAX_MERGE = 3;
-    var UP_MAX_RESULTS = 25;
 
-    var upState = { year: new Date().getFullYear(), suggestions: [], days: [] };
+    var upState = { year: new Date().getFullYear(), suggestions: [], days: [], maxResults: 25, minDuration: 0 };
 
     // i18n: JS-generierter Text wird von der statischen Pipeline nicht erfasst.
     // Lokal definiert, damit keine Ladereihenfolge-Abhaengigkeit entsteht.
@@ -361,8 +360,9 @@
         // Nur ueberschneidungsfreie Vorschlaege — sonst schlagen wir Tage
         // mehrfach vor und die Kostensumme waere gelogen.
         var taken = {}, out = [], spent = 0;
-        for (var c = 0; c < cands.length && out.length < UP_MAX_RESULTS; c++) {
+        for (var c = 0; c < cands.length && out.length < upState.maxResults; c++) {
             var cd = cands[c], clash = false;
+            if (cd.gain < upState.minDuration) continue;
             for (var k = 0; k < cd.gapDays.length; k++) {
                 if (taken[cd.gapDays[k].key]) { clash = true; break; }
             }
@@ -763,5 +763,13 @@
 
     function upChangeYear(val) {
         upState.year = parseInt(val, 10) || new Date().getFullYear();
+        renderUrlaubsplaner();
+    }
+
+    function upChangeSettings() {
+        var maxResEl = document.getElementById('upMaxResults');
+        var minDurEl = document.getElementById('upMinDuration');
+        if (maxResEl) upState.maxResults = parseInt(maxResEl.value, 10) || 25;
+        if (minDurEl) upState.minDuration = parseInt(minDurEl.value, 10) || 0;
         renderUrlaubsplaner();
     }
