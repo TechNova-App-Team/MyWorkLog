@@ -1713,20 +1713,11 @@ document.documentElement.className += ' js';</script>
        der Betreiber gar nicht sehen. Die Karte ist deshalb weg, an ihrer
        Stelle steht die Verweildauer, die wirklich gemessen wird.
 
-       Quelle ist derselbe Proxy wie auf /analytics/, Zeitraum 90 Tage.
-       SNAPSHOT ist kein Platzhalter, sondern die letzte echte Messung mit
-       Datum — er steht da, solange der Abruf laeuft, und bleibt stehen, wenn
-       er scheitert (Adblocker, offline). In dem Fall nennt die Sprechblase
-       den Stand statt "live". */
+       Quelle ist derselbe Proxy wie auf /analytics/, Zeitraum 90 Tage. */
     var AN_PROXY = 'https://analytics-proxy.myworklog.workers.dev';
     var AN_RANGE = 90;
     var AN_CACHE_KEY = 'mwl_about_stats';
     var AN_CACHE_MS = 10 * 60 * 1000;
-    var SNAPSHOT = {
-        visitors: 329, pageviews: 1228, sessions: 515,
-        bounceRate: 0.4640776699029126, avgSessionDuration: 444.567,
-        measuredAt: '2026-08-29'
-    };
 
     function loc() {
         return window.mwlLocale ? window.mwlLocale()
@@ -1760,7 +1751,7 @@ document.documentElement.className += ' js';</script>
     /* Eine Dezimalstelle, in der Sprache der Seite: 2.4 gegen 2,4. */
     function fmt1(n) { return Number(n).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
 
-    function renderStats(sum, live) {
+    function renderStats(sum) {
         var e = window.mwlEngagement ? window.mwlEngagement.parts(sum) : null;
         if (!e || !e.hasData) return;
 
@@ -1771,12 +1762,8 @@ document.documentElement.className += ' js';</script>
         setText('stat-duration', dur);
 
         /* Die Herkunft steht an jeder Zahl. Ohne Zeitraum ist eine Besucherzahl
-           keine Auskunft, und ohne "gemessen am" waere der Snapshot eine
-           Behauptung von heute. */
-        var quelle = live
-            ? t('letzte 90 Tage', 'last 90 days')
-            : t('letzte 90 Tage · Stand ', 'last 90 days · as of ') + SNAPSHOT.measuredAt;
-        setText('stat-users-sub', quelle);
+           keine Auskunft. */
+        setText('stat-users-sub', t('letzte 90 Tage', 'last 90 days'));
 
         setText('durationExample', fmt(e.pageviews) + t(' Seiten in ', ' pages across ') + fmt(e.sessions) + t(' Sitzungen', ' sessions'));
 
@@ -1792,9 +1779,7 @@ document.documentElement.className += ' js';</script>
         setText('stat-engagement-sub', e.score >= 75 ? t('hervorragend', 'excellent')
                                      : e.score >= 50 ? t('gut', 'good')
                                      : e.score >= 25 ? t('ausbaufähig', 'has room') : t('niedrig', 'low'));
-        setText('engagementSource', live
-            ? t('Live aus der Web-Analyse', 'Live from web analytics')
-            : t('Stand ', 'As of ') + SNAPSHOT.measuredAt);
+        setText('engagementSource', t('Live aus der Web-Analyse', 'Live from web analytics'));
     }
 
     function cachedStats() {
@@ -1811,11 +1796,7 @@ document.documentElement.className += ' js';</script>
         statsStarted = true;
 
         var cache = cachedStats();
-        if (cache) { renderStats(cache, true); return; }
-
-        /* Erst der letzte gemessene Stand, damit die Karten nie leer stehen —
-           dann der Live-Wert obendrauf. */
-        renderStats(SNAPSHOT, false);
+        if (cache) { renderStats(cache); return; }
 
         var ctrl = new AbortController();
         var to = setTimeout(function () { ctrl.abort(); }, 8000);
@@ -1826,9 +1807,12 @@ document.documentElement.className += ' js';</script>
                 if (!sum || !sum.sessions) return;
                 try { sessionStorage.setItem(AN_CACHE_KEY, JSON.stringify({ ts: Date.now(), sum: sum })); } catch (e) {}
                 statsStarted = true;
-                renderStats(sum, true);
+                renderStats(sum);
             })
-            .catch(function () { /* Snapshot bleibt stehen, die Sprechblase nennt seinen Stand. */ })
+            .catch(function () {
+                setText('stat-users-sub', t('Fehler beim Laden', 'Failed to load'));
+                setText('stat-engagement-sub', '—');
+            })
             .then(function () { clearTimeout(to); });
     }
 
