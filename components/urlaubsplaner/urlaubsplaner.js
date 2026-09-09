@@ -8,7 +8,7 @@
     // Daraus folgt die maximale Vorschlagsgroesse; 3 deckt Ostern und
     // Weihnachten/Neujahr ab, ohne absurde Monatsbloecke zu erzeugen.
     var UP_MAX_MERGE = 3;
-    var UP_MAX_RESULTS = 6;
+    var UP_MAX_RESULTS = 25;
 
     var upState = { year: new Date().getFullYear(), suggestions: [], days: [] };
 
