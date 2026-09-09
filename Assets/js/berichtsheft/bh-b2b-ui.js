@@ -267,6 +267,11 @@
                 (e.benutzt || e.abgelaufen ? ''
                     : '<button class="b2b-copy" onclick="b2bCodeKopieren(\'' + esc(e.code) + '\')">' +
                       b2bL('Kopieren', 'Copy') + '</button>') +
+                // Seit es Vertretungscodes gibt, sind zwei Sorten in der
+                // Liste. Ohne Marke sieht ein Code, der jemanden zum
+                // Abzeichnen berechtigt, aus wie einer fuer einen Azubi.
+                (e.rolle === 'ausbilder'
+                    ? '<span class="b2b-code-state">' + b2bL('Vertretung', 'Deputy') + '</span>' : '') +
                 '<span class="b2b-code-state">' + esc(zustand) + '</span>' +
                 (loeschbar
                     ? '<button class="b2b-code-weg" onclick="b2bCodeLoeschen(\'' + esc(e.code) + '\')" ' +
@@ -517,8 +522,17 @@
         if (p && p.sig === 'gueltig') {
             sigZeile = '<p style="margin-top:8px;font-size:0.78rem;color:var(--success);">' +
                 b2bL('Signatur des Ausbilder-Geräts gültig.', 'Trainer device signature valid.') +
+                // Seit es Urlaubsvertretungen gibt (mehrere Ausbilder je
+                // Betrieb), ist ein anderes Geraet der NORMALFALL und kein
+                // Verdacht. Deshalb steht hier der Name statt einer Warnung —
+                // der Azubi soll sehen, WER unterschrieben hat, nicht raten,
+                // ob etwas faul ist.
                 (p.trust === 'other-device'
-                    ? ' ' + b2bL('(anderes Gerät als beim ersten Mal)', '(different device than the first time)') : '') +
+                    ? ' ' + (report.approval && report.approval.by
+                        ? b2bL('Unterschrieben von ' + report.approval.by + ' — ein anderes Gerät als bei der ersten Freigabe.',
+                               'Signed by ' + report.approval.by + ' — a different device than the first approval.')
+                        : b2bL('(anderes Gerät als beim ersten Mal)', '(different device than the first time)'))
+                    : '') +
                 '</p>';
         } else if (p && p.sig === 'ungueltig') {
             sigZeile = '<p style="margin-top:8px;font-size:0.78rem;color:var(--danger);font-weight:600;">' +

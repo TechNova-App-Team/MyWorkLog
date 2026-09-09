@@ -96,9 +96,13 @@ ok(!/stat-hours|stat-satisfaction/.test(about), 'die alten Ids sind weg');
 ok(/analytics-proxy\.myworklog\.workers\.dev/.test(about), '/about/ holt die Zahlen vom Analytics-Proxy');
 ok(/range=/.test(about) && /AN_RANGE\s*=\s*90/.test(about), 'Zeitraum sind 90 Tage');
 
-// Der Snapshot ist erlaubt — aber nur MIT Datum daneben, sonst ist er wieder
-// eine Behauptung von heute.
-ok(/measuredAt:\s*'\d{4}-\d{2}-\d{2}'/.test(about), 'der Ruecfall-Stand traegt ein Messdatum');
+// Seit 137da30 gibt es gar keinen Rueckfall-Stand mehr: schlaegt der Abruf
+// fehl (Adblocker, offline), bleiben die Kacheln leer, statt eine Messung von
+// vorgestern als heutige Zahl auszugeben. Die Pruefung dreht sich damit um —
+// vorher „nur MIT Datum", jetzt „gar nicht".
+ok(!/SNAPSHOT\s*=/.test(about) && !/measuredAt/.test(about),
+    'es gibt keinen fest eingetragenen Kennzahlen-Stand mehr');
+ok(/AN_PROXY\s*=/.test(about), 'Gegenprobe: die Abruf-Konstanten stehen ueberhaupt in der Datei');
 ok(/stat-users-sub/.test(about), 'die Besucherzahl nennt ihren Zeitraum');
 
 // Die Kachel darf nicht "Zufriedenheit" heissen: gemessen wird Verhalten,

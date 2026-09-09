@@ -239,6 +239,75 @@ try {
     ok(hart.status === 204 || hart.status === 200, 'Bericht ohne Freigabe wird hart geloescht');
     const weg = await tr(`berichte?id=eq.${freiId}&select=id`);
     ok((weg.body || []).length === 0, 'und ist danach auch fuer den Ausbilder weg');
+
+    // ── Meldungen: was der Azubi loescht, sieht der Ausbilder ────────────
+    // Geschrieben wird `bericht_ereignisse` NUR vom Trigger. Deshalb wird hier
+    // nicht geprueft, ob ein Client die Zeile anlegt, sondern ob sie nach den
+    // Loeschungen weiter oben von allein da ist.
+    const ereig = await tr(`bericht_ereignisse?betrieb_id=eq.${betriebId}&select=id,art,kw,war_freigegeben&order=erstellt_at`);
+    const arten = (ereig.body || []).map(e => e.art);
+    ok(arten.includes('geloescht'), 'Soft-Delete erzeugt eine Meldung');
+    ok(arten.includes('wiederhergestellt'), 'Wiederherstellen erzeugt eine Meldung');
+    ok(arten.includes('endgueltig_geloescht'), 'Hard-Delete erzeugt eine Meldung');
+    const warFrei = (ereig.body || []).find(e => e.art === 'geloescht');
+    ok(warFrei && warFrei.war_freigegeben === true,
+        'die geloeschte Woche wird als "war abgezeichnet" gemeldet');
+    const hartMeldung = (ereig.body || []).find(e => e.art === 'endgueltig_geloescht');
+    ok(hartMeldung && hartMeldung.kw === 21 && hartMeldung.war_freigegeben === false,
+        'die Meldung traegt die KW der Woche, die es nicht mehr gibt');
+
+    // Der Azubi sieht seine eigenen Meldungen, kann sie aber nicht anfassen.
+    const azSieht = await az(`bericht_ereignisse?select=id`);
+    ok((azSieht.body || []).length >= 3, 'Azubi sieht die Meldungen ueber seine eigenen Wochen');
+    const azErfindet = await az('bericht_ereignisse', {
+        method: 'POST', body: JSON.stringify({
+            betrieb_id: betriebId, azubi_id: azId, art: 'wiederhergestellt',
+        }),
+    });
+    ok(azErfindet.status >= 400, 'Azubi kann keine Meldung erfinden (kein INSERT)');
+    const azLoescht = await az(`bericht_ereignisse?betrieb_id=eq.${betriebId}`, { method: 'DELETE' });
+    ok(azLoescht.status >= 400 || (Array.isArray(azLoescht.body) && azLoescht.body.length === 0),
+        'Azubi kann keine Meldung wegraeumen (kein DELETE)');
+    const nochAlle = await tr(`bericht_ereignisse?betrieb_id=eq.${betriebId}&select=id`);
+    ok((nochAlle.body || []).length === (ereig.body || []).length,
+        'und es sind danach noch genauso viele da');
+
+    // Quittieren: je Ausbilder eigener Lesestand.
+    const ersteId = ereig.body[0].id;
+    ok(typeof ersteId === 'string' && ersteId.length === 36,
+        'die Meldungs-id kommt mit (sonst quittiert der Test ins Leere)');
+    const quitt = await tr('ereignis_gesehen', {
+        method: 'POST', body: JSON.stringify({ ereignis_id: ersteId, user_id: trId }),
+    });
+    ok(quitt.status === 201, 'Ausbilder quittiert eine Meldung');
+    const azQuitt = await az('ereignis_gesehen', {
+        method: 'POST', body: JSON.stringify({ ereignis_id: ersteId, user_id: azId }),
+    });
+    ok(azQuitt.status >= 400, 'Azubi kann nicht quittieren (nur Ausbilder)');
+
+    // ── Urlaubsvertretung: zweiter Ausbilder ────────────────────────────
+    const vertCode = 'E2E-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const vertInv = await tr('einladungen', {
+        method: 'POST', body: JSON.stringify({
+            code: vertCode, betrieb_id: betriebId, rolle: 'ausbilder', erstellt_von: trId,
+            laeuft_ab: new Date(Date.now() + 864e5).toISOString(),
+        }),
+    });
+    ok(vertInv.status === 201 && vertInv.body?.[0]?.rolle === 'ausbilder',
+        'Ausbilder legt einen Vertretungscode an');
+
+    // 🔴 Der teuerste Fall: ein Azubi, der an einen Vertretungscode kommt,
+    // duerfte danach seine EIGENEN Wochen abzeichnen.
+    const selbst = await rpc(azTok, 'einladung_einloesen', { p_code: vertCode, p_anzeige_name: 'E2E Azubi' });
+    ok(selbst.status >= 400, 'Azubi kann sich mit einem Vertretungscode nicht selbst befoerdern');
+    const rolleNoch = await tr(`betrieb_mitglieder?user_id=eq.${azId}&betrieb_id=eq.${betriebId}&select=rolle`);
+    ok(rolleNoch.body?.[0]?.rolle === 'azubi', 'und er ist danach immer noch Azubi');
+
+    // Der letzte Ausbilder darf nicht gehen, solange Azubis da sind.
+    const raus = await tr(`betrieb_mitglieder?betrieb_id=eq.${betriebId}&user_id=eq.${trId}`, { method: 'DELETE' });
+    ok(raus.status >= 400, 'der letzte Ausbilder kann den Betrieb nicht verlassen');
+    const nochMitglied = await tr(`betrieb_mitglieder?user_id=eq.${trId}&betrieb_id=eq.${betriebId}&select=rolle`);
+    ok(nochMitglied.body?.[0]?.rolle === 'ausbilder', 'und ist danach noch Ausbilder');
 } finally {
     const rm = await tr(`betriebe?id=eq.${betriebId}`, { method: 'DELETE', prefer: 'return=minimal' });
     ok(rm.status === 204 || rm.status === 200, 'Aufraeumen: Testbetrieb geloescht (Cascade)');

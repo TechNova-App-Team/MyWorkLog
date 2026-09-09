@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.14"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.9.14"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.15"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.9.15"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
@@ -321,6 +321,100 @@
             border-color: rgba(var(--warning-rgb), 0.32);
         }
         .abk-hinweis.is-warn svg { color: var(--warning); }
+
+        /* Meldungen: Wochen, die der Azubi geloescht hat.
+           Die einzige getoente Flaeche dieser Seite — und das mit Absicht:
+           es ist die einzige Information hier, die nicht AUS dem Freigabe-
+           Ablauf kommt, sondern ihn unterbricht. Eine geloeschte Woche faellt
+           aus jeder anderen Anzeige heraus (Karten, Balken, Wochen-Streifen),
+           und "war da, ist weg" sieht dort aus wie "war nie da".
+           Getoent wird nur, wenn wenigstens eine der Wochen bereits
+           abgezeichnet war — ein geloeschter Entwurf ist Aufraeumen, keine
+           Meldung mit Farbe. Dieselbe Regel wie bei den Kacheln. */
+        .abk-meld {
+            margin-top: 14px; padding: 14px 16px 4px;
+            background: var(--bg-card); border: 1px solid var(--border-strong);
+            border-radius: var(--radius);
+        }
+        .abk-meld.is-alarm {
+            background: rgba(var(--danger-rgb), 0.07);
+            border-color: rgba(var(--danger-rgb), 0.30);
+        }
+        .abk-meld-kopf {
+            display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+            padding-bottom: 11px;
+        }
+        .abk-meld-t { font-size: 0.92rem; font-weight: 650; letter-spacing: -0.012em; }
+        .abk-meld-s { font-size: 0.78rem; color: var(--text-muted); }
+        .abk-meld-alle {
+            margin-left: auto; padding: 0; border: 0; background: none;
+            font-family: inherit; font-size: 0.78rem; color: var(--text-muted);
+            cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+        }
+        .abk-meld-alle:hover { color: var(--text-main); }
+        .abk-meld-zeile {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 0; border-top: 1px solid var(--border);
+        }
+        .abk-meld-kw {
+            font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+            font-size: 0.85rem; font-weight: 600; color: var(--text-main);
+        }
+        .abk-meld-wann { font-size: 0.76rem; color: var(--text-faint); }
+        /* Wann geloescht wurde, gehoert an den rechten Rand zum Knopf — sonst
+           steht es mitten in der Zeile und sieht aus wie ein zweites Datum
+           neben dem Zeitraum der Woche. */
+        .abk-meld-seit { margin-left: auto; }
+        .abk-meld-marke {
+            padding: 2px 8px; border-radius: 999px;
+            font-size: 0.7rem; font-weight: 600;
+            color: var(--text-muted); border: 1px solid var(--border-strong);
+        }
+        .abk-meld-marke.is-alarm {
+            color: var(--danger); border-color: rgba(var(--danger-rgb), 0.42);
+            background: rgba(var(--danger-rgb), 0.10);
+        }
+        /* Zwei Klassen: `.ab-btn { flex: 1 1 0; padding: 14px 16px }` steht
+           weiter unten im Stylesheet und gewinnt sonst bei gleicher
+           Spezifitaet — die Falle aus CLAUDE.md, hier schon dreimal getroffen. */
+        .abk-meld-zeile .abk-meld-ok {
+            flex: 0 0 auto; padding: 5px 12px; font-size: 0.76rem;
+            /* Bewusst NICHT .ab-btn-ghost: dessen Hover ist rot (das ist der
+               „Zurückgeben"-Knopf). „Gelesen" nimmt nichts zurueck. */
+            background: none; color: var(--text-muted); border-color: var(--border-strong);
+        }
+        .abk-meld-zeile .abk-meld-ok:hover { color: var(--text-main); border-color: var(--primary); }
+        .abk-meld-zeile .abk-meld-ok:disabled { opacity: 0.5; cursor: default; }
+
+        /* Team (Urlaubsvertretung). Bewusst KEINE eigene Karte: wer in diesem
+           Betrieb abzeichnen darf, ist eine Angabe ueber den Betrieb und
+           gehoert in dessen Kopf. Der Kasten erscheint erst auf Klick. */
+        .abk-team-zeile {
+            margin-top: 6px; font-size: 0.75rem; color: var(--text-faint);
+            line-height: 1.55; overflow-wrap: anywhere;
+        }
+        .abk-team-btn {
+            padding: 0; margin-left: 6px; border: 0; background: none;
+            font-family: inherit; font-size: inherit; color: var(--text-muted);
+            cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+        }
+        .abk-team-btn:hover { color: var(--primary); }
+        .abk-team-liste { margin-top: 12px; display: grid; gap: 6px; }
+        .abk-team-m {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 9px 13px; background: var(--bg-raise);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+        }
+        .abk-team-name { font-size: 0.86rem; font-weight: 600; }
+        .abk-team-seit { font-size: 0.74rem; color: var(--text-faint); }
+        .abk-team-ich {
+            padding: 1px 8px; border-radius: 999px; font-size: 0.68rem; font-weight: 600;
+            color: var(--primary); border: 1px solid rgba(var(--primary-rgb), 0.32);
+        }
+        .abk-team-m .abk-team-weg {
+            flex: 0 0 auto; margin-left: auto; padding: 5px 12px; font-size: 0.76rem;
+        }
+        .abk-team-fehler { margin-top: 9px; font-size: 0.8rem; color: var(--danger); line-height: 1.55; }
 
         /* Einladungscode direkt hier — vorher musste man ins Berichtsheft. */
         .abk-einl {
@@ -920,13 +1014,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.9.14"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.9.14"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.9.15"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.9.15"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.14"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.15"></script>
 
     <script>
     (function () {
@@ -1411,6 +1505,8 @@
 
         var kontoDaten = null;
         var kontoGebunden = false;
+        var kontoMeldungen = [];   // geloeschte Wochen, noch nicht quittiert
+        var kontoTeam = [];        // Ausbilder dieses Betriebs (Urlaubsvertretung)
 
         function findeBericht(bid) {
             for (var i = 0; i < (kontoDaten ? kontoDaten.azubis.length : 0); i++) {
@@ -1882,8 +1978,193 @@
                 '</summary>' + koerper + '</details>';
         }
 
+        // ── Meldungen: Wochen, die der Azubi geloescht hat ────────────
+        //
+        // 🔴 Eine geloeschte Woche faellt aus JEDER anderen Anzeige dieser
+        // Seite heraus: `azubiBerichte()` filtert `geloescht_at is null`, also
+        // fehlt sie in den Karten, im Anteilsbalken UND im Wochen-Streifen.
+        // Ohne diesen Block sieht "war da, ist weg" genauso aus wie "war nie
+        // da" — und ausgerechnet die schon abgezeichnete Woche, die jemand
+        // wieder loswerden wollte, verschwindet damit am leisesten.
+        //
+        // Geschrieben werden die Meldungen vom Datenbank-Trigger
+        // `berichte_ereignis_log`, nicht vom Loesch-Knopf im Berichtsheft:
+        // sonst haetten die Papierkorb-Automatik nach 30 Tagen und jeder
+        // direkte Aufruf am Client vorbei kein Ereignis erzeugt.
+
+        function relativTag(iso) {
+            var d = new Date(iso);
+            if (isNaN(d)) return '';
+            var tage = Math.floor((Date.now() - d.getTime()) / 864e5);
+            if (tage <= 0) return abL('heute', 'today');
+            if (tage === 1) return abL('gestern', 'yesterday');
+            if (tage < 30) return abL('vor ' + tage + ' Tagen', tage + ' days ago');
+            return d.toLocaleDateString(abLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        function meldungZeile(m) {
+            var spanne = fmtRange(m.datumVon, m.datumBis);
+            // Farbe traegt nur der Fall, der wirklich einer ist. Ein
+            // geloeschter Entwurf ist Aufraeumen; eine abgezeichnete Woche zu
+            // entfernen ist derselbe Befund wie sie nachtraeglich zu aendern —
+            // und traegt deshalb dieselbe Rolle (rot) wie dort.
+            var marke = m.warFreigegeben
+                ? '<span class="abk-meld-marke is-alarm">' + abL('war abgezeichnet', 'was signed off') + '</span>'
+                : '<span class="abk-meld-marke">' + (m.endgueltig
+                    ? abL('endgültig gelöscht', 'permanently deleted')
+                    : abL('im Papierkorb', 'in the bin')) + '</span>';
+            return '<div class="abk-meld-zeile" data-mid="' + esc(m.id) + '">' +
+                '<span class="abk-meld-kw">' + abL('KW ', 'Week ') + m.kw + '</span>' +
+                (spanne ? '<span class="abk-meld-wann">' + esc(spanne) + '</span>' : '') +
+                '<span class="abk-team-name">' + esc(m.azubiName ||
+                    abL('Azubi ohne Namen', 'Apprentice, no name')) + '</span>' +
+                marke +
+                '<span class="abk-meld-wann abk-meld-seit">' + esc(relativTag(m.wann)) + '</span>' +
+                '<button type="button" class="ab-btn abk-meld-ok" data-mk="ok">' +
+                abL('Gelesen', 'Got it') + '</button>' +
+                '</div>';
+        }
+
+        function meldungenBlock() {
+            if (!kontoMeldungen.length) return '';
+            var n = kontoMeldungen.length;
+            var alarm = kontoMeldungen.some(function (m) { return m.warFreigegeben; });
+            return '<div class="abk-meld' + (alarm ? ' is-alarm' : '') + '" id="abkMeld">' +
+                '<div class="abk-meld-kopf">' +
+                '<span class="abk-meld-t">' + abL('Gelöschte Wochen', 'Deleted weeks') + '</span>' +
+                '<span class="abk-meld-s">' + abL(
+                    n === 1
+                        ? 'Eine Woche wurde aus dem Berichtsheft entfernt und steht unten nicht mehr.'
+                        : n + ' Wochen wurden aus dem Berichtsheft entfernt und stehen unten nicht mehr.',
+                    n === 1
+                        ? 'One week was removed from the report book and no longer appears below.'
+                        : n + ' weeks were removed from the report book and no longer appear below.') + '</span>' +
+                (n > 1 ? '<button type="button" class="abk-meld-alle" data-mk="alle">' +
+                    abL('Alle gelesen', 'Mark all read') + '</button>' : '') +
+                '</div>' +
+                kontoMeldungen.map(meldungZeile).join('') +
+                '</div>';
+        }
+
+        async function meldungenQuittieren(ids) {
+            if (!ids || !ids.length) return;
+            var box = $('abkMeld');
+            if (box) box.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+            var ok = false;
+            try { ok = await BHB2B.meldungenQuittieren(ids); } catch (e) { ok = false; }
+            if (!ok) {
+                if (!box) return;
+                box.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+                var p = box.querySelector('.abk-team-fehler');
+                if (!p) { p = document.createElement('p'); p.className = 'abk-team-fehler'; box.appendChild(p); }
+                p.textContent = abL('Konnte nicht gespeichert werden. Bitte später noch einmal.',
+                                    'Could not be saved. Please try again later.');
+                return;
+            }
+            var weg = {};
+            ids.forEach(function (id) { weg[id] = true; });
+            kontoMeldungen = kontoMeldungen.filter(function (m) { return !weg[m.id]; });
+            renderKonto();
+        }
+
+        // ── Team: mehrere Ausbilder je Betrieb (Urlaubsvertretung) ────
+        //
+        // Das Datenmodell kann das seit dem ersten Entwurf: der Primaer-
+        // schluessel von `betrieb_mitglieder` ist (betrieb_id, user_id), und
+        // JEDE RLS-Policy fragt `ist_mitglied(betrieb_id,'ausbilder')` — also
+        // die ROLLE, nie eine Person. Ein zweiter Ausbilder sieht damit
+        // dieselben Wochen und trifft dieselben Entscheidungen. Gefehlt hat
+        // nur der Weg, ihn einzuladen.
+
+        function teamZeile() {
+            if (!kontoTeam.length) return '';
+            var namen = kontoTeam.map(function (t) {
+                return (t.name || abL('ohne Namen', 'unnamed')) + (t.ich ? abL(' (Sie)', ' (you)') : '');
+            });
+            return '<p class="abk-team-zeile">' +
+                abL(kontoTeam.length === 1 ? 'Ausbilder: ' : 'Ausbilder: ',
+                    kontoTeam.length === 1 ? 'Trainer: ' : 'Trainers: ') +
+                esc(namen.join(', ')) +
+                '<button type="button" class="abk-team-btn" onclick="abkTeamPanel()">' +
+                abL('Team verwalten', 'Manage team') + '</button></p>';
+        }
+
+        function teamPanelHTML(fehler) {
+            var zeilen = kontoTeam.map(function (t) {
+                var seit = t.seit ? fmtDate(String(t.seit).slice(0, 10)) : '';
+                return '<div class="abk-team-m">' +
+                    '<span class="abk-team-name">' + esc(t.name || abL('ohne Namen', 'unnamed')) + '</span>' +
+                    (t.ich ? '<span class="abk-team-ich">' + abL('Sie', 'you') + '</span>' : '') +
+                    (seit ? '<span class="abk-team-seit">' + abL('dabei seit ', 'since ') + esc(seit) + '</span>' : '') +
+                    (t.ich ? '' : '<button type="button" class="ab-btn ab-btn-ghost abk-team-weg" ' +
+                        'onclick="abkMitgliedEntfernen(\'' + esc(t.userId) + '\')">' +
+                        abL('Entfernen', 'Remove') + '</button>') +
+                    '</div>';
+            }).join('');
+
+            return '<div class="abk-einl" id="abkTeamBox">' +
+                '<p class="abk-einl-t">' + abL('Wer darf abzeichnen', 'Who can sign off') + '</p>' +
+                '<p class="abk-einl-s" style="margin-top:6px;">' + abL(
+                    'Jeder Ausbilder dieses Betriebs sieht dieselben Wochen und kann dieselben Entscheidungen treffen. Jede Entscheidung bleibt mit Namen im Prüfverlauf stehen, auch die von Kolleginnen und Kollegen. Für eine Urlaubsvertretung laden Sie jemanden ein und entfernen ihn danach wieder.',
+                    'Every trainer in this company sees the same weeks and can make the same decisions. Every decision stays in the audit trail under the name of whoever made it. For holiday cover, invite someone and remove them again afterwards.') + '</p>' +
+                '<div class="abk-team-liste">' + zeilen + '</div>' +
+                (fehler ? '<p class="abk-team-fehler">' + esc(fehler) + '</p>' : '') +
+                '<div class="abk-actions" style="margin-top:12px;">' +
+                '<button type="button" class="ab-btn abk-cta" onclick="abkVertretungEinladen()">' +
+                '<span>' + abL('Vertretung einladen', 'Invite a deputy') + '</span></button>' +
+                '</div>' +
+                '<div id="abkVertretung"></div>' +
+                '</div>';
+        }
+
+        var teamOffen = false;
+
+        window.abkTeamPanel = function (fehler) {
+            var box = $('abkTeam');
+            if (!box) return;
+            if (teamOffen && !fehler) { box.innerHTML = ''; teamOffen = false; return; }
+            teamOffen = true;
+            box.innerHTML = teamPanelHTML(fehler || '');
+            box.querySelector('.abk-einl').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        };
+
+        window.abkVertretungEinladen = async function () {
+            var box = $('abkVertretung');
+            if (!box) return;
+            box.innerHTML = '<p class="abk-einl-lade" style="margin-top:12px;">' +
+                abL('Code wird erzeugt …', 'Creating code …') + '</p>';
+            var code;
+            try { code = await BHB2B.einladungErstellen(7, 'ausbilder'); }
+            catch (e) {
+                box.innerHTML = '<p class="abk-team-fehler">' +
+                    esc((e && e.message) || abL('Code konnte nicht erzeugt werden.', 'Could not create a code.')) + '</p>';
+                return;
+            }
+            box.innerHTML = einlPanel(code, 'ausbilder', 'abkVertretung');
+        };
+
+        window.abkMitgliedEntfernen = async function (userId) {
+            var box = $('abkTeamBox');
+            if (box) box.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+            try {
+                await BHB2B.mitgliedEntfernen(userId);
+                kontoTeam = kontoTeam.filter(function (t) { return t.userId !== userId; });
+                renderKonto();
+                abkTeamPanel();
+            } catch (e) {
+                renderKonto();
+                abkTeamPanel((e && e.message) ||
+                    abL('Konnte nicht entfernt werden.', 'Could not be removed.'));
+            }
+        };
+
         function renderKonto() {
             var d = kontoDaten;
+            // Die drei Behaelter unten werden mit `kopf` neu geschrieben. Ohne
+            // das Zuruecksetzen bliebe der Merker auf "offen" stehen und der
+            // naechste Klick klappte einen leeren Kasten zu.
+            einladungOffen = false;
+            teamOffen = false;
             var alle = [];
             d.azubis.forEach(function (a) { alle = alle.concat(a.berichte); });
             var g = zahlenFuer(alle);
@@ -1921,6 +2202,7 @@
                     : '<p class="abk-ungeprueft">' + abL(
                         'Selbst angelegt — MyWorkLog prüft weder den Betrieb noch Ihre Rolle darin.',
                         'Self-created — MyWorkLog verifies neither the company nor your role in it.') + '</p>') +
+                teamZeile() +
                 '</div>' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-einladen" onclick="abkEinladen()">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
@@ -1939,8 +2221,10 @@
                 // ist eine Frage, die sich niemand gestellt hat.
                 (g.ihk ? kachel(g.ihk, abL('bereits unterschrieben · nicht von Ihnen',
                                            'already signed · not by you'), 'ihk') : '') +
-                '</div>' + hinweis +
-                '<div id="abkEinladung"></div><div id="abkDomain"></div>';
+                // Meldungen VOR dem §14-Hinweis: eine Woche, die es nicht
+                // mehr gibt, wiegt schwerer als die allgemeine Monatsfrist.
+                '</div>' + meldungenBlock() + hinweis +
+                '<div id="abkEinladung"></div><div id="abkTeam"></div><div id="abkDomain"></div>';
 
             var koerper;
             if (!n) {
@@ -1964,6 +2248,41 @@
         // ── Einladen (bisher nur im Berichtsheft moeglich) ───────────
         var einladungOffen = false;
 
+        // Der fertige Code als Kasten. EINE Fassung fuer beide Rollen — zwei
+        // waeren dieselbe Falle wie zwei Regler auf einen Zustand: sie driften.
+        // `boxId` sagt, welcher Behaelter beim Verwerfen geleert wird; ohne das
+        // raeumte ein Verwerfen im Team-Panel die Azubi-Einladung darueber weg.
+        function einlPanel(code, rolle, boxId) {
+            var link = location.origin + abL('/berichtsheft/', '/en/berichtsheft/');
+            var vertretung = rolle === 'ausbilder';
+            return '<div class="abk-einl">' +
+                '<p class="abk-einl-t">' + (vertretung
+                    ? abL('Code für die Vertretung', 'Deputy code')
+                    : abL('Einladungscode', 'Invite code')) + '</p>' +
+                '<div class="abk-einl-code"><code>' + esc(code) + '</code>' +
+                '<button type="button" class="ab-btn ab-btn-ghost abk-kopieren" onclick="abkCodeKopieren(\'' + esc(code) + '\')">' +
+                '<span>' + abL('Kopieren', 'Copy') + '</span></button>' +
+                // Der Knopf steht bewusst NEBEN dem frisch erzeugten Code:
+                // „aus Versehen erstellt" merkt man in genau dieser Sekunde,
+                // und ein Code, den man nicht mehr los wird, steht sonst fuer
+                // immer in der Liste im Berichtsheft.
+                '<button type="button" class="ab-btn ab-btn-ghost abk-verwerfen" ' +
+                'onclick="abkCodeVerwerfen(\'' + esc(code) + '\',\'' + esc(boxId) + '\')">' +
+                '<span>' + abL('Verwerfen', 'Discard') + '</span></button></div>' +
+                '<p class="abk-einl-s">' + (vertretung
+                    ? abL(
+                        'Gültig 7 Tage, einmal einlösbar. Wer ihn einlöst, darf danach dieselben Wochen abzeichnen wie Sie. Geben Sie ihn nur an Personen weiter, die vertreten sollen. Sie öffnen ' + link +
+                        ' und tragen den Code unter „Betrieb & IHK" ein.',
+                        'Valid for 7 days, single use. Whoever redeems it can sign off the same weeks you can, so only pass it to people who are meant to stand in. They open ' + link +
+                        ' and enter the code under “Company & chamber”.')
+                    : abL(
+                        'Gültig 14 Tage, einmal einlösbar. Ihr Azubi öffnet ' + link +
+                        ' und trägt den Code unter „Betrieb & IHK" ein.',
+                        'Valid for 14 days, single use. Your apprentice opens ' + link +
+                        ' and enters the code under “Company & chamber”.')) + '</p>' +
+                '</div>';
+        }
+
         window.abkEinladen = async function () {
             var box = $('abkEinladung');
             if (!box) return;
@@ -1972,30 +2291,13 @@
             box.innerHTML = '<div class="abk-einl"><p class="abk-einl-lade">' +
                 abL('Code wird erzeugt …', 'Creating code …') + '</p></div>';
             var code;
-            try { code = await BHB2B.einladungErstellen(14); }
+            try { code = await BHB2B.einladungErstellen(14, 'azubi'); }
             catch (e) {
                 box.innerHTML = '<div class="abk-einl"><p class="abk-einl-lade" style="color:var(--danger)">' +
                     esc((e && e.message) || abL('Code konnte nicht erzeugt werden.', 'Could not create a code.')) + '</p></div>';
                 return;
             }
-            var link = location.origin + abL('/berichtsheft/', '/en/berichtsheft/');
-            box.innerHTML = '<div class="abk-einl">' +
-                '<p class="abk-einl-t">' + abL('Einladungscode', 'Invite code') + '</p>' +
-                '<div class="abk-einl-code"><code>' + esc(code) + '</code>' +
-                '<button type="button" class="ab-btn ab-btn-ghost abk-kopieren" onclick="abkCodeKopieren(\'' + esc(code) + '\')">' +
-                '<span>' + abL('Kopieren', 'Copy') + '</span></button>' +
-                // Der Knopf steht bewusst NEBEN dem frisch erzeugten Code:
-                // „aus Versehen erstellt" merkt man in genau dieser Sekunde,
-                // und ein Code, den man nicht mehr los wird, steht sonst fuer
-                // immer in der Liste im Berichtsheft.
-                '<button type="button" class="ab-btn ab-btn-ghost abk-verwerfen" onclick="abkCodeVerwerfen(\'' + esc(code) + '\')">' +
-                '<span>' + abL('Verwerfen', 'Discard') + '</span></button></div>' +
-                '<p class="abk-einl-s">' + abL(
-                    'Gültig 14 Tage, einmal einlösbar. Ihr Azubi öffnet ' + link +
-                    ' und trägt den Code unter „Betrieb & IHK" ein.',
-                    'Valid for 14 days, single use. Your apprentice opens ' + link +
-                    ' and enters the code under “Company & chamber”.') + '</p>' +
-                '</div>';
+            box.innerHTML = einlPanel(code, 'azubi', 'abkEinladung');
             var c = box.querySelector('.abk-einl');
             if (c) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         };
@@ -2003,8 +2305,8 @@
         // Einen noch nicht eingeloesten Code wieder wegraeumen. Ein bereits
         // eingeloester bleibt stehen — er belegt, auf welchem Weg ein Azubi
         // in den Betrieb gekommen ist; die Policy einl_delete setzt das durch.
-        window.abkCodeVerwerfen = async function (code) {
-            var box = $('abkEinladung');
+        window.abkCodeVerwerfen = async function (code, boxId) {
+            var box = $(boxId || 'abkEinladung');
             if (!box) return;
             var btn = box.querySelector('.abk-verwerfen');
             if (btn) btn.disabled = true;
@@ -2012,7 +2314,7 @@
                 await BHB2B.einladungLoeschen(code);
                 box.innerHTML = '<div class="abk-einl"><p class="abk-einl-lade">' +
                     abL('Code verworfen.', 'Code discarded.') + '</p></div>';
-                einladungOffen = false;
+                if (!boxId || boxId === 'abkEinladung') einladungOffen = false;
             } catch (e) {
                 if (btn) btn.disabled = false;
                 var p = document.createElement('p');
@@ -2170,6 +2472,17 @@
                     head.setAttribute('aria-expanded', String(offen));
                     return;
                 }
+                var mb = e.target.closest('button[data-mk]');
+                if (mb) {
+                    if (mb.getAttribute('data-mk') === 'alle') {
+                        meldungenQuittieren(kontoMeldungen.map(function (m) { return m.id; }));
+                    } else {
+                        var z = mb.closest('.abk-meld-zeile');
+                        if (z) meldungenQuittieren([z.getAttribute('data-mid')]);
+                    }
+                    return;
+                }
+
                 var btn = e.target.closest('button[data-k]');
                 if (!btn) return;
                 var card = btn.closest('.abk-card');
@@ -2216,6 +2529,16 @@
                     'Could not load. Please reload the page.') + '</p>';
                 return;
             }
+            // Beide sind fuer die Uebersicht noetig, haengen aber nicht
+            // voneinander ab — parallel, und ein Fehler darf das Cockpit nicht
+            // kippen (dann eben ohne Meldungen statt ohne Seite).
+            var zusatz = await Promise.all([
+                BHB2B.meldungen ? BHB2B.meldungen().catch(function () { return []; }) : [],
+                BHB2B.team ? BHB2B.team().catch(function () { return []; }) : []
+            ]);
+            kontoMeldungen = zusatz[0] || [];
+            kontoTeam = zusatz[1] || [];
+
             bindeKonto();
             renderKonto();
         }

@@ -11,6 +11,7 @@
 //
 //  Der liegt seit der Migration `b2b_berichtsheft_datenmodell` in Supabase:
 //    betriebe · betrieb_mitglieder · einladungen · berichte · freigaben
+//    bericht_ereignisse · ereignis_gesehen   (Meldungen an den Ausbilder)
 //  Zwei Rollen je Betrieb: 'ausbilder' | 'azubi'. Durchgesetzt in RLS,
 //  nicht hier — dieser Client zeigt nur an, was der Server ohnehin erzwingt.
 //  `freigaben` ist serverseitig append-only (kein UPDATE/DELETE) — das ist
@@ -232,6 +233,10 @@
                 betriebId: row.betrieb_id,
                 name: (b && b.name) || '',
                 rolle: row.rolle,
+                // Wird gebraucht, sobald es mehrere Ausbilder gibt: die
+                // Team-Liste markiert damit "Sie" und sperrt den Knopf, mit
+                // dem man sich selbst entfernen wuerde.
+                userId: u.id,
                 anzeigeName: row.anzeige_name || '',
                 domain: (b && b.domain) || '',
                 domainToken: (b && b.domain_token) || '',
@@ -299,18 +304,30 @@
         return s;
     }
 
-    /** Neuen Einladungscode anlegen. `tage` = Gueltigkeit, Vorgabe 14. */
-    async function bhb2bEinladungErstellen(tage) {
+    /**
+     * Neuen Einladungscode anlegen. `tage` = Gueltigkeit, Vorgabe 14.
+     * `rolle` = 'azubi' (Vorgabe) oder 'ausbilder' — letzteres ist die
+     * Urlaubsvertretung: das beitretende Konto bekommt dieselben Rechte im
+     * Betrieb, weil jede RLS-Policy die ROLLE prueft und nie eine Person.
+     *
+     * 🔴 Ein Vertretungscode ist wertvoller als ein Azubi-Code: wer ihn hat,
+     * darf Wochen abzeichnen. Deshalb kuerzere Vorgabe-Gueltigkeit und die
+     * serverseitige Sperre, dass ein bestehender Azubi sich damit nicht selbst
+     * befoerdern kann (einladung_einloesen, Migration b2b_mehrere_ausbilder).
+     */
+    async function bhb2bEinladungErstellen(tage, rolle) {
         const st = await bhb2bStatus(true);
         if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann einladen.');
+        const r = rolle === 'ausbilder' ? 'ausbilder' : 'azubi';
         const sb = await client();
         const u = await benutzer(sb);
         const code = neuerCode();
-        const laeuftAb = new Date(Date.now() + (Number(tage) > 0 ? Number(tage) : 14) * 86400000);
+        const vorgabe = r === 'ausbilder' ? 7 : 14;
+        const laeuftAb = new Date(Date.now() + (Number(tage) > 0 ? Number(tage) : vorgabe) * 86400000);
         const { error } = await sb.from('einladungen').insert({
             code: code,
             betrieb_id: st.betriebId,
-            rolle: 'azubi',
+            rolle: r,
             erstellt_von: u.id,
             laeuft_ab: laeuftAb.toISOString()
         });
@@ -324,17 +341,163 @@
         if (!st || st.rolle !== 'ausbilder') return [];
         const sb = await client();
         const { data, error } = await sb.from('einladungen')
-            .select('code, laeuft_ab, benutzt_von, benutzt_at, created_at')
+            .select('code, rolle, laeuft_ab, benutzt_von, benutzt_at, created_at')
             .eq('betrieb_id', st.betriebId)
             .order('created_at', { ascending: false });
         if (error) { console.warn('[B2B] Einladungen:', error.message); return []; }
         return (data || []).map(r => ({
             code: r.code,
+            rolle: r.rolle || 'azubi',
             laeuftAb: r.laeuft_ab,
             benutzt: !!r.benutzt_von,
             benutztAt: r.benutzt_at,
             abgelaufen: new Date(r.laeuft_ab) < new Date()
         }));
+    }
+
+    // ── Team (mehrere Ausbilder je Betrieb) ──────────────────────────
+    //
+    // Die Datenbank kann das seit dem ersten Entwurf: der Primaerschluessel
+    // von `betrieb_mitglieder` ist (betrieb_id, user_id), und JEDE Policy
+    // fragt `ist_mitglied(betrieb_id,'ausbilder')` — also die Rolle, nie eine
+    // Person. Gefehlt hat nur der Weg, einen zweiten Ausbilder einzuladen.
+
+    /** Alle Ausbilder des Betriebs, eigener Eintrag mit `ich: true`. */
+    async function bhb2bTeam() {
+        const st = await bhb2bStatus();
+        if (!st) return [];
+        const sb = await client();
+        const { data, error } = await sb.from('betrieb_mitglieder')
+            .select('user_id, anzeige_name, angelegt_at')
+            .eq('betrieb_id', st.betriebId)
+            .eq('rolle', 'ausbilder')
+            .order('angelegt_at', { ascending: true });
+        if (error) { console.warn('[B2B] Team:', error.message); return []; }
+        return (data || []).map(m => ({
+            userId: m.user_id,
+            name: m.anzeige_name || '',
+            seit: m.angelegt_at,
+            ich: m.user_id === st.userId
+        }));
+    }
+
+    /**
+     * Ein Mitglied aus dem Betrieb nehmen (nach der Vertretung wieder
+     * abmelden). Die Policy `bm_write` erlaubt das jedem Ausbilder; der
+     * Trigger `bm_letzter_ausbilder` verhindert nur, dass der letzte
+     * Ausbilder verschwindet, solange dem Betrieb Azubis zugeordnet sind.
+     *
+     * 🔴 PostgREST meldet ein von RLS verworfenes DELETE nicht als Fehler,
+     * sondern als "nichts geloescht" — deshalb `.select()` und die Zaehlung.
+     */
+    async function bhb2bMitgliedEntfernen(userId) {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        if (!userId) throw new Error('Kein Mitglied angegeben.');
+        if (userId === st.userId) throw new Error('Sich selbst entfernt man über „Betrieb verlassen".');
+        const sb = await client();
+        const { data, error } = await sb.from('betrieb_mitglieder')
+            .delete()
+            .eq('betrieb_id', st.betriebId)
+            .eq('user_id', userId)
+            .select('user_id');
+        if (error) throw new Error(error.message);
+        if (!data || !data.length) throw new Error('Das Mitglied konnte nicht entfernt werden.');
+        return true;
+    }
+
+    // ── Meldungen (geloeschte Wochen) ────────────────────────────────
+    //
+    // Geschrieben werden sie vom Trigger `berichte_ereignis_log`, nicht von
+    // einem Klick-Handler: sonst haette jeder andere Weg (Papierkorb-Automatik
+    // nach 30 Tagen, Mehrfachloeschung, ein roher PostgREST-Aufruf) kein
+    // Ereignis erzeugt — und ausgerechnet der absichtliche Umgehungsfall waere
+    // der einzige gewesen, der nirgends auftaucht (CLAUDE.md, "Wer die Arbeit
+    // tut, protokolliert sie").
+    //
+    // Hier wird nur gelesen und je Woche auf den JUENGSTEN Stand eingedampft:
+    // wer eine Woche loescht und wieder herstellt, hat nichts hinterlassen,
+    // worum der Ausbilder sich kuemmern muesste.
+
+    /**
+     * Offene Meldungen fuer den Ausbilder.
+     * → [{ id, azubiId, azubiName, jahr, kw, datumVon, datumBis, art,
+     *      warFreigegeben, wann, endgueltig }] — juengste zuerst.
+     */
+    async function bhb2bMeldungen() {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') return [];
+        try {
+            const sb = await client();
+            const [ev, ges, mitg] = await Promise.all([
+                sb.from('bericht_ereignisse')
+                    .select('id, azubi_id, client_id, jahr, kw, datum_von, datum_bis, art, war_freigegeben, erstellt_at')
+                    .eq('betrieb_id', st.betriebId)
+                    .order('erstellt_at', { ascending: true }),   // aelteste zuerst → juengste gewinnt
+                sb.from('ereignis_gesehen').select('ereignis_id'),
+                sb.from('betrieb_mitglieder').select('user_id, anzeige_name')
+                    .eq('betrieb_id', st.betriebId)
+            ]);
+            if (ev.error) { console.warn('[B2B] Meldungen:', ev.error.message); return []; }
+
+            const namen = {};
+            (mitg.data || []).forEach(m => { namen[m.user_id] = m.anzeige_name || ''; });
+            return meldungenEindampfen(ev.data || [],
+                (ges.data || []).map(g => g.ereignis_id), namen);
+        } catch (e) {
+            console.warn('[B2B] Meldungen:', e && e.message);
+            return [];
+        }
+    }
+
+    /**
+     * Ereignis-Zeilen (aelteste zuerst) auf das eindampfen, was der Ausbilder
+     * wirklich sehen muss. Rein rechnend, damit pruefbar.
+     *
+     * Je (Azubi, Lehrjahr, KW) zaehlt nur der JUENGSTE Stand:
+     *  - geloescht → wiederhergestellt ist keine Meldung. Die Woche ist da,
+     *    es gibt nichts zu tun; eine Meldung darueber waere Laerm.
+     *  - geloescht → endgueltig geloescht ist EINE Meldung, nicht zwei.
+     */
+    function meldungenEindampfen(zeilen, quittierteIds, namen) {
+        const quittiert = new Set(quittierteIds || []);
+        const proWoche = {};
+        (zeilen || []).forEach(e => { proWoche[[e.azubi_id, e.jahr, e.kw].join('|')] = e; });
+        return Object.keys(proWoche).map(k => proWoche[k])
+            .filter(e => e.art !== 'wiederhergestellt' && !quittiert.has(e.id))
+            .sort((a, b) => String(b.erstellt_at).localeCompare(String(a.erstellt_at)))
+            .map(e => ({
+                id: e.id,
+                azubiId: e.azubi_id,
+                azubiName: (namen || {})[e.azubi_id] || '',
+                clientId: e.client_id || '',
+                jahr: e.jahr, kw: e.kw,
+                datumVon: e.datum_von, datumBis: e.datum_bis,
+                art: e.art,
+                endgueltig: e.art === 'endgueltig_geloescht',
+                warFreigegeben: !!e.war_freigegeben,
+                wann: e.erstellt_at
+            }));
+    }
+
+    /** Meldungen fuer DIESEN Ausbilder abhaken (jeder quittiert fuer sich). */
+    async function bhb2bMeldungenQuittieren(ids) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder' || !Array.isArray(ids) || !ids.length) return false;
+        try {
+            const sb = await client();
+            // `ignoreDuplicates` → ON CONFLICT DO NOTHING. Ein echter Upsert
+            // braeuchte eine UPDATE-Policy, die es hier bewusst nicht gibt:
+            // eine Quittung wird gesetzt, nie geaendert.
+            const { error } = await sb.from('ereignis_gesehen')
+                .upsert(ids.map(id => ({ ereignis_id: id, user_id: st.userId })),
+                        { onConflict: 'ereignis_id,user_id', ignoreDuplicates: true });
+            if (error) { console.warn('[B2B] Quittieren:', error.message); return false; }
+            return true;
+        } catch (e) {
+            console.warn('[B2B] Quittieren:', e && e.message);
+            return false;
+        }
     }
 
     /**
@@ -1043,6 +1206,10 @@
         einladungErstellen: bhb2bEinladungErstellen,
         einladungLoeschen: bhb2bEinladungLoeschen,
         einladungenListe: bhb2bEinladungenListe,
+        team: bhb2bTeam,
+        mitgliedEntfernen: bhb2bMitgliedEntfernen,
+        meldungen: bhb2bMeldungen,
+        meldungenQuittieren: bhb2bMeldungenQuittieren,
         azubiListe: bhb2bAzubiListe,
         azubiBerichte: bhb2bAzubiBerichte,
         berichtHoch: bhb2bBerichtHoch,
@@ -1064,6 +1231,6 @@
         domainPruefen: bhb2bDomainPruefen,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, inhaltDiff: bhb2bInhaltDiff }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, inhaltDiff: bhb2bInhaltDiff, meldungenEindampfen }
     };
 })();

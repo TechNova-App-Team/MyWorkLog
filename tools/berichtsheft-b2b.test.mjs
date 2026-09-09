@@ -374,9 +374,51 @@ const dx = I.inhaltDiff({ ganzNeuesFeld: 'a' }, { ganzNeuesFeld: 'b' });
 ok(dx.length === 1 && dx[0].feld === 'sonstiges',
     'unbekanntes Feld faellt in den Auffangzweig, statt zu verschwinden');
 
+gruppe('meldungenEindampfen — geloeschte Wochen');
+
+// Die Ereignisse kommen AELTESTE ZUERST vom Server; je (Azubi, Lehrjahr, KW)
+// zaehlt der letzte Stand.
+const NAMEN = { 'u-a': 'Aylin Azubi', 'u-b': 'Bela Beispiel' };
+const ev = (id, azubi, kw, art, opt) => Object.assign({
+    id, azubi_id: azubi, client_id: 'c-' + kw, jahr: 1, kw,
+    datum_von: '2026-03-02', datum_bis: '2026-03-06', art,
+    war_freigegeben: false, erstellt_at: '2026-03-1' + id + 'T10:00:00Z'
+}, opt || {});
+
+const wiederhergestellt = I.meldungenEindampfen(
+    [ev('1', 'u-a', 10, 'geloescht'), ev('2', 'u-a', 10, 'wiederhergestellt')], [], NAMEN);
+ok(wiederhergestellt.length === 0,
+    'geloescht + wiederhergestellt ist KEINE Meldung — die Woche ist wieder da');
+
+const zweimal = I.meldungenEindampfen(
+    [ev('1', 'u-a', 10, 'geloescht'), ev('2', 'u-a', 10, 'endgueltig_geloescht')], [], NAMEN);
+ok(zweimal.length === 1 && zweimal[0].endgueltig === true,
+    'weich + endgueltig geloescht ergibt EINE Meldung, und zwar die schaerfere');
+
+const quittiert = I.meldungenEindampfen([ev('1', 'u-a', 10, 'geloescht')], ['1'], NAMEN);
+ok(quittiert.length === 0, 'eine quittierte Meldung ist weg');
+
+const zwei = I.meldungenEindampfen(
+    [ev('1', 'u-a', 10, 'geloescht'), ev('2', 'u-b', 10, 'geloescht')], [], NAMEN);
+ok(zwei.length === 2, 'dieselbe KW bei zwei Azubis sind zwei Meldungen');
+ok(zwei[0].wann >= zwei[1].wann, 'juengste Meldung steht oben');
+ok(zwei.every(m => m.azubiName), 'jede Meldung traegt den Namen des Azubis');
+
+const alarm = I.meldungenEindampfen(
+    [ev('1', 'u-a', 10, 'geloescht', { war_freigegeben: true })], [], NAMEN);
+ok(alarm.length === 1 && alarm[0].warFreigegeben === true,
+    'eine abgezeichnete Woche wird als solche gemeldet');
+ok(alarm[0].kw === 10 && alarm[0].datumVon === '2026-03-02',
+    'KW und Zeitraum ueberleben die Loeschung des Berichts');
+
+// Gegenprobe zu den drei Negativ-Behauptungen oben: der Normalfall MUSS
+// durchkommen, sonst waeren sie auch bei kaputtem Code gruen (CLAUDE.md).
+ok(I.meldungenEindampfen([ev('1', 'u-a', 10, 'geloescht')], [], NAMEN).length === 1,
+    'Gegenprobe: eine schlichte Loeschung kommt durch');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
-ok(bestanden >= 72, `es sind genug Pruefungen gelaufen (${bestanden})`);
+ok(bestanden >= 80, `es sind genug Pruefungen gelaufen (${bestanden})`);
 
 console.log(`\nbh-b2b: ${bestanden} ok, ${fehlgeschlagen} fehlgeschlagen`);
 process.exit(fehlgeschlagen ? 1 : 0);
