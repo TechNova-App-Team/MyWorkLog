@@ -22,6 +22,7 @@ document.addEventListener('keydown', (e) => {
             closeReportModal();
             closeViewModal();
             closeTemplatesModal();
+            if (typeof closeTrashModal === 'function') closeTrashModal();
         }
         if (bulkMode) toggleBulkMode();
         return;

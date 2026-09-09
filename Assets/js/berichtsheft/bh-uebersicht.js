@@ -71,6 +71,13 @@ function loadReports() {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
             } catch (e) {}
         }
+        // Papierkorb: abgelaufene Einträge (>30 Tage) automatisch bereinigen
+        if (typeof cleanupExpiredTrash === 'function') {
+            const { expired } = cleanupExpiredTrash(TRASH_MAX_DAYS);
+            if (expired && expired.length > 0 && typeof b2bOnTrashEmptied === 'function') {
+                b2bOnTrashEmptied(expired.map(x => x.report && (x.report.client_id || x.report.id)).filter(Boolean));
+            }
+        }
     } catch (e) {
         console.error('Fehler beim Laden:', e);
         reports = [];
@@ -104,6 +111,7 @@ function updateUI() {
     // Show bulk toggle if there are reports
     const bulkToggle = document.getElementById('bulkToggle');
     if (bulkToggle) bulkToggle.style.display = reports.length > 1 ? 'block' : 'none';
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
 }
 
 // ═══════════════════════════════════════

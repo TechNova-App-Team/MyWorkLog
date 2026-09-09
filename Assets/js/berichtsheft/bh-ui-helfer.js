@@ -197,19 +197,40 @@ function restoreTheme() {
 // TOAST NOTIFICATIONS
 // ═══════════════════════════════════════
 
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', action = null) {
     // Remove existing toasts
     document.querySelectorAll('.toast').forEach(t => t.remove());
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.textContent = message;
+    if (action && typeof action.onClick === 'function') {
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '12px';
+        const span = document.createElement('span');
+        span.textContent = message;
+        toast.appendChild(span);
+
+        const btn = document.createElement('button');
+        btn.textContent = action.label || L('Rückgängig', 'Undo');
+        btn.style.cssText = 'background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); border-radius:4px; padding:2px 8px; color:inherit; font-size:0.8rem; font-weight:600; cursor:pointer; margin-left:auto;';
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            toast.remove();
+            action.onClick();
+        };
+        toast.appendChild(btn);
+    } else {
+        toast.textContent = message;
+    }
     document.body.appendChild(toast);
 
+    const duration = action ? 5000 : 3000;
     setTimeout(() => {
+        if (!document.body.contains(toast)) return;
         toast.classList.add('removing');
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, duration);
 }
 
 // ═══════════════════════════════════════

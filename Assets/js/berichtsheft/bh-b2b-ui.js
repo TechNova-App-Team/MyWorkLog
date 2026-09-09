@@ -552,16 +552,67 @@
         } catch (e) { /* egal */ }
     };
 
-    // Gegenstueck zu b2bOnReportSaved: was lokal weg ist, gehoert auch im
-    // Betrieb weg. Ohne diesen Weg blieb eine geloeschte Woche fuer immer im
-    // Ausbilder-Cockpit stehen — sichtbar nur DORT, also nie beim Azubi, der
-    // sie geloescht hat.
+    // Gegenstueck zu b2bOnReportSaved: was lokal in den Papierkorb wandert,
+    // wird auch auf dem Server als geloescht_at markiert (Soft-Delete).
     window.b2bOnReportDeleted = async function (id) {
         if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) return;
         try {
             const st = await BHB2B.status();
             if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
-                await BHB2B.berichtLoeschen(id);
+                await BHB2B.berichtLoeschen(id, false);
+            }
+        } catch (e) { /* egal */ }
+    };
+
+    window.b2bOnReportsDeleted = async function (ids) {
+        if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet() || !Array.isArray(ids)) return;
+        try {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.berichteLoeschen(ids, false);
+            }
+        } catch (e) { /* egal */ }
+    };
+
+    // Wiederherstellung aus dem Papierkorb (hebt geloescht_at auf).
+    window.b2bOnReportRestored = async function (report) {
+        if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet() || !report) return;
+        try {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.berichtWiederherstellen(report.id);
+            }
+        } catch (e) { /* egal */ }
+    };
+
+    window.b2bOnReportsRestored = async function (reports) {
+        if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet() || !Array.isArray(reports)) return;
+        try {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.berichteWiederherstellen(reports.map(r => r.id));
+            }
+        } catch (e) { /* egal */ }
+    };
+
+    // Endgültiges Löschen (Hard-Delete).
+    window.b2bOnReportHardDeleted = async function (id) {
+        if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) return;
+        try {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.berichtLoeschen(id, true);
+            }
+        } catch (e) { /* egal */ }
+    };
+
+    // Papierkorb komplett leeren (Hard-Delete aller gelöschten Zeilen).
+    window.b2bOnTrashEmptied = async function (ids) {
+        if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) return;
+        try {
+            const st = await BHB2B.status();
+            if (st && st.rolle === 'azubi' && bestaetigt() === st.betriebId) {
+                await BHB2B.papierkorbLeeren(ids);
             }
         } catch (e) { /* egal */ }
     };

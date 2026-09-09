@@ -409,19 +409,18 @@
     }
 
     /**
-     * Einen lokal geloeschten Bericht auch serverseitig entfernen.
-     * Wirft nie — dieselbe Zurueckhaltung wie beim Hochladen, das Geraet
-     * ist die Wahrheit. → true/false.
+     * Einen Bericht serverseitig löschen oder in den Papierkorb verschieben (Soft-Delete).
      *
-     * 🔴 Zwei Wege, und welcher gilt, entscheidet die Freigabe-Historie:
-     * ohne `freigaben` verschwindet die Zeile ganz; mit `freigaben` bleibt sie
-     * als Grabstein (`geloescht_at`) stehen. Ein Hard-Delete wuerde ueber
-     * `on delete cascade` die abgezeichneten Freigaben mitreissen — genau die
-     * append-only-Kette, an der die Revisionssicherheit haengt. Der Ausbilder
-     * behaelt damit den Nachweis, dass er etwas abgezeichnet hat, auch wenn
-     * der Azubi den Bericht bei sich wegwirft.
+     * - hardDelete = false (Soft-Delete / In den Papierkorb):
+     *   Setzt `geloescht_at = now()`. Der Bericht ist für den Ausbilder unsichtbar,
+     *   kann aber jederzeit innerhalb der Frist wiederhergestellt werden.
+     *
+     * - hardDelete = true (Endgültig löschen / Papierkorb geleert / 30 Tage abgelaufen):
+     *   Ohne Freigaben: Zeile wird per SQL-DELETE vollständig aus `berichte` gelöscht.
+     *   Mit Freigaben: Bleibt als schlanker Grabstein (`geloescht_at`) für die
+     *   Revisionssicherheit nach §14 BBiG erhalten, Payload wird minimiert.
      */
-    async function bhb2bBerichtLoeschen(clientId) {
+    async function bhb2bBerichtLoeschen(clientId, hardDelete = false) {
         const st = await bhb2bStatus();
         if (!st || st.rolle !== 'azubi' || !clientId) return false;
         try {
@@ -434,7 +433,16 @@
             if (be.error || !be.data || !be.data[0]) return false;
             const berichtId = be.data[0].id;
 
-            // `head: true` holt nur die Anzahl, nicht die Zeilen.
+            if (!hardDelete) {
+                // Soft-Delete für Papierkorb
+                const { error } = await sb.from('berichte')
+                    .update({ geloescht_at: new Date().toISOString() })
+                    .eq('id', berichtId);
+                if (error) { console.warn('[B2B] Soft-Delete fehlgeschlagen:', error.message); return false; }
+                return true;
+            }
+
+            // Hard-Delete: Prüfen ob Freigaben dranhängen
             const zaehl = await sb.from('freigaben')
                 .select('id', { count: 'exact', head: true })
                 .eq('bericht_id', berichtId);
@@ -442,14 +450,128 @@
 
             const { error } = hatFreigaben
                 ? await sb.from('berichte')
-                    .update({ geloescht_at: new Date().toISOString() })
+                    .update({ geloescht_at: new Date().toISOString(), inhalt: {} })
                     .eq('id', berichtId)
                 : await sb.from('berichte').delete().eq('id', berichtId);
-            if (error) { console.warn('[B2B] Bericht loeschen:', error.message); return false; }
+            if (error) { console.warn('[B2B] Hard-Delete fehlgeschlagen:', error.message); return false; }
             return true;
         } catch (e) {
             console.warn('[B2B] Bericht loeschen:', e && e.message);
             return false;
+        }
+    }
+
+    /**
+     * Mehrere Berichte löschen (Soft- oder Hard-Delete).
+     */
+    async function bhb2bBerichteLoeschen(clientIds, hardDelete = false) {
+        if (!Array.isArray(clientIds) || !clientIds.length) return { ok: 0, fehler: 0 };
+        let ok = 0, fehler = 0;
+        for (const cid of clientIds) {
+            if (await bhb2bBerichtLoeschen(cid, hardDelete)) ok++; else fehler++;
+        }
+        return { ok, fehler };
+    }
+
+    /**
+     * Einen gelöschten Bericht aus dem Papierkorb wiederherstellen (geloescht_at = null).
+     */
+    async function bhb2bBerichtWiederherstellen(clientId) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'azubi' || !clientId) return false;
+        try {
+            const sb = await client();
+            const u = await benutzer(sb);
+            if (!u) return false;
+
+            const { error } = await sb.from('berichte')
+                .update({ geloescht_at: null })
+                .eq('azubi_id', u.id)
+                .eq('client_id', String(clientId));
+            if (error) { console.warn('[B2B] Wiederherstellen:', error.message); return false; }
+            return true;
+        } catch (e) {
+            console.warn('[B2B] Wiederherstellen:', e && e.message);
+            return false;
+        }
+    }
+
+    /**
+     * Mehrere Berichte aus dem Papierkorb wiederherstellen.
+     */
+    async function bhb2bBerichteWiederherstellen(clientIds) {
+        if (!Array.isArray(clientIds) || !clientIds.length) return { ok: 0, fehler: 0 };
+        let ok = 0, fehler = 0;
+        for (const cid of clientIds) {
+            if (await bhb2bBerichtWiederherstellen(cid)) ok++; else fehler++;
+        }
+        return { ok, fehler };
+    }
+
+    /**
+     * Leert den Papierkorb vollständig in Supabase (Hard-Delete aller gelöschten Zeilen).
+     * Löscht alle Zeilen dieses Azubis, die `geloescht_at IS NOT NULL` sind oder
+     * übergebene clientIds enthalten.
+     */
+    async function bhb2bPapierkorbLeeren(clientIds) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'azubi') return false;
+        try {
+            const sb = await client();
+            const u = await benutzer(sb);
+            if (!u) return false;
+
+            let query = sb.from('berichte').select('id, client_id, geloescht_at').eq('azubi_id', u.id);
+            if (Array.isArray(clientIds) && clientIds.length > 0) {
+                query = query.or(`geloescht_at.not.is.null,client_id.in.(${clientIds.map(c => `"${c}"`).join(',')})`);
+            } else {
+                query = query.not('geloescht_at', 'is', null);
+            }
+            const { data: zeilen, error } = await query;
+            if (error || !zeilen || !zeilen.length) return true;
+
+            for (const z of zeilen) {
+                const zaehl = await sb.from('freigaben')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('bericht_id', z.id);
+                const hatFreigaben = !zaehl.error && (zaehl.count || 0) > 0;
+                if (hatFreigaben) {
+                    await sb.from('berichte')
+                        .update({ geloescht_at: z.geloescht_at || new Date().toISOString(), inhalt: {} })
+                        .eq('id', z.id);
+                } else {
+                    await sb.from('berichte').delete().eq('id', z.id);
+                }
+            }
+            return true;
+        } catch (e) {
+            console.warn('[B2B] Papierkorb leeren:', e && e.message);
+            return false;
+        }
+    }
+
+    /**
+     * Gleicht Berichte in Supabase ab, die lokal nicht (mehr) aktiv existieren.
+     * Findet verwaiste Einträge auf dem Server (wie nach einem lokalen Reset).
+     */
+    async function bhb2bVerwaisteCloudBerichte(aktiveClientIds = []) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'azubi') return [];
+        try {
+            const sb = await client();
+            const u = await benutzer(sb);
+            if (!u) return [];
+
+            const { data: rows, error } = await sb.from('berichte')
+                .select('*')
+                .eq('azubi_id', u.id);
+            if (error || !rows) return [];
+
+            const aktivSet = new Set((aktiveClientIds || []).map(String));
+            const verwaist = rows.filter(r => r.geloescht_at != null || !aktivSet.has(String(r.client_id || r.id)));
+            return verwaist;
+        } catch (e) {
+            return [];
         }
     }
 
@@ -926,6 +1048,11 @@
         berichtHoch: bhb2bBerichtHoch,
         berichteHoch: bhb2bBerichteHoch,
         berichtLoeschen: bhb2bBerichtLoeschen,
+        berichteLoeschen: bhb2bBerichteLoeschen,
+        berichtWiederherstellen: bhb2bBerichtWiederherstellen,
+        berichteWiederherstellen: bhb2bBerichteWiederherstellen,
+        papierkorbLeeren: bhb2bPapierkorbLeeren,
+        verwaisteCloudBerichte: bhb2bVerwaisteCloudBerichte,
         freigabenRunter: bhb2bFreigabenRunter,
         freigabeSchreiben: bhb2bFreigabeSchreiben,
         pruefsumme: bhb2bPruefsumme,

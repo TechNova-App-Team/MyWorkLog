@@ -412,9 +412,9 @@ async function deleteReport(id) {
     // fallback if data-id not found
     const ok = await bhConfirm({
         title: L('Bericht löschen?', 'Delete report?'),
-        text: L('Der Eintrag wird aus der Liste entfernt. Das lässt sich nicht rückgängig machen.',
-            'The entry is removed from the list. This cannot be undone.'),
-        confirmText: L('Bericht löschen', 'Delete report')
+        text: L('Der Eintrag wird in den Papierkorb verschoben und nach 30 Tagen endgültig gelöscht.',
+            'The entry is moved to the trash and permanently deleted after 30 days.'),
+        confirmText: L('In Papierkorb verschieben', 'Move to trash')
     });
     if (!ok) return;
     entferneBericht(id);
@@ -429,13 +429,33 @@ function confirmDeleteReport(id) {
     entferneBericht(id);
 }
 
-// Beide Loeschwege laufen hier zusammen. Vorher stand die Zeile zweimal da und
-// der Cloud-Aufruf haette an zwei Stellen nachgetragen werden muessen — genau
-// die Sorte Loch, durch die der Server-Loeschvorgang jahrelang gefehlt hat:
-// wer die Arbeit tut, protokolliert sie, nicht der Klick-Handler.
+// Beide Loeschwege laufen hier zusammen.
+// Verschiebt den Bericht in den Papierkorb (Soft-Delete) und benachrichtigt die Cloud.
 function entferneBericht(id) {
+    const reportToDelete = reports.find(r => r.id === id);
+    if (!reportToDelete) return;
+
+    // 1. In Papierkorb schieben
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    trash.push({
+        report: reportToDelete,
+        deletedAt: new Date().toISOString()
+    });
+    if (typeof saveTrash === 'function') saveTrash(trash);
+
+    // 2. Aus aktiver Liste entfernen
     reports = reports.filter(r => r.id !== id);
-    saveToStorage(); updateUI(); showToast(L('Bericht gelöscht', 'Report deleted'), 'info');
+    saveToStorage();
+    updateUI();
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+
+    // 3. Toast mit Undo-Option
+    showToast(L('Bericht in den Papierkorb verschoben', 'Report moved to trash'), 'info', {
+        label: L('Rückgängig', 'Undo'),
+        onClick: () => restoreReport(id)
+    });
+
+    // 4. Cloud benachrichtigen (Soft-Delete)
     if (typeof b2bOnReportDeleted === 'function') b2bOnReportDeleted(id);
 }
 
@@ -531,13 +551,38 @@ function confirmBulkDelete() {
     if (selectedIds.size === 0) return;
 
     const count = selectedIds.size;
+    const toDelete = reports.filter(r => selectedIds.has(r.id));
+    const deletedIds = toDelete.map(r => r.id);
+
+    // 1. In Papierkorb schieben
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    const nowIso = new Date().toISOString();
+    for (const r of toDelete) {
+        trash.push({ report: r, deletedAt: nowIso });
+    }
+    if (typeof saveTrash === 'function') saveTrash(trash);
+
+    // 2. Aus aktiver Liste entfernen
     reports = reports.filter(r => !selectedIds.has(r.id));
     saveToStorage();
     toggleBulkMode();
     updateUI();
-    showToast(count === 1
-        ? L('1 Bericht gelöscht', '1 report deleted')
-        : L(`${count} Berichte gelöscht`, `${count} reports deleted`), 'info');
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+
+    // 3. Toast mit Undo-Option
+    showToast(
+        count === 1
+            ? L('1 Bericht in den Papierkorb verschoben', '1 report moved to trash')
+            : L(`${count} Berichte in den Papierkorb verschoben`, `${count} reports moved to trash`),
+        'info',
+        {
+            label: L('Rückgängig', 'Undo'),
+            onClick: () => restoreReports(deletedIds)
+        }
+    );
+
+    // 4. Cloud benachrichtigen (Soft-Delete)
+    if (typeof b2bOnReportsDeleted === 'function') b2bOnReportsDeleted(deletedIds);
 }
 
 function bulkExportPDF() {
@@ -611,4 +656,254 @@ function updateQualityMeter(text) {
         label.style.color = 'var(--danger)';
     }
 }
+
+// ═══════════════════════════════════════
+// PAPIERKORB WIEDERHERSTELLUNG & LEEREN
+// ═══════════════════════════════════════
+
+function updateTrashBadge() {
+    const btn = document.getElementById('trashToggle');
+    const badge = document.getElementById('trashBadge');
+    if (!badge) return;
+    const count = typeof getTrashCount === 'function' ? getTrashCount() : 0;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'inline-flex' : 'none';
+}
+
+function restoreReport(id) {
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    const idx = trash.findIndex(t => t.report && String(t.report.id) === String(id));
+    if (idx === -1) return;
+
+    const item = trash[idx];
+    trash.splice(idx, 1);
+    if (typeof saveTrash === 'function') saveTrash(trash);
+
+    // Nicht doppelt einfuegen
+    if (!reports.some(r => String(r.id) === String(item.report.id))) {
+        reports.push(item.report);
+        reports.sort((a, b) => {
+            const yA = Number(a.year || a.jahr || 1), yB = Number(b.year || b.jahr || 1);
+            if (yA !== yB) return yB - yA;
+            return Number(b.week || b.kw || 0) - Number(a.week || a.kw || 0);
+        });
+    }
+
+    saveToStorage();
+    updateUI();
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+    showToast(L('Bericht wiederhergestellt', 'Report restored'), 'success');
+
+    if (typeof b2bOnReportRestored === 'function') b2bOnReportRestored(item.report);
+}
+
+function restoreReports(ids) {
+    if (!Array.isArray(ids) || !ids.length) return;
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    const restored = [];
+    const idSet = new Set(ids.map(String));
+
+    const remaining = [];
+    for (const item of trash) {
+        if (item.report && idSet.has(String(item.report.id))) {
+            restored.push(item.report);
+            if (!reports.some(r => String(r.id) === String(item.report.id))) {
+                reports.push(item.report);
+            }
+        } else {
+            remaining.push(item);
+        }
+    }
+
+    if (typeof saveTrash === 'function') saveTrash(remaining);
+
+    reports.sort((a, b) => {
+        const yA = Number(a.year || a.jahr || 1), yB = Number(b.year || b.jahr || 1);
+        if (yA !== yB) return yB - yA;
+        return Number(b.week || b.kw || 0) - Number(a.week || a.kw || 0);
+    });
+
+    saveToStorage();
+    updateUI();
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+    showToast(
+        restored.length === 1
+            ? L('1 Bericht wiederhergestellt', '1 report restored')
+            : L(`${restored.length} Berichte wiederhergestellt`, `${restored.length} reports restored`),
+        'success'
+    );
+
+    if (typeof b2bOnReportsRestored === 'function') b2bOnReportsRestored(restored);
+}
+
+async function permanentDeleteReport(id) {
+    const ok = await bhConfirm({
+        title: L('Endgültig löschen?', 'Delete permanently?'),
+        text: L('Dieser Bericht wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.',
+            'This report will be permanently deleted and cannot be restored.'),
+        confirmText: L('Endgültig löschen', 'Delete permanently')
+    });
+    if (!ok) return;
+
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    const updated = trash.filter(t => !t.report || String(t.report.id) !== String(id));
+    if (typeof saveTrash === 'function') saveTrash(updated);
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+    renderTrashModal();
+    showToast(L('Bericht endgültig gelöscht', 'Report permanently deleted'), 'info');
+
+    if (typeof b2bOnReportHardDeleted === 'function') b2bOnReportHardDeleted(id);
+}
+
+async function emptyTrashConfirm() {
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    if (!trash.length) return;
+
+    const ok = await bhConfirm({
+        title: L('Papierkorb leeren?', 'Empty trash?'),
+        text: L(`Alle ${trash.length} Berichte im Papierkorb werden dauerhaft und unwiderruflich gelöscht.`,
+            `All ${trash.length} reports in the trash will be permanently and irreversibly deleted.`),
+        confirmText: L('Papierkorb leeren', 'Empty trash')
+    });
+    if (!ok) return;
+
+    const allIds = trash.map(t => t.report && (t.report.client_id || t.report.id)).filter(Boolean);
+    if (typeof saveTrash === 'function') saveTrash([]);
+    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+    renderTrashModal();
+    showToast(L('Papierkorb geleert', 'Trash emptied'), 'info');
+
+    if (typeof b2bOnTrashEmptied === 'function') b2bOnTrashEmptied(allIds);
+}
+
+function restoreAllTrashConfirm() {
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+    if (!trash.length) return;
+    const allIds = trash.map(t => t.report && t.report.id).filter(Boolean);
+    restoreReports(allIds);
+    renderTrashModal();
+}
+
+async function openTrashModal() {
+    const m = document.getElementById('trashModal');
+    if (!m) return;
+    m.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Cloud-Abgleich: Prüfen ob verwaiste Zeilen in Supabase existieren, die lokal fehlen
+    if (typeof BHB2B !== 'undefined' && BHB2B && BHB2B.angemeldet && BHB2B.angemeldet() && BHB2B.verwaisteCloudBerichte) {
+        try {
+            const aktiveIds = reports.map(r => String(r.id));
+            const verwaist = await BHB2B.verwaisteCloudBerichte(aktiveIds);
+            if (verwaist && verwaist.length > 0) {
+                const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+                const trashIdSet = new Set(trash.map(t => t.report && String(t.report.id)));
+                let hinzugefuegt = false;
+                for (const row of verwaist) {
+                    const cid = String(row.client_id || row.id);
+                    if (!trashIdSet.has(cid) && !aktiveIds.includes(cid)) {
+                        const reconstructed = {
+                            id: cid,
+                            week: row.kw,
+                            year: row.jahr,
+                            dateFrom: row.datum_von,
+                            dateTo: row.datum_bis,
+                            status: row.status || 'incomplete',
+                            ...(row.inhalt || {})
+                        };
+                        trash.push({
+                            report: reconstructed,
+                            deletedAt: row.geloescht_at || row.updated_at || new Date().toISOString(),
+                            fromCloud: true
+                        });
+                        trashIdSet.add(cid);
+                        hingezufuegt = true;
+                    }
+                }
+                if (hingezufuegt && typeof saveTrash === 'function') {
+                    saveTrash(trash);
+                    if (typeof updateTrashBadge === 'function') updateTrashBadge();
+                }
+            }
+        } catch (e) {
+            console.warn('[Trash] Cloud-Abgleich:', e);
+        }
+    }
+
+    renderTrashModal();
+}
+
+function closeTrashModal() {
+    const m = document.getElementById('trashModal');
+    if (m) {
+        m.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function renderTrashModal() {
+    const listEl = document.getElementById('trashList');
+    if (!listEl) return;
+    const trash = typeof loadTrash === 'function' ? loadTrash() : [];
+
+    const btnEmpty = document.getElementById('btnEmptyTrash');
+    const btnRestoreAll = document.getElementById('btnRestoreAllTrash');
+    if (btnEmpty) btnEmpty.style.display = trash.length > 0 ? 'inline-flex' : 'none';
+    if (btnRestoreAll) btnRestoreAll.style.display = trash.length > 0 ? 'inline-flex' : 'none';
+
+    if (trash.length === 0) {
+        listEl.innerHTML = `
+            <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+                <div style="width: 48px; height: 48px; margin: 0 auto 12px; opacity: 0.3;">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                </div>
+                <h4 style="font-size: 1rem; margin-bottom: 0.25rem; color: var(--text-primary); font-weight: 600;">${L('Papierkorb ist leer', 'Trash is empty')}</h4>
+                <p style="font-size: 0.82rem; margin: 0;">${L('Gelöschte Berichte werden hier für 30 Tage aufbewahrt.', 'Deleted reports are stored here for 30 days.')}</p>
+            </div>
+        `;
+        return;
+    }
+
+    const now = Date.now();
+    listEl.innerHTML = trash.slice().reverse().map(item => {
+        const r = item.report || {};
+        const d = item.deletedAt ? new Date(item.deletedAt) : new Date();
+        const tageAlt = Math.floor((now - d.getTime()) / 86400000);
+        const verbleibTage = Math.max(0, TRASH_MAX_DAYS - tageAlt);
+
+        const dStr = d.toLocaleDateString(document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE',
+            { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        const kwStr = `KW ${r.week || r.kw || '?'}`;
+        const jahrStr = `${r.year || r.jahr || 1}. ${L('Ausbildungsjahr', 'Year')}`;
+        const dateSpan = (r.dateFrom && r.dateTo) ? `${r.dateFrom} – ${r.dateTo}` : '';
+
+        return `
+            <div class="trash-card" style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.85rem 1rem; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <span style="font-weight: 700; font-size: 0.92rem; color: var(--primary);">${kwStr}</span>
+                        <span style="font-size: 0.78rem; padding: 2px 6px; border-radius: 4px; background: rgba(var(--primary-rgb), 0.12); color: var(--primary); font-weight: 500;">${jahrStr}</span>
+                        ${item.fromCloud ? `<span style="font-size: 0.72rem; padding: 1px 5px; border-radius: 3px; background: rgba(59,130,246,0.15); color: #60a5fa;">Cloud</span>` : ''}
+                    </div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">
+                        ${dateSpan ? `<span>${dateSpan} · </span>` : ''}
+                        <span>${L('Gelöscht am ', 'Deleted on ')}${dStr}</span>
+                        <span style="color: var(--warning); margin-left: 6px;">(${L(`noch ${verbleibTage} Tage`, `${verbleibTage} days left`)})</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary" onclick="restoreReport('${r.id}'); renderTrashModal();" style="padding: 5px 10px; font-size: 0.78rem;">
+                        <svg class="icon icon-sm"><use href="#i-refresh"/></svg>
+                        <span>${L('Wiederherstellen', 'Restore')}</span>
+                    </button>
+                    <button class="btn btn-danger" onclick="permanentDeleteReport('${r.id}')" style="padding: 5px 10px; font-size: 0.78rem;" title="${L('Endgültig löschen', 'Delete permanently')}">
+                        <svg class="icon icon-sm"><use href="#i-trash"/></svg>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
 

@@ -16,6 +16,7 @@ function L(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
 // ===== CONSTANTS & STATE =====
 const STORAGE_KEY = 'berichtsheft_reports';
+const TRASH_KEY = 'berichtsheft_trash';
 const THEME_KEY = 'berichtsheft_theme';
 const AUTOSAVE_KEY = 'berichtsheft_draft';
 const MODE_KEY = 'berichtsheft_mode';
@@ -206,4 +207,58 @@ function ihkCalculateAusbildungsjahr(dRef, sDate, baseYearFallback) {
         return Math.min(Math.max(yr, 1), 4);
     }
     return 1;
+}
+
+// ═══════════════════════════════════════
+// PAPIERKORB / TRASH MANAGEMENT
+// ═══════════════════════════════════════
+// Hält gelöschte Berichte für max. 30 Tage vor. Nach Ablauf werden sie
+// automatisch endgültig gelöscht, um den Speicher und die Datenbank schlank zu halten.
+const TRASH_MAX_DAYS = 30;
+if (typeof window !== 'undefined') {
+    window.TRASH_KEY = TRASH_KEY;
+    window.TRASH_MAX_DAYS = TRASH_MAX_DAYS;
+}
+
+function loadTrash() {
+    try {
+        const raw = localStorage.getItem(TRASH_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+        console.warn('[Trash] Fehler beim Laden:', e);
+        return [];
+    }
+}
+
+function saveTrash(list) {
+    try {
+        localStorage.setItem(TRASH_KEY, JSON.stringify(Array.isArray(list) ? list : []));
+    } catch (e) {
+        console.warn('[Trash] Fehler beim Speichern:', e);
+    }
+}
+
+function getTrashCount() {
+    return loadTrash().length;
+}
+
+function cleanupExpiredTrash(maxDays = TRASH_MAX_DAYS) {
+    const list = loadTrash();
+    if (!list.length) return { kept: [], expired: [] };
+    const cutoff = Date.now() - (maxDays * 86400000);
+    const kept = [];
+    const expired = [];
+    for (const item of list) {
+        const d = item.deletedAt ? new Date(item.deletedAt).getTime() : 0;
+        if (d && d < cutoff) {
+            expired.push(item);
+        } else {
+            kept.push(item);
+        }
+    }
+    if (expired.length > 0) {
+        saveTrash(kept);
+    }
+    return { kept, expired };
 }
