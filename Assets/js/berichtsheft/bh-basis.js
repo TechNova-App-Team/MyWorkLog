@@ -262,3 +262,13 @@ function cleanupExpiredTrash(maxDays = TRASH_MAX_DAYS) {
     }
     return { kept, expired };
 }
+
+if (typeof window !== 'undefined') {
+    window.TRASH_KEY = TRASH_KEY;
+    window.TRASH_MAX_DAYS = TRASH_MAX_DAYS;
+    window.loadTrash = loadTrash;
+    window.saveTrash = saveTrash;
+    window.getTrashCount = getTrashCount;
+    window.cleanupExpiredTrash = cleanupExpiredTrash;
+}
+

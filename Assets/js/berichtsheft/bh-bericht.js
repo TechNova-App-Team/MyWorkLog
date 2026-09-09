@@ -906,4 +906,17 @@ function renderTrashModal() {
     }).join('');
 }
 
+if (typeof window !== 'undefined') {
+    window.openTrashModal = openTrashModal;
+    window.closeTrashModal = closeTrashModal;
+    window.renderTrashModal = renderTrashModal;
+    window.updateTrashBadge = updateTrashBadge;
+    window.restoreReport = restoreReport;
+    window.restoreReports = restoreReports;
+    window.permanentDeleteReport = permanentDeleteReport;
+    window.emptyTrashConfirm = emptyTrashConfirm;
+    window.restoreAllTrashConfirm = restoreAllTrashConfirm;
+}
+
+
 
