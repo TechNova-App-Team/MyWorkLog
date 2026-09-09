@@ -31,15 +31,20 @@
             // Update popover content before showing
             try {
                 const name = (typeof data !== 'undefined' && data.settings && data.settings.name) ? data.settings.name : 'Benutzer';
+                const custom = (typeof data !== 'undefined' && data.settings && data.settings.avatarInitials) ? String(data.settings.avatarInitials).trim() : '';
                 const popName = document.getElementById('popoverName');
                 const popAvatar = document.getElementById('popoverAvatar');
                 const popStatus = document.getElementById('popoverStatus');
                 if (popName) popName.textContent = name || 'Benutzer';
                 if (popAvatar) {
-                    const parts = (name || '').trim().split(/\s+/);
-                    popAvatar.textContent = parts.length >= 2 
-                        ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase()
-                        : (name || 'U').substring(0, 2).toUpperCase();
+                    if (custom) {
+                        popAvatar.textContent = custom.substring(0, 2).toUpperCase();
+                    } else {
+                        const parts = (name || '').trim().split(/\s+/);
+                        popAvatar.textContent = parts.length >= 2 
+                            ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase()
+                            : (name || 'U').substring(0, 2).toUpperCase();
+                    }
                 }
                 // Die Unterzeile sagt jetzt, was dieses Profil IST (lokal, nur auf
                 // diesem Geraet) — sie stand vorher auf "Online" und las sich wie

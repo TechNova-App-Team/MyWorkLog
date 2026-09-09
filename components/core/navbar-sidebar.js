@@ -436,15 +436,22 @@
     function updateSidebarAvatar() {
         try {
             const avatarEl = document.getElementById('sidebarAvatar');
-            if (!avatarEl) return;
-            const name = (typeof data !== 'undefined' && data.settings && data.settings.name) ? data.settings.name : '';
-            if (name) {
-                const parts = name.trim().split(/\s+/);
-                const initials = parts.length >= 2 
+            const popAvatar = document.getElementById('popoverAvatar');
+            const custom = (typeof data !== 'undefined' && data.settings && data.settings.avatarInitials) ? String(data.settings.avatarInitials).trim() : '';
+            const name = (typeof data !== 'undefined' && data.settings && data.settings.name) ? String(data.settings.name).trim() : '';
+            let initials = '';
+            if (custom) {
+                initials = custom.substring(0, 2).toUpperCase();
+            } else if (name) {
+                const parts = name.split(/\s+/);
+                initials = parts.length >= 2 
                     ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase()
                     : name.substring(0, 2).toUpperCase();
-                avatarEl.textContent = initials;
+            } else {
+                initials = 'U';
             }
+            if (avatarEl) avatarEl.textContent = initials;
+            if (popAvatar) popAvatar.textContent = initials;
         } catch(e) {}
     }
     // Close popover when clicking outside

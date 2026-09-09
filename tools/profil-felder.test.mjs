@@ -46,7 +46,7 @@ const markupRein = markup.replace(/<!--[\s\S]*?-->/g, '');
 // ─────────────────────────────────────────────────────────────────────────
 console.log('\n── Aufbau der Zeilen ──────────────────────────────────────────');
 const zeilen = [...doc.querySelectorAll('.pfield')];
-ok(zeilen.length === 3, `drei Zeilen, gezaehlt: ${zeilen.length}`);
+ok(zeilen.length === 4, `vier Zeilen, gezaehlt: ${zeilen.length}`);
 
 // CLAUDE.md: Kinderzahl gegen Spurenzahl. Die Klickschicht ist absolut
 // positioniert und faellt aus dem Raster — es bleiben genau vier Rasterkinder.
@@ -122,11 +122,13 @@ if (fs.existsSync(en)) {
     const liste = d.querySelector('.pfield-list');
     ok(!!liste, '/en/ hat die Profilliste');
     const txt = liste ? liste.textContent : '';
-    const deutsch = ['Dein Name', 'Ausbildungsberuf', 'Bundesland', 'Nicht gewählt', 'Für lokale Feiertage']
+    const deutsch = ['Dein Name', 'Avatar-Kürzel', 'Ausbildungsberuf', 'Bundesland', 'Nicht gewählt', 'Für lokale Feiertage']
         .filter((w) => txt.includes(w));
     ok(deutsch.length === 0, `/en/ traegt keinen deutschen Feldtext${deutsch.length ? ': ' + deutsch.join(', ') : ''}`);
     ok(d.getElementById('confName').placeholder === 'Not set',
         `/en/ Platzhalter uebersetzt, gelesen: "${d.getElementById('confName').placeholder}"`);
+    ok(d.getElementById('confAvatarInitials').placeholder === 'Auto',
+        `/en/ Avatar-Platzhalter uebersetzt, gelesen: "${d.getElementById('confAvatarInitials').placeholder}"`);
 } else {
     console.log('  ..     pages/en/index.html nicht gebaut — uebersprungen');
 }

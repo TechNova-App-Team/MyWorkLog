@@ -9,6 +9,7 @@
         untis: null,            // NEW: Untis integration data
         settings: { 
             name:'User', 
+            avatarInitials: '',
             theme:'#5578a8',
             themeMode: 'dark',
             hours:[0,8.75,8.75,8.75,8.75,4.5,0], 

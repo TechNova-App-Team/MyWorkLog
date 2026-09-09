@@ -594,6 +594,19 @@
                                 <span class="pfield-affix" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
                             </label>
 
+                            <!-- Avatar-Kürzel -->
+                            <label class="pfield">
+                                <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg></span>
+                                <span class="pfield-text">
+                                    <span class="pfield-label">Avatar-Kürzel</span>
+                                    <span class="pfield-hint">Max. 2 Buchstaben (leer = automatisch aus Name)</span>
+                                </span>
+                                <input type="text" id="confAvatarInitials" class="pfield-value pfield-input"
+                                       placeholder="Auto" maxlength="2" autocomplete="off" spellcheck="false"
+                                       style="text-transform:uppercase;">
+                                <span class="pfield-affix" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+                            </label>
+
                             <!-- Job -->
                             <label class="pfield">
                                 <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
@@ -704,6 +717,7 @@
                                 var regionTextEl = card.querySelector('[data-profile-region] span');
                                 var badgeEl  = card.querySelector('[data-profile-badge]');
                                 var nameInput  = card.querySelector('#confName');
+                                var initialsInput = card.querySelector('#confAvatarInitials');
                                 var jobSelect  = card.querySelector('#confJob');
                                 var bundSelect = card.querySelector('#confBundesland');
 
@@ -718,8 +732,11 @@
                                     job:    jobEl ? jobEl.textContent : '',
                                     region: regionTextEl ? regionTextEl.textContent : ''
                                 };
-                                function initials(n){
-                                    if (!n) return '?';
+                                function initials(n, custom){
+                                    if (custom && custom.trim()) {
+                                        return custom.trim().substring(0, 2).toUpperCase();
+                                    }
+                                    if (!n || !n.trim()) return '?';
                                     var parts = n.trim().split(/\s+/).slice(0,2);
                                     var s = parts.map(function(p){ return p.charAt(0); }).join('').toUpperCase();
                                     return s || '?';
@@ -755,15 +772,25 @@
                                     spiegle(jobSelect);
                                     spiegle(bundSelect);
                                     var name = (nameInput && nameInput.value || '').trim();
+                                    var custom = (initialsInput && initialsInput.value || '').trim();
                                     if (name){
                                         nameEl.textContent = name;
                                         nameEl.classList.remove('is-empty');
-                                        avatarEl.textContent = initials(name);
                                     } else {
                                         nameEl.textContent = LEER.name;
                                         nameEl.classList.add('is-empty');
-                                        avatarEl.textContent = '?';
                                     }
+                                    var effective = initials(name, custom);
+                                    avatarEl.textContent = effective;
+
+                                    // Spiegle direkt in Sidebar (#sidebarAvatar) und Popover (#popoverAvatar)
+                                    var sbAvatar = document.getElementById('sidebarAvatar');
+                                    var popAvatar = document.getElementById('popoverAvatar');
+                                    var displayInit = (effective && effective !== '?') ? effective : (name ? initials(name, '') : 'U');
+                                    if (displayInit === '?') displayInit = 'U';
+                                    if (sbAvatar) sbAvatar.textContent = displayInit;
+                                    if (popAvatar) popAvatar.textContent = displayInit;
+
                                     var jobOpt = jobSelect ? jobSelect.options[jobSelect.selectedIndex] : null;
                                     if (jobOpt && jobOpt.value){
                                         jobEl.textContent = jobOpt.textContent;
@@ -822,20 +849,65 @@
                                     });
                                 }
 
-                                if (nameInput)  nameInput.addEventListener('input', sync);
+                                if (nameInput) {
+                                    nameInput.addEventListener('input', function(){
+                                        sync();
+                                        if (typeof updateSidebarAvatar === 'function') updateSidebarAvatar();
+                                    });
+                                }
+                                if (initialsInput) {
+                                    initialsInput.addEventListener('input', function(){
+                                        this.value = this.value.toUpperCase();
+                                        var val = this.value.trim().substring(0, 2);
+                                        var st = appSettings();
+                                        if (st) st.avatarInitials = val;
+                                        sync();
+                                        if (typeof save === 'function') save();
+                                        if (typeof updateSidebarAvatar === 'function') updateSidebarAvatar();
+                                    });
+                                }
+                                if (avatarEl && initialsInput) {
+                                    avatarEl.style.cursor = 'pointer';
+                                    avatarEl.title = 'Klicken zum Ändern des Avatar-Kürzels';
+                                    avatarEl.addEventListener('click', function() {
+                                        initialsInput.focus();
+                                        initialsInput.select();
+                                    });
+                                }
                                 if (jobSelect)  jobSelect.addEventListener('change', function(){ sync(); syncSkin(); });
                                 if (bundSelect) bundSelect.addEventListener('change', sync);
+
+                                function applyAllAvatars(){
+                                    var st = appSettings();
+                                    var custom = (st && st.avatarInitials) ? String(st.avatarInitials).trim().toUpperCase() : '';
+                                    var name = (st && st.name) ? String(st.name).trim() : '';
+                                    var t = initials(name, custom);
+                                    if (t === '?') t = 'U';
+                                    var sbAvatar = document.getElementById('sidebarAvatar');
+                                    var popAvatar = document.getElementById('popoverAvatar');
+                                    if (sbAvatar) sbAvatar.textContent = t;
+                                    if (popAvatar) popAvatar.textContent = t;
+                                    if (avatarEl) avatarEl.textContent = initials(name, custom);
+                                }
+                                window.updateSidebarAvatar = applyAllAvatars;
 
                                 // openSettings() writes values via .value = — kein Input-Event. Bei Modal-Open re-syncen.
                                 var modal = document.getElementById('settingsModal');
                                 if (modal){
                                     var obs = new MutationObserver(function(){
-                                        if (modal.classList.contains('active')) setTimeout(function(){ sync(); syncSkin(); }, 30);
+                                        if (modal.classList.contains('active')) {
+                                            var st = appSettings();
+                                            if (initialsInput && st && typeof st.avatarInitials !== 'undefined') {
+                                                initialsInput.value = st.avatarInitials || '';
+                                            }
+                                            setTimeout(function(){ sync(); syncSkin(); }, 30);
+                                        }
                                     });
                                     obs.observe(modal, { attributes:true, attributeFilter:['class'] });
                                 }
                                 sync();
                                 syncSkin();
+                                applyAllAvatars();
                             });
                         }
                         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

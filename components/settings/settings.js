@@ -12,6 +12,8 @@
         // die Zeichenkette "undefined" ins Namensfeld — und speichert sie
         // beim Schliessen als Namen ab.
         document.getElementById('confName').value = data.settings.name || '';
+        const confAvatarInitialsEl = document.getElementById('confAvatarInitials');
+        if (confAvatarInitialsEl) confAvatarInitialsEl.value = data.settings.avatarInitials || '';
         // Job
         const confJobEl = document.getElementById('confJob');
         if (confJobEl) confJobEl.value = data.settings.job || '';
@@ -143,6 +145,8 @@
 
     function saveSettings() {
         data.settings.name = document.getElementById('confName').value;
+        const confAvatarInitialsSaveEl = document.getElementById('confAvatarInitials');
+        if (confAvatarInitialsSaveEl) data.settings.avatarInitials = confAvatarInitialsSaveEl.value.trim().toUpperCase().substring(0, 2);
         // Job
         const confJobSaveEl = document.getElementById('confJob');
         if (confJobSaveEl) data.settings.job = confJobSaveEl.value;
