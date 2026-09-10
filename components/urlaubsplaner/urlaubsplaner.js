@@ -520,8 +520,38 @@
             return;
         }
 
+        var byMonth = {};
         list.forEach(function (s, idx) {
-            host.appendChild(upSuggestionCard(s, idx, budget));
+            var m = s.from.date.getMonth();
+            if (!byMonth[m]) byMonth[m] = [];
+            byMonth[m].push({ s: s, idx: idx });
+        });
+
+        var sortedMonths = Object.keys(byMonth).sort(function(a, b) { return parseInt(a, 10) - parseInt(b, 10); });
+        
+        sortedMonths.forEach(function (mStr) {
+            var m = parseInt(mStr, 10);
+            var mName = new Date(year, m, 1).toLocaleDateString(upLocale(), { month: 'long' });
+            
+            var group = document.createElement('div');
+            group.className = 'up-month-group';
+            
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'up-month-btn';
+            btn.innerHTML = '<span class="up-month-name">' + esc(mName) + '</span><span class="up-month-count">' + byMonth[m].length + '</span><svg class="up-month-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+            btn.onclick = function() { group.classList.toggle('is-open'); };
+            
+            var content = document.createElement('div');
+            content.className = 'up-month-content';
+            
+            byMonth[m].forEach(function (item) {
+                content.appendChild(upSuggestionCard(item.s, item.idx, budget));
+            });
+            
+            group.appendChild(btn);
+            group.appendChild(content);
+            host.appendChild(group);
         });
     }
 
