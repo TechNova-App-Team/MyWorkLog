@@ -15,7 +15,7 @@ Lokal-first · Offline-fähig · DSGVO-konform · 100% kostenlos
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-6.3.14-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](https://github.com/TechNova-App-Team/MyWorkLog/releases)
+[![Version](https://img.shields.io/badge/version-6.9.16-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](https://github.com/TechNova-App-Team/MyWorkLog/releases)
 [![PWA](https://img.shields.io/badge/PWA-Ready-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -52,8 +52,9 @@ Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lok
 <td width="50%" valign="top">
 
 ### Zeiterfassung
-- Live-Timer mit Pause-Automatik
+- Live-Timer mit Pause-Automatik & Live-Verdienst-Zähler
 - Kategorien: Arbeit · Schule · Urlaub · Krank · Feiertag
+- Mehrere Jobs mit eigenem Soll/Pause & getrenntem Saldo
 - §4 ArbZG-konforme Pausenregel
 - Kalender- und Wochenansicht
 - Custom Entry Types & Fields
@@ -63,6 +64,7 @@ Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lok
 - Trends nach Woche · Monat · Jahr
 - SVG-Charts (Area · Bar · Line · Heatmap)
 - 8+ Analytics-Tabs in `/analytics/`
+- Mächtige Suche mit Operatoren (>8, <6, #Projekt)
 - Export: PDF · Excel · CSV · iCal (RFC 5545)
 
 ### AI
@@ -74,10 +76,12 @@ Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lok
 <td width="50%" valign="top">
 
 ### Azubi-Tools
-- **Berichtsheft** — IHK-konforme Ausbildungsnachweise mit AI-Generierung
+- **Berichtsheft** — Amtliche IHK-Vordrucke, Betriebs-Anbindung (B2B), AI-Generierung & PDF/Excel-Import
+- **Urlaubsplaner** — Brückentag-Empfehlungen & Multi-Range
 - **Rechte-Checker** — BBiG / JArbSchG / ArbZG interaktiv prüfen
-- **Vertrags-Manager** — Gehalt, Urlaub, Lohnzuschläge
-- **Fahrtkosten** — Routing, ÖPNV, Spritkosten, Pendlerpauschale
+- **Vertrags-Manager** — Gehalt, Benefits, Lohnzuschläge
+- **Fahrtkosten** — Echtes Routing je Verkehrsmittel, Pendlerpauschale
+- **IT-Stories** — Interaktive Deep-Dives zu IT-Themen
 - **Untis-Sync** — Stundenplan automatisch oder manuell
 - **Skill-Tree** — RPG-Gamification für Ausbildungsfortschritt
 
@@ -215,14 +219,13 @@ PWA-Install funktioniert auf allen Modern-Browsers. WebGPU für On-Device-LLM nu
 
 ## Versionierung
 
-Aktuelle Version: **v3.5.4** (Release 2026-05-31)
+Aktuelle Version: **v6.9.16** (Release 2026-09-10)
 
-```
-4.1.7   Der komplette IT-Lernbereich wurde von Grund auf neu gestaltet
-4.1.6   Der NFC-Bereich (Chip-Scanner) hat ein großes optisches Upgrade bekommen
-4.1.5   Im Verlauf ließen sich auf Handy und Tablet keine Einträge bearbeiten, ansehen oder löschen
-4.1.4   Die kleinen Hilfe-Fenster hinter den „?“-Knöpfen wurden überarbeitet
-...
+```text
+6.9.16  Optische Verbesserungen und Fehlerbehebung beim Import von IHK-Berichtsheften
+6.9.15  Mehrere Ausbilder je Betrieb und eine Meldung, wenn eine Woche gelöscht wird
+6.9.14  Die App-Tour und Schnelle Hilfe nutzen jetzt das einheitliche Theme und SVG-Symbole
+6.9.13  Ausbildungsjahre beim IHK-PDF-Import stichtagsgenau berechnet
 ```
 
 Vollständige Liste in `config/version.json` oder auf https://myworklog.de/ -> Support.
