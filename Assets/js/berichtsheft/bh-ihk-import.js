@@ -380,15 +380,49 @@ function ihkProcessExtractedText(pagesText) {
                 let inQuali = false;
                 
                 const parts = daySlice.split('|').map(p => p.trim());
+                let pendingIndent = '';
+                
                 parts.forEach(part => {
                     if (part === 'Qualifikationen:') {
                         inQuali = true;
+                        pendingIndent = '';
+                        return;
+                    }
+                    
+                    // IHK-typische Aufzählungszeichen (Haupt- und Unterpunkte)
+                    // Häufig wird der hohle Kreis ◦ vom PDF-Parser als Buchstabe 'o' erkannt.
+                    if (part === '•' || part === '') {
+                        pendingIndent = '• ';
+                        return;
+                    } else if (part === '◦' || part === '-' || part === '–' || part === 'o') {
+                        pendingIndent = '    ◦ '; // Unterpunkte explizit mit '◦' und Einrückung darstellen
                         return;
                     }
                     
                     let cleanPart = part;
-                    if (cleanPart.startsWith('•')) cleanPart = cleanPart.substring(1).trim();
-                    if (cleanPart.startsWith('-')) cleanPart = cleanPart.substring(1).trim();
+                    let currentIndent = pendingIndent;
+                    let isNewPoint = false;
+                    
+                    if (cleanPart.startsWith('• ') || cleanPart.startsWith(' ')) {
+                        cleanPart = cleanPart.substring(2).trim();
+                        currentIndent = '• ';
+                        isNewPoint = true;
+                    } else if (cleanPart.startsWith('◦ ') || cleanPart.startsWith('- ') || cleanPart.startsWith('– ') || cleanPart.startsWith('o ')) {
+                        cleanPart = cleanPart.substring(2).trim();
+                        currentIndent = '    ◦ ';
+                        isNewPoint = true;
+                    } else if (cleanPart.startsWith('•') || cleanPart.startsWith('')) {
+                        cleanPart = cleanPart.substring(1).trim();
+                        currentIndent = '• ';
+                        isNewPoint = true;
+                    } else if (cleanPart.startsWith('◦') || cleanPart.startsWith('-') || cleanPart.startsWith('–')) {
+                        // Bei '-' ohne Leerzeichen könnte es ein Wort sein, aber als Startzeichen meist ein Bullet
+                        cleanPart = cleanPart.substring(1).trim();
+                        currentIndent = '    ◦ ';
+                        isNewPoint = true;
+                    } else if (pendingIndent !== '') {
+                        isNewPoint = true;
+                    }
                     
                     if (!cleanPart) return; // Skip bullets selbst
                     if (cleanPart.match(/^[0-9]{2}:[0-9]{2}$/)) return; // Skip wiederholte Zeiten
@@ -404,10 +438,33 @@ function ihkProcessExtractedText(pagesText) {
                     if (pLower.includes('ausbildungswoche')) return;
                     if (pLower.match(/^[0-9]{2}\.[0-9]{2}\.[0-9]{4}/)) return;
                     
-                    if (inQuali) {
-                        if (cleanPart.length > 3) qualifikationen.push(cleanPart);
-                    } else {
-                        if (cleanPart.length > 3) activities.push('• ' + cleanPart);
+                    const targetList = inQuali ? qualifikationen : activities;
+                    
+                    if (cleanPart.length > 3) {
+                        if (isNewPoint || targetList.length === 0) {
+                            targetList.push(currentIndent + cleanPart);
+                        } else {
+                            // Prüfe, ob es sich um einen Zeilenumbruch innerhalb eines Satzes handelt
+                            let last = targetList.pop();
+                            const lastTrimmed = last.trim();
+                            const endedWithPunctuation = /[.:!?]$/.test(lastTrimmed);
+                            
+                            if (endedWithPunctuation) {
+                                // Vorheriger Satz ist abgeschlossen -> Neue Zeile
+                                targetList.push(last);
+                                targetList.push(currentIndent + cleanPart);
+                            } else {
+                                // Fortsetzung des vorherigen Satzes (Wrap)
+                                if (last.endsWith('-')) {
+                                    // Trennungsstrich am Zeilenende entfernen (z.B. Skrip- ten -> Skripten)
+                                    last = last.substring(0, last.length - 1) + cleanPart;
+                                } else {
+                                    last = last + ' ' + cleanPart;
+                                }
+                                targetList.push(last);
+                            }
+                        }
+                        pendingIndent = '';
                     }
                 });
                 
