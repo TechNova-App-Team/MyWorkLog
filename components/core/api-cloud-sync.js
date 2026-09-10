@@ -433,6 +433,28 @@
     // CLOUD SYNC INTEGRATION (ECHTE PRODUKTIVE INTEGRATION!)
     // ============================================
     
+    /* War DIESER Seitenaufruf die Rueckkehr aus einem Anmelde-Vorgang?
+       Google-Anmeldung und Magic Link verlassen die Seite und kommen mit
+       `#access_token=` bzw. `?code=` zurueck. Der Wert wird EINMAL beim Laden
+       festgehalten, bevor handleOAuthCallback() die Adresse aufraeumt —
+       spaeter gemessen waere er schon weg. */
+    var _warAnmeldeRueckkehr = /access_token|[?&]code=/.test(location.hash + location.search);
+
+    function rueckwegEinloesen() {
+        var roh;
+        try { roh = localStorage.getItem('mwl_cloud_back'); } catch (e) { return; }
+        if (!roh) return;
+        try { localStorage.removeItem('mwl_cloud_back'); } catch (e) { /* egal */ }
+        var v;
+        try { v = JSON.parse(roh); } catch (e) { return; }
+        // Aelter als zehn Minuten: der Anmelde-Versuch von vorhin wurde
+        // abgebrochen. Ein Vermerk ohne Verfall wuerde beim naechsten
+        // Seitenaufruf eine Weiterleitung ausloesen, die niemand angefordert hat.
+        if (!v || !v.p || !v.t || Date.now() - v.t > 600000) return;
+        if (!/^\/(en\/)?[a-z][a-z0-9-]{0,31}\/$/.test(v.p)) return;
+        location.assign(v.p);
+    }
+
     function setupCloudSyncIntegration() {
         // Registriere Auth-State Callbacks
         if (window.cloudSync && window.cloudSync.onAuthStateChanged) {
@@ -503,7 +525,18 @@
         }
 
         renderPasskeySection(isLoggedIn);
+
+        // Rueckweg nur bei einer frischen Anmeldung: entweder kam dieser
+        // Seitenaufruf aus dem Anmelde-Umweg zurueck, oder der Dialog wurde
+        // auf dieser Seite geoeffnet und der Zustand ist gerade umgesprungen.
+        if (isLoggedIn && !_warEingeloggt && (_warAnmeldeRueckkehr || _loginDialogOffen)) {
+            rueckwegEinloesen();
+        }
+        _warEingeloggt = isLoggedIn;
     }
+
+    var _warEingeloggt = false;
+    var _loginDialogOffen = false;
 
     /* ══════════════════════════════════════════════════════════════════════
        PASSKEYS
@@ -631,6 +664,7 @@
     }
     
     function openCloudLoginModal() {
+        _loginDialogOffen = true;
         if (window.cloudSyncUI && typeof window.cloudSyncUI.openLoginModal === 'function') {
             window.cloudSyncUI.openLoginModal();
         } else {
@@ -1323,6 +1357,29 @@
         // openCloudLoginModal ist in config/supabase-config.js so gepatcht,
         // dass es die Supabase-Bibliothek bei Bedarf erst nachlaedt.
         if (/[?&]cloud=login(?:&|$)/.test(location.search)) {
+            /* `back=<slug>` merkt sich, von welcher Seite der Anmelde-Wunsch
+               kam. Die /ausbilder/-Seite braucht das: ihr Haupt-Knopf fuehrt
+               hierher, weil der Anmelde-Dialog nur in der App existiert — ohne
+               Rueckweg landet ein Ausbilder danach im Dashboard und muss die
+               Adresse von Hand wieder eintippen. Die App ist von dort aus auch
+               nicht verlinkt.
+
+               Bewusst ein SLUG, kein Pfad: `/ausbilder/` waere ein offener
+               Redirect-Parameter, sobald jemand `back=//fremde.seite` anhaengt.
+               Aus `[a-z][a-z0-9-]*` laesst sich nur eine Adresse auf dieser
+               Domain bauen. Die Sprache kommt aus dem Dokument, nicht aus dem
+               Link — auf /en/ ruft der Knopf /en/ auf, und dann muss der
+               Rueckweg auch nach /en/ zeigen. */
+            var mBack = /[?&]back=([a-z][a-z0-9-]{0,31})(?:&|$)/.exec(location.search);
+            if (mBack) {
+                try {
+                    var enFall = document.documentElement.lang === 'en';
+                    localStorage.setItem('mwl_cloud_back', JSON.stringify({
+                        p: (enFall ? '/en/' : '/') + mBack[1] + '/',
+                        t: Date.now()
+                    }));
+                } catch (e) { /* Speicher gesperrt — dann eben ohne Rueckweg */ }
+            }
             history.replaceState(null, '', location.pathname);
             var n = 0;
             var t = setInterval(function () {

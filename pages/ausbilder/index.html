@@ -8,11 +8,11 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-    <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
-    <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.18"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.9.18"></script>
-    <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
+    <meta name="description" content="Als Ausbilder alle Berichtsheft-Wochen Ihrer Azubis an einem Ort prüfen, abzeichnen oder zurückgeben — mit Konto als Sammelübersicht, ohne Konto per Link.">
+    <meta name="keywords" content="Berichtsheft Ausbilder, Ausbildungsnachweis prüfen, Ausbildungsnachweis unterschreiben, Berichtsheft abzeichnen, §14 BBiG, Ausbildungsbetrieb, Ausbilder-Übersicht">
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.9.19"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.9.19"></script>
+    <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
     <link rel="apple-touch-icon" href="/Grafiken/icon-192.png">
@@ -23,11 +23,74 @@
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://myworklog.de/ausbilder/">
-    <meta property="og:title" content="MyWorkLog | Ausbildungsnachweis freigeben">
-    <meta property="og:description" content="Wochenbericht eines Azubis ansehen und bestätigen oder zurückgeben. Ohne Konto, ohne Anmeldung.">
+    <meta property="og:title" content="Ausbilder: Berichtshefte prüfen und abzeichnen">
+    <meta property="og:description" content="Alle Wochen Ihrer Azubis an einem Ort: bestätigen, zurückgeben, die Monatsfrist im Blick. Ohne Konto geht eine einzelne Woche weiterhin über den Link.">
     <meta property="og:image" content="https://myworklog.de/Grafiken/og-image.png">
     <meta name="theme-color" content="#030305">
-    <link rel="icon" href="/Grafiken/favicon.ico" sizes="any">
+
+    <!-- Strukturierte Daten. Sie sind hier kein Beiwerk, sondern der Grund
+         fuer die halbe Aenderung: Suchmaschinen und ihre Antwortkaesten
+         zitieren bevorzugt Frage/Antwort-Paare. Bis September 2026 stand auf
+         dieser Seite gar kein JSON-LD, und der einzige crawlbare Text
+         beschrieb nur den Link-Weg ("ohne Konto, ohne Anmeldung") — die
+         KI-Uebersicht von Google gab genau das wieder und kannte die
+         Sammeluebersicht nicht. -->
+    <script type="application/ld+json" data-ld-id="faq">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"Braucht ein Ausbilder f\u00fcr MyWorkLog ein eigenes Konto?","acceptedAnswer":{"@type":"Answer","text":"F\u00fcr die \u00dcbersicht \u00fcber alle Azubis ja: Der Ausbildungsbetrieb wird mit einem Konto angelegt, die Azubis treten \u00fcber einen Einladungscode bei. F\u00fcr eine einzelne Woche nein \u2014 schickt der Azubi einen Freigabe-Link, l\u00e4sst sich die Woche ohne Konto und ohne Anmeldung ansehen und abzeichnen."}},
+        {"@type":"Question","name":"Wie kommen die Berichtsheft-Wochen zum Ausbilder?","acceptedAnswer":{"@type":"Answer","text":"\u00dcber den Betrieb: Der Ausbilder erzeugt einen Einladungscode, der Azubi tr\u00e4gt ihn in seinem Berichtsheft ein. Danach erscheint jede fertige Woche in der Ausbilder-\u00dcbersicht, ohne dass jemand etwas verschicken muss. Alternativ schickt der Azubi je Woche einen Link oder zeigt einen QR-Code."}},
+        {"@type":"Question","name":"Sieht ein Ausbilder alle Azubis auf einen Blick?","acceptedAnswer":{"@type":"Answer","text":"Ja. Die \u00dcbersicht zeigt je Azubi das Lehrjahr, die letzte Einreichung und alle Wochen, dazu Kennzahlen: wie viele Wochen auf eine Freigabe warten, wie viele bereits abgezeichnet sind und welche \u00e4lteste Woche zu lange liegt."}},
+        {"@type":"Question","name":"Werden die Berichtshefte auf einen Server hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Beim Weg mit Konto ja: Die eingereichten Wochen liegen im Bereich des Ausbildungsbetriebs, und Zugriffsregeln in der Datenbank stellen sicher, dass ein Betrieb nur seine eigenen Azubis sieht. Beim Weg \u00fcber den Link nicht: Dort steckt die Woche im Link selbst, hinter dem Rautezeichen \u2014 und dieser Teil einer Adresse wird nicht an den Server geschickt."}},
+        {"@type":"Question","name":"Erf\u00fcllt die \u00dcbersicht die Pr\u00fcfpflicht nach \u00a714 BBiG?","acceptedAnswer":{"@type":"Answer","text":"Sie unterst\u00fctzt sie. Ausbildungsnachweise sind mindestens einmal im Monat zu pr\u00fcfen; die \u00dcbersicht weist auf die \u00e4lteste unbearbeitete Woche hin, sobald sie \u00fcber einen Monat alt ist. Jede Entscheidung bleibt mit Name und Zeitpunkt im Pr\u00fcfverlauf stehen."}},
+        {"@type":"Question","name":"K\u00f6nnen zwei Ausbilder denselben Betrieb betreuen?","acceptedAnswer":{"@type":"Answer","text":"Ja. Ein Ausbilder erzeugt daf\u00fcr einen befristeten Vertretungscode. Wer ihn einl\u00f6st, sieht dieselben Wochen und kann dieselben Entscheidungen treffen. Jede Entscheidung bleibt unter dem Namen der Person stehen, die sie getroffen hat \u2014 auch die einer Urlaubsvertretung."}},
+        {"@type":"Question","name":"Was passiert, wenn ein Azubi eine bereits abgezeichnete Woche \u00e4ndert?","acceptedAnswer":{"@type":"Answer","text":"Die Woche wird wieder als offen gef\u00fchrt und als nach der Freigabe ge\u00e4ndert gekennzeichnet. Die alte Unterschrift wandert nicht in das PDF, und der Ausbilder entscheidet erneut."}},
+        {"@type":"Question","name":"Kostet die Ausbilder-\u00dcbersicht etwas?","acceptedAnswer":{"@type":"Answer","text":"Nein. MyWorkLog ist kostenlos und werbefrei, das gilt auch f\u00fcr den Zugang der Ausbildungsbetriebe. Es gibt keine Lizenz je Azubi und keinen Vertrag."}}
+      ]
+    }
+    </script>
+
+    <script type="application/ld+json" data-ld-id="webapp">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "MyWorkLog Ausbilder-\u00dcbersicht",
+      "description": "\u00dcbersicht f\u00fcr Ausbildungsbetriebe: Berichtsheft-Wochen aller Azubis pr\u00fcfen, abzeichnen oder mit Anmerkung zur\u00fcckgeben. Mit Konto als Sammel\u00fcbersicht, ohne Konto \u00fcber einen Freigabe-Link je Woche.",
+      "url": "https://myworklog.de/ausbilder/",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "de",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Ausbilderinnen und Ausbilder in Ausbildungsbetrieben"
+      },
+      "featureList": [
+        "Sammel\u00fcbersicht aller Azubis eines Ausbildungsbetriebs",
+        "Wochen best\u00e4tigen oder mit Anmerkung zur\u00fcckgeben",
+        "Hinweis auf die monatliche Pr\u00fcffrist nach \u00a714 BBiG",
+        "Pr\u00fcfverlauf mit Name, Zeitpunkt und Signatur",
+        "Mehrere Ausbilder je Betrieb, Urlaubsvertretung per befristetem Code",
+        "Erkennt \u00c4nderungen an einer bereits abgezeichneten Woche",
+        "Einzelne Woche ohne Konto \u00fcber Freigabe-Link oder QR-Code"
+      ],
+      "author": { "@type": "Organization", "name": "MyWorkLog", "url": "https://myworklog.de" }
+    }
+    </script>
+
+    <script type="application/ld+json" data-ld-id="breadcrumb">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "MyWorkLog", "item": "https://myworklog.de/" },
+        { "@type": "ListItem", "position": 2, "name": "Ausbilder-\u00dcbersicht", "item": "https://myworklog.de/ausbilder/" }
+      ]
+    }
+    </script>
 
     <style>
         :root {
@@ -45,7 +108,7 @@
             --success: #10b981;     --success-rgb: 16, 185, 129;
             --danger: #ef4444;      --danger-rgb: 239, 68, 68;
             --warning: #f59e0b;     --warning-rgb: 245, 158, 11;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
             --radius: 16px;
             --radius-sm: 8px;
@@ -63,6 +126,10 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* Formularelemente erben die Schrift NICHT von selbst — ohne diese
+           Zeile stehen Knoepfe und Felder in der Systemschrift des
+           Betriebssystems (CLAUDE.md). Bewusst nur font-family. */
+        button, input, select, textarea, optgroup { font-family: inherit; }
 
         body {
             font-family: var(--font-main);
@@ -841,6 +908,41 @@
         .ab-note-t { font-size: 0.88rem; color: var(--text-muted); }
         .ab-note-t + .ab-note-t { margin-top: 8px; }
 
+        /* ── Die zwei Wege ───────────────────────────────────────
+           Bewusst KEINE zwei gleich grossen Karten nebeneinander: welcher
+           Weg fuehrt, ist die Aussage des Abschnitts. Der Kontoweg traegt
+           Flaeche und Akzentkante, der Link-Weg steht als ruhige Liste
+           darunter. */
+        .ab-way { margin-top: 30px; }
+        .ab-way.is-lead {
+            padding: 22px 22px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 2px solid var(--primary);
+            border-radius: var(--radius);
+        }
+        .ab-way-t { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.012em; }
+        .ab-way.is-lead .ab-way-t { font-size: 1.2rem; }
+        .ab-way-s { font-size: 0.93rem; color: var(--text-muted); margin-top: 8px; max-width: 58ch; }
+        .ab-feats { list-style: none; margin-top: 16px; }
+        .ab-feats li {
+            position: relative; padding: 10px 0 10px 18px;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem; color: var(--text-muted); max-width: 62ch;
+        }
+        .ab-feats li::before {
+            content: ""; position: absolute; left: 0; top: 17px;
+            width: 6px; height: 6px; border-radius: 50%;
+            background: rgba(var(--primary-rgb), 0.55);
+        }
+        .ab-way-note { font-size: 0.84rem; color: var(--text-faint); margin-top: 14px; max-width: 62ch; }
+        .ab-foot-link { margin-top: 32px; font-size: 0.88rem; }
+        .ab-foot-link a {
+            color: var(--text-muted); text-decoration: underline;
+            text-underline-offset: 3px; transition: color 0.2s ease;
+        }
+        .ab-foot-link a:hover { color: var(--text-main); }
+
         .ab-cta {
             display: inline-flex; align-items: center; gap: 8px; margin-top: 24px;
             padding: 12px 20px; border-radius: var(--radius-sm);
@@ -848,7 +950,7 @@
             font-size: 0.92rem; font-weight: 600; text-decoration: none;
             transition: all 0.2s ease;
         }
-        .ab-cta:hover { filter: brightness(1.1); }
+        .ab-cta:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
         .ab-cta svg { width: 16px; height: 16px; }
 
         /* ── Fehler ──────────────────────────────────────────────── */
@@ -876,35 +978,63 @@
     <main class="ab-wrap">
 
         <!-- ══ Leerzustand: was ist diese Seite ══════════════════════ -->
+        <!-- 🔴 Dieser Block ist der EINZIGE Text, den eine Suchmaschine auf
+             dieser Seite zu sehen bekommt. Das Cockpit darunter (#abKonto) wird
+             per JS in eine leere, versteckte Sektion gerendert und nur bei
+             angemeldetem Ausbilder — ein Crawler sieht davon nichts. Bis
+             September 2026 stand hier deshalb ausschliesslich der Link-Weg samt
+             "Sie brauchen dafuer kein Konto", und Googles KI-Uebersicht gab
+             genau das als Beschreibung der Seite wieder. Wer hier kuerzt,
+             kuerzt an der oeffentlichen Beschreibung des Produkts. -->
         <section id="abIntro">
             <p class="ab-eyebrow">Für Ausbilderinnen und Ausbilder</p>
-            <h1 class="ab-title">Ausbildungsnachweis ansehen und freigeben</h1>
-            <p class="ab-lead">Diese Seite zeigt eine einzelne Berichtsheft-Woche eines Azubis, damit Sie sie bestätigen oder zur Überarbeitung zurückgeben können. Sie brauchen dafür kein Konto und müssen nichts installieren.</p>
+            <h1 class="ab-title">Berichtshefte Ihrer Azubis prüfen und abzeichnen</h1>
+            <p class="ab-lead">Diese Seite hat zwei Betriebsarten. Mit einem Konto ist sie die Übersicht über alle Azubis Ihres Betriebs und deren Wochen. Ohne Konto zeigt sie eine einzelne Woche — die, deren Link Ihr Azubi Ihnen geschickt hat.</p>
 
-            <ol class="ab-steps">
-                <li class="ab-step">
-                    <span class="ab-step-n">1</span>
-                    <span class="ab-step-t">Ihr Azubi zeigt Ihnen einen QR-Code oder schickt Ihnen einen Link.</span>
-                </li>
-                <li class="ab-step">
-                    <span class="ab-step-n">2</span>
-                    <span class="ab-step-t">Sie lesen die Woche hier und tippen auf Bestätigen oder Zurückgeben.</span>
-                </li>
-                <li class="ab-step">
-                    <span class="ab-step-n">3</span>
-                    <span class="ab-step-t">Sie erhalten einen kurzen Antwort-Code, den Ihr Azubi mit der Handykamera abscannt. Danach steht Ihre Entscheidung in seinem Berichtsheft.</span>
-                </li>
-            </ol>
+            <section class="ab-way is-lead">
+                <h2 class="ab-way-t">Mit Konto: alle Azubis an einem Ort</h2>
+                <p class="ab-way-s">Ihre Azubis verbinden ihr Berichtsheft einmalig über einen Einladungscode mit Ihrem Betrieb. Danach erscheint jede fertige Woche hier von selbst. Sie sammeln nichts ein, drucken nichts aus und verwalten keine Links.</p>
+                <ul class="ab-feats">
+                    <li>Offene Wochen zuerst, mit Zeitraum, Tagen und Tätigkeiten wie im Nachweis.</li>
+                    <li>Bestätigen mit einem Klick, Zurückgeben mit Anmerkung. Ihre Entscheidung steht danach im Berichtsheft des Azubis.</li>
+                    <li>Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen. Die Übersicht meldet, welche Woche zu lange liegt.</li>
+                    <li>Jede Entscheidung bleibt mit Name und Zeitpunkt im Prüfverlauf und wird auf Ihrem Gerät signiert.</li>
+                    <li>Mehrere Ausbilder je Betrieb, auch als Urlaubsvertretung über einen befristeten Code.</li>
+                    <li>Ändert ein Azubi eine Woche nach der Freigabe, führt die Übersicht sie wieder als offen.</li>
+                </ul>
 
-            <div class="ab-note">
-                <p class="ab-note-t">Die Woche steckt im Link selbst. Sie wird nicht an einen Server übertragen und nirgends gespeichert — der Teil einer Adresse hinter dem Rautezeichen verlässt das Gerät nicht.</p>
-                <p class="ab-note-t">Ohne einen solchen Link hat diese Seite keinen Inhalt anzuzeigen.</p>
-            </div>
+                <a class="ab-cta" href="/?cloud=login&amp;back=ausbilder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+                    <span>Anmelden und Übersicht öffnen</span>
+                </a>
+                <p class="ab-way-note">Noch kein Betrieb hinterlegt? Nach dem Anmelden legen Sie ihn hier an und erzeugen den ersten Einladungscode. Der Weg über ein Konto ist neu — der Weg über den Link darunter bleibt unverändert bestehen.</p>
+            </section>
 
-            <a class="ab-cta" href="/">
-                <span>MyWorkLog ansehen</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-            </a>
+            <section class="ab-way">
+                <h2 class="ab-way-t">Ohne Konto: eine einzelne Woche über den Link</h2>
+                <p class="ab-way-s">Für Betriebe, die kein Konto anlegen möchten. Sie brauchen nichts weiter als den Link oder den QR-Code Ihres Azubis.</p>
+
+                <ol class="ab-steps">
+                    <li class="ab-step">
+                        <span class="ab-step-n">1</span>
+                        <span class="ab-step-t">Ihr Azubi zeigt Ihnen einen QR-Code oder schickt Ihnen einen Link.</span>
+                    </li>
+                    <li class="ab-step">
+                        <span class="ab-step-n">2</span>
+                        <span class="ab-step-t">Sie lesen die Woche hier und tippen auf Bestätigen oder Zurückgeben.</span>
+                    </li>
+                    <li class="ab-step">
+                        <span class="ab-step-n">3</span>
+                        <span class="ab-step-t">Sie erhalten einen kurzen Antwort-Code, den Ihr Azubi mit der Handykamera abscannt. Danach steht Ihre Entscheidung in seinem Berichtsheft.</span>
+                    </li>
+                </ol>
+
+                <div class="ab-note">
+                    <p class="ab-note-t">Bei diesem Weg steckt die Woche im Link selbst. Sie wird nicht an einen Server übertragen und nirgends gespeichert — der Teil einer Adresse hinter dem Rautezeichen verlässt das Gerät nicht.</p>
+                </div>
+            </section>
+
+            <p class="ab-foot-link"><a href="/">Was MyWorkLog sonst noch macht</a></p>
         </section>
 
         <!-- ══ Fehler ════════════════════════════════════════════════ -->
@@ -1014,13 +1144,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.9.18"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.9.18"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.9.19"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.9.19"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.18"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.9.19"></script>
 
     <script>
     (function () {
