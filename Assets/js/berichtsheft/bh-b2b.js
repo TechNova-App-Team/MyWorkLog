@@ -81,10 +81,20 @@
         return clientPromise;
     }
 
+    /* 🔴 getSession() statt getUser(): getUser() geht bei JEDEM Aufruf ans
+       Netz (/auth/v1/user), getSession() liest die Sitzung aus dem
+       localStorage und frischt sie nur auf, wenn das Token abgelaufen ist.
+       Diese Funktion steht vor fast jeder B2B-Operation, und ein Sync ueber
+       zwoelf Wochen ruft sie zwoelfmal. Gemessen am 10.09.2026 im Auth-Log:
+       1707 /user-Abrufe an einem Tag, 59 davon in EINER Minute.
+       Der Netzabruf kaufte dabei nichts: welche Zeilen dieses Konto sehen und
+       schreiben darf, entscheidet die RLS am Server — dieser Client zeigt nur
+       an, was dort ohnehin erzwungen wird. Ist die Sitzung serverseitig weg,
+       schlaegt die naechste Abfrage mit 401/403 fehl, nicht diese Zeile. */
     async function benutzer(sb) {
-        const { data, error } = await sb.auth.getUser();
-        if (error || !data || !data.user) return null;
-        return data.user;
+        const { data, error } = await sb.auth.getSession();
+        if (error || !data || !data.session) return null;
+        return data.session.user || null;
     }
 
     // Anzeigename des angemeldeten Kontos, wenn im Profil hinterlegt.
@@ -1199,6 +1209,13 @@
     // ── Export ───────────────────────────────────────────────────────
     window.BHB2B = {
         angemeldet: bhb2bAngemeldet,
+        /* 🔴 Der EINE Supabase-Client dieser Seite. Wer daneben einen eigenen
+           `createClient()` aufmacht, bekommt einen zweiten GoTrueClient auf
+           demselben localStorage-Schluessel: zwei Auffrisch-Zeitgeber, zwei
+           Sitzungen im Speicher, und nach einem Abmelden haelt der eine noch
+           das tote Token des anderen fest. Deshalb wird er hier
+           herausgereicht statt nebenan neu gebaut. */
+        client: client,
         status: bhb2bStatus,
         statusVergessen: statusVergessen,
         betriebGruenden: bhb2bBetriebGruenden,

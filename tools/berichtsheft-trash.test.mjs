@@ -90,7 +90,10 @@ lsStore.set('sb-test-auth-token', 'dummy-token');
 
 const mockClient = {
     auth: {
-        getUser: async () => ({ data: { user: { id: 'usr-123' } }, error: null })
+        // Nur getSession(): bh-b2b.js liest die Sitzung aus dem Speicher statt
+        // bei jedem Aufruf /auth/v1/user zu fragen. Ein Rueckfall auf getUser()
+        // laesst diesen Test sterben — so soll es sein.
+        getSession: async () => ({ data: { session: { user: { id: 'usr-123' } } }, error: null })
     },
     from: (tabelle) => {
         let currentTable = tabelle;

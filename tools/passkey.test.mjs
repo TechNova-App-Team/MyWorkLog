@@ -166,6 +166,139 @@ console.log('\n5. Englische Fassung');
     }
 }
 
+// ── 6. Sparsamkeit: die Liste wird nur geholt, wenn sie jemand sieht ───────
+//
+// Gemessener Anlass (Auth-Log des Projekts, 10.09.2026): 670 Abrufe von
+// /auth/v1/passkeys an EINEM Tag, drei bis fuenf je Auth-Ereignis. Supabase
+// feuert onAuthStateChange beim Laden, beim Token-Refresh und beim Wechsel auf
+// den Reiter; daran hing renderPasskeySection() ungefiltert. Der Abschnitt
+// steht im Einstellungs-Dialog, Reiter „Cloud“ — zu war er fast immer.
+//
+// Der Test laedt die echten Funktionen aus der Datei und ZAEHLT die Aufrufe.
+// Eine Behauptung ueber den Quelltext haette hier nicht gereicht: sie waere
+// auch gruen, wenn der Aufruf nur verschoben statt vermieden wird.
+console.log('\n6. Sparsamkeit (kein Netzabruf fuer ein geschlossenes Panel)');
+{
+    const { JSDOM } = await import('jsdom');
+
+    const von = API.indexOf('    let passkeyCache = null;');
+    const bis = API.indexOf('    function passkeyMeldung(');
+    ok('Codeblock gefunden', von > 0 && bis > von);
+
+    const dom = new JSDOM(`<!doctype html><body>
+        <div class="modal" id="settingsModal" style="display:none">
+          <div id="settings-tab-cloud" style="display:none">
+            <div id="passkeySection" style="display:none"><div id="passkeyList"></div></div>
+          </div>
+        </div></body>`);
+    const { window } = dom;
+    const doc = window.document;
+
+    let abrufe = 0;
+    window.cloudSync = {
+        passkeySupported: () => true,
+        listPasskeys: async () => { abrufe++; return [{ id: 'a1', friendly_name: 'Windows Hello' }]; }
+    };
+
+    // getComputedStyle ist im Browser ein Global des window — hier muss es
+    // von Hand hinein, sonst stirbt passkeyPanelOffen() an ReferenceError.
+    const bauen = new Function('window', 'document', 'getComputedStyle', 'esc', 'passkeyMoeglich',
+        API.slice(von, bis) + '\n; return renderPasskeySection;');
+    const render = bauen(window, doc, el => window.getComputedStyle(el), x => String(x), () => true);
+
+    const oeffnen = () => {
+        doc.getElementById('settingsModal').style.display = 'flex';
+        doc.getElementById('settings-tab-cloud').style.display = 'block';
+    };
+    const schliessen = () => {
+        doc.getElementById('settingsModal').style.display = 'none';
+        doc.getElementById('settings-tab-cloud').style.display = 'none';
+    };
+
+    // Der Normalfall: Dialog zu, Auth-Ereignisse prasseln.
+    for (let i = 0; i < 20; i++) await render(true);
+    ok('20 Auth-Ereignisse bei geschlossenem Dialog → kein Abruf', abrufe === 0, 'Abrufe: ' + abrufe);
+
+    // Gegenprobe: der Zaehler KANN steigen — sonst prueft die Zeile oben nichts.
+    oeffnen();
+    await render(true);
+    ok('Gegenprobe: offener Reiter holt die Liste', abrufe === 1, 'Abrufe: ' + abrufe);
+    ok('… und zeichnet sie', doc.getElementById('passkeyList').innerHTML.includes('Windows Hello'));
+
+    // Ist sie einmal da, kostet jedes weitere Ereignis nichts mehr.
+    for (let i = 0; i < 10; i++) await render(true);
+    ok('weitere Ereignisse laufen aus dem Speicher', abrufe === 1, 'Abrufe: ' + abrufe);
+
+    // Abmelden entwertet die Liste — sie gehoert dem alten Konto.
+    schliessen();
+    await render(false);
+    ok('abgemeldet: Abschnitt weg', doc.getElementById('passkeySection').style.display === 'none');
+    oeffnen();
+    await render(true);
+    ok('nach Kontowechsel wird neu geholt', abrufe === 2, 'Abrufe: ' + abrufe);
+
+    // Und der Ausloeser muss verdrahtet sein, sonst bliebe der Abschnitt leer.
+    const ohne = ohneKomm(API);
+    ok('Cloud-Reiter ruft renderPasskeySection', /tab === 'cloud'[\s\S]{0,400}renderPasskeySection\(/.test(ohne));
+
+    /* Der Ausloeser haengt an einer Umhuellung von window.switchSettingsTab, und
+       die installiert sich NUR, wenn die Funktion beim Auswerten von
+       api-cloud-sync.js schon existiert (`if (typeof _origSwitchTabCloud ===
+       'function')`). Zieht jemand die Datei in index.template.html nach vorn,
+       faellt die Umhuellung still aus: kein Fehler, keine Konsole — der
+       Passkey-Abschnitt bliebe dann einfach leer, und die API-Status-Ansicht
+       friert beim Reiterwechsel ein. Deshalb steht die Reihenfolge hier fest. */
+    const TPL = lies('index.template.html');
+    const iPanel = TPL.indexOf('components/core/settings-panel.js');
+    const iApi = TPL.indexOf('components/core/api-cloud-sync.js');
+    ok('beide Skripte stehen im Template', iPanel > 0 && iApi > 0);
+    ok('settings-panel.js laedt VOR api-cloud-sync.js', iPanel < iApi,
+       'settings-panel@' + iPanel + ', api-cloud-sync@' + iApi);
+    ok('Umhuellung prueft die Funktion, statt sie anzunehmen',
+       ohne.includes("typeof _origSwitchTabCloud === 'function'"));
+}
+
+// ── 6b. Der Bereitschafts-Ping erfindet keinen Ausfall ───────────────────
+//
+// Steht hier, weil es dieselbe Datei und dieselbe Frage ist: was schickt die
+// Cloud-Ansicht an den Server, und was bringt es. Der alte Ping ging auf die
+// Wurzel `/rest/v1/` — die ist service_role-only, und ohne Sitzung darf der
+// Anon-Schluessel an diesem Projekt gar keine Tabelle lesen. Gemessen am
+// 10.09.2026: 401 in allen vier Varianten (HEAD/GET x mit/ohne Authorization).
+// Ein Ping, der nie gelingen kann, meldet keinen Ausfall — er erfindet einen.
+console.log('\n6b. Bereitschafts-Ping');
+{
+    const rIdx = API.indexOf('function refreshApiStatus');
+    ok('refreshApiStatus existiert', rIdx > 0);
+    const R = ohneKomm(API.slice(rIdx, API.indexOf('\n    }\n', rIdx)));
+
+    ok('kein Ping mehr auf die service_role-Wurzel', !/'\/rest\/v1\/'|\+ '\/rest\/v1\/'/.test(R));
+    ok('REST-Ping haengt an einer Sitzung', /access_token/.test(R) && /if \(token\)/.test(R));
+    ok('Gegenprobe: es gibt ueberhaupt noch einen Ping', /auth\/v1\/health/.test(R));
+
+    // Der fetch-Patch schreibt jede Supabase-Anfrage mit. Wer hier zusaetzlich
+    // protokolliert, hat jeden Ping doppelt im Verlauf — einmal unter seinem
+    // echten Pfad, einmal unter einem erfundenen.
+    ok('protokolliert nicht ein zweites Mal von Hand', !/apiStatusMonitor\.record/.test(R));
+    ok('Gegenprobe: der Patch protokolliert weiterhin',
+       /apiStatusMonitor\.record\(method, path, resp\.status/.test(ohneKomm(API)));
+    ok('die erfundene Adresse ist aus dem Code raus',
+       !/rest-admin/.test(ohneKomm(API)), 'nur noch im Kommentar erlaubt');
+}
+
+// ── 7. Abmelden betrifft dieses Geraet, nicht alle ──────────────────────
+//
+// Ohne `scope` meldet Supabase GLOBAL ab und wirft jede Sitzung des Kontos weg
+// — auch die auf dem Handy. Die merkt davon nichts, bis das Auffrischen mit
+// 400 „Refresh Token Not Found“ scheitert und der Anmelde-Dialog dasteht.
+console.log('\n7. signOut-Reichweite');
+{
+    ok('signOut meldet nur dieses Geraet ab',
+       /signOut\(\s*\{\s*scope:\s*'local'\s*\}\s*\)/.test(INT_C));
+    ok('Gegenprobe: kein signOut ohne Reichweite uebrig',
+       !/signOut\(\s*\)/.test(INT_C));
+}
+
 console.log(`\n${geprueft - fehler}/${geprueft} bestanden`);
 if (geprueft < 35) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
 process.exit(fehler ? 1 : 0);

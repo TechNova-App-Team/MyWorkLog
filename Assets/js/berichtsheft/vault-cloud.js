@@ -86,10 +86,20 @@
         return clientPromise;
     }
 
+    /* 🔴 getSession() statt getUser(): getUser() geht bei JEDEM Aufruf ans
+       Netz (/auth/v1/user), getSession() liest die Sitzung aus dem
+       localStorage und frischt sie nur auf, wenn das Token abgelaufen ist.
+       Diese Funktion steht vor fast jeder B2B-Operation, und ein Sync ueber
+       zwoelf Wochen ruft sie zwoelfmal. Gemessen am 10.09.2026 im Auth-Log:
+       1707 /user-Abrufe an einem Tag, 59 davon in EINER Minute.
+       Der Netzabruf kaufte dabei nichts: welche Zeilen dieses Konto sehen und
+       schreiben darf, entscheidet die RLS am Server — dieser Client zeigt nur
+       an, was dort ohnehin erzwungen wird. Ist die Sitzung serverseitig weg,
+       schlaegt die naechste Abfrage mit 401/403 fehl, nicht diese Zeile. */
     async function benutzer(c) {
-        const { data, error } = await c.auth.getUser();
-        if (error || !data || !data.user) return null;
-        return data.user;
+        const { data, error } = await c.auth.getSession();
+        if (error || !data || !data.session) return null;
+        return data.session.user || null;
     }
 
     // ── Abbildung Zeile <-> Spiegel ────────────────────────────────────────

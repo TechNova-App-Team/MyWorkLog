@@ -51,8 +51,11 @@ function baue({ sitzung = true, zeile = null, userFehlt = false, fehlerBeim = nu
     // Die Bibliothek wird per <script> nachgeladen. jsdom fuehrt das nicht aus,
     // also legen wir sie vorher hin und zaehlen mit, ob ueberhaupt geladen wird.
     const bauer = () => ({
-        auth: { getUser: async () => userFehlt ? { data: null, error: 'kein User' }
-                                               : { data: { user: { id: 'user-1' } }, error: null } },
+        // Nur getSession(): der Client fragt die Sitzung aus dem Speicher ab,
+        // nicht bei jedem Aufruf den Server (/auth/v1/user). Faellt jemand
+        // auf getUser() zurueck, stirbt dieser Test — so soll es sein.
+        auth: { getSession: async () => userFehlt ? { data: { session: null }, error: 'keine Sitzung' }
+                                                  : { data: { session: { user: { id: 'user-1' } } }, error: null } },
         from(t) {
             mitschrift.tabelle = t;
             return {

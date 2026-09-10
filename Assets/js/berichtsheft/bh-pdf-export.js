@@ -440,9 +440,11 @@ async function exportBulkPDFCore() {
         if (window.BHB2B && BHB2B.angemeldet()) {
             const st = await BHB2B.status();
             if (st && st.rolle === 'azubi') {
-                let sb = window.cloudSync && window.cloudSync.client;
-                if (!sb && window.supabase && typeof SUPABASE_CONFIG !== 'undefined') {
-                    sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY);
+                // Den vorhandenen Client nehmen, nie einen zweiten bauen
+                // (Begruendung steht bei BHB2B.client).
+                let sb = (window.cloudSync && window.cloudSync.client) || null;
+                if (!sb && window.BHB2B && typeof BHB2B.client === 'function') {
+                    sb = await BHB2B.client();
                 }
                 if (!sb) throw new Error('Supabase Client nicht bereit');
                 const { data: { user } } = await sb.auth.getUser();

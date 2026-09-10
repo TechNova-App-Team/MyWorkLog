@@ -315,32 +315,52 @@
         apiStatusMonitor.render();
     }
     
+    /* 🔴 Der Bereitschafts-Ping auf `/rest/v1/` konnte NIE gelingen: die Wurzel
+       von PostgREST ist ausdruecklich service_role-only ("Only the
+       `service_role` API key can be used for this endpoint"), und der
+       Anon-Schluessel darf an diesem Projekt ohne Sitzung ueberhaupt keine
+       Tabelle lesen — jede liegt hinter RLS ("permission denied for table
+       users"). Gemessen am 10.09.2026, alle vier Varianten 401: HEAD und GET,
+       mit und ohne Authorization-Kopf. Der Ping hat also keinen Ausfall
+       gemeldet, sondern einen erfunden — rot in der Konsole, ein 4xx im eigenen
+       Verlauf, und ab der Haelfte faerbt die Uptime-Leiste ihr Segment gelb.
+       Dieselbe Abfrage MIT Sitzungs-Token antwortet 200; deshalb laeuft sie nur
+       noch dann, und dann sagt sie auch etwas aus (Gateway, PostgREST und RLS in
+       einem Zug).
+
+       Zweiter Punkt: hier wird nichts mehr von Hand protokolliert. Der
+       fetch-Patch weiter unten schreibt JEDE Supabase-Anfrage mit, also stand
+       jeder Ping doppelt im Verlauf — einmal unter seinem echten Pfad und einmal
+       unter `/rest-admin/v1/ready`, einer Adresse, die nie jemand angefragt hat.
+       Wer die Arbeit tut, protokolliert sie: das ist der Patch, nicht der
+       Aufrufer. */
     function refreshApiStatus() {
-        // Ping Supabase health endpoints and record results
         const baseUrl = typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG.URL : null;
         if (!baseUrl) {
             apiStatusMonitor.render();
             return;
         }
-        
-        const healthChecks = [
-            { method: 'GET', path: '/auth/v1/health', url: baseUrl + '/auth/v1/health' },
-            { method: 'HEAD', path: '/rest-admin/v1/ready', url: baseUrl + '/rest/v1/' }
+
+        const anon = typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG.ANON_KEY : '';
+        const token = (window.cloudSync && window.cloudSync.session
+                       && window.cloudSync.session.access_token) || null;
+
+        const pings = [
+            { url: baseUrl + '/auth/v1/health', method: 'GET', auth: anon }
         ];
-        
-        healthChecks.forEach(check => {
-            const startTime = Date.now();
-            fetch(check.url, { method: check.method === 'HEAD' ? 'HEAD' : 'GET', mode: 'cors', headers: { 'apikey': typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG.ANON_KEY : '' } })
-                .then(resp => {
-                    apiStatusMonitor.record(check.method, check.path, resp.status, startTime, false);
-                    apiStatusMonitor.render();
-                })
-                .catch(async () => {
-                    const isAdBlocked = await detectAdBlocker();
-                    apiStatusMonitor.record(check.method, check.path, 0, startTime, isAdBlocked);
-                    apiStatusMonitor.render();
-                });
+        if (token) {
+            pings.push({ url: baseUrl + '/rest/v1/users?select=id&limit=1', method: 'HEAD', auth: token });
+        }
+
+        pings.forEach(ping => {
+            fetch(ping.url, {
+                method: ping.method,
+                mode: 'cors',
+                headers: { 'apikey': anon, 'Authorization': 'Bearer ' + ping.auth }
+            }).catch(() => { /* der Patch hat den Fehlschlag schon vermerkt */ });
         });
+
+        apiStatusMonitor.render();
     }
     
     // Intercept Supabase fetch calls to auto-log
@@ -394,6 +414,14 @@
             _origSwitchTabCloud.call(this, tab);
             if (tab === 'cloud') {
                 apiStatusMonitor.render();
+                // Erst hier ist der Passkey-Abschnitt sichtbar — und erst hier
+                // lohnt sein Netzabruf.
+                try {
+                    const eingeloggt = !!(window.cloudSync
+                                          && typeof window.cloudSync.isLoggedIn === 'function'
+                                          && window.cloudSync.isLoggedIn());
+                    renderPasskeySection(eingeloggt);
+                } catch (e) { /* Abschnitt bleibt leer, der Dialog nicht */ }
             }
         };
     }
@@ -492,18 +520,48 @@
                   && window.cloudSync.passkeySupported());
     }
 
+    /* 🔴 Die Liste wird geholt, wenn der Cloud-Reiter aufgeht — NICHT bei
+       jedem Auth-Ereignis. Vorher rief updateCloudSyncUI() diese Funktion bei
+       jedem Ereignis, das Supabase feuert: beim Laden, beim Token-Refresh, beim
+       Zurueckwechseln auf den Reiter, und beim Start gleich dreimal (Flush,
+       INITIAL_SESSION, Poller in mobile-nav-extras.js). Gemessen am 10.09.2026
+       im Auth-Log des Projekts: 670 Abrufe von /auth/v1/passkeys an EINEM Tag,
+       drei bis fuenf je Ereignis — fast alle fuer einen Abschnitt, der im
+       geschlossenen Einstellungs-Dialog stand und also niemanden erreichte.
+       Regel dahinter: eine Ansicht, die niemand sieht, laedt auch nichts. */
+    let passkeyCache = null;        // null = noch nie geholt / durch Aenderung entwertet
+
+    function passkeyPanelOffen() {
+        const modal = document.getElementById('settingsModal');
+        const tab = document.getElementById('settings-tab-cloud');
+        if (!modal || !tab) return false;
+        return getComputedStyle(modal).display !== 'none'
+            && getComputedStyle(tab).display !== 'none';
+    }
+
     async function renderPasskeySection(isLoggedIn) {
         const box = document.getElementById('passkeySection');
         if (!box) return;
 
-        if (!isLoggedIn || !passkeyMoeglich()) { box.style.display = 'none'; return; }
+        if (!isLoggedIn || !passkeyMoeglich()) {
+            box.style.display = 'none';
+            passkeyCache = null;    // die Liste gehoerte dem abgemeldeten Konto
+            return;
+        }
         box.style.display = '';
 
         const liste = document.getElementById('passkeyList');
         if (!liste) return;
 
-        let keys = [];
-        try { keys = await window.cloudSync.listPasskeys(); } catch (e) { keys = []; }
+        // Zu und nichts im Speicher: dann gibt es nichts zu zeichnen und erst
+        // recht nichts zu holen. Das Oeffnen des Reiters ruft hier erneut an.
+        if (passkeyCache === null && !passkeyPanelOffen()) return;
+
+        if (passkeyCache === null) {
+            try { passkeyCache = await window.cloudSync.listPasskeys(); }
+            catch (e) { passkeyCache = []; }
+        }
+        const keys = passkeyCache;
 
         if (!keys.length) {
             liste.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem; margin:0;">Noch keiner eingerichtet.</p>`;
@@ -539,6 +597,7 @@
             const pk = await window.cloudSync.registerPasskey();
             passkeyMeldung('Passkey eingerichtet' + (pk && pk.friendly_name ? ': ' + pk.friendly_name : '')
                            + '. Beim nächsten Anmelden reicht jetzt Fingerabdruck oder Gesicht.', 'success');
+            passkeyCache = null;
             await renderPasskeySection(true);
         } catch (e) {
             passkeyMeldung(typeof authFehlerText === 'function' ? authFehlerText(e)
@@ -558,6 +617,7 @@
             // dann nichts, was wie ein Fehler aussieht.
             passkeyMeldung('Passkey entfernt. Im Schlüsselbund deines Geräts liegt er weiterhin — '
                            + 'dort musst du ihn getrennt löschen.', 'success');
+            passkeyCache = null;
             await renderPasskeySection(true);
         } catch (e) {
             passkeyMeldung(typeof authFehlerText === 'function' ? authFehlerText(e)

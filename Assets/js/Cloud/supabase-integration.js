@@ -393,7 +393,21 @@ class SupabaseCloudSync {
         }
 
         try {
-            const { error } = await this.client.auth.signOut();
+            /* 🔴 `scope: 'local'` ist Pflicht, nicht Feinschliff. Ohne Angabe
+               meldet Supabase GLOBAL ab: der Server wirft dabei jede Sitzung
+               dieses Kontos weg — auch die auf dem Handy, dem zweiten Browser
+               und im offenen Berichtsheft-Tab. Dort merkt niemand etwas, bis
+               das naechste Auffrischen mit
+               `400 Invalid Refresh Token: Refresh Token Not Found` scheitert;
+               danach steht der Anmelde-Dialog da, ohne dass der Nutzer sich je
+               abgemeldet haette. Genau das war der Grund fuer die taeglich
+               mehrfache Neuanmeldung (Auth-Log 10.09.2026: zwei solche 400er
+               und mehrere `Session not found`-403er kurz nach einem Abmelden
+               auf einem anderen Geraet).
+               Abmelden heisst hier: DIESES Geraet. Die anderen behalten ihre
+               Sitzung — wer sie wirklich alle beenden will, tut das im
+               Google-Konto. */
+            const { error } = await this.client.auth.signOut({ scope: 'local' });
             
             if (error) {
                 throw error;
