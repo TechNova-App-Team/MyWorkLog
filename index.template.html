@@ -505,6 +505,39 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
 </head>
 <body>
+    <!-- Fallback-Ladescreen: erscheint NUR bei spürbarer Verzögerung (> 3000ms).
+         Normales Laden bricht den Timer ab — 0ms Spinner, kein LCP-Impact. -->
+    <script>
+      (function() {
+        var timer = setTimeout(function() {
+          var ov = document.querySelector('.loading-overlay');
+          if (!ov && document.body) {
+            ov = document.createElement('div');
+            ov.className = 'loading-overlay';
+            ov.innerHTML = '<h2 class="shimmer-text">MyWorkLog wird geladen...</h2>';
+            document.body.appendChild(ov);
+          } else if (ov) {
+            ov.classList.remove('hidden');
+          }
+        }, 3000);
+        window._clearMwlLoader = function() {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          var ov = document.querySelector('.loading-overlay');
+          if (ov) {
+            ov.classList.add('hidden');
+            setTimeout(function() { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 300);
+          }
+        };
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+          window._clearMwlLoader();
+        } else {
+          document.addEventListener('DOMContentLoaded', window._clearMwlLoader);
+        }
+      })();
+    </script>
     <!-- Network Status Indicator -->
     <div class="net-status" id="netStatus">
         <div class="net-status-pill" id="netStatusPill" onclick="networkMonitor.togglePanel()">

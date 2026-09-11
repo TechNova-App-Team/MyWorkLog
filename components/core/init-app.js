@@ -410,6 +410,7 @@
         window._clsBC = 'before-renderWidgetManager';
         try { renderWidgetManager(); } catch(e) { console.error('Error rendering widget manager:', e); }
         window._clsBC = 'init-complete';
+        if (typeof hideLoadingSpinner === 'function') hideLoadingSpinner();
 
         // Warn user if accessing via localhost/127.0.0.1 on mobile devices (helps avoid mobile PWA 404 issue)
         try { detectLocalhostAndWarn(); } catch(e) { console.warn('detectLocalhostAndWarn failed', e); }

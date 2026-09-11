@@ -497,6 +497,13 @@
     }
 
     function hideLoadingSpinner() {
+        if (typeof window._clearMwlLoader === 'function') {
+            window._clearMwlLoader();
+        }
+        if (window._mwlLoadTimer) {
+            clearTimeout(window._mwlLoadTimer);
+            window._mwlLoadTimer = null;
+        }
         const overlay = document.querySelector('.loading-overlay');
         if (overlay) {
             overlay.classList.add('hidden');
@@ -504,17 +511,16 @@
         }
     }
 
-    // Zeige Spinner beim Start
-    showLoadingSpinner('MyWorkLog wird geladen...');
+    window.showLoadingSpinner = showLoadingSpinner;
+    window.hideLoadingSpinner = hideLoadingSpinner;
 
-    // Verstecke Spinner wenn alles geladen ist
+    // Sobald die App geladen ist: Lade-Timer stoppen & Spinner ausblenden
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(hideLoadingSpinner, 300);
-        });
+        document.addEventListener('DOMContentLoaded', hideLoadingSpinner);
     } else {
-        setTimeout(hideLoadingSpinner, 300);
+        hideLoadingSpinner();
     }
+    window.addEventListener('load', hideLoadingSpinner);
 
     // Call initialization on load
     if (document.readyState === 'loading') {

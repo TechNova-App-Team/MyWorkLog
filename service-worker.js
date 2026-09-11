@@ -367,6 +367,23 @@ self.addEventListener('fetch', event => {
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);
 
+    // Auf Localhost/127.0.0.1 immer Netzwerk zuerst, damit lokale Änderungen
+    // sofort ohne Version-Bump wirksam werden und Entwickler nicht im Cache festsitzen.
+    const isLocal = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+    if (isLocal) {
+      try {
+        const netResp = await fetch(request);
+        if (netResp.status === 200) {
+          cache.put(request, netResp.clone()).catch(() => {});
+        }
+        return netResp;
+      } catch (e) {
+        const treffer = await cache.match(request);
+        if (treffer) return treffer;
+        return new Response('', { status: 503 });
+      }
+    }
+
     const treffer = await cache.match(request);
     if (treffer) return treffer;
 
