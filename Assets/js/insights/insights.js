@@ -124,7 +124,7 @@ function animateValue(el, target, suffix, duration) {
         var progress = Math.min((ts - startTime) / duration, 1);
         var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
         var current = start + (target - start) * eased;
-        el.textContent = (isFloat ? current.toFixed(1) : Math.round(current)) + suffix;
+        el.textContent = (isFloat ? current.toFixed(1) : Math.round(current).toLocaleString(mwlLocale())) + suffix;
         if (progress < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -1726,6 +1726,104 @@ function renderCustomEvents(events) {
 }
 
 // =========================================
+//  RENDER: Cloudflare Edge & CDN (Infrastruktur)
+// =========================================
+function renderCloudflareEdge(cfData) {
+    var card = document.getElementById('cloudflareEdgeCard');
+    if (!card) return;
+
+    var reqEl      = document.getElementById('cfValRequests');
+    var bytesEl    = document.getElementById('cfValBytes');
+    var cacheEl    = document.getElementById('cfValCache');
+    var sslEl      = document.getElementById('cfValSsl');
+    var subReq     = document.getElementById('cfSubRequests');
+    var subBytes   = document.getElementById('cfSubBytes');
+    var subCache   = document.getElementById('cfSubCache');
+    var subThreats = document.getElementById('cfSubThreats');
+    var tbody      = document.getElementById('cfHistoryBody');
+
+    if (!cfData || !cfData.available || !cfData.totals) {
+        if (reqEl) reqEl.textContent = '—';
+        if (bytesEl) bytesEl.textContent = '—';
+        if (cacheEl) cacheEl.textContent = '—';
+        if (sslEl) sslEl.textContent = '—';
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Cloudflare API-Token noch nicht im Worker hinterlegt oder keine Edge-Daten für die letzten 72h.</td></tr>';
+        }
+        return;
+    }
+
+    var t = cfData.totals;
+    var totalReqs   = t.requests || 0;
+    var cachedReqs  = t.cachedRequests || 0;
+    var totalBytes  = t.bytes || 0;
+    var cachedBytes = t.cachedBytes || 0;
+    var encReqs     = t.encryptedRequests || 0;
+    var threats     = t.threats || 0;
+
+    var hitRatio = totalReqs > 0 ? (cachedReqs / totalReqs) : 0;
+    var sslRatio = totalReqs > 0 ? (encReqs / totalReqs) : 0;
+
+    if (reqEl) {
+        reqEl.textContent = totalReqs.toLocaleString(mwlLocale());
+        animateValue(reqEl, totalReqs, '');
+    }
+    if (subReq) {
+        subReq.textContent = fmt(cachedReqs) + ' aus Cache (' + (hitRatio * 100).toFixed(1) + '%)';
+    }
+
+    if (bytesEl) {
+        bytesEl.textContent = fmtBytes(totalBytes);
+    }
+    if (subBytes) {
+        subBytes.textContent = fmtBytes(cachedBytes) + ' Bandbreite gespart';
+    }
+
+    if (cacheEl) {
+        cacheEl.textContent = (hitRatio * 100).toFixed(1) + '%';
+    }
+    if (subCache) {
+        var byteCacheRatio = totalBytes > 0 ? ((cachedBytes / totalBytes) * 100).toFixed(1) : '0.0';
+        subCache.textContent = byteCacheRatio + '% Bandbreite gecached';
+    }
+
+    if (sslEl) {
+        sslEl.textContent = (sslRatio * 100).toFixed(1) + '%';
+    }
+    if (subThreats) {
+        subThreats.textContent = threats === 0 ? 'Keine Bedrohungen' : (fmt(threats) + ' Bedrohung' + (threats > 1 ? 'en' : '') + ' abgewehrt');
+    }
+
+    if (tbody && Array.isArray(cfData.history)) {
+        if (!cfData.history.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Keine Einträge für die letzten 72h.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = cfData.history.map(function(row) {
+            var hitPct = (row.cacheHitRatio * 100).toFixed(1);
+            var dStr = row.date;
+            try {
+                var parts = row.date.split('-');
+                if (parts.length === 3) {
+                    var dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                    dStr = dObj.toLocaleDateString(mwlLocale(), { weekday: 'short', day: '2-digit', month: '2-digit' });
+                }
+            } catch (e) {}
+
+            return '<tr>' +
+                '<td style="font-weight:500; font-family:var(--font-mono); font-size:0.75rem;">' + esc(dStr) + '</td>' +
+                '<td class="value">' + fmt(row.requests) + '</td>' +
+                '<td>' + hitPct + '%<div class="progress-bar"><div class="progress-fill green" style="width:' + hitPct + '%"></div></div></td>' +
+                '<td>' + fmtBytes(row.bytes) + '</td>' +
+                '<td style="color:var(--text-secondary);">' + fmtBytes(row.cachedBytes) + '</td>' +
+                '<td>' + (row.threats > 0 ? ('<span style="color:var(--red);font-weight:600;">' + fmt(row.threats) + '</span>') : '<span style="color:var(--sub);">0</span>') + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+}
+
+// =========================================
 //  LOAD ALL DATA — PostHog via Worker-Proxy
 // =========================================
 // Resilienz gegen PostHog-Rate-Limits (429): Der Proxy fächert ~22 HogQL-Queries
@@ -2039,9 +2137,10 @@ async function loadAll() {
             pvpSorted.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
             function(x) { return x; }, 'green');
 
-        // ── Aktivitäts-Puls, Ladeperformance, Feature-Nutzung ──────────────
+        // ── Aktivitäts-Puls, Ladeperformance, Feature-Nutzung, Cloudflare Edge ──────────
         renderActivityPulse(activity);
         renderVitals(lcp);
+        renderCloudflareEdge(d.cloudflare);
         renderCustomEvents(custEv);
 
         // ── Insights ───────────────────────────────────────────────────────
