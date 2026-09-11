@@ -660,8 +660,16 @@
             transition: margin-left 0.3s ease-in-out;
         }
 
-        .view-section { display: none; animation: fadeIn 0.4s ease forwards; }
+        .view-section { display: none; }
         .view-section.active { display: block; }
+        /* Die Einblendung laeuft erst ab dem ersten Ansichtswechsel (switchTab
+           setzt body.mwl-navigated). Beim Seitenaufruf lief sie mit und startete
+           das ganze Dashboard bei Deckkraft 0 — Chrome zaehlt Inhalt, der mit
+           opacity 0 gemalt wird, nicht als LCP-Kandidat, und die Animation
+           laeuft auf dem Compositor, ohne die Texte neu zu malen. Der Kandidat
+           #valTotal entstand deshalb erst beim naechsten Repaint durch das JS
+           (gemessen: 212 ms statt 100 ms warm, live 750 ms). */
+        body.mwl-navigated .view-section { animation: fadeIn 0.4s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 

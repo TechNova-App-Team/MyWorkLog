@@ -48,10 +48,16 @@
         var raf = 0;
         function apply() {
             raf = 0;
-            var h = vv ? vv.height : window.innerHeight;
+            // Erst alle Masse lesen, dann schreiben. innerHeight/visualViewport
+            // erzwingen Style+Layout; eine Custom Property am <html> dazwischen
+            // macht den ganzen Baum (~10.000 Elemente) wieder schmutzig, und die
+            // zweite Lesung rechnet alles noch einmal — gemessen 2 x 12 ms auf
+            // dem Desktop, vor dem ersten Paint.
+            var innerH = window.innerHeight;
+            var h = vv ? vv.height : innerH;
+            var kb = vv ? Math.max(0, Math.round(innerH - vv.height - vv.offsetTop)) : 0;
             root.style.setProperty('--viewport-height', Math.round(h) + 'px');
             root.style.setProperty('--vh', (h / 100) + 'px');
-            var kb = vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
             root.style.setProperty('--keyboard-inset', kb + 'px');
             root.classList.toggle('is-keyboard-open', kb > 120);
         }
@@ -136,13 +142,18 @@
         var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
                            window.navigator.standalone === true;
 
+        // Viewport-Masse VOR den Klassen und dem Stylesheet lesen: als
+        // defer-Skript laeuft init() direkt nach dem Parser auf einem sauberen
+        // Baum, die Lesung kostet dann nichts. Erst eine Klasse am <html> oder
+        // ein neues <style> davor erzwingt einen kompletten Style-Durchlauf.
+        setupViewportMetrics(root);
+
         root.classList.add(isTouch ? 'is-touch' : 'is-no-touch');
         if (isIOS) root.classList.add('is-ios');
         if (isAndroid) root.classList.add('is-android');
         if (isStandalone) root.classList.add('is-standalone');
 
         injectBaseCSS();
-        setupViewportMetrics(root);
         if (isTouch) {
             setupPressFeedback();
             setupKeyboardAwareFocus();

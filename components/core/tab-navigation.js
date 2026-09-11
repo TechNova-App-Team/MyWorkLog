@@ -6,6 +6,10 @@
         // ist per HTML default aktiv, kein Auto-Call beim Start) → kein Rausch-Event.
         if (typeof mwlEvent === 'function') mwlEvent('feature_genutzt', { feature: tabId });
 
+        // Schaltet die Einblendung der Ansichten frei (core.css) — beim
+        // Seitenaufruf bleibt sie aus, sonst startet das Dashboard bei
+        // Deckkraft 0 und der LCP rutscht auf den ersten JS-Repaint.
+        document.body.classList.add('mwl-navigated');
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
