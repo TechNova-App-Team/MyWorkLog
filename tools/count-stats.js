@@ -8,7 +8,8 @@
  * wuerde dort "1 Commit" ins Live-HTML schreiben. Also bleiben die Zahlen im
  * Template hartcodiert; dieses Script macht das Nachziehen zum Einzeiler.
  *
- * Aufruf: npm run stats   → Zahlen ausgeben und in index.template.html eintragen:
+ * Aufruf: npm run stats   → gibt die Zahlen aus; eingetragen werden sie VON HAND
+ * (das Skript schreibt nichts) in index.template.html:
  *   - S2 "lines:" und "features:" (deutsch formatiert, z.B. 108.518)
  *   - S3 data-target der Karten "Zeilen Code" und "Commits"
  *
