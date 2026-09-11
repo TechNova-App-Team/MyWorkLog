@@ -309,7 +309,7 @@
         let s = '';
         for (let i = 0; i < roh.length; i++) {
             s += alpha[roh[i] % alpha.length];
-            if (i === 2 || i === 5) s += '-';   // XXX-XXX-XXX
+            if (i === 2 || i === 5) s += '-';   // Format: 3-3-3 (z. B. ABC-DEF-GHJ)
         }
         return s;
     }
