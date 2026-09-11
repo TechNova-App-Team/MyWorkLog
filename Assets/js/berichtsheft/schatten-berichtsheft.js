@@ -4235,6 +4235,16 @@ async function exportAsPDF() {
     html += '.trace{margin-top:2.5mm;font-size:7.5pt;color:#b6bbc3}';
     html += '.foot{margin-top:12mm;padding-top:4mm;border-top:.75pt solid #14161a;font-size:8pt;color:#6b7280;max-width:150mm;line-height:1.6}';
     html += '.foot p+p{margin-top:2mm}';
+    // Herkunftsvermerk als letzte Zeile: leiser als der Fusstext (7.5pt, hellstes
+    // Grau, Haarlinie statt Balken), damit er ein ernstes Dokument nicht als
+    // Werbeflaeche vereinnahmt — aber lesbar genug, dass der Empfaenger weiss,
+    // woher das Protokoll stammt. Gleiches Schloss wie im Seitenkopf der App.
+    html += '.colophon{margin-top:6mm;padding-top:3mm;border-top:.5pt solid #eceef1;max-width:150mm;';
+    html += 'display:flex;justify-content:space-between;align-items:center;gap:6mm;font-size:7.5pt;color:#9096a0}';
+    html += '.colophon .brand{display:inline-flex;align-items:center;gap:2mm;white-space:nowrap}';
+    html += '.colophon .brand .cat-ico{width:8pt;height:8pt;color:#9096a0}';
+    html += '.colophon b{font-weight:500;color:#6b7280}';
+    html += '.colophon .url{font-size:7pt;white-space:nowrap}';
 
     // ── Bildschirm vs. Papier: @page limitiert die Breite NUR beim echten
     //    Drucken/in der Druckvorschau. Der neue Tab selbst ist eine ganz
@@ -4368,7 +4378,9 @@ async function exportAsPDF() {
     html += '</div>';
 
     // ═══ VORFÄLLE ═══
-    html += '<div class="page">';
+    // Umbruch nur, wenn danach noch 04 kommt — jedes Kapitel beginnt auf einer
+    // neuen Seite, aber das letzte Blatt traegt Unterschrift und Fusstext.
+    html += '<div class="page' + (attList.length ? ' break' : '') + '">';
     html += '<div class="sec-head"><span class="sec-idx">03</span><h2>' + L('Die Vorfälle im Einzelnen', 'The incidents in detail') + '</h2></div>';
     exportEntries.forEach((e, i) => {
         const cat = getCategory(e.category);
@@ -4452,8 +4464,13 @@ async function exportAsPDF() {
     // Ohne dieses Verzeichnis ist eine separat uebergebene Datei keinem
     // Vorfall zuzuordnen, und der Empfaenger sieht nicht, ob zu einem
     // Vorfall ueberhaupt Beweismittel existieren.
+    // Das Blatt 03 schliesst hier; Unterschrift und Fusstext stehen auf dem
+    // LETZTEN Blatt, egal ob das 03 oder 04 ist. Vorher lag 04 ungeschlossen
+    // in 03 (Blatt im Blatt auf dem Bildschirm) und trug einen Seitenumbruch,
+    // der die Unterschrift allein auf eine eigene Seite schob.
     if (attList.length) {
-        html += '<div class="page break">';
+        html += '</div>';
+        html += '<div class="page">';
         html += '<div class="sec-head"><span class="sec-idx">04</span><h2>' + L('Anlagenverzeichnis', 'Index of exhibits') + '</h2></div>';
 
         const nExt = attList.filter(a => a.mode === 'external').length;
@@ -4493,7 +4510,6 @@ async function exportAsPDF() {
                 'The separately supplied files are held unchanged in the encrypted vault. Use "Export backup" to hand them over in their original form.'
             ) + '</p>';
         }
-        html += '</div>';
     }
 
     html += '<div class="sig">';
@@ -4509,6 +4525,12 @@ async function exportAsPDF() {
     // Bewusst keine erfundenen Seitenzahlen: CSS kann sie im Browser nicht
     // liefern, der Druckdialog schon.
     html += '<p>' + L('Seitenzahlen liefert der Druckdialog: dort „Kopf- und Fußzeilen" aktivieren.', 'For page numbers, enable “Headers and footers” in the print dialog.') + '</p>';
+    html += '</div>';
+    // Herkunft des Dokuments — die TXT-Fassung traegt denselben Vermerk.
+    html += '<div class="colophon">';
+    html += '<span class="brand"><span class="cat-ico">' + CATEGORY_ICONS.lock + '</span>' +
+        L('Erstellt mit <b>MyWorkLog</b> · Schatten-Berichtsheft', 'Created with <b>MyWorkLog</b> · Shadow report book') + '</span>';
+    html += '<span class="url mono">myworklog.de/' + (lang === 'en' ? 'en/' : '') + 'schatten-berichtsheft</span>';
     html += '</div>';
     html += '</div>';
 
