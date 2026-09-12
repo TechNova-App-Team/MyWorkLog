@@ -143,7 +143,10 @@ console.log('\nAnsicht — Leiste, Reiter, Tabelle');
     ok('Reiter tragen den Schnitt', /Ø\s*2,67/.test(t.doc.querySelector('[data-scope="1"]').textContent));
     ok('Verwalten-Panel sichtbar, Hinweis versteckt',
         !t.doc.querySelector('.sc-config-panel').hidden && t.doc.getElementById('schoolAllHint').hidden);
-    eq('Entfernen-Knopf da (zwei Jahre)', t.doc.getElementById('schoolRemoveYearBtn').hidden, false);
+    const remBtn = t.doc.querySelector('#schoolYearBar [data-action="remove"]');
+    ok('Entfernen-Knopf sitzt in der Leiste neben „+ Lehrjahr" und nennt das aktive Jahr',
+        !!remBtn && /2\. Lehrjahr entfernen/.test(remBtn.textContent)
+        && remBtn.previousElementSibling === t.doc.querySelector('#schoolYearBar [data-action="add"]'));
     eq('Karten des 2. Lehrjahrs', t.doc.querySelectorAll('.sc-subject-card').length, 2);
     // Verschieben-Auswahl: anderes Jahr + „neues"
     const opts = [...t.doc.querySelector('.school-move-select').options].map(o => o.value);
@@ -154,7 +157,7 @@ console.log('\nAnsicht — Leiste, Reiter, Tabelle');
     ok('Gesamt: Verwalten-Panel weg, Hinweis da',
         t.doc.querySelector('.sc-config-panel').hidden && !t.doc.getElementById('schoolAllHint').hidden);
     eq('Gesamt: keine Eingabekarten', t.doc.querySelectorAll('.sc-subject-card').length, 0);
-    eq('Gesamt: Entfernen-Knopf versteckt', t.doc.getElementById('schoolRemoveYearBtn').hidden, true);
+    eq('Gesamt: kein Entfernen-Knopf', t.doc.querySelectorAll('#schoolYearBar [data-action="remove"]').length, 0);
 
     // Phantomspalten-Probe: Kopf und jede Zeile gleich viele Zellen
     const th = t.doc.querySelectorAll('#schoolGradesList thead th').length;
@@ -179,7 +182,7 @@ console.log('\nAnsicht — Leiste, Reiter, Tabelle');
     const t = boot({ school: { years: { '1': { grades: { 'A': ['2.0'] } } } } });
     t.renderSchoolGradesInputs();
     eq('ein Lehrjahr: kein „alle"-Reiter', t.doc.querySelectorAll('[data-scope="all"]').length, 0);
-    eq('ein Lehrjahr: kein Entfernen-Knopf', t.doc.getElementById('schoolRemoveYearBtn').hidden, true);
+    eq('ein Lehrjahr: kein Entfernen-Knopf', t.doc.querySelectorAll('#schoolYearBar [data-action="remove"]').length, 0);
     // gemerktes „alle" ohne zweites Jahr faellt auf das Jahr zurueck
     t.store.set('mwl_school_year', 'all');
     const t2 = boot({ school: { years: { '1': { grades: { 'A': ['2.0'] } } } } });
@@ -277,7 +280,7 @@ console.log('\nStatik — jede id hat ein Element, jede Klasse eine Regel');
     // Inline-Handler im Markup muessen definiert sein
     const handler = [...MARKUP.matchAll(/onclick="([a-zA-Z]+)\(/g)].map(m => m[1]);
     const undef = handler.filter(h => !new RegExp('function ' + h + '\\(').test(JS));
-    ok('alle onclick-Namen sind definiert (' + handler.join(', ') + ')', undef.length === 0 && handler.length >= 3);
+    ok('alle onclick-Namen sind definiert (' + handler.join(', ') + ')', undef.length === 0 && handler.length >= 2);
 
     // Zustandsklassen aus dem JS gegen die CSS-Selektoren
     const cssSet = new Set([...CSS.matchAll(/\.([a-zA-Z][\w-]*)(?=[\s,.:>#{\[])/g)].map(m => m[1]));

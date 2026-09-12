@@ -250,6 +250,18 @@
                     ${SC_ICONS.plus}<span>${esc(scL('Lehrjahr', 'Year'))}</span>
                 </button>`;
 
+        // Entfernen steht NEBEN dem Anlegen, nicht am Ende der Seite: in v7.0.3
+        // sass der Knopf in der Fusszeile von „Faecher verwalten" und wurde dort
+        // nicht gefunden („ich kann keine Lehrjahre mehr loeschen"). Er gilt fuer
+        // den aktiven Reiter; mit einem einzigen Jahr gibt es nichts zu entfernen.
+        if (scope !== 'all' && years.length > 1) {
+            html += `
+                <button type="button" class="sc-year-add is-danger" data-action="remove"
+                    title="${esc(scL('Das ' + scope + '. Lehrjahr samt Fächern und Noten entfernen', 'Remove year ' + scope + ' with its subjects and grades'))}">
+                    ${SC_ICONS.trash}<span>${esc(scL(scope + '. Lehrjahr entfernen', 'Remove year ' + scope))}</span>
+                </button>`;
+        }
+
         // „Alle" erst ab zwei Jahren — mit einem waere es derselbe Reiter zweimal.
         if (years.length > 1) {
             const all = schoolAllGrades();
@@ -270,6 +282,8 @@
         });
         const add = bar.querySelector('[data-action="add"]');
         if (add) add.addEventListener('click', () => addSchoolYear());
+        const rem = bar.querySelector('[data-action="remove"]');
+        if (rem) rem.addEventListener('click', () => removeSchoolYear());
     }
 
     function renderSchoolView() {
@@ -489,13 +503,6 @@
         const allHint = document.getElementById('schoolAllHint');
         if (configPanel) configPanel.hidden = scope === 'all';
         if (allHint) allHint.hidden = scope !== 'all';
-
-        const removeBtn = document.getElementById('schoolRemoveYearBtn');
-        if (removeBtn) {
-            const years = scYears();
-            removeBtn.hidden = scope === 'all' || years.length < 2;
-            if (!removeBtn.hidden) removeBtn.textContent = scL(scope + '. Lehrjahr entfernen', 'Remove year ' + scope);
-        }
 
         const inputGrid = document.getElementById('schoolSubjectsInputGrid');
         if (!inputGrid) return;

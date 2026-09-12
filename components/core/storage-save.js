@@ -66,41 +66,16 @@
                 }
             }
         }
-        checkAlertsThresholds();
-        checkOvertimeAlert();
-        updateUI(); 
-    }
-
-    function checkOvertimeAlert() {
-        const workEntries = data.entries.filter(e => e.type === 'work' && e.worked > 0);
-        const thisWeek = workEntries.filter(e => {
-            const entryDate = new Date(e.date);
-            const now = new Date();
-            const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
-            return entryDate >= weekStart;
-        });
-        const totalHours = thisWeek.reduce((sum, e) => sum + e.worked, 0);
-        const overtimeThreshold = data.settings.overtimeAlert || 40; // Default 40h
-
-        if (totalHours >= overtimeThreshold) {
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('⚠️ Überstunden-Alarm', {
-                    body: `Du hast diese Woche bereits ${totalHours.toFixed(1)}h gearbeitet. Überstunden-Threshold: ${overtimeThreshold}h`,
-                    icon: '/favicon.ico'
-                });
-            } else if ('Notification' in window && Notification.permission !== 'denied') {
-                Notification.requestPermission().then(permission => {
-                    if (permission === 'granted') {
-                        new Notification('⚠️ Überstunden-Alarm', {
-                            body: `Du hast diese Woche bereits ${totalHours.toFixed(1)}h gearbeitet. Überstunden-Threshold: ${overtimeThreshold}h`,
-                            icon: '/favicon.ico'
-                        });
-                    }
-                });
-            }
-            // Fallback: In-App Message
-            showCustomMessage('⚠️ Überstunden', `Diese Woche: ${totalHours.toFixed(1)}h (Threshold: ${overtimeThreshold}h)`, 'warning');
-        }
+        // Der Nachlauf darf den Aufrufer nicht mitreissen. Wer save() ruft,
+        // hat danach noch zu tun (neu zeichnen, Reiter wechseln) — bis v7.0.3
+        // lief hier ein eigener Ueberstunden-Check, der bei JEDEM Speichern
+        // einen Toast warf und auf dem Handy mit `new Notification()` sogar
+        // eine Ausnahme (Android: "Illegal constructor"); der Aufrufer sah dann
+        // eine Aenderung, die gespeichert war, aber nicht gezeichnet wurde.
+        // Die Wochenstunden-Warnung sitzt jetzt in checkAlertsThresholds()
+        // (Schalter, einmal je Woche).
+        try { checkAlertsThresholds(); } catch (e) { console.warn('Alerts-Pruefung nach save():', e); }
+        try { updateUI(); } catch (e) { console.warn('updateUI nach save():', e); }
     }
 
     function checkAchievements() {

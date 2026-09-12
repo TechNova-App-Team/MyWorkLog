@@ -19,6 +19,7 @@
         { key: 'saldoNegative',  id: 'alertSaldoNegative' },
         { key: 'shiftMax',       id: 'alertShiftMax' },
         { key: 'vacationLow',    id: 'alertVacationLow' },
+        { key: 'weeklyOvertime', id: 'alertWeeklyOvertime' },
         { key: 'dailyReminders', id: 'alertDailyReminders' },
         { key: 'milestones',     id: 'alertMilestones' },
         { key: 'exportReminder', id: 'alertExportReminder' }
@@ -303,6 +304,37 @@
             if (!lastAlertCheck[checkKey]) {
                 const remaining = data.vacationMax - data.vacationUsed;
                 const alert = createAlert('📅 Urlaub läuft aus', `Nur noch ${remaining.toFixed(1)} Urlaubstage übrig. Planen Sie rechtzeitig!`, 'warning', '📅');
+                alert.isRead = false;
+                alertsHistory.unshift(alert);
+                lastAlertCheck[checkKey] = true;
+                newAlertsCreated = true;
+                showToastNotification(alert);
+            }
+        }
+
+        // 5. Wochenstunden ueber 40 h — EINMAL je Kalenderwoche.
+        // Bis v7.0.3 stand diese Pruefung in save() ohne Schluessel und meldete
+        // sich bei jedem Speichern neu. Der Schluessel ist der Montag der Woche:
+        // die Bedingung bleibt den Rest der Woche wahr, die Meldung nicht.
+        // 40 h ist die Wochengrenze fuer Jugendliche (§ 8 JArbSchG) — deshalb
+        // steht die Zahl im Text und nicht ein erfundener "Threshold".
+        if (alertSettings.weeklyOvertime) {
+            const montag = new Date(now);
+            montag.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+            const montagIso = montag.getFullYear() + '-' + String(montag.getMonth() + 1).padStart(2, '0')
+                            + '-' + String(montag.getDate()).padStart(2, '0');
+            const wochenStunden = data.entries
+                .filter(e => e.type === 'work' && e.date >= montagIso && (parseFloat(e.worked) || 0) > 0)
+                .reduce((sum, e) => sum + parseFloat(e.worked), 0);
+            const checkKey = `weeklyOvertime_${montagIso}`;
+            if (wochenStunden >= 40 && !lastAlertCheck[checkKey]) {
+                const en = document.documentElement.lang === 'en';
+                const h = wochenStunden.toLocaleString(en ? 'en-US' : 'de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+                const alert = createAlert(
+                    en ? '⚠️ Over 40 h this week' : '⚠️ Woche über 40 h',
+                    en ? `${h} h worked this week. For trainees under 18, 40 h is the legal weekly limit (§ 8 JArbSchG); adults may go up to 48 h (§ 3 ArbZG).`
+                       : `Diese Woche schon ${h} h gearbeitet. Für Azubis unter 18 ist bei 40 h Schluss (§ 8 JArbSchG), Volljährige dürfen bis 48 h (§ 3 ArbZG).`,
+                    'warning', '⚠️');
                 alert.isRead = false;
                 alertsHistory.unshift(alert);
                 lastAlertCheck[checkKey] = true;

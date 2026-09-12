@@ -63,6 +63,10 @@ console.log('\nJede automatische Meldung haengt an einem Schalter');
 {
     ok('showSmartNotification hat selbst den Hauptschalter',
        /function showSmartNotification[\s\S]{0,220}mwlAlertsOn\(\)/.test(NAV_C));
+    const SAVE = strip(readFileSync('components/core/storage-save.js', 'utf8'));
+    ok('save() ruft keine eigene Ueberstunden-Pruefung mehr', !/checkOvertimeAlert|Threshold:/.test(SAVE));
+    ok('save() faengt den Nachlauf ab (Alerts, updateUI), damit ein Toast nie den Aufrufer stoppt',
+       /try \{ checkAlertsThresholds\(\); \} catch/.test(SAVE) && /try \{ updateUI\(\); \} catch/.test(SAVE));
     ok('checkAlertsThresholds steigt bei ausgeschaltetem Hauptschalter sofort aus',
        /function checkAlertsThresholds\(\)\s*\{\s*if \(!mwlAlertsOn\(\)\) return;/.test(ALERTS_C));
     ok('auch die Cloud-Aufforderung liegt unter dem Hauptschalter',
@@ -149,6 +153,69 @@ console.log('\nHauptschalter wirkt (gemessen, nicht gegrept)');
     api2.initializeAlerts();
     ok('Einstellung überlebt den Neustart',
        api2.mwlAlertsOn() && !api2.mwlAlertsOn('dailyReminders'));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+console.log('\nWochenstunden-Warnung: einmal je Woche, nicht bei jedem Speichern');
+
+{
+    // Bis v7.0.3 stand der Check in save() ohne Schluessel: "Diese Woche: 40.1h
+    // (Threshold: 40h)" kam bei JEDEM Speichern — beim Anlegen einer Note, beim
+    // Umbenennen eines Fachs, beim Wechsel eines Lehrjahrs. Hier wird gezaehlt.
+    const dom = new JSDOM('<!doctype html><body><span id="alertBadge"></span>' + MODALS + '</body>',
+        { pretendToBeVisual: true });
+    const doc = dom.window.document;
+    const store = new Map();
+    const localStorage = {
+        getItem: k => (store.has(k) ? store.get(k) : null),
+        setItem: (k, v) => store.set(k, String(v)),
+        removeItem: k => store.delete(k)
+    };
+    // Woche mit 40,1 h: Mo–Fr dieser Woche, lokal formatiert (kein toISOString).
+    const now = new Date(); const dow = (now.getDay() + 6) % 7;
+    const mon = new Date(now); mon.setDate(now.getDate() - dow);
+    const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const entries = [];
+    for (let i = 0; i < 5; i++) { const d = new Date(mon); d.setDate(mon.getDate() + i); entries.push({ date: iso(d), type: 'work', worked: i === 4 ? 8.1 : 8 }); }
+    // Eine Woche davor mit 45 h darf NICHT zaehlen — nur die laufende Woche.
+    for (let i = 7; i < 12; i++) { const d = new Date(mon); d.setDate(mon.getDate() - i); entries.push({ date: iso(d), type: 'work', worked: 9 }); }
+
+    // Gezaehlt wird ueber die Alert-Historie und die persistierte Dedup-Tabelle,
+    // nicht ueber den DOM. showToast() braucht requestAnimationFrame fuer den
+    // Fortschrittsbalken — in Node gibt es das Global nicht, hier eine Attrappe.
+    const build = new Function('document', 'window', 'localStorage', 'data', 'mwlLocale',
+        'mwlIcon', 'mwlIconFromEmoji', 'parseTime', 'showCustomMessage', 'console', 'requestAnimationFrame',
+        ALERTS + '\nreturn { checkAlertsThresholds, initializeAlerts, alertsRef: () => alertsHistory };');
+    const stub = [() => 'de-DE', () => '<svg></svg>', () => '<svg></svg>', () => 0, () => {},
+        { log() {}, warn() {}, error() {} }, () => 0];
+    const data = { entries, saldo: 0, vacationUsed: 0, vacationMax: 30, settings: {} };
+    const api = build(doc, dom.window, localStorage, data, ...stub);
+    api.initializeAlerts();
+
+    const anzahl = () => api.alertsRef().filter(a => /Woche über 40 h/.test(a.title)).length;
+    api.checkAlertsThresholds();
+    eq('erster Lauf: genau eine Meldung', anzahl(), 1);
+    api.checkAlertsThresholds(); api.checkAlertsThresholds(); api.checkAlertsThresholds();
+    eq('drei weitere Laeufe (= drei Speichervorgaenge): keine weitere', anzahl(), 1);
+    const gemerkt = JSON.parse(store.get('timetracker_alert_check') || '{}');
+    ok('Dedup-Schluessel ist der Montag der Woche', gemerkt['weeklyOvertime_' + iso(mon)] === true);
+    ok('Text nennt die Stunden mit Komma', /40,1 h/.test(api.alertsRef().find(a => /Woche über 40 h/.test(a.title)).message));
+
+    // Neustart in derselben Woche: der Schluessel ueberlebt, die Meldung kommt nicht nochmal.
+    const api2 = build(doc, dom.window, localStorage, data, ...stub);
+    api2.initializeAlerts();
+    const vorher = api2.alertsRef().length;
+    api2.checkAlertsThresholds();
+    eq('nach Neustart in derselben Woche: keine neue Meldung', api2.alertsRef().length, vorher);
+    eq('… die Wochen-Meldung steht genau einmal in der Historie', api2.alertsRef().filter(a => /Woche über 40 h/.test(a.title)).length, 1);
+
+    // Gegenprobe: unter 40 h gibt es gar nichts zu melden.
+    const store2 = new Map();
+    const ls2 = { getItem: k => (store2.has(k) ? store2.get(k) : null), setItem: (k, v) => store2.set(k, String(v)), removeItem: k => store2.delete(k) };
+    const api3 = build(doc, dom.window, ls2, { entries: entries.map(e => Object.assign({}, e, { worked: 7 })), saldo: 0, vacationUsed: 0, vacationMax: 30, settings: {} }, ...stub);
+    api3.initializeAlerts(); api3.checkAlertsThresholds();
+    eq('35 h: keine Meldung', api3.alertsRef().filter(a => /Woche über 40 h/.test(a.title)).length, 0);
+    ok('… und die Pruefung hat ueberhaupt Eintraege gesehen', entries.length === 10);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
