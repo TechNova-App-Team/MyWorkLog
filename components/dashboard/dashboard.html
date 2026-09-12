@@ -5,6 +5,90 @@
                 <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.85rem; background:rgba(217,119,6,0.15); border:1px solid rgba(217,119,6,0.3); color:#f59e0b; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen — Speichern erfolgt über den grünen Layout-Button rechts"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg><span>Abbrechen / Speichern</span></button>
             </div>
 
+            <!-- ═══ GEBURTSTAG (12.09.) ═══
+                 Sichtbar nur mit html.mwl-geburtstag-karte — den Torwaechter setzt das
+                 Pre-Apply-Skript im <head> VOR dem ersten Zeichnen, sonst schoebe die
+                 Karte nach dem Laden das ganze Dashboard um eine Kartenhoehe nach unten.
+                 Liegt bewusst AUSSERHALB von #dashboardContainer: das Widget-Raster wird
+                 gespeichert und im Editor sortiert, diese Karte gehoert nur dem Tag.
+                 Verhalten und Gestaltung: components/geburtstag/ -->
+            <section id="gbCard" class="gb-card" aria-labelledby="gbTitleLit">
+                <button type="button" class="gb-candle" id="gbCandle" aria-label="Kerze auspusten">
+                    <svg viewBox="0 0 120 210" aria-hidden="true" focusable="false">
+                        <defs>
+                            <linearGradient id="gbWachs" x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0" stop-color="var(--gb-wachs-a)"/>
+                                <stop offset="0.55" stop-color="var(--gb-wachs-b)"/>
+                                <stop offset="1" stop-color="var(--gb-wachs-c)"/>
+                            </linearGradient>
+                            <radialGradient id="gbSchein" cx="0.5" cy="0.5" r="0.5">
+                                <stop offset="0" stop-color="#ffbe55" stop-opacity="0.42"/>
+                                <stop offset="0.45" stop-color="#ffb347" stop-opacity="0.16"/>
+                                <stop offset="1" stop-color="#ff9a2e" stop-opacity="0"/>
+                            </radialGradient>
+                            <linearGradient id="gbFlamme" x1="0" y1="1" x2="0" y2="0">
+                                <stop offset="0" stop-color="#ff6a1f"/>
+                                <stop offset="0.45" stop-color="#ffab2b"/>
+                                <stop offset="1" stop-color="#ffe08a"/>
+                            </linearGradient>
+                        </defs>
+                        <rect class="gb-holder" x="27" y="188" width="66" height="7" rx="3.5"/>
+                        <rect class="gb-wax" id="gbWax" x="41" y="78" width="38" height="112" rx="5"/>
+                        <!-- Docht, Flamme, Rauch sitzen auf der Wachsoberkante; die
+                             Gruppe wird per JS auf die Tageshoehe verschoben -->
+                        <g id="gbTop" transform="translate(60 78)">
+                            <ellipse class="gb-glow" cx="0" cy="-34" rx="46" ry="54" fill="url(#gbSchein)"/>
+                            <ellipse class="gb-wax-rim" cx="0" cy="0" rx="19" ry="5"/>
+                            <line class="gb-wick" x1="0" y1="-1" x2="0" y2="-12"/>
+                            <circle class="gb-ember" cx="0" cy="-12" r="1.8"/>
+                            <path class="gb-smoke" pathLength="1"
+                                  d="M0 -14 C 5 -22, -6 -30, 1 -40 C 7 -49, -4 -56, 2 -66"/>
+                            <g class="gb-lean" id="gbLean">
+                                <g class="gb-flicker">
+                                    <path d="M0 -12 C -9.5 -19, -12 -34, 0 -52 C 12 -34, 9.5 -19, 0 -12 Z" fill="url(#gbFlamme)"/>
+                                    <path class="gb-flame-inner" d="M0 -14 C -4.5 -18, -5.5 -27, 0 -36 C 5.5 -27, 4.5 -18, 0 -14 Z" fill="#fff6d2" opacity="0.92"/>
+                                    <ellipse cx="0" cy="-15" rx="3.2" ry="4.2" fill="#7fb0ff" opacity="0.45"/>
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                </button>
+
+                <div class="gb-text">
+                    <div class="gb-state" data-gb-state="lit">
+                        <h3 class="gb-title" id="gbTitleLit">Der Mensch hinter MyWorkLog hat heute Geburtstag.</h3>
+                        <p class="gb-lead">Puste die Kerze aus: mit dem Mikrofon oder mit einem Tippen auf die Flamme.</p>
+                        <div class="gb-actions">
+                            <button type="button" class="gb-btn" id="gbMicBtn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                                <span>Mikrofon nutzen</span>
+                            </button>
+                            <span class="gb-mic-status" id="gbMicStatus" hidden></span>
+                        </div>
+                    </div>
+                    <div class="gb-state" data-gb-state="out" hidden>
+                        <h3 class="gb-title">Danke. Ich hab mir was gewünscht, jetzt bist du dran.</h3>
+                        <form class="gb-form" id="gbForm" novalidate>
+                            <label class="gb-label" for="gbWish">Was soll MyWorkLog nächstes Jahr können?</label>
+                            <div class="gb-row">
+                                <input class="gb-input" id="gbWish" type="text" maxlength="240" autocomplete="off" spellcheck="true" placeholder="Ein Satz reicht">
+                                <button type="submit" class="gb-btn gb-btn--primary" id="gbSend">Wunsch schicken</button>
+                            </div>
+                            <p class="gb-fine">Ohne Konto, ohne Namen. Nur der Satz.</p>
+                            <p class="gb-error" id="gbError" hidden></p>
+                        </form>
+                    </div>
+                    <div class="gb-state" data-gb-state="sent" hidden>
+                        <h3 class="gb-title">Angekommen. Danke.</h3>
+                        <p class="gb-lead">Ich lese jeden Wunsch selbst.</p>
+                    </div>
+                </div>
+
+                <button type="button" class="gb-close" id="gbClose" aria-label="Für heute ausblenden" title="Für heute ausblenden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </section>
+
             <div id="dashboardContainer" class="dashboard-grid">
 
                 <!-- ═══ KPI OVERVIEW ═══

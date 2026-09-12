@@ -13,6 +13,19 @@
 
   // Deutsch → Englisch. Nur ANZEIGE-Strings (App-Logik keyt auf IDs, nicht Labels).
   var MAP = {
+    // ── Geburtstag (12.09., components/geburtstag/geburtstag.js) ──
+    'Die Kerze ist aus.': 'The candle is out.',
+    'Mikrofon an. Jetzt pusten.': 'Microphone on. Blow now.',
+    'Stopp': 'Stop',
+    'Mikrofon wieder aus. Ein Tippen auf die Flamme geht auch.': 'Microphone off again. Tapping the flame works too.',
+    'Kein Mikrofon gefunden. Tipp stattdessen auf die Flamme.': 'No microphone found. Tap the flame instead.',
+    'Kein Zugriff aufs Mikrofon. Tipp stattdessen auf die Flamme.': 'No access to the microphone. Tap the flame instead.',
+    'Das Mikrofon geht gerade nicht. Tipp stattdessen auf die Flamme.': 'The microphone is not working right now. Tap the flame instead.',
+    'Ein paar Worte brauche ich schon.': 'I do need a few words.',
+    'Schickt …': 'Sending …',
+    'Wunsch schicken': 'Send wish',
+    'Zu viele Anfragen. Bitte in ein paar Minuten nochmal.': 'Too many requests. Please try again in a few minutes.',
+    'Keine Verbindung zum Server. Versuch es gleich nochmal.': 'No connection to the server. Try again in a moment.',
     // ── P2P Geräte-Sync (p2p-sync.js baut das komplett in JS) ──
     // Geprüft: 'Verbunden'/'Nicht verbunden' kommen NUR in p2p-sync.js vor,
     // 'Offline' ist in beiden Sprachen gleich. Keine Kollision mit anderen Modals.
@@ -434,6 +447,9 @@
   // ("vor 2d", "Ø Saldo: +1.5h"), braucht ein Muster. Reihenfolge zählt:
   // spezifische Regeln vor allgemeinen, sonst frisst die allgemeine zuerst.
   var RULES = [
+    // ── Geburtstag: Restzeit der Kerze und Server-Status tragen Zahlen ──
+    [/^Die Kerze brennt den Tag herunter, noch (\d+) h (\d+) min\.$/g, 'The candle burns down with the day, $1 h $2 min left.'],
+    [/^Server antwortete mit (\d+)$/g, 'Server answered with $1'],
     // ── IHK-PDF-Import: Zahl steht vorne, deshalb kein MAP-Eintrag moeglich ──
     [/^(\d+) Wochen gefunden$/g, '$1 weeks found'],
     [/^(\d+) Wochen importieren$/g, 'Import $1 weeks'],
