@@ -41,6 +41,137 @@
             --sc-border-soft: rgba(7, 16, 35, 0.06);
         }
 
+        /* ════════════════════════════════════════════════
+           LEHRJAHR-LEISTE
+           Bestimmt den Bereich fuer alles darunter. Die Chips tragen
+           Schnitt und Notenzahl, damit man die Jahre vergleichen kann,
+           ohne zu klicken — das ist Information, keine Dekoration.
+           ════════════════════════════════════════════════ */
+        #view-school .sc-yearbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: stretch;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        #view-school .sc-yearbar__spacer { flex: 1 1 auto; }
+
+        #view-school .sc-year-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.2rem;
+            min-width: 128px;
+            padding: 0.6rem 0.9rem;
+            background: var(--bg-glass);
+            border: 1px solid var(--sc-border);
+            border-radius: 12px;
+            color: var(--sc-text-muted);
+            font-family: var(--font-main);
+            text-align: left;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+
+        #view-school .sc-year-chip:hover {
+            border-color: var(--hover-border);
+            background: var(--hover-fill);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-year-chip.is-active {
+            border-color: color-mix(in srgb, var(--sc-accent) 60%, transparent);
+            background: var(--hover-fill-strong);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-year-chip:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.35);
+        }
+
+        #view-school .sc-year-chip__label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+
+        #view-school .sc-year-chip__label svg {
+            width: 14px;
+            height: 14px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        /* Laufendes Lehrjahr laut Ausbildungsdaten: ein Punkt vor dem Namen. */
+        #view-school .sc-year-chip.is-current .sc-year-chip__label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--sc-accent);
+            flex-shrink: 0;
+        }
+
+        #view-school .sc-year-chip__sub {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.45rem;
+            font-size: 0.72rem;
+            color: var(--sc-text-dim);
+            font-variant-numeric: tabular-nums;
+        }
+
+        #view-school .sc-year-chip__avg {
+            font-weight: 600;
+            color: var(--sc-text-muted);
+        }
+
+        #view-school .sc-year-chip.is-active .sc-year-chip__avg { color: var(--sc-text-main); }
+
+        #view-school .sc-year-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            align-self: center;
+            padding: 0.5rem 0.8rem;
+            background: transparent;
+            border: 1px dashed var(--sc-border);
+            border-radius: 10px;
+            color: var(--sc-text-dim);
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+
+        #view-school .sc-year-add svg {
+            width: 14px;
+            height: 14px;
+            display: block;
+        }
+
+        #view-school .sc-year-add:hover {
+            border-color: var(--hover-border);
+            background: var(--hover-fill);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-year-add:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.3);
+        }
+
+        /* [hidden] muss gewinnen: .sc-year-list ist display:flex, und eine Regel mit
+           id-Selektor schlaegt sonst das display:none des Browsers — die versteckte
+           Jahresliste liess im Jahres-Modus ihre Trennlinie stehen. */
+        #view-school [hidden] { display: none !important; }
+
         /* Gemeinsame Panel-Basis */
         #view-school .sc-panel,
         #view-school .sc-header,
@@ -68,15 +199,6 @@
         #view-school .sc-header-text {
             flex: 1 1 260px;
             min-width: 0;
-        }
-
-        #view-school .sc-title {
-            margin: 0 0 0.4rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-            color: var(--sc-text-main);
         }
 
         #view-school .sc-subtitle {
@@ -463,6 +585,59 @@
         }
 
         /* Verteilung */
+        /* Schnitt je Lehrjahr — nur in der Gesamtansicht */
+        #view-school .sc-year-list {
+            display: flex;
+            flex-direction: column;
+            margin-top: 1.25rem;
+            border-top: 1px solid var(--sc-border-soft);
+        }
+
+        #view-school .sc-year-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto 3.5rem;
+            align-items: baseline;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--sc-border-soft);
+            font-size: 0.85rem;
+        }
+
+        #view-school .sc-year-row:last-child { border-bottom: none; }
+
+        #view-school .sc-year-row__label { font-weight: 500; color: var(--sc-text-main); }
+        #view-school .sc-year-row__n { font-size: 0.75rem; color: var(--sc-text-dim); font-variant-numeric: tabular-nums; }
+
+        #view-school .sc-year-row__delta {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--sc-text-dim);
+        }
+        #view-school .sc-year-row__delta svg { width: 12px; height: 12px; display: block; }
+        #view-school .sc-year-row__delta.is-up   { color: var(--sc-good); }
+        #view-school .sc-year-row__delta.is-down { color: var(--sc-bad); }
+
+        /* Die Zahl steht immer in Spalte 4 — auch ohne Veraenderungs-Zelle. */
+        #view-school .sc-year-row__avg {
+            grid-column: 4;
+            text-align: right;
+            font-size: 1rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        #view-school .sc-col-year {
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #view-school .sc-year-none { color: var(--sc-text-dim); }
+
         #view-school .sc-distribution-grid {
             display: flex;
             flex-direction: column;
@@ -819,6 +994,85 @@
             color: var(--sc-text-dim);
         }
 
+        /* Verschieben: das <select> liegt unsichtbar ueber dem Symbol und bekommt
+           den Klick — die Liste bleibt nativ (Systemrad am Handy, Tastatur gratis). */
+        #view-school .sc-move-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+
+        #view-school .sc-move-select {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #view-school .sc-move-wrap:hover .sc-icon-btn,
+        #view-school .sc-move-wrap:focus-within .sc-icon-btn {
+            background: var(--sc-surface-2);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-move-wrap:focus-within .sc-icon-btn {
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.3);
+        }
+
+        /* Leiser Knopf fuer Nebenaktionen (Faecher uebernehmen, Lehrjahr entfernen) */
+        #view-school .sc-ghost-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.5rem 0.85rem;
+            background: transparent;
+            border: 1px solid var(--sc-border);
+            border-radius: 8px;
+            color: var(--sc-text-muted);
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+
+        #view-school .sc-ghost-btn svg {
+            width: 14px;
+            height: 14px;
+            display: block;
+        }
+
+        #view-school .sc-ghost-btn:hover {
+            border-color: var(--hover-border);
+            background: var(--hover-fill);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-ghost-btn.is-danger:hover {
+            border-color: color-mix(in srgb, var(--sc-bad) 45%, transparent);
+            background: color-mix(in srgb, var(--sc-bad) 10%, transparent);
+            color: var(--sc-bad);
+        }
+
+        #view-school .sc-ghost-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.3);
+        }
+
+        #view-school .sc-subjects-empty { display: grid; justify-items: center; gap: 0.85rem; }
+
+        #view-school .sc-config-footer-left {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem 1rem;
+        }
+
+        #view-school .sc-all-hint { margin-bottom: 1rem; }
+        #view-school .sc-all-hint .sc-panel-sub { max-width: 60ch; }
+
         #view-school .sc-config-footer {
             display: flex;
             justify-content: space-between;
@@ -851,6 +1105,10 @@
                 padding: 1.5rem 1.25rem;
             }
 
+            /* In der Spalte wird flex-basis zur HOEHE: 1 1 260px machte den Textblock
+               260 px hoch und liess ueber dem Ring eine leere Flaeche. */
+            #view-school .sc-header-text { flex: 0 0 auto; }
+
             #view-school .sc-avg {
                 flex-direction: row;
                 align-items: center;
@@ -861,8 +1119,6 @@
             #view-school .sc-ring-wrap { width: 88px; height: 88px; }
             #view-school .sc-ring-value { font-size: 1.35rem; }
             #view-school .sc-ring-caption { font-size: 0.6rem; }
-
-            #view-school .sc-title { font-size: 1.3rem; }
 
             #view-school .sc-panel { padding: 1.25rem 1.15rem; }
 
@@ -887,6 +1143,12 @@
             #view-school .sc-save-btn { width: 100%; }
 
             #view-school .sc-subjects-input-grid { grid-template-columns: 1fr; }
+
+            #view-school .sc-year-chip { min-width: 0; flex: 1 1 40%; }
+            #view-school .sc-yearbar__spacer { display: none; }
+            #view-school .sc-year-chip--all { flex-basis: 100%; }
+            #view-school .sc-config-footer-left { flex-direction: column; align-items: stretch; }
+            #view-school .sc-config-footer-left .sc-ghost-btn { justify-content: center; }
         }
 
         @media (prefers-reduced-motion: reduce) {

@@ -22,14 +22,8 @@
                 note_zwischen: '',
                 note_abschluss: ''
             },
-            school: {
-                grades: {
-                    'Kernprozesse': [],
-                    'Wirtschaftslehre': [],
-                    'IT-Systeme': [],
-                    'Deutsch/Kommunikation': [],
-                }
-            },
+            // Faecher je Lehrjahr; Vorgabe-Faecher setzt scNormalizeSchool() (school.js)
+            school: { years: {} },
             goals: []
         } 
     };

@@ -263,23 +263,9 @@
              data.settings.ihk = {start: '', end: '', exam_zwischen: '', note_zwischen: '', note_abschluss: ''};
         }
         
-        if(!data.settings.school) {
-             data.settings.school = {
-                grades: {
-                    'Kernprozesse': [],
-                    'Wirtschaftslehre': [],
-                    'IT-Systeme': [],
-                    'Deutsch/Kommunikation': [],
-                }
-             };
-        } else if(!data.settings.school.grades) {
-             data.settings.school.grades = {
-                'Kernprozesse': [],
-                'Wirtschaftslehre': [],
-                'IT-Systeme': [],
-                'Deutsch/Kommunikation': [],
-             };
-        }
+        // Berufsschule: Struktur je Lehrjahr absichern, Altbestand (flaches
+        // `grades`) heben — die Regeln stehen in school.js, nicht hier.
+        scNormalizeSchool(data.settings);
         
         if(!data.settings.goals) data.settings.goals = [];
         if (typeof data.settings.shortcutsEnabled === 'undefined') data.settings.shortcutsEnabled = false;
@@ -368,10 +354,6 @@
         _updateDate();
         setInterval(_updateDate, 1000);
         document.getElementById('inpDate').valueAsDate = new Date();
-
-        if (document.getElementById('schoolGradesInputGrid')) {
-             renderSchoolGradesInputs();
-        }
 
         renderLists(); 
         

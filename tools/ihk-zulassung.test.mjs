@@ -28,6 +28,10 @@ const ok = (n, c) => { c ? (pass++, console.log('  ok    ' + n)) : (fail++, cons
 const eq = (n, a, b) => ok(n + '  (' + a + ' = ' + b + ')', a === b);
 
 const JS     = readFileSync('components/ihk/ihk.js', 'utf8');
+// Die Berufsschul-Noten liest ihk.js seit v7.0.3 ueber schoolAllGrades() aus
+// school.js — ohne die Datei waere der Querverweis im Test still leer und
+// `ihkSchoolAvg` fiele als „versteckt" aus der Platzhalter-Pruefung heraus.
+const JS_SCHOOL = readFileSync('components/school/school.js', 'utf8');
 const CSS    = readFileSync('components/ihk/ihk.css', 'utf8');
 const MARKUP = readFileSync('components/ihk/ihk.html', 'utf8');
 
@@ -58,7 +62,7 @@ function boot({ now, settings, entries }) {
     const build = new Function(
         'data', 'document', 'window', 'localStorage', 'Date',
         'mwlLocale', 'getJobHours', 'mwlIcon', 'getTypeRgb', 'getTypeLabel', 'save',
-        JS + '\nreturn { ihkComputeFacts, ihkCriteria, ihkStations, renderIHKView, saveIHKSettings, ihkRel };'
+        JS_SCHOOL + '\n' + JS + '\nreturn { ihkComputeFacts, ihkCriteria, ihkStations, renderIHKView, saveIHKSettings, ihkRel, ihkLehrjahrHeute };'
     );
     const api = build(
         data, doc, dom.window, localStorage, fixedDateClass(now),
@@ -98,7 +102,7 @@ const cfg = extra => ({
         start: '2025-01-06', end: '2026-01-02',
         exam_zwischen: '', exam_abschluss: '', note_zwischen: '', note_abschluss: ''
     }, extra || {}),
-    school: { grades: {} }
+    school: { years: { '1': { grades: {} } } }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -267,7 +271,7 @@ console.log('\nFormular — jedes Feld hat einen Leser und einen Schreiber');
         now: '2025-03-03',
         settings: Object.assign(cfg({ exam_zwischen: '2025-02-12', note_zwischen: '2.3',
                         exam_abschluss: '2025-11-10', note_abschluss: '1.7' }),
-                        { school: { grades: { 'IT-Systeme': [2.0, 1.7] } } }),
+                        { school: { years: { '1': { grades: { 'IT-Systeme': [2.0] } }, '2': { grades: { 'IT-Systeme': [1.7] } } } } }),
         entries: weekdayEntries('2025-01-06', '2025-02-28', { '2025-01-08': 'sick' })
     });
     const platzhalter = [...t.doc.querySelectorAll('[id]')]
@@ -278,6 +282,18 @@ console.log('\nFormular — jedes Feld hat einen Leser und einen Schreiber');
     const stumm = platzhalter.filter(id => sichtbar(id) && /^(—|0 %)$/.test(t.doc.getElementById(id).textContent.trim()));
     ok('Platzhalter im Markup gefunden (' + platzhalter.length + ')', platzhalter.length >= 8);
     eq('kein Ergebnisfeld bleibt beim Platzhalter stehen', stumm.join(', ') || '(keins)', '(keins)');
+
+    // Querverweis Berufsschule: ueber ALLE Lehrjahre gemittelt (2,0 im 1., 1,7 im 2.),
+    // und die Zeile sagt dann, worueber sie mittelt.
+    const f = t.ihkComputeFacts();
+    eq('Berufsschul-Noten aus beiden Lehrjahren gezaehlt', f.schoolCount, 2);
+    eq('Berufsschul-Schnitt ueber beide Lehrjahre', f.schoolAvg.toFixed(2), '1.85');
+    eq('Zahl der Lehrjahre mit Noten', f.schoolYears, 2);
+    eq('Querverweis sichtbar', t.doc.getElementById('ihkSchoolRef').hidden, false);
+    eq('Hinweis nennt die Lehrjahre', t.doc.getElementById('ihkSchoolHint').textContent, 'Durchschnitt über 2 Lehrjahre');
+    const lj = t.ihkLehrjahrHeute();
+    eq('laufendes Lehrjahr am 03.03.2025 bei Beginn 06.01.2025', lj && lj.lehrjahr, 1);
+    eq('Gesamtdauer 06.01.2025–02.01.2026 = 1 Jahr', lj && lj.years, 1);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

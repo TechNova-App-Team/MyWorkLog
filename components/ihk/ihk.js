@@ -74,6 +74,22 @@
         return x;
     }
 
+    // Laufendes Lehrjahr aus Beginn und Vertragsende. Herausgezogen, weil die
+    // Berufsschul-Ansicht dieselbe Zahl braucht, um das aktuelle Lehrjahr zu
+    // markieren — zwei Rechnungen driften, eine nicht. null, solange die
+    // Ausbildungsdaten fehlen.
+    function ihkLehrjahrHeute() {
+        const cfg   = ihkSettings() || {};
+        const start = ihkDate(cfg.start);
+        const end   = ihkDate(cfg.end);
+        if (!start || !end) return null;
+        const daysTotal = Math.max(1, ihkDayDiff(start, end));
+        const daysDone  = Math.min(daysTotal, Math.max(0, ihkDayDiff(start, ihkToday())));
+        const years     = Math.max(1, Math.round(daysTotal / 365.25));
+        const lehrjahr  = Math.min(years, Math.max(1, Math.floor(daysDone / 365.25) + 1));
+        return { years, lehrjahr, daysTotal, daysDone };
+    }
+
     function ihkFmtDate(d) {
         if (!d) return '—';
         return d.toLocaleDateString(ihkLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -177,11 +193,12 @@
         if (!f.configured) return f;
 
         // ── Fortschritt & Lehrjahr ──
-        f.daysTotal = Math.max(1, ihkDayDiff(start, end));
-        f.daysDone  = Math.min(f.daysTotal, Math.max(0, ihkDayDiff(start, today)));
+        const lj    = ihkLehrjahrHeute();
+        f.daysTotal = lj.daysTotal;
+        f.daysDone  = lj.daysDone;
         f.pct       = Math.min(100, Math.max(0, (f.daysDone / f.daysTotal) * 100));
-        f.years     = Math.max(1, Math.round(f.daysTotal / 365.25));
-        f.lehrjahr  = Math.min(f.years, Math.max(1, Math.floor(f.daysDone / 365.25) + 1));
+        f.years     = lj.years;
+        f.lehrjahr  = lj.lehrjahr;
         if (examA) f.daysToExam = ihkDayDiff(today, examA);
 
         // ── Fehlzeiten ───────────────────────────────────────────────────
@@ -261,16 +278,12 @@
         }
 
         // ── Berufsschule (Querverweis, nicht zweite Quelle) ──
-        const grades = (data.settings.school && data.settings.school.grades) || {};
-        let all = [];
-        Object.keys(grades).forEach(s => {
-            (grades[s] || []).forEach(n => {
-                const v = parseFloat(n);
-                if (!isNaN(v) && v >= 1 && v <= 6) all.push(v);
-            });
-        });
+        // Ueber ALLE Lehrjahre: fuer die Zulassung zaehlt die ganze Ausbildung,
+        // nicht das gerade gewaehlte Jahr. Die Struktur kennt nur school.js.
+        const all = (typeof schoolAllGrades === 'function') ? schoolAllGrades() : [];
         f.schoolCount = all.length;
         f.schoolAvg   = all.length ? all.reduce((a, b) => a + b, 0) / all.length : 0;
+        f.schoolYears = (typeof schoolYearsWithGrades === 'function') ? schoolYearsWithGrades() : 0;
 
         return f;
     }
@@ -692,6 +705,12 @@
         if (ref) {
             ref.hidden = f.schoolCount === 0;
             ihkSetText('ihkSchoolAvg', f.schoolCount ? ihkNum(f.schoolAvg, 2) : '—');
+            // Bei mehreren Lehrjahren sagt die Zeile, worueber sie mittelt —
+            // der Einjahres-Text bleibt statisch (i18n-Schluessel im Markup).
+            if (f.schoolYears > 1) {
+                ihkSetText('ihkSchoolHint', ihkL('Durchschnitt über ' + f.schoolYears + ' Lehrjahre',
+                                                 'Average across ' + f.schoolYears + ' training years'));
+            }
         }
     }
 

@@ -646,7 +646,7 @@
         if(typeof d.settings.vacation.mode === 'undefined') d.settings.vacation.mode = 'days';
         if(!Array.isArray(d.settings.projects)) d.settings.projects = [];
         if(!d.settings.ihk) d.settings.ihk = {start: '', end: '', exam_zwischen: '', note_zwischen: '', note_abschluss: ''};
-        if(!d.settings.school) d.settings.school = { grades: { 'Kernprozesse': [], 'Wirtschaftslehre': [], 'IT-Systeme': [], 'Deutsch/Kommunikation': [] } };
+        scNormalizeSchool(d.settings);   // Berufsschule je Lehrjahr, Altbestand heben (school.js)
         if(!d.settings.goals) d.settings.goals = [];
         if (typeof d.settings.shortcutsEnabled === 'undefined') d.settings.shortcutsEnabled = false;
         if(!Array.isArray(d.entries)) d.entries = [];

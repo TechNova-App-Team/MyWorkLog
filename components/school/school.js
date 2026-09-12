@@ -1,4 +1,21 @@
 // ═══ SCHOOL MODULE ═══
+//
+// Speicher: data.settings.school = {
+//   years: { '1': { grades: { Fach: ['2.5', '3.0'] } }, '2': { grades: {…} } }
+// }
+// Die Lehrjahr-Nummer ist der Schluessel und fachlich gemeint (das 3. Lehrjahr
+// bleibt das 3., auch wenn das 2. geloescht wurde) — deshalb wird nie umnummeriert.
+//
+// 🔴 `school.grades` auf oberster Ebene ist der Altbestand bis v7.0.2 (ein Jahr,
+// ohne Dimension). scNormalizeSchool() hebt ihn nach years['1'] und LOESCHT ihn.
+// Es darf keine zweite Schreibstelle darauf geben — zwei Ablagen fuer dieselben
+// Noten driften (CLAUDE.md: „ein Zustand, ein Regler"). Wer die Noten braucht,
+// geht ueber scGradesOf() / schoolAllGrades(); die IHK-Ansicht macht das so.
+//
+// Das gewaehlte Lehrjahr ist eine Ansichts-Einstellung und liegt in
+// localStorage.mwl_school_year, NICHT in data.settings: save() legt bei jedem
+// Aufruf einen Voll-Backup-Schnappschuss an (10 Stueck), und ein Tab-Klick
+// wuerde echte Sicherungen aus der Liste schieben.
 
     // Lucide-Style Icons (Stroke 1.8, currentColor) — eine Quelle, keine Emojis.
     const SC_ICONS = {
@@ -10,8 +27,17 @@
         plus:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
         award:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5"/></svg>',
         check:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
-        alert:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.3 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+        alert:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.3 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+        move:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>',
+        copy:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+        layers:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>'
     };
+
+    // Vorgabe-Faecher fuer einen frischen Speicher — nur fuers erste Lehrjahr.
+    // Weitere Lehrjahre starten leer; wer dieselben Faecher will, uebernimmt sie
+    // mit einem Klick aus dem Vorjahr (copySchoolSubjects).
+    const SC_DEFAULT_SUBJECTS = ['Kernprozesse', 'Wirtschaftslehre', 'IT-Systeme', 'Deutsch/Kommunikation'];
+    const SC_YEAR_KEY = 'mwl_school_year';
 
     // JS-generierte Texte uebersetzen sich lokal, NICHT ueber das globale MAP in
     // i18n-runtime.js: Kurzlabels wie 'Gut'/'Sehr gut' kommen auch anderswo vor
@@ -28,6 +54,23 @@
         return n.toLocaleString(loc, { minimumFractionDigits: digits, maximumFractionDigits: digits });
     }
 
+    function scYearLabel(year) {
+        return scL(year + '. Lehrjahr', 'Year ' + year);
+    }
+
+    function scIsValidGrade(n) {
+        const v = parseFloat(n);
+        return !isNaN(v) && v >= 1 && v <= 6;
+    }
+
+    function scValidGrades(list) {
+        return (list || []).filter(scIsValidGrade).map(parseFloat);
+    }
+
+    function scAvg(list) {
+        return list.length ? list.reduce((a, b) => a + b, 0) / list.length : 0;
+    }
+
     // Notenskala: eine Stufe pro Bereich, benutzt ueberall dieselben Klassen.
     function getSchoolNoteTone(note) {
         const n = parseFloat(note);
@@ -37,8 +80,201 @@
         return 'bad';
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  SPEICHER — Struktur absichern, Altbestand heben
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Idempotent und billig; init-app.js ruft sie beim Start, applyDataDefaults()
+    // beim Import, scSchool() bei jedem Zugriff. Gibt data.settings.school zurueck.
+    function scNormalizeSchool(settings) {
+        if (!settings.school || typeof settings.school !== 'object') settings.school = {};
+        const s = settings.school;
+        if (!s.years || typeof s.years !== 'object' || Array.isArray(s.years)) s.years = {};
+
+        // Altbestand (flach, bis v7.0.2) → 1. Lehrjahr. Liegt dort schon etwas
+        // (ein aelterer Client hat nach der Umstellung noch flach geschrieben),
+        // gewinnt je Fach die Liste mit Noten; Fach fuer Fach zu mischen waere bei
+        // doppelten Werten (zweimal 2,0) nicht entscheidbar.
+        if (s.grades && typeof s.grades === 'object') {
+            if (!s.years['1'] || typeof s.years['1'] !== 'object') s.years['1'] = { grades: {} };
+            const ziel = s.years['1'];
+            if (!ziel.grades || typeof ziel.grades !== 'object') ziel.grades = {};
+            for (const fach in s.grades) {
+                const alt = Array.isArray(s.grades[fach]) ? s.grades[fach].slice() : [];
+                if (!ziel.grades[fach]) { ziel.grades[fach] = alt; continue; }
+                if (scValidGrades(ziel.grades[fach]).length === 0 && scValidGrades(alt).length > 0) ziel.grades[fach] = alt;
+            }
+            delete s.grades;
+        }
+
+        for (const y of Object.keys(s.years)) {
+            if (!/^[1-9]\d*$/.test(y) || !s.years[y] || typeof s.years[y] !== 'object') { delete s.years[y]; continue; }
+            if (!s.years[y].grades || typeof s.years[y].grades !== 'object') s.years[y].grades = {};
+            for (const fach in s.years[y].grades) {
+                if (!Array.isArray(s.years[y].grades[fach])) s.years[y].grades[fach] = [];
+            }
+        }
+
+        if (Object.keys(s.years).length === 0) {
+            s.years['1'] = { grades: {} };
+            SC_DEFAULT_SUBJECTS.forEach(f => { s.years['1'].grades[f] = []; });
+        }
+        return s;
+    }
+
+    function scSchool() {
+        return scNormalizeSchool(data.settings);
+    }
+
+    // Vorhandene Lehrjahre, aufsteigend.
+    function scYears() {
+        return Object.keys(scSchool().years).map(Number).sort((a, b) => a - b);
+    }
+
+    // Kleinste freie Nummer — fuellt eine Luecke (1, 3 → 2), sonst haengt sie an.
+    function scNextYear() {
+        const have = new Set(scYears());
+        let n = 1;
+        while (have.has(n)) n++;
+        return n;
+    }
+
+    function scGradesOf(year) {
+        const y = scSchool().years[String(year)];
+        return y ? y.grades : {};
+    }
+
+    // Alle gueltigen Noten ueber alle Lehrjahre — Querverweis fuer die IHK-Ansicht.
+    function schoolAllGrades() {
+        const out = [];
+        scYears().forEach(y => {
+            const g = scGradesOf(y);
+            for (const fach in g) scValidGrades(g[fach]).forEach(v => out.push(v));
+        });
+        return out;
+    }
+
+    function schoolYearsWithGrades() {
+        return scYears().filter(y => {
+            const g = scGradesOf(y);
+            return Object.keys(g).some(f => scValidGrades(g[f]).length > 0);
+        }).length;
+    }
+
+    // Zusammenfassung eines Lehrjahrs fuer die Leiste und die Jahresliste.
+    function scYearSummary(year) {
+        const g = scGradesOf(year);
+        let all = [];
+        for (const fach in g) all = all.concat(scValidGrades(g[fach]));
+        return { year, count: all.length, subjects: Object.keys(g).length, avg: scAvg(all) };
+    }
+
+    // Laufendes Lehrjahr laut IHK-Daten (ihk.js), sonst null.
+    function scCurrentYear() {
+        if (typeof ihkLehrjahrHeute !== 'function') return null;
+        const lj = ihkLehrjahrHeute();
+        return lj ? lj.lehrjahr : null;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  ANSICHT — gewaehltes Lehrjahr ('all' = alle zusammen)
+    // ═══════════════════════════════════════════════════════════════════
+
+    let scScopeCache = null;
+
+    function scScope() {
+        const years = scYears();
+        if (scScopeCache === null) {
+            let stored = null;
+            try { stored = localStorage.getItem(SC_YEAR_KEY); } catch (e) {}
+            if (stored === 'all') scScopeCache = 'all';
+            else if (stored && years.includes(parseInt(stored, 10))) scScopeCache = parseInt(stored, 10);
+        }
+        if (scScopeCache === 'all' && years.length > 1) return 'all';
+        if (typeof scScopeCache === 'number' && years.includes(scScopeCache)) return scScopeCache;
+        // Voreinstellung: das laufende Lehrjahr, wenn es angelegt ist — sonst das
+        // hoechste, denn dort traegt man heute ein.
+        const cur = scCurrentYear();
+        scScopeCache = (cur && years.includes(cur)) ? cur : years[years.length - 1];
+        return scScopeCache;
+    }
+
+    function setSchoolScope(scope) {
+        scCollectInputs();
+        scScopeCache = scope === 'all' ? 'all' : parseInt(scope, 10);
+        try { localStorage.setItem(SC_YEAR_KEY, String(scScopeCache)); } catch (e) {}
+        renderSchoolGradesInputs();
+    }
+
+    // Noten des gewaehlten Bereichs je Fach: ein Jahr direkt, „alle" als Verkettung
+    // in Jahresreihenfolge — so bleibt calculateTrend() (erste Haelfte gegen zweite)
+    // auch ueber Jahre hinweg sinnvoll.
+    function scScopeGrades(scope) {
+        if (scope !== 'all') return scGradesOf(scope);
+        const merged = {};
+        scYears().forEach(y => {
+            const g = scGradesOf(y);
+            for (const fach in g) merged[fach] = (merged[fach] || []).concat(g[fach] || []);
+        });
+        return merged;
+    }
+
+    function renderSchoolYearBar() {
+        const bar = document.getElementById('schoolYearBar');
+        if (!bar) return;
+        const years = scYears();
+        const scope = scScope();
+        const cur = scCurrentYear();
+        bar.setAttribute('aria-label', scL('Lehrjahr wählen', 'Choose training year'));
+
+        let html = '';
+        years.forEach(y => {
+            const s = scYearSummary(y);
+            const active = scope === y;
+            const isCur = cur === y;
+            const sub = s.count > 0
+                ? `<span class="sc-year-chip__avg">Ø ${scFmt(s.avg, 2)}</span><span>${s.count} ${s.count === 1 ? scL('Note', 'grade') : scL('Noten', 'grades')}</span>`
+                : `<span>${scL('keine Noten', 'no grades')}</span>`;
+            html += `
+                <button type="button" role="tab" class="sc-year-chip${active ? ' is-active' : ''}${isCur ? ' is-current' : ''}"
+                    aria-selected="${active}" data-scope="${y}"
+                    ${isCur ? `title="${scL('Laufendes Lehrjahr laut deinen Ausbildungsdaten', 'Current year according to your training data')}"` : ''}>
+                    <span class="sc-year-chip__label">${esc(scYearLabel(y))}</span>
+                    <span class="sc-year-chip__sub">${sub}</span>
+                </button>`;
+        });
+
+        html += `
+                <button type="button" class="sc-year-add" data-action="add"
+                    title="${scL('Weiteres Lehrjahr anlegen', 'Add another training year')}">
+                    ${SC_ICONS.plus}<span>${esc(scL('Lehrjahr', 'Year'))}</span>
+                </button>`;
+
+        // „Alle" erst ab zwei Jahren — mit einem waere es derselbe Reiter zweimal.
+        if (years.length > 1) {
+            const all = schoolAllGrades();
+            html += `
+                <span class="sc-yearbar__spacer" aria-hidden="true"></span>
+                <button type="button" role="tab" class="sc-year-chip sc-year-chip--all${scope === 'all' ? ' is-active' : ''}"
+                    aria-selected="${scope === 'all'}" data-scope="all">
+                    <span class="sc-year-chip__label">${SC_ICONS.layers}${esc(scL('Alle Lehrjahre', 'All years'))}</span>
+                    <span class="sc-year-chip__sub">${all.length
+                        ? `<span class="sc-year-chip__avg">Ø ${scFmt(scAvg(all), 2)}</span><span>${all.length} ${all.length === 1 ? scL('Note', 'grade') : scL('Noten', 'grades')}</span>`
+                        : `<span>${scL('keine Noten', 'no grades')}</span>`}</span>
+                </button>`;
+        }
+
+        bar.innerHTML = html;
+        bar.querySelectorAll('[data-scope]').forEach(btn => {
+            btn.addEventListener('click', () => setSchoolScope(btn.dataset.scope));
+        });
+        const add = bar.querySelector('[data-action="add"]');
+        if (add) add.addEventListener('click', () => addSchoolYear());
+    }
+
     function renderSchoolView() {
-        const kpis = calculateSchoolKPIs();
+        const scope = scScope();
+        const kpis = calculateSchoolKPIs(scope);
         const overallAvg = kpis.overallAvg;
 
         // ── Durchschnitts-Ring ──
@@ -108,7 +344,7 @@
         }
 
         const totalCount   = kpis.allGrades.length;
-        const subjectCount = Object.keys(data.settings.school?.grades || {}).length;
+        const subjectCount = Object.keys(scScopeGrades(scope)).length;
         if (subjectCountEl) subjectCountEl.textContent = totalCount;
         if (subjectTotalEl) {
             const unit = subjectCount === 1
@@ -145,6 +381,8 @@
         if (trendValue) trendValue.textContent = totalCount > 0 ? scFmt(overallAvg, 2) : '–';
         if (volatility) volatility.textContent = totalCount > 1 ? scFmt(calculateVolatility(kpis.allGrades), 2) : '–';
 
+        renderSchoolYearList(scope);
+
         // ── Verteilung ──
         const dist = kpis.distribution;
         const setW = (id, val) => { const el = document.getElementById(id); if (el) el.style.width = val + '%'; };
@@ -161,6 +399,7 @@
         setT('countPoor', dist.poorCount);
 
         // ── Fächer-Tabelle ──
+        renderSchoolTableHead(scope);
         const oldBody = document.getElementById('schoolSubjectsBody');
         if (oldBody && kpis.gradeRowsHTML) {
             const tbody = document.createElement('tbody');
@@ -170,23 +409,116 @@
         }
     }
 
+    // Der Tabellenkopf fuer EIN Jahr steht im Markup (i18n-Schluessel dort);
+    // die Gesamtansicht braucht eine Spalte je Lehrjahr und baut ihn selbst.
+    // Beim ersten Aufruf wird das Original gesichert, um zurueckwechseln zu koennen.
+    let scTheadYear = null;
+    function renderSchoolTableHead(scope) {
+        const table = document.getElementById('schoolGradesList');
+        const thead = table && table.querySelector('thead');
+        if (!thead) return;
+        if (scTheadYear === null) scTheadYear = thead.innerHTML;
+        if (scope !== 'all') {
+            if (thead.innerHTML !== scTheadYear) thead.innerHTML = scTheadYear;
+            return;
+        }
+        const years = scYears();
+        thead.innerHTML = `
+                            <tr>
+                                <th class="sc-col-subject">${esc(scL('Fach', 'Subject'))}</th>
+                                ${years.map(y => `<th class="sc-col-year">${esc(scL(y + '. LJ', 'Y' + y))}</th>`).join('')}
+                                <th class="sc-col-grade">${esc(scL('Gesamt', 'Overall'))}</th>
+                                <th class="sc-col-trend">${esc(scL('Trend', 'Trend'))}</th>
+                            </tr>`;
+    }
+
+    // Schnitt je Lehrjahr mit Veraenderung zum Vorjahr — nur in der Gesamtansicht.
+    function renderSchoolYearList(scope) {
+        const list = document.getElementById('schoolYearList');
+        if (!list) return;
+        if (scope !== 'all') { list.hidden = true; list.innerHTML = ''; return; }
+
+        let prev = null, html = '';
+        scYears().forEach(y => {
+            const s = scYearSummary(y);
+            let delta = '';
+            if (s.count > 0 && prev !== null) {
+                // Dieselbe Lesart wie die Trend-Spalte der Tabelle: positiv = besser
+                // (Note gesunken), mit demselben Pfeil — zwei Vorzeichen-Regeln auf
+                // einer Seite waeren eine zu viel.
+                const d = prev - s.avg;
+                const cls = d > 0.05 ? ' is-up' : d < -0.05 ? ' is-down' : '';
+                const sign = Math.abs(d) <= 0.05 ? '±' : (d > 0 ? '+' : '−');
+                const icon = d > 0.05 ? SC_ICONS.trendUp : d < -0.05 ? SC_ICONS.trendDown : SC_ICONS.trendFlat;
+                delta = `<span class="sc-year-row__delta${cls}">${mwlIconFromEmoji(icon, 12)}${sign}${scFmt(Math.abs(d), 2)}</span>`;
+            }
+            html += `
+                <div class="sc-year-row">
+                    <span class="sc-year-row__label">${esc(scYearLabel(y))}</span>
+                    <span class="sc-year-row__n">${s.count} ${s.count === 1 ? scL('Note', 'grade') : scL('Noten', 'grades')}</span>
+                    ${delta}
+                    <span class="sc-year-row__avg"${s.count ? ` style="color:var(--sc-${getSchoolNoteTone(s.avg)})"` : ''}>${s.count ? scFmt(s.avg, 2) : '–'}</span>
+                </div>`;
+            if (s.count > 0) prev = s.avg;
+        });
+        list.innerHTML = html;
+        list.hidden = false;
+    }
+
+    // Was in den Eingabefeldern steht, ins Datenmodell — OHNE zu speichern.
+    // Vor jedem Neuzeichnen der Karten aufrufen, sonst gehen getippte, noch
+    // nicht gespeicherte Noten verloren (so war es bis v7.0.2 beim „+ Note").
+    function scCollectInputs() {
+        const scope = scScope();
+        if (scope === 'all') return;
+        const grades = scGradesOf(scope);
+        document.querySelectorAll('.school-grade-input').forEach(input => {
+            const subject = input.dataset.subject;
+            const index = parseInt(input.dataset.index, 10);
+            if (!grades[subject] || isNaN(index)) return;
+            const value = parseFloat(input.value);
+            grades[subject][index] = isNaN(value) ? '' : value.toString();
+        });
+    }
+
     function renderSchoolGradesInputs() {
+        renderSchoolYearBar();
+
+        const scope = scScope();
+        const configPanel = document.querySelector('#view-school .sc-config-panel');
+        const allHint = document.getElementById('schoolAllHint');
+        if (configPanel) configPanel.hidden = scope === 'all';
+        if (allHint) allHint.hidden = scope !== 'all';
+
+        const removeBtn = document.getElementById('schoolRemoveYearBtn');
+        if (removeBtn) {
+            const years = scYears();
+            removeBtn.hidden = scope === 'all' || years.length < 2;
+            if (!removeBtn.hidden) removeBtn.textContent = scL(scope + '. Lehrjahr entfernen', 'Remove year ' + scope);
+        }
+
         const inputGrid = document.getElementById('schoolSubjectsInputGrid');
         if (!inputGrid) return;
+        if (scope === 'all') { inputGrid.innerHTML = ''; renderSchoolView(); return; }
 
-        const subjects = Object.keys(data.settings.school?.grades || {});
+        const gradesMap = scGradesOf(scope);
+        const subjects = Object.keys(gradesMap);
+        const others = scYears().filter(y => y !== scope);
         let html = '';
 
         if (subjects.length === 0) {
-            html = '<div class="sc-subjects-empty">' + scL('Noch keine Fächer angelegt.', 'No subjects yet.') + '</div>';
+            // Vorjahr mit Faechern anbieten — das naechstliegende darunter, sonst darueber.
+            const source = others.filter(y => y < scope && Object.keys(scGradesOf(y)).length).pop()
+                        || others.find(y => y > scope && Object.keys(scGradesOf(y)).length);
+            html = `<div class="sc-subjects-empty">
+                        <div>${esc(scL('Noch keine Fächer im ' + scope + '. Lehrjahr.', 'No subjects in year ' + scope + ' yet.'))}</div>
+                        ${source ? `<button type="button" class="sc-ghost-btn school-copy-btn" data-from="${source}">${SC_ICONS.copy}${esc(scL('Fächer aus dem ' + source + '. Lehrjahr übernehmen', 'Take over subjects from year ' + source))}</button>` : ''}
+                    </div>`;
         }
 
         subjects.forEach(subject => {
-            const grades = data.settings.school.grades[subject] || [];
-            const validGrades = grades.filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6);
-            const avg = validGrades.length > 0
-                ? validGrades.reduce((a, b) => a + parseFloat(b), 0) / validGrades.length
-                : 0;
+            const grades = gradesMap[subject] || [];
+            const avg = scAvg(scValidGrades(grades));
             const subjectEsc = esc(subject);
 
             const avgBadge = avg > 0
@@ -202,12 +534,26 @@
                                 aria-label="${subjectEsc}, ${gradeWord} ${index + 1}">
             `).join('');
 
+            // Verschieben: natives <select> als unsichtbare Schicht ueber dem Symbol
+            // (CLAUDE.md: opacity 0, nie display none; 16px gegen iOS-Zoom).
+            const moveOptions = others.map(y => `<option value="${y}">${esc(scYearLabel(y))}</option>`).join('')
+                + `<option value="new">${esc(scL('Neues Lehrjahr (' + scNextYear() + '.)', 'New year (' + scNextYear() + ')'))}</option>`;
+            const moveLabel = scL('Fach in ein anderes Lehrjahr verschieben', 'Move subject to another year');
+
             html += `
                 <div class="sc-subject-card">
                     <div class="sc-subject-top">
                         <h5 class="sc-subject-name" title="${subjectEsc}">${subjectEsc}</h5>
                         ${avgBadge}
                         <div class="sc-subject-actions">
+                            <span class="sc-move-wrap" title="${moveLabel}">
+                                <span class="sc-icon-btn" aria-hidden="true">${SC_ICONS.move}</span>
+                                <select class="sc-move-select school-move-select" data-subject="${subjectEsc}"
+                                    aria-label="${subjectEsc}: ${moveLabel}">
+                                    <option value="" selected disabled>${esc(scL('Verschieben nach…', 'Move to…'))}</option>
+                                    ${moveOptions}
+                                </select>
+                            </span>
                             <button type="button" class="sc-icon-btn school-rename-btn" data-subject="${subjectEsc}"
                                 title="${scL('Fach umbenennen', 'Rename subject')}"
                                 aria-label="${scL('Fach', 'Subject')} ${subjectEsc} ${scL('umbenennen', 'rename')}">${SC_ICONS.pencil}</button>
@@ -235,6 +581,12 @@
         });
         inputGrid.querySelectorAll('.school-addgrade-btn').forEach(btn => {
             btn.addEventListener('click', () => addSchoolGrade(btn.dataset.subject));
+        });
+        inputGrid.querySelectorAll('.school-move-select').forEach(sel => {
+            sel.addEventListener('change', () => { if (sel.value) moveSchoolSubject(sel.dataset.subject, sel.value); });
+        });
+        inputGrid.querySelectorAll('.school-copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => copySchoolSubjects(parseInt(btn.dataset.from, 10), scope));
         });
 
         renderSchoolView();
@@ -276,21 +628,23 @@
         });
     }
 
-    function calculateSchoolKPIs() {
-        const grades = data.settings.school?.grades || {};
+    // ═══════════════════════════════════════════════════════════════════
+    //  KENNZAHLEN — fuer ein Lehrjahr oder alle zusammen ('all')
+    // ═══════════════════════════════════════════════════════════════════
+    function calculateSchoolKPIs(scope) {
+        if (scope === undefined) scope = scScope();
+        const grades = scScopeGrades(scope);
+        const years = scope === 'all' ? scYears() : [];
         let allGrades = [];
         let gradesBySubject = {};
         let bestNote = 6.0, bestSubject = '—';
         let worstNote = 1.0, worstSubject = '—';
 
         for (const subject in grades) {
-            const validGrades = (grades[subject] || []).filter(n => {
-                const num = parseFloat(n);
-                return !isNaN(num) && num >= 1 && num <= 6;
-            }).map(parseFloat);
+            const validGrades = scValidGrades(grades[subject]);
 
             if (validGrades.length > 0) {
-                const avg = validGrades.reduce((a, b) => a + b, 0) / validGrades.length;
+                const avg = scAvg(validGrades);
                 gradesBySubject[subject] = avg;
                 allGrades = allGrades.concat(validGrades);
 
@@ -305,17 +659,25 @@
             }
         }
 
-        const overallAvg = allGrades.length > 0
-            ? allGrades.reduce((a, b) => a + b, 0) / allGrades.length
-            : 0;
+        const overallAvg = scAvg(allGrades);
 
         // Tabellenzeilen
         let gradeRowsHTML = '';
         for (const subject in gradesBySubject) {
             const avg = gradesBySubject[subject];
-            const count = (grades[subject] || []).filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6).length;
-            const trend = calculateTrend(grades[subject] || []);
+            const count = scValidGrades(grades[subject]).length;
             const tone = getSchoolNoteTone(avg);
+
+            // Trend: im Jahr erste gegen zweite Haelfte der Noten; ueber alle
+            // Jahre der Schnitt des ersten Jahres mit Noten gegen den des letzten.
+            let trend;
+            if (scope === 'all') {
+                const yearAvgs = years.map(y => scAvg(scValidGrades(scGradesOf(y)[subject]))).filter(v => v > 0);
+                const change = yearAvgs.length >= 2 ? yearAvgs[0] - yearAvgs[yearAvgs.length - 1] : 0;
+                trend = { change, direction: change > 0.2 ? 'up' : change < -0.2 ? 'down' : 'stable' };
+            } else {
+                trend = calculateTrend(grades[subject] || []);
+            }
 
             const trendIcon = trend.direction === 'up' ? SC_ICONS.trendUp
                             : trend.direction === 'down' ? SC_ICONS.trendDown
@@ -331,7 +693,23 @@
                               : avg <= 3 ? scL('Gut', 'Good')
                               : scL('Verbesserung', 'Needs work');
 
-            gradeRowsHTML += `
+            if (scope === 'all') {
+                const yearCells = years.map(y => {
+                    const a = scAvg(scValidGrades(scGradesOf(y)[subject]));
+                    return a > 0
+                        ? `<td class="sc-col-year"><span class="sc-grade-val" style="color:var(--sc-${getSchoolNoteTone(a)})">${scFmt(a, 1)}</span></td>`
+                        : `<td class="sc-col-year"><span class="sc-year-none">–</span></td>`;
+                }).join('');
+                gradeRowsHTML += `
+                <tr>
+                    <td class="sc-col-subject">${esc(subject)}</td>
+                    ${yearCells}
+                    <td class="sc-col-grade"><span class="sc-grade-val" style="color:var(--sc-${tone})">${scFmt(avg, 1)}</span></td>
+                    <td class="sc-col-trend"><span class="sc-trend-cell${trendClass}">${mwlIconFromEmoji(trendIcon, 13)}${trendLabel}</span></td>
+                </tr>
+            `;
+            } else {
+                gradeRowsHTML += `
                 <tr>
                     <td class="sc-col-subject">${esc(subject)}</td>
                     <td class="sc-col-grade"><span class="sc-grade-val" style="color:var(--sc-${tone})">${scFmt(avg, 1)}</span></td>
@@ -340,6 +718,7 @@
                     <td class="sc-col-status"><span class="sc-status-pill sc-status-${tone}">${statusLabel}</span></td>
                 </tr>
             `;
+            }
         }
 
         const distribution = calculateGradeDistribution(allGrades);
@@ -357,10 +736,7 @@
     }
 
     function calculateTrend(grades) {
-        const validGrades = (grades || []).filter(n => {
-            const num = parseFloat(n);
-            return !isNaN(num) && num >= 1 && num <= 6;
-        }).map(parseFloat);
+        const validGrades = scValidGrades(grades);
 
         if (validGrades.length < 2) return { direction: 'stable', change: 0 };
 
@@ -420,8 +796,17 @@
         return Math.max(0, Math.min(100, ((6.0 - n) / 5.0) * 100));
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  AKTIONEN
+    // ═══════════════════════════════════════════════════════════════════
+
     function addSchoolGrade(subject) {
-        data.settings.school.grades[subject].push('');
+        const scope = scScope();
+        if (scope === 'all') return;
+        scCollectInputs();
+        const grades = scGradesOf(scope);
+        if (!grades[subject]) grades[subject] = [];
+        grades[subject].push('');
         renderSchoolGradesInputs();
         // Fokus auf das neue, leere Feld
         const fields = document.querySelectorAll(`.school-grade-input[data-subject="${CSS.escape(subject)}"]`);
@@ -429,6 +814,8 @@
     }
 
     function addNewSchoolSubject() {
+        const scope = scScope();
+        if (scope === 'all') return;
         const nameEl = document.getElementById('newSubjectName');
         const gradeEl = document.getElementById('newSubjectGrade');
 
@@ -453,53 +840,34 @@
             return;
         }
 
-        if (!data.settings.school) data.settings.school = { grades: {} };
-        if (!data.settings.school.grades[name]) {
-            data.settings.school.grades[name] = [];
-        }
-
-        data.settings.school.grades[name].push(grade.toString());
+        scCollectInputs();
+        const grades = scGradesOf(scope);
+        if (!grades[name]) grades[name] = [];
+        grades[name].push(grade.toString());
         nameEl.value = '';
         gradeEl.value = '';
 
+        save();
         renderSchoolGradesInputs();
-        saveSchoolGrades();
     }
 
     function saveSchoolGrades() {
-        if (!data.settings.school) data.settings.school = { grades: {} };
-
-        const inputs = document.querySelectorAll('.school-grade-input');
-        const updatedGrades = {};
-
-        inputs.forEach(input => {
-            const subject = input.dataset.subject;
-            const index = parseInt(input.dataset.index);
-            const value = parseFloat(input.value);
-
-            if (!updatedGrades[subject]) updatedGrades[subject] = [];
-            updatedGrades[subject][index] = isNaN(value) ? '' : value.toString();
-        });
-
-        // Faecher ohne sichtbare Eingabefelder unveraendert uebernehmen
-        for (const subject in data.settings.school.grades) {
-            if (!updatedGrades[subject]) {
-                updatedGrades[subject] = data.settings.school.grades[subject];
-            }
-        }
-
-        data.settings.school.grades = updatedGrades;
+        scCollectInputs();
         save();
         renderSchoolView();
+        renderSchoolYearBar();
     }
 
     function deleteSchoolSubject(subject) {
+        const scope = scScope();
+        if (scope === 'all') return;
         showCustomConfirm(
             scL('Fach löschen?', 'Delete subject?'),
-            scL(`Alle Noten im Fach „${subject}" werden mitgelöscht. Das lässt sich nicht rückgängig machen.`,
-                `All grades in "${subject}" will be deleted as well. This cannot be undone.`),
+            scL(`Alle Noten im Fach „${subject}" im ${scope}. Lehrjahr werden mitgelöscht. Das lässt sich nicht rückgängig machen.`,
+                `All grades in "${subject}" in year ${scope} will be deleted as well. This cannot be undone.`),
             () => {
-                delete data.settings.school.grades[subject];
+                scCollectInputs();
+                delete scGradesOf(scope)[subject];
                 save();
                 renderSchoolGradesInputs();
             }, null,
@@ -507,13 +875,84 @@
     }
 
     async function renameSchoolSubject(oldName) {
+        const scope = scScope();
+        if (scope === 'all') return;
         const label = scL(`Neuer Name für „${oldName}"`, `New name for "${oldName}"`);
         const newName = await showCustomPrompt(scL('Fach umbenennen', 'Rename subject'), label, oldName,
             { confirmText: scL('Umbenennen', 'Rename'), cancelText: scL('Abbrechen', 'Cancel') });
-        if (newName && newName.trim() && newName !== oldName) {
-            data.settings.school.grades[newName.trim()] = data.settings.school.grades[oldName];
-            delete data.settings.school.grades[oldName];
-            save();
-            renderSchoolGradesInputs();
+        const clean = (newName || '').trim();
+        if (!clean || clean === oldName) return;
+        scCollectInputs();
+        const grades = scGradesOf(scope);
+        if (grades[clean]) {
+            showCustomMessage(scL('Fach existiert bereits', 'Subject already exists'),
+                scL(`„${clean}" gibt es im ${scope}. Lehrjahr schon.`, `"${clean}" already exists in year ${scope}.`), 'warning');
+            return;
         }
+        grades[clean] = grades[oldName];
+        delete grades[oldName];
+        save();
+        renderSchoolGradesInputs();
+    }
+
+    // Fach samt Noten in ein anderes Lehrjahr. Gibt es das Fach dort schon,
+    // werden die Noten angehaengt — nichts geht verloren.
+    function moveSchoolSubject(subject, target) {
+        const scope = scScope();
+        if (scope === 'all') return;
+        scCollectInputs();
+        const to = target === 'new' ? scNextYear() : parseInt(target, 10);
+        if (!to || to === scope) return;
+        const school = scSchool();
+        if (!school.years[String(to)]) school.years[String(to)] = { grades: {} };
+        const from = scGradesOf(scope);
+        const dest = school.years[String(to)].grades;
+        dest[subject] = (dest[subject] || []).concat(from[subject] || []);
+        delete from[subject];
+        save();
+        renderSchoolGradesInputs();
+        if (typeof showToast === 'function') {
+            showToast(scL('Fach verschoben', 'Subject moved'),
+                      scL(`„${subject}" liegt jetzt im ${to}. Lehrjahr.`, `"${subject}" is now in year ${to}.`), 'success');
+        }
+    }
+
+    // Fachnamen (ohne Noten) aus einem anderen Lehrjahr uebernehmen.
+    function copySchoolSubjects(fromYear, toYear) {
+        scCollectInputs();
+        const school = scSchool();
+        if (!school.years[String(toYear)]) school.years[String(toYear)] = { grades: {} };
+        const src = scGradesOf(fromYear), dest = school.years[String(toYear)].grades;
+        Object.keys(src).forEach(f => { if (!dest[f]) dest[f] = []; });
+        save();
+        renderSchoolGradesInputs();
+    }
+
+    function addSchoolYear() {
+        scCollectInputs();
+        const y = scNextYear();
+        scSchool().years[String(y)] = { grades: {} };
+        save();
+        setSchoolScope(y);
+    }
+
+    function removeSchoolYear() {
+        const scope = scScope();
+        if (scope === 'all' || scYears().length < 2) return;
+        scCollectInputs();
+        const s = scYearSummary(scope);
+        const doRemove = () => {
+            delete scSchool().years[String(scope)];
+            save();
+            scScopeCache = null;
+            try { localStorage.removeItem(SC_YEAR_KEY); } catch (e) {}
+            renderSchoolGradesInputs();
+        };
+        if (s.subjects === 0) { doRemove(); return; }
+        showCustomConfirm(
+            scL(scope + '. Lehrjahr entfernen?', 'Remove year ' + scope + '?'),
+            scL(`${s.subjects} ${s.subjects === 1 ? 'Fach' : 'Fächer'} und ${s.count} ${s.count === 1 ? 'Note' : 'Noten'} werden mitgelöscht. Das lässt sich nicht rückgängig machen.`,
+                `${s.subjects} ${s.subjects === 1 ? 'subject' : 'subjects'} and ${s.count} ${s.count === 1 ? 'grade' : 'grades'} will be deleted as well. This cannot be undone.`),
+            doRemove, null,
+            { danger: true, confirmText: scL('Lehrjahr entfernen', 'Remove year'), cancelText: scL('Abbrechen', 'Cancel') });
     }
