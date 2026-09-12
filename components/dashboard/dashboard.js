@@ -2199,3 +2199,37 @@
             showVoiceFeedback('❌ Fehler beim Verarbeiten', 'error');
         }
     }
+
+    // ═══ PROJEKT-STATUS-BANNER ═══
+    // Hinweis, dass MyWorkLog waehrend eines parallelen Ausbildungsprojekts
+    // seltener Updates bekommt. Dismiss wie umf-banner (umfrage.js): eigenes
+    // localStorage-Flag, keine Kopplung an data.settings. "_v1"-Suffix, damit
+    // eine spaetere inhaltliche Aenderung den Banner erneut zeigen kann.
+    var PROJ_STATUS_LS_DISMISSED = 'mwl_projectstatus_dismissed_v1';
+
+    function applyProjectStatusBanner() {
+        var banner = document.getElementById('projectStatusBanner');
+        if (!banner) return;
+        var dismissed = false;
+        try { dismissed = !!localStorage.getItem(PROJ_STATUS_LS_DISMISSED); } catch (e) {}
+        banner.style.display = dismissed ? 'none' : 'flex';
+    }
+
+    function dismissProjectStatus() {
+        try { localStorage.setItem(PROJ_STATUS_LS_DISMISSED, '1'); } catch (e) {}
+        applyProjectStatusBanner();
+    }
+
+    // Support-Tab oeffnen und direkt zum Feedback-Formular scrollen.
+    function goToSupportFeedback() {
+        switchTab('support');
+        var el = document.getElementById('supportFeedbackSection');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    window.applyProjectStatusBanner = applyProjectStatusBanner;
+    window.dismissProjectStatus = dismissProjectStatus;
+    window.goToSupportFeedback = goToSupportFeedback;
+
+    // Script laedt per defer, DOM ist bereits geparst.
+    applyProjectStatusBanner();
