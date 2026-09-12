@@ -1,9 +1,12 @@
 // ═══ GEBURTSTAG MODULE ═══
-// Kerze und Wunsch am 12.09. Das Markup steht in dashboard.html (#gbCard), die
-// Klassen html.mwl-geburtstag / .mwl-geburtstag-karte setzt das Pre-Apply-Skript
-// im <head> — hier passiert nur, was erst mit JS geht: die Tageshoehe der Kerze,
-// die Flamme (Feder auf Zeigerbewegung, Flattern am Mikrofon), das Auspusten,
-// der Wunsch an den Worker und das goldene Favicon.
+// Kerze und Wunsch vom 12.09. 0 Uhr bis 13.09. 13 Uhr (nicht nur der Geburtstag
+// selbst — sonst waere das Ganze fuer die meisten nur ein paar Abendstunden
+// sichtbar). Das Markup steht in dashboard.html (#gbCard), die Klassen
+// html.mwl-geburtstag / .mwl-geburtstag-karte setzt das Pre-Apply-Skript im
+// <head> — hier passiert nur, was erst mit JS geht: die Hoehe der Kerze, die
+// Flamme (Feder auf Zeigerbewegung, Flattern am Mikrofon), das Auspusten und
+// der Wunsch an den Worker. Das Favicon bleibt bewusst das normale — Wunsch
+// des Nutzers vom 12.09.2026, nicht wieder vergolden.
 //
 // Zum Testen an einem anderen Tag: localStorage.mwl_geburtstag_test = '1'
 // (liest der Torwaechter im <head>), danach neu laden.
@@ -14,6 +17,8 @@
     if (!root.classList.contains('mwl-geburtstag')) return;
 
     const JAHR      = new Date().getFullYear();
+    const START     = new Date(JAHR, 8, 12, 0, 0, 0);    // 12.09. 0:00
+    const ENDE      = new Date(JAHR, 8, 13, 13, 0, 0);   // 13.09. 13:00
     const LS_STAND  = 'mwl_geburtstag_' + JAHR;     // 'aus' | 'gesendet' | 'weg'
     const LS_ID     = 'mwl_wunsch_id';
     // Eigener Pfad am bestehenden Worker, wie /umfrage. Kein "feedback",
@@ -24,6 +29,7 @@
     // Deutsche Strings; /en/ uebersetzt Assets/js/i18n-runtime.js (MAP/RULES).
     const T = {
         kerzeAus:      'Die Kerze ist aus.',
+        gestern:       'Der Mensch hinter MyWorkLog hatte gestern Geburtstag. Die Kerze brennt noch.',
         micAn:         'Mikrofon an. Jetzt pusten.',
         micStopp:      'Stopp',
         micAus:        'Mikrofon wieder aus. Ein Tippen auf die Flamme geht auch.',
@@ -35,38 +41,15 @@
         senden:        'Wunsch schicken',
         zuViele:       'Zu viele Anfragen. Bitte in ein paar Minuten nochmal.',
         netz:          'Keine Verbindung zum Server. Versuch es gleich nochmal.',
-        brennt:        function (h, m) { return 'Die Kerze brennt den Tag herunter, noch ' + h + ' h ' + m + ' min.'; }
+        brennt:        function (h, m) { return 'Die Kerze brennt herunter, noch ' + h + ' h ' + m + ' min.'; }
     };
 
     function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
     function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
     function ereignis(name, props) { if (typeof mwlEvent === 'function') mwlEvent(name, props || {}); }
 
-    // ── Favicon: dieselbe Marke wie in der Sidebar, in Gold, auf dunklem Grund
-    // (damit sie auch auf einer hellen Tab-Leiste steht). Die beiden festen
-    // Icon-Links fliegen fuer den Tag raus, sonst nimmt Chrome weiter das .ico.
-    function goldFavicon() {
-        const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">'
-            + '<rect width="40" height="40" rx="9" fill="#15161b"/>'
-            + '<g fill="none" stroke="#d9b054" stroke-linecap="round" stroke-linejoin="round">'
-            + '<path d="M16 4h8M20 4v3.5" stroke-width="2.4"/>'
-            + '<circle cx="20" cy="24" r="13" stroke-width="2" opacity=".28"/>'
-            + '<path d="M20 11A13 13 0 1 1 9.45 30.65" stroke-width="2.6"/>'
-            + '<path d="M20 24l8-8M23.5 16H28v4.5" stroke-width="2.6"/>'
-            + '</g><circle cx="20" cy="24" r="2" fill="#d9b054"/></svg>';
-        document.querySelectorAll('link[rel="icon"]').forEach(function (l) { l.remove(); });
-        const link = document.createElement('link');
-        link.rel = 'icon';
-        link.type = 'image/svg+xml';
-        link.sizes = 'any';
-        link.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
-        document.head.appendChild(link);
-    }
-
     // ── Karte ───────────────────────────────────────────────────────────
     function init() {
-        goldFavicon();
-
         const card = document.getElementById('gbCard');
         if (!card || !root.classList.contains('mwl-geburtstag-karte')) return;
 
@@ -86,23 +69,28 @@
         let stand = lsGet(LS_STAND) || 'lit';
         if (stand === 'weg') return;
 
-        // ── Die Kerze ist eine Uhr: um 0:00 voll, bis 23:59 auf ein Drittel
-        // heruntergebrannt. Bewusst ohne Animation — es ist die Uhrzeit, kein Effekt.
+        // ── Die Kerze ist eine Uhr: voll beim Start des Fensters (12.09., 0 Uhr),
+        // bis zum Ende (13.09., 13 Uhr) auf ein Drittel heruntergebrannt. Bewusst
+        // ohne Animation — es ist die Uhrzeit, kein Effekt. Ausserhalb des Fensters
+        // (Test-Schalter) wird auf voll bzw. leer geklemmt.
         const HOLDER_Y = 190, H_MAX = 112, H_MIN = 40;
         let topY = 78;
         function setzeHoehe() {
             const jetzt = new Date();
-            const rest = 1 - (jetzt.getHours() * 60 + jetzt.getMinutes()) / 1440;
+            const rest = Math.max(0, Math.min(1, 1 - (jetzt - START) / (ENDE - START)));
             const h = H_MIN + (H_MAX - H_MIN) * rest;
             topY = HOLDER_Y - h;
             wax.setAttribute('y', topY.toFixed(1));
             wax.setAttribute('height', h.toFixed(1));
             top.setAttribute('transform', 'translate(60 ' + topY.toFixed(1) + ')');
-            const restMin = Math.round(rest * 1440);
+            const restMin = Math.round(rest * (ENDE - START) / 60000);
             candle.title = T.brennt(Math.floor(restMin / 60), restMin % 60);
         }
         setzeHoehe();
         candle.addEventListener('pointerenter', setzeHoehe);
+        // Am 13. stimmt „heute" nicht mehr — die Ueberschrift sagt dann, was Sache ist.
+        const heute = new Date();
+        if (heute.getMonth() === 8 && heute.getDate() === 13) document.getElementById('gbTitleLit').textContent = T.gestern;
 
         // ── Textzustand (lit → out → sent), Ueberblendung mit leichter Unschaerfe
         function zeigeStand(name, animiert) {

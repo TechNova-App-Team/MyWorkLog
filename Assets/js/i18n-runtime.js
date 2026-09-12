@@ -15,6 +15,7 @@
   var MAP = {
     // ── Geburtstag (12.09., components/geburtstag/geburtstag.js) ──
     'Die Kerze ist aus.': 'The candle is out.',
+    'Der Mensch hinter MyWorkLog hatte gestern Geburtstag. Die Kerze brennt noch.': 'The person behind MyWorkLog had their birthday yesterday. The candle is still burning.',
     'Mikrofon an. Jetzt pusten.': 'Microphone on. Blow now.',
     'Stopp': 'Stop',
     'Mikrofon wieder aus. Ein Tippen auf die Flamme geht auch.': 'Microphone off again. Tapping the flame works too.',
@@ -448,7 +449,7 @@
   // spezifische Regeln vor allgemeinen, sonst frisst die allgemeine zuerst.
   var RULES = [
     // ── Geburtstag: Restzeit der Kerze und Server-Status tragen Zahlen ──
-    [/^Die Kerze brennt den Tag herunter, noch (\d+) h (\d+) min\.$/g, 'The candle burns down with the day, $1 h $2 min left.'],
+    [/^Die Kerze brennt herunter, noch (\d+) h (\d+) min\.$/g, 'The candle burns down, $1 h $2 min left.'],
     [/^Server antwortete mit (\d+)$/g, 'Server answered with $1'],
     // ── IHK-PDF-Import: Zahl steht vorne, deshalb kein MAP-Eintrag moeglich ──
     [/^(\d+) Wochen gefunden$/g, '$1 weeks found'],

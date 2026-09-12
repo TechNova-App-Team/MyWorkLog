@@ -7,8 +7,9 @@
 // document.hidden wahr"). Deshalb jsdom mit pretendToBeVisual.
 //
 // Geprueft wird:
-//   1. der Torwaechter im <head> (Datum, Test-Schalter, 'weg' blendet nur die Karte aus)
-//   2. die Kerze als Uhr (Wachshoehe faellt ueber den Tag)
+//   1. der Torwaechter im <head> (Fenster 12.09. 0 Uhr – 13.09. 13 Uhr, Test-Schalter,
+//      'weg' blendet nur die Karte aus)
+//   2. die Kerze als Uhr (Wachshoehe faellt ueber das ganze Fenster), Favicon bleibt
 //   3. die Flamme reagiert auf eine schnelle Zeigerbewegung und kommt zur Ruhe
 //   4. Tippen loescht, Zustand wird gespeichert, Formular kommt
 //   5. Wunsch: leer = kein Abruf (Gegenprobe!), gueltig = genau ein Abruf mit Id
@@ -65,8 +66,14 @@ function gate({ now, ls = {} }) {
 {
     const am = gate({ now: '2026-09-12T09:30:00' });
     ok('12.09.: Marken + Karte', am.includes('mwl-geburtstag') && am.includes('mwl-geburtstag-karte'));
-    const nicht = gate({ now: '2026-09-13T09:30:00' });
-    ok('13.09.: nichts', !nicht.includes('mwl-geburtstag') && !nicht.includes('mwl-geburtstag-karte'));
+    const tag2 = gate({ now: '2026-09-13T12:59:00' });
+    ok('13.09. 12:59: noch an', tag2.includes('mwl-geburtstag') && tag2.includes('mwl-geburtstag-karte'));
+    const ende = gate({ now: '2026-09-13T13:00:00' });
+    ok('13.09. 13:00: aus', !ende.includes('mwl-geburtstag') && !ende.includes('mwl-geburtstag-karte'));
+    const vorher = gate({ now: '2026-09-11T23:59:00' });
+    ok('11.09. 23:59: noch nichts', !vorher.includes('mwl-geburtstag'));
+    const nicht = gate({ now: '2026-09-14T09:30:00' });
+    ok('14.09.: nichts', !nicht.includes('mwl-geburtstag') && !nicht.includes('mwl-geburtstag-karte'));
     const dez = gate({ now: '2026-12-09T09:30:00' });
     ok('09.12. (Tag/Monat vertauscht): nichts', !dez.includes('mwl-geburtstag'));
     const test = gate({ now: '2026-03-01T09:30:00', ls: { mwl_geburtstag_test: '1' } });
@@ -110,15 +117,25 @@ const sichtbar = (d) => [...d.querySelectorAll('.gb-state')].filter(s => !s.hidd
 console.log('\n2. Die Kerze ist eine Uhr');
 {
     const frueh = await boot({ now: '2026-09-12T00:10:00' });
-    const spaet = await boot({ now: '2026-09-12T23:50:00' });
+    const mitte = await boot({ now: '2026-09-12T23:50:00' });
+    const spaet = await boot({ now: '2026-09-13T12:50:00' });
     const hF = parseFloat(frueh.id('gbWax').getAttribute('height'));
+    const hM = parseFloat(mitte.id('gbWax').getAttribute('height'));
     const hS = parseFloat(spaet.id('gbWax').getAttribute('height'));
-    ok('um 0:10 fast voll (' + hF + ')', hF > 108 && hF <= 112);
-    ok('um 23:50 fast heruntergebrannt (' + hS + ')', hS >= 40 && hS < 42);
+    ok('12.09. 0:10 fast voll (' + hF + ')', hF > 111 && hF <= 112);
+    // 23 h 50 min von 37 h verbraucht → 35,6 % Rest → 40 + 72 * 0,356 ≈ 65,6
+    ok('12.09. 23:50 gut ein Drittel (' + hM + ')', hM > 64 && hM < 67);
+    ok('13.09. 12:50 fast heruntergebrannt (' + hS + ')', hS >= 40 && hS < 41);
+    ok('13.09.: Ueberschrift sagt „gestern"', /hatte gestern Geburtstag/.test(spaet.id('gbTitleLit').textContent));
+    ok('12.09.: Ueberschrift sagt „heute"', /hat heute Geburtstag/.test(frueh.id('gbTitleLit').textContent));
+    ok('title nennt die Restzeit (13.09. 12:50 → 0 h 10 min)', /noch 0 h 10 min/.test(spaet.id('gbCandle').title));
     ok('Docht/Flamme sitzen auf der Wachsoberkante',
         frueh.id('gbTop').getAttribute('transform') === 'translate(60 ' + frueh.id('gbWax').getAttribute('y') + ')');
-    ok('title nennt die Restzeit', /noch 23 h 5\d min/.test(frueh.id('gbCandle').title));
-    ok('Favicon: nur noch das goldene SVG', [...frueh.d.querySelectorAll('link[rel="icon"]')].map(l => l.type).join() === 'image/svg+xml');
+    ok('title nennt die Restzeit (12.09. 0:10 → 36 h 50 min)', /noch 36 h 50 min/.test(frueh.id('gbCandle').title));
+    // Wunsch des Nutzers (12.09.2026): das Tab-Symbol bleibt das normale.
+    eq('Favicon bleibt unangetastet (beide Links, kein SVG)',
+        [...frueh.d.querySelectorAll('link[rel="icon"]')].map(l => l.getAttribute('href')).join(), 'favicon.ico,/Grafiken/image.jpg');
+    ok('kein Favicon-Code mehr im Modul', !/rel *= *'icon'|link\[rel="icon"\]/.test(JS));
 }
 
 // ═════════════════════════════════════════════════════════════════════
@@ -268,7 +285,7 @@ console.log('\n8. Jeder JS-String hat einen englischen Eintrag');
     ok('Strings gefunden (' + strings.length + ')', strings.length >= 12);
     const fehlt = strings.filter(s => !RUNTIME.includes("'" + s + "'"));
     ok('alle in i18n-runtime.js' + (fehlt.length ? ' — FEHLT: ' + fehlt.join(' | ') : ''), fehlt.length === 0);
-    ok('Restzeit-Regel (mit Zahlen) vorhanden', /Die Kerze brennt den Tag herunter/.test(RUNTIME));
+    ok('Restzeit-Regel (mit Zahlen) vorhanden', /Die Kerze brennt herunter, noch/.test(RUNTIME));
     ok('Server-Status-Regel vorhanden', /Server antwortete mit/.test(RUNTIME));
 }
 
