@@ -2,7 +2,17 @@
         #settingsModal .modal-box {
             background: #0e0e11;
             border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 18px;
+            overflow: hidden;
+            isolation: isolate;
             /* backdrop-filter entfernt: BG ist opak, Blur war reine GPU-Last */
+        }
+        #settingsModal .settings-body,
+        #settingsModal .modal-box > div[style*="overflow-y"] {
+            will-change: scroll-position;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            transform: translateZ(0);
         }
         .settings-header {
             background: rgba(255,255,255,0.02);
@@ -624,6 +634,7 @@
                 font-size: 0.75rem;
             }
             /* Content area: padding reduzieren */
+            #settingsModal .settings-body,
             #settingsModal .modal-box > div[style*="overflow-y"] {
                 padding: 1rem !important;
             }
@@ -641,7 +652,7 @@
            ═══════════════════════════════════════════════════════ */
         .accent-picker {
             padding: 1.5rem;
-            contain: layout paint style;
+            contain: layout style;
         }
         .accent-picker .settings-section-title { margin-bottom: 1.25rem; }
 
@@ -660,14 +671,14 @@
             border: 1px solid rgba(var(--primary-rgb), 0.22);
             overflow: hidden;
             isolation: isolate;
-            contain: layout paint style;
+            contain: layout style;
             transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
         }
         .accent-hero::before {
             content: '';
             position: absolute;
-            inset: -40%;
-            background: radial-gradient(circle at 80% 20%, rgba(var(--primary-rgb), 0.22), transparent 55%);
+            inset: 0;
+            background: radial-gradient(circle at 85% 20%, rgba(var(--primary-rgb), 0.20), transparent 60%);
             pointer-events: none;
             z-index: -1;
             transition: background 0.4s ease;
@@ -679,10 +690,9 @@
             background: var(--primary);
             flex-shrink: 0;
             box-shadow:
-                0 12px 28px -6px rgba(var(--primary-rgb), 0.55),
-                inset 0 0 0 1px rgba(255,255,255,0.18),
-                inset 0 12px 24px -8px rgba(255,255,255,0.25),
-                inset 0 -12px 24px -8px rgba(0,0,0,0.35);
+                0 8px 20px -4px rgba(var(--primary-rgb), 0.45),
+                inset 0 1px 2px rgba(255,255,255,0.3),
+                inset 0 -2px 4px rgba(0,0,0,0.35);
             transition: background 0.3s ease, box-shadow 0.3s ease;
         }
         .accent-hero-info { flex: 1; min-width: 0; }
@@ -782,6 +792,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
             gap: 8px;
+            contain: layout style;
             /* KEIN contain: paint — würde aktiven Swatch-Ring (::after inset:-5px + scale)
                an Rand-Reihen abschneiden. */
         }
@@ -791,9 +802,13 @@
             border-radius: 50%;
             cursor: pointer;
             padding: 0;
-            border: 1px solid rgba(255,255,255,0.10);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), inset 0 6px 10px -4px rgba(255,255,255,0.25), inset 0 -6px 10px -4px rgba(0,0,0,0.35);
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow:
+                inset 0 1px 2px rgba(255,255,255,0.32),
+                inset 0 -1px 2px rgba(0,0,0,0.35),
+                0 1px 2px rgba(0,0,0,0.18);
+            will-change: transform;
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s ease;
         }
         .accent-swatch::after {
             content: '';
@@ -803,11 +818,11 @@
             border: 2px solid #fff;
             opacity: 0;
             transform: scale(0.82);
-            transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
         }
         .accent-swatch:hover {
-            transform: translateY(-1px) scale(1.10);
+            transform: scale(1.10);
         }
         .accent-swatch.active {
             transform: scale(1.06);
@@ -988,7 +1003,7 @@
         /* contain wie bei .accent-picker: Profil ist der einzige Tab mit
            Schatten/Verläufen (49 bzw. 14 Elemente, alle anderen Tabs: 0).
            Ohne contain invalidiert jeder Hover den kompletten Modal-Inhalt. */
-        .profile-card { padding: 1.5rem; contain: layout paint style; }
+        .profile-card { padding: 1.5rem; contain: layout style; }
         .profile-card .settings-section-title { margin-bottom: 1.25rem; }
 
         /* Hero */
