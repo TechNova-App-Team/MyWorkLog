@@ -2,7 +2,7 @@
 <html lang="de" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
@@ -12,7 +12,7 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/aufgaben/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/aufgaben/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/aufgaben/">
-    <meta name="description" content="Aufgabenverwaltung für Azubis: Tagesplan, Kategorien, Unteraufgaben, Erinnerungen und Verlauf — kostenlos und offline nutzbar.">
+    <meta name="description" content="Aufgaben für Azubis: Heute, Geplant, Listen, Wiederholungen, Erinnerungen und Logbuch — Schnelleingabe mit „morgen“, „!!“ und „#Liste“. Kostenlos und offline nutzbar.">
     <meta name="keywords" content="Aufgaben, To-do, Azubi, Tagesplan, Checkliste, Routine, Erinnerung, Berufsschule">
     <meta name="theme-color" content="#030305">
 
@@ -22,41 +22,58 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
 
-    <link rel="stylesheet" href="/Assets/css/aufgaben.css?v=7.1.2">
-    <script defer src="/Assets/js/version-loader.js?v=7.1.2"></script>
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.1.2"></script>
+    <link rel="stylesheet" href="/Assets/css/aufgaben.css?v=7.2.0">
+    <script defer src="/Assets/js/version-loader.js?v=7.2.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.2.0"></script>
 
     <style>
         /* Tokens der App. --primary ist der Vorgabewert aus core.css; steht
            im Profil ein eigener Akzent, zieht ihn der Sync unten nach.
            🔴 Nie wieder ein festes #a855f7 wie in der alten Fassung — dann
-           ignoriert die Seite die gewaehlte Akzentfarbe. */
+           ignoriert die Seite die gewaehlte Akzentfarbe.
+           Die drei Flaechen (--bg-deep, --bg-side, --bg-panel) sind bewusst
+           deckend: Sidebar und Detailspalte liegen ueber scrollendem Inhalt,
+           ein Alpha-Token wuerde ihn durchscheinen lassen (CLAUDE.md). */
         :root {
             --bg-deep: #030305;
+            --bg-side: #0a0a0d;
+            --bg-panel: #0d0d11;
+            --bg-input: #101015;
             --primary: #5578a8;
             --primary-rgb: 85, 120, 168;
-            --primary-dim: rgba(var(--primary-rgb), 0.1);
+            --primary-dim: rgba(var(--primary-rgb), 0.12);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --border: rgba(255, 255, 255, 0.06);
+            --text-dim: #64748b;
+            --border: rgba(255, 255, 255, 0.07);
+            --border-strong: rgba(255, 255, 255, 0.12);
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
             --hover-fill: rgba(var(--primary-rgb), 0.07);
             --hover-fill-strong: rgba(var(--primary-rgb), 0.12);
             --hover-border: rgba(var(--primary-rgb), 0.28);
+            --shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
             --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
-            --font-num: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+            --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
         }
 
         [data-theme="light"] {
-            --bg-deep: #f8fafc;
+            --bg-deep: #f4f6fa;
+            --bg-side: #ffffff;
+            --bg-panel: #ffffff;
+            --bg-input: #ffffff;
             --text-main: #071023;
             --text-muted: #475569;
-            --border: rgba(7, 16, 35, 0.06);
+            --text-dim: #7c8aa0;
+            --border: rgba(7, 16, 35, 0.07);
+            --border-strong: rgba(7, 16, 35, 0.13);
             --hover-fill: rgba(var(--primary-rgb), 0.08);
             --hover-fill-strong: rgba(var(--primary-rgb), 0.14);
+            --hover-border: rgba(var(--primary-rgb), 0.34);
+            --shadow: 0 18px 50px rgba(7, 16, 35, 0.14);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -70,8 +87,8 @@
             font-family: var(--font-main);
             background: var(--bg-deep);
             color: var(--text-main);
-            font-size: 15px;
-            line-height: 1.55;
+            font-size: 14px;
+            line-height: 1.5;
             min-height: 100dvh;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
@@ -80,328 +97,291 @@
 
         a { color: var(--primary); }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=7.1.2"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.2.0"></script>
 </head>
 <body>
 
-<main class="ag-wrap">
+<div class="tk" id="tk">
 
-    <!-- ═══ Kopf ═══════════════════════════════════════════════════ -->
-    <header class="ag-head">
-        <div class="ag-head__id">
-            <p class="ag-eyebrow">MyWorkLog</p>
-            <h1 class="ag-head__title">Aufgaben</h1>
-            <p class="ag-head__sub" id="agToday"></p>
-        </div>
-        <div class="ag-head__acts">
-            <a href="/" class="ag-link">
+    <!-- ═══ Sidebar: Ansichten und Listen ═════════════════════════════
+         Am Handy eine Schublade (Knopf im Kopf), sonst feste Spalte. -->
+    <aside class="tk-side" id="tkSide" aria-label="Ansichten und Listen">
+        <div class="tk-side__top">
+            <a href="/" class="tk-back">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
                 <span>Zur App</span>
             </a>
-            <button type="button" class="ag-icon-btn" data-a="theme" aria-label="Hell oder dunkel umschalten">
-                <svg class="ag-i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                <svg class="ag-i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <button type="button" class="tk-ib" data-a="theme" aria-label="Hell oder dunkel umschalten">
+                <svg class="tk-i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                <svg class="tk-i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
             </button>
         </div>
-    </header>
 
-    <!-- ═══ 1 · Die Tagesleiste ════════════════════════════════════
-         DER Regler der Seite. Alles darunter gehorcht ihm. Bis v6.3.8
-         gab es hier zwei Zustaende nebeneinander (viewMode + Tagesindex),
-         die nichts abglich. -->
-    <nav class="ag-week" id="agWeek" aria-label="Wochentag wählen"></nav>
-
-    <!-- ═══ 2 · Befund ═════════════════════════════════════════════ -->
-    <section class="ag-verdict" id="agVerdict">
-        <div>
-            <p class="ag-verdict__kicker"><span id="agDayName"></span> · <span id="agKicker"></span></p>
-            <p class="ag-verdict__num" id="agNum">0<span class="ag-u" id="agUnit"></span></p>
-            <p class="ag-verdict__say" id="agSay"></p>
-        </div>
-        <div class="ag-meter" id="agMeter">
-            <span class="ag-meter__track"><span class="ag-meter__fill" id="agFill"></span></span>
-            <!-- 🔴 Beide Enden bewusst OHNE gemischten Inhalt: ein Textknoten
-                 neben einem Element wird vom i18n-Walk still uebersprungen,
-                 dann steht auf /en/ wieder Deutsch. Zahl und Wort sind
-                 deshalb je ein eigener Knoten. -->
-            <div class="ag-meter__ends">
-                <span class="ag-meter__end"><b id="agDone">0</b><small>erledigt</small></span>
-                <span class="ag-meter__end"><b id="agTotal">0</b><small>geplant</small></span>
-            </div>
-            <p class="ag-meter__note" id="agNote"></p>
-        </div>
-    </section>
-
-    <!-- ═══ 3 · Filter ═════════════════════════════════════════════ -->
-    <div class="ag-tools">
-        <div class="ag-seg" role="group" aria-label="Filter">
-            <button type="button" class="ag-seg__btn is-on" data-a="filter" data-f="all"  aria-pressed="true">Alle</button>
-            <button type="button" class="ag-seg__btn"       data-a="filter" data-f="open" aria-pressed="false">Offen</button>
-            <button type="button" class="ag-seg__btn"       data-a="filter" data-f="done" aria-pressed="false">Erledigt</button>
-            <button type="button" class="ag-seg__btn"       data-a="filter" data-f="high" aria-pressed="false">Hoch</button>
-        </div>
-        <div class="ag-search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input type="text" id="agSearch" autocomplete="off" placeholder="Suchen" aria-label="Aufgabe suchen">
-        </div>
-        <button type="button" class="ag-link ag-link--go" data-a="newcat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            <span>Kategorie</span>
-        </button>
-    </div>
-
-    <!-- ═══ 4 · Rubriken ═══════════════════════════════════════════ -->
-    <div id="agList"></div>
-
-    <div class="ag-empty" id="agEmpty" style="display:none;">
-        <span class="ag-empty__ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-        </span>
-        <p class="ag-empty__t">Noch nichts geplant</p>
-        <p class="ag-empty__s">Eine Kategorie fasst zusammen, was zusammengehört: Morgenroutine, Berufsschule, Werkstatt. Leg die erste an, dann kommen die Aufgaben hinein.</p>
-        <button type="button" class="ag-link ag-link--go" data-a="newcat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            <span>Erste Kategorie anlegen</span>
-        </button>
-    </div>
-
-    <!-- ═══ 5 · Verlauf ════════════════════════════════════════════
-         Ersetzt die sieben Emoji-Trophaeen der alten Fassung. Der
-         Verlauf wird ab jetzt aufgezeichnet; Tage davor bleiben leer,
-         weil es fuer sie keine Aufzeichnung gibt. -->
-    <section class="ag-act">
-        <div class="ag-act__head">
-            <div class="ag-act__id">
-                <h2 class="ag-act__title">Verlauf</h2>
-                <p class="ag-act__sub">Die letzten 30 Tage. Ein Feld je Tag: voll, wenn an dem Tag alles Geplante erledigt war. Aufgezeichnet wird ab dem ersten Besuch dieser Seite.</p>
-            </div>
-        </div>
-
-        <div class="ag-hist" id="agHist"></div>
-
-        <!-- 🔴 Wie bei den Balkenenden: der Text darf nicht als blosser
-             Textknoten neben dem <i> stehen, sonst bleibt er auf /en/ deutsch. -->
-        <div class="ag-legend">
-            <span><i class="is-full"></i><small>alles erledigt</small></span>
-            <span><i class="is-part"></i><small>teilweise</small></span>
-            <span><i class="is-none"></i><small>kein Eintrag</small></span>
-        </div>
-
-        <div class="ag-streak">
-            <div class="ag-streak__c">
-                <p class="ag-streak__k">Aktuelle Serie</p>
-                <p class="ag-streak__v"><span id="agStreak">0</span><small>Tage</small></p>
-            </div>
-            <div class="ag-streak__c">
-                <p class="ag-streak__k">Längste Serie</p>
-                <p class="ag-streak__v"><span id="agBest">0</span><small>Tage</small></p>
-            </div>
-            <div class="ag-streak__c">
-                <p class="ag-streak__k">Insgesamt abgehakt</p>
-                <p class="ag-streak__v"><span id="agTotalDone">0</span><small>Aufgaben</small></p>
-            </div>
-        </div>
-
-        <div class="ag-goals" id="agGoals"></div>
-    </section>
-
-    <!-- ═══ 6 · Daten ══════════════════════════════════════════════
-         Bis v6.3.8 lagen zwei Knoepfe namens "Reset" auf der Seite: einer
-         setzte den Tag zurueck, der andere loeschte alles. Gleiches Wort,
-         verschiedene Folgen. Jetzt heisst jeder, was er tut. -->
-    <section class="ag-act">
-        <div class="ag-act__head">
-            <div class="ag-act__id">
-                <h2 class="ag-act__title">Daten</h2>
-                <p class="ag-act__sub">Alles liegt in diesem Browser, nichts auf einem Server. Der Export ist eine JSON-Datei und lässt sich auf einem anderen Gerät wieder einlesen.</p>
-            </div>
-        </div>
-        <div class="ag-data">
-            <button type="button" class="ag-link" data-a="export">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                <span>Exportieren</span>
+        <nav class="tk-nav" aria-label="Ansichten">
+            <button type="button" class="tk-nav__it is-on" data-a="view" data-view="today" aria-current="page">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                <span>Heute</span>
+                <b class="tk-nav__n" id="tkNToday"></b>
             </button>
-            <button type="button" class="ag-link" data-a="import">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                <span>Importieren</span>
+            <button type="button" class="tk-nav__it" data-a="view" data-view="upcoming">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+                <span>Geplant</span>
+                <b class="tk-nav__n" id="tkNUpcoming"></b>
             </button>
-            <button type="button" class="ag-link" data-a="resettoday">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                <span>Heute zurücksetzen</span>
+            <button type="button" class="tk-nav__it" data-a="view" data-view="all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>
+                <span>Alle</span>
+                <b class="tk-nav__n" id="tkNAll"></b>
             </button>
-            <button type="button" class="ag-link ag-link--danger" data-a="wipe">
+            <button type="button" class="tk-nav__it" data-a="view" data-view="done">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+                <span>Erledigt</span>
+                <b class="tk-nav__n" id="tkNDone"></b>
+            </button>
+        </nav>
+
+        <div class="tk-side__h">
+            <span>Listen</span>
+            <button type="button" class="tk-ib tk-ib--sm" data-a="newlist" aria-label="Neue Liste anlegen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            </button>
+        </div>
+        <nav class="tk-lists" id="tkLists" aria-label="Listen"></nav>
+        <div class="tk-newlist" id="tkNewList" hidden>
+            <input type="text" id="tkNewListName" autocomplete="off" maxlength="40" placeholder="Name der Liste" aria-label="Name der neuen Liste">
+        </div>
+
+        <div class="tk-side__foot">
+            <div class="tk-streak" id="tkStreakBox" title="Tage in Folge, an denen alles Geplante erledigt war">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                <b id="tkStreak">0</b>
+                <small>Tage in Folge</small>
+            </div>
+            <button type="button" class="tk-ib" data-a="menu" aria-label="Daten und Tastenkürzel" aria-haspopup="menu" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+            </button>
+            <div class="tk-menu" id="tkMenu" role="menu" hidden>
+                <button type="button" role="menuitem" data-a="export">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    <span>Exportieren</span>
+                </button>
+                <button type="button" role="menuitem" data-a="import">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    <span>Importieren</span>
+                </button>
+                <button type="button" role="menuitem" data-a="resettoday">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Heute zurücksetzen</span>
+                </button>
+                <button type="button" role="menuitem" class="is-danger" data-a="wipe">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    <span>Alle Daten löschen</span>
+                </button>
+                <div class="tk-menu__keys">
+                    <p class="tk-menu__kh">Tastatur</p>
+                    <p><kbd>N</kbd><span>Neue Aufgabe</span></p>
+                    <p><kbd>↑</kbd><kbd>↓</kbd><span>Auswahl bewegen</span></p>
+                    <p><kbd>Leer</kbd><span>Abhaken</span></p>
+                    <p><kbd>Enter</kbd><span>Details öffnen</span></p>
+                    <p><kbd>Esc</kbd><span>Schließen</span></p>
+                </div>
+                <p class="tk-menu__note">Alles liegt in diesem Browser, nichts auf einem Server.</p>
+            </div>
+        </div>
+    </aside>
+    <div class="tk-scrim" id="tkScrim" hidden></div>
+
+    <!-- ═══ Liste ═════════════════════════════════════════════════════ -->
+    <main class="tk-main" id="tkMain">
+        <header class="tk-head">
+            <button type="button" class="tk-ib tk-burger" data-a="side" aria-label="Listen anzeigen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+            </button>
+            <div class="tk-head__id">
+                <h1 class="tk-title" id="tkTitle">Heute</h1>
+                <p class="tk-sub" id="tkSub"></p>
+            </div>
+            <div class="tk-head__acts">
+                <button type="button" class="tk-ib" data-a="listcfg" id="tkListCfg" aria-label="Liste bearbeiten" hidden>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Fortschritt des Tages. Nur Heute und Listen tragen ihn; Geplant
+             und Erledigt haben keinen Nenner, dort ist er ausgeblendet. -->
+        <div class="tk-prog" id="tkProg" hidden>
+            <span class="tk-prog__bar"><i id="tkProgFill"></i></span>
+            <span class="tk-prog__txt"><b id="tkProgDone">0</b><small id="tkProgOf">von</small><b id="tkProgTotal">0</b><small>erledigt</small></span>
+        </div>
+
+        <!-- Schnelleingabe. Das eine Element, das die Seite ausmacht:
+             tippen, Enter, fertig. „morgen", „!!", „#Liste" werden beim
+             Tippen erkannt und als Chips gezeigt, bevor man Enter drueckt. -->
+        <div class="tk-add" id="tkAddBox">
+            <label class="tk-add__row" for="tkAdd">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                <input type="text" id="tkAdd" autocomplete="off" enterkeyhint="done" placeholder="Aufgabe hinzufügen" aria-label="Neue Aufgabe">
+                <kbd class="tk-add__key">N</kbd>
+            </label>
+            <div class="tk-add__hints" id="tkAddHints" aria-live="polite"></div>
+        </div>
+
+        <section class="tk-list" id="tkList" aria-label="Aufgaben"></section>
+
+        <div class="tk-empty" id="tkEmpty" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+            <p class="tk-empty__t" id="tkEmptyT"></p>
+            <p class="tk-empty__s" id="tkEmptyS"></p>
+        </div>
+    </main>
+
+    <!-- ═══ Detail: eine Aufgabe ODER die Einstellungen einer Liste ════
+         Rechts als Spalte, am Handy als Bottom Sheet. Kein Speichern-Knopf:
+         jede Aenderung wird sofort geschrieben (Autosave). -->
+    <aside class="tk-detail" id="tkDetail" aria-label="Details" aria-hidden="true">
+        <div class="tk-detail__bar">
+            <button type="button" class="tk-ib" data-a="closedetail" aria-label="Details schließen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <span class="tk-detail__kind" id="tkDetailKind">Aufgabe</span>
+            <button type="button" class="tk-ib tk-ib--danger" data-a="deldetail" aria-label="Löschen">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-                <span>Alle Daten löschen</span>
             </button>
         </div>
-    </section>
 
-</main>
-
-<div id="page-footer"></div>
-
-
-<!-- ═══ Dialog: neue Kategorie ═════════════════════════════════════ -->
-<div class="ag-ov" id="agModalCat">
-    <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="agModalCatT">
-        <div class="ag-modal__head">
-            <p class="ag-modal__t" id="agModalCatT">Neue Kategorie</p>
-            <p class="ag-modal__s">Eine Kategorie fasst Aufgaben zusammen, die zusammengehören.</p>
-        </div>
-        <div class="ag-modal__body">
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agCatName">Name</label>
-                <input class="ag-in" id="agCatName" autocomplete="off" maxlength="40" placeholder="Morgenroutine">
+        <!-- Aufgabe -->
+        <form class="tk-form" id="tkFTask" autocomplete="off" hidden>
+            <div class="tk-form__name">
+                <button type="button" class="tk-check tk-check--lg" id="tkFCheck" data-a="fcheck" aria-pressed="false" aria-label="Erledigt">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                </button>
+                <textarea class="tk-fname" id="tkFName" rows="1" maxlength="200" aria-label="Name der Aufgabe"></textarea>
             </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l">Symbol</label>
-                <div class="ag-icons" id="agIcons"></div>
+
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFList">Liste</label>
+                <select class="tk-in" id="tkFList"></select>
             </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agCatPrio">Standard-Priorität</label>
-                <select class="ag-in" id="agCatPrio">
+
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFDue">Fällig</label>
+                <input class="tk-in" type="date" id="tkFDue">
+                <div class="tk-quick">
+                    <button type="button" class="tk-chip" data-a="due" data-due="today">Heute</button>
+                    <button type="button" class="tk-chip" data-a="due" data-due="tomorrow">Morgen</button>
+                    <button type="button" class="tk-chip" data-a="due" data-due="nextweek">Nächste Woche</button>
+                    <button type="button" class="tk-chip" data-a="due" data-due="">Kein Datum</button>
+                </div>
+            </div>
+
+            <div class="tk-fld">
+                <span class="tk-fld__l" id="tkFPrioL">Priorität</span>
+                <div class="tk-seg" id="tkFPrio" role="group" aria-labelledby="tkFPrioL">
+                    <button type="button" class="tk-seg__btn" data-a="prio" data-p="" aria-pressed="false">Keine</button>
+                    <button type="button" class="tk-seg__btn" data-a="prio" data-p="low" aria-pressed="false">Niedrig</button>
+                    <button type="button" class="tk-seg__btn" data-a="prio" data-p="medium" aria-pressed="false">Mittel</button>
+                    <button type="button" class="tk-seg__btn" data-a="prio" data-p="high" aria-pressed="false">Hoch</button>
+                </div>
+            </div>
+
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFRepeat">Wiederholen</label>
+                <select class="tk-in" id="tkFRepeat">
+                    <option value="none">Nie</option>
+                    <option value="daily">Täglich</option>
+                    <option value="weekdays">Montag bis Freitag</option>
+                    <option value="weekly">Wöchentlich</option>
+                    <option value="monthly">Monatlich</option>
+                </select>
+                <p class="tk-fld__hint">Eine wiederholte Aufgabe steht am nächsten Tag, in der nächsten Woche oder im nächsten Monat wieder offen da.</p>
+            </div>
+
+            <div class="tk-fld">
+                <span class="tk-fld__l" id="tkFDaysL">Nur an diesen Tagen</span>
+                <div class="tk-days" id="tkFDays" role="group" aria-labelledby="tkFDaysL">
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="1" aria-pressed="false">Mo</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="2" aria-pressed="false">Di</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="3" aria-pressed="false">Mi</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="4" aria-pressed="false">Do</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="5" aria-pressed="false">Fr</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="6" aria-pressed="false">Sa</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="fday" data-day="0" aria-pressed="false">So</button>
+                </div>
+                <p class="tk-fld__hint">Ohne Auswahl gilt jeden Tag. Eine Aufgabe ohne Datum erscheint unter Heute nur an ihren Tagen.</p>
+            </div>
+
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFRemind">Erinnerung</label>
+                <input class="tk-in" type="time" id="tkFRemind">
+            </div>
+
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFNote">Notiz</label>
+                <textarea class="tk-in tk-in--area" id="tkFNote" rows="3" placeholder="Optional"></textarea>
+            </div>
+
+            <div class="tk-fld">
+                <span class="tk-fld__l" id="tkFSubsL">Unteraufgaben</span>
+                <div class="tk-subs" id="tkFSubs" role="group" aria-labelledby="tkFSubsL"></div>
+                <label class="tk-subadd" for="tkFSubAdd">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    <input type="text" id="tkFSubAdd" autocomplete="off" maxlength="120" placeholder="Unteraufgabe hinzufügen" aria-label="Neue Unteraufgabe">
+                </label>
+            </div>
+
+            <p class="tk-form__meta" id="tkFMeta"></p>
+        </form>
+
+        <!-- Liste -->
+        <form class="tk-form" id="tkFCat" autocomplete="off" hidden>
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFCatName">Name</label>
+                <input class="tk-in" type="text" id="tkFCatName" maxlength="40">
+            </div>
+            <div class="tk-fld">
+                <span class="tk-fld__l" id="tkFCatIconL">Symbol</span>
+                <div class="tk-icons" id="tkFCatIcon" role="group" aria-labelledby="tkFCatIconL"></div>
+            </div>
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFCatPrio">Priorität für neue Aufgaben</label>
+                <select class="tk-in" id="tkFCatPrio">
                     <option value="">Keine</option>
-                    <option value="high">Hoch</option>
-                    <option value="medium">Mittel</option>
                     <option value="low">Niedrig</option>
+                    <option value="medium">Mittel</option>
+                    <option value="high">Hoch</option>
                 </select>
             </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l"><span>Nur an diesen Tagen</span> <em>(nichts gewählt = jeden Tag)</em></label>
-                <div class="ag-chips" id="agCatDays">
-                    <button type="button" class="ag-chip ag-chip--day" data-day="1">Mo</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="2">Di</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="3">Mi</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="4">Do</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="5">Fr</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="6">Sa</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="0">So</button>
+            <div class="tk-fld">
+                <span class="tk-fld__l" id="tkFCatDaysL">Nur an diesen Tagen</span>
+                <div class="tk-days" id="tkFCatDays" role="group" aria-labelledby="tkFCatDaysL">
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="1" aria-pressed="false">Mo</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="2" aria-pressed="false">Di</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="3" aria-pressed="false">Mi</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="4" aria-pressed="false">Do</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="5" aria-pressed="false">Fr</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="6" aria-pressed="false">Sa</button>
+                    <button type="button" class="tk-chip tk-chip--day" data-a="cday" data-day="0" aria-pressed="false">So</button>
                 </div>
+                <p class="tk-fld__hint">Die ganze Liste erscheint unter Heute nur an diesen Tagen, zum Beispiel Berufsschule dienstags und donnerstags.</p>
             </div>
-        </div>
-        <div class="ag-modal__foot">
-            <button type="button" class="ag-link" data-a="shut" data-m="agModalCat">Abbrechen</button>
-            <button type="button" class="ag-link ag-link--go" data-a="savecat">Anlegen</button>
-        </div>
-    </div>
-</div>
-
-
-<!-- ═══ Dialog: Aufgabe bearbeiten ═════════════════════════════════ -->
-<div class="ag-ov" id="agModalTask">
-    <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="agModalTaskT">
-        <div class="ag-modal__head">
-            <p class="ag-modal__t" id="agModalTaskT">Aufgabe bearbeiten</p>
-            <p class="ag-modal__s" id="agTaskSub"></p>
-        </div>
-        <div class="ag-modal__body">
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agTaskName">Name</label>
-                <input class="ag-in" id="agTaskName" autocomplete="off">
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agTaskPrio">Priorität</label>
-                <select class="ag-in" id="agTaskPrio">
-                    <option value="">Keine</option>
-                    <option value="high">Hoch</option>
-                    <option value="medium">Mittel</option>
-                    <option value="low">Niedrig</option>
-                </select>
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agTaskDue">Fällig am</label>
-                <input class="ag-in" type="date" id="agTaskDue">
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l">Nur an diesen Tagen</label>
-                <div class="ag-chips" id="agTaskDays">
-                    <button type="button" class="ag-chip ag-chip--day" data-day="1">Mo</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="2">Di</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="3">Mi</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="4">Do</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="5">Fr</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="6">Sa</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="0">So</button>
-                </div>
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l">Wiederholen</label>
-                <div class="ag-chips" id="agTaskRepeat">
-                    <button type="button" class="ag-chip is-on" data-rep="none">Keine</button>
-                    <button type="button" class="ag-chip" data-rep="daily">Täglich</button>
-                    <button type="button" class="ag-chip" data-rep="weekdays">Mo bis Fr</button>
-                    <button type="button" class="ag-chip" data-rep="weekly">Wöchentlich</button>
-                    <button type="button" class="ag-chip" data-rep="monthly">Monatlich</button>
-                </div>
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agTaskRemind">Erinnerung</label>
-                <input class="ag-in" type="time" id="agTaskRemind">
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agTaskNote">Notiz</label>
-                <textarea class="ag-in" id="agTaskNote" rows="2" placeholder="Optional"></textarea>
-            </div>
-        </div>
-        <div class="ag-modal__foot">
-            <button type="button" class="ag-link ag-link--danger ag-spacer" data-a="deltaskm">Löschen</button>
-            <button type="button" class="ag-link" data-a="shut" data-m="agModalTask">Abbrechen</button>
-            <button type="button" class="ag-link ag-link--go" data-a="savetask">Speichern</button>
-        </div>
-    </div>
-</div>
-
-
-<!-- ═══ Dialog: Kategorie bearbeiten ═══════════════════════════════ -->
-<div class="ag-ov" id="agModalCatEdit">
-    <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="agModalCatEditT">
-        <div class="ag-modal__head">
-            <p class="ag-modal__t" id="agModalCatEditT">Kategorie bearbeiten</p>
-            <p class="ag-modal__s" id="agCatEditSub"></p>
-        </div>
-        <div class="ag-modal__body">
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agCatEditName">Name</label>
-                <input class="ag-in" id="agCatEditName" autocomplete="off" maxlength="40">
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agCatEditPrio">Standard-Priorität</label>
-                <select class="ag-in" id="agCatEditPrio">
-                    <option value="">Keine</option>
-                    <option value="high">Hoch</option>
-                    <option value="medium">Mittel</option>
-                    <option value="low">Niedrig</option>
-                </select>
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l">Nur an diesen Tagen</label>
-                <div class="ag-chips" id="agCatEditDays">
-                    <button type="button" class="ag-chip ag-chip--day" data-day="1">Mo</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="2">Di</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="3">Mi</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="4">Do</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="5">Fr</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="6">Sa</button>
-                    <button type="button" class="ag-chip ag-chip--day" data-day="0">So</button>
-                </div>
-            </div>
-            <div class="ag-fld">
-                <label class="ag-fld__l" for="agCatEditReset">Von selbst zurücksetzen</label>
-                <select class="ag-in" id="agCatEditReset">
+            <div class="tk-fld">
+                <label class="tk-fld__l" for="tkFCatReset">Von selbst wieder öffnen</label>
+                <select class="tk-in" id="tkFCatReset">
                     <option value="">Nie</option>
                     <option value="daily">Täglich</option>
                     <option value="weekly">Wöchentlich, montags</option>
                     <option value="monthly">Monatlich, am Ersten</option>
                 </select>
+                <p class="tk-fld__hint">Für Routinen: alle Aufgaben der Liste stehen dann wieder offen da.</p>
             </div>
-        </div>
-        <div class="ag-modal__foot">
-            <button type="button" class="ag-link ag-link--danger ag-spacer" data-a="delcat">Löschen</button>
-            <button type="button" class="ag-link" data-a="shut" data-m="agModalCatEdit">Abbrechen</button>
-            <button type="button" class="ag-link ag-link--go" data-a="savecatcfg">Speichern</button>
-        </div>
-    </div>
+            <p class="tk-form__meta" id="tkFCatMeta"></p>
+        </form>
+    </aside>
+
 </div>
+
+<div id="page-footer"></div>
 
 
 <script>
@@ -414,7 +394,7 @@
         var s = document.documentElement.style;
         s.setProperty('--primary', hex);
         s.setProperty('--primary-rgb', r + ',' + g + ',' + b);
-        s.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.1)');
+        s.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.12)');
         s.setProperty('--hover-fill', 'rgba(' + r + ',' + g + ',' + b + ',0.07)');
         s.setProperty('--hover-fill-strong', 'rgba(' + r + ',' + g + ',' + b + ',0.12)');
         s.setProperty('--hover-border', 'rgba(' + r + ',' + g + ',' + b + ',0.28)');
@@ -448,7 +428,7 @@ fetch('/pages/footer/footer.html')
     .catch(function () {});
 </script>
 
-<script src="/Assets/js/aufgaben.js?v=7.1.2"></script>
+<script src="/Assets/js/aufgaben.js?v=7.2.0"></script>
 
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
