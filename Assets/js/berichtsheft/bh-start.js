@@ -94,16 +94,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1500);
     });
 
-    // Auto-set dates when week changes
+    // Auto-set dates when week changes. Das Jahr kommt aus dem Datum, das
+    // gerade im Formular steht (bhFormularJahr) — VOR dem Ueberschreiben lesen.
     document.getElementById('reportWeek').addEventListener('change', (e) => {
         const week = parseInt(e.target.value);
         if (week >= 1 && week <= 53) {
-            const { monday, friday } = getWeekDates(week);
+            const { monday, friday } = getWeekDates(week, bhFormularJahr());
             document.getElementById('reportDateFrom').value = monday;
             document.getElementById('reportDateTo').value = friday;
+            bhAusbildungsjahrVorbelegen(monday, true);
             // Re-render daily fields with correct dates
             if (currentMode === 'daily') renderDailyFields();
         }
+    });
+
+    // Und die Gegenrichtung: wer ein Datum waehlt, bekommt KW und Freitag dazu.
+    // Vorher blieb die KW auf der Vorgabe stehen und der Bericht hiess „KW 38",
+    // obwohl die Daten im Dezember lagen. Auf den Montag gerundet, weil der
+    // Ausbildungsnachweis wochenweise gefuehrt wird und die Tagesfelder ohnehin
+    // am Montag beginnen.
+    document.getElementById('reportDateFrom').addEventListener('change', (e) => {
+        const gewaehlt = bhParseDatum(e.target.value);
+        if (!gewaehlt) return;
+        const week = getWeekNumber(gewaehlt);
+        const { monday, friday } = getWeekDates(week, isoWeekYear(gewaehlt));
+        document.getElementById('reportWeek').value = week;
+        e.target.value = monday;
+        document.getElementById('reportDateTo').value = friday;
+        bhAusbildungsjahrVorbelegen(monday, true);
+        if (currentMode === 'daily') renderDailyFields();
     });
 
     // Re-render AI when department changes

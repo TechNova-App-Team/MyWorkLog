@@ -233,8 +233,13 @@ function updateStreak() {
 // ═══════════════════════════════════════
 
 function updateProgress() {
-    // 3-year apprenticeship = ~156 weeks, 2-year = ~104
-    const maxWeeks = 156;
+    // Laenge der Ausbildung aus Beginn/Ende (Deckblatt oder Haupt-App). Ohne
+    // beides bleibt es bei der 3-jaehrigen Annahme (156 Wochen) — fuer eine
+    // 2-jaehrige oder 3,5-jaehrige Ausbildung war die Zahl vorher einfach falsch.
+    const { beginn, ende } = bhAusbildungsZeitraum();
+    const maxWeeks = (beginn && ende && ende > beginn)
+        ? Math.max(1, Math.round((ende - beginn) / (7 * 86400000)))
+        : 156;
     const documentedWeeks = new Set(reports.map(r => `${r.year}-${r.week}`)).size;
     const percent = Math.min(Math.round((documentedWeeks / maxWeeks) * 100), 100);
 
@@ -328,7 +333,7 @@ function renderCalendarHeatmap() {
             const dm = `${mon.getUTCDate()}.${mon.getUTCMonth() + 1}.`;
             const statusLabel = status ? STATUS_TEXT[status] : L('kein Bericht', 'no report');
             const label = L(`KW ${w} (ab ${dm}) — ${statusLabel}`, `CW ${w} (from ${dm}) — ${statusLabel}`);
-            return `<button type="button" class="cal-cell${status ? ' ' + STATUS_CLASS[status] : ''}${w === currentWeek ? ' is-now' : ''}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w})"><span class="cal-cell-tooltip">${label}</span></button>`;
+            return `<button type="button" class="cal-cell${status ? ' ' + STATUS_CLASS[status] : ''}${w === currentWeek ? ' is-now' : ''}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w}, ${year})"><span class="cal-cell-tooltip">${label}</span></button>`;
         }).join('');
         return `<div class="cal-month" style="flex-grow:${weeks.length}"><span class="cal-month-label">${MONTHS[m]}</span><div class="cal-month-weeks">${cells}</div></div>`;
     }).join('');
@@ -358,17 +363,25 @@ function statusPriority(status) {
 
 // Hieß filterByWeek und filterte nichts: die Funktion öffnete einen Bericht
 // und leerte dabei Suchfeld, Jahr- und Status-Filter des Nutzers als Nebenwirkung.
-function openWeek(week) {
-    const filtered = reports.filter(r => r.week === week);
+// Die Heatmap zeigt EIN Jahr — der Klick muss es mitbringen. Vorher fand
+// „KW 12" den Bericht aus dem Vorjahr, und ein neuer Bericht bekam die Daten
+// des laufenden Jahres, egal welches Jahr ueber der Uebersicht stand.
+function openWeek(week, year) {
+    const jahr = year || new Date().getFullYear();
+    const filtered = reports.filter(r => r.week === week
+        && (reportCalendarYear(r) === null || reportCalendarYear(r) === jahr));
     if (filtered.length > 0) {
         viewReport(filtered[0].id);
     } else {
         // Open new report for this week
         openNewReportModal();
         document.getElementById('reportWeek').value = week;
-        const { monday, friday } = getWeekDates(week);
+        const { monday, friday } = getWeekDates(week, jahr);
         document.getElementById('reportDateFrom').value = monday;
         document.getElementById('reportDateTo').value = friday;
+        bhAusbildungsjahrVorbelegen(monday, true);
+        // Die Tagesfelder wurden im Modal schon fuer die laufende Woche gebaut.
+        if (currentMode === 'daily') renderDailyFields();
     }
 }
 

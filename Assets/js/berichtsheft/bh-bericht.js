@@ -54,8 +54,49 @@ function isoWeekMonday(year, week) {
     return monday;
 }
 
+// Jahr, zu dem die ISO-Woche eines Datums gehoert: der 1.1.2027 liegt in
+// KW 53 von 2026. getFullYear() liefert dort 2027, und getWeekDates(53, 2027)
+// gibt es nicht — der Bericht landete unter falschen Daten.
+function isoWeekYear(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    return d.getUTCFullYear();
+}
+
+// Kalenderjahr, in dem das Formular gerade steht — aus „Datum von", nicht aus
+// der Uhr. Wer im Januar die Dezemberwochen nachtraegt, tippt „KW 50" und bekam
+// vorher die KW 50 des NEUEN Jahres.
+function bhFormularJahr() {
+    const from = bhParseDatum(document.getElementById('reportDateFrom')?.value);
+    return from ? isoWeekYear(from) : isoWeekYear(new Date());
+}
+
+// Ausbildungsjahr aus dem Ausbildungsbeginn (Stichtag Donnerstag der Woche).
+// Ohne bekannten Beginn beim Anlegen das Jahr des juengsten Berichts — ein Azubi
+// im 3. Lehrjahr soll nicht bei jedem Bericht von „1." umstellen muessen.
+// nurMitBeginn: beim Wechsel der Woche nichts raten, sonst ueberschriebe der
+// Rueckfall eine Auswahl, die der Nutzer gerade von Hand getroffen hat.
+function bhAusbildungsjahrFuer(dateFromStr) {
+    const { beginn } = bhAusbildungsZeitraum();
+    const from = bhParseDatum(dateFromStr);
+    if (!beginn || !from) return null;
+    const donnerstag = new Date(from.getFullYear(), from.getMonth(), from.getDate() + 3);
+    return ihkCalculateAusbildungsjahr(donnerstag, beginn);
+}
+
+function bhAusbildungsjahrVorbelegen(dateFromStr, nurMitBeginn) {
+    const sel = document.getElementById('reportYear');
+    if (!sel) return;
+    const jahr = bhAusbildungsjahrFuer(dateFromStr);
+    if (jahr) { sel.value = String(jahr); return; }
+    if (nurMitBeginn) return;
+    const juengster = reports.slice()
+        .sort((a, b) => String(b.dateFrom || '').localeCompare(String(a.dateFrom || '')))[0];
+    if (juengster && juengster.year >= 1 && juengster.year <= 4) sel.value = String(juengster.year);
+}
+
 function getWeekDates(weekNum, year) {
-    const monday = isoWeekMonday(year || new Date().getFullYear(), weekNum);
+    const monday = isoWeekMonday(year || isoWeekYear(new Date()), weekNum);
     const friday = new Date(monday);
     friday.setUTCDate(monday.getUTCDate() + 4);
     return {
@@ -79,9 +120,10 @@ function openNewReportModal() {
     document.getElementById('reportWeek').value = week;
 
     // Set current week dates
-    const { monday, friday } = getWeekDates(week);
+    const { monday, friday } = getWeekDates(week, isoWeekYear(now));
     document.getElementById('reportDateFrom').value = monday;
     document.getElementById('reportDateTo').value = friday;
+    bhAusbildungsjahrVorbelegen(monday, false);
 
     // Restore draft if exists
     restoreDraft();
@@ -121,8 +163,28 @@ function closeTemplatesModal() {
 // SAVE REPORT
 // ═══════════════════════════════════════
 
-function saveReport(event) {
+async function saveReport(event) {
     event.preventDefault();
+
+    // Dieselbe Woche ein zweites Mal anlegen ist fast immer ein Versehen (Entwurf
+    // vergessen, Import schon gelaufen) — und im Heft stehen dann zwei
+    // Ausbildungsnachweise fuer eine Woche. Vorher gab es keine Pruefung.
+    if (!editingId) {
+        const weekVal = parseInt(document.getElementById('reportWeek').value);
+        const fromVal = document.getElementById('reportDateFrom').value || '';
+        const doppelt = reports.find(r => r.week === weekVal
+            && String(r.dateFrom || '').slice(0, 4) === fromVal.slice(0, 4));
+        if (doppelt) {
+            const weiter = await bhConfirm({
+                title: L(`KW ${weekVal} gibt es schon`, `Week ${weekVal} already exists`),
+                text: L(`Für diese Woche ist bereits ein Bericht angelegt (${formatDate(doppelt.dateFrom)} – ${formatDate(doppelt.dateTo)}). Ein zweiter Bericht für dieselbe Woche steht später doppelt im Heft.`,
+                        `A report for this week already exists (${formatDate(doppelt.dateFrom)} – ${formatDate(doppelt.dateTo)}). A second report for the same week will appear twice in the record book.`),
+                confirmText: L('Trotzdem anlegen', 'Create anyway'),
+                danger: false
+            });
+            if (!weiter) return;
+        }
+    }
 
     // Determine activities based on mode
     let activities = '';
@@ -467,19 +529,29 @@ function duplicateReport(id) {
     const original = reports.find(r => r.id === id);
     if (!original) return;
 
+    // Die Folgewoche ist „Montag + 7 Tage" — nicht „KW + 1 im laufenden Jahr":
+    // eine kopierte Woche aus dem Vorjahr landete sonst im falschen Jahr, und
+    // KW 52 → 1 ignorierte, dass ein Jahr 53 Wochen haben kann.
+    const basis = bhParseDatum(original.dateFrom) || new Date();
+    const naechster = new Date(basis.getFullYear(), basis.getMonth(), basis.getDate() + 7);
+    const week = getWeekNumber(naechster);
+    const { monday, friday } = getWeekDates(week, isoWeekYear(naechster));
+
     const newReport = {
         ...original,
         id: Date.now().toString(),
-        week: original.week + 1 > 52 ? 1 : original.week + 1,
+        week,
+        dateFrom: monday,
+        dateTo: friday,
+        year: bhAusbildungsjahrFuer(monday) || original.year,
         status: 'incomplete',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
-
-    // Update dates for next week
-    const { monday, friday } = getWeekDates(newReport.week);
-    newReport.dateFrom = monday;
-    newReport.dateTo = friday;
+    // Die Freigabe des Ausbilders gilt fuer die abgezeichnete Woche, nicht fuer
+    // die Kopie — mitkopiert waere die neue Woche sofort gesperrt und stuende
+    // als „bestaetigt" im Heft, ohne dass je jemand draufgeschaut hat.
+    delete newReport.approval;
 
     reports.push(newReport);
     saveToStorage();

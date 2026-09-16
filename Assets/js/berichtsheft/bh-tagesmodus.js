@@ -84,9 +84,10 @@ function renderDailyFields() {
     const container = document.getElementById('dailyFieldsContainer');
     if (!container) return;
 
-    // Get the week dates
+    // Get the week dates — Jahr aus „Datum von", sonst zeigt eine Woche aus dem
+    // Vorjahr beim Bearbeiten die Tagesdaten des laufenden Jahres.
     const weekNum = parseInt(document.getElementById('reportWeek')?.value) || getWeekNumber(new Date());
-    const { monday } = getWeekDates(weekNum);
+    const { monday } = getWeekDates(weekNum, bhFormularJahr());
     const monDate = new Date(monday);
 
     container.innerHTML = DAYS.map((day, i) => {
@@ -105,7 +106,7 @@ function renderDailyFields() {
                                 <span class="toggle-track"></span>
                             </label>
                             <div class="day-hours">
-                                <input type="number" step="any" min="0" max="12" value="8" 
+                                <input type="number" step="any" min="0" max="12" value="${bhSollStunden(i)}"
                                        id="daily_hours_${i}" class="daily-hours-input" data-day="${day.key}" 
                                        oninput="updateDailyTotalHours()">
                                 <span>Std.</span>

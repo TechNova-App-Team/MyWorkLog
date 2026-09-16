@@ -112,10 +112,13 @@ function autoFillFromTimeTracker() {
     entries.forEach(entry => {
         const date = new Date(entry.date);
         const week = getWeekNumber(date);
-        const key = `${date.getFullYear()}-${week}`;
+        // ISO-Wochenjahr, nicht Kalenderjahr: der 30.12. gehoert zu KW 1 des
+        // Folgejahres, sonst entstehen zwei halbe Berichte fuer eine Woche.
+        const jahr = isoWeekYear(date);
+        const key = `${jahr}-${week}`;
 
         if (!weekGroups[key]) {
-            weekGroups[key] = { week, year: date.getFullYear(), entries: [], totalHours: 0 };
+            weekGroups[key] = { week, year: jahr, entries: [], totalHours: 0 };
         }
         weekGroups[key].entries.push(entry);
         weekGroups[key].totalHours += entry.worked || 0;
@@ -123,10 +126,14 @@ function autoFillFromTimeTracker() {
 
     let imported = 0;
     Object.values(weekGroups).forEach(group => {
-        const exists = reports.some(r => r.week === group.week);
-        if (exists) return;
-
         const { monday, friday } = getWeekDates(group.week, group.year);
+
+        // Mit Jahr vergleichen: vorher galt KW 38 als „schon da", sobald
+        // irgendein Jahr eine KW 38 hatte — ab dem zweiten Lehrjahr fiel damit
+        // jede Woche still unter den Tisch, die es im ersten schon gab.
+        const exists = reports.some(r => r.week === group.week
+            && String(r.dateFrom || '').slice(0, 4) === monday.slice(0, 4));
+        if (exists) return;
 
         // Projekte, Notizen und Custom-Fields pro Tag statt „• Arbeitszeit erfasst".
         const daily = _trackingToDailyText(group.week, group.year);
@@ -137,7 +144,9 @@ function autoFillFromTimeTracker() {
 
         reports.push({
             id: Date.now().toString() + imported,
-            year: 1,
+            // Lehrjahr aus dem Ausbildungsbeginn; ohne Angabe bleibt 1 — vorher
+            // stand JEDE importierte Woche im 1. Ausbildungsjahr.
+            year: bhAusbildungsjahrFuer(monday) || 1,
             week: group.week,
             dateFrom: monday,
             dateTo: friday,

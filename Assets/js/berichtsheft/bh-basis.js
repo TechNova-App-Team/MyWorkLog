@@ -210,6 +210,58 @@ function ihkCalculateAusbildungsjahr(dRef, sDate, baseYearFallback) {
 }
 
 // ═══════════════════════════════════════
+// ANGABEN AUS DER HAUPT-APP UND DEM PDF-DECKBLATT
+// ═══════════════════════════════════════
+// Soll-Stunden je Wochentag und Ausbildungsbeginn/-ende sind an zwei Orten
+// eingestellt: im Deckblatt des PDF-Dialogs (pdf_personal_cfg) und in der
+// Haupt-App (tg_pro_data.settings.hours / .ihk). Hier wird nur GELESEN — wer
+// etwas aendern will, tut das dort, wo es eingestellt wird. Vorher stand im
+// Formular fuer jeden Azubi „8 Std." und „1. Ausbildungsjahr", egal was er
+// in der App eingetragen hatte.
+
+function bhHauptAppSettings() {
+    try {
+        const d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
+        return (d && d.settings) || null;
+    } catch (e) { return null; }
+}
+
+// "TT.MM.JJJJ" (Deckblatt) oder "JJJJ-MM-TT" (Haupt-App, <input type=date>).
+function bhParseDatum(str) {
+    if (!str) return null;
+    const s = String(str).trim();
+    let y, m, d;
+    if (s.includes('.')) [d, m, y] = s.split('.').map(Number);
+    else if (s.includes('-')) [y, m, d] = s.split('-').map(Number);
+    if (!y || !m || !d) return null;
+    const dt = new Date(y, m - 1, d);
+    return isNaN(dt.getTime()) ? null : dt;
+}
+
+// Tag i: 0 = Montag … 4 = Freitag. settings.hours ist Sonntag-basiert
+// (Index 0 = So), deshalb i + 1. Ohne Angabe bleibt es bei 8.
+function bhSollStunden(i) {
+    const s = bhHauptAppSettings();
+    const h = s && Array.isArray(s.hours) ? s.hours[i + 1] : null;
+    return (typeof h === 'number' && h > 0) ? h : 8;
+}
+
+function bhAusbildungsZeitraum() {
+    let beginn = null, ende = null;
+    try {
+        const p = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}') || {};
+        beginn = bhParseDatum(p.beginn);
+        ende = bhParseDatum(p.ende);
+    } catch (e) {}
+    const s = bhHauptAppSettings();
+    if (s && s.ihk) {
+        if (!beginn) beginn = bhParseDatum(s.ihk.start);
+        if (!ende) ende = bhParseDatum(s.ihk.end);
+    }
+    return { beginn, ende };
+}
+
+// ═══════════════════════════════════════
 // PAPIERKORB / TRASH MANAGEMENT
 // ═══════════════════════════════════════
 // Hält gelöschte Berichte für max. 30 Tage vor. Nach Ablauf werden sie
