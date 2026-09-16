@@ -14,6 +14,14 @@
 // Code selbst umschalten. i18n-runtime.js matcht nur exakte, feste Strings.
 function L(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
+// Stundenzahl in der Schreibweise der Seite (8,75 auf Deutsch, 8.75 auf Englisch).
+// Native Zahlenfelder zeigen das Dezimalkomma von selbst — alles, was JS daneben
+// schreibt, muss es nachziehen, sonst stehen „8,75" und „39.5" nebeneinander.
+function bhStunden(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString(window.mwlLocale ? window.mwlLocale() : document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
+}
+
 // ===== CONSTANTS & STATE =====
 const STORAGE_KEY = 'berichtsheft_reports';
 const TRASH_KEY = 'berichtsheft_trash';
@@ -94,18 +102,20 @@ const AI_BRAIN = {
     // === SENTENCE TEMPLATES (slots: {V}=verb, {O}=object, {T}=tool, {D}=detail) ===
     templates: [
         '• {O} {V} und dokumentiert',
-        '• {V}: {O} für aktuelles Projekt',
+        '• {O} für aktuelles Projekt {V}',
         '• {O} mithilfe von {T} {V}',
         '• Anleitung erhalten: {O} fachgerecht {V}',
         '• Selbstständig {O} {V}',
         '• {O} — Ergebnis mit Ausbilder besprochen',
         '• Im Team: {O} {V} und geprüft',
-        '• {V} von {O} nach Arbeitsanweisung',
+        '• {O} nach Arbeitsanweisung {V}',
         '• Qualitätskontrolle: {O} überprüft und nachgebessert',
         '• Neues gelernt: {O} {V} (Erstanwendung)',
         '• Fehler bei {O} identifiziert und behoben',
         '• {O} nach Zeichnung/Plan {V}',
-        '• {T} eingesetzt um {O} zu {V}',
+        // {I} = Infinitiv: „um … zu getestet" war ein Partizip an der Stelle, an
+        // der nur der Infinitiv steht. {V} bleibt ueberall sonst das Partizip.
+        '• {T} eingesetzt, um {O} zu {I}',
     ],
 
     // === DETAIL/QUALIFIER POOLS ===

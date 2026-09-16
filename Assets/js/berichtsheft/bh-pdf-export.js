@@ -330,8 +330,12 @@ function renderSingleReportToDoc(doc, report) {
 
     if (report.mode === 'daily' && report.dailyActivities) {
         DAYS_ORD.forEach(dk => {
-            const txt = report.dailyActivities[dk];
+            let txt = report.dailyActivities[dk];
             if (!txt) return;
+            // Schultag kenntlich machen — dailySchool kam in den freien Stilen
+            // bis v7.2.4 gar nicht vor, der Ausbilder sah Schulstoff als
+            // Betriebsarbeit. Die Tagesspalte ist 24 mm breit, also in den Text.
+            if (report.dailySchool?.[dk] && !/^\s*(\[?Berufsschule\]?)/i.test(txt)) txt = 'Berufsschule: ' + txt;
             drawRow(DAYS_FULL[dk], txt, report.dailyHours?.[dk] || null);
         });
     } else if (report.activities) {

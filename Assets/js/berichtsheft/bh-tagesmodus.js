@@ -129,7 +129,9 @@ function updateDailyTotalHours() {
     inputs.forEach(inp => total += parseFloat(inp.value) || 0);
     total = Math.round(total * 100) / 100;
     const el = document.getElementById('dailyTotalHours');
-    if (el) el.textContent = total;
+    // Gleiche Schreibweise wie die Tagesfelder daneben (native Zahlenfelder
+    // zeigen „8,75") — „39.5" neben „8,75" sah nach zwei Systemen aus.
+    if (el) el.textContent = bhStunden(total);
 
     // Also sync to the main hours field
     const hoursField = document.getElementById('reportHours');

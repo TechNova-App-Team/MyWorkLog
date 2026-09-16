@@ -197,11 +197,25 @@ function buildIhkCtx(report) {
         return {
             label: DAYS_MAP[k],
             text: text,
-            hours: report.dailyHours ? (report.dailyHours[k] || '') : ''
+            hours: report.dailyHours && report.dailyHours[k] ? bhStunden(report.dailyHours[k]) : ''
         };
     });
     // Wochenmodus: der zusammengefasste Text steht im Taetigkeits-Block.
-    // Im Tagesmodus fuellt derselbe Text die Tageszeilen.
+    // Im Tagesmodus fuellt derselbe Text die Tageszeilen (mit [Berufsschule]-
+    // Marke, weil dort jeder Tag EINE Zeile hat). Fuer den Wochen-Vordruck
+    // werden die Schultage dagegen in den Block „Themen des Berufsschul-
+    // unterrichts" sortiert: bis v7.2.4 standen sie mit Marke unter „Betriebliche
+    // Taetigkeiten" und der Schul-Block blieb leer — genau andersherum, als der
+    // Vordruck es vorsieht. Die Stunden werden mitgeteilt.
+    const istTagesmodus = report.mode === 'daily' && !!report.dailyActivities;
+    const istSchule = k => !!(report.dailySchool && report.dailySchool[k]);
+    const tagesText = k => DAYS_MAP[k] + ':\n' + (report.dailyActivities[k] || 'Berufsschule');
+    const stundenVon = keys => {
+        if (!report.dailyHours) return 0;
+        return Math.round(keys.reduce((s, k) => s + (parseFloat(report.dailyHours[k]) || 0), 0) * 100) / 100;
+    };
+    const betriebTage = istTagesmodus ? DAYS_ORDER.filter(k => report.dailyActivities[k] && !istSchule(k)) : [];
+    const schulTage = istTagesmodus ? DAYS_ORDER.filter(istSchule) : [];
     return {
         name: v('pdfAzubiName'),
         jahr: report.year ? String(report.year) : '',
@@ -209,20 +223,18 @@ function buildIhkCtx(report) {
         von: formatDate(report.dateFrom),
         bis: formatDate(report.dateTo),
         nr: report.week ? String(report.week) : '',
-        activities: report.mode === 'daily' && report.dailyActivities
-            ? DAYS_ORDER.filter(k => report.dailyActivities[k] || (report.dailySchool && report.dailySchool[k]))
-                .map(k => {
-                    const isSchool = report.dailySchool && report.dailySchool[k];
-                    let t = report.dailyActivities[k] || '';
-                    if (isSchool && t) t = '[Berufsschule] ' + t;
-                    else if (isSchool) t = 'Berufsschule';
-                    return DAYS_MAP[k] + ':\n' + t;
-                }).join('\n\n')
+        activities: istTagesmodus
+            ? betriebTage.map(tagesText).join('\n\n')
             : (report.activities || ''),
         instruction: report.instruction || '',
-        school: report.school || '',
+        school: istTagesmodus
+            ? schulTage.map(tagesText).join('\n\n')
+            : (report.school || ''),
         days: days,
-        gesamtStunden: report.hours ? String(report.hours) : '',
+        gesamtStunden: report.hours ? bhStunden(report.hours) : '',
+        betriebStunden: istTagesmodus && schulTage.length && stundenVon(DAYS_ORDER.filter(k => !istSchule(k)))
+            ? bhStunden(stundenVon(DAYS_ORDER.filter(k => !istSchule(k)))) : '',
+        schoolStunden: istTagesmodus && stundenVon(schulTage) ? bhStunden(stundenVon(schulTage)) : '',
         adresse: v('pdfAdresse'),
         beruf: v('pdfBeruf'),
         fachrichtung: v('pdfFachrichtung'),

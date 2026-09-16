@@ -295,7 +295,7 @@
     // MODELL BAUEN
     // ═══════════════════════════════════════════════════════════════════════
     // ctx: { name, jahr, bereich, von, bis, nr, activities, instruction, school,
-    //        days:[{label,text,hours}], gesamtStunden,
+    //        days:[{label,text,hours}], gesamtStunden, betriebStunden, schoolStunden,
     //        adresse, beruf, fachrichtung, betrieb, ausbilder, heftNr, beginn, ende }
 
     // Leerzeilen INNERHALB des Textes bleiben stehen (sie sind Gliederung),
@@ -375,10 +375,16 @@
                     kind: 'text',
                     title: b.title,
                     lines: toLines(ctx && ctx[b.src]),
-                    // Stunden gehoeren nur an den Taetigkeits-Block: fuer die
-                    // beiden anderen liegt in den Daten schlicht keine Zahl vor,
-                    // und eine erfundene waere schlimmer als ein leeres Feld.
-                    hours: (i === 0 && tpl.hoursCol) ? val('gesamtStunden') : '',
+                    // Stunden nur, wo in den Daten eine Zahl liegt: der
+                    // Taetigkeits-Block bekommt die Betriebsstunden (im
+                    // Tagesmodus ohne die Schultage, sonst die Wochensumme), der
+                    // Schul-Block die Stunden der Schultage. Fuer Unterweisungen
+                    // gibt es keine Zahl — eine erfundene waere schlimmer als ein
+                    // leeres Feld.
+                    hours: !tpl.hoursCol ? ''
+                        : i === 0 ? (val('betriebStunden') || val('gesamtStunden'))
+                        : b.src === 'school' ? val('schoolStunden')
+                        : '',
                     minH: b.minH
                 });
             });

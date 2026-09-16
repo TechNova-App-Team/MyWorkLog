@@ -717,8 +717,8 @@ function generateWeek(professionId, options = {}) {
         // ✦ Krank/Urlaub/Feiertag: AI-Generierung überspringen, Tag als Status markieren
         const dayStatus = state.dayStatus[dayIdx];
         if (dayStatus && DAY_STATUS_LABELS[dayStatus]) {
-            // Krank/Urlaub/Feiertag = bezahlt. Echte Stunden aus der Zeiterfassung, sonst 8h.
-            const statusHours = _trackingHoursForDay(dayIdx) || 8;
+            // Krank/Urlaub/Feiertag = bezahlt. Echte Stunden aus der Zeiterfassung, sonst das Soll.
+            const statusHours = _trackingHoursForDay(dayIdx) || bhSollStunden(dayIdx);
             week.days.push({
                 index: dayIdx,
                 name: DAY_NAMES[dayIdx],
@@ -761,8 +761,9 @@ function generateWeek(professionId, options = {}) {
             index: dayIdx,
             name: DAY_NAMES[dayIdx],
             entries: eintraege,
-            // Echte erfasste Stunden schlagen den 8h-Default der Engine
-            hours: _trackingHoursForDay(dayIdx) || result.hours || 8,
+            // Echte erfasste Stunden schlagen das Soll aus der Haupt-App; die
+            // Engine selbst kennt keine Stunden (ihr 8 in result.hours ist Altbestand).
+            hours: _trackingHoursForDay(dayIdx) || bhSollStunden(dayIdx),
             isSchoolDay: result.isSchoolDay,
             schoolTopic: result.schoolTopic || null,
         };
@@ -835,10 +836,12 @@ function validateIHKCompliance(week) {
     else if (varietyRatio >= 0.7) score += 15;
     else { score += 5; issues.push(L('Zu viele ähnliche Einträge — mehr Variation empfohlen', 'Too many similar entries — more variety recommended')); }
 
-    // 3. Check hours (should be ~40h/week for 5 days)
-    const expectedHours = week.days.length * 8;
+    // 3. Stunden gegen das SOLL des Azubis (bhSollStunden, Haupt-App), nicht
+    //    gegen 8 h je Tag: wer 35 h die Woche hat, bekam sonst bei jeder
+    //    Generierung „weicht von 40h ab" — ein Mangel, den es nicht gibt.
+    const expectedHours = Math.round(week.days.reduce((s, d) => s + bhSollStunden(d.index), 0) * 100) / 100;
     if (Math.abs(week.totalHours - expectedHours) <= 2) score += 15;
-    else { score += 5; issues.push(L(`Stundenzahl (${week.totalHours}h) weicht von ${expectedHours}h ab`, `Hours (${week.totalHours}h) differ from ${expectedHours}h`)); }
+    else { score += 5; issues.push(L(`Stundenzahl (${week.totalHours}h) weicht vom Soll (${expectedHours}h) ab`, `Hours (${week.totalHours}h) differ from the target (${expectedHours}h)`)); }
 
     // 4. Berufsschultag. Wer in den Optionen ausdruecklich "Kein" gewaehlt hat,
     //    bekommt dafuer keinen Abzug — die Meldung waere ein Vorwurf fuer eine
@@ -985,10 +988,14 @@ function renderPreview(week) {
     // Score in toolbar
     const scoreEl = document.getElementById('aisPreviewScore');
     if (scoreEl) {
+        // Farbe als Custom Property — `var(--success)22` (Hex-Alpha an ein var()
+        // gehaengt) ist kein CSS und lief still auf „transparent"; Form und Fuellung
+        // stehen in ai-studio-vorschau.css.
         const color = ihk.score >= 85 ? 'var(--success)' : ihk.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+        scoreEl.style.setProperty('--score-color', color);
         scoreEl.innerHTML = `
-                    <div class="ais-score-ring" style="background:${color}22;color:${color};border:2px solid ${color}">${ihk.score}</div>
-                    <span style="color:${color}">IHK Score</span>`;
+                    <span class="ais-score-ring">${ihk.score}</span>
+                    <span class="ais-score-label">IHK-Score</span>`;
     }
 }
 

@@ -212,6 +212,17 @@ check('nur der erste Block traegt eine Stundenzahl',
     w.model.sections.filter((s) => s.hours).length === 1,
     w.model.sections.map((s) => s.hours || '–').join(' / '));
 
+// Liegt die Zahl aber vor (Tagesmodus mit Schultag: bh-pdf-modal liefert
+// betriebStunden/schoolStunden), bekommt der Schul-Block seine Stunden und der
+// Taetigkeits-Block nur die des Betriebs — nicht die Wochensumme.
+const ws = render('dihk-w', { betriebStunden: '31,25', schoolStunden: '8,75' });
+check('Schul-Block traegt die Schulstunden, Betrieb nur die Betriebsstunden',
+    ws.model.sections[0].hours === '31,25' && ws.model.sections[2].hours === '8,75'
+    && !ws.model.sections[1].hours,
+    ws.model.sections.map((s) => s.hours || '–').join(' / '));
+check('Gegenprobe: ohne Schulstunden bleibt der Schul-Block ohne Zahl',
+    !render('dihk-w', { betriebStunden: '40' }).model.sections[2].hours, '');
+
 // ═══ 3b. Eine Woche = ein Blatt ═════════════════════════════════════════════
 // Der amtliche Vordruck ist einseitig. Rutscht der letzte Block auf Seite 2,
 // bleibt darunter eine halbe leere Seite — genau das war der erste Entwurf.

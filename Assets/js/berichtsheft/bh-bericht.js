@@ -19,11 +19,11 @@ function populateYearFilter() {
     const currentValue = yearFilter.value;
 
     // Rebuild options
-    yearFilter.innerHTML = '<option value="">Alle Jahre</option>';
+    yearFilter.innerHTML = `<option value="">${L('Alle Jahre', 'All years')}</option>`;
     years.forEach(year => {
         const option = document.createElement('option');
         option.value = year;
-        option.textContent = `${year}. Ausbildungsjahr`;
+        option.textContent = L(`${year}. Ausbildungsjahr`, `Training year ${year}`);
         yearFilter.appendChild(option);
     });
     yearFilter.value = currentValue;
@@ -361,7 +361,7 @@ function viewReport(id) {
                     </div>
                     <div>
                         <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Stunden', 'Hours')}</div>
-                        <div style="font-weight: 600; font-size: 0.95rem;">${report.hours || 0} ${L('Std.', 'hrs')}</div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${bhStunden(report.hours)} ${L('Std.', 'hrs')}</div>
                     </div>
                     <div>
                         <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Wörter', 'Words')}</div>
@@ -393,7 +393,7 @@ function viewReport(id) {
         return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isSchool ? 'rgba(var(--primary-rgb), 0.4)' : 'var(--border)'};border-radius:var(--radius-sm);overflow:hidden;${isSchool ? 'border-left:3px solid var(--primary);' : ''}">
                                     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:${isSchool ? 'rgba(var(--primary-rgb), 0.05)' : 'rgba(255,255,255,0.02)'};border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;">
                                         <span>${day.name}</span>
-                                        ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${hrs} ${L('Std.', 'hrs')}</span>` : ''}
+                                        ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${bhStunden(hrs)} ${L('Std.', 'hrs')}</span>` : ''}
                                     </div>
                                     <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(displayText)}</div>
                                 </div>`;

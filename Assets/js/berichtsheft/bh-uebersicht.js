@@ -491,8 +491,8 @@ function renderReports() {
                             </div>
                             <div class="report-meta">
                                 <span><svg class="icon" style="width:12px;height:12px"><use href="#i-calendar"/></svg> ${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</span>
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-clock"/></svg> ${report.hours || 0} ${L('Std.', 'hrs')}</span>
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> ${wordCount} ${L('Wörter', 'words')}</span>
+                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-clock"/></svg> ${bhStunden(report.hours)} ${L('Std.', 'hrs')}</span>
+                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> ${wordCount} ${wordCount === 1 ? L('Wort', 'word') : L('Wörter', 'words')}</span>
                                 ${modeBadge}
                                 ${statusBadge}
                                 ${bhApprovalBadge(report)}

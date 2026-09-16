@@ -118,6 +118,7 @@ function generateSentence(prof) {
 
     return template
         .replace('{V}', pastVerb)
+        .replace('{I}', verb)
         .replace('{O}', object)
         .replace('{T}', tool)
         .replace('{D}', detail);

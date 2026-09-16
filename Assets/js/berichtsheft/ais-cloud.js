@@ -458,7 +458,7 @@ async function generateWithCloud(professionId, options) {
             timestamp: Date.now(),
             source: 'status-only',
             days: _statusDays.map(d => ({
-                index: d, name: DAY_NAMES[d], entries: [], hours: _trackingHoursForDay(d) || 8,
+                index: d, name: DAY_NAMES[d], entries: [], hours: _trackingHoursForDay(d) || bhSollStunden(d),
                 isSchoolDay: false, schoolTopic: null, dayStatus: _dayStatus[d],
             })),
             totalHours: _statusDays.reduce((n, d) => n + (_trackingHoursForDay(d) || 8), 0),
@@ -793,8 +793,10 @@ async function generateWithCloud(professionId, options) {
             index: dayIdx,
             name: dayName,
             entries: cloudEntries,
-            // Echte erfasste Stunden schlagen den Schätzwert der KI
-            hours: _trackingHoursForDay(dayIdx) || dayData.hours || 8,
+            // Echte erfasste Stunden, sonst das Soll aus der Haupt-App. Die Zahl
+            // des Modells zaehlt nicht: es kennt den Vertrag nicht und schreibt, was
+            // das Beispiel im Prompt vorgibt (8).
+            hours: _trackingHoursForDay(dayIdx) || bhSollStunden(dayIdx),
             isSchoolDay: _sollSchule,
             schoolTopic,
         };
@@ -842,11 +844,11 @@ async function generateWithCloud(professionId, options) {
                     entries: options.form === 'fliesstext'
                         ? alsFliesstext(result.entries, DAY_NAMES[dayIdx])
                         : result.entries,
-                    hours: result.hours || 8,
+                    hours: _trackingHoursForDay(dayIdx) || bhSollStunden(dayIdx),
                     isSchoolDay: result.isSchoolDay,
                     schoolTopic: result.schoolTopic || null,
                 });
-                week.totalHours += result.hours || 8;
+                week.totalHours += _trackingHoursForDay(dayIdx) || bhSollStunden(dayIdx);
             } catch (synthErr) {
                 console.error(`[AIStudio] Lokales Auffüllen für Tag ${dayIdx} fehlgeschlagen:`, synthErr);
             }
@@ -870,7 +872,7 @@ async function generateWithCloud(professionId, options) {
     const DAY_NAMES_2 = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
     if (_statusDays.length > 0) {
         _statusDays.forEach(d => {
-            const statusHours = _trackingHoursForDay(d) || 8;
+            const statusHours = _trackingHoursForDay(d) || bhSollStunden(d);
             week.days.push({
                 index: d,
                 name: DAY_NAMES_2[d],
