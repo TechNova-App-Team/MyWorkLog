@@ -713,12 +713,19 @@
     }
 
     /* Eine Notiz hat keinen Haken: in der Haken-Spalte steht der Zettel,
-       damit die Texte beider Sorten auf derselben Kante stehen. */
+       damit die Texte beider Sorten auf derselben Kante stehen. Die erste
+       Zeile ist die Ueberschrift, alles danach steht leiser darunter —
+       so wird aus „Zoll-Rechnungen\nAusdrucken, …" eine Karteikarte. */
     function noteRowHTML(n) {
+        var nl = n.text.indexOf('\n');
+        var head = nl === -1 ? n.text : n.text.slice(0, nl);
+        var rest = nl === -1 ? '' : n.text.slice(nl + 1).trim();
         return '<div class="tk-row tk-row--note' + (sel === n.id ? ' is-sel' : '') + '"'
             + ' data-id="' + esc(n.id) + '" data-a="open" role="button" tabindex="0" aria-selected="' + (sel === n.id) + '">'
             + '<span class="tk-row__glyph">' + svg('stickyNote') + '</span>'
-            + '<div class="tk-row__main"><span class="tk-row__name">' + esc(n.text) + '</span></div>'
+            + '<div class="tk-row__main"><span class="tk-row__name">' + esc(head) + '</span>'
+                + (rest ? '<span class="tk-row__more">' + esc(rest) + '</span>' : '')
+            + '</div>'
         + '</div>';
     }
 
@@ -1280,6 +1287,9 @@
                     sel = null; if (detailMode) closeDetail();
                     save(); render();
                     toast(T.imported);
+                    /* Importierte Erinnerungen wuerden sonst stumm bleiben: der
+                       Erlaubnis-Dialog kommt nur beim Setzen einer Uhrzeit. */
+                    if (allTasks().some(function (t) { return !!t.reminder; })) { startReminders(); askNotify(); }
                 });
             };
             r.readAsText(f);
@@ -1308,16 +1318,19 @@
         }
         try { new Notification('MyWorkLog', { body: body }); } catch (e) {}
     }
+    /* Alle Aufgaben derselben Minute in EINER Meldung: ein Freitagsblock
+       mit sieben Aufgaben um 11:00 sind sonst sieben Benachrichtigungen. */
     var remindedAt = {};
     function checkReminders() {
         if (!('Notification' in window) || Notification.permission !== 'granted') return;
         var now = new Date();
         var hm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-        var v = todayView();
+        var v = todayView(), names = [];
         v.over.concat(v.due).forEach(function (t) {
             var key = t.id + '@' + todayIso();
-            if (t.reminder === hm && !remindedAt[key]) { remindedAt[key] = true; notify(T.stillOpen + t.name); }
+            if (t.reminder === hm && !remindedAt[key]) { remindedAt[key] = true; names.push(t.name); }
         });
+        if (names.length) notify(T.stillOpen + names.join(', '));
     }
     function askNotify() {
         if (!('Notification' in window) || Notification.permission !== 'default') return;

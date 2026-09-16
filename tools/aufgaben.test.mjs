@@ -365,7 +365,8 @@ console.log('\n10 · Notizen zaehlen nirgends mit und wandeln sich verlustfrei u
     ok('Notiz-Zeile hat keinen Haken', !q(w, '.tk-row--note .tk-check') && !!q(w, '.tk-row--note .tk-row__glyph svg'));
     ok('Fortschritt bleibt 1 von 4 (Notizen zaehlen nicht)', q(w, '#tkProgDone').textContent === '1' && q(w, '#tkProgTotal').textContent === '4');
     ok('Sidebar: Heute 3 unveraendert, Notizen 2', q(w, '#tkNToday').textContent === '3' && q(w, '#tkNNotes').textContent === '2');
-    ok('Zeilenumbruch bleibt als Text erhalten', q(w, '.tk-row[data-id="n2"] .tk-row__name').textContent === 'Erste Zeile\nzweite Zeile');
+    ok('erste Zeile ist die Ueberschrift, der Rest steht leiser darunter', q(w, '.tk-row[data-id="n2"] .tk-row__name').textContent === 'Erste Zeile' && q(w, '.tk-row[data-id="n2"] .tk-row__more').textContent === 'zweite Zeile');
+    ok('einzeilige Notiz hat keinen leeren Untertext', !q(w, '.tk-row[data-id="n1"] .tk-row__more'));
 
     // Abhaken einer Notiz per Leertaste ist ein No-op.
     click(w, '.tk-row[data-id="n1"]');
@@ -441,6 +442,50 @@ console.log('\n10 · Notizen zaehlen nirgends mit und wandeln sich verlustfrei u
     const w2 = boot({ mwl_tasks_cats: [], mwl_tasks_notes: [{ id: 'x', text: 'Nur eine Notiz', createdAt: TODAY }], mwl_tasks_lastReset: NOW.toDateString() });
     ok('Leerzustand kompakt, Notiz darunter sichtbar', q(w2, '#tkEmpty').hidden === false && q(w2, '#tkEmpty').classList.contains('is-compact') && qa(w2, '.tk-row--note').length === 1);
     ok('Leerzustand steht im DOM vor der Liste', q(w2, '#tkEmpty').compareDocumentPosition(q(w2, '#tkList')) & 4);
+}
+
+/* ─── 11 · Erinnerungen derselben Minute sind EINE Meldung ──────────── */
+console.log('\n11 · Erinnerungen zur selben Uhrzeit kommen als eine Benachrichtigung');
+{
+    /* Eigener Start: feste Uhr (CLAUDE.md: new Date() im Test stellen) und
+       eine zaehlende Notification-Attrappe statt der geloeschten Eigenschaft. */
+    function bootAt(hh, mm, store) {
+        const dom = new JSDOM(HTML, { url: 'https://myworklog.de/aufgaben/', runScripts: 'outside-only', pretendToBeVisual: true });
+        const { window } = dom;
+        Object.keys(store).forEach(k => window.localStorage.setItem(k, typeof store[k] === 'string' ? store[k] : JSON.stringify(store[k])));
+        window.fetch = () => Promise.reject(new Error('offline'));
+        window.matchMedia = window.matchMedia || (() => ({ matches: false, addListener() {}, removeListener() {} }));
+        const Real = window.Date;
+        class Fixed extends Real {
+            constructor(...a) { if (a.length) super(...a); else super(NOW.getFullYear(), NOW.getMonth(), NOW.getDate(), hh, mm, 0); }
+            static now() { return new Fixed().getTime(); }
+        }
+        window.Date = Fixed;
+        const bodies = [];
+        window.Notification = class { constructor(t, o) { bodies.push(o.body); } static get permission() { return 'granted'; } };
+        delete window.navigator.serviceWorker;
+        window.eval(JS);
+        return { w: window, bodies };
+    }
+    const store = {
+        mwl_tasks_cats: [{ id: 'c1', name: 'Täglich', icon: 'penLine', days: [], autoReset: 'daily', tasks: [
+            { id: 'a', name: 'Küche', days: [], due: '', recurring: 'none', reminder: '16:15', subtasks: [] },
+            { id: 'b', name: 'Elo', days: [], due: '', recurring: 'none', reminder: '16:15', subtasks: [] },
+            { id: 'c', name: 'Post frankieren', days: [], due: '', recurring: 'none', reminder: '16:15', subtasks: [] },
+            { id: 'd', name: 'Flaschen', days: [], due: '', recurring: 'none', reminder: '', subtasks: [] },
+            { id: 'e', name: 'Schon erledigt', days: [], due: '', recurring: 'none', reminder: '16:15', subtasks: [], doneAt: TODAY + 'T09:00:00' }
+        ] }],
+        mwl_tasks_states: { e: true },
+        mwl_tasks_lastReset: NOW.toDateString()
+    };
+    const hit = bootAt(16, 15, store);
+    ok('genau EINE Meldung um 16:15', hit.bodies.length === 1, JSON.stringify(hit.bodies));
+    ok('sie nennt alle drei offenen Aufgaben', hit.bodies[0] === 'Noch offen: Küche, Elo, Post frankieren', hit.bodies[0]);
+    ok('die erledigte und die ohne Uhrzeit fehlen darin', !/erledigt|Flaschen/.test(hit.bodies[0] || ''));
+    const miss = bootAt(16, 14, store);
+    ok('eine Minute frueher: keine Meldung (Gegenprobe)', miss.bodies.length === 0, JSON.stringify(miss.bodies));
+    ok('Aufgaben stehen trotzdem unter Heute (der Start lief)', rows(miss.w).length === 5, rows(miss.w).join(','));
+    ok('Import fragt nach Erinnerungen, wenn welche drin sind', /startReminders\(\); askNotify\(\);/.test(JS_CODE) && JS_CODE.indexOf('toast(T.imported)') < JS_CODE.indexOf('startReminders(); askNotify();'));
 }
 
 console.log('\n' + (fail ? `✗ ${fail} von ${pass + fail} Pruefungen fehlgeschlagen` : `✓ ${pass}/${pass + fail}`));
