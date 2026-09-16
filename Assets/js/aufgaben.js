@@ -28,6 +28,16 @@
  * 5. Symbole sind Lucide-Namen; Alt-Emojis aus den Daten werden beim
  *    Zeichnen uebersetzt (`agIcon`), nie migriert.
  *
+ * 6. Notizen (seit v7.2.1) sind eine ZWEITE Sorte Eintrag, kein Aufgaben-
+ *    Zustand: `mwl_tasks_notes` = [{id, text, createdAt}], eigener
+ *    Schluessel, damit das Berichtsheft sie nicht als Aufgaben liest und
+ *    keine Zaehlung (Fortschritt, Serie, Heute-Zahl) sie mitnimmt. Sie
+ *    stehen unter Heute als eigener Abschnitt und in der Ansicht Notizen.
+ *    Der Schalter „Aufgabe | Notiz" im Detail wandelt um: Name, Notiztext
+ *    und Unteraufgaben werden Text, alles mit Datum faellt weg. Anlass war
+ *    ein Nutzer mit vielen „Aufgaben", die Erinnerungen waren — sie standen
+ *    jeden Tag offen da, drueckten den Fortschritt und die Serie.
+ *
  * Test: node tools/aufgaben.test.mjs
  */
 (function () {
@@ -43,10 +53,13 @@
         dayShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
         dayLong: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
         today: 'Today', tomorrow: 'Tomorrow', yesterday: 'Yesterday', later: 'Later', earlier: 'Earlier',
-        vToday: 'Today', vUpcoming: 'Upcoming', vAll: 'All', vDone: 'Done',
-        subUpcoming: 'The next days', subAll: 'Every list', subDone: 'Log',
+        vToday: 'Today', vUpcoming: 'Upcoming', vAll: 'All', vDone: 'Done', vNotes: 'Notes',
+        subUpcoming: 'The next days', subAll: 'Every list', subDone: 'Log', subNotes: 'No checkbox, under Today every day',
         secOverdue: 'Overdue', secToday: 'Today', secOpen: 'Open', secDone: 'Done', secDoneToday: 'Done today',
-        secNoDate: 'No date',
+        secNoDate: 'No date', secNotes: 'Notes',
+        phTask: 'Add a task', phNote: 'Add a note', hintNote: 'Note, no checkbox',
+        emptyNotes: 'No notes yet.', emptyNotesS: 'For hints and anything you want to keep in view without checking it off. Notes show under Today every day.',
+        noteDeleted: 'Note deleted',
         routines: '{n} routines', routine: '1 routine',
         inbox: 'Inbox', everyDay: 'Every day', onDays: 'On {d}',
         reopens: { daily: 'reopens daily', weekly: 'reopens weekly', monthly: 'reopens monthly' },
@@ -59,7 +72,6 @@
         emptyUpcoming: 'Nothing dated yet.', emptyUpcomingS: 'Give a task a date, for example "Report Fri" or "Docs 24.09.".',
         emptyDone: 'Nothing done yet.', emptyDoneS: 'Checked-off tasks land here with their date.',
         emptyList: 'This list is empty.', emptyListS: 'Type a task above.',
-        kindTask: 'Task', kindList: 'List',
         created: 'Created {d}', doneOn: 'Done {d}', tasksInList: '{n} tasks in this list',
         deleted: 'Task deleted', listDeleted: 'List deleted', undo: 'Undo',
         askDelListT: 'Delete list?', askDelListM: '"{n}" and its {c} will be deleted.',
@@ -71,15 +83,18 @@
         yesNotif: 'Turn on', notNow: 'Not now',
         cancel: 'Cancel', del: 'Delete', reset: 'Reset', importIt: 'Import', ok: 'OK',
         exported: 'Exported', imported: 'Imported', resetDone: 'Today is open again', wiped: 'All data deleted',
-        stillOpen: 'Still open: ', noteLbl: 'Note', doneLbl: 'Done: '
+        stillOpen: 'Still open: ', doneLbl: 'Done: '
     } : {
         dayShort: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
         dayLong: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
         today: 'Heute', tomorrow: 'Morgen', yesterday: 'Gestern', later: 'Später', earlier: 'Früher',
-        vToday: 'Heute', vUpcoming: 'Geplant', vAll: 'Alle', vDone: 'Erledigt',
-        subUpcoming: 'Die nächsten Tage', subAll: 'Alle Listen', subDone: 'Logbuch',
+        vToday: 'Heute', vUpcoming: 'Geplant', vAll: 'Alle', vDone: 'Erledigt', vNotes: 'Notizen',
+        subUpcoming: 'Die nächsten Tage', subAll: 'Alle Listen', subDone: 'Logbuch', subNotes: 'Ohne Haken, jeden Tag unter Heute',
         secOverdue: 'Überfällig', secToday: 'Heute', secOpen: 'Offen', secDone: 'Erledigt', secDoneToday: 'Heute erledigt',
-        secNoDate: 'Ohne Datum',
+        secNoDate: 'Ohne Datum', secNotes: 'Notizen',
+        phTask: 'Aufgabe hinzufügen', phNote: 'Notiz hinzufügen', hintNote: 'Notiz, ohne Haken',
+        emptyNotes: 'Noch keine Notizen.', emptyNotesS: 'Für Hinweise und alles, was du im Blick behalten willst, ohne es abzuhaken. Notizen stehen jeden Tag unter Heute.',
+        noteDeleted: 'Notiz gelöscht',
         routines: '{n} Routinen', routine: '1 Routine',
         inbox: 'Eingang', everyDay: 'Jeden Tag', onDays: 'Am {d}',
         reopens: { daily: 'öffnet sich täglich neu', weekly: 'öffnet sich wöchentlich neu', monthly: 'öffnet sich monatlich neu' },
@@ -92,7 +107,6 @@
         emptyUpcoming: 'Nichts mit Datum geplant.', emptyUpcomingS: 'Gib einer Aufgabe ein Datum, zum Beispiel „Bericht Fr“ oder „Doku 24.09.“.',
         emptyDone: 'Noch nichts erledigt.', emptyDoneS: 'Abgehakte Aufgaben landen hier mit Datum.',
         emptyList: 'Diese Liste ist leer.', emptyListS: 'Oben eine Aufgabe eintippen.',
-        kindTask: 'Aufgabe', kindList: 'Liste',
         created: 'Angelegt {d}', doneOn: 'Erledigt {d}', tasksInList: '{n} Aufgaben in dieser Liste',
         deleted: 'Aufgabe gelöscht', listDeleted: 'Liste gelöscht', undo: 'Rückgängig',
         askDelListT: 'Liste löschen?', askDelListM: '„{n}“ wird gelöscht, inklusive {c}.',
@@ -104,7 +118,7 @@
         yesNotif: 'Einschalten', notNow: 'Nicht jetzt',
         cancel: 'Abbrechen', del: 'Löschen', reset: 'Zurücksetzen', importIt: 'Importieren', ok: 'OK',
         exported: 'Exportiert', imported: 'Importiert', resetDone: 'Heute ist wieder offen', wiped: 'Alle Daten gelöscht',
-        stillOpen: 'Noch offen: ', noteLbl: 'Notiz', doneLbl: 'Erledigt: '
+        stillOpen: 'Noch offen: ', doneLbl: 'Erledigt: '
     };
 
     function fill(s, o) { return s.replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); }
@@ -131,6 +145,7 @@
         inbox:        '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
         listChecks:   '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
         note:         '<path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/><path d="M8 13h8"/><path d="M8 17h8"/>',
+        stickyNote:   '<path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/>',
         /* Listen-Symbole */
         clipboardList:'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
         wrench:       '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
@@ -199,6 +214,7 @@
     var SK = {
         cats:    'mwl_tasks_cats',
         states:  'mwl_tasks_states',
+        notes:   'mwl_tasks_notes',
         streak:  'mwl_tasks_streak',
         theme:   'mwl_tasks_theme',
         reset:   'mwl_tasks_lastReset',
@@ -207,9 +223,10 @@
         ui:      'mwl_tasks_ui'
     };
 
-    var cats = [], streak = {}, history = {}, stats = {}, ui = {};
+    var cats = [], notes = [], streak = {}, history = {}, stats = {}, ui = {};
     var st = {};                      /* id → true, die Erledigt-Flags */
     var view = 'today', viewList = null, sel = null, detailMode = null;
+    var addKind = 'task';             /* Schnelleingabe: 'task' | 'note', faellt nach jedem Eintrag zurueck */
 
     function jget(k, fb) {
         try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; }
@@ -217,12 +234,15 @@
     }
     function load() {
         cats    = jget(SK.cats, []);
+        notes   = jget(SK.notes, []);
         streak  = jget(SK.streak, { streak: 0, lastDate: null, best: 0 });
         history = jget(SK.history, {});
         stats   = jget(SK.stats, { done: 0 });
         ui      = jget(SK.ui, {});
         st      = jget(SK.states, {}) || {};
         if (!Array.isArray(cats)) cats = [];
+        if (!Array.isArray(notes)) notes = [];
+        notes = notes.filter(function (n) { return n && typeof n.id === 'string' && typeof n.text === 'string'; });
         if (typeof stats.done !== 'number') stats.done = 0;
         cats.forEach(function (c) { if (!Array.isArray(c.tasks)) c.tasks = []; });
         migrateDoneAt();
@@ -230,6 +250,7 @@
     function save() {
         localStorage.setItem(SK.cats, JSON.stringify(cats));
         localStorage.setItem(SK.states, JSON.stringify(st));
+        localStorage.setItem(SK.notes, JSON.stringify(notes));
         localStorage.setItem(SK.streak, JSON.stringify(streak));
         localStorage.setItem(SK.history, JSON.stringify(history));
         localStorage.setItem(SK.stats, JSON.stringify(stats));
@@ -318,6 +339,12 @@
     }
     function isDone(t) { return !!st[t.id]; }
     function doneDay(t) { return t.doneAt ? String(t.doneAt).slice(0, 10) : ''; }
+    function noteById(id) {
+        for (var i = 0; i < notes.length; i++) if (notes[i].id === id) return notes[i];
+        return null;
+    }
+    /* Aufgabe oder Notiz — beide teilen sich `sel` und die Zeilen. */
+    function kindOf(id) { return noteById(id) ? 'note' : 'task'; }
 
     /* Ohne Liste geht es trotzdem: „Eingang" entsteht bei der ersten
        Aufgabe, die keine Liste bekommt. */
@@ -462,7 +489,17 @@
             if (v.over.length) out.sections.push({ key: 'over', title: T.secOverdue, cls: 'is-over', tasks: v.over });
             if (v.due.length) out.sections.push({ key: 'today', title: T.secToday, tasks: v.due });
             if (v.done.length) out.sections.push({ key: 'done', title: T.secDoneToday, tasks: v.done, fold: true });
+            /* Notizen zuletzt: sie sollen jeden Tag im Blick sein, aber nicht
+               mit dem konkurrieren, was heute zu tun ist. Zaehlen nirgends. */
+            if (notes.length) out.sections.push({ key: 'notes', title: T.secNotes, notes: notes, fold: true });
             if (!v.total) out.empty = nothingAtAll ? [T.emptyNothing, T.emptyNothingS] : [T.emptyFree, T.emptyFreeS];
+        }
+
+        else if (view === 'notes') {
+            out.title = T.vNotes;
+            out.sub = T.subNotes;
+            if (notes.length) out.sections.push({ key: 'notes', bare: true, notes: notes });
+            else out.empty = [T.emptyNotes, T.emptyNotesS];
         }
 
         else if (view === 'upcoming') {
@@ -540,7 +577,7 @@
 
     function counts() {
         var t = todayIso(), dow = today().getDay();
-        var n = { today: 0, upcoming: 0, all: 0, done: 0, lists: {} };
+        var n = { today: 0, upcoming: 0, all: 0, done: 0, notes: notes.length, lists: {} };
         cats.forEach(function (c) {
             n.lists[c.id] = 0;
             c.tasks.forEach(function (x) {
@@ -567,6 +604,7 @@
         $('tkNUpcoming').textContent = n.upcoming || '';
         $('tkNAll').textContent = n.all || '';
         $('tkNDone').textContent = n.done || '';
+        $('tkNNotes').textContent = n.notes || '';
         document.querySelectorAll('.tk-nav > .tk-nav__it').forEach(function (b) {
             var on = view === b.dataset.view;
             b.classList.toggle('is-on', on);
@@ -589,6 +627,7 @@
         $('tkSub').textContent = m.sub;
         $('tkListCfg').hidden = view !== 'list';
         $('tkAddBox').hidden = view === 'done';
+        renderAddKind();
 
         var prog = $('tkProg');
         if (m.progress && m.progress.total) {
@@ -606,26 +645,39 @@
         var html = '';
         if (m.log) html += logHTML();
         m.sections.forEach(function (s) {
+            var items = s.notes || s.tasks;
             var folded = s.fold && ui['fold_' + s.key] !== false && (ui['fold_' + s.key] === true || s.fold === true && view !== 'today');
-            /* Heute erledigt bleibt offen, solange der Nutzer es nicht zuklappt —
-               man will sehen, was man geschafft hat. Sonst beginnt Erledigt zu. */
+            /* Heute erledigt (und die Notizen) bleiben offen, solange der Nutzer
+               sie nicht zuklappt — man will sehen, was man geschafft hat und
+               was man im Blick behalten wollte. Sonst beginnt Erledigt zu. */
             if (s.fold && view === 'today') folded = ui['fold_' + s.key] === true;
-            html += '<h2 class="tk-sec' + (s.cls ? ' ' + s.cls : '') + (s.muted ? ' tk-sec--muted' : '') + '">'
+            if (!s.bare) html += '<h2 class="tk-sec' + (s.cls ? ' ' + s.cls : '') + (s.muted ? ' tk-sec--muted' : '') + '">'
                 + (s.fold
                     ? '<button type="button" class="tk-sec__btn" data-a="fold" data-k="' + esc(s.key) + '" aria-expanded="' + !folded + '">' + svg('chevronDown') + '<span>' + esc(s.title) + '</span></button>'
                     : (s.icon ? '<span class="tk-sec__ico">' + agIcon(s.icon) + '</span>' : '') + '<span>' + esc(s.title) + '</span>')
-                + (s.hideZero && !s.tasks.length ? '' : '<b>' + s.tasks.length + '</b>')
+                + (s.hideZero && !items.length ? '' : '<b>' + items.length + '</b>')
                 + (s.routines ? '<b>' + esc(s.routines === 1 ? T.routine : fill(T.routines, { n: s.routines })) + '</b>' : '')
                 + '</h2>';
-            if (!folded) html += s.tasks.map(function (x) { return rowHTML(x, s); }).join('');
+            if (!folded) html += items.map(function (x) { return s.notes ? noteRowHTML(x) : rowHTML(x, s); }).join('');
         });
         $('tkList').innerHTML = html;
 
         var empty = $('tkEmpty');
         if (m.empty) { $('tkEmptyT').textContent = m.empty[0]; $('tkEmptyS').textContent = m.empty[1]; empty.hidden = false; }
         else empty.hidden = true;
+        empty.classList.toggle('is-compact', !!m.empty && m.sections.length > 0);
 
-        if (sel && !document.querySelector('.tk-row[data-id="' + cssEsc(sel) + '"]') && !taskById(sel)) sel = null;
+        if (sel && !document.querySelector('.tk-row[data-id="' + cssEsc(sel) + '"]') && !taskById(sel) && !noteById(sel)) sel = null;
+    }
+
+    /* Schnelleingabe: Symbol, Platzhalter und Chip folgen der Art. In der
+       Ansicht Notizen ist der Knopf festgestellt. */
+    function renderAddKind() {
+        var locked = view === 'notes', isNote = locked || addKind === 'note';
+        var b = $('tkAddKind');
+        b.setAttribute('aria-pressed', String(isNote));
+        b.disabled = locked;
+        $('tkAdd').placeholder = isNote ? T.phNote : T.phTask;
     }
 
     function cssEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
@@ -660,6 +712,16 @@
         + '</div>';
     }
 
+    /* Eine Notiz hat keinen Haken: in der Haken-Spalte steht der Zettel,
+       damit die Texte beider Sorten auf derselben Kante stehen. */
+    function noteRowHTML(n) {
+        return '<div class="tk-row tk-row--note' + (sel === n.id ? ' is-sel' : '') + '"'
+            + ' data-id="' + esc(n.id) + '" data-a="open" role="button" tabindex="0" aria-selected="' + (sel === n.id) + '">'
+            + '<span class="tk-row__glyph">' + svg('stickyNote') + '</span>'
+            + '<div class="tk-row__main"><span class="tk-row__name">' + esc(n.text) + '</span></div>'
+        + '</div>';
+    }
+
     /* Logbuch-Kopf: 30 Felder, ein Feld je Tag — drei Zustaende, drei
        Farben, eine Aussage (CLAUDE.md, Heatmap). */
     function logHTML() {
@@ -680,7 +742,7 @@
 
 
     /* ─── Detail ───────────────────────────────────────────────────── */
-    var detailEl, fTask, fCat, nameTimer, noteTimer;
+    var detailEl, fTask, fNote, fCat, nameTimer, noteTimer, memoTimer;
 
     function openDetail(mode) {
         detailMode = mode;
@@ -691,12 +753,12 @@
         renderDetail();
     }
     function closeDetail() {
-        var wasTask = detailMode === 'task' && sel;
+        var wasRow = (detailMode === 'task' || detailMode === 'note') && sel;
         detailMode = null;
         detailEl.classList.remove('is-open');
         detailEl.setAttribute('aria-hidden', 'true');
         if (!$('tkSide').classList.contains('is-open')) $('tkScrim').hidden = true;
-        if (wasTask) {
+        if (wasRow) {
             var row = document.querySelector('.tk-row[data-id="' + cssEsc(sel) + '"]');
             if (row) row.focus();
         }
@@ -704,14 +766,29 @@
 
     function renderDetail() {
         var t = detailMode === 'task' ? taskById(sel) : null;
+        var n = detailMode === 'note' ? noteById(sel) : null;
         var c = detailMode === 'list' ? listById(viewList) : null;
         if (detailMode === 'task' && !t) { closeDetail(); return; }
+        if (detailMode === 'note' && !n) { closeDetail(); return; }
         if (detailMode === 'list' && !c) { closeDetail(); return; }
         fTask.hidden = !t;
+        fNote.hidden = !n;
         fCat.hidden = !c;
-        $('tkDetailKind').textContent = t ? T.kindTask : c ? T.kindList : '';
+        /* Leiste: bei Aufgabe und Notiz der Art-Schalter, bei Liste nur das Wort. */
+        $('tkDetailKind').hidden = !c;
+        $('tkDetailKindSw').hidden = !!c;
+        document.querySelectorAll('#tkDetailKindSw .tk-seg__btn').forEach(function (b) {
+            b.setAttribute('aria-pressed', String(b.dataset.kind === (n ? 'note' : 'task')));
+        });
         if (t) fillTask(t);
+        if (n) fillNote(n);
         if (c) fillList(c);
+    }
+
+    function fillNote(n) {
+        var ta = $('tkFNoteText');
+        if (document.activeElement !== ta) { ta.value = n.text; autosize(ta); }
+        $('tkFNoteMeta').textContent = n.createdAt ? fill(T.created, { d: fmtRel(String(n.createdAt).slice(0, 10)) }) : '';
     }
 
     function fillTask(t) {
@@ -778,6 +855,50 @@
         Object.keys(patch).forEach(function (k) { c[k] = patch[k]; });
         save();
         renderSide(); renderMain();
+    }
+    function writeNote(patch) {
+        var n = noteById(sel);
+        if (!n) return;
+        Object.keys(patch).forEach(function (k) { n[k] = patch[k]; });
+        save();
+        renderMain();
+    }
+
+
+    /* ─── Umwandeln ────────────────────────────────────────────────────
+       Dieselbe id bleibt: die Zeile wandert nur in den anderen Abschnitt
+       und bleibt ausgewaehlt, das Detail zeigt sofort die andere Form.  */
+    function taskToNote(id) {
+        var t = taskById(id), c = listOf(t);
+        if (!t || !c) return;
+        var lines = [t.name];
+        (t.subtasks || []).forEach(function (s) { lines.push('– ' + s.name); });
+        if (t.note) lines.push('', t.note);
+        c.tasks.splice(c.tasks.indexOf(t), 1);
+        delete st[id];
+        notes.unshift({ id: id, text: lines.join('\n'), createdAt: t.createdAt || new Date().toISOString() });
+        sel = id; detailMode = 'note';
+        if (typeof mwlEvent === 'function') mwlEvent('feature_genutzt', { feature: 'aufgaben', aktion: 'zur_notiz' });
+        commit();
+    }
+    function noteToTask(id) {
+        var n = noteById(id);
+        if (!n) return;
+        var lines = n.text.split('\n');
+        var name = lines[0].trim().slice(0, 200) || n.text.trim().slice(0, 200);
+        var rest = lines.slice(1).join('\n').trim();
+        var c = (view === 'list' ? listById(viewList) : null) || ensureInbox();
+        /* Ohne Datum: so steht sie wie vorher jeden Tag unter Heute, nur
+           jetzt mit Haken — ein Datum gibt ihr der Nutzer im Detail. */
+        c.tasks.push({
+            id: id, name: name, priority: c.defaultPriority || '',
+            days: [], due: '', recurring: 'none', reminder: '', note: rest, subtasks: [],
+            createdAt: n.createdAt || new Date().toISOString()
+        });
+        notes.splice(notes.indexOf(n), 1);
+        sel = id; detailMode = 'task';
+        if (typeof mwlEvent === 'function') mwlEvent('feature_genutzt', { feature: 'aufgaben', aktion: 'zur_aufgabe' });
+        commit();
     }
 
 
@@ -850,14 +971,31 @@
         var v = $('tkAdd').value.trim();
         var box = $('tkAddHints');
         if (!v) { box.innerHTML = ''; return; }
+        /* Notiz: keine Steuerwoerter, der ganze Text ist die Notiz. Der Chip
+           sagt, was Enter jetzt tut — in der Ansicht Notizen sagt es schon
+           der Platzhalter. */
+        if (view === 'notes') { box.innerHTML = ''; return; }
+        if (addKind === 'note') { box.innerHTML = '<span class="tk-hint">' + svg('stickyNote') + '<span>' + esc(T.hintNote) + '</span></span>'; return; }
         var r = parseQuick(v);
         box.innerHTML = r.hints.map(function (h) {
             return '<span class="tk-hint' + (h.cls ? ' ' + h.cls : '') + '">' + (h.icon ? svg(h.icon) : '') + '<span>' + esc(h.text) + '</span></span>';
         }).join('');
     }
-    function quickAdd() {
+    function addNote(text) {
+        notes.unshift({ id: 'nt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), text: text, createdAt: new Date().toISOString() });
+        if (typeof mwlEvent === 'function') mwlEvent('feature_genutzt', { feature: 'aufgaben', aktion: 'notiz' });
+        commit();
+    }
+    function quickAdd(asNote) {
         var inp = $('tkAdd'), raw = inp.value.trim();
         if (!raw) return;
+        if (asNote || addKind === 'note' || view === 'notes') {
+            inp.value = '';
+            addKind = 'task';
+            renderHints();
+            addNote(raw);
+            return;
+        }
         var r = parseQuick(raw);
         var name = r.name || raw;
         var c = r.list || (view === 'list' ? listById(viewList) : null) || ensureInbox();
@@ -919,7 +1057,7 @@
         if (sel === id) { sel = null; if (detailMode === 'task') closeDetail(); }
         commit();
         toast(T.deleted, function () {
-            if (!undo) return;
+            if (!undo || !undo.task) return;
             var back = undo; undo = null;
             if (cats.indexOf(back.cat) === -1) cats.push(back.cat);
             back.cat.tasks.splice(Math.min(back.idx, back.cat.tasks.length), 0, back.task);
@@ -927,6 +1065,23 @@
             commit();
         });
     }
+    function deleteNote(id) {
+        var n = noteById(id);
+        if (!n) return;
+        var idx = notes.indexOf(n);
+        undo = { note: n, idx: idx };
+        notes.splice(idx, 1);
+        if (sel === id) { sel = null; if (detailMode === 'note') closeDetail(); }
+        commit();
+        toast(T.noteDeleted, function () {
+            if (!undo || !undo.note) return;
+            var back = undo; undo = null;
+            notes.splice(Math.min(back.idx, notes.length), 0, back.note);
+            commit();
+        });
+    }
+    /* Loeschen, egal welcher Sorte die Auswahl ist. */
+    function deleteSel(id) { if (kindOf(id) === 'note') deleteNote(id); else deleteTask(id); }
     function deleteList(id) {
         var c = listById(id);
         if (!c) return;
@@ -950,8 +1105,9 @@
             r.classList.toggle('is-sel', on);
             r.setAttribute('aria-selected', String(on));
         });
-        if (open) openDetail('task');
-        else if (detailMode === 'task') renderDetail();
+        var mode = kindOf(id);
+        if (open) openDetail(mode);
+        else if (detailMode === 'task' || detailMode === 'note') { detailMode = mode; renderDetail(); }
     }
     function moveSel(dir) {
         var rows = Array.prototype.slice.call(document.querySelectorAll('.tk-row'));
@@ -965,9 +1121,11 @@
 
     function setView(v, listId) {
         view = v; viewList = listId || null;
+        addKind = 'task';
         if (detailMode === 'list') closeDetail();
         saveUi();
         render();
+        renderHints();
         if (window.matchMedia('(max-width: 767px)').matches) closeSide();
     }
     function openSide() { $('tkSide').classList.add('is-open'); $('tkScrim').hidden = false; }
@@ -1072,7 +1230,7 @@
     function wipe() {
         ask({ title: T.askWipeT, message: T.askWipeM, variant: 'danger', confirm: T.del }).then(function (ok) {
             if (!ok) return;
-            cats = []; history = {}; stats = { done: 0 }; st = {};
+            cats = []; notes = []; history = {}; stats = { done: 0 }; st = {};
             streak = { streak: 0, lastDate: null, best: 0 };
             sel = null; view = 'today'; viewList = null; saveUi();
             if (detailMode) closeDetail();
@@ -1082,7 +1240,7 @@
     }
     function exportAll() {
         var blob = new Blob([JSON.stringify({
-            categories: cats, states: st, streakData: streak, history: history, stats: stats,
+            categories: cats, states: st, notes: notes, streakData: streak, history: history, stats: stats,
             exportDate: new Date().toISOString()
         }, null, 2)], { type: 'application/json' });
         var url = URL.createObjectURL(blob), a = document.createElement('a');
@@ -1113,6 +1271,7 @@
                     if (!ok) return;
                     cats = d.categories;
                     cats.forEach(function (c) { if (!Array.isArray(c.tasks)) c.tasks = []; });
+                    notes = Array.isArray(d.notes) ? d.notes.filter(function (n) { return n && typeof n.id === 'string' && typeof n.text === 'string'; }) : [];
                     st = d.states || {};
                     streak = d.streakData || { streak: 0, lastDate: null, best: 0 };
                     history = d.history || {};
@@ -1182,7 +1341,9 @@
         else if (a === 'open')    select(el.dataset.id, true);
         else if (a === 'fold')    { ui['fold_' + el.dataset.k] = el.getAttribute('aria-expanded') === 'true'; saveUi(); renderMain(); }
         else if (a === 'closedetail') closeDetail();
-        else if (a === 'deldetail') { if (detailMode === 'task' && sel) deleteTask(sel); else if (detailMode === 'list') deleteList(viewList); }
+        else if (a === 'deldetail') { if ((detailMode === 'task' || detailMode === 'note') && sel) deleteSel(sel); else if (detailMode === 'list') deleteList(viewList); }
+        else if (a === 'kind')    { if (!sel) return; if (el.dataset.kind === 'note' && detailMode === 'task') taskToNote(sel); else if (el.dataset.kind === 'task' && detailMode === 'note') noteToTask(sel); }
+        else if (a === 'addkind') { addKind = addKind === 'note' ? 'task' : 'note'; renderAddKind(); renderHints(); $('tkAdd').focus(); }
         else if (a === 'fcheck')  { if (sel) toggle(sel); }
         else if (a === 'due')     { var v = el.dataset.due; writeTask({ due: v === 'today' ? todayIso() : v === 'tomorrow' ? iso(addDays(today(), 1)) : v === 'nextweek' ? iso(addDays(today(), 7)) : '' }); renderDetail(); }
         else if (a === 'prio')    { writeTask({ priority: el.dataset.p }); renderDetail(); }
@@ -1209,6 +1370,7 @@
         if (id === 'tkAdd') renderHints();
         else if (id === 'tkFName') { autosize(e.target); clearTimeout(nameTimer); nameTimer = setTimeout(function () { writeTask({ name: $('tkFName').value.trim() || taskById(sel).name }); }, 250); }
         else if (id === 'tkFNote') { clearTimeout(noteTimer); noteTimer = setTimeout(function () { writeTask({ note: $('tkFNote').value.trim() }); }, 250); }
+        else if (id === 'tkFNoteText') { autosize(e.target); clearTimeout(memoTimer); memoTimer = setTimeout(function () { var n = noteById(sel); if (n) writeNote({ text: $('tkFNoteText').value.trim() || n.text }); }, 250); }
         else if (id === 'tkFCatName') { var v = e.target.value.trim(); if (v) writeList({ name: v }); }
     });
     document.addEventListener('change', function (e) {
@@ -1229,8 +1391,8 @@
         var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(tgt.tagName) || tgt.isContentEditable;
 
         if (id === 'tkAdd') {
-            if (e.key === 'Enter') { e.preventDefault(); quickAdd(); }
-            else if (e.key === 'Escape') { tgt.value = ''; renderHints(); tgt.blur(); }
+            if (e.key === 'Enter') { e.preventDefault(); quickAdd(e.shiftKey); }
+            else if (e.key === 'Escape') { tgt.value = ''; addKind = 'task'; renderAddKind(); renderHints(); tgt.blur(); }
             return;
         }
         if (id === 'tkNewListName') {
@@ -1261,8 +1423,8 @@
         else if (e.key === 'ArrowDown') { e.preventDefault(); moveSel(1); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); moveSel(-1); }
         else if ((e.key === ' ' || e.key === 'x') && sel) { e.preventDefault(); toggle(sel); }
-        else if (e.key === 'Enter' && sel) { e.preventDefault(); select(sel, true); setTimeout(function () { $('tkFName').focus(); }, 30); }
-        else if ((e.key === 'Delete' || e.key === 'Backspace') && sel && tgt.closest && tgt.closest('.tk-row')) { e.preventDefault(); deleteTask(sel); }
+        else if (e.key === 'Enter' && sel) { e.preventDefault(); var k = kindOf(sel); select(sel, true); setTimeout(function () { $(k === 'note' ? 'tkFNoteText' : 'tkFName').focus(); }, 30); }
+        else if ((e.key === 'Delete' || e.key === 'Backspace') && sel && tgt.closest && tgt.closest('.tk-row')) { e.preventDefault(); deleteSel(sel); }
     });
 
     /* Fokus auf einer Zeile (Tab) waehlt sie aus, ohne das Detail zu oeffnen. */
@@ -1285,7 +1447,7 @@
 
 
     /* ─── Start ────────────────────────────────────────────────────── */
-    detailEl = $('tkDetail'); fTask = $('tkFTask'); fCat = $('tkFCat');
+    detailEl = $('tkDetail'); fTask = $('tkFTask'); fNote = $('tkFNoteForm'); fCat = $('tkFCat');
     initTheme();
     load();
     if (ui.view && ui.view !== 'list') view = ui.view;

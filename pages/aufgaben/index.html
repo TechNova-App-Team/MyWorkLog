@@ -12,8 +12,8 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/aufgaben/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/aufgaben/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/aufgaben/">
-    <meta name="description" content="Aufgaben für Azubis: Heute, Geplant, Listen, Wiederholungen, Erinnerungen und Logbuch — Schnelleingabe mit „morgen“, „!!“ und „#Liste“. Kostenlos und offline nutzbar.">
-    <meta name="keywords" content="Aufgaben, To-do, Azubi, Tagesplan, Checkliste, Routine, Erinnerung, Berufsschule">
+    <meta name="description" content="Aufgaben und Notizen für Azubis: Heute, Geplant, Listen, Wiederholungen, Erinnerungen und Logbuch — Schnelleingabe mit „morgen“, „!!“ und „#Liste“. Notizen ohne Haken, jeden Tag im Blick. Kostenlos und offline nutzbar.">
+    <meta name="keywords" content="Aufgaben, Notizen, To-do, Azubi, Tagesplan, Checkliste, Routine, Erinnerung, Berufsschule">
     <meta name="theme-color" content="#030305">
 
     <!-- Dieselben Familien wie die App. Die Seite lief bis v6.3.8 in
@@ -22,9 +22,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
 
-    <link rel="stylesheet" href="/Assets/css/aufgaben.css?v=7.2.0">
-    <script defer src="/Assets/js/version-loader.js?v=7.2.0"></script>
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.2.0"></script>
+    <link rel="stylesheet" href="/Assets/css/aufgaben.css?v=7.2.1">
+    <script defer src="/Assets/js/version-loader.js?v=7.2.1"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.2.1"></script>
 
     <style>
         /* Tokens der App. --primary ist der Vorgabewert aus core.css; steht
@@ -97,7 +97,7 @@
 
         a { color: var(--primary); }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=7.2.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.2.1"></script>
 </head>
 <body>
 
@@ -137,6 +137,14 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
                 <span>Erledigt</span>
                 <b class="tk-nav__n" id="tkNDone"></b>
+            </button>
+            <!-- Notizen sind kein fuenfter Aufgaben-Zustand, sondern eine
+                 zweite Sorte Eintrag: ohne Haken, ohne Datum, ohne Zaehlung.
+                 Der Abstand davor sagt genau das. -->
+            <button type="button" class="tk-nav__it tk-nav__it--apart" data-a="view" data-view="notes">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+                <span>Notizen</span>
+                <b class="tk-nav__n" id="tkNNotes"></b>
             </button>
         </nav>
 
@@ -180,6 +188,7 @@
                 <div class="tk-menu__keys">
                     <p class="tk-menu__kh">Tastatur</p>
                     <p><kbd>N</kbd><span>Neue Aufgabe</span></p>
+                    <p><kbd>⇧</kbd><kbd>Enter</kbd><span>Als Notiz speichern</span></p>
                     <p><kbd>↑</kbd><kbd>↓</kbd><span>Auswahl bewegen</span></p>
                     <p><kbd>Leer</kbd><span>Abhaken</span></p>
                     <p><kbd>Enter</kbd><span>Details öffnen</span></p>
@@ -217,34 +226,51 @@
 
         <!-- Schnelleingabe. Das eine Element, das die Seite ausmacht:
              tippen, Enter, fertig. „morgen", „!!", „#Liste" werden beim
-             Tippen erkannt und als Chips gezeigt, bevor man Enter drueckt. -->
+             Tippen erkannt und als Chips gezeigt, bevor man Enter drueckt.
+             Der Knopf links schaltet fuer EINEN Eintrag auf Notiz um (in der
+             Ansicht Notizen ist er festgestellt); Shift+Enter tut dasselbe.
+             Ein Knopf innerhalb des Labels reicht den Klick NICHT an das
+             Eingabefeld weiter — deshalb darf er hier drinstehen. -->
         <div class="tk-add" id="tkAddBox">
             <label class="tk-add__row" for="tkAdd">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                <button type="button" class="tk-add__kind" id="tkAddKind" data-a="addkind" aria-pressed="false" aria-label="Als Notiz statt als Aufgabe speichern" title="Notiz statt Aufgabe">
+                    <svg class="tk-add__kind-task" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    <svg class="tk-add__kind-note" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+                </button>
                 <input type="text" id="tkAdd" autocomplete="off" enterkeyhint="done" placeholder="Aufgabe hinzufügen" aria-label="Neue Aufgabe">
                 <kbd class="tk-add__key">N</kbd>
             </label>
             <div class="tk-add__hints" id="tkAddHints" aria-live="polite"></div>
         </div>
 
-        <section class="tk-list" id="tkList" aria-label="Aufgaben"></section>
-
+        <!-- Leerzustand VOR der Liste: unter Heute kann „Frei fuer heute"
+             ueber den Notizen stehen, die trotzdem da sind. -->
         <div class="tk-empty" id="tkEmpty" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
             <p class="tk-empty__t" id="tkEmptyT"></p>
             <p class="tk-empty__s" id="tkEmptyS"></p>
         </div>
+
+        <section class="tk-list" id="tkList" aria-label="Aufgaben und Notizen"></section>
     </main>
 
-    <!-- ═══ Detail: eine Aufgabe ODER die Einstellungen einer Liste ════
-         Rechts als Spalte, am Handy als Bottom Sheet. Kein Speichern-Knopf:
-         jede Aenderung wird sofort geschrieben (Autosave). -->
+    <!-- ═══ Detail: eine Aufgabe, eine Notiz ODER die Einstellungen einer
+         Liste. Rechts als Spalte, am Handy als Bottom Sheet. Kein
+         Speichern-Knopf: jede Aenderung wird sofort geschrieben (Autosave).
+         Der Schalter „Aufgabe | Notiz" in der Leiste IST die Umwandlung:
+         ein Klick macht aus einer Aufgabe eine Notiz und zurueck. Name,
+         Notiztext und Unteraufgaben wandern als Text mit; Datum, Prioritaet
+         und Wiederholung fallen weg — genau das unterscheidet die beiden. -->
     <aside class="tk-detail" id="tkDetail" aria-label="Details" aria-hidden="true">
         <div class="tk-detail__bar">
             <button type="button" class="tk-ib" data-a="closedetail" aria-label="Details schließen">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
-            <span class="tk-detail__kind" id="tkDetailKind">Aufgabe</span>
+            <span class="tk-detail__kind" id="tkDetailKind" hidden>Liste</span>
+            <div class="tk-seg tk-seg--kind" id="tkDetailKindSw" role="group" aria-label="Art des Eintrags">
+                <button type="button" class="tk-seg__btn" data-a="kind" data-kind="task" aria-pressed="true">Aufgabe</button>
+                <button type="button" class="tk-seg__btn" data-a="kind" data-kind="note" aria-pressed="false">Notiz</button>
+            </div>
             <button type="button" class="tk-ib tk-ib--danger" data-a="deldetail" aria-label="Löschen">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
             </button>
@@ -331,6 +357,18 @@
             </div>
 
             <p class="tk-form__meta" id="tkFMeta"></p>
+        </form>
+
+        <!-- Notiz: nur Text. Enter ist hier ein Zeilenumbruch, kein Blur. -->
+        <form class="tk-form" id="tkFNoteForm" autocomplete="off" hidden>
+            <div class="tk-form__name">
+                <span class="tk-form__glyph">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2V9Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/></svg>
+                </span>
+                <textarea class="tk-fname tk-fname--note" id="tkFNoteText" rows="2" maxlength="2000" aria-label="Text der Notiz" placeholder="Was du im Blick behalten willst"></textarea>
+            </div>
+            <p class="tk-fld__hint">Steht jeden Tag unter Heute — ohne Haken, ohne Datum, ohne Zählung.</p>
+            <p class="tk-form__meta" id="tkFNoteMeta"></p>
         </form>
 
         <!-- Liste -->
@@ -428,7 +466,7 @@ fetch('/pages/footer/footer.html')
     .catch(function () {});
 </script>
 
-<script src="/Assets/js/aufgaben.js?v=7.2.0"></script>
+<script src="/Assets/js/aufgaben.js?v=7.2.1"></script>
 
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>

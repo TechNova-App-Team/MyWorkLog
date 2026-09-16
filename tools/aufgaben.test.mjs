@@ -23,6 +23,11 @@
  *     gleichzeitig Kopf-Untertitel und Unteraufgaben-Zeile (Grid mit 18-px-
  *     Spalte), der Datumstext brach wortweise um. Selbe Falle wie doppelte
  *     Selektoren in CLAUDE.md, nur ueber zwei Rollen einer Klasse.
+ * 10. Notizen (v7.2.1) zaehlen NIRGENDS mit: nicht in Heute, nicht im
+ *     Fortschritt, nicht in der Serie, nicht im Berichtsheft-Schluessel.
+ *     Sie haben keinen Haken, stehen unter Heute zuletzt, und der Schalter
+ *     im Detail wandelt verlustfrei um (Unteraufgaben und Notiztext werden
+ *     Zeilen; zurueck wird die erste Zeile der Name).
  *
  * 🔴 Falle aus CLAUDE.md: mit `runScripts:'outside-only'` bleibt
  * `document.readyState` auf 'loading'; das Modul startet sofort, ohne
@@ -321,10 +326,121 @@ console.log('\n9 · Statische Proben');
         textOnly.map(e => e.className + ': ' + e.textContent.trim().slice(0, 30)).join(' | '));
     ok('es gibt ueberhaupt Container-Klassen zu pruefen', gridClasses.size > 10);
 
+    // Modifikator NACH der Basis: `.tk-fname--note { font-weight: 400 }` vor
+    // `.tk-fname { font-weight: 600 }` verliert bei gleicher Spezifitaet — kein
+    // Fehler, kein Log, nur fette Notizen. Beim Bau von v7.2.1 zweimal passiert
+    // (.tk-fname--note, .tk-seg--kind). Fuer jede Regel `.x--mod {` muss die
+    // letzte Regel `.x {` davor stehen.
+    // Basisname: Woerter mit EINFACHEM Bindestrich und optionalem __element; `\w` allein kennt kein `-`.
+    const BASE = '[a-zA-Z]\\w*(?:-\\w+)*(?:__\\w+(?:-\\w+)*)?';
+    const baseLast = {}, modFirst = {};
+    for (const m of CSS_CODE.matchAll(new RegExp('^\\s*\\.(' + BASE + ') \\{', 'gm'))) baseLast[m[1]] = m.index;
+    for (const m of CSS_CODE.matchAll(new RegExp('^\\s*\\.(' + BASE + ')(--[\\w-]+) \\{', 'gm'))) if (!(m[1] + m[2] in modFirst)) modFirst[m[1] + m[2]] = { base: m[1], at: m.index };
+    const early = Object.keys(modFirst).filter(k => baseLast[modFirst[k].base] != null && modFirst[k].at < baseLast[modFirst[k].base]);
+    ok('jeder Modifikator steht nach seiner Basisregel (' + Object.keys(modFirst).length + ' Modifikatoren)', early.length === 0, early.join(', '));
+    ok('es gibt ueberhaupt Modifikatoren mit Basisregel zu pruefen', Object.keys(modFirst).filter(k => baseLast[modFirst[k].base] != null).length >= 3);
+
     // Reminder: kein nackter new Notification() ausserhalb von try.
     const naked = [...JS_CODE.matchAll(/new Notification\(/g)].length;
     const guarded = [...JS_CODE.matchAll(/try \{ new Notification\(/g)].length;
     ok('new Notification() nur in try/catch (' + naked + ')', naked > 0 && naked === guarded);
+}
+
+/* ─── 10 · Notizen: zweite Sorte, zaehlt nirgends ───────────────────── */
+console.log('\n10 · Notizen zaehlen nirgends mit und wandeln sich verlustfrei um');
+{
+    const s = base();
+    s.mwl_tasks_notes = [
+        { id: 'n1', text: 'Brush-PC ansehen', createdAt: TODAY + 'T08:00:00' },
+        { id: 'n2', text: 'Erste Zeile\nzweite Zeile', createdAt: TODAY + 'T08:01:00' }
+    ];
+    const w = boot(s);
+    const type = text => { const i = q(w, '#tkAdd'); i.value = text; i.dispatchEvent(new w.Event('input', { bubbles: true })); return i; };
+    const key = (k, extra = {}) => q(w, '#tkAdd').dispatchEvent(new w.KeyboardEvent('keydown', Object.assign({ key: k, bubbles: true }, extra)));
+    const notesLS = () => JSON.parse(w.localStorage.getItem('mwl_tasks_notes'));
+
+    // Heute: Notizen sind da, aber in keiner Zahl.
+    ok('Notiz-Zeilen stehen unter Heute', qa(w, '.tk-row--note').length === 2);
+    ok('Notizen stehen ZULETZT (nach Heute erledigt)', /Notizen/.test(secs(w)[secs(w).length - 1]), secs(w).join(' | '));
+    ok('Notiz-Zeile hat keinen Haken', !q(w, '.tk-row--note .tk-check') && !!q(w, '.tk-row--note .tk-row__glyph svg'));
+    ok('Fortschritt bleibt 1 von 4 (Notizen zaehlen nicht)', q(w, '#tkProgDone').textContent === '1' && q(w, '#tkProgTotal').textContent === '4');
+    ok('Sidebar: Heute 3 unveraendert, Notizen 2', q(w, '#tkNToday').textContent === '3' && q(w, '#tkNNotes').textContent === '2');
+    ok('Zeilenumbruch bleibt als Text erhalten', q(w, '.tk-row[data-id="n2"] .tk-row__name').textContent === 'Erste Zeile\nzweite Zeile');
+
+    // Abhaken einer Notiz per Leertaste ist ein No-op.
+    click(w, '.tk-row[data-id="n1"]');
+    ok('Klick oeffnet das Notiz-Formular, nicht das Aufgaben-Formular', q(w, '#tkFNoteForm').hidden === false && q(w, '#tkFTask').hidden === true);
+    ok('Art-Schalter zeigt Notiz', q(w, '#tkDetailKindSw [data-kind="note"]').getAttribute('aria-pressed') === 'true');
+    ok('Text im Formular', q(w, '#tkFNoteText').value === 'Brush-PC ansehen');
+    w.document.dispatchEvent(new w.KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    ok('Leertaste erzeugt keinen Erledigt-Zustand fuer eine Notiz', !JSON.parse(w.localStorage.getItem('mwl_tasks_states')).n1 && JSON.parse(w.localStorage.getItem('mwl_tasks_stats')).done === 34);
+
+    // Notiz → Aufgabe: erste Zeile wird Name, Rest Notiztext, Eingang, kein Datum.
+    click(w, '.tk-row[data-id="n2"]');
+    click(w, '#tkDetailKindSw [data-kind="task"]');
+    const inbox = JSON.parse(w.localStorage.getItem('mwl_tasks_cats')).find(c => c.id === 'cat_inbox');
+    const t2 = inbox && inbox.tasks.find(x => x.id === 'n2');
+    ok('Notiz wurde Aufgabe im Eingang', !!t2);
+    ok('erste Zeile ist der Name, der Rest die Notiz', t2 && t2.name === 'Erste Zeile' && t2.note === 'zweite Zeile');
+    ok('ohne Datum, Berichtsheft-Form (days-Array)', t2 && t2.due === '' && Array.isArray(t2.days));
+    ok('aus den Notizen verschwunden', !notesLS().some(n => n.id === 'n2') && notesLS().length === 1);
+    ok('Detail zeigt jetzt das Aufgaben-Formular, Auswahl bleibt', q(w, '#tkFTask').hidden === false && q(w, '.tk-row[data-id="n2"]').classList.contains('is-sel'));
+
+    // Aufgabe → Notiz: Name, Unteraufgaben und Notiztext werden Zeilen; Flag weg.
+    const cs = JSON.parse(w.localStorage.getItem('mwl_tasks_cats'));
+    const c1 = cs.find(c => c.id === 'c1');   // der Eingang steht inzwischen vorn
+    c1.tasks.find(x => x.id === 'dueT').subtasks = [{ name: 'Teil A', done: false }];
+    c1.tasks.find(x => x.id === 'dueT').note = 'Merke dir das';
+    w.localStorage.setItem('mwl_tasks_cats', JSON.stringify(cs));
+    w.dispatchEvent(new w.StorageEvent('storage', { key: 'mwl_tasks_cats' }));
+    click(w, '.tk-row[data-id="dueT"]');
+    click(w, '#tkDetailKindSw [data-kind="note"]');
+    const nn = notesLS().find(n => n.id === 'dueT');
+    ok('Aufgabe wurde Notiz', !!nn);
+    ok('Text = Name, Unteraufgabe, Leerzeile, Notiz', nn && nn.text === 'Heute fällig\n– Teil A\n\nMerke dir das', nn && JSON.stringify(nn.text));
+    ok('aus der Liste verschwunden', !JSON.parse(w.localStorage.getItem('mwl_tasks_cats')).some(c => c.tasks.some(x => x.id === 'dueT')));
+    // over + rout + die aus n2 gewordene Aufgabe (ohne Datum → Heute) = 3 offen, mit doneT 4 gesamt; dueT zaehlt als Notiz nicht mehr.
+    ok('Heute zaehlt 3, Fortschritt 1 von 4 — die Notiz fehlt in beiden', q(w, '#tkNToday').textContent === '3' && q(w, '#tkProgTotal').textContent === '4',
+        q(w, '#tkNToday').textContent + ' / ' + q(w, '#tkProgTotal').textContent);
+
+    // Schnelleingabe: Shift+Enter und der Umschalter machen Notizen; Enter in Heute weiterhin Aufgaben.
+    type('Passwort läuft im Oktober ab');
+    key('Enter', { shiftKey: true });
+    ok('Shift+Enter legt eine Notiz an (vorne)', notesLS()[0].text === 'Passwort läuft im Oktober ab');
+    ok('keine Aufgabe daraus', !JSON.parse(w.localStorage.getItem('mwl_tasks_cats')).some(c => c.tasks.some(t => t.name === 'Passwort läuft im Oktober ab')));
+    click(w, '#tkAddKind');
+    ok('Umschalter gedrueckt, Platzhalter sagt Notiz', q(w, '#tkAddKind').getAttribute('aria-pressed') === 'true' && q(w, '#tkAdd').placeholder === 'Notiz hinzufügen');
+    type('Schlüssel liegt bei Frau Müller');
+    ok('Chip sagt Notiz statt Faelligkeit', qa(w, '.tk-hint').length === 1 && /Notiz/.test(q(w, '.tk-hint').textContent));
+    key('Enter');
+    ok('Enter im Notiz-Modus legt eine Notiz an', notesLS()[0].text === 'Schlüssel liegt bei Frau Müller');
+    ok('Modus faellt danach auf Aufgabe zurueck', q(w, '#tkAddKind').getAttribute('aria-pressed') === 'false' && q(w, '#tkAdd').placeholder === 'Aufgabe hinzufügen');
+
+    // Ansicht Notizen: festgestellt, kein Fortschritt, Enter = Notiz.
+    click(w, '[data-view="notes"]');
+    ok('Ansicht Notizen: Umschalter festgestellt', q(w, '#tkAddKind').disabled === true && q(w, '#tkAddKind').getAttribute('aria-pressed') === 'true');
+    ok('kein Fortschrittsbalken, keine Ueberschrift, alle Notizen als Zeilen', q(w, '#tkProg').hidden === true && secs(w).length === 0 && qa(w, '.tk-row--note').length === notesLS().length);
+    type('Noch eine'); key('Enter');
+    ok('Enter in der Ansicht Notizen legt eine Notiz an', notesLS()[0].text === 'Noch eine');
+
+    // Loeschen mit Rueckgaengig, Export traegt die Notizen.
+    const before = notesLS().length;
+    click(w, '.tk-row[data-id="n1"]');
+    click(w, '[data-a="deldetail"]');
+    ok('Notiz geloescht', notesLS().length === before - 1 && !notesLS().some(n => n.id === 'n1'));
+    click(w, '.tk-toast__undo');
+    ok('Rueckgaengig stellt sie wieder her', notesLS().length === before && notesLS().some(n => n.id === 'n1'));
+    ok('Export nennt die Notizen', /notes: notes/.test(JS_CODE) && /d\.notes/.test(JS_CODE));
+
+    // Das Berichtsheft liest nur mwl_tasks_cats — Notizen liegen woanders.
+    const ais = readFileSync(new URL('../Assets/js/berichtsheft/ais-studio.js', import.meta.url), 'utf8');
+    ok('Berichtsheft kennt den Notiz-Schluessel nicht (liest ihn also nie als Aufgaben)', !ais.includes('mwl_tasks_notes'));
+    ok('es gibt ueberhaupt Notizen zu pruefen', notesLS().length > 3);
+
+    // Leerzustand: Heute ohne Aufgaben, aber mit Notizen → kompakt, ueber den Notizen.
+    const w2 = boot({ mwl_tasks_cats: [], mwl_tasks_notes: [{ id: 'x', text: 'Nur eine Notiz', createdAt: TODAY }], mwl_tasks_lastReset: NOW.toDateString() });
+    ok('Leerzustand kompakt, Notiz darunter sichtbar', q(w2, '#tkEmpty').hidden === false && q(w2, '#tkEmpty').classList.contains('is-compact') && qa(w2, '.tk-row--note').length === 1);
+    ok('Leerzustand steht im DOM vor der Liste', q(w2, '#tkEmpty').compareDocumentPosition(q(w2, '#tkList')) & 4);
 }
 
 console.log('\n' + (fail ? `✗ ${fail} von ${pass + fail} Pruefungen fehlgeschlagen` : `✓ ${pass}/${pass + fail}`));
