@@ -187,6 +187,21 @@
             }
         });
 
+        // --- Enter im Formular = speichern ---
+        // Das Formular ist ein <div>, kein <form>: Enter tut dort von Haus aus
+        // nichts. Nur Eingabefelder — Knoepfe klicken sich per Enter selbst,
+        // die Typ-Liste hat eigene Tastensteuerung. Nur ohne Modifier, denn
+        // Strg+Enter gehoert dem Shortcut-Handler darunter; sonst wuerde der
+        // Eintrag doppelt gebucht. Delegation, weil der Dashboard-Editor das
+        // Widget entfernen und neu einsetzen kann.
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.isComposing) return;
+            const t = e.target;
+            if (!t || t.tagName !== 'INPUT' || !t.closest('.entry-form')) return;
+            e.preventDefault();
+            handleEntry();
+        });
+
         // --- Keyboard Shortcuts ---
         document.addEventListener('keydown', (e) => {
             // Master-Schalter (shortcuts.js) — Default AUS

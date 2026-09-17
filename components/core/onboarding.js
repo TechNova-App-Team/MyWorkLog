@@ -22,11 +22,32 @@ window._clsBC='onboarding.js-start';(function(){
 // ============================================
 
 let currentMoodEntryId = null;
+let moodReturnFocus = null;
 
 function openMoodSelector(entryId) {
     currentMoodEntryId = entryId;
-    document.getElementById('moodSelectorModal').style.display = 'flex';
+    const modal = document.getElementById('moodSelectorModal');
+    modal.style.display = 'flex';
+    // Fokus in den Dialog auf „Überspringen“: Enter trifft damit den Dialog,
+    // nicht das Formular dahinter (dort speichert Enter, app-startup.js).
+    moodReturnFocus = document.activeElement;
+    const skip = document.getElementById('moodSkipBtn');
+    if (skip) skip.focus();
 }
+
+// Enter und Escape im Stimmungs-Dialog = Überspringen. Capture-Phase, damit
+// der Enter-Handler des Formulars den Druck nie sieht. Auf einer Stimmung
+// selbst (per Tab erreicht) bleibt Enter die Auswahl — nativer Klick.
+document.addEventListener('keydown', function (e) {
+    const modal = document.getElementById('moodSelectorModal');
+    if (!modal || modal.style.display !== 'flex') return;
+    const onMood = e.target && e.target.classList && e.target.classList.contains('mood-btn');
+    if (e.key === 'Escape' || (e.key === 'Enter' && !onMood)) {
+        e.preventDefault();
+        e.stopPropagation();
+        skipMood();
+    }
+}, true);
 
 function setMood(emoji) {
     if (currentMoodEntryId) {
@@ -47,6 +68,9 @@ function skipMood() {
 function closeMoodSelector() {
     document.getElementById('moodSelectorModal').style.display = 'none';
     currentMoodEntryId = null;
+    // Fokus zurueck ins Formular, damit der naechste Eintrag sofort tippbar ist
+    if (moodReturnFocus && document.contains(moodReturnFocus)) moodReturnFocus.focus();
+    moodReturnFocus = null;
 }
 
 // Beschriftung einer Stimmung. Wird auch im Performance-Befund gerendert und

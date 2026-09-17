@@ -1684,8 +1684,9 @@
                         { text: qhL('Die „Jetzt“-Buttons setzen die aktuelle Uhrzeit ein.', 'The “Now” buttons insert the current time.') },
                         { text: qhL('Entwürfe werden automatisch gesichert und lassen sich wiederherstellen.', 'Drafts are saved automatically and can be restored.') }
                     ]},
-                    { kind: 'keys', label: qhL('Kürzel', 'Shortcut'), items: [
-                        { keys: ['Ctrl', 'Enter'], text: qhL('Eintrag sofort speichern', 'Save entry instantly') }
+                    { kind: 'keys', label: qhL('Kürzel', 'Shortcuts'), items: [
+                        { keys: ['Enter'], text: qhL('Eintrag speichern — aus jedem Feld', 'Save entry — from any field') },
+                        { keys: ['Ctrl', 'Enter'], text: qhL('Speichern von überall auf der Seite (Kürzel aktiviert)', 'Save from anywhere on the page (shortcuts enabled)') }
                     ]}
                 ]
             };
