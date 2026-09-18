@@ -16,7 +16,11 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
-const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'), 'utf8')).version;
+const versionJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'), 'utf8'));
+const version = versionJson.version;
+// Juengstes Datum aus changelogDates = Tag des letzten Release. Beim Bump traegt
+// der Eintrag der neuen Version genau dieses Datum, also stimmt es auch dann.
+const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1) || '';
 
 // Nur eigene Assets. CDN-URLs und alles mit eigener Query bleiben unangetastet.
 //
@@ -41,7 +45,18 @@ const VERSION_RES = [
   // [^>]* deckt weitere Attribute hinter dem Marker ab (z.B. translate="no").
   /(\sdata-app-version(?:="[^"]*")?[^>]*>\s*v)\d+\.\d+\.\d+(\s*<)/g,
   /(\sdata-version(?:="[^"]*")?[^>]*>\s*)\d+\.\d+\.\d+(\s*<)/g,
+  // JSON-LD der App (index.template.html, EN-Fassung aus index.en-overrides.json).
+  // Stand bis v7.2.5 ein halbes Jahr lang auf 3.5.3 — Google las eine Version,
+  // die es laengst nicht mehr gab.
+  /("softwareVersion":\s*")\d+\.\d+\.\d+(")/g,
 ];
+
+// dateModified im JSON-LD gibt es nur in den drei App-Dateien; ein Standalone-
+// Seiten-Block wuerde damit ein Datum bekommen, an dem sich die SEITE nicht
+// geaendert hat. Deshalb nicht in VERSION_RES, sondern nur fuer diese Liste.
+const DATE_RE = /("dateModified":\s*")\d{4}-\d{2}-\d{2}(")/g;
+const APP_FILES = new Set(['index.html', 'index.template.html', path.join('pages', 'en', 'index.html')]
+  .map((p) => path.join(ROOT, p)));
 
 function stampFile(file) {
   // index.html existiert im frischen Checkout (Cloudflare) noch nicht — sie wird
@@ -50,6 +65,7 @@ function stampFile(file) {
   const raw = fs.readFileSync(file, 'utf8');
   let out = raw.replace(RE, (_m, pre, url, post) => pre + url + '?v=' + version + post);
   for (const re of VERSION_RES) out = out.replace(re, (_m, pre, post) => pre + version + post);
+  if (releaseDate && APP_FILES.has(file)) out = out.replace(DATE_RE, (_m, pre, post) => pre + releaseDate + post);
   if (out === raw) return 0;
   // 🔴 Atomar schreiben, nicht direkt. Dieses Werkzeug schreibt beim Bump 22
   // Quelldateien neu; ein `writeFileSync` darauf ist erst leer, dann halb, dann
