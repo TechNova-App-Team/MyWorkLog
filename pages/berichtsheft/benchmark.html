@@ -318,53 +318,58 @@
 
 const STORAGE_KEY = 'mwlbench_or_key';
 
-// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.8).
-// Am 19.09.2026 gegen https://openrouter.ai/api/v1/models geprueft: 22 freie
-// Modelle, hier stehen 19 — ALLE ausser den drei Rausgeflogenen unten. Die Rollen
-// stammen aus dem Lauf vom 19.09.; die Karten zeigen damit nicht eine Vorgabe,
-// sondern den Stand, gegen den neu gemessen wird. Wer die Rangfolge hier aendert,
-// aendert sie auch drueben: sonst behauptet die Karte "Primary" fuer ein Modell,
-// das der Worker als drittes anfaesst.
+// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.9).
+// Die Rangfolge ist das Ergebnis des Laufs vom 19.09.2026, 20:22 Uhr (19 Modelle,
+// 12 Tests, Live-Prompt, parallel 2), NACHGERECHNET mit der Regel "unparsbar
+// oder leer = 0/10" (siehe scoreResult) — die Datei liegt unter
+// .claude/notes/benchmark/benchmark-2026-09-19-2022.json. Wer die Rangfolge
+// hier aendert, aendert sie auch drueben: sonst behauptet die Karte "Primary"
+// fuer ein Modell, das der Worker als drittes anfaesst.
 //
-// Rausgeflogen am 19.09. (ueber Wochen in JEDEM Lauf nur 429, nie ein Prozent —
-// Entscheidung des Nutzers, auch wenn sie noch gelistet sind;
-// nicht wieder als "Reserve" aufnehmen): minimax-m3, minimax-m2.7 (beide nicht
-// mehr in der Live-Liste), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it.
+// Was der Lauf gezeigt hat, in Kurzform (Prozent = nachgerechnet):
+//   Ling 3.0 Flash Fin 100 · Santé 98,7 · VL 98,7 · Nex Mini 96,2 · North 91,5
+//   Nex Pro 75 (2x Timeout) · DeepSeek 66 (4x Timeout) · Laguna XS 60 (5x 429)
+//   Dots 59 · Super 45 (SECHS leere 200er in 400 ms) · Laguna S 43 (7x 429)
+//   Ultra 34 (7x Timeout) · GLM 28 (9x 429) · LFM 26 (6x leer) · Nano 15
+//   Qwen 0 (12x 429 "Provider returned error") · Inkling/Inkling Small 0
+//   (12x 403 "only available on agentic harnesses" — Policy, nicht Last)
+//   Nemotron Safety: zwoelfmal "User Safety: safe", also 0 — wie erwartet raus.
 //
-// 🔴 19 Modelle x 12 Tests = 228 Calls je Lauf, plus Retries. OpenRouter deckelt
+// Rausgeflogen (nicht wieder aufnehmen): minimax-m3, minimax-m2.7 (nicht mehr
+// in der Live-Liste), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it
+// (ueber Wochen in JEDEM Lauf nur 429 — Entscheidung des Nutzers),
+// thinkingmachines/inkling + inkling-small (403: OpenRouter gibt sie nur an
+// gelistete Agent-Apps heraus, das erreicht kein Worker-Header),
+// nvidia/nemotron-3.5-content-safety (Klassifikator, gemessen: schreibt keine Woche).
+//
+// 🔴 16 Modelle x 12 Tests = 192 Calls je Lauf, plus Retries. OpenRouter deckelt
 // :free-Modelle (Doku, Stand 19.09.2026) auf 20 Anfragen/Minute und 1000/Tag
-// (mit >= 10 $ je gekauftem Guthaben, sonst 50/Tag). Ein voller Lauf ist also
-// ein Viertel des Tages, und vier parallele Modelle koennen die Minute reissen —
-// fuer einzelne Modelle MWLBench.runOne('…') nehmen. Ein 429 wird als 0/10
-// gewertet und sieht in der Matrix genauso aus wie ein Modell, das nichts kann:
-// bei einer Nullzeile erst die Details der Karte oeffnen (FEHLER: …), bevor das
-// Modell rausfliegt.
+// (mit >= 10 $ je gekauftem Guthaben, sonst 50/Tag). Vier parallele Modelle
+// koennen die Minute reissen — der Lauf vom 19.09. lief mit 2. Ein 429 wird als
+// 0/10 gewertet und sieht in der Matrix genauso aus wie ein Modell, das nichts
+// kann: bei einer Nullzeile erst "Ergebnis als JSON" ziehen und `fehler` lesen.
 const MODELS = [
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',    role: 'Primary'     },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',     role: 'Fallback 1'  },
-  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',        role: 'Fallback 2'  },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',    role: 'Fallback 3'  },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',     role: 'Last Resort' },
-  // ── Kandidaten ohne Messwert, Reihenfolge = Vermutung (Allzweck-Instruct vor
-  //    Coding vor Fach-Modellen). Alle stehen im Worker unter den fuenf oben,
-  //    bis auf content-safety: laut Modellkarte ein 4B-Guardrail-Klassifikator,
-  //    steht NUR hier — der Lauf soll zeigen, ob er ueberhaupt eine Woche
-  //    generiert, bevor er eine Kette kostet. inkling und glm-5.2 hatten am
-  //    31.08. 0 % (keine Antwort) und sind zur Wiedervorlage drin.
-  { id: 'deepseek/deepseek-v4-flash-0731:free',               label: 'DeepSeek V4 Flash',   role: 'Kandidat 1'  },
-  { id: 'qwen/qwen3.8-27b:free',                              label: 'Qwen 3.8 27B',        role: 'Kandidat 2'  },
-  { id: 'thinkingmachines/inkling:free',                      label: 'Inkling',             role: 'Kandidat 3'  },
-  { id: 'thinkingmachines/inkling-small:free',                label: 'Inkling Small',       role: 'Kandidat 4'  },
-  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',         role: 'Kandidat 5'  },
-  { id: 'z-ai/glm-5.2:free',                                  label: 'GLM 5.2',             role: 'Kandidat 6'  },
-  { id: 'nex-agi/nex-n2.5-pro:free',                          label: 'Nex N2.5 Pro',        role: 'Kandidat 7'  },
-  { id: 'nex-agi/nex-n2.5-mini:free',                         label: 'Nex N2.5 Mini',       role: 'Kandidat 8'  },
-  { id: 'inclusionai/ling-3.0-flash-vl:free',                 label: 'Ling 3.0 Flash VL',   role: 'Kandidat 9'  },
-  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',       role: 'Kandidat 10' },
-  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',        role: 'Kandidat 11' },
-  { id: 'inclusionai/ling-3.0-flash-fin:free',                label: 'Ling 3.0 Flash Fin',  role: 'Kandidat 12' },
-  { id: 'inclusionai/ling-3.0-flash-sante:free',              label: 'Ling 3.0 Flash Santé', role: 'Kandidat 13' },
-  { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',     role: 'Nur Benchmark' },
+  // ── Rangliste 19.09.2026. Nach zwei Ling-Modellen bewusst ein anderer
+  //    Anbieter (Nex), damit ein InclusionAI-Ausfall hoechstens zwei Stufen
+  //    am Stueck kostet; VL ist gleich gut, aber mit 12 s halb so schnell.
+  { id: 'inclusionai/ling-3.0-flash-fin:free',                label: 'Ling 3.0 Flash Fin',   role: 'Primary'     },
+  { id: 'inclusionai/ling-3.0-flash-sante:free',              label: 'Ling 3.0 Flash Santé', role: 'Fallback 1'  },
+  { id: 'nex-agi/nex-n2.5-mini:free',                         label: 'Nex N2.5 Mini',        role: 'Fallback 2'  },
+  { id: 'inclusionai/ling-3.0-flash-vl:free',                 label: 'Ling 3.0 Flash VL',    role: 'Fallback 3'  },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 4'  },
+  { id: 'nex-agi/nex-n2.5-pro:free',                          label: 'Nex N2.5 Pro',         role: 'Fallback 5'  },
+  { id: 'deepseek/deepseek-v4-flash-0731:free',               label: 'DeepSeek V4 Flash',    role: 'Fallback 6'  },
+  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 7'  },
+  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 8'  },
+  // ── Unter 50 %. Bleiben als Reserve fuer den naechsten Anbieter-Ausfall;
+  //    wer hier zweimal in Folge nichts liefert, fliegt.
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Reserve 1'   },
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Reserve 2'   },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Reserve 3'   },
+  { id: 'z-ai/glm-5.2:free',                                  label: 'GLM 5.2',              role: 'Reserve 4'   },
+  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',         role: 'Reserve 5'   },
+  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',      role: 'Reserve 6'   },
+  { id: 'qwen/qwen3.8-27b:free',                              label: 'Qwen 3.8 27B',         role: 'Last Resort' },
 ];
 
 // Wie viele MODELLE gleichzeitig laufen. Bewusst ueber die Modelle und nicht
@@ -1033,6 +1038,16 @@ async function callModel(modelId, prompt, apiKey, signal) {
 
 function scoreResult(result, test) {
   if (!result.ok) return { score: 0, issues: [`FEHLER: ${result.error}`] };
+  // 🔴 Ohne parsbare Woche gibt es 0/10 — nicht 8/10. Bis 19.09.2026 meldete
+  // jeder check() fuer unparsbares JSON genau EIN Issue (= -2), und damit
+  // bekam ein Guardrail-Klassifikator fuer zwoelfmal "User Safety: safe" 80 %,
+  // und Nemotron Super stand mit sechs LEEREN 200er-Antworten (400 ms, kein
+  // Inhalt) bei 85 % statt 45 %. In der Matrix sah beides aus wie "fast
+  // perfekt". Der Worker wertet leer/unparsbar als Fallback — der Benchmark
+  // muss es genauso werten, sonst misst er eine Kette, die es nicht gibt.
+  if (!result.text || !result.text.trim()) return { score: 0, issues: ['LEER: HTTP 200 ohne Inhalt'] };
+  const ex = extractJSON(result.text);
+  if (!ex.json) return { score: 0, issues: [`JSON unparsbar: ${ex.err || 'kein Wochen-Array'}`] };
   const issues = test.check(result.text, test.options);
   return { score: Math.max(0, 10 - issues.length * 2), issues };
 }
@@ -1372,7 +1387,7 @@ async function runBenchmark(modelFilter) {
 
   // ── Pool: mehrere Modelle gleichzeitig ──────────────────────────────────
   // Jeder Arbeiter nimmt sich das naechste freie Modell und faehrt es komplett
-  // durch. Bei 19 Modellen und POOL_SIZE=4 dauert der Lauf rund ein Viertel.
+  // durch. Bei 16 Modellen und POOL_SIZE=4 dauert der Lauf rund ein Viertel.
   const warteschlange = models[Symbol.iterator]();
   const arbeiter = async () => {
     for (;;) {

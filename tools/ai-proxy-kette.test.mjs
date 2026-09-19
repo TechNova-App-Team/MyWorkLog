@@ -100,7 +100,9 @@ pruefe(res2.headers.get('X-MWL-Model') === MODELS[0] && aufrufe.length === 1,
 
 // Die Kette selbst: kein Eintrag doppelt, keiner der fuenf Rausgeflogenen drin.
 const verboten = ['minimax/minimax-m3:free', 'minimax/minimax-m2.7:free', 'nvidia/nemotron-3.5-lightning:free',
-  'google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free'];
+  'google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free',
+  // 19.09. abends: 403 "only available on agentic harnesses" bzw. Klassifikator
+  'thinkingmachines/inkling:free', 'thinkingmachines/inkling-small:free', 'nvidia/nemotron-3.5-content-safety:free'];
 pruefe(new Set(MODELS).size === MODELS.length, `kein Modell doppelt (${MODELS.length} Eintraege)`);
 pruefe(!MODELS.some(m => verboten.includes(m)), 'keiner der am 19.09.2026 rausgeflogenen Eintraege ist zurueck');
 pruefe(MODELS.length > 0 && MODELS.every(m => m.endsWith(':free')), 'nur :free-Modelle in der Kette');
