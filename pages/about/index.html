@@ -797,6 +797,206 @@ document.documentElement.className += ' js';</script>
         .value-desc { font-size: .87rem; line-height: 1.75; color: var(--text-muted); text-wrap: pretty; }
         @media (max-width: 820px) { .values-grid { grid-template-columns: 1fr; } }
 
+        /* ═══════════════════════════════════════════════════════════════
+           DATENFLUSS — die Karte, die Grundsatz Nr. 1 beweist.
+           Inhaltsquelle ist Lokales/Diagramme/Project_Diagram.mmd; das
+           Bild ist bewusst NICHT Mermaid-gerendert: dessen Auto-Layout
+           setzt „User" oben rechts und zieht 13 Kanten quer, und genau
+           die Aussage („alles landet auf dem Geraet, die Cloud ist
+           optional") geht darin unter. Hier: Speicher in der Mitte, die
+           Geraetegrenze als gestrichelter Rahmen, vier Ausgaenge darunter.
+           Linien zeichnet JS aus den Elementpositionen in ein SVG-Overlay
+           — dadurch bleiben die Beschriftungen HTML und laufen durch die
+           i18n-Pipeline (Text in <svg> wird von ihr uebersprungen).
+           Keine Gruppenfarben: die einzige Farbrolle ist „die Verbindung,
+           die du gerade ansiehst" (Akzent), gestrichelt heisst optional.
+           ═══════════════════════════════════════════════════════════════ */
+        #datenfluss { --df-line: rgba(255,255,255,.22); }
+        /* Wie #stats: der ABSCHNITT muss ueber seine Nachbarn, nicht die
+           Sprechblase — sonst liegt der Journey-Abschnitt darueber. */
+        #datenfluss { z-index: 5; }
+        .df-map { position: relative; }
+        .df-lines {
+            position: absolute; inset: 0; width: 100%; height: 100%;
+            pointer-events: none; overflow: visible;
+        }
+        .df-lines path {
+            fill: none; stroke: var(--df-line); stroke-width: 1.5;
+            stroke-linecap: round;
+            transition: stroke 260ms var(--ease-out), opacity 260ms var(--ease-out);
+        }
+        .df-lines path.is-out { stroke-dasharray: 4 5; }
+        .df-lines path.on { stroke: var(--accent); }
+        .df-lines.has-focus path:not(.on) { opacity: .45; }
+        /* Zeichnen beim Einblenden: dasharray/offset setzt JS auf die
+           gemessene Laenge, die Klasse laesst den Offset auf 0 laufen. */
+        .df-lines path.draw { transition: stroke-dashoffset 900ms var(--ease-out), stroke 260ms var(--ease-out), opacity 260ms var(--ease-out); transition-delay: calc(var(--i, 0) * 45ms), 0ms, 0ms; }
+        /* Die Ausgaenge blenden erst auf, wenn die inneren Linien angekommen sind. */
+        .df-lines path.is-out.draw { transition-delay: 0ms, 0ms, calc(700ms + var(--i, 0) * 45ms); }
+
+        .df-device {
+            position: relative; padding: 2.4rem 2rem 2.2rem;
+            border: 1px dashed var(--rule-mid); border-radius: 18px;
+        }
+        .df-device-label {
+            position: absolute; top: -.7em; left: 1.6rem; padding: 0 .55rem;
+            background: #030305;
+            font-family: var(--fm); font-size: .62rem; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--text-faint);
+        }
+        .df-device-label b { color: var(--ink-soft); font-weight: 600; }
+        .df-grid {
+            display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 1fr);
+            align-items: stretch;
+        }
+        .df-col { display: flex; flex-direction: column; gap: 1.6rem; min-width: 0; }
+        .df-col--l { align-items: flex-end; text-align: right; }
+        .df-group { display: flex; flex-direction: column; }
+        .df-col--l .df-group { align-items: flex-end; }
+        .df-group-name {
+            font-family: var(--fm); font-size: .64rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--text-faint); margin-bottom: .45rem;
+        }
+        .df-list { list-style: none; display: flex; flex-direction: column; }
+        .df-col--l .df-list { align-items: flex-end; }
+        .df-node { position: relative; }
+        .df-btn {
+            position: relative; display: inline-flex; align-items: center; gap: .55rem;
+            padding: .42rem 0; background: none; border: 0; cursor: pointer;
+            font-size: .9rem; font-weight: 500; color: var(--text-muted);
+            text-align: inherit; line-height: 1.3;
+            transition: color var(--dur-ui) ease;
+        }
+        /* Der Anschlusspunkt: an der Seite, die zum Speicher zeigt. Von hier
+           misst JS den Linienstart (Rand des Knopfs, nicht des Texts). */
+        .df-btn::after {
+            content: ''; flex-shrink: 0; width: 7px; height: 7px; border-radius: 50%;
+            border: 1px solid var(--rule-mid); background: #030305;
+            transition: border-color var(--dur-ui) ease, background var(--dur-ui) ease, box-shadow var(--dur-ui) ease;
+        }
+        .df-col--l .df-btn { flex-direction: row; }
+        .df-col--r .df-btn { flex-direction: row-reverse; }
+        .df-btn.on, .df-btn[aria-expanded="true"] { color: var(--ink); }
+        .df-btn.on::after, .df-btn[aria-expanded="true"]::after {
+            border-color: var(--accent); background: var(--accent);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb),.16);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .df-btn:hover { color: var(--ink); }
+        }
+
+        .df-center { display: flex; align-items: center; justify-content: center; padding: 1rem 0; }
+        .df-hub-wrap { position: relative; width: 236px; }
+        .df-hub {
+            position: relative; width: 100%; padding: 1.35rem 1.3rem 1.2rem;
+            border-radius: 16px; text-align: left; cursor: pointer;
+            border: 1px solid var(--accent-brd); color: inherit; font: inherit;
+            background: linear-gradient(160deg, rgba(var(--primary-rgb),.16), rgba(var(--primary-rgb),.04)), #030305;
+            box-shadow: 0 0 0 6px rgba(var(--primary-rgb),.05), 0 24px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+            transition: border-color 260ms var(--ease-out), box-shadow 260ms var(--ease-out);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .df-hub:hover { border-color: rgba(var(--primary-rgb),.45); }
+        }
+        .df-hub[aria-expanded="true"] { border-color: rgba(var(--primary-rgb),.55); box-shadow: 0 0 0 6px rgba(var(--primary-rgb),.10), 0 24px 60px rgba(0,0,0,.5); }
+        .df-hub-icon { color: var(--accent); margin-bottom: .8rem; display: block; }
+        /* <span> im <button>: ohne display:block liefe alles in eine Zeile. */
+        .df-hub-title { display: block; font-size: 1rem; font-weight: 600; letter-spacing: -.015em; color: var(--ink); }
+        .df-hub-live {
+            display: block; margin-top: .35rem; font-family: var(--fm); font-size: .76rem; line-height: 1.5;
+            color: var(--ink-soft); font-variant-numeric: tabular-nums;
+        }
+        .df-hub-tech {
+            display: block; margin-top: .9rem; padding-top: .8rem; border-top: 1px solid var(--accent-brd);
+            font-family: var(--fm); font-size: .62rem; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--text-faint); line-height: 1.7;
+        }
+        .df-hub-tech span { display: block; }
+
+        /* Ausgaenge: unter der Grenze, mit Abstand — die gestrichelten Linien
+           muessen den Rahmen sichtbar kreuzen, sonst fehlt die Pointe. */
+        .df-outside { margin-top: 4.5rem; }
+        .df-outside-head {
+            display: flex; align-items: center; gap: .75rem; margin-bottom: 1.25rem;
+            font-family: var(--fm); font-size: .64rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--text-faint);
+        }
+        .df-outside-head::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+        .df-out-list { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+        .df-out { position: relative; }
+        .df-out-btn {
+            width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: .3rem;
+            padding: 1rem 1.1rem; border-radius: 12px; cursor: pointer; text-align: left;
+            background: rgba(255,255,255,.02); border: 1px dashed var(--rule-mid);
+            color: var(--text-muted); font: inherit; line-height: 1.3;
+            transition: border-color var(--dur-ui) ease, color var(--dur-ui) ease, background var(--dur-ui) ease;
+        }
+        .df-out-btn strong { font-size: .9rem; font-weight: 600; color: var(--ink-soft); transition: color var(--dur-ui) ease; }
+        .df-out-btn small { font-family: var(--fm); font-size: .64rem; letter-spacing: .04em; color: var(--text-faint); }
+        .df-out-btn.on, .df-out-btn[aria-expanded="true"] { border-color: var(--accent-brd); border-style: solid; background: rgba(var(--primary-rgb),.06); }
+        .df-out-btn.on strong, .df-out-btn[aria-expanded="true"] strong { color: var(--ink); }
+        @media (hover: hover) and (pointer: fine) {
+            .df-out-btn:hover { border-color: var(--accent-brd); color: var(--ink-soft); }
+        }
+
+        /* Sprechblase: pro Knoten EIN Kasten im Markup (i18n sieht ihn),
+           JS schaltet nur `hidden`. Oeffnet nach unten, in der eigenen
+           Spalte — links buendig zum Text der linken Spalte, also rechts. */
+        .df-tip {
+            position: absolute; top: calc(100% + 8px); left: 0; width: 300px; z-index: 60;
+            padding: .95rem 1.05rem; border-radius: 10px; text-align: left;
+            background: #0b0b10; border: 1px solid var(--rule-mid);
+            box-shadow: 0 16px 44px rgba(0,0,0,.55);
+            pointer-events: none;   /* nichts Klickbares drin; so verdeckt sie keinen Nachbarknopf */
+        }
+        .df-tip[hidden] { display: none; }
+        .df-col--l .df-tip { left: auto; right: 0; }
+        .df-tip-text { font-size: .76rem; line-height: 1.65; color: var(--ink-soft); }
+        .df-tip-io { display: grid; grid-template-columns: auto 1fr; gap: .45rem .7rem; margin-top: .8rem; align-items: baseline; }
+        .df-tip-io dt {
+            font-family: var(--fm); font-size: .6rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--text-faint); padding-top: .15rem;
+        }
+        .df-tip-io dd { display: flex; flex-wrap: wrap; gap: .3rem; }
+        .df-tip-io code {
+            font-family: var(--fm); font-size: .66rem; color: var(--text-muted);
+            padding: .14rem .4rem; border-radius: 4px;
+            background: rgba(255,255,255,.04); border: 1px solid var(--rule);
+        }
+        .df-tip-io dd.is-none { font-size: .72rem; color: var(--text-faint); }
+        .df-hub-wrap .df-tip { top: calc(100% + 10px); left: 0; width: 100%; min-width: 236px; }
+
+        .df-legend {
+            display: flex; flex-wrap: wrap; gap: .6rem 2rem; margin-top: 2rem;
+            font-size: .76rem; color: var(--text-faint);
+        }
+        .df-legend span { display: inline-flex; align-items: center; gap: .55rem; }
+        .df-legend svg { flex-shrink: 0; }
+        .df-note { margin-top: 1rem; font-size: .76rem; line-height: 1.65; color: var(--text-faint); max-width: 68ch; text-wrap: pretty; }
+
+        /* Einspaltig: Speicher oben, Bausteine darunter, eine Schiene links.
+           Die Sprechblase schiebt dann den Inhalt (statt zu ueberlagern),
+           der ResizeObserver zeichnet die Linien nach. */
+        @media (max-width: 900px) {
+            .df-device { padding: 2rem 1rem 1.5rem 1.1rem; }
+            .df-grid { grid-template-columns: 1fr; gap: 1.75rem; }
+            .df-center { order: -1; padding: 0; justify-content: flex-start; }
+            .df-hub-wrap { width: 100%; }
+            .df-col, .df-col--l, .df-col--l .df-group, .df-col--l .df-list { align-items: stretch; text-align: left; }
+            /* Einrueckung = Platz fuer den Abzweig von der Schiene (JS legt
+               sie 12 px rechts der Speicherkante; gemessen bleiben ~33 px
+               Linie bis zum Anschlusspunkt). */
+            .df-col { gap: 1.4rem; padding-left: 2.6rem; }
+            .df-col--l .df-btn, .df-col--r .df-btn { flex-direction: row-reverse; justify-content: flex-end; }
+            .df-tip, .df-col--l .df-tip, .df-hub-wrap .df-tip {
+                position: static; width: auto; margin: .35rem 0 .7rem; box-shadow: none;
+            }
+            .df-outside { margin-top: 3rem; }
+            /* Einspaltig auch hier: ein zweispaltiges Raster liesse den Abzweig
+               zur rechten Karte durch die linke laufen. */
+            .df-out-list { grid-template-columns: 1fr; gap: .6rem; padding-left: 3.4rem; }
+        }
+
         /* ═══ JOURNEY ═══ */
         .journey { position: relative; }
         .jr-rail { position: relative; display: flex; margin-bottom: 2.5rem; }
@@ -950,6 +1150,7 @@ document.documentElement.className += ' js';</script>
         <ul class="nav-links">
             <li><a href="#showcase">Produkt</a></li>
             <li><a href="#features">Features</a></li>
+            <li><a href="#datenfluss">Datenfluss</a></li>
             <li><a href="#journey">Journey</a></li>
             <li><a href="#team">Team</a></li>
         </ul>
@@ -970,6 +1171,7 @@ document.documentElement.className += ' js';</script>
         <div class="rail-tick" data-for="features"><span class="rail-tick-label">Features</span></div>
         <div class="rail-tick" data-for="stats"><span class="rail-tick-label">Kennzahlen</span></div>
         <div class="rail-tick" data-for="values"><span class="rail-tick-label">Grundsätze</span></div>
+        <div class="rail-tick" data-for="datenfluss"><span class="rail-tick-label">Datenfluss</span></div>
         <div class="rail-tick" data-for="journey"><span class="rail-tick-label">Journey</span></div>
         <div class="rail-tick" data-for="team"><span class="rail-tick-label">Team</span></div>
     </div>
@@ -1368,6 +1570,225 @@ document.documentElement.className += ' js';</script>
     </div>
 </section>
 
+<!-- ═══ DATENFLUSS ═══
+     Bausteine sind <button>, Sprechblasen liegen als Geschwister im Markup
+     (hidden), Schluesselnamen in <code> — die i18n-Pipeline uebersetzt den
+     Text und laesst die Schluessel in Ruhe. Die Linien dazwischen kommen
+     aus JS (Block 12 der Motion-Engine). -->
+<section class="section" id="datenfluss">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Datenfluss</span>
+            <h2 class="section-title">Alles läuft auf deinem Gerät zusammen.</h2>
+            <p class="section-description">Jede Funktion liest und schreibt denselben Speicher im Browser. Vier Wege führen nach draußen — und jeder nur, wenn du ihn einschaltest. Tippe auf einen Baustein, um zu sehen, was er liest und schreibt.</p>
+        </div>
+
+        <div class="df-map" id="dfMap" data-reveal>
+            <svg class="df-lines" id="dfLines" aria-hidden="true" focusable="false"></svg>
+
+            <div class="df-device" id="dfDevice">
+                <span class="df-device-label"><b>Dein Gerät</b></span>
+                <div class="df-grid">
+
+                    <div class="df-col df-col--l" id="dfColL">
+                        <div class="df-group">
+                            <span class="df-group-name">Erfassen</span>
+                            <ul class="df-list">
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-eintrag" aria-expanded="false" aria-controls="dft-eintrag">Eintrag erfassen</button>
+                                    <div class="df-tip" id="dft-eintrag" role="tooltip" hidden>
+                                        <p class="df-tip-text">Kommen, Pause, Gehen — der Tag wird als Eintrag gespeichert. Ein halb ausgefüllter Eintrag bleibt als Entwurf liegen.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>tg_pro_data</code><code>mwl_entry_draft</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-timer" aria-expanded="false" aria-controls="dft-timer">Live-Timer</button>
+                                    <div class="df-tip" id="dft-timer" role="tooltip" hidden>
+                                        <p class="df-tip-text">Läuft auch bei geschlossenem Tab weiter, weil der Startzeitpunkt gespeichert ist — nicht ein Zähler.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_timer</code></dd><dt>schreibt</dt><dd><code>tg_timer</code><code>tg_timer_log</code><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-nfc" aria-expanded="false" aria-controls="dft-nfc">NFC-Stempeln</button>
+                                    <div class="df-tip" id="dft-nfc" role="tooltip" hidden>
+                                        <p class="df-tip-text">Der Chip trägt nur eine Adresse, keine Daten. Das Handy öffnet die App, der Eintrag entsteht hier.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd class="is-none">nichts vom Chip außer der Adresse</dd><dt>schreibt</dt><dd><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-import" aria-expanded="false" aria-controls="dft-import">Import</button>
+                                    <div class="df-tip" id="dft-import" role="tooltip" hidden>
+                                        <p class="df-tip-text">CSV, Excel oder Zwischenablage aus einem anderen Tool. Die Datei wird im Browser gelesen, nichts wird hochgeladen.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd class="is-none">die Datei, die du auswählst</dd><dt>schreibt</dt><dd><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="df-group">
+                            <span class="df-group-name">Ausbildung</span>
+                            <ul class="df-list">
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-berichtsheft" aria-expanded="false" aria-controls="dft-berichtsheft">Berichtsheft</button>
+                                    <div class="df-tip" id="dft-berichtsheft" role="tooltip" hidden>
+                                        <p class="df-tip-text">Berichte, Entwürfe und die Angaben für den IHK-Vordruck. Zieht die Stunden aus der Zeiterfassung, statt sie doppelt abzufragen.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>berichtsheft_reports</code><code>berichtsheft_draft</code><code>pdf_personal_cfg</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-schule" aria-expanded="false" aria-controls="dft-schule">Berufsschule</button>
+                                    <div class="df-tip" id="dft-schule" role="tooltip" hidden>
+                                        <p class="df-tip-text">Schultage, Fächer und Noten je Lehrjahr — Teil deiner Einstellungen, nicht eines eigenen Kontos.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-ihk" aria-expanded="false" aria-controls="dft-ihk">IHK-Ansicht</button>
+                                    <div class="df-tip" id="dft-ihk" role="tooltip" hidden>
+                                        <p class="df-tip-text">Fehlzeiten, Zulassung, Vertragsende — gerechnet aus den Einträgen, die schon da sind.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code><code>pdf_personal_cfg</code></dd><dt>schreibt</dt><dd><code>pdf_personal_cfg</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-urlaub" aria-expanded="false" aria-controls="dft-urlaub">Urlaubsplaner</button>
+                                    <div class="df-tip" id="dft-urlaub" role="tooltip" hidden>
+                                        <p class="df-tip-text">Resturlaub in Tagen oder Stunden. Jeder geplante Tag wird ein Eintrag wie jeder andere.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-aufgaben" aria-expanded="false" aria-controls="dft-aufgaben">Aufgaben</button>
+                                    <div class="df-tip" id="dft-aufgaben" role="tooltip" hidden>
+                                        <p class="df-tip-text">Eigene Seite mit eigenen Schlüsseln — getrennt von den Zeiten, aber im selben Browser.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>mwl_tasks_*</code></dd><dt>schreibt</dt><dd><code>mwl_tasks_states</code><code>mwl_tasks_notes</code><code>mwl_tasks_history</code></dd></dl>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="df-center">
+                        <div class="df-hub-wrap">
+                            <button type="button" class="df-hub" id="dfHub" aria-expanded="false" aria-controls="dft-hub">
+                                <svg class="df-hub-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+                                <span class="df-hub-title">Speicher im Browser</span>
+                                <span class="df-hub-live" id="dfHubLive">Auf diesem Gerät liegt noch nichts.</span>
+                                <span class="df-hub-tech"><span>localStorage</span><span>IndexedDB</span><span>Cache Storage</span></span>
+                            </button>
+                            <div class="df-tip" id="dft-hub" role="tooltip" hidden>
+                                <p class="df-tip-text">Ein Datensatz für Einträge, Einstellungen und Ziele; das Berichtsheft, die Aufgaben und der Stundenplan haben eigene Schlüssel daneben. Löschst du die Website-Daten im Browser, ist alles weg — deshalb die Sicherung rechts.</p>
+                                <dl class="df-tip-io"><dt>Kern</dt><dd><code>tg_pro_data</code><code>tg_pro_data_backups</code></dd><dt>daneben</dt><dd><code>berichtsheft_reports</code><code>mwl_tasks_*</code><code>untis_cache</code></dd></dl>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="df-col df-col--r" id="dfColR">
+                        <div class="df-group">
+                            <span class="df-group-name">Auswerten</span>
+                            <ul class="df-list">
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-verlauf" aria-expanded="false" aria-controls="dft-verlauf">Verlauf</button>
+                                    <div class="df-tip" id="dft-verlauf" role="tooltip" hidden>
+                                        <p class="df-tip-text">Jeder Tag als Zeile, nach Monaten gruppiert. Bearbeiten schreibt in denselben Datensatz zurück.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-analyse" aria-expanded="false" aria-controls="dft-analyse">Auswertungen</button>
+                                    <div class="df-tip" id="dft-analyse" role="tooltip" hidden>
+                                        <p class="df-tip-text">Gleitzeitkonto, Heatmaps, Prognosen — alles im Browser gerechnet. Gespeichert wird nur, wie du die Diagramme eingestellt hast.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>mwl_chart_style</code><code>tg_galaxy_settings</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-ziele" aria-expanded="false" aria-controls="dft-ziele">Ziele</button>
+                                    <div class="df-tip" id="dft-ziele" role="tooltip" hidden>
+                                        <p class="df-tip-text">Wochen- und Monatsziele stehen in den Einstellungen; der Fortschritt wird bei jedem Öffnen neu aus den Einträgen gerechnet.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>tg_pro_data</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-export" aria-expanded="false" aria-controls="dft-export">Export</button>
+                                    <div class="df-tip" id="dft-export" role="tooltip" hidden>
+                                        <p class="df-tip-text">PDF, CSV oder JSON werden im Browser erzeugt und landen als Datei bei dir. Gemerkt wird nur der Zeitpunkt, für die Erinnerung.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>mwl_last_export</code></dd></dl>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="df-group">
+                            <span class="df-group-name">Sicherung &amp; Offline</span>
+                            <ul class="df-list">
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-offline" aria-expanded="false" aria-controls="dft-offline">Offline-Worker</button>
+                                    <div class="df-tip" id="dft-offline" role="tooltip" hidden>
+                                        <p class="df-tip-text">Hält die App-Dateien vor, damit sie ohne Netz startet. Deine Einträge fasst er nicht an — die liegen woanders.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd class="is-none">die App-Dateien, nicht deine Daten</dd><dt>schreibt</dt><dd><code>tt-cache-&lt;version&gt;</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-autosicherung" aria-expanded="false" aria-controls="dft-autosicherung">Auto-Sicherung</button>
+                                    <div class="df-tip" id="dft-autosicherung" role="tooltip" hidden>
+                                        <p class="df-tip-text">Bei jedem Speichern legt die App eine Kopie des Datensatzes daneben. Ist der Hauptdatensatz beim Start beschädigt, wird daraus wiederhergestellt.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd><code>tg_pro_data_backups</code></dd></dl>
+                                    </div>
+                                </li>
+                                <li class="df-node">
+                                    <button type="button" class="df-btn" id="df-backup" aria-expanded="false" aria-controls="dft-backup">Verschlüsseltes Backup</button>
+                                    <div class="df-tip" id="dft-backup" role="tooltip" hidden>
+                                        <p class="df-tip-text">Der ganze Datensatz als Datei, mit deinem Passwort verschlüsselt (AES-GCM, Schlüssel per PBKDF2). Ohne Passwort ist die Datei unlesbar — auch für uns.</p>
+                                        <dl class="df-tip-io"><dt>liest</dt><dd><code>tg_pro_data</code></dd><dt>schreibt</dt><dd class="is-none">eine .json-Datei auf deinem Gerät</dd></dl>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="df-outside">
+                <div class="df-outside-head"><span>Außerhalb deines Geräts — nur wenn du es einschaltest</span></div>
+                <ul class="df-out-list" id="dfOutList">
+                    <li class="df-out">
+                        <button type="button" class="df-out-btn" id="df-cloud" aria-expanded="false" aria-controls="dft-cloud"><strong>Cloud-Sync</strong><small>nur mit Konto</small></button>
+                        <div class="df-tip" id="dft-cloud" role="tooltip" hidden>
+                            <p class="df-tip-text">Legst du ein Konto an, liegt der Datensatz zusätzlich auf dem Sync-Server, damit ein zweites Gerät ihn holen kann. Der Zugriff ist auf dein Konto beschränkt. Abmelden gilt nur für dieses Gerät.</p>
+                            <dl class="df-tip-io"><dt>sendet</dt><dd><code>tg_pro_data</code></dd><dt>merkt sich</dt><dd><code>mwl_last_export</code></dd></dl>
+                        </div>
+                    </li>
+                    <li class="df-out">
+                        <button type="button" class="df-out-btn" id="df-p2p" aria-expanded="false" aria-controls="dft-p2p"><strong>Geräte-Sync</strong><small>direkt, verschlüsselt</small></button>
+                        <div class="df-tip" id="dft-p2p" role="tooltip" hidden>
+                            <p class="df-tip-text">Zwei Geräte reden per WebRTC direkt miteinander, Ende-zu-Ende verschlüsselt. Der Kopplungscode wandert per QR oder Zwischenablage — kein Server sieht deine Einträge, und ohne den Vergleich der Prüfziffer bleibt der Kanal zu.</p>
+                            <dl class="df-tip-io"><dt>sendet</dt><dd><code>tg_pro_data</code></dd><dt>merkt sich</dt><dd><code>p2p_deviceId</code><code>p2p_lastSync</code></dd></dl>
+                        </div>
+                    </li>
+                    <li class="df-out">
+                        <button type="button" class="df-out-btn" id="df-ki" aria-expanded="false" aria-controls="dft-ki"><strong>Cloud-KI</strong><small>Berichtsheft, auf Klick</small></button>
+                        <div class="df-tip" id="dft-ki" role="tooltip" hidden>
+                            <p class="df-tip-text">Nur was du im KI-Studio eingibst, geht über unseren Proxy an das Sprachmodell — und, wenn du die Quelle „Zeiterfassung" einschaltest, die Notizen der gewählten Woche. Der Proxy hält den Schlüssel, nicht dein Browser. Ausgeschaltet läuft der Generator lokal.</p>
+                            <dl class="df-tip-io"><dt>sendet</dt><dd class="is-none">den Text der Anfrage</dd><dt>merkt sich</dt><dd><code>ais_use_cloud</code></dd></dl>
+                        </div>
+                    </li>
+                    <li class="df-out">
+                        <button type="button" class="df-out-btn" id="df-untis" aria-expanded="false" aria-controls="dft-untis"><strong>Stundenplan</strong><small>WebUntis oder iCal</small></button>
+                        <div class="df-tip" id="dft-untis" role="tooltip" hidden>
+                            <p class="df-tip-text">Holt den Stundenplan deiner Schule über einen Proxy, der die Anfrage nur durchreicht. In die andere Richtung fließt nichts: deine Einträge bleiben hier.</p>
+                            <dl class="df-tip-io"><dt>holt</dt><dd class="is-none">den Plan von deiner Schule</dd><dt>schreibt</dt><dd><code>untis_cache</code><code>untis_ical_url</code><code>untis_manual_grid</code></dd></dl>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="df-legend" aria-hidden="true">
+                <span><svg width="28" height="8" viewBox="0 0 28 8"><path d="M1 4h26" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round"/></svg><span>liest und schreibt auf diesem Gerät</span></span>
+                <span><svg width="28" height="8" viewBox="0 0 28 8"><path d="M1 4h26" stroke="rgba(255,255,255,.3)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="4 5"/></svg><span>verlässt das Gerät — nur auf deinen Wunsch</span></span>
+            </div>
+            <p class="df-note">Dazu kommt die anonyme, cookiefreie Nutzungsstatistik: sie zählt Seitenaufrufe, keine Einträge. Und das Schatten-Berichtsheft kann auf Wunsch zusätzlich in dein Google Drive sichern — ebenfalls nur auf Klick.</p>
+        </div>
+    </div>
+</section>
+
 <!-- ═══ JOURNEY ═══ -->
 <section class="section" id="journey">
     <div class="shell">
@@ -1484,6 +1905,7 @@ document.documentElement.className += ' js';</script>
             e.target.classList.add('is-in');
             revObs.unobserve(e.target);
             if (e.target.id === 'stats' || e.target.closest('#stats')) startStats();
+            if (e.target.id === 'dfMap') dfReveal();
         });
     }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
     document.querySelectorAll('[data-reveal]').forEach(function (el) { revObs.observe(el); });
@@ -1841,6 +2263,246 @@ document.documentElement.className += ' js';</script>
        Karten dauerhaft auf 0 stehen. Das sieht nicht nach einem Fehler aus,
        sondern nach einem Produkt ohne Nutzer. */
     setTimeout(startStats, 2500);
+
+    /* ══════════════════════════════════════════════════════════════════
+       12. DATENFLUSS — Linien aus Elementpositionen, Sprechblasen, Zaehler.
+       Die Linien liegen in einem SVG-Overlay ueber #dfMap und werden aus
+       getBoundingClientRect() der Knoepfe gerechnet — beim Laden, nach
+       den Fonts und bei jeder Groessenaenderung der Spalten (eine
+       aufgeklappte Sprechblase schiebt einspaltig den Inhalt). Dadurch
+       bleibt jede Beschriftung HTML: die i18n-Pipeline uebersetzt sie,
+       Text in <svg> wuerde sie ueberspringen.
+       Zwei Layouts, eine Funktion: dreispaltig laufen die Linien seitlich
+       in den Speicher, einspaltig (<= 900px) haengen alle Bausteine an
+       einer Schiene links vom Speicher nach unten.
+       ══════════════════════════════════════════════════════════════════ */
+    var dfMap    = document.getElementById('dfMap');
+    var dfSvg    = document.getElementById('dfLines');
+    var dfHub    = document.getElementById('dfHub');
+    var dfDevice = document.getElementById('dfDevice');
+    var mqStack  = window.matchMedia('(max-width: 900px)');
+    var dfBtns   = dfMap ? Array.prototype.slice.call(dfMap.querySelectorAll('.df-btn, .df-out-btn')) : [];
+    var dfRevealed = false;   /* Einblendung gelaufen → Linien voll zeichnen */
+    var dfAnimated = false;   /* Zeichen-Animation ist gelaufen oder laeuft */
+    var dfFocusId  = null;
+    var SVG_NS = 'http://www.w3.org/2000/svg';
+
+    function dfRel(box, r) {
+        return { l: r.left - box.left, t: r.top - box.top, r: r.right - box.left, b: r.bottom - box.top,
+                 cx: (r.left + r.right) / 2 - box.left, cy: (r.top + r.bottom) / 2 - box.top };
+    }
+    function dfN(v) { return (Math.round(v * 10) / 10).toString(); }
+    function dfCurveH(x1, y1, x2, y2) {
+        var dx = Math.abs(x2 - x1) * 0.55, s = x2 > x1 ? 1 : -1;
+        return 'M' + dfN(x1) + ' ' + dfN(y1) + ' C' + dfN(x1 + s * dx) + ' ' + dfN(y1) + ' ' + dfN(x2 - s * dx) + ' ' + dfN(y2) + ' ' + dfN(x2) + ' ' + dfN(y2);
+    }
+    function dfCurveV(x1, y1, x2, y2) {
+        var dy = Math.max(36, Math.abs(y2 - y1) * 0.5);
+        return 'M' + dfN(x1) + ' ' + dfN(y1) + ' C' + dfN(x1) + ' ' + dfN(y1 + dy) + ' ' + dfN(x2) + ' ' + dfN(y2 - dy) + ' ' + dfN(x2) + ' ' + dfN(y2);
+    }
+
+    function dfDraw() {
+        if (!dfMap || !dfSvg || !dfHub) return;
+        var box = dfMap.getBoundingClientRect();
+        if (!box.width) return;
+        dfSvg.setAttribute('viewBox', '0 0 ' + dfN(box.width) + ' ' + dfN(box.height));
+        var h = dfRel(box, dfHub.getBoundingClientRect());
+        var dev = dfRel(box, dfDevice.getBoundingClientRect());
+        var stack = mqStack.matches;
+        var segs = [];   /* { id, d, out, spine } */
+
+        if (stack) {
+            /* Schiene links im Speicher, Abzweig zu jedem Knoten. Solide bis
+               zur Geraetegrenze, gestrichelt darunter — die Grenze wird
+               sichtbar gekreuzt. */
+            var sx = h.l + 12, lastIn = h.b, lastOut = dev.b;
+            dfBtns.forEach(function (btn) {
+                var r = dfRel(box, btn.getBoundingClientRect());
+                var out = btn.classList.contains('df-out-btn');
+                var px = out ? r.l : r.l + 4;
+                var py = out ? r.cy : r.cy;
+                segs.push({ id: btn.id, out: out, d: 'M' + dfN(sx) + ' ' + dfN(py) + ' H' + dfN(px) });
+                if (out) lastOut = Math.max(lastOut, py); else lastIn = Math.max(lastIn, py);
+            });
+            segs.push({ id: 'spine-in',  spine: true, out: false, d: 'M' + dfN(sx) + ' ' + dfN(h.b) + ' V' + dfN(lastIn) });
+            segs.push({ id: 'spine-out', spine: true, out: true,  d: 'M' + dfN(sx) + ' ' + dfN(lastIn) + ' V' + dfN(lastOut) });
+        } else {
+            dfBtns.forEach(function (btn) {
+                var r = dfRel(box, btn.getBoundingClientRect());
+                if (btn.classList.contains('df-out-btn')) {
+                    segs.push({ id: btn.id, out: true, d: dfCurveV(h.cx, h.b, r.cx, r.t) });
+                } else {
+                    var left = !!btn.closest('.df-col--l');
+                    var x1 = left ? r.r - 4 : r.l + 4;
+                    var x2 = left ? h.l : h.r;
+                    var y2 = clamp(r.cy, h.t + 16, h.b - 16);
+                    segs.push({ id: btn.id, out: false, d: dfCurveH(x1, r.cy, x2, y2) });
+                }
+            });
+        }
+
+        /* Pfade wiederverwenden (Attribute setzen), nicht neu bauen — sonst
+           faengt jede Groessenaenderung die Zeichen-Animation von vorn an. */
+        var existing = {};
+        Array.prototype.slice.call(dfSvg.querySelectorAll('path')).forEach(function (p) { existing[p.getAttribute('data-for')] = p; });
+        var keep = {};
+        segs.forEach(function (s, i) {
+            var p = existing[s.id];
+            if (!p) {
+                p = document.createElementNS(SVG_NS, 'path');
+                p.setAttribute('data-for', s.id);
+                dfSvg.appendChild(p);
+            }
+            keep[s.id] = true;
+            p.setAttribute('d', s.d);
+            p.classList.toggle('is-out', !!s.out);
+            p.classList.toggle('is-spine', !!s.spine);
+            p.style.setProperty('--i', i);
+            if (dfRevealed || reduce) {
+                /* fertig gezeichnet: keine Dash-Reste, sonst frisst ein
+                   spaeterer Resize die Linie wieder auf */
+                if (!s.out) { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; }
+                p.style.opacity = '';
+            } else if (!dfAnimated) {
+                if (s.out) { p.style.opacity = '0'; }
+                else { var L = p.getTotalLength(); p.style.strokeDasharray = dfN(L); p.style.strokeDashoffset = dfN(L); }
+            }
+            p.classList.toggle('on', s.id === dfFocusId || (stack && s.spine && s.out === dfIsOut(dfFocusId) && dfFocusId !== null));
+        });
+        Object.keys(existing).forEach(function (id) { if (!keep[id]) dfSvg.removeChild(existing[id]); });
+    }
+
+    function dfIsOut(id) {
+        var b = id && document.getElementById(id);
+        return !!(b && b.classList.contains('df-out-btn'));
+    }
+
+    /* Einblendung: Linien nach innen laufen lassen (dashoffset → 0), die
+       gestrichelten Ausgaenge blenden nur auf. Bei reduzierter Bewegung
+       steht alles sofort da. */
+    function dfReveal() {
+        if (!dfSvg || dfAnimated) return;
+        dfAnimated = true;
+        if (reduce) { dfRevealed = true; dfDraw(); return; }
+        var paths = Array.prototype.slice.call(dfSvg.querySelectorAll('path'));
+        requestAnimationFrame(function () {
+            paths.forEach(function (p) { p.classList.add('draw'); });
+            requestAnimationFrame(function () {
+                paths.forEach(function (p) {
+                    if (p.classList.contains('is-out')) p.style.opacity = '';
+                    else p.style.strokeDashoffset = '0';
+                });
+            });
+        });
+        setTimeout(function () {
+            dfRevealed = true;
+            paths.forEach(function (p) { p.classList.remove('draw'); });
+            dfDraw();
+        }, 900 + paths.length * 45 + 100);
+    }
+
+    function dfSetFocus(id) {
+        dfFocusId = id;
+        if (!dfSvg) return;
+        /* Der Speicher selbst hat keine Linie — ihn zu betrachten dimmt nichts. */
+        dfSvg.classList.toggle('has-focus', id !== null && id !== 'dfHub');
+        var stack = mqStack.matches, outFocus = dfIsOut(id);
+        Array.prototype.slice.call(dfSvg.querySelectorAll('path')).forEach(function (p) {
+            var pid = p.getAttribute('data-for');
+            var on = pid === id || (id !== null && stack && p.classList.contains('is-spine') && p.classList.contains('is-out') === outFocus);
+            p.classList.toggle('on', on);
+        });
+        dfBtns.forEach(function (b) { b.classList.toggle('on', b.id === id); });
+        if (dfHub) dfHub.classList.toggle('on', id === 'dfHub');
+    }
+
+    /* Sprechblasen: hover zeigt (nur auf Zeigergeraeten — auf Touch feuert
+       mouseenter vor click, und der Klick wuerde die Blase gleich wieder
+       schliessen), Klick schaltet fest, Fokus zeigt, Escape schliesst. */
+    var dfOpen = null;   /* { btn, tip } */
+    var hoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    function dfShow(btn, tip) {
+        if (dfOpen && dfOpen.btn !== btn) dfHide();
+        tip.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        dfOpen = { btn: btn, tip: tip, pinned: false };
+        dfSetFocus(btn.id);
+    }
+    function dfHide() {
+        if (!dfOpen) return;
+        dfOpen.tip.hidden = true;
+        dfOpen.btn.setAttribute('aria-expanded', 'false');
+        dfOpen = null;
+        dfSetFocus(null);
+    }
+    function dfBind(btn) {
+        var tip = document.getElementById(btn.getAttribute('aria-controls'));
+        if (!tip) return;
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (dfOpen && dfOpen.btn === btn) {
+                if (dfOpen.pinned) dfHide(); else dfOpen.pinned = true;
+            } else { dfShow(btn, tip); dfOpen.pinned = true; }
+        });
+        if (hoverCapable) {
+            btn.addEventListener('mouseenter', function () { if (!dfOpen || dfOpen.btn !== btn) dfShow(btn, tip); });
+            btn.addEventListener('mouseleave', function (e) {
+                if (dfOpen && dfOpen.btn === btn && !dfOpen.pinned && !tip.contains(e.relatedTarget)) dfHide();
+            });
+            tip.addEventListener('mouseleave', function (e) {
+                if (dfOpen && dfOpen.btn === btn && !dfOpen.pinned && e.relatedTarget !== btn) dfHide();
+            });
+        }
+        btn.addEventListener('focus', function () { if (!dfOpen || dfOpen.btn !== btn) dfShow(btn, tip); });
+        btn.addEventListener('blur', function () { if (dfOpen && dfOpen.btn === btn && !dfOpen.pinned) dfHide(); });
+    }
+    if (dfMap) {
+        dfBtns.forEach(dfBind);
+        if (dfHub) dfBind(dfHub);
+        document.addEventListener('click', function (e) { if (dfOpen && !dfOpen.tip.contains(e.target)) dfHide(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dfHide(); });
+
+        /* Linien nachziehen, wenn sich eine Spalte, die Ausgangsliste oder
+           der Speicher in der Groesse aendert — einspaltig ist das jede
+           aufgeklappte Sprechblase. Eine Messung je Frame, nicht je Event. */
+        var dfPending = false;
+        function dfSchedule() {
+            if (dfPending) return;
+            dfPending = true;
+            requestAnimationFrame(function () { dfPending = false; dfDraw(); });
+        }
+        if ('ResizeObserver' in window) {
+            var ro = new ResizeObserver(dfSchedule);
+            ['dfMap', 'dfColL', 'dfColR', 'dfOutList'].forEach(function (id) { var el = document.getElementById(id); if (el) ro.observe(el); });
+            ro.observe(dfHub.parentElement);
+        } else {
+            window.addEventListener('resize', dfSchedule);
+        }
+        mqStack.addEventListener('change', dfSchedule);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(dfSchedule);
+        dfDraw();
+
+        /* Der Speicher zeigt, was WIRKLICH hier liegt — gelesen, nie
+           geschrieben. Ohne Daten bleibt der Markup-Text (i18n) stehen. */
+        (function dfLive() {
+            var el = document.getElementById('dfHubLive');
+            if (!el) return;
+            var entries = 0, reports = 0, has = false;
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (raw) { var dd = JSON.parse(raw); if (dd && Array.isArray(dd.entries)) { entries = dd.entries.length; has = true; } }
+            } catch (e) { /* kaputter Datensatz: dann eben kein Zaehler */ }
+            try {
+                var rr = localStorage.getItem('berichtsheft_reports');
+                if (rr) { var arr = JSON.parse(rr); if (Array.isArray(arr)) { reports = arr.length; has = true; } }
+            } catch (e) { /* dito */ }
+            /* Ein leerer Datensatz ist „noch nichts", nicht „0 Einträge". */
+            if (!has || (entries === 0 && reports === 0)) return;
+            var parts = [fmt(entries) + ' ' + (entries === 1 ? t('Eintrag', 'entry') : t('Einträge', 'entries'))];
+            if (reports) parts.push(fmt(reports) + ' ' + (reports === 1 ? t('Bericht', 'report') : t('Berichte', 'reports')));
+            el.textContent = t('Auf diesem Gerät: ', 'On this device: ') + parts.join(' · ');
+        })();
+    }
 })();
 </script>
 
