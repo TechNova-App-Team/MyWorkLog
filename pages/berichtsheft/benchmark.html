@@ -285,9 +285,11 @@
         </select>
       </label>
       <button class="ghost" id="cancelBtn" disabled>Abbrechen</button>
+      <button class="ghost" id="exportBtn" disabled title="Alle Modelle, alle Tests, mit Fehlertext, Parse-Modus und Rohantwort — die Datei, die man zur Auswertung weitergibt.">Ergebnis als JSON</button>
       <span class="status-row" style="margin-left: auto;" id="globalProgress"></span>
     </div>
-    <p class="hint">Console-Hooks: <code>MWLBench.run()</code> · <code>MWLBench.runOne('model/id')</code> · <code>MWLBench.last</code></p>
+    <p class="hint">Console-Hooks: <code>MWLBench.run()</code> · <code>MWLBench.runOne('model/id')</code> · <code>MWLBench.last</code> · <code>MWLBench.export()</code></p>
+    <p class="hint" id="exportHint" style="display:none;">Zwischenstand liegt in <code>localStorage.mwlbench_last</code> — ein abgebrochener oder abgestürzter Lauf ist damit nicht verloren, der Knopf exportiert auch ihn.</p>
   </div>
 
   <div id="modelsContainer" class="models-grid"></div>
@@ -1011,10 +1013,13 @@ async function callModel(modelId, prompt, apiKey, signal) {
     const ms = Math.round(performance.now() - start);
     let data;
     try { data = JSON.parse(bodyText); }
-    catch (e) { return { ok: false, ms, error: `Antwort kein JSON (HTTP ${res.status})` }; }
-    if (!res.ok) return { ok: false, ms, error: data?.error?.message || `HTTP ${res.status}` };
+    catch (e) { return { ok: false, ms, status: res.status, error: `Antwort kein JSON (HTTP ${res.status})` }; }
+    // status bleibt am Ergebnis: im Export unterscheidet er ein 429 (Anbieter
+    // dicht) von einem Modell, das wirklich nichts kann — in der Matrix sehen
+    // beide gleich aus (0/10).
+    if (!res.ok) return { ok: false, ms, status: res.status, error: data?.error?.message || `HTTP ${res.status}` };
     const text = data.choices?.[0]?.message?.content?.trim() || '';
-    return { ok: true, ms, text };
+    return { ok: true, ms, status: res.status, text };
   })().catch(e => ({
     ok: false,
     ms: Math.round(performance.now() - start),
@@ -1190,6 +1195,66 @@ function renderRecommendations(scores) {
   $('recCard').style.display = 'block';
 }
 
+// ─── Export & Zwischenstand ──────────────────────────────────────────────
+// Die Matrix zeigt nur Punkte. Zur Auswertung braucht man je Test den
+// Fehlertext (429? Timeout? Muell-JSON?), den Parse-Modus und die Rohantwort —
+// das steht alles in `allScores`, hatte aber keinen Weg aus dem Tab heraus.
+// Ausserdem: ein Lauf ueber 19 Modelle dauert lange; stuerzt der Tab ab, war
+// bisher alles weg. Deshalb nach jedem fertigen Modell ein Zwischenstand in
+// localStorage (Rohantworten auf 2000 Zeichen gekuerzt, damit es klein bleibt).
+const ERGEBNIS_KEY = 'mwlbench_last';
+const RAW_MAX = 2000;
+
+function serialisiere(scores, abgebrochen) {
+  return {
+    erstellt: new Date().toISOString(),
+    promptQuelle: PROMPT_QUELLE,
+    abgebrochen: !!abgebrochen,
+    config: { temperature: PROD_TEMPERATURE, top_p: PROD_TOP_P, max_tokens: PROD_MAX_TOKENS, timeoutMs: HTTP_TIMEOUT_MS, poolSize: POOL_SIZE },
+    tests: TESTS.map((t, i) => ({ nr: i + 1, name: t.name, weight: t.weight })),
+    modelle: scores.map(s => ({
+      id: s.model.id, label: s.model.label, role: s.model.role,
+      finalScore: Math.round(s.finalScore * 10) / 10,
+      avgMs: Math.round(s.avgMs),
+      okCount: s.results.filter(r => r.result.ok).length,
+      failCount: s.failCount, wrapCount: s.wrapCount, retryCount: s.retryCount,
+      // Fehler je Sorte gezaehlt: "429 x12" sagt mehr als zwoelf Einzelzeilen
+      fehler: Object.entries(s.results.reduce((acc, r) => {
+        if (r.result.ok) return acc;
+        const k = r.result.status ? `HTTP ${r.result.status}` : String(r.result.error || 'unbekannt').slice(0, 40);
+        acc[k] = (acc[k] || 0) + 1; return acc;
+      }, {})).map(([k, n]) => `${k} x${n}`),
+      tests: s.results.map((r, i) => ({
+        nr: i + 1, score: r.evaluation.score, ms: r.result.ms, ok: r.result.ok,
+        status: r.result.status ?? null, error: r.result.error ?? null,
+        parseMode: r.result.parseMode ?? null, issues: r.evaluation.issues,
+        raw: r.result.text ? r.result.text.slice(0, RAW_MAX) : null,
+      })),
+    })),
+  };
+}
+
+function speichereZwischenstand(scores, abgebrochen) {
+  try { localStorage.setItem(ERGEBNIS_KEY, JSON.stringify(serialisiere(scores, abgebrochen))); }
+  catch (e) { console.warn('[Bench] Zwischenstand nicht speicherbar:', e.message); }
+  $('exportBtn').disabled = false;
+}
+
+function exportErgebnis() {
+  let daten = LAST ? serialisiere(LAST, CANCEL?.signal.aborted) : null;
+  if (!daten) {
+    try { daten = JSON.parse(localStorage.getItem(ERGEBNIS_KEY) || 'null'); } catch (e) { daten = null; }
+  }
+  if (!daten) { alert('Kein Ergebnis vorhanden — erst einen Lauf starten.'); return null; }
+  const stamp = daten.erstellt.slice(0, 16).replace('T', '-').replace(':', '');
+  const name = `benchmark-${stamp}${daten.abgebrochen ? '-abgebrochen' : ''}.json`;
+  const blob = new Blob([JSON.stringify(daten, null, 2)], { type: 'application/json' });
+  const a = el('a', { href: URL.createObjectURL(blob), download: name });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  return name;
+}
+
 // ─── Benchmark Runner ─────────────────────────────────────────────────────
 let CANCEL = null;
 let LAST = null;
@@ -1302,6 +1367,7 @@ async function runBenchmark(modelFilter) {
     });
 
     allScores.push({ model, finalScore, avgMs, failCount, wrapCount, retryCount, results });
+    speichereZwischenstand(allScores, CANCEL.signal.aborted);
   }
 
   // ── Pool: mehrere Modelle gleichzeitig ──────────────────────────────────
@@ -1336,6 +1402,7 @@ async function runBenchmark(modelFilter) {
 
   LAST = allScores;
   if (window.MWLBench) window.MWLBench.last = allScores;
+  if (allScores.length) speichereZwischenstand(allScores, CANCEL.signal.aborted);
   $('runBtn').disabled = false;
   $('cancelBtn').disabled = true;
   CANCEL = null;
@@ -1358,8 +1425,20 @@ $('poolSize').addEventListener('change', e => {
 });
 $('runBtn').addEventListener('click', () => runBenchmark());
 $('cancelBtn').addEventListener('click', () => { if (CANCEL) CANCEL.abort(); });
+$('exportBtn').addEventListener('click', () => exportErgebnis());
 
 updateKeyStatus();
+
+// Liegt ein Zwischenstand vom letzten Lauf im Speicher, ist er exportierbar —
+// auch wenn der Tab dazwischen zu war.
+try {
+  const alt = JSON.parse(localStorage.getItem(ERGEBNIS_KEY) || 'null');
+  if (alt && Array.isArray(alt.modelle) && alt.modelle.length) {
+    $('exportBtn').disabled = false;
+    $('exportBtn').title = `Letzter Stand: ${alt.erstellt.slice(0, 16).replace('T', ' ')} · ${alt.modelle.length} Modelle${alt.abgebrochen ? ' · abgebrochen' : ''}`;
+    $('exportHint').style.display = '';
+  }
+} catch (e) { /* kaputter Eintrag — dann eben kein Export */ }
 
 // Prompt aus der echten Seite holen. Klappt das nicht, laeuft der Benchmark auf
 // der Handkopie weiter — dann aber sichtbar rot, nicht stillschweigend.
@@ -1385,6 +1464,7 @@ window.MWLBench = {
   run: runBenchmark,
   runOne: (modelId) => runBenchmark(modelId),
   cancel: () => { if (CANCEL) CANCEL.abort(); },
+  export: exportErgebnis,
   setKey, getKey, clrKey,
   MODELS, TESTS, PROFESSIONS,
   // 🔴 buildPrompt wird von ladeEchtenPrompt() NACH diesem Objektliteral
