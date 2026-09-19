@@ -317,28 +317,51 @@
 const STORAGE_KEY = 'mwlbench_or_key';
 
 // Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.8).
-// Am 19.09.2026 gegen https://openrouter.ai/api/v1/models geprueft: alle 8 leben.
-// Die Rollen stammen aus dem Lauf vom 19.09. — die Karten zeigen damit nicht eine
-// Vorgabe, sondern den Stand, gegen den neu gemessen wird. Wer die Rangfolge hier
-// aendert, aendert sie auch drueben: sonst behauptet die Karte "Primary" fuer ein
-// Modell, das der Worker als drittes anfaesst.
+// Am 19.09.2026 gegen https://openrouter.ai/api/v1/models geprueft: 22 freie
+// Modelle, hier stehen 19 — ALLE ausser den drei Rausgeflogenen unten. Die Rollen
+// stammen aus dem Lauf vom 19.09.; die Karten zeigen damit nicht eine Vorgabe,
+// sondern den Stand, gegen den neu gemessen wird. Wer die Rangfolge hier aendert,
+// aendert sie auch drueben: sonst behauptet die Karte "Primary" fuer ein Modell,
+// das der Worker als drittes anfaesst.
 //
 // Rausgeflogen am 19.09. (0/10 in allen zwoelf Tests, Entscheidung des Nutzers —
 // nicht wieder als "Reserve" aufnehmen): minimax-m3, minimax-m2.7 (beide nicht
 // mehr in der Live-Liste), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it.
+//
+// 🔴 19 Modelle x 12 Tests = 228 Calls je Lauf, plus Retries. OpenRouter deckelt
+// :free-Modelle (Doku, Stand 19.09.2026) auf 20 Anfragen/Minute und 1000/Tag
+// (mit >= 10 $ je gekauftem Guthaben, sonst 50/Tag). Ein voller Lauf ist also
+// ein Viertel des Tages, und vier parallele Modelle koennen die Minute reissen —
+// fuer einzelne Modelle MWLBench.runOne('…') nehmen. Ein 429 wird als 0/10
+// gewertet und sieht in der Matrix genauso aus wie ein Modell, das nichts kann:
+// bei einer Nullzeile erst die Details der Karte oeffnen (FEHLER: …), bevor das
+// Modell rausfliegt.
 const MODELS = [
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',   role: 'Primary'     },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',    role: 'Fallback 1'  },
-  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',       role: 'Fallback 2'  },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',   role: 'Fallback 3'  },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',    role: 'Last Resort' },
-  // ── Kandidaten, neu in der Live-Liste, noch ohne Messwert. Die ersten zwei
-  //    stehen im Worker ganz unten; content-safety ist laut Modellkarte ein
-  //    4B-Guardrail-Klassifikator und steht NUR hier — der Lauf soll zeigen,
-  //    ob er ueberhaupt eine Woche generiert, bevor er eine Kette kostet.
-  { id: 'deepseek/deepseek-v4-flash-0731:free',               label: 'DeepSeek V4 Flash',  role: 'Kandidat 1'  },
-  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',       role: 'Kandidat 2'  },
-  { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',    role: 'Kandidat 3'  },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',    role: 'Primary'     },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',     role: 'Fallback 1'  },
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',        role: 'Fallback 2'  },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',    role: 'Fallback 3'  },
+  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',     role: 'Last Resort' },
+  // ── Kandidaten ohne Messwert, Reihenfolge = Vermutung (Allzweck-Instruct vor
+  //    Coding vor Fach-Modellen). Alle stehen im Worker unter den fuenf oben,
+  //    bis auf content-safety: laut Modellkarte ein 4B-Guardrail-Klassifikator,
+  //    steht NUR hier — der Lauf soll zeigen, ob er ueberhaupt eine Woche
+  //    generiert, bevor er eine Kette kostet. inkling und glm-5.2 hatten am
+  //    31.08. 0 % (keine Antwort) und sind zur Wiedervorlage drin.
+  { id: 'deepseek/deepseek-v4-flash-0731:free',               label: 'DeepSeek V4 Flash',   role: 'Kandidat 1'  },
+  { id: 'qwen/qwen3.8-27b:free',                              label: 'Qwen 3.8 27B',        role: 'Kandidat 2'  },
+  { id: 'thinkingmachines/inkling:free',                      label: 'Inkling',             role: 'Kandidat 3'  },
+  { id: 'thinkingmachines/inkling-small:free',                label: 'Inkling Small',       role: 'Kandidat 4'  },
+  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',         role: 'Kandidat 5'  },
+  { id: 'z-ai/glm-5.2:free',                                  label: 'GLM 5.2',             role: 'Kandidat 6'  },
+  { id: 'nex-agi/nex-n2.5-pro:free',                          label: 'Nex N2.5 Pro',        role: 'Kandidat 7'  },
+  { id: 'nex-agi/nex-n2.5-mini:free',                         label: 'Nex N2.5 Mini',       role: 'Kandidat 8'  },
+  { id: 'inclusionai/ling-3.0-flash-vl:free',                 label: 'Ling 3.0 Flash VL',   role: 'Kandidat 9'  },
+  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',       role: 'Kandidat 10' },
+  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',        role: 'Kandidat 11' },
+  { id: 'inclusionai/ling-3.0-flash-fin:free',                label: 'Ling 3.0 Flash Fin',  role: 'Kandidat 12' },
+  { id: 'inclusionai/ling-3.0-flash-sante:free',              label: 'Ling 3.0 Flash Santé', role: 'Kandidat 13' },
+  { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',     role: 'Nur Benchmark' },
 ];
 
 // Wie viele MODELLE gleichzeitig laufen. Bewusst ueber die Modelle und nicht
@@ -1282,7 +1305,7 @@ async function runBenchmark(modelFilter) {
 
   // ── Pool: mehrere Modelle gleichzeitig ──────────────────────────────────
   // Jeder Arbeiter nimmt sich das naechste freie Modell und faehrt es komplett
-  // durch. Bei 8 Modellen und POOL_SIZE=4 dauert der Lauf rund die Haelfte.
+  // durch. Bei 19 Modellen und POOL_SIZE=4 dauert der Lauf rund ein Viertel.
   const warteschlange = models[Symbol.iterator]();
   const arbeiter = async () => {
     for (;;) {
