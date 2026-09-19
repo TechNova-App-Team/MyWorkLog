@@ -2,26 +2,29 @@
 
 <br>
 
-<img src="Grafiken/icon-512.png" alt="MyWorkLog" width="120" height="120">
+<img src="Grafiken/icon-512.png" alt="MyWorkLog" width="112" height="112">
 
 <br>
 
 # MyWorkLog
 
-### Die offene Zeiterfassung für Auszubildende
+### Zeiterfassung und digitales Berichtsheft für Auszubildende
 
-Lokal-first · Offline-fähig · DSGVO-konform · 100% kostenlos
+Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-6.9.16-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](https://github.com/TechNova-App-Team/MyWorkLog/releases)
-[![PWA](https://img.shields.io/badge/PWA-Ready-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![License](https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
+[![Version](https://img.shields.io/badge/version-7.3.0-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
+[![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
+
+[![Tests](https://github.com/TechNova-App-Team/MyWorkLog/actions/workflows/tests.yml/badge.svg)](https://github.com/TechNova-App-Team/MyWorkLog/actions/workflows/tests.yml)
+[![Live-Check](https://github.com/TechNova-App-Team/MyWorkLog/actions/workflows/live-check.yml/badge.svg)](https://github.com/TechNova-App-Team/MyWorkLog/actions/workflows/live-check.yml)
 
 <br>
 
-[Live](https://myworklog.de/) · [Berichtsheft](https://myworklog.de/berichtsheft/) · [Aufgaben](https://myworklog.de/aufgaben/) · [Rechte-Checker](https://myworklog.de/rechte-checker/) · [Architektur](https://myworklog.de/archflow/)
+[App öffnen](https://myworklog.de/) · [Berichtsheft](https://myworklog.de/berichtsheft/) · [Aufgaben](https://myworklog.de/aufgaben/) · [Rechte-Checker](https://myworklog.de/rechte-checker/) · [Für Ausbilder](https://myworklog.de/ausbilder/) · [English](https://myworklog.de/en/)
 
 <br>
 
@@ -31,73 +34,78 @@ Lokal-first · Offline-fähig · DSGVO-konform · 100% kostenlos
 
 ## Was ist MyWorkLog?
 
-MyWorkLog ist eine **Progressive Web App** für deutsche Auszubildende, Mitarbeiter und Freelancer, die ihre Arbeitszeit professionell erfassen wollen — **ohne Account-Zwang, ohne Tracker, ohne Cloud-Pflicht.**
+MyWorkLog ist eine **Progressive Web App** für Auszubildende in Deutschland: Arbeitszeit erfassen, Gleitzeitkonto führen, das Berichtsheft schreiben und als amtlichen IHK-Vordruck ausgeben — **ohne Konto, ohne Werbe-Tracking, ohne Cloud-Zwang.**
 
-Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lokal in deinem `localStorage`. Wer will, kann optional auf eine eigene Supabase-Instanz syncen — der Source-Code ist offen, du behältst die Kontrolle.
+Die App ist reines HTML, CSS und JavaScript und läuft vollständig im Browser. Die Daten liegen im `localStorage` des Geräts. Wer mehrere Geräte abgleichen oder das Berichtsheft vom Ausbilder freigeben lassen will, meldet sich freiwillig an — alles andere funktioniert auch ohne.
 
-```
-   Lokal-first    →   Daten bleiben auf deinem Gerät
-   Offline-ready  →   PWA mit Service Worker, läuft ohne Internet
-   DSGVO-clean    →   Kein Tracking, keine Dritt-Anbieter-Calls per Default
-   Azubi-DNA      →   Berichtsheft (IHK), BBiG-Rechte, Untis, Fahrtkosten
-   AI-optional    →   Cloud-KI (OpenRouter-Proxy) oder lokales WebLLM
-```
+| Grundsatz | Was das konkret heißt |
+|---|---|
+| **Lokal zuerst** | Daten bleiben auf dem Gerät; zehn Sicherungskopien im Hintergrund, verschlüsselter Export auf Wunsch |
+| **Offline nutzbar** | Service Worker mit drei Cache-Strategien — die App startet auch ohne Netz |
+| **Ohne Werbe-Tracking** | keine Cookies, keine Profile; Nutzungszahlen nur anonym (PostHog EU, cookiefrei) |
+| **Für die Ausbildung gebaut** | IHK-Berichtsheft, Prüfungszulassung, BBiG-Rechte, Berufsschule, Untis, Fahrtkosten |
+| **KI optional** | Berichtsheft-Vorschläge aus der Cloud (über einen Proxy, kein eigener Schlüssel) oder aus einer lokalen Engine ohne Netz |
 
 ---
 
-## Features
+## Funktionen
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
 ### Zeiterfassung
-- Live-Timer mit Pause-Automatik & Live-Verdienst-Zähler
-- Kategorien: Arbeit · Schule · Urlaub · Krank · Feiertag
-- Mehrere Jobs mit eigenem Soll/Pause & getrenntem Saldo
-- §4 ArbZG-konforme Pausenregel
-- Kalender- und Wochenansicht
-- Custom Entry Types & Fields
+- Live-Timer mit Pausen, Live-Verdienst-Zähler
+- Eintragstypen: Arbeit · Berufsschule · Urlaub · Gleittag · Krankheit · Feiertag · Korrektur — plus eigene Typen und Felder
+- Mehrere Jobs mit eigenem Soll, eigener Pause und getrenntem Saldo
+- Geteilte Schichten am selben Tag
+- Wochen-, Monats- und Jahresansicht, Monatsvergleich
+- Verlauf mit Zeitband, Suche mit Operatoren (`>8`, `<6`, `#Projekt`)
+- Import aus Excel, CSV und Zwischenablage — Wechsel von anderen Apps ohne Datenverlust
 
-### Analytics
-- KPI-Dashboard mit Ringen
-- Trends nach Woche · Monat · Jahr
-- SVG-Charts (Area · Bar · Line · Heatmap)
-- 8+ Analytics-Tabs in `/analytics/`
-- Mächtige Suche mit Operatoren (>8, <6, #Projekt)
-- Export: PDF · Excel · CSV · iCal (RFC 5545)
+### Auswertung
+- KPI-Dashboard mit Ringen, frei anordenbare Widgets
+- Trends nach Woche · Monat · Jahr, Heatmap
+- ArbZG-Prüfung: Höchstarbeitszeit (§ 3), Ruhepausen (§ 4), Ruhezeit (§ 5)
+- Ziele mit Fortschritt
+- Export: JSON · CSV · iCal (RFC 5545) · HTML-Bericht mit Diagrammen · verschlüsseltes Backup
 
-### AI
-- Cloud-KI via OpenRouter-Proxy (kein eigener Key nötig)
-- Spracheingabe für Timer & Chat
-- Pattern Recognition & Smart Insights
+### Berichtsheft
+- Tages- und Wochenberichte, Kalender, Vorlagen
+- Amtliche IHK-Vordrucke als PDF (DIHK-Muster, Neufassung, IHK München)
+- Vorschläge aus Zeiterfassung und Aufgaben; KI aus der Cloud oder lokal
+- Foto vom Papierheft → Text (OCR lokal im Browser)
+- IHK-PDF-Import bestehender Hefte
+- **Betrieb & Ausbilder:** Freigabe, Prüfverlauf, Vertretung, signierte Freigaben (ECDSA), § 14-Frist
+- Schatten-Berichtsheft: ein zweites, verschlüsseltes Heft für Notizen, die niemand sieht
 
 </td>
 <td width="50%" valign="top">
 
-### Azubi-Tools
-- **Berichtsheft** — Amtliche IHK-Vordrucke, Betriebs-Anbindung (B2B), AI-Generierung & PDF/Excel-Import
-- **Urlaubsplaner** — Brückentag-Empfehlungen & Multi-Range
-- **Rechte-Checker** — BBiG / JArbSchG / ArbZG interaktiv prüfen
-- **Vertrags-Manager** — Gehalt, Benefits, Lohnzuschläge
-- **Fahrtkosten** — Echtes Routing je Verkehrsmittel, Pendlerpauschale
-- **IT-Stories** — Interaktive Deep-Dives zu IT-Themen
-- **Untis-Sync** — Stundenplan automatisch oder manuell
-- **Skill-Tree** — RPG-Gamification für Ausbildungsfortschritt
+### Azubi-Werkzeuge
+- **Aufgaben** — Heute / Geplant / Alle / Erledigt, Schnelleingabe („morgen", „!!", „#Liste"), Wiederholungen, Notizen
+- **Rechte-Checker** — BBiG, JArbSchG und ArbZG interaktiv prüfen
+- **IHK-Ansicht** — Prüfungszulassung, Fehlquote, Nachweis-Lücken
+- **Berufsschule** — Noten je Lehrjahr, Stundenplan aus WebUntis
+- **Urlaubsplaner** — Brückentage nach Bundesland, Ausbeute-Ranking, Ein-Klick-Buchung
+- **Vertrags-Manager** — Gehalt, Benefits, Zuschläge
+- **Fahrtkosten** — Routing je Verkehrsmittel, eigene Strecke einzeichnen, Pendlerpauschale
+- **Skill-Baum** — IT-Wissen der Ausbildung üben, Fragenbank mit Wiederholung
+- **IT-Deep-Dives** — bedienbare Diagramme zu LED, SSD, Arbeitsspeicher, Qubit
 
-### Sicherheit
-- AES-256-GCM verschlüsselte Backups
-- DOMPurify Input-Sanitization
-- Row-Level Security (Supabase)
-- Optionaler Cloud-Sync — kein Default-Tracking
-- DSGVO-konform (keine Cookies, kein Server-Logging)
+### Sicherheit & Datenschutz
+- AES-256-GCM für Backups, Schatten-Heft und P2P-Übertragung
+- DOMPurify für alle Nutzereingaben, strenge CSP
+- Cloud nur nach Anmeldung; Row-Level Security in der Datenbank
+- Anmeldung per Magic-Link, Google, GitHub, Discord oder Passkey
+- Boss-Key: eine Taste, und die App sieht aus wie eine Tabellenkalkulation
 
 ### PWA
-- Service Worker (Cache-First Assets, Network-First Daten)
-- Installierbar auf iOS · Android · Desktop
-- PWA-Quick-Actions (Long-Press-Menü)
-- Web Share Target API
-- P2P-Sync via WebRTC (SimplePeer + TURN)
+- Installierbar auf iOS, Android und Desktop
+- Startmenü-Verknüpfungen (Timer, neuer Eintrag, Berichtsheft, Aufgaben)
+- Web Share Target
+- P2P-Abgleich zwischen zwei Geräten per WebRTC, ohne Server-Speicher
+- NFC-Chip als Stempeluhr (Android, Chrome)
 
 </td>
 </tr>
@@ -105,159 +113,185 @@ Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lok
 
 ---
 
-## Quick Start
+## Seiten
+
+Die App unter `/` ist eine Single-Page-App aus Komponenten. Daneben gibt es eigenständige Seiten — jede auch auf Englisch unter `/en/`.
+
+| Seite | Was dort passiert |
+|---|---|
+| [/berichtsheft/](https://myworklog.de/berichtsheft/) | Berichtsheft schreiben, IHK-Vordrucke, KI-Vorschläge, Foto-Import |
+| [/ausbilder/](https://myworklog.de/ausbilder/) | Cockpit für Ausbilder: Hefte prüfen, freigeben, Fristen |
+| [/schatten-berichtsheft/](https://myworklog.de/schatten-berichtsheft/) | Das verschlüsselte zweite Heft, erklärt |
+| [/aufgaben/](https://myworklog.de/aufgaben/) | Aufgaben mit Wiederholungen und Notizen |
+| [/rechte-checker/](https://myworklog.de/rechte-checker/) | Ausbildungsrechte interaktiv prüfen |
+| [/vertrags-manager/](https://myworklog.de/vertrags-manager/) | Vertrag, Gehalt, Zuschläge |
+| [/fahrtkosten/](https://myworklog.de/fahrtkosten/) | Fahrtkosten mit echter Route und Karte |
+| [/skill-tree/](https://myworklog.de/skill-tree/) | Lernstrecke mit Fragenbank |
+| [/it-landing/](https://myworklog.de/it-landing/) | Einstieg zu Skill-Baum und Deep-Dives |
+| [/it-stories/…](https://myworklog.de/it-landing/) | Deep-Dives: blaue LED, SSD, Arbeitsspeicher, Qubit |
+| [/wechseln/](https://myworklog.de/wechseln/) | Umzug aus anderen Zeiterfassungen |
+| [/vergleich/](https://myworklog.de/vergleich/) | MyWorkLog neben Zubido, Azubiheft und BLok |
+| [/archflow/](https://myworklog.de/archflow/) | Der Quellcode als Karte |
+| [/about/](https://myworklog.de/about/) · [/Impressum/](https://myworklog.de/Impressum/) · [/DSGVO/](https://myworklog.de/DSGVO/) | Über uns, Impressum, Datenschutz |
+
+---
+
+## Lokal starten
 
 ```bash
-# Repo clonen
 git clone https://github.com/TechNova-App-Team/MyWorkLog.git
 cd MyWorkLog
+npm install            # nur Build-Werkzeuge und Tests, die App selbst hat keine Abhängigkeiten
+npm run build:index    # baut index.html aus index.template.html + components/**
+npx serve .            # oder jeder andere statische Server
+```
 
-# Lokal servieren (egal wie)
-python -m http.server 8000
-# oder: npx serve .
-# oder: index.html direkt im Browser öffnen
+Dann `http://localhost:3000/` öffnen. Die eigenständigen Seiten liegen lokal unter `/pages/<name>/` — die kurzen Adressen (`/berichtsheft/`) kommen erst auf Cloudflare aus `_redirects` und einer Rewrite-Regel.
 
-# Tests + Linting
-npm install
-npm test
+```bash
+npm test               # alle Tests aus tools/*.test.mjs
+npm run i18n:build     # englische Seiten nach pages/en/ rendern
 npm run lint
 ```
 
-**Kein Build-Step.** Vanilla JS/HTML/CSS, alle Scripts werden direkt via `<script src>` geladen. PWA-Manifest und Service Worker sind ohne Konfiguration einsatzbereit.
+**Kein Bundler, kein Framework.** Alle Skripte werden per `<script src>` geladen. Ein kleiner Node-Build setzt nur die Teile zusammen: `index.html` aus dem Template, `/en/` aus Übersetzungs-Wörterbüchern, `?v=`-Stempel für den Cache. `index.html` und `pages/en/` sind deshalb nicht im Repo — Cloudflare baut sie beim Deploy.
 
 ---
 
-## Projekt-Architektur
+## Aufbau
 
 ```
 MyWorkLog/
-├─ index.template.html     index.html builder
-├─ service-worker.js       Offline-Cache, Push-Notifications
-├─ manifest.json           PWA-Metadata, Shortcuts, Icons
+├─ index.template.html      Kopf und Gerüst der App; wird zu index.html gebaut
+├─ service-worker.js        Offline-Cache (Network-First, Cache-First, Stale-While-Revalidate)
+├─ manifest.json            PWA: Verknüpfungen, Share Target, Icons
 │
-├─ components/             Modulare Komponenten ({css,html,js} pro Modul)
-│  ├─ core/                Timer · Storage · Save · Utils
-│  ├─ dashboard/           KPI-Ringe, Charts
-│  ├─ analytics-pro/       Erweiterte Analytics
-│  ├─ goals/               Ziel-Tracking
-│  ├─ school/              Schultag-Verwaltung
-│  ├─ untis/               Stundenplan-Sync
-│  └─ ...                  20+ weitere Module
+├─ components/              Die App, eine Komponente je Ordner: {name}.html + .css + .js
+│  ├─ core/                 Speicher, Timer, Diagramme, Export, Cloud-Abgleich, P2P, Icons
+│  ├─ dashboard/            KPI-Ringe, Eintrag erfassen, Widgets
+│  ├─ history/ weekview/ yearview/ monthcompare/   Auswertungen
+│  ├─ ihk/ school/ untis/ jobs/ goals/             Ausbildung, Schule, Jobs, Ziele
+│  ├─ import/ urlaubsplaner/ bbig-scanner/ ghost/  Wechsel-Brücke, Urlaub, Rechte, Boss-Key
+│  └─ …                     eine Komponente je Ansicht, Dialog und Werkzeug
 │
-├─ pages/                  Standalone-Pages (Clean URLs via _redirects)
-│  ├─ berichtsheft/        IHK-Ausbildungsnachweise + AI-Generator
-│  ├─ aufgaben/            Task-Manager
-│  ├─ rechte-checker/      Azubi-Rechte interaktiv prüfen
-│  ├─ vertrags-manager/    Gehalt, Urlaub
-│  ├─ fahrtkosten/         Pendlerpauschale, Routing
-│  ├─ skill-tree/          RPG-Gamification
-│  ├─ analytics/           Advanced Analytics
-│  ├─ archflow/            Architektur-Visualisierung
-│  ├─ en/                  Englische Version
-│  └─ ...
+├─ pages/                   Eigenständige Seiten, je pages/<name>/index.html
+│  ├─ berichtsheft/         Markup — die Logik liegt in Assets/js/berichtsheft/
+│  ├─ ausbilder/ aufgaben/ rechte-checker/ fahrtkosten/ skill-tree/ …
+│  └─ it-stories/<slug>/    Deep-Dives mit bedienbaren Diagrammen
 │
-├─ Assets/                 Statische Ressourcen (css, js, icons)
-│  └─ js/Cloud/            Supabase-Integration (Auth + Sync)
+├─ Assets/
+│  ├─ js/berichtsheft/      Berichtsheft-Engine, IHK-Vordrucke, Freigabe, Tresor, OCR
+│  ├─ js/Cloud/             Supabase: Anmeldung und Abgleich
+│  ├─ css/ · js/ · icons/   Seiten-Stile, Seiten-Skripte, Icons
+│  └─ i18n/                 Gerenderte Übersetzungs-Wörterbücher (Build-Zwischenstand)
 │
-├─ config/                 supabase-config.js (anon key, public-safe)
-├─ Grafiken/               Icons + Intro-Video
-├─ Rechtliches/            LICENSE, PRIVACY, SECURITY, CODE_OF_CONDUCT
+├─ tools/                   Build-Kette, i18n-Pipeline, Tests (*.test.mjs), Mess-Skripte
+├─ config/                  version.json (Version + Changelog), maintenance.json, Supabase-Konfiguration
+├─ Grafiken/                Icons, Intro-Video
+├─ Rechtliches/             LICENSE, PRIVACY, SECURITY, CONTRIBUTING, CODE_OF_CONDUCT
+├─ .github/workflows/       Tests bei jedem Push; täglicher Live-Check der ausgelieferten Site
 │
-├─ _headers                Cloudflare Pages Headers (CSP, Security)
-└─ _redirects              Clean URLs (/berichtsheft → /pages/berichtsheft.html)
+├─ _headers                 CSP und Cache-Header für Cloudflare Pages
+└─ _redirects               Weiterleitungen und Sperren; kurze Adressen für pages/
 ```
 
-**Convention:** Components heißen `{name}.{css,html,js}` und werden in `index.html` per `<script src>` geladen — Reihenfolge wichtig (core → dashboard → ... → extras).
+**Build-Kette** (`npm run build`, läuft auf Cloudflare): `build-index` → `stamp-assets` → `i18n:build` → `stamp-assets` → `repo-report` → `strip-comments` → `prune-deploy`. Die letzten beiden greifen nur im Deploy: Kommentare raus, Quellen und Werkzeuge aus dem Ausgabeordner löschen.
 
 ---
 
-## Tech Stack
+## Technik
 
-| Layer | Technologie |
+| Ebene | Was |
 |---|---|
-| **Frontend** | Vanilla HTML/CSS/JavaScript (kein Framework, kein Bundler) |
-| **Storage** | `localStorage` mit JSON-Schema + Backup-Rotation (10×) |
-| **Cloud-Sync** (optional) | Supabase (Auth + Postgres + RLS) |
-| **AI-Proxy** | Cloudflare Worker → OpenRouter (Free Tier) |
-| **PWA** | Service Worker + Web App Manifest |
-| **Sicherheit** | DOMPurify 3.2.4, AES-256-GCM Backup-Encryption |
-| **P2P** | WebRTC via SimplePeer + TURN |
-| **Hosting** | Cloudflare Pages → `myworklog.de` |
-| **Build** | Kein Build — Roh-Files direkt deployed |
-| **Tests** | Jest + ESLint |
+| **Frontend** | HTML, CSS, JavaScript — kein Framework, kein Bundler, keine Module |
+| **Speicher** | `localStorage` (JSON) mit zehn rotierenden Sicherungen; Berichtsheft-Tresor in IndexedDB |
+| **Cloud** (optional) | Supabase — Auth, Postgres, Row-Level Security; Anmeldung per Magic-Link, OAuth oder Passkey |
+| **KI-Proxy** | Cloudflare Worker `ai-proxy.myworklog.de` → OpenRouter; API-Schlüssel bleiben im Worker |
+| **PWA** | Service Worker mit drei Cache-Strategien, Web App Manifest |
+| **Sicherheit** | DOMPurify 3.2.4, AES-256-GCM (Web Crypto), ECDSA-Signaturen für Freigaben, strenge CSP |
+| **P2P** | WebRTC über simple-peer, STUN/TURN |
+| **Bibliotheken bei Bedarf** | jsPDF (Vordrucke), Tesseract.js (OCR), MapLibre GL (Karte), Chart.js, three.js / 3d-force-graph (ArchFlow) — alle erst geladen, wenn die Seite sie braucht |
+| **Hosting** | Cloudflare Pages → myworklog.de |
+| **Tests** | Node-Tests unter `tools/` (jsdom, gegen die echten Quelldateien), GitHub Actions bei jedem Push, täglicher Live-Check der Site |
+| **Sprachen** | Deutsch als Quelle; Englisch unter `/en/` als echte, statisch gerenderte Seiten |
 
 ---
 
-## Cloud-Sync (optional)
+## Cloud-Abgleich (optional)
 
-Daten bleiben **per Default lokal**. Wer Sync zwischen Geräten will:
+Ohne Anmeldung bleibt alles lokal. Wer sich anmeldet, bekommt:
 
-1. Account auf [supabase.com](https://supabase.com) anlegen (free tier reicht)
-2. Project-URL und **anon key** in `config/supabase-config.js` eintragen
-3. RLS-Policies aus `DB/rls-policies.sql` einspielen
-4. In der App via Magic-Link einloggen → Auto-Sync läuft
+- Abgleich der Zeiterfassung zwischen Geräten
+- Berichtsheft-Freigabe durch den Ausbilder (Betrieb verbinden, Einladungscode, Rollen)
+- Verschlüsselter Berichtsheft-Tresor in der Cloud — der Schlüssel bleibt beim Nutzer
 
-**Warum sicher:**
-- `anon key` ist **public-by-design** (steht im Frontend, das ist okay)
-- Sicherheit hängt an Row-Level-Security — User sehen nur eigene Rows
-- `service_role`-Key ist nur Backend (niemals client-side)
-- API-Keys für AI laufen über Cloudflare-Worker (`ai-proxy.myworklog.de`), nie im Frontend
+**Warum der `anon key` im Frontend stehen darf:** Er ist öffentlich gedacht. Was ein Konto sehen und schreiben darf, entscheidet Row-Level Security in der Datenbank, nie der Client. Der `service_role`-Schlüssel und die KI-API-Schlüssel liegen ausschließlich in Cloudflare-Secrets.
+
+**Eigener Fork mit eigener Cloud:** Der Client spricht mit dem Supabase-Projekt aus `config/supabase-config.js`. Ein Fork braucht ein eigenes Projekt samt Tabellen, RLS-Policies und RPC-Funktionen — das Datenbankschema liegt nicht in diesem Repository.
 
 ---
 
-## Browser-Support
+## Browser
 
-| Browser | Min-Version |
+| Browser | ab Version |
 |---|---|
-| Chrome / Edge | 90+ |
-| Firefox | 88+ |
-| Safari | 14+ |
+| Chrome / Edge | 90 |
+| Firefox | 88 |
+| Safari | 14 |
 
-PWA-Install funktioniert auf allen Modern-Browsers. WebGPU für On-Device-LLM nur Chromium-basiert (Chrome / Edge / Arc).
+Die Mindestversionen stehen in `config/version.json` (`minBrowser`). NFC-Stempeluhr nur in Chrome auf Android; Passkeys überall dort, wo der Browser WebAuthn kann.
 
 ---
 
 ## Versionierung
 
-Aktuelle Version: **v6.9.16** (Release 2026-09-10)
+Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`. Der vollständige Changelog steht in `config/version.json` und in der App unter **Support → Releases**.
 
-```text
-6.9.16  Optische Verbesserungen und Fehlerbehebung beim Import von IHK-Berichtsheften
-6.9.15  Mehrere Ausbilder je Betrieb und eine Meldung, wenn eine Woche gelöscht wird
-6.9.14  Die App-Tour und Schnelle Hilfe nutzen jetzt das einheitliche Theme und SVG-Symbole
-6.9.13  Ausbildungsjahre beim IHK-PDF-Import stichtagsgenau berechnet
-```
+<!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
+<!-- changelog:start -->
 
-Vollständige Liste in `config/version.json` oder auf https://myworklog.de/ -> Support.
+Aktuelle Version: **v7.3.0** · 2026-09-18
+
+| Version | Datum | Was ist anders |
+|---|---|---|
+| **7.3.0** | 2026-09-18 | Neue Seite: MyWorkLog, Zubido, Azubiheft und BLok im Vergleich |
+| 7.2.5 | 2026-09-17 | Enter speichert den Eintrag |
+| 7.2.4 | 2026-09-16 | Der IHK-Vordruck sortiert Schultage in den Berufsschul-Block |
+| 7.2.3 | 2026-09-16 | Das Berichtsheft-Formular kennt jetzt dein Lehrjahr und deine Soll-Stunden |
+| 7.2.2 | 2026-09-16 | Erinnerungen zur selben Uhrzeit kommen als eine Benachrichtigung |
+
+<!-- changelog:end -->
 
 ---
 
 ## Mitmachen
 
-Pull Requests willkommen. Für größere Änderungen erst Issue öffnen.
+Pull Requests sind willkommen. Für größere Änderungen bitte zuerst ein Issue öffnen.
 
-- **Bug?** → [Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues)
-- **Feature-Idee?** → [Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues) (mit Label `enhancement`)
+- **Fehler gefunden?** → [Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues)
+- **Idee?** → [Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues) mit Label `enhancement`
 - **Code beisteuern?** → [CONTRIBUTING.md](Rechtliches/CONTRIBUTING.md)
-- **Security-Lücke?** → [SECURITY.md](Rechtliches/SECURITY.md) (Disclosure-Process)
+- **Sicherheitslücke?** → [SECURITY.md](Rechtliches/SECURITY.md) — bitte nicht als öffentliches Issue
 - **Verhalten?** → [CODE_OF_CONDUCT.md](Rechtliches/CODE_OF_CONDUCT.md)
+
+Vor dem Pull Request: `npm test` — derselbe Lauf wie in der GitHub Action.
 
 ---
 
 ## Lizenz
 
-[MIT](Rechtliches/LICENSE.md) © TechNova App Team
+[MIT](Rechtliches/LICENSE.md) © 2025–2026 Sven Kunz · TechNova App Team
 
-Forks, Fork-and-Sell, kommerzielle Nutzung, alles erlaubt — Hauptsache der Copyright-Hinweis bleibt.
+Nutzen, verändern, weitergeben, auch kommerziell — der Lizenzhinweis bleibt drin. Lizenzen der eingebundenen Bibliotheken: [NOTICE.md](Rechtliches/NOTICE.md).
 
 ---
 
 <div align="center">
 
-<sub>Gebaut mit Vanilla-JS, Kaffee und der Überzeugung, dass Zeiterfassung nicht kompliziert sein muss.</sub>
+<sub>Gebaut ohne Framework, mit Kaffee und der Überzeugung, dass Zeiterfassung nicht kompliziert sein muss.</sub>
 
 <br>
 
-[Website](https://myworklog.de/) · [Impressum](https://myworklog.de/Impressum/) · [Datenschutz](https://myworklog.de/DSGVO/) · [Security](Rechtliches/SECURITY.md)
+[Website](https://myworklog.de/) · [Impressum](https://myworklog.de/Impressum/) · [Datenschutz](https://myworklog.de/DSGVO/) · [Datenschutz der App](Rechtliches/PRIVACY.md) · [Security](Rechtliches/SECURITY.md)
 
 </div>

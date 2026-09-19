@@ -31,7 +31,6 @@ const OFFLINE_URL = './offline/';
 const DEBUG       = true;
 
 const log  = (...a) => DEBUG && console.log('[SW]', ...a);
-const warn = (...a) => DEBUG && console.warn('[SW]', ...a);
 
 // Dateitypen die gecacht werden (nur eigener Origin)
 const CACHEABLE_EXTS = new Set(['js', 'css', 'html', 'png', 'svg', 'jpg',

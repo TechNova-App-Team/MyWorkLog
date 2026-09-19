@@ -61,8 +61,10 @@ if echo "$changed" | grep -qE '^config/version\.json'; then
     echo "[stamp] ✗ Stamping fehlgeschlagen — Commit abgebrochen."
     exit 1
   fi
-  # stamp-assets gleicht auch package.json an config/version.json an
-  git add index.template.html components pages package.json 2>/dev/null
+  # stamp-assets gleicht auch package.json, README.md (Badge + Changelog-
+  # Tabelle) und das EN-Woerterbuch (JSON-LD-Version) an config/version.json an
+  git add index.template.html components pages package.json README.md \
+          tools/i18n/dict/index.en-overrides.json 2>/dev/null
   node tools/build-index.js > /dev/null   # index.html mit frischen Stempeln neu bauen
 fi
 

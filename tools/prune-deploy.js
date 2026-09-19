@@ -65,10 +65,6 @@ const REMOVE = [
   'tools',                 // Build-Tooling
   'CLAUDE.md',
   '.eslintrc.json',
-  'jest.config.js',
-  'babel.config.js',
-  '__tests__',
-  '__mocks__',
   '.github',               // Workflows — gehoeren ins Repo, nicht auf die Domain
 ];
 
