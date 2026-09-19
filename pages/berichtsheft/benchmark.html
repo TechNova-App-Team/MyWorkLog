@@ -237,7 +237,7 @@
 
   <header>
     <h1>Berichtsheft AI Benchmark <span class="badge">DEV</span></h1>
-    <p class="sub">Fährt die Test-Suite gegen OpenRouter — mit dem Prompt, den <code>pages/berichtsheft/index.html</code> live baut, nicht mit einer Kopie davon.</p>
+    <p class="sub">Fährt die Test-Suite gegen OpenRouter — mit dem Prompt, den <code>Assets/js/berichtsheft/ais-cloud.js</code> live baut, nicht mit einer Kopie davon.</p>
   </header>
 
   <div class="card">
@@ -311,31 +311,34 @@
 
 // ═══════════════════════════════════════════════════════════
 //  Die Test-Suite steht hier; der Prompt wird zur Laufzeit aus
-//  pages/berichtsheft/index.html geholt (ladeEchtenPrompt).
+//  Assets/js/berichtsheft/ais-cloud.js geholt (ladeEchtenPrompt).
 // ═══════════════════════════════════════════════════════════
 
 const STORAGE_KEY = 'mwlbench_or_key';
 
-// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.7).
-// Am 31.08.2026 gegen https://openrouter.ai/api/v1/models geprueft: alle 13 leben.
-// Die Rollen stammen seit v3.7 aus dem Lauf vom 31.08. — die Karten zeigen damit
-// nicht mehr eine Vorgabe, sondern den Stand, gegen den neu gemessen wird. Wer die
-// Rangfolge hier aendert, aendert sie auch drueben: sonst behauptet die Karte
-// "Primary" fuer ein Modell, das der Worker als achtes anfaesst.
+// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.8).
+// Am 19.09.2026 gegen https://openrouter.ai/api/v1/models geprueft: alle 8 leben.
+// Die Rollen stammen aus dem Lauf vom 19.09. — die Karten zeigen damit nicht eine
+// Vorgabe, sondern den Stand, gegen den neu gemessen wird. Wer die Rangfolge hier
+// aendert, aendert sie auch drueben: sonst behauptet die Karte "Primary" fuer ein
+// Modell, das der Worker als drittes anfaesst.
+//
+// Rausgeflogen am 19.09. (0/10 in allen zwoelf Tests, Entscheidung des Nutzers —
+// nicht wieder als "Reserve" aufnehmen): minimax-m3, minimax-m2.7 (beide nicht
+// mehr in der Live-Liste), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it.
 const MODELS = [
-  { id: 'minimax/minimax-m3:free',                            label: 'MiniMax M3',         role: 'Primary'     },
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',   role: 'Fallback 1'  },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',    role: 'Fallback 2'  },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',   role: 'Primary'     },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',    role: 'Fallback 1'  },
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',       role: 'Fallback 2'  },
   { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',   role: 'Fallback 3'  },
-  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',       role: 'Fallback 4'  },
-  { id: 'minimax/minimax-m2.7:free',                          label: 'MiniMax M2.7',       role: 'Fallback 5'  },
   { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',    role: 'Last Resort' },
-  // ── Ab hier unter der 30-%-Schwelle des letzten Laufs. Bleiben im Benchmark,
-  //    weil genau hier die Frage haengt, ob sie dauerhaft nichts liefern oder nur
-  //    an dem Tag nichts geliefert haben.
-  { id: 'nvidia/nemotron-3.5-lightning:free',                 label: 'Nemotron Lightning', role: 'Reserve 1'   },
-  { id: 'google/gemma-4-31b-it:free',                         label: 'Gemma 4 31B',        role: 'Reserve 2'   },
-  { id: 'google/gemma-4-26b-a4b-it:free',                     label: 'Gemma 4 26B A4B',    role: 'Reserve 3'   },
+  // ── Kandidaten, neu in der Live-Liste, noch ohne Messwert. Die ersten zwei
+  //    stehen im Worker ganz unten; content-safety ist laut Modellkarte ein
+  //    4B-Guardrail-Klassifikator und steht NUR hier — der Lauf soll zeigen,
+  //    ob er ueberhaupt eine Woche generiert, bevor er eine Kette kostet.
+  { id: 'deepseek/deepseek-v4-flash-0731:free',               label: 'DeepSeek V4 Flash',  role: 'Kandidat 1'  },
+  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',       role: 'Kandidat 2'  },
+  { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',    role: 'Kandidat 3'  },
 ];
 
 // Wie viele MODELLE gleichzeitig laufen. Bewusst ueber die Modelle und nicht
@@ -377,10 +380,18 @@ const PROFESSIONS = {
 
 const DAY_NAMES = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
 
-// ─── Production-Prompt: kommt aus der ECHTEN Seite ───────────────────────
-// Wird beim Laden aus /berichtsheft/ herausgeschnitten und ausgewertet. Damit
-// kann die Vorlage nicht mehr abdriften; die Handkopie darunter ist nur noch
-// Notnagel und meldet sich sichtbar, wenn sie benutzt wird.
+// ─── Production-Prompt: kommt aus der ECHTEN Quelle ──────────────────────
+// Wird beim Laden aus Assets/js/berichtsheft/ais-cloud.js herausgeschnitten und
+// ausgewertet. Damit kann die Vorlage nicht mehr abdriften; die Handkopie
+// darunter ist nur noch Notnagel und meldet sich sichtbar, wenn sie benutzt wird.
+//
+// 🔴 Bis 19.09.2026 stand hier `/berichtsheft/` — seit der Aufteilung in v6.5.0
+// traegt die Seite aber nur Markup, der Prompt liegt in ais-cloud.js. Der Lader
+// fand den Marker nicht, meldete das rot in der Konfig-Zeile, und der Lauf vom
+// 19.09. lief trotzdem auf der Handkopie von vor v6.4.18 (ohne [SPRACHE]-Block).
+// Wer die Datei-Tabelle in .claude/notes/berichtsheft.md aendert, zieht den
+// Pfad hier mit.
+const PROMPT_DATEI = '/Assets/js/berichtsheft/ais-cloud.js';
 let PROMPT_QUELLE = 'Kopie (veraltet!)';
 let buildPrompt = (opts) => buildProdPromptFallback(opts);
 
@@ -391,16 +402,19 @@ async function ladeEchtenPrompt() {
         if (i < 0 || j < 0) throw new Error('Marker nicht gefunden: ' + von);
         return html.slice(i, j);
     };
-    const res = await fetch('/berichtsheft/', { cache: 'no-store' });
+    const res = await fetch(PROMPT_DATEI, { cache: 'no-store' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const html = (await res.text()).split('\r\n').join('\n');
 
     // CLOUD_FORM … bis kurz vor _repairJSON deckt CLOUD_FORM, CLOUD_UMFANG und
-    // _buildCloudPrompt ab. PROFESSIONS und getCurrentSeason gibt der Benchmark dazu.
+    // _buildCloudPrompt ab. Was die Funktion von aussen liest, gibt der Benchmark
+    // dazu: PROFESSIONS, getCurrentSeason, UNIVERSAL_SCHULFAECHER (nur fuer Berufe
+    // ohne Faecherliste — hier haben alle eine) und `state` (nur fuer
+    // customProfession, hier nie erreicht, weil jeder Beruf in PROFESSIONS steht).
     const src = schnitt(html, 'const CLOUD_FORM = {', 'function _repairJSON(');
-    const f = new Function('PROFESSIONS', 'getCurrentSeason',
+    const f = new Function('PROFESSIONS', 'getCurrentSeason', 'UNIVERSAL_SCHULFAECHER', 'state',
         src + '\n; return { _buildCloudPrompt, CLOUD_FORM };');
-    const mod = f(PROFESSIONS, () => 'Sommer');
+    const mod = f(PROFESSIONS, () => 'Sommer', [], {});
     if (typeof mod._buildCloudPrompt !== 'function') throw new Error('_buildCloudPrompt fehlt');
 
     // Gegenprobe: der Prompt muss die Bloecke tragen, die die App heute schickt.
@@ -413,7 +427,7 @@ async function ladeEchtenPrompt() {
         if (!probe.includes(block)) throw new Error('Block fehlt im geladenen Prompt: ' + block);
     }
     buildPrompt = (opts) => mod._buildCloudPrompt(opts.professionId, opts);
-    PROMPT_QUELLE = 'Live aus /berichtsheft/';
+    PROMPT_QUELLE = 'Live aus ' + PROMPT_DATEI;
 }
 
 function buildProdPromptFallback(opts) {
@@ -1268,7 +1282,7 @@ async function runBenchmark(modelFilter) {
 
   // ── Pool: mehrere Modelle gleichzeitig ──────────────────────────────────
   // Jeder Arbeiter nimmt sich das naechste freie Modell und faehrt es komplett
-  // durch. Bei 13 Modellen und POOL_SIZE=4 dauert der Lauf rund ein Viertel.
+  // durch. Bei 8 Modellen und POOL_SIZE=4 dauert der Lauf rund die Haelfte.
   const warteschlange = models[Symbol.iterator]();
   const arbeiter = async () => {
     for (;;) {
