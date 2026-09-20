@@ -495,6 +495,11 @@
         // Extern
         { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './berichtsheft/'; } },
         { id: 'ihk-berichtsheft', label: 'IHK-Berichtsheft endet 2026', icon: getIconSvgById('berichtsheft'), group: 'Extern', action: () => { window.location.href = './ihk-berichtsheft/'; } },
+        // Die Betriebs-Anbindung lebt im Berichtsheft; von der App aus gab es
+        // bis v7.4.7 keinen Weg dorthin, „Ausbilder" fand in der Suche nichts.
+        // ?betrieb=1 klappt die Karte auf (bh-start.js), auch wenn sie
+        // weggeklickt war.
+        { id: 'ausbilder-betrieb', label: 'Ausbilder / Betrieb verbinden', icon: getIconSvgById('berichtsheft'), group: 'Extern', action: () => { window.location.href = './berichtsheft/?betrieb=1'; } },
         { id: 'schatten-berichtsheft', label: 'Schatten-Berichtsheft', icon: getIconSvgById('schatten-berichtsheft'), group: 'Extern', action: () => { window.location.href = './schatten-berichtsheft/'; } },
         { id: 'fahrtkosten',  label: 'Fahrtkosten',       icon: getIconSvgById('fahrtkosten'), group: 'Extern',     action: () => { window.location.href = './fahrtkosten/'; } },
         { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './aufgaben/'; } },

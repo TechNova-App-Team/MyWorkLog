@@ -717,7 +717,15 @@
 
     window.b2bUiInit = function () {
         if (!el()) return;
-        aktualisieren(false);
+        // Tiefeinstieg aus der App (Schnellsuche „Ausbilder / Betrieb
+        // verbinden"): ?betrieb=1 klappt die Karte auf — auch wenn sie
+        // weggeklickt war, sonst landet man vor einer Haarlinie und sucht.
+        let tief = false;
+        try { tief = new URLSearchParams(location.search).get('betrieb') === '1'; } catch (e) { /* ohne URLSearchParams kein Tiefeinstieg */ }
+        if (tief) { setZu(false); expandiert = true; }
+        aktualisieren(false).then(function () {
+            if (tief && el() && !el().hidden) el().scrollIntoView({ block: 'start', behavior: 'smooth' });
+        });
     };
 
     // Bei Rueckkehr auf den Tab neu abgleichen (der Ausbilder hat evtl.

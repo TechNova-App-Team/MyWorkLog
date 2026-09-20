@@ -197,6 +197,7 @@
     'Backup / Export': 'Backup / export',
     'Schatten-Berichtsheft': 'Shadow logbook',
     'IHK-Berichtsheft endet 2026': 'IHK report book ends in 2026',
+    'Ausbilder / Betrieb verbinden': 'Trainer / connect company',
     'IT Professional Hub': 'IT professional hub',
     'IHK': 'IHK',
     'Ghost Mode': 'Ghost mode',
