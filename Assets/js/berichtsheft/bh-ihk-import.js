@@ -234,12 +234,22 @@ function ihkProcessExtractedText(pagesText) {
     let weeksMap = new Map(); // Key: "YYYY-WW" zur Zusammenführung bei Umbruch auf nächste Seite
     
     pagesText.forEach((pageText, pageIndex) => {
-        // Tagesberichts-Seiten haben "Ausbildungsnachweis auf Tagesbasis" oben
-        if (!/Ausbildungsnachweis[\s\|]*auf[\s\|]*Tagesbasis/i.test(pageText)) return;
-        
+        // Das Portal kennt zwei Fuehrungsarten, und der Export benennt sie im
+        // Seitenkopf: "Ausbildungsnachweis auf Tagesbasis" (ein Block je Tag)
+        // und "Ausbildungsnachweis auf Wochenbasis" (ein Freitext je Woche).
+        // 🔴 Bis v7.4.3 wurde alles ohne "Tagesbasis" uebersprungen — ein
+        // Wochen-Export lief damit auf "keine auswertbaren Tagesberichte", obwohl
+        // Kopfzeile, Wochenzeile und Status identisch aufgebaut sind.
+        const istTag = /Ausbildungsnachweis[\s\|]*auf[\s\|]*Tagesbasis/i.test(pageText);
+        const istWoche = !istTag && /Ausbildungsnachweis[\s\|]*(auf[\s\|]*)?Wochen(basis|nachweis)?/i.test(pageText);
+        // Ohne einen der beiden Koepfe ist es Deckblatt oder Inhaltsverzeichnis —
+        // das listet Wochenzeilen auf, ohne ein Nachweis zu sein. Bewusst KEIN
+        // Notnagel "irgendwo steht Ausbildungsnachweis": der stuende auch dort.
+        if (!istTag && !istWoche) return;
+
         // Neuer Wochen-Start auf der Seite?
         const weekMatch = pageText.match(/Ausbildungswoche[\s\|]*([0-9]{2}\.[0-9]{2}\.[0-9]{4})[\s\|]*bis[\s\|]*([0-9]{2}\.[0-9]{2}\.[0-9]{4})/);
-        
+
         if (weekMatch) {
             console.log(`DEBUG: Found week on page ${pageIndex + 1}:`, weekMatch[0]);
             const startStr = weekMatch[1];
@@ -288,7 +298,9 @@ function ihkProcessExtractedText(pagesText) {
                     dateTo: dateTo,
                     department: '', // Wird gefüllt falls gefunden
                     activities: '',
-                    mode: 'daily',
+                    // Die Fuehrungsart der Woche kommt vom Seitenkopf: Tagesbasis
+                    // → 'daily' (Tagesfelder), Wochenbasis → 'weekly' (ein Freitext).
+                    mode: istTag ? 'daily' : 'weekly',
                     dailyActivities: { monday:'', tuesday:'', wednesday:'', thursday:'', friday:'', saturday:'', sunday:'' },
                     dailyHours: { monday:'', tuesday:'', wednesday:'', thursday:'', friday:'', saturday:'', sunday:'' },
                     dailySchool: { monday:false, tuesday:false, wednesday:false, thursday:false, friday:false, saturday:false, sunday:false },
@@ -325,7 +337,14 @@ function ihkProcessExtractedText(pagesText) {
     
     weeksMap.forEach(week => {
         const text = week._rawText;
-        
+
+        // Wochenbasis: ein Freitext je Woche statt Tagesbloecke — eigener Weg.
+        if (week.mode === 'weekly') {
+            ihkWocheAusText(week, dayMap);
+            delete week._rawText;
+            return;
+        }
+
         // Wir suchen nach Blöcken: "Tag | DD.MM.YYYY | Ort | anwesend" ... bis zum nächsten Tag oder Dauer gesamt
         // Format: "Mo | 08.09.2025 | Betrieb | anwesend | 08:45 | • | ... | Qualifikationen: | - | ..."
         
@@ -373,100 +392,7 @@ function ihkProcessExtractedText(pagesText) {
                 
                 let daySlice = text.substring(startPos, endPos);
                 
-                // Tätigkeiten haben Bullet Points '•' (im geparsten PDF manchmal als andere Zeichen)
-                // Wir filtern nach Sätzen, die nach '•' oder nach '|' stehen
-                let activities = [];
-                let qualifikationen = [];
-                let inQuali = false;
-                
-                const parts = daySlice.split('|').map(p => p.trim());
-                let pendingIndent = '';
-                
-                parts.forEach(part => {
-                    if (part === 'Qualifikationen:') {
-                        inQuali = true;
-                        pendingIndent = '';
-                        return;
-                    }
-                    
-                    // IHK-typische Aufzählungszeichen (Haupt- und Unterpunkte)
-                    // Häufig wird der hohle Kreis ◦ vom PDF-Parser als Buchstabe 'o' erkannt.
-                    if (part === '•' || part === '') {
-                        pendingIndent = '• ';
-                        return;
-                    } else if (part === '◦' || part === '-' || part === '–' || part === 'o') {
-                        pendingIndent = '    ◦ '; // Unterpunkte explizit mit '◦' und Einrückung darstellen
-                        return;
-                    }
-                    
-                    let cleanPart = part;
-                    let currentIndent = pendingIndent;
-                    let isNewPoint = false;
-                    
-                    if (cleanPart.startsWith('• ') || cleanPart.startsWith(' ')) {
-                        cleanPart = cleanPart.substring(2).trim();
-                        currentIndent = '• ';
-                        isNewPoint = true;
-                    } else if (cleanPart.startsWith('◦ ') || cleanPart.startsWith('- ') || cleanPart.startsWith('– ') || cleanPart.startsWith('o ')) {
-                        cleanPart = cleanPart.substring(2).trim();
-                        currentIndent = '    ◦ ';
-                        isNewPoint = true;
-                    } else if (cleanPart.startsWith('•') || cleanPart.startsWith('')) {
-                        cleanPart = cleanPart.substring(1).trim();
-                        currentIndent = '• ';
-                        isNewPoint = true;
-                    } else if (cleanPart.startsWith('◦') || cleanPart.startsWith('-') || cleanPart.startsWith('–')) {
-                        // Bei '-' ohne Leerzeichen könnte es ein Wort sein, aber als Startzeichen meist ein Bullet
-                        cleanPart = cleanPart.substring(1).trim();
-                        currentIndent = '    ◦ ';
-                        isNewPoint = true;
-                    } else if (pendingIndent !== '') {
-                        isNewPoint = true;
-                    }
-                    
-                    if (!cleanPart) return; // Skip bullets selbst
-                    if (cleanPart.match(/^[0-9]{2}:[0-9]{2}$/)) return; // Skip wiederholte Zeiten
-                    if (cleanPart.startsWith('<') && cleanPart.endsWith('>')) return; // Skip Hex-Blöcke
-                    
-                    const pLower = cleanPart.toLowerCase();
-                    if (pLower.match(/^seite\s*\d+/)) return;
-                    if (pLower.includes('ausbildungsnachweis auf tagesbasis')) return;
-                    if (pLower.includes('auszubildende/r')) return;
-                    if (pLower === 'ausbilder' || pLower === 'status') return;
-                    if (pLower.includes('eingereicht am')) return;
-                    if (pLower.includes('freigegeben')) return;
-                    if (pLower.includes('ausbildungswoche')) return;
-                    if (pLower.match(/^[0-9]{2}\.[0-9]{2}\.[0-9]{4}/)) return;
-                    
-                    const targetList = inQuali ? qualifikationen : activities;
-                    
-                    if (cleanPart.length > 3) {
-                        if (isNewPoint || targetList.length === 0) {
-                            targetList.push(currentIndent + cleanPart);
-                        } else {
-                            // Prüfe, ob es sich um einen Zeilenumbruch innerhalb eines Satzes handelt
-                            let last = targetList.pop();
-                            const lastTrimmed = last.trim();
-                            const endedWithPunctuation = /[.:!?]$/.test(lastTrimmed);
-                            
-                            if (endedWithPunctuation) {
-                                // Vorheriger Satz ist abgeschlossen -> Neue Zeile
-                                targetList.push(last);
-                                targetList.push(currentIndent + cleanPart);
-                            } else {
-                                // Fortsetzung des vorherigen Satzes (Wrap)
-                                if (last.endsWith('-')) {
-                                    // Trennungsstrich am Zeilenende entfernen (z.B. Skrip- ten -> Skripten)
-                                    last = last.substring(0, last.length - 1) + cleanPart;
-                                } else {
-                                    last = last + ' ' + cleanPart;
-                                }
-                                targetList.push(last);
-                            }
-                        }
-                        pendingIndent = '';
-                    }
-                });
+                const { activities, qualifikationen } = ihkZeilenAusTeilen(daySlice);
                 
                 // Falls der Tag leer ist, aber "Urlaub", "Feiertag" oder "Krankheit" vermerkt war,
                 // tragen wir das als Tätigkeit ein, damit es nicht so aussieht als fehle etwas.
@@ -477,11 +403,7 @@ function ihkProcessExtractedText(pagesText) {
                 week.dailyActivities[dayKey] = activities.join('\n');
                 
                 // Sammle Qualifikationen für das Wochen-Feld 'instruction'
-                qualifikationen.forEach(q => {
-                    if (!week.instruction.includes(q)) {
-                        week.instruction += (week.instruction ? ', ' : '') + q;
-                    }
-                });
+                ihkQualifikationenAnhaengen(week, qualifikationen);
             }
         });
         
@@ -516,6 +438,213 @@ function ihkProcessExtractedText(pagesText) {
     setTimeout(() => {
         ihkShowResult(meta);
     }, 400);
+}
+
+
+// Aufzaehlungs-Logik fuer einen Textausschnitt "a | b | • | c | …" (pdf.js-Zeilen,
+// mit | getrennt). Liefert Taetigkeiten und Qualifikationen als Zeilenlisten.
+// Seit v7.4.4 von BEIDEN Fuehrungsarten benutzt: der Tages-Parser ruft sie je
+// Tag, der Wochen-Parser fuer den ganzen Freitext. Die Aufzaehlungszeichen
+// darin sind teils Symbol-Font-Zeichen (U+F0A7, U+F0B7), die ein Editor als
+// Leerzeichen zeigt — nicht "aufraeumen".
+function ihkZeilenAusTeilen(daySlice) {
+    // Tätigkeiten haben Bullet Points '•' (im geparsten PDF manchmal als andere Zeichen)
+    // Wir filtern nach Sätzen, die nach '•' oder nach '|' stehen
+    let activities = [];
+    let qualifikationen = [];
+    let inQuali = false;
+    
+    const parts = daySlice.split('|').map(p => p.trim());
+    let pendingIndent = '';
+    
+    parts.forEach(part => {
+        if (part === 'Qualifikationen:') {
+            inQuali = true;
+            pendingIndent = '';
+            return;
+        }
+        
+        // IHK-typische Aufzählungszeichen (Haupt- und Unterpunkte)
+        // Häufig wird der hohle Kreis ◦ vom PDF-Parser als Buchstabe 'o' erkannt.
+        if (part === '•' || part === '') {
+            pendingIndent = '• ';
+            return;
+        } else if (part === '◦' || part === '-' || part === '–' || part === 'o') {
+            pendingIndent = '    ◦ '; // Unterpunkte explizit mit '◦' und Einrückung darstellen
+            return;
+        }
+        
+        let cleanPart = part;
+        let currentIndent = pendingIndent;
+        let isNewPoint = false;
+        
+        if (cleanPart.startsWith('• ') || cleanPart.startsWith(' ')) {
+            cleanPart = cleanPart.substring(2).trim();
+            currentIndent = '• ';
+            isNewPoint = true;
+        } else if (cleanPart.startsWith('◦ ') || cleanPart.startsWith('- ') || cleanPart.startsWith('– ') || cleanPart.startsWith('o ')) {
+            cleanPart = cleanPart.substring(2).trim();
+            currentIndent = '    ◦ ';
+            isNewPoint = true;
+        } else if (cleanPart.startsWith('•') || cleanPart.startsWith('')) {
+            cleanPart = cleanPart.substring(1).trim();
+            currentIndent = '• ';
+            isNewPoint = true;
+        } else if (cleanPart.startsWith('◦') || cleanPart.startsWith('-') || cleanPart.startsWith('–')) {
+            // Bei '-' ohne Leerzeichen könnte es ein Wort sein, aber als Startzeichen meist ein Bullet
+            cleanPart = cleanPart.substring(1).trim();
+            currentIndent = '    ◦ ';
+            isNewPoint = true;
+        } else if (pendingIndent !== '') {
+            isNewPoint = true;
+        }
+        
+        if (!cleanPart) return; // Skip bullets selbst
+        if (cleanPart.match(/^[0-9]{2}:[0-9]{2}$/)) return; // Skip wiederholte Zeiten
+        if (cleanPart.startsWith('<') && cleanPart.endsWith('>')) return; // Skip Hex-Blöcke
+        
+        const pLower = cleanPart.toLowerCase();
+        if (pLower.match(/^seite\s*\d+/)) return;
+        if (pLower.includes('ausbildungsnachweis auf tagesbasis')) return;
+        if (pLower.includes('auszubildende/r')) return;
+        if (pLower === 'ausbilder' || pLower === 'status') return;
+        if (pLower.includes('eingereicht am')) return;
+        if (pLower.includes('freigegeben')) return;
+        if (pLower.includes('ausbildungswoche')) return;
+        if (pLower.match(/^[0-9]{2}\.[0-9]{2}\.[0-9]{4}/)) return;
+        
+        const targetList = inQuali ? qualifikationen : activities;
+        
+        if (cleanPart.length > 3) {
+            if (isNewPoint || targetList.length === 0) {
+                targetList.push(currentIndent + cleanPart);
+            } else {
+                // Prüfe, ob es sich um einen Zeilenumbruch innerhalb eines Satzes handelt
+                let last = targetList.pop();
+                const lastTrimmed = last.trim();
+                const endedWithPunctuation = /[.:!?]$/.test(lastTrimmed);
+                
+                if (endedWithPunctuation) {
+                    // Vorheriger Satz ist abgeschlossen -> Neue Zeile
+                    targetList.push(last);
+                    targetList.push(currentIndent + cleanPart);
+                } else {
+                    // Fortsetzung des vorherigen Satzes (Wrap)
+                    if (last.endsWith('-')) {
+                        // Trennungsstrich am Zeilenende entfernen (z.B. Skrip- ten -> Skripten)
+                        last = last.substring(0, last.length - 1) + cleanPart;
+                    } else {
+                        last = last + ' ' + cleanPart;
+                    }
+                    targetList.push(last);
+                }
+            }
+            pendingIndent = '';
+        }
+    });
+
+    return { activities, qualifikationen };
+}
+
+
+// Qualifikationen aus einer Zeilenliste in das Wochenfeld 'instruction' —
+// ohne die Aufzaehlungszeichen, die ihkZeilenAusTeilen davorsetzt ("    ◦ ").
+// Bis v7.4.3 landete die Einrueckung mit im Feld.
+function ihkQualifikationenAnhaengen(week, qualifikationen) {
+    qualifikationen.forEach(q => {
+        const sauber = String(q).replace(/^[\s•◦\-–]+/, '').trim();
+        if (!sauber) return;
+        if (!week.instruction.includes(sauber)) {
+            week.instruction += (week.instruction ? ', ' : '') + sauber;
+        }
+    });
+}
+
+// ═══ WOCHENBASIS ═══
+// Ein Wochen-Eintrag im Portal besteht laut Nutzerhandbuch aus: einem Ort fuer
+// die ganze Woche (Schule / Betrieb / Unterweisung / Schule/Betrieb — bei
+// letzterem ZWEI Freitexte), dem Freitext, der Anwesenheit je Wochentag und
+// wahlweise Qualifikation und Ausbildungsstunden. Der Export setzt das wie die
+// Tagesseite als "Label | Wert | …"-Zeilen. Gelesen wird deshalb tolerant:
+// Kopf und Fusszeile abschneiden, Ort erkennen, Freitext ueber dieselbe
+// Aufzaehlungs-Logik wie beim Tag, Stunden aus "Dauer gesamt" ODER
+// "Ausbildungsstunden". Was die Heuristik nicht zuordnen kann, bleibt als
+// Text in den Taetigkeiten — lieber eine Zeile zu viel als eine verloren.
+// 🔴 Beim Schreiben (v7.4.4) lag kein echter Wochen-Export vor; die Erwartungen
+// stehen als synthetische Seiten in tools/ihk-import-parse.test.mjs. Wer einen
+// echten hat, gleicht dort ab.
+function ihkWocheAusText(week, dayMap) {
+    const text = week._rawText || '';
+
+    // 1) Kopf bis einschliesslich Wochenzeile (und ggf. "2. Ausbildungsjahr") weg
+    const wm = text.match(/Ausbildungswoche[\s\|]*[0-9]{2}\.[0-9]{2}\.[0-9]{4}[\s\|]*bis[\s\|]*[0-9]{2}\.[0-9]{2}\.[0-9]{4}/);
+    let body = wm ? text.slice(wm.index + wm[0].length) : text;
+    body = body.replace(/^[\s\|]*(?:[1-4]\.\s*)?Ausbildungsjahr[\s\|:]*[1-4]?\.?/i, ' | ');
+
+    // 2) Ort der Woche
+    let ort = '';
+    const ortM = body.match(/(?:^|\|)\s*Ort\s*(?:\||:)\s*(Schule\s*\/\s*Betrieb|Betrieb\s*\/\s*Schule|Schule|Betrieb|Unterweisung)\s*(?=\||$)/i);
+    if (ortM) {
+        ort = ortM[1].replace(/\s+/g, '');
+        body = body.slice(0, ortM.index) + ' | ' + body.slice(ortM.index + ortM[0].length);
+    }
+
+    // 3) Wo der Freitext endet: erster Tagesblock, "Anwesenheit", Stunden, Fusszeile
+    const endRes = [
+        /(?:^|\|)\s*Anwesenheit\s*(?=\||$)/i,
+        /(?:^|\|)\s*(?:Mo|Di|Mi|Do|Fr|Sa|So)\s*\|\s*[0-9]{2}\.[0-9]{2}\.[0-9]{4}\s*\|/,
+        /(?:^|\|)\s*Dauer[\s\|]*gesamt/i,
+        /(?:^|\|)\s*Ausbildungsstunden\s*(?=\||:|$)/i,
+        /Auszubildende\/r/i,
+        /(?:^|\|)\s*Ausbilder\s*(?=\||$)/i,
+        /(?:^|\|)\s*Status\s*(?=\||$)/i,
+        /Eingereicht am/i,
+        /(?:^|\|)\s*Seite\s*[0-9]+/i
+    ];
+    let ende = body.length;
+    endRes.forEach(re => { const m = body.match(re); if (m && m.index < ende) ende = m.index; });
+    const textTeil = body.slice(0, ende);
+    const rest = body.slice(ende);
+
+    // 4) Schule/Betrieb: zwei Freitexte, jeder unter seiner Ueberschrift
+    let schuleTeil = '', betriebTeil = textTeil;
+    if (/schule/i.test(ort) && /betrieb/i.test(ort)) {
+        const sM = textTeil.match(/(?:^|\|)\s*Schule\s*(?=\|)/i);
+        const bM = textTeil.match(/(?:^|\|)\s*Betrieb\s*(?=\|)/i);
+        if (sM && bM) {
+            const sStart = sM.index + sM[0].length, bStart = bM.index + bM[0].length;
+            if (sM.index < bM.index) { schuleTeil = textTeil.slice(sStart, bM.index); betriebTeil = textTeil.slice(bStart); }
+            else { betriebTeil = textTeil.slice(bStart, sM.index); schuleTeil = textTeil.slice(sStart); }
+        }
+    } else if (/^schule$/i.test(ort)) {
+        // Reine Schulwoche: der Text gehoert ins Schulfeld, nicht zu den Taetigkeiten
+        schuleTeil = textTeil; betriebTeil = '';
+    }
+
+    const b = betriebTeil ? ihkZeilenAusTeilen(betriebTeil) : { activities: [], qualifikationen: [] };
+    const s = schuleTeil ? ihkZeilenAusTeilen(schuleTeil) : { activities: [], qualifikationen: [] };
+    week.activities = b.activities.join('\n');
+    week.school = s.activities.join('\n');
+    ihkQualifikationenAnhaengen(week, b.qualifikationen.concat(s.qualifikationen));
+    // Notnagel: wenn beides leer blieb, aber Text da war, lieber roh uebernehmen
+    if (!week.activities && !week.school && textTeil.replace(/[\s\|]/g, '').length > 3) {
+        week.activities = textTeil.split('|').map(p => p.trim()).filter(p => p.length > 3).join('\n');
+    }
+
+    // 5) Anwesenheit je Tag. Die Wochenbasis kennt keinen Ort je Tag — Schultage
+    //    nur dann, wenn die ganze Woche "Schule" ist.
+    const nurSchule = /^schule$/i.test(ort);
+    const dayRe = /(?:^|\|)\s*(Mo|Di|Mi|Do|Fr|Sa|So)\s*\|\s*([0-9]{2}\.[0-9]{2}\.[0-9]{4})\s*\|(?:\s*(?:Schule\s*\/\s*Betrieb|Schule|Betrieb|Unterweisung)\s*\|)?\s*(anwesend|abwesend)/gi;
+    let dm;
+    while ((dm = dayRe.exec(rest))) {
+        const kurz = dm[1].charAt(0).toUpperCase() + dm[1].charAt(1).toLowerCase();
+        const key = dayMap[kurz];
+        if (key && nurSchule && dm[3].toLowerCase() === 'anwesend') week.dailySchool[key] = true;
+    }
+
+    // 6) Stunden der Woche: "Dauer gesamt: HH:MM" oder "Ausbildungsstunden | HH:MM"
+    const hM = rest.match(/(?:Dauer[\s\|]*gesamt:?|Ausbildungsstunden:?)[\s\|]*([0-9]{1,3}):([0-9]{2})/i);
+    week.hours = hM ? Number(hM[1]) + Number(hM[2]) / 60 : 0;
 }
 
 function ihkFindReportIndex(list, week) {
