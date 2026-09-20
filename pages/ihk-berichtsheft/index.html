@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+    <title>IHK-Berichtsheft endet 2026: Export sichern und weiterführen</title>
+    <meta name="description" content="Das Digitale Berichtsheft der IHK wird zum 31. Dezember 2026 bundesweit eingestellt, ab 1. Januar 2027 gibt es keinen Zugriff mehr. Was Azubis und Ausbilder jetzt tun müssen, und wie der PDF-Export in MyWorkLog weitergeführt wird: kostenlos, offline, unabhängig von der IHK.">
+    <meta name="keywords" content="IHK Berichtsheft eingestellt, Digitales Berichtsheft IHK Abschaltung 2026, Serviceportal Bildung Berichtsheft Export, IHK Berichtsheft Alternative, IHK Berichtsheft PDF importieren, Ausbildungsnachweis weiterführen, Berichtsheft App kostenlos">
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.0"></script>
+
+    <link rel="canonical" href="https://myworklog.de/ihk-berichtsheft/">
+    <link rel="alternate" hreflang="de" href="https://myworklog.de/ihk-berichtsheft/">
+    <link rel="alternate" hreflang="en" href="https://myworklog.de/en/ihk-berichtsheft/">
+    <link rel="alternate" hreflang="x-default" href="https://myworklog.de/ihk-berichtsheft/">
+
+    <meta property="og:title" content="IHK-Berichtsheft endet am 31. Dezember 2026">
+    <meta property="og:description" content="Vorher als PDF exportieren, danach ist kein Zugriff mehr möglich. Was zu tun ist, und wie der Export in MyWorkLog weiterläuft.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://myworklog.de/ihk-berichtsheft/">
+    <meta property="og:site_name" content="MyWorkLog">
+    <meta property="og:locale" content="de_DE">
+
+    <style>
+        :root {
+            --bg-deep: #030305;
+            --bg-card: rgba(255,255,255,0.025);
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --primary-dim: rgba(168,85,247,0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.16);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --warning-rgb: 245, 158, 11;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        [data-theme="light"] {
+            --bg-deep: #f8fafc;
+            --bg-card: rgba(7,16,35,0.02);
+            --text-main: #071023;
+            --text-muted: #475569;
+            --text-dim: #64748b;
+            --border: rgba(7,16,35,0.08);
+            --border-hover: rgba(7,16,35,0.16);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        button, input, select, textarea, optgroup { font-family: inherit; }
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        /* Der Schein ist hier bernsteinfarben, nicht im Markenton: die Uhr auf
+           dieser Seite ist die der IHK, nicht die von MyWorkLog. */
+        .ambient {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(60% 40% at 50% 0%, rgba(var(--warning-rgb), 0.07), transparent 70%);
+        }
+
+        .shell { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+        .prose { max-width: 70ch; }
+
+        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.75rem; color: var(--text-dim); flex-wrap: wrap; }
+        nav a { color: var(--text-dim); text-decoration: none; }
+        nav a:hover { color: var(--text-muted); }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            margin: 10px 0 26px; padding: 7px 13px;
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text-muted); text-decoration: none;
+            font-size: 0.82rem; transition: border-color 0.15s ease, color 0.15s ease;
+        }
+        .back-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
+        .back-btn svg { width: 15px; height: 15px; }
+
+        .hero { margin-bottom: 26px; }
+        h1 {
+            font-size: clamp(1.75rem, 4.8vw, 2.6rem); font-weight: 800;
+            letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; max-width: 22ch;
+        }
+        .hero-sub { font-size: 1.03rem; color: var(--text-muted); }
+        .hero-sub + .hero-sub { margin-top: 10px; }
+
+        h2 {
+            font-size: 1.32rem; font-weight: 700; letter-spacing: -0.02em;
+            margin: 40px 0 14px; scroll-margin-top: 20px;
+        }
+        h3 { font-size: 1rem; font-weight: 650; margin-bottom: 6px; }
+        p { color: var(--text-muted); margin-bottom: 12px; }
+        p strong, li strong, dd strong { color: var(--text-main); font-weight: 600; }
+        a.inl { color: var(--primary); }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; color: var(--text-main); }
+
+        ol, ul { margin: 0 0 12px 20px; color: var(--text-muted); }
+        li { margin-bottom: 6px; }
+
+        /* ── Die Frist: ein Jahresstreifen, auf dem heute steht. Was bleibt, ist
+              bernsteinfarben; was vorbei ist, grau. Die Marken liegen in DEMSELBEN
+              Raster wie die Monate (12 Zellen), damit nichts verrutschen kann. ── */
+        .frist {
+            border: 1px solid rgba(var(--warning-rgb), 0.35);
+            border-radius: 16px; padding: 20px 22px 18px;
+            background: linear-gradient(rgba(var(--warning-rgb), 0.05), rgba(var(--warning-rgb), 0.05)), var(--bg-deep);
+        }
+        .frist-lead { font-size: 1.12rem; color: var(--text-main); margin-bottom: 16px; line-height: 1.4; }
+        .frist-lead strong { color: var(--warning); font-weight: 800; }
+        .frist-track { position: relative; height: 44px; margin: 0 0 10px; }
+        .frist-bar {
+            position: absolute; left: 0; right: 0; top: 10px; height: 10px;
+            border-radius: 6px; background: var(--border); overflow: hidden;
+        }
+        .frist-rest { position: absolute; top: 0; bottom: 0; right: 0; left: 72%; background: var(--warning); border-radius: 0 6px 6px 0; }
+        .frist-months {
+            position: absolute; left: 0; right: 0; top: 24px;
+            display: grid; grid-template-columns: repeat(12, 1fr);
+            font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.02em;
+        }
+        .frist-months span { text-align: center; border-left: 1px solid var(--border); line-height: 1.2; padding-top: 2px; }
+        .frist-months span:first-child { border-left: none; }
+        .frist-heute {
+            position: absolute; top: 3px; left: 72%; width: 24px; height: 24px; margin-left: -12px;
+            border-radius: 50%; background: var(--bg-deep);
+            border: 3px solid var(--text-main); box-shadow: 0 0 0 4px rgba(var(--warning-rgb), 0.25);
+        }
+        .frist-ende {
+            position: absolute; top: 4px; right: -1px; width: 3px; height: 22px;
+            background: var(--text-main); border-radius: 2px;
+        }
+        .frist-legend { list-style: none; margin: 0; display: grid; gap: 6px; font-size: 0.88rem; }
+        .frist-legend li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: baseline; margin: 0; color: var(--text-muted); }
+        .frist-legend i { display: block; width: 12px; height: 12px; border-radius: 50%; position: relative; top: 1px; }
+        .frist-legend .l-heute i { border: 3px solid var(--text-main); background: var(--bg-deep); box-sizing: border-box; }
+        .frist-legend .l-ende i { width: 3px; height: 14px; border-radius: 2px; background: var(--text-main); margin-left: 5px; }
+        .frist-legend .l-weg i { background: transparent; border: 2px dashed var(--text-dim); box-sizing: border-box; }
+        .frist-legend b { color: var(--text-main); font-weight: 600; }
+        /* Nach dem 31.12.2026 gibt es nichts mehr zu retten; die Seite sagt das,
+           statt einen abgelaufenen Zaehler zu zeigen (JS setzt die Klasse). */
+        .frist.is-vorbei .frist-rest { display: none; }
+        .frist.is-vorbei { border-color: var(--border); background: var(--bg-card); }
+        .frist.is-vorbei .frist-lead strong { color: var(--text-main); }
+
+        .facts {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+            margin: 18px 0 0;
+        }
+        .facts div { border-left: 2px solid var(--border); padding-left: 14px; }
+        .facts dt { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 3px; }
+        .facts dd { font-size: 0.92rem; color: var(--text-main); }
+
+        /* ── Zwei Leser, zwei Spalten. Karten nur hier, weil es wirklich zwei
+              getrennte Anleitungen sind. ── */
+        .wer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
+        }
+        .wer .card { margin: 0; min-width: 0; }
+        .card h3 { margin-bottom: 10px; }
+        .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
+
+        /* ── Schritte: eine echte Reihenfolge, deshalb nummeriert. Die Nummer
+              sitzt in einer eigenen Spur, der Text bricht darunter nicht ein. ── */
+        .steps { list-style: none; margin: 0 0 8px; counter-reset: s; }
+        .steps > li {
+            counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 12px;
+            padding: 12px 0; border-top: 1px solid var(--border); margin: 0;
+        }
+        .steps > li:first-child { border-top: none; padding-top: 0; }
+        .steps > li::before {
+            content: counter(s); font-weight: 700; font-size: 0.92rem; color: var(--text-main);
+            width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+            display: inline-flex; align-items: center; justify-content: center; margin-top: 1px;
+        }
+        .steps h3 { margin-bottom: 4px; }
+        .steps p { margin-bottom: 6px; font-size: 0.93rem; }
+        .steps p:last-child { margin-bottom: 0; }
+        .card .steps > li { grid-template-columns: 26px 1fr; gap: 10px; padding: 9px 0; }
+        .card .steps > li::before { width: 24px; height: 24px; font-size: 0.82rem; border-radius: 7px; }
+        .card .steps p { font-size: 0.9rem; }
+
+
+        .note {
+            border-left: 3px solid var(--primary);
+            padding: 11px 15px; margin: 16px 0;
+            background: var(--primary-dim); border-radius: 0 10px 10px 0;
+            font-size: 0.9rem;
+        }
+        .note.warn { border-left-color: var(--warning); background: rgba(var(--warning-rgb), 0.07); }
+        .note p:last-child { margin-bottom: 0; }
+
+        .zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
+        .zwei ul { margin-bottom: 0; }
+
+        .check { list-style: none; margin: 0 0 12px; }
+        .check li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; margin-bottom: 9px; }
+        .check svg { width: 18px; height: 18px; color: var(--success); margin-top: 3px; }
+        .check b { color: var(--text-main); font-weight: 600; }
+
+        .faq-item { border-bottom: 1px solid var(--border); }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-item summary {
+            cursor: pointer; padding: 13px 0; font-weight: 600;
+            font-size: 0.94rem; list-style: none; display: flex;
+            justify-content: space-between; gap: 12px; align-items: center;
+        }
+        .faq-item summary::-webkit-details-marker { display: none; }
+        .faq-item summary::after { content: '+'; color: var(--primary); font-size: 1.2rem; flex-shrink: 0; }
+        .faq-item[open] summary::after { content: '−'; }
+        .faq-item p { padding-bottom: 13px; margin-bottom: 0; font-size: 0.9rem; }
+
+        .sources { font-size: 0.82rem; }
+        .sources ol { margin-left: 22px; }
+        .sources li { margin-bottom: 4px; color: var(--text-dim); }
+        .sources a { color: var(--text-muted); text-decoration: none; border-bottom: 1px solid var(--border); }
+        .sources a:hover { color: var(--text-main); border-color: var(--border-hover); }
+        .fn { color: var(--text-dim); text-decoration: none; font-size: 0.7rem; vertical-align: super; margin-left: 2px; }
+        .fn:hover { color: var(--primary); }
+
+        .cta {
+            display: flex; flex-wrap: wrap; gap: 11px; align-items: center;
+            margin-top: 34px; padding: 22px; border-radius: 14px;
+            background: var(--bg-card); border: 1px solid var(--border);
+        }
+        .cta-text { flex: 1; min-width: 210px; }
+        .cta-text strong { display: block; font-size: 1.02rem; margin-bottom: 3px; }
+        .cta-text span { font-size: 0.86rem; color: var(--text-muted); }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 20px; border-radius: 9px; text-decoration: none;
+            font-size: 0.9rem; font-weight: 600; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+            border: 1px solid var(--border);
+        }
+        .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .btn-primary:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
+        .btn-ghost { color: var(--text-muted); }
+        .btn-ghost:hover { border-color: var(--border-hover); color: var(--text-main); }
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+        /* Touch hat kein :hover — Ziele muessen auch ohne erkennbar sein. */
+        @media (hover: none) { .btn-ghost { color: var(--text-main); } }
+
+        @media (max-width: 760px) {
+            .wer, .zwei { grid-template-columns: 1fr; }
+            .facts { grid-template-columns: 1fr; gap: 10px; }
+        }
+        @media (max-width: 560px) {
+            .shell { padding: 20px 15px 44px; }
+            .frist { padding: 16px 16px 14px; }
+            .frist-lead { font-size: 1.02rem; }
+            .frist-months { font-size: 0.62rem; }
+            .cta { flex-direction: column; align-items: stretch; }
+            .btn { justify-content: center; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    </style>
+    <script defer src="/Assets/js/version-loader.js?v=7.4.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.4.0"></script>
+</head>
+<body>
+    <div class="ambient"></div>
+
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+    </svg>
+
+    <div class="shell">
+        <nav aria-label="Breadcrumb">
+            <ol>
+                <li><a href="/">MyWorkLog</a></li>
+                <li aria-hidden="true" style="opacity:0.4;">›</li>
+                <li aria-current="page" style="color:var(--text-muted);">IHK-Berichtsheft</li>
+            </ol>
+        </nav>
+
+        <a href="/" class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            <span>Zurück</span>
+        </a>
+
+        <header class="hero prose">
+            <h1>Das IHK-Berichtsheft endet am 31. Dezember 2026</h1>
+            <p class="hero-sub">
+                Bundesweit, für alle Kammern, ohne einen Nachfolger von der IHK. Wer sein Heft
+                dort führt, muss es vorher als PDF exportieren — ab dem 1. Januar 2027 gibt es
+                keinen Zugriff mehr. Diese Seite sagt, was zu tun ist, und wie der Export in
+                MyWorkLog weiterläuft.
+            </p>
+            <p class="hero-sub">
+                MyWorkLog ist unabhängig: kein Angebot der IHK, keine Vereinbarung mit einer
+                Kammer. Kostenlos, offline, die Daten bleiben auf deinem Gerät.
+            </p>
+        </header>
+
+        <section class="frist" id="frist" aria-labelledby="fristLead">
+            <p class="frist-lead" id="fristLead"><span>Letzter Tag für den Export: 31. Dezember 2026.</span></p>
+            <div class="frist-track" aria-hidden="true">
+                <div class="frist-bar"><div class="frist-rest" id="fristRest"></div></div>
+                <div class="frist-heute" id="fristHeute"></div>
+                <div class="frist-ende"></div>
+                <div class="frist-months" translate="no">
+                    <span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span>
+                    <span>J</span><span>A</span><span>S</span><span>O</span><span>N</span><span>D</span>
+                </div>
+            </div>
+            <ul class="frist-legend">
+                <li class="l-heute"><i></i><span><b id="fristHeuteText">Heute</b> <span>— das Jahr 2026 ist das letzte Jahr des IHK-Berichtshefts.</span></span></li>
+                <li class="l-ende"><i></i><span><b>31. Dezember 2026</b> <span>— letzter Tag, an dem der Export im Serviceportal möglich ist.</span><a class="fn" href="#q5">5</a></span></li>
+                <li class="l-weg"><i></i><span><b>1. Januar 2027</b> <span>— kein Zugriff mehr auf das bisherige Heft, auch nicht auf alte Einträge.</span><a class="fn" href="#q2">2</a></span></li>
+            </ul>
+            <dl class="facts">
+                <div>
+                    <dt>Wer exportieren kann</dt>
+                    <dd><span>Nur der Azubi selbst, über den eigenen Zugang. Der Betrieb kann es nicht auslösen.</span><a class="fn" href="#q4">4</a></dd>
+                </div>
+                <div>
+                    <dt>Was herauskommt</dt>
+                    <dd><span>Eine PDF-Datei mit allen Einträgen. Ein anderes Format gibt es nicht.</span><a class="fn" href="#q5">5</a></dd>
+                </div>
+                <div>
+                    <dt>Was bleibt</dt>
+                    <dd><span>Die Pflicht, den Ausbildungsnachweis zu führen. Ohne ihn keine Zulassung zur Abschlussprüfung.</span><a class="fn" href="#q1">1</a></dd>
+                </div>
+            </dl>
+        </section>
+
+        <h2 id="jetzt">Was jetzt zu tun ist</h2>
+        <div class="wer">
+            <div class="card">
+                <h3>Als Azubi</h3>
+                <ol class="steps">
+                    <li>
+                        <p><span>Im Serviceportal anmelden</span> <span>(</span><a class="inl" href="https://meineihk.service.ihk.de/landing/bildung" rel="noopener" target="_blank">meineihk.service.ihk.de</a><span>, „Zum digitalen Berichtsheft").</span></p>
+                    </li>
+                    <li>
+                        <p><span>Kachel „Berichtsheftverwaltung" öffnen, dann „Berichtsheft herunterladen" und „Berichtsheftexport aller Einträge" wählen.</span><a class="fn" href="#q5">5</a></p>
+                    </li>
+                    <li>
+                        <p>Die PDF an zwei Orten ablegen, etwa auf dem Gerät und in einer Cloud oder auf einem Stick. Sie ist dein Nachweis für die Prüfung — auch dann, wenn du das Heft nirgends digital weiterführst.</p>
+                    </li>
+                    <li>
+                        <p>Entscheiden, wie es weitergeht: auf Papier, mit der Vorlage deiner Kammer oder in einem digitalen Heft. Wie der Export in MyWorkLog landet, steht weiter unten.</p>
+                    </li>
+                </ol>
+                <p style="margin-top:10px;font-size:0.86rem;color:var(--text-dim);">Wer nach dem Export noch Wochen im Portal einträgt, exportiert danach einfach noch einmal — die PDF enthält immer alles bis zu diesem Moment.</p>
+            </div>
+            <div class="card">
+                <h3>Als Ausbilder</h3>
+                <ul>
+                    <li><span>Azubis jetzt informieren. Die Kammern bitten die Betriebe ausdrücklich darum.</span><a class="fn" href="#q4">4</a></li>
+                    <li>Den Export kann nur der Azubi auslösen. Einen Termin vereinbaren und die PDF gemeinsam ablegen — im Betrieb und beim Azubi.</li>
+                    <li><span>Festlegen, wie ab Januar geführt wird: Papier, halbdigital oder digital. Alle drei sind laut der BIBB-Empfehlung von 2020 zulässig.</span><a class="fn" href="#q2">2</a></li>
+                    <li><span>Ob die eigene IHK eine Nachfolgelösung anbietet, ist von Kammer zu Kammer verschieden: Magdeburg stellt Azubiheft bereit, Ostwürttemberg darf aus rechtlichen Gründen nichts empfehlen. Was gilt, sagt die eigene IHK.</span><a class="fn" href="#q3">3</a></li>
+                    <li><span>Die Freigabe braucht keine IHK. In MyWorkLog gibt der Ausbilder mit Konto frei, mit digitaler Signatur, für alle Azubis des Betriebs an einem Ort:</span> <a class="inl" href="/ausbilder/">Berichtshefte prüfen und abzeichnen</a><span>.</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="import">So kommt der IHK-Export in MyWorkLog</h2>
+        <p class="prose">
+            MyWorkLog liest die PDF aus dem Serviceportal direkt ein — jede Woche, jeder Tag,
+            die Stunden und der Stand der Abzeichnung. Das passiert im Browser auf deinem Gerät;
+            die Datei wird nirgendwohin geschickt.
+        </p>
+        <ol class="steps prose">
+            <li><div>
+                <h3>Berichtsheft öffnen</h3>
+                <p><span>Unter</span> <a class="inl" href="/berichtsheft/?import=ihk">myworklog.de/berichtsheft</a> <span>— ohne Konto, ohne Installation. Der Link öffnet den Import direkt.</span></p>
+            </div></li>
+            <li><div>
+                <h3>Import starten</h3>
+                <p>Oben in der Werkzeugleiste „IHK-PDF Import" wählen. Es öffnet sich der Dialog „IHK-Export importieren".</p>
+            </div></li>
+            <li><div>
+                <h3>PDF ablegen</h3>
+                <p>Die Datei aus dem Serviceportal in das Feld ziehen oder auswählen. Das Auslesen dauert je nach Umfang ein paar Sekunden.</p>
+            </div></li>
+            <li><div>
+                <h3>Prüfen, was gefunden wurde</h3>
+                <p>Oben stehen Name, Beruf und Betrieb vom Deckblatt. Darunter jede erkannte Woche mit Kalenderwoche, Zeitraum, Stunden und Stand — „Geprüft &amp; Unterschrieben" oder „Fertiggestellt". Wochen, die es bei dir schon gibt, sind markiert und abgewählt; du entscheidest, was übernommen wird.</p>
+            </div></li>
+            <li><div>
+                <h3>Importieren</h3>
+                <p>„Wochen importieren" — fertig. Die Wochen tragen die Herkunft „IHK-Import". Ein Ausbilder mit MyWorkLog-Konto sieht sie als „Bei der IHK abgezeichnet" und bekommt keine offene Freigabe dafür.</p>
+            </div></li>
+        </ol>
+
+        <div class="zwei">
+            <div>
+                <h3>Was übernommen wird</h3>
+                <ul>
+                    <li>Je Woche: Zeitraum, Kalenderwoche, Ausbildungsjahr</li>
+                    <li>Je Tag: Tätigkeiten mit Aufzählung, Stunden, Berufsschultag</li>
+                    <li>Abwesenheiten wie Urlaub oder Krankheit als Vermerk</li>
+                    <li>Die Zuordnung „Qualifikationen" ins Feld Unterweisungen &amp; Schulungen</li>
+                    <li>Der Stand: bei der IHK abgezeichnet oder nur fertiggestellt</li>
+                    <li>Name, Beruf, Betrieb und Ausbildungsbeginn in die Angaben für den PDF-Export, wenn dort noch nichts steht</li>
+                </ul>
+            </div>
+            <div>
+                <h3>Was nicht geht</h3>
+                <ul>
+                    <li>Der Export „auf Wochenbasis". Gelesen wird der „Ausbildungsnachweis auf Tagesbasis"; wer wöchentlich geführt hat, legt die Wochen an und kopiert den Text aus der PDF.</li>
+                    <li>Unterschriftsbilder und Anhänge. Der amtliche Beleg der Abzeichnung bleibt die PDF selbst — deshalb aufbewahren.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="danach">Danach: das Heft weiterführen</h2>
+        <p class="prose">
+            Ab hier ist es ein normales Berichtsheft. Täglich oder wöchentlich schreiben, die
+            Berufsschultage markieren, am Ende der Woche fertigstellen. Zur Prüfung erzeugt
+            MyWorkLog das PDF auf dem Vordruck deiner Kammer — DIHK-Muster, Köln und
+            Frankfurt, München; andere Kammern bekommen das DIHK-Muster, und das steht so dabei.
+        </p>
+        <p class="prose">
+            <span>Die Freigabe läuft ohne Kammer: Der Ausbilder legt ein Konto an, verbindet sich
+            mit dem Betrieb und zeichnet Wochen mit digitaler Signatur ab; der Azubi sieht die
+            Entscheidung im Heft. Ohne Konto geht es auch — eine einzelne Woche als Link zum
+            Gegenzeichnen. Beides beschreibt die Seite</span> <a class="inl" href="/ausbilder/">für Ausbilder</a><span>.</span>
+        </p>
+        <p class="prose">
+            <span>Wer auch seine Arbeitszeit erfassen will, hat sie im selben Werkzeug: Soll,
+            Gleitzeit, Überstunden, Urlaub. Stunden aus einer Excel- oder CSV-Tabelle lassen
+            sich ebenfalls übernehmen —</span> <a class="inl" href="/wechseln/">wie, steht hier</a><span>.</span>
+        </p>
+
+        <h2 id="sichern">Sichern, bevor etwas schiefgeht</h2>
+        <p class="prose">
+            MyWorkLog speichert auf deinem Gerät, im Browser. Das ist der Grund, warum es ohne
+            Konto und offline funktioniert — und der Grund für diese Liste:
+        </p>
+        <ul class="check prose">
+            <li><svg><use href="#i-check"/></svg><span><b>Die IHK-PDF selbst</b> <span>an zwei Orten. Sie ist der Beleg, den du bei der Prüfung vorzeigst, unabhängig von jeder App.</span></span></li>
+            <li><svg><use href="#i-check"/></svg><span><b>Vollständiges Backup</b> <span>nach dem Import: in der App über Seitenleiste → Backup. Eine JSON-Datei mit allem, auch dem Berichtsheft. Vor jedem Browserwechsel, jeder Neuinstallation, jedem „Websitedaten löschen".</span></span></li>
+            <li><svg><use href="#i-check"/></svg><span><b>Verschlüsseltes Backup</b> <span>im selben Menü: dieselbe Datei, mit Passwort verschlüsselt (AES-256) — für Cloud-Ordner und geteilte Rechner.</span></span></li>
+            <li><svg><use href="#i-check"/></svg><span><b>Cloud-Abgleich</b> <span>optional, mit Konto: die Daten liegen zusätzlich auf einem Server in der EU und stehen auf jedem Gerät bereit.</span></span></li>
+            <li><svg><use href="#i-check"/></svg><span><b>Recovery Center</b> <span>in den Einstellungen: holt frühere Stände zurück, die die App selbst im Browser angelegt hat — wenn etwas fehlt, zuerst dort nachsehen.</span></span></li>
+        </ul>
+        <div class="note warn prose">
+            <p>
+                <strong>Was ohne Backup nicht zurückkommt:</strong>
+                <span>Werden die Browserdaten für myworklog.de gelöscht — Verlauf leeren mit „Websitedaten", Browser neu installieren, Gerät zurücksetzen — sind die lokalen Daten weg. Kein Konto, kein Server, also auch keine Kopie, die jemand für dich hätte. Die PDF und ein Backup sind der Schutz davor.</span>
+            </p>
+        </div>
+
+        <h2 id="faq">Häufige Fragen</h2>
+        <div class="card">
+            <details class="faq-item">
+                <summary>Ist MyWorkLog der Nachfolger des IHK-Berichtshefts?</summary>
+                <p>
+                    Nein. MyWorkLog hat keinen Auftrag und keine Vereinbarung mit einer IHK. Die
+                    Kammern nennen keinen bundesweiten Nachfolger; einzelne stellen eine eigene
+                    Lösung bereit, andere dürfen keine Empfehlung aussprechen. Ob ein Heft
+                    elektronisch geführt werden darf, steht im Ausbildungsvertrag — das gilt für
+                    jedes Werkzeug.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Was passiert, wenn ich bis zum 31. Dezember nicht exportiert habe?</summary>
+                <p>
+                    Laut den Kammern ist ab dem 1. Januar 2027 kein Zugriff mehr möglich, und
+                    ein Export danach ausgeschlossen. Ob eine IHK im Einzelfall noch helfen kann,
+                    wissen wir nicht — fragen kostet nichts. Sicher ist nur der Weg vorher:
+                    exportieren, ablegen, weiterführen.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Mein Ausbilder hat im Portal abgezeichnet. Zählt das nach dem Import noch?</summary>
+                <p>
+                    Der Import übernimmt den Stand aus der PDF und markiert die Woche als bei der
+                    IHK abgezeichnet; ein Ausbilder mit MyWorkLog-Konto sieht genau das. Der
+                    amtliche Beleg der Abzeichnung bleibt aber die PDF aus dem Portal — bewahre
+                    sie auf und leg sie zur Prüfung vor, falls jemand danach fragt.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Ich habe im Portal wochenweise geführt, nicht tageweise.</summary>
+                <p>
+                    Der Import liest derzeit den Export „Ausbildungsnachweis auf Tagesbasis".
+                    Beim Wochen-Export erkennt er keine Einträge und sagt das auch. Dann bleibt:
+                    Wochen in MyWorkLog anlegen und den Text aus der PDF hineinkopieren.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Brauche ich ein Konto?</summary>
+                <p>
+                    Nein. Berichtsheft und Import laufen ohne Konto, auf deinem Gerät, auch
+                    offline. Ein Konto braucht es nur für zwei Dinge: den Abgleich zwischen
+                    mehreren Geräten und die Verbindung zum Betrieb, damit der Ausbilder freigeben
+                    kann.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Was kostet das?</summary>
+                <p>
+                    Nichts, auch nicht für Betriebe. Es gibt keine Tarife und keine Werbung; der
+                    Quellcode steht unter MIT-Lizenz offen.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Erkennt die IHK ein Berichtsheft aus MyWorkLog an?</summary>
+                <p>
+                    Zur Prüfung verlangen die Kammern in der Regel ein PDF; MyWorkLog erzeugt es
+                    auf dem Vordruck der jeweiligen IHK. Ob du elektronisch führen darfst,
+                    regelt der Ausbildungsvertrag. Im Zweifel die eigene IHK fragen.
+                </p>
+            </details>
+        </div>
+
+        <h2 id="quellen">Quellen</h2>
+        <div class="sources prose">
+            <p>Alle Angaben zur Abschaltung stammen von den Kammern selbst, gelesen am 20. September 2026.</p>
+            <ol>
+                <li id="q1"><a href="https://www.ihk.de/nordschwarzwald/aus-und-weiterbildung/ausbildung/ausbildung-digital/serviceportal-bildung-berichtsheft/service-digitales-berichtsheft-wird-eingestellt-6821804" rel="noopener" target="_blank">IHK Nordschwarzwald</a> <span>— „zum 31. Dezember 2026 bundesweit eingestellt"; Nachweispflicht für die Zulassung bleibt</span></li>
+                <li id="q2"><a href="https://www.ihk.de/hannover/hauptnavigation/ausbildung-und-weiterbildung/ausbildung/aktuell/digitales-berichtsheft-gibt-es-nur-noch-bis-ende-2026-6743960" rel="noopener" target="_blank">IHK Hannover</a> <span>— Meldung vom 13. März 2026; Zugriff ab 1. Januar 2027 nicht mehr möglich; Papier und halbdigital bleiben zulässig (BIBB-Empfehlung 2020)</span></li>
+                <li id="q3"><a href="https://www.ihk.de/ostwuerttemberg/produktmarken/aus-und-weiterbildung/ausbildung/ausbildungsberatung/berichtsheft-6777626" rel="noopener" target="_blank">IHK Ostwürttemberg</a> <span>— keine Empfehlung zu Anbietern „aus rechtlichen Gründen"</span></li>
+                <li id="q4"><a href="https://www.ihk.de/magdeburg/bildung/ausbildung-2-/digitales-berichtsheft-5096760" rel="noopener" target="_blank">IHK Magdeburg</a> <span>— Export „ausschließlich durch die Auszubildenden selbst"; Betriebe sollen frühzeitig informieren; Azubiheft als Angebot dieser Kammer</span></li>
+                <li id="q5"><a href="https://www.ihk.de/stuttgart/fuer-unternehmen/fachkraefte-und-ausbildung/ausbildung/digitales-berichtsheft-anleitung-export-6960548" rel="noopener" target="_blank">IHK Region Stuttgart</a> <span>— Anleitung zum Export: Berichtsheftverwaltung → Berichtsheft herunterladen → Berichtsheftexport aller Einträge; „vor dem 31.12.2026"</span></li>
+                <li id="q6"><a href="https://www.ihk.de/blueprint/servlet/resource/blob/7099488/b3c7561114cffa1543245eaee508333c/anleitung-export-berichtsheft-data.pdf" rel="noopener" target="_blank">Anleitung zum Export (PDF)</a> <span>— dieselben Schritte als Dokument</span></li>
+            </ol>
+            <p>
+                <span>Die Angaben zu MyWorkLog stammen aus der App selbst und aus</span> <a href="/DSGVO/">Datenschutzerklärung</a> <span>und</span> <a href="/Impressum/">Impressum</a><span>. „IHK" und „Serviceportal Bildung" sind Bezeichnungen der Industrie- und Handelskammern; MyWorkLog steht in keiner Verbindung zu ihnen.</span>
+            </p>
+        </div>
+
+        <div class="cta">
+            <div class="cta-text">
+                <strong>Export einlesen und weiterführen</strong>
+                <span>Kostenlos, ohne Konto, ohne Installation.</span>
+            </div>
+            <a href="/berichtsheft/?import=ihk" class="btn btn-primary">IHK-PDF importieren</a>
+            <a href="/ausbilder/" class="btn btn-ghost">Als Ausbilder starten</a>
+        </div>
+    </div>
+
+    <div id="page-footer"></div>
+
+    <script type="application/ld+json" data-ld-id="faq">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"Ist MyWorkLog der Nachfolger des IHK-Berichtshefts?","acceptedAnswer":{"@type":"Answer","text":"Nein. MyWorkLog hat keinen Auftrag und keine Vereinbarung mit einer IHK. Die Kammern nennen keinen bundesweiten Nachfolger; einzelne stellen eine eigene Lösung bereit, andere dürfen keine Empfehlung aussprechen. Ob ein Heft elektronisch geführt werden darf, steht im Ausbildungsvertrag."}},
+        {"@type":"Question","name":"Was passiert, wenn ich bis zum 31. Dezember nicht exportiert habe?","acceptedAnswer":{"@type":"Answer","text":"Laut den Kammern ist ab dem 1. Januar 2027 kein Zugriff mehr möglich, und ein Export danach ausgeschlossen. Ob eine IHK im Einzelfall noch helfen kann, ist offen. Sicher ist nur der Weg vorher: exportieren, ablegen, weiterführen."}},
+        {"@type":"Question","name":"Mein Ausbilder hat im Portal abgezeichnet. Zählt das nach dem Import noch?","acceptedAnswer":{"@type":"Answer","text":"Der Import übernimmt den Stand aus der PDF und markiert die Woche als bei der IHK abgezeichnet. Der amtliche Beleg der Abzeichnung bleibt die PDF aus dem Portal — aufbewahren und zur Prüfung vorlegen können."}},
+        {"@type":"Question","name":"Ich habe im Portal wochenweise geführt, nicht tageweise.","acceptedAnswer":{"@type":"Answer","text":"Der Import liest derzeit den Export „Ausbildungsnachweis auf Tagesbasis“. Beim Wochen-Export erkennt er keine Einträge. Dann bleibt: Wochen in MyWorkLog anlegen und den Text aus der PDF hineinkopieren."}},
+        {"@type":"Question","name":"Brauche ich ein Konto?","acceptedAnswer":{"@type":"Answer","text":"Nein. Berichtsheft und Import laufen ohne Konto, auf dem eigenen Gerät, auch offline. Ein Konto braucht es nur für den Abgleich zwischen Geräten und die Verbindung zum Betrieb."}},
+        {"@type":"Question","name":"Was kostet das?","acceptedAnswer":{"@type":"Answer","text":"Nichts, auch nicht für Betriebe. Es gibt keine Tarife und keine Werbung; der Quellcode steht unter MIT-Lizenz offen."}},
+        {"@type":"Question","name":"Erkennt die IHK ein Berichtsheft aus MyWorkLog an?","acceptedAnswer":{"@type":"Answer","text":"Zur Prüfung verlangen die Kammern in der Regel ein PDF; MyWorkLog erzeugt es auf dem Vordruck der jeweiligen IHK. Ob elektronisch geführt werden darf, regelt der Ausbildungsvertrag. Im Zweifel die eigene IHK fragen."}}
+      ]
+    }
+    </script>
+    <script type="application/ld+json" data-ld-id="breadcrumb">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type":"ListItem","position":1,"name":"MyWorkLog","item":"https://myworklog.de/"},
+        {"@type":"ListItem","position":2,"name":"IHK-Berichtsheft endet 2026","item":"https://myworklog.de/ihk-berichtsheft/"}
+      ]
+    }
+    </script>
+
+    <script>
+    /* Die Frist rechnet sich am Tag des Aufrufs. Drei Zustaende: vor dem 31.12.
+       (Tage zaehlen), am 31.12. (letzter Tag), danach (nichts mehr zu retten —
+       die Seite sagt das, statt einen abgelaufenen Zaehler zu zeigen). Text kommt
+       aus dem lang-Attribut, weil die i18n-Pipeline nur Markup uebersetzt. */
+    (function () {
+        var EN = document.documentElement.lang === 'en';
+        var start = new Date(2026, 0, 1), ende = new Date(2026, 11, 31), weg = new Date(2027, 0, 1);
+        var heute = new Date(); heute.setHours(0, 0, 0, 0);
+        var tage = Math.round((ende - heute) / 86400000) + 1;   // inkl. heute; am 31.12. = 1
+        var pct = Math.max(0, Math.min(1, (heute - start) / (weg - start))) * 100;
+        var frist = document.getElementById('frist');
+        var lead = document.getElementById('fristLead');
+        var datum = heute.toLocaleDateString(EN ? 'en-GB' : 'de-DE', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        document.getElementById('fristRest').style.left = pct + '%';
+        document.getElementById('fristHeute').style.left = pct + '%';
+        document.getElementById('fristHeuteText').textContent = (EN ? 'Today, ' : 'Heute, ') + datum;
+
+        function setLead(vor, stark, nach) {
+            lead.textContent = '';
+            if (vor) lead.appendChild(document.createTextNode(vor));
+            if (stark) { var b = document.createElement('strong'); b.textContent = stark; lead.appendChild(b); }
+            if (nach) lead.appendChild(document.createTextNode(nach));
+        }
+        if (tage > 1) {
+            setLead(EN ? 'Still ' : 'Noch ',
+                    EN ? tage + ' days' : tage + ' Tage',
+                    EN ? ' to export your report book from the IHK portal.' : ', um das Heft aus dem IHK-Portal zu exportieren.');
+        } else if (tage === 1) {
+            setLead('', EN ? 'Today is the last day.' : 'Heute ist der letzte Tag.',
+                    EN ? ' After 31 December 2026 no export is possible.' : ' Nach dem 31. Dezember 2026 ist kein Export mehr möglich.');
+        } else {
+            frist.classList.add('is-vorbei');
+            setLead('', EN ? 'The IHK report book is closed.' : 'Das IHK-Berichtsheft ist abgeschaltet.',
+                    EN ? ' Since 1 January 2027 there has been no access; what was not exported is no longer reachable.'
+                       : ' Seit dem 1. Januar 2027 gibt es keinen Zugriff mehr; was nicht exportiert wurde, ist nicht mehr erreichbar.');
+        }
+    })();
+    </script>
+
+    <script>
+        fetch('/pages/footer/footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const ph = document.getElementById('page-footer');
+                if (!ph) return;
+                const tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
+                if (typeof loadAppVersion === 'function') loadAppVersion();
+            });
+    </script>
+
+    <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
+    <script>
+    (function() {
+        function applyTheme(hex) {
+            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+        }
+        function syncTheme() {
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                if (data && data.settings) {
+                    if (data.settings.theme) applyTheme(data.settings.theme);
+                    if (data.settings.themeMode === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) { /* ignore */ }
+        }
+        syncTheme();
+        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+    })();
+    </script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+</html>

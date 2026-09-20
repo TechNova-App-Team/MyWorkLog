@@ -165,4 +165,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize AI Studio
     AIStudio.init();
+
+    // Tiefer Einstieg von /ihk-berichtsheft/: ?import=ihk oeffnet den
+    // IHK-PDF-Import direkt, damit niemand den Knopf in der Werkzeugleiste
+    // suchen muss. Erst hier, nach loadReports(), sonst fehlt der
+    // Dubletten-Abgleich gegen die vorhandenen Wochen.
+    try {
+        if (new URLSearchParams(location.search).get('import') === 'ihk'
+            && typeof openIhkImport === 'function') openIhkImport();
+    } catch (e) { /* kein URLSearchParams: dann eben ohne Tiefeinstieg */ }
 });

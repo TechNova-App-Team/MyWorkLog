@@ -13,7 +13,7 @@
 //
 // Aufruf:  node tools/jsonld.test.mjs   (nach der Build-Kette — liest index.html)
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 
 const lies = (p) => readFileSync(p, 'utf8').split('\r\n').join('\n');
 
@@ -83,6 +83,35 @@ for (const [name, datei, lang] of [['DE', 'index.html', 'de'], ['EN', 'pages/en/
     ok('jeder @id-Verweis hat einen Knoten', tot.length === 0, tot.join(', '));
     ok('es gibt ueberhaupt Verweise', verweise.length > 0, String(verweise.length));
 }
+
+// Alle Standalone-Seiten, DE und EN: jeder Block muss parsen. Anlass (2026-09-20):
+// /vergleich/ trug drei Tage lang eine FAQPage mit „nicht genannt" — das
+// Anfuehrungszeichen war ein rohes ", also war der JSON-String dort zu Ende
+// und der Block fuer Google nicht vorhanden. Im Browser sieht man davon
+// nichts, und die EN-Fassung war sogar in Ordnung, weil das Override den Block
+// ersetzt. Deutsche Anfuehrungszeichen in JSON-LD heissen „…“ (U+201E/U+201C).
+console.log('\nStandalone-Seiten: jeder JSON-LD-Block parst');
+const seitenDateien = [];
+for (const wurzel of ['pages', 'pages/en']) {
+    for (const d of readdirSync(wurzel, { withFileTypes: true })) {
+        if (!d.isDirectory() || d.name === 'en') continue;
+        const f = `${wurzel}/${d.name}/index.html`;
+        if (existsSync(f)) seitenDateien.push(f);
+    }
+}
+let seitenMitLd = 0, kaputt = [];
+for (const f of seitenDateien) {
+    const html = lies(f);
+    const re = /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g;
+    let m, hat = false;
+    while ((m = re.exec(html))) {
+        hat = true;
+        try { JSON.parse(m[1]); } catch (e) { kaputt.push(`${f}: ${e.message.slice(0, 60)}`); }
+    }
+    if (hat) seitenMitLd++;
+}
+ok('kein Block mit Syntaxfehler', kaputt.length === 0, kaputt.join(' | '));
+ok('es gibt ueberhaupt Seiten mit JSON-LD', seitenMitLd >= 6, String(seitenMitLd));   // sonst prueft die Zeile darueber nichts
 
 // Quelle: die Stempel-Muster muessen die Felder ueberhaupt treffen — sonst laeuft
 // stamp-assets gruen und aendert nichts.
