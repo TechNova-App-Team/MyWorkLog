@@ -512,7 +512,7 @@
         { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./analytics/', '_blank') },
         { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Impressum/', '_blank') },
         { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./DSGVO/', '_blank') },
-        { id: 'about',        label: 'About',             icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./about/', '_blank') },
+        { id: 'about',        label: 'Was ist MyWorkLog?', icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./about/', '_blank') },
         // Ghost Mode
         { id: 'ghost',        label: 'Ghost Mode',        icon: getIconSvgById('ghost'), group: 'Tools',      action: () => toggleGhostMode() },
     ];

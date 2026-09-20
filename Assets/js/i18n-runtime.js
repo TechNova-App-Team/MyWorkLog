@@ -315,6 +315,8 @@
     'Daten übernehmen': 'Import your data',
     'Anbieter-Vergleich': 'Compare providers',
     'Über uns': 'About us',
+    'So funktioniert MyWorkLog': 'How MyWorkLog works',
+    'Was ist MyWorkLog?': 'What is MyWorkLog?',
     'Datenschutz': 'Privacy',
     'Impressum': 'Legal notice',
     'Navigation': 'Navigation',
