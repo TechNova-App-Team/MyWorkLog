@@ -494,6 +494,7 @@
         { id: 'untis',        label: 'Untis Import',      icon: getIconSvgById('untis'), group: 'Tools',      action: () => showUntisImportModal() },
         // Extern
         { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './berichtsheft/'; } },
+        { id: 'ihk-berichtsheft', label: 'IHK-Berichtsheft endet 2026', icon: getIconSvgById('berichtsheft'), group: 'Extern', action: () => { window.location.href = './ihk-berichtsheft/'; } },
         { id: 'schatten-berichtsheft', label: 'Schatten-Berichtsheft', icon: getIconSvgById('schatten-berichtsheft'), group: 'Extern', action: () => { window.location.href = './schatten-berichtsheft/'; } },
         { id: 'fahrtkosten',  label: 'Fahrtkosten',       icon: getIconSvgById('fahrtkosten'), group: 'Extern',     action: () => { window.location.href = './fahrtkosten/'; } },
         { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './aufgaben/'; } },
