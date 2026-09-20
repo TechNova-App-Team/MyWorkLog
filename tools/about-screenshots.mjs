@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// ═══ DIE DREI AUFNAHMEN AUF /about/ NEU MACHEN ═══
+// ═══ DIE VIER AUFNAHMEN AUF /about/ NEU MACHEN ═══
 //
 // Erzeugt Beispieldaten (ein erfundener Azubi, 18 Wochen Eintraege bis zum
-// letzten Freitag vor heute) und nimmt damit die drei Bilder unter
+// letzten Freitag vor heute) und nimmt damit die vier Bilder unter
 // /Grafiken/about/ auf: Dashboard am Rechner, Recovery Center, Dashboard am
-// Handy. 2x aufgeloest, WebP. Braucht den lokalen Server (Portman, 5001).
+// Handy, Berichtsheft-Uebersicht. 2x aufgeloest, WebP. Braucht den lokalen Server (Portman, 5001).
 //
 //   node tools/about-screenshots.mjs            → Grafiken/about/*.webp
 //   node tools/about-screenshots.mjs --nur-seed → schreibt nur die Seed-Datei
@@ -81,8 +81,71 @@ const data = {
 };
 const now = Date.now();
 const backups = [3, 2, 1].map((n) => ({ ts: now - n * 86400000 * 2, data: { ...data, entries: entries.slice(0, entries.length - n * 3) } }));
+
+// ── Berichtsheft: eine Woche je Kalenderwoche der Eintraege, Tagesmodus ──
+// Aeltere Wochen sind unterschrieben, die letzten drei fertig, die juengste
+// ein Entwurf — so zeigt die Wochen-Uebersicht alle Farben der Legende.
+const TAGE = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const TAGNAME = { monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch', thursday: 'Donnerstag', friday: 'Freitag' };
+const TEXTE = {
+    betrieb: [
+        'Tickets im Helpdesk bearbeitet: Druckerfreigabe, VPN-Zugang, Passwort-Rücksetzungen',
+        'Neuen Arbeitsplatz-PC aufgesetzt (Image, Domänenbeitritt, Software-Paket)',
+        'Patchfeld im Serverraum dokumentiert und Beschriftung erneuert',
+        'Backup-Lauf geprüft und Fehlerprotokoll mit dem Ausbilder besprochen',
+        'Switch-Konfiguration gesichert, VLAN für die Buchhaltung angelegt',
+        'Kundentermin begleitet: Netzwerkdosen geprüft, Messprotokoll erstellt',
+        'Monitoring-Alarme ausgewertet und zwei Schwellwerte angepasst',
+        'Dokumentation der Wiederanlauf-Reihenfolge im Wiki ergänzt',
+    ],
+    schule: ['Datenbanken: Normalformen und Joins', 'Wirtschaft: Kaufvertrag und AGB', 'Englisch: technische Dokumentation', 'Netzwerktechnik: Subnetting'],
+    unterweisung: ['Sicherheitsunterweisung Elektro', 'Umgang mit Kundendaten (DSGVO)', 'Ticket-Priorisierung nach SLA', ''],
+};
+const kw = (d) => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const n = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - n); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil((((t - y0) / 86400000) + 1) / 7); };
+const wochen = new Map();
+for (const e of entries) {
+    const d = new Date(e.date + 'T00:00:00');
+    const montag = new Date(d); montag.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    const key = iso(montag);
+    if (!wochen.has(key)) wochen.set(key, { montag, tage: {} });
+    wochen.get(key).tage[TAGE[(d.getDay() + 6) % 7]] = e;
+}
+const reports = [];
+let wi = 0;
+const wochenListe = [...wochen.values()].sort((a, b) => a.montag - b.montag);
+for (const w of wochenListe) {
+    const freitag = new Date(w.montag); freitag.setDate(freitag.getDate() + 4);
+    const dailyActivities = {}, dailyHours = {}, dailySchool = {};
+    let stunden = 0;
+    for (const t of TAGE) {
+        const e = w.tage[t];
+        dailyActivities[t] = ''; dailyHours[t] = ''; dailySchool[t] = false;
+        if (!e) continue;
+        if (e.type === 'school') { dailySchool[t] = true; dailyActivities[t] = '• ' + TEXTE.schule[wi % 4] + '\n• ' + TEXTE.schule[(wi + 1) % 4]; }
+        else if (e.type === 'vacation') { dailyActivities[t] = '• Urlaub'; }
+        else if (e.type === 'sick') { dailyActivities[t] = '• Krank'; }
+        else { const a = TEXTE.betrieb[(wi * 2 + TAGE.indexOf(t)) % 8], b = TEXTE.betrieb[(wi * 3 + TAGE.indexOf(t) + 5) % 8]; dailyActivities[t] = '• ' + a + '\n• ' + b; }
+        dailyHours[t] = e.worked; stunden += e.worked;
+    }
+    const abstand = wochenListe.length - 1 - wi;   // 0 = juengste Woche
+    const status = abstand === 0 ? 'incomplete' : abstand <= 3 ? 'complete' : 'signed';
+    const von = iso(w.montag), bis = iso(freitag);
+    reports.push({
+        id: 'demo_' + von, year: w.montag >= new Date(heute.getFullYear(), 7, 1) ? 3 : 2, week: kw(w.montag),
+        dateFrom: von, dateTo: bis, department: 'IT-Support', mode: 'daily',
+        activities: TAGE.filter((t) => dailyActivities[t]).map((t) => `${TAGNAME[t] || t}:\n${dailyActivities[t]}`).join('\n\n'),
+        dailyActivities, dailyHours, dailySchool,
+        instruction: TEXTE.unterweisung[wi % 4], school: '', hours: Math.round(stunden * 100) / 100, status,
+        createdAt: new Date(freitag).toISOString(), updatedAt: new Date(freitag).toISOString(),
+    });
+    wi++;
+}
+
 const seed = {
     tg_pro_data: data, tg_pro_data_backups: backups,
+    berichtsheft_reports: reports,
+    pdf_personal_cfg: { name: 'Anna Beispiel', beruf: 'Fachinformatikerin für Systemintegration', betrieb: 'Musterwerk GmbH', beginn: `01.08.${heute.getFullYear() - 2}`, ende: `31.07.${heute.getFullYear() + 1}`, ausbilder: 'M. Weber' },
+    ais_cloud_v2_announcement_dismissed: '1',
     pro_intro_seen: 'true', privacy_acknowledged: '1',
     mwl_last_export: new Date(now - 86400000).toISOString(), mwl_last_backup_kind: 'full',
     mwl_setup_hint_dismissed: '1', mwl_lang_promo_dismissed: '1', tg_school_dismissed: '1',
@@ -90,7 +153,7 @@ const seed = {
     mwl_last_streak_notification_date: iso(heute), mwl_last_streak_notification_value: '90',
 };
 writeFileSync(SEED, JSON.stringify(seed));
-console.log(`Seed: ${entries.length} Eintraege (${iso(start)} – ${iso(ende)}), Saldo ${entries.reduce((a, x) => a + x.diff, 0).toFixed(2)} h`);
+console.log(`Seed: ${entries.length} Eintraege (${iso(start)} – ${iso(ende)}), Saldo ${entries.reduce((a, x) => a + x.diff, 0).toFixed(2)} h, ${reports.length} Berichtsheft-Wochen`);
 if (process.argv.includes('--nur-seed')) process.exit(0);
 
 // ── Aufnahmen ────────────────────────────────────────────────────────────
@@ -100,12 +163,15 @@ const shots = [
     ['dashboard.webp', ['--w', '1440', '--h', '900'], `(function(){${CLEAN}return 'ok'})()`],
     ['recovery.webp', ['--w', '1440', '--h', '900'], `(function(){${CLEAN}openRecoveryModal();return new Promise(r=>setTimeout(()=>r('modal='+document.getElementById('recoveryModal').classList.contains('active')),600))})()`],
     ['handy.webp', ['--w', '390', '--h', '844'], `(function(){${CLEAN}return 'ok'})()`],
+    // Berichtsheft: Kopf abgeschnitten (Statistik, Wochen-Uebersicht, Liste), der
+    // B2B-Teaser raus — er ist fuer Nicht-Mitglieder ein Hinweis, kein Inhalt.
+    ['berichtsheft.webp', ['--w', '1440', '--h', '900'], `(function(){return new Promise(r=>setTimeout(function(){var c=document.getElementById('b2bCard');if(c)c.remove();window.scrollTo(0,215);setTimeout(function(){r('ok')},400)},600))})()`, 'http://localhost:5001/berichtsheft/'],
 ];
 let fehler = 0;
-for (const [datei, masse, js] of shots) {
-    const r = spawnSync(process.execPath, [join(HERE, 'screenshot.mjs'), URL_APP, join(OUT, datei), ...masse, '--dpr', '2', '--quality', '88', '--seed', SEED, '--wait', '3500', '--js', js], { cwd: ROOT, encoding: 'utf8' });
+for (const [datei, masse, js, url] of shots) {
+    const r = spawnSync(process.execPath, [join(HERE, 'screenshot.mjs'), url || URL_APP, join(OUT, datei), ...masse, '--dpr', '2', '--quality', '88', '--seed', SEED, '--wait', '3500', '--js', js], { cwd: ROOT, encoding: 'utf8' });
     process.stdout.write(r.stdout); process.stderr.write(r.stderr);
     if (r.status !== 0) fehler++;
 }
-console.log(fehler ? `${fehler} Aufnahme(n) fehlgeschlagen` : 'Drei Aufnahmen unter Grafiken/about/ — danach bumpen, damit die ?v= wechseln.');
+console.log(fehler ? `${fehler} Aufnahme(n) fehlgeschlagen` : 'Vier Aufnahmen unter Grafiken/about/ — danach bumpen, damit die ?v= wechseln.');
 process.exit(fehler ? 1 : 0);

@@ -17,16 +17,16 @@ document.documentElement.className += ' js';</script>
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/about/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/about/">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.5"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.6"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=7.4.5"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.4.6"></script>
     <!-- Bewusst OHNE defer: das Inline-Skript vor </body> ist ein klassisches
          Skript und laeuft, sobald der Parser es erreicht — also VOR jedem
          defer-Skript. Mit defer waere window.mwlEngagement dort noch nicht da.
          Die Datei haengt nichts ans DOM, sie definiert nur ein Objekt. -->
-    <script src="/Assets/js/insights/engagement.js?v=7.4.5"></script>
+    <script src="/Assets/js/insights/engagement.js?v=7.4.6"></script>
 
     <style>
         :root {
@@ -688,31 +688,55 @@ document.documentElement.className += ' js';</script>
             .bcard-lg, .bcard-md, .bcard-sm { grid-column: span 1; grid-row: auto; }
         }
 
-        /* ═══ SO SIEHT ES AUS: drei Aufnahmen ═══
-           Rechner links ueber zwei Zeilen-Haelften (Dashboard, Recovery), das
-           Handy rechts ueber beide Zeilen. Die Bilder haben width/height im
-           Markup, damit nichts springt, und min-width:0 auf den Kindern, damit
-           die Bildbreite das Raster nicht aufhaelt (CLAUDE.md: Rasterkind ist
-           nie schmaler als sein Mindestinhalt). */
-        .shots {
-            display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-            grid-template-rows: auto auto; gap: 1rem; align-items: start;
+        /* ═══ SO SIEHT ES AUS: vier Aufnahmen ═══
+           Derselbe Bildschirm-Rahmen wie im Intro der App (.vi-screen in
+           landing.css): Aussenschale mit Haarlinie und weichem Schein, darin
+           der Kern mit eigener Rundung. Die Bilder haben width/height im
+           Markup, damit nichts springt; min-width:0 an den Rasterkindern, weil
+           ein Rasterkind sonst nie schmaler wird als sein Bild (CLAUDE.md). */
+        .stage { position: relative; }
+        .screen {
+            position: relative; margin: 0; padding: 8px; min-width: 0;
+            border-radius: 24px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid var(--rule-mid);
+            box-shadow: 0 40px 120px -30px rgba(0,0,0,.85), 0 0 90px -20px rgba(var(--primary-rgb),.22);
         }
-        .shot {
-            margin: 0; min-width: 0; overflow: hidden;
-            background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
+        .screen-in {
+            border-radius: 16px; overflow: hidden; background: var(--surface);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
         }
-        .shot img { display: block; width: 100%; height: auto; }
-        .shot-phone { grid-column: 2; grid-row: 1 / 3; }
-        .shot-phone img { width: min(100%, 300px); margin: 0 auto; }
-        .shot figcaption {
-            padding: .8rem 1rem .9rem; font-size: .84rem; line-height: 1.55; color: var(--text-muted);
-            border-top: 1px solid var(--rule);
+        .screen img, .phone img { display: block; width: 100%; height: auto; }
+
+        /* Buehne 1: Rechner voll, Handy ragt rechts unten heraus */
+        .stage-hero { margin-bottom: clamp(5rem, 9vw, 8rem); }
+        .stage-hero .screen { width: min(100%, 1040px); }
+        .phone {
+            position: absolute; right: -1.5%; bottom: -12%; width: 18%; margin: 0; padding: 5px;
+            border-radius: 30px; background: rgba(255,255,255,.05);
+            border: 1px solid var(--rule-mid);
+            box-shadow: 0 30px 80px -20px rgba(0,0,0,.9), 0 0 60px -20px rgba(var(--primary-rgb),.25);
         }
-        .shot figcaption b { color: var(--ink); font-weight: 600; }
+        .phone-in { border-radius: 25px; overflow: hidden; background: var(--surface); }
+        .stage-cap {
+            margin: 1.1rem 0 0; font-size: .88rem; line-height: 1.6; color: var(--text-muted);
+            max-width: 56ch; text-wrap: pretty;
+        }
+        .stage-cap b { color: var(--ink); font-weight: 600; }
+        .stage-hero .stage-cap { max-width: 44ch; }
+
+        /* Buehne 2: zwei Rahmen, gleiche Hoehe (beide 16:9) */
+        .stage-duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 1.5rem; align-items: start; }
+        .stage-duo .screen { padding: 6px; border-radius: 18px; }
+        .stage-duo .screen-in { border-radius: 12px; }
+        .stage-duo .stage-cap { padding: 0 .25rem; }
+
         @media (max-width: 900px) {
-            .shots { grid-template-columns: 1fr; grid-template-rows: none; }
-            .shot-phone { grid-column: auto; grid-row: auto; }
+            .stage-hero { margin-bottom: 3rem; }
+            .stage-hero .screen { width: 100%; }
+            .phone { position: static; width: min(58%, 260px); margin: 1.25rem auto 0; }
+            .stage-hero .stage-cap { max-width: none; }
+            .stage-duo { grid-template-columns: 1fr; gap: 2rem; }
         }
 
         /* ═══ KENNZAHLEN ═══ */
@@ -1170,7 +1194,7 @@ document.documentElement.className += ' js';</script>
             .stat-metric-bar { transition: none; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=7.4.5"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.4.6"></script>
 </head>
 <body>
 
@@ -1443,21 +1467,40 @@ document.documentElement.className += ' js';</script>
     <div class="shell">
         <div class="section-header" data-reveal>
             <span class="section-eyebrow">So sieht es aus</span>
-            <h2 class="section-title">Drei Aufnahmen, keine Attrappen.</h2>
-            <p class="section-description">Das Dashboard am Rechner und am Handy, dazu das Recovery Center — mit Beispieldaten aufgenommen, so wie die App heute aussieht.</p>
+            <h2 class="section-title">Vier Aufnahmen, keine Attrappen.</h2>
+            <p class="section-description">Dashboard, Berichtsheft und Recovery Center — mit Beispieldaten aufgenommen, so wie die App heute aussieht. Am Rechner wie am Handy.</p>
         </div>
-        <div class="shots">
-            <figure class="shot shot-desk" data-reveal style="--i:0">
-                <img src="/Grafiken/about/dashboard.webp?v=7.4.5" width="2880" height="1800" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Rechner: Kennzahlen für Woche, Monat, Gleitzeit und Resturlaub, darunter Saldo-Trend und Arbeitszeit-Verteilung">
-                <figcaption><b>Dashboard.</b> <span>Woche, Monat, Gleitzeit und Urlaub — jede Abweichung an einer sichtbaren Nulllinie.</span></figcaption>
+
+        <!-- Buehne 1: Dashboard im Bildschirm-Rahmen des Intros (Aussenschale +
+             Innenkern), das Handy ragt rechts unten heraus. Unter 900 px steht das
+             Handy still darunter — Ueberlappung und Touch-Ziele vertragen sich nicht. -->
+        <div class="stage stage-hero" data-reveal>
+            <figure class="screen">
+                <div class="screen-in">
+                    <img src="/Grafiken/about/dashboard.webp?v=7.4.6" width="2880" height="1800" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Rechner: Kennzahlen für Woche, Monat, Gleitzeit und Resturlaub, darunter Saldo-Trend und Arbeitszeit-Verteilung">
+                </div>
             </figure>
-            <figure class="shot shot-phone" data-reveal style="--i:1">
-                <img src="/Grafiken/about/handy.webp?v=7.4.5" width="780" height="1688" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Handy: die Kennzahlen untereinander, unten die Leiste mit Dashboard, Analyse, Bericht, Verlauf und Mehr">
-                <figcaption><b>Am Handy.</b> <span>Dieselbe App, installierbar, läuft offline.</span></figcaption>
+            <figure class="phone">
+                <div class="phone-in">
+                    <img src="/Grafiken/about/handy.webp?v=7.4.6" width="780" height="1688" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Handy: die Kennzahlen untereinander, unten die Leiste mit Dashboard, Analyse, Bericht, Verlauf und Mehr">
+                </div>
             </figure>
-            <figure class="shot shot-rec" data-reveal style="--i:2">
-                <img src="/Grafiken/about/recovery.webp?v=7.4.5" width="2880" height="1800" loading="lazy" decoding="async" alt="Recovery Center von MyWorkLog: Liste gespeicherter Stände mit Wiederherstellen, Ergänzen und JSON-Export, darunter das Feld zum Einspielen einer Backup-Datei">
-                <figcaption><b>Recovery Center.</b> <span>Frühere Stände zurückholen oder ein Backup als Datei einspielen.</span></figcaption>
+            <p class="stage-cap"><b>Dashboard.</b> <span>Woche, Monat, Gleitzeit und Urlaub — jede Abweichung an einer sichtbaren Nulllinie. Am Handy dieselbe App, installierbar, offline.</span></p>
+        </div>
+
+        <!-- Buehne 2: zwei Rahmen nebeneinander, gleiche Hoehe (beide 16:9). -->
+        <div class="stage stage-duo">
+            <figure class="screen" data-reveal style="--i:0">
+                <div class="screen-in">
+                    <img src="/Grafiken/about/berichtsheft.webp?v=7.4.6" width="2880" height="1800" loading="lazy" decoding="async" alt="Berichtsheft von MyWorkLog: Wochen-Streak, Ausbildungsfortschritt, Wochen-Übersicht des Jahres mit Farben für Entwurf, vollständig und unterschrieben, darunter die Liste der Wochen">
+                </div>
+                <figcaption class="stage-cap"><b>Berichtsheft.</b> <span>Jede Woche mit Stand und Stunden, das Jahr als Übersicht, der Ausbildungsnachweis als PDF im Vordruck deiner Kammer.</span></figcaption>
+            </figure>
+            <figure class="screen" data-reveal style="--i:1">
+                <div class="screen-in">
+                    <img src="/Grafiken/about/recovery.webp?v=7.4.6" width="2880" height="1800" loading="lazy" decoding="async" alt="Recovery Center von MyWorkLog: Liste gespeicherter Stände mit Wiederherstellen, Ergänzen und JSON-Export, darunter das Feld zum Einspielen einer Backup-Datei">
+                </div>
+                <figcaption class="stage-cap"><b>Recovery Center.</b> <span>Frühere Stände zurückholen oder ein Backup als Datei einspielen — bevor etwas fehlt, nicht danach.</span></figcaption>
             </figure>
         </div>
     </div>
