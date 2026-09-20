@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-7.4.1-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-7.4.2-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -250,15 +250,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v7.4.1** · 2026-09-20
+Aktuelle Version: **v7.4.2** · 2026-09-20
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **7.4.1** | 2026-09-20 | Die Startseite sagt jetzt, für wen MyWorkLog ist — und Ausbilder finden ihren Einstieg |
+| **7.4.2** | 2026-09-20 | Die Ausbilder-Seite erklärt die drei Rollen und den Nutzen für den Betrieb; Passkeys stehen in der Datenschutzerklärung |
+| 7.4.1 | 2026-09-20 | Die Startseite sagt jetzt, für wen MyWorkLog ist — und Ausbilder finden ihren Einstieg |
 | 7.4.0 | 2026-09-20 | Neue Seite: Das IHK-Berichtsheft endet am 31. Dezember 2026 — was jetzt zu tun ist |
 | 7.3.0 | 2026-09-18 | Neue Seite: MyWorkLog, Zubido, Azubiheft und BLok im Vergleich |
 | 7.2.5 | 2026-09-17 | Enter speichert den Eintrag |
-| 7.2.4 | 2026-09-16 | Der IHK-Vordruck sortiert Schultage in den Berufsschul-Block |
 
 <!-- changelog:end -->
 

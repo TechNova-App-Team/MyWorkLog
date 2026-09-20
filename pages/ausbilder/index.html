@@ -10,9 +10,9 @@
 </script>
     <meta name="description" content="Als Ausbilder alle Berichtsheft-Wochen Ihrer Azubis an einem Ort prüfen, abzeichnen oder zurückgeben — mit Konto als Sammelübersicht, ohne Konto per Link.">
     <meta name="keywords" content="Berichtsheft Ausbilder, Ausbildungsnachweis prüfen, Ausbildungsnachweis unterschreiben, Berichtsheft abzeichnen, §14 BBiG, Ausbildungsbetrieb, Ausbilder-Übersicht">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.1"></script>
-    <script defer src="/Assets/js/version-loader.js?v=7.4.1"></script>
-    <script defer src="/Assets/js/ph-init.js?v=7.4.1"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.2"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.4.2"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.4.2"></script>
     <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
@@ -937,6 +937,11 @@
             background: rgba(var(--primary-rgb), 0.55);
         }
         .ab-way-note { font-size: 0.84rem; color: var(--text-faint); margin-top: 14px; max-width: 62ch; }
+        .ab-roles li { display: grid; grid-template-columns: 96px 1fr; gap: 10px; padding-left: 18px; }
+        .ab-role { color: var(--text-main); font-weight: 600; }
+        .ab-inl { color: var(--primary); text-decoration: none; border-bottom: 1px solid rgba(var(--primary-rgb), 0.35); }
+        .ab-inl:hover { border-bottom-color: var(--primary); }
+        @media (max-width: 480px) { .ab-roles li { grid-template-columns: 1fr; gap: 2px; } }
         .ab-foot-link { margin-top: 32px; font-size: 0.88rem; }
         .ab-foot-link a {
             color: var(--text-muted); text-decoration: underline;
@@ -1033,6 +1038,26 @@
                 <div class="ab-note">
                     <p class="ab-note-t">Bei diesem Weg steckt die Woche im Link selbst. Sie wird nicht an einen Server übertragen und nirgends gespeichert — der Teil einer Adresse hinter dem Rautezeichen verlässt das Gerät nicht.</p>
                 </div>
+            </section>
+
+            <!-- Rollen und Betriebsnutzen standen bis v7.4.1 nur in der Datenbank
+                 (RLS) und im Kopf — hier als Text, damit ein Betrieb vor dem
+                 Anmelden weiss, wer was sieht. -->
+            <section class="ab-way">
+                <h2 class="ab-way-t">Wer was sieht</h2>
+                <p class="ab-way-s">Drei Rollen, jede sieht nur, was sie braucht. Der Betrieb sieht nie die Zeiterfassung, das Gleitzeitkonto oder die Notizen eines Azubis — nur die Berichtsheft-Wochen, die der Azubi verbunden hat, mit dem, was im Nachweis steht.</p>
+                <ul class="ab-feats ab-roles">
+                    <li><span class="ab-role">Azubi</span> <span>führt sein Heft auf dem eigenen Gerät, verbindet es einmalig mit dem Betrieb und sieht jede Entscheidung des Ausbilders in seinem Berichtsheft. Er kann die Verbindung jederzeit lösen.</span></li>
+                    <li><span class="ab-role">Ausbilder</span> <span>legt den Betrieb an, erzeugt Einladungscodes, prüft die Wochen aller verbundenen Azubis, bestätigt oder gibt mit Anmerkung zurück. Jede Entscheidung trägt seinen Namen und wird auf seinem Gerät signiert.</span></li>
+                    <li><span class="ab-role">Vertretung</span> <span>ist ein zweiter Ausbilder desselben Betriebs, eingeladen über einen befristeten Code — etwa für den Urlaub. Sie sieht und entscheidet wie der erste Ausbilder; wer entschieden hat, steht im Prüfverlauf.</span></li>
+                </ul>
+            </section>
+
+            <section class="ab-way">
+                <h2 class="ab-way-t">Was der Betrieb davon hat</h2>
+                <p class="ab-way-s">Kein Papier, das eingesammelt und abgeheftet wird. Eine Übersicht statt einer Mail je Azubi und Woche, und die Monatsfrist nach §14 BBiG meldet sich von selbst. Keine Kosten, keine Tarife, kein Vertrag — und die Daten der Azubis liegen weiter bei den Azubis, nicht auf einem Server des Betriebs.</p>
+                <p class="ab-way-s"><span>Das Digitale Berichtsheft der IHK endet zum 31. Dezember 2026. Wer dort Azubis betreut, findet auf der Seite</span> <a class="ab-inl" href="/ihk-berichtsheft/">IHK-Berichtsheft endet 2026</a> <span>Frist, Exportweg und wie der Export hier weitergeführt wird.</span></p>
+                <p class="ab-way-note"><span>Fragen zur betrieblichen Nutzung, zu Datenschutz oder zu mehreren Standorten:</span> <a class="ab-inl" href="mailto:info@myworklog.de?subject=Betriebliche%20Nutzung%20von%20MyWorkLog">info@myworklog.de</a> <span>— eine Antwort kommt von der Person, die die App baut.</span></p>
             </section>
 
             <p class="ab-foot-link"><a href="/">Was MyWorkLog sonst noch macht</a></p>
@@ -1145,13 +1170,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=7.4.1"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=7.4.1"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=7.4.2"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=7.4.2"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.4.1"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.4.2"></script>
 
     <script>
     (function () {

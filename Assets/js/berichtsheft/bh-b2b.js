@@ -287,6 +287,9 @@
         });
         if (error) throw new Error(freundlich(error.message));
         statusVergessen();
+        // Hier und nicht im Klick-Handler (CLAUDE.md: wer die Arbeit tut,
+        // protokolliert sie). Nur die Aktion, kein Code, kein Name.
+        if (typeof mwlEvent === 'function') mwlEvent('ausbilder_einladung', { aktion: 'eingeloest' });
         return data;   // betriebId
     }
 
@@ -342,6 +345,7 @@
             laeuft_ab: laeuftAb.toISOString()
         });
         if (error) throw new Error(error.message);
+        if (typeof mwlEvent === 'function') mwlEvent('ausbilder_einladung', { aktion: 'erzeugt', rolle: r });
         return code;
     }
 

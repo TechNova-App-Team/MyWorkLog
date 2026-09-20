@@ -52,7 +52,10 @@ ok('App definiert mwlEvent inline',
 for (const [f, n] of [['components/ghost/ghost.js', 1],
                       ['components/umfrage/umfrage.js', 3],
                       ['components/urlaubsplaner/urlaubsplaner.js', 1],
-                      ['Assets/js/berichtsheft/foto-import.js', 2]]) {
+                      ['Assets/js/berichtsheft/foto-import.js', 2],
+                      // v7.4.2: Einladung erzeugt / eingeloest — in der Funktion,
+                      // die die Arbeit tut, nicht im Klick-Handler
+                      ['Assets/js/berichtsheft/bh-b2b.js', 2]]) {
   const src = readFileSync(f, 'utf8');
   ok(`${f}: ${n} Aufruf(e), kein uEvent`,
      (src.match(/[^.\w]mwlEvent\(/g) || []).length === n && !src.includes('uEvent'));
