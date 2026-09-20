@@ -31,7 +31,9 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 // Neuladen und auch nicht nach einem Cloudflare-Purge, denn der raeumt die Kante,
 // nicht den Geraete-Cache. Ergebnis war ein Handy, das nach dem Deploy weiter den
 // alten Clip zeigte. Mit ?v=<version> aendert sich der Cache-Key bei jedem Bump.
-const RE = /(\s(?:src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm)))(?:\?v=[^"]*)?(")/g;
+// Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
+// jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen.
+const RE = /(\s(?:src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
 
 // Versionsnummern, die im HTML stehen MUESSEN und daher unweigerlich veralten:
 //  - <meta name="generator">: Crawler lesen statisches HTML, JS kommt zu spaet.

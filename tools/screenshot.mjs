@@ -5,7 +5,7 @@
  * nicht verbunden ist oder ein definierter Datenstand gebraucht wird.
  *
  *   node tools/screenshot.mjs <url> <ausgabe.png> [--w 1280] [--h 900] [--full]
- *        [--seed datei.json] [--dark|--light] [--js "code"] [--wait 800]
+ *        [--seed datei.json] [--dark|--light] [--js "code"] [--wait 800] [--dpr 1] [--quality 85]
  *
  * --seed  JSON-Objekt {schluessel: wert}; Werte, die keine Strings sind, werden
  *         per JSON.stringify abgelegt. Gesetzt VOR dem ersten Skript der Seite
@@ -24,7 +24,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const argv = process.argv.slice(2);
-const opt = { w: 1280, h: 900, full: false, seed: null, theme: null, js: null, wait: 800 };
+const opt = { w: 1280, h: 900, full: false, seed: null, theme: null, js: null, wait: 800, dpr: 1, format: null, quality: 85 };
 const pos = [];
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
@@ -36,6 +36,8 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--light') opt.theme = 'light';
   else if (a === '--js') opt.js = argv[++i];
   else if (a === '--wait') opt.wait = +argv[++i];
+  else if (a === '--dpr') opt.dpr = +argv[++i];   // 2 fuer scharfe Bilder auf Retina-Anzeigen (Seiten-Screenshots)
+  else if (a === '--quality') opt.quality = +argv[++i];   // nur fuer jpeg/webp (Endung der Ausgabedatei entscheidet)
   else pos.push(a);
 }
 const [url, out] = pos;
@@ -77,7 +79,7 @@ try {
   const cdp = new CDP(ws);
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
-  await cdp.send('Emulation.setDeviceMetricsOverride', { width: opt.w, height: opt.h, deviceScaleFactor: 1, mobile: opt.w < 600 });
+  await cdp.send('Emulation.setDeviceMetricsOverride', { width: opt.w, height: opt.h, deviceScaleFactor: opt.dpr, mobile: opt.w < 600 });
 
   const seed = Object.assign({}, opt.seed || {});
   if (opt.theme) seed.mwl_tasks_theme = opt.theme;
@@ -98,14 +100,16 @@ try {
     await sleep(400);
   }
 
-  const shot = { format: 'png' };
+  // Format aus der Dateiendung: .webp/.jpg fuer Seitenbilder (ein Viertel der PNG-Groesse), sonst PNG.
+  const ext = (out.match(/\.(webp|jpe?g)$/i) || [])[1];
+  const shot = ext ? { format: ext.toLowerCase().startsWith('jp') ? 'jpeg' : 'webp', quality: opt.quality } : { format: 'png' };
   if (opt.full) {
     const { cssContentSize } = await cdp.send('Page.getLayoutMetrics');
     const h = Math.min(Math.ceil(cssContentSize.height), 8000);
-    await cdp.send('Emulation.setDeviceMetricsOverride', { width: opt.w, height: h, deviceScaleFactor: 1, mobile: opt.w < 600 });
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: opt.w, height: h, deviceScaleFactor: opt.dpr, mobile: opt.w < 600 });
     await sleep(200);
     shot.captureBeyondViewport = true;
-    shot.clip = { x: 0, y: 0, width: opt.w, height: h, scale: 1 };
+    shot.clip = { x: 0, y: 0, width: opt.w, height: h, scale: opt.dpr };
   }
   const { data } = await cdp.send('Page.captureScreenshot', shot);
   writeFileSync(out, Buffer.from(data, 'base64'));

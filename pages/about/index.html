@@ -17,16 +17,16 @@ document.documentElement.className += ' js';</script>
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/about/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/about/">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.4"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.5"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=7.4.4"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.4.5"></script>
     <!-- Bewusst OHNE defer: das Inline-Skript vor </body> ist ein klassisches
          Skript und laeuft, sobald der Parser es erreicht — also VOR jedem
          defer-Skript. Mit defer waere window.mwlEngagement dort noch nicht da.
          Die Datei haengt nichts ans DOM, sie definiert nur ein Objekt. -->
-    <script src="/Assets/js/insights/engagement.js?v=7.4.4"></script>
+    <script src="/Assets/js/insights/engagement.js?v=7.4.5"></script>
 
     <style>
         :root {
@@ -688,6 +688,33 @@ document.documentElement.className += ' js';</script>
             .bcard-lg, .bcard-md, .bcard-sm { grid-column: span 1; grid-row: auto; }
         }
 
+        /* ═══ SO SIEHT ES AUS: drei Aufnahmen ═══
+           Rechner links ueber zwei Zeilen-Haelften (Dashboard, Recovery), das
+           Handy rechts ueber beide Zeilen. Die Bilder haben width/height im
+           Markup, damit nichts springt, und min-width:0 auf den Kindern, damit
+           die Bildbreite das Raster nicht aufhaelt (CLAUDE.md: Rasterkind ist
+           nie schmaler als sein Mindestinhalt). */
+        .shots {
+            display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+            grid-template-rows: auto auto; gap: 1rem; align-items: start;
+        }
+        .shot {
+            margin: 0; min-width: 0; overflow: hidden;
+            background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
+        }
+        .shot img { display: block; width: 100%; height: auto; }
+        .shot-phone { grid-column: 2; grid-row: 1 / 3; }
+        .shot-phone img { width: min(100%, 300px); margin: 0 auto; }
+        .shot figcaption {
+            padding: .8rem 1rem .9rem; font-size: .84rem; line-height: 1.55; color: var(--text-muted);
+            border-top: 1px solid var(--rule);
+        }
+        .shot figcaption b { color: var(--ink); font-weight: 600; }
+        @media (max-width: 900px) {
+            .shots { grid-template-columns: 1fr; grid-template-rows: none; }
+            .shot-phone { grid-column: auto; grid-row: auto; }
+        }
+
         /* ═══ KENNZAHLEN ═══ */
         .stats-grid {
             display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1143,7 +1170,7 @@ document.documentElement.className += ' js';</script>
             .stat-metric-bar { transition: none; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=7.4.4"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.4.5"></script>
 </head>
 <body>
 
@@ -1401,6 +1428,37 @@ document.documentElement.className += ' js';</script>
                     <p class="act-step-desc">Aus den Einträgen der Woche entsteht der Ausbildungsnachweis — als PDF im amtlichen Vordruck deiner Kammer. Was du täglich notiert hast, steht schon drin.</p>
                 </article>
             </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ SO SIEHT ES AUS ═══
+     Drei echte Aufnahmen der App (tools/screenshot.mjs mit Beispieldaten,
+     2x, WebP), keine gebauten Attrappen. Die Bilder liegen unter
+     /Grafiken/about/ und tragen ?v= — der Ordner ist immutable gecacht, und
+     sie werden bei jeder Aenderung der Oberflaeche unter gleichem Namen neu
+     aufgenommen: node tools/about-screenshots.mjs (Beispieldaten + drei Aufnahmen),
+     danach bumpen. -->
+<section class="section tight" id="screens">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">So sieht es aus</span>
+            <h2 class="section-title">Drei Aufnahmen, keine Attrappen.</h2>
+            <p class="section-description">Das Dashboard am Rechner und am Handy, dazu das Recovery Center — mit Beispieldaten aufgenommen, so wie die App heute aussieht.</p>
+        </div>
+        <div class="shots">
+            <figure class="shot shot-desk" data-reveal style="--i:0">
+                <img src="/Grafiken/about/dashboard.webp?v=7.4.5" width="2880" height="1800" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Rechner: Kennzahlen für Woche, Monat, Gleitzeit und Resturlaub, darunter Saldo-Trend und Arbeitszeit-Verteilung">
+                <figcaption><b>Dashboard.</b> <span>Woche, Monat, Gleitzeit und Urlaub — jede Abweichung an einer sichtbaren Nulllinie.</span></figcaption>
+            </figure>
+            <figure class="shot shot-phone" data-reveal style="--i:1">
+                <img src="/Grafiken/about/handy.webp?v=7.4.5" width="780" height="1688" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Handy: die Kennzahlen untereinander, unten die Leiste mit Dashboard, Analyse, Bericht, Verlauf und Mehr">
+                <figcaption><b>Am Handy.</b> <span>Dieselbe App, installierbar, läuft offline.</span></figcaption>
+            </figure>
+            <figure class="shot shot-rec" data-reveal style="--i:2">
+                <img src="/Grafiken/about/recovery.webp?v=7.4.5" width="2880" height="1800" loading="lazy" decoding="async" alt="Recovery Center von MyWorkLog: Liste gespeicherter Stände mit Wiederherstellen, Ergänzen und JSON-Export, darunter das Feld zum Einspielen einer Backup-Datei">
+                <figcaption><b>Recovery Center.</b> <span>Frühere Stände zurückholen oder ein Backup als Datei einspielen.</span></figcaption>
+            </figure>
         </div>
     </div>
 </section>

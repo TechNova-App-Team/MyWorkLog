@@ -1010,6 +1010,20 @@
             }
         }
 
+        /* Begruessung und Datums-Chip teilen sich unter 480 px keine Zeile:
+           neben dem Menue-Knopf (60 px Reserve) blieben bei 390 px ~300 px, und
+           "GUTEN ABEND, ANNA" brach dreizeilig neben "Sonntag, 20. September"
+           um (gemessen 20.09.2026). Zwei Zeilen — Begruessung, darunter Datum
+           und Hilfe rechtsbuendig. Steht hier ganz unten, weil diese Datei
+           nach core.css laedt und .main .header weiter oben schon zwei
+           Fassungen hat; die letzte Regel gewinnt. */
+        @media (max-width: 480px) {
+            .main .header { flex-wrap: wrap; row-gap: 4px; align-items: center; }
+            .main .header > div:first-child { flex: 1 1 100%; min-width: 0; }
+            .main .header .greeting { margin-bottom: 0; }
+            .main .header .header-actions { margin-left: auto; }
+        }
+
         /* Motion sparsam halten, wenn der User das so will */
         @media (prefers-reduced-motion: reduce) {
             .mobile-bottom-nav,
