@@ -57,10 +57,24 @@ try {
   communities = new Set((g.nodes || []).map((n) => n.community)).size;
 } catch (e) { /* Kennzahlen sind Beiwerk, kein Abbruchgrund */ }
 
+// Knoten-Budget — eine Warnung, kein Verbot. vis rechnet die Anordnung vor dem
+// ersten Bild; gemessen am 22.09.2026 (Desktop, localhost): 2.337 Knoten / 2,0 MB
+// → Graph nach 4,7 s sichtbar, 4.307 Knoten / 3,6 MB → nach 6,9 s. Beides
+// erträglich, aber ein `graphify update .` verdoppelt den Umfang leicht, und die
+// Seite laedt jedes Byte im HTML mit. Ab hier lohnt die Frage, ob der Graph
+// wirklich das ganze Repo zeigen muss.
+const KNOTEN_BUDGET = 3000;
+
 let commit = '';
 try { commit = execSync('git rev-parse --short HEAD', { cwd: ROOT }).toString().trim(); } catch (e) {}
 const datum = new Date().toLocaleDateString('de-DE', { year: 'numeric', month: 'long', day: 'numeric' });
 const de = (n) => n.toLocaleString('de-DE');
+
+if (nodes > KNOTEN_BUDGET) {
+  console.warn(`[publish-graph] ⚠ ${de(nodes)} Knoten — ueber dem Richtwert von ${de(KNOTEN_BUDGET)}.`);
+  console.warn('                Der Aufbau dauert dann laenger und die Seite wird schwerer;');
+  console.warn('                am Handy zaehlt beides. Wird trotzdem veroeffentlicht.');
+}
 
 // ── 1. Fremd-Skript auf die lokale Kopie umbiegen ────────────────────────────
 // crossorigin faellt weg (gleiche Herkunft), integrity bleibt als Pruefsumme.
@@ -143,7 +157,45 @@ const BAR_CSS = `
     font-family: "JetBrains Mono", ui-monospace, monospace;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  @media (max-width: 700px) { .mwl-title, .mwl-meta { display: none; } }
+  @media (max-width: 700px) { .mwl-meta { display: none; } }
+
+  /* ── Handy ───────────────────────────────────────────────────────────────
+     graphify legt body als Flex-ZEILE an: #graph{flex:1} neben #sidebar mit
+     festen 280px. Auf 390px Breite bleiben dem Graphen damit 110px — gemessen,
+     und genau das sieht aus wie "der Graph kommt nicht". Untereinander statt
+     nebeneinander: der Graph oben mit voller Breite, die Liste darunter.
+     min-height:0 muss sein, sonst verweigert das Flex-Kind das Schrumpfen und
+     die Liste wird aus dem Bild geschoben. */
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    #graph { width: 100%; min-height: 0; }
+    #sidebar {
+      width: 100%; flex: 0 0 auto; max-height: 38vh;
+      border-left: none; border-top: 1px solid #2a2a4e;
+    }
+    #info-panel { min-height: 0; }
+  }
+
+  /* ── Aufbau-Hinweis ──────────────────────────────────────────────────────
+     vis rechnet vor dem ERSTEN Bild 200 Iterationen Kraefteverteilung ueber
+     2.337 Knoten. Bis dahin ist die Flaeche leer — ohne diesen Hinweis ist
+     eine rechnende Seite von einer kaputten nicht zu unterscheiden. */
+  #graph { position: relative; }
+  #mwlLade {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    background: #0f0f1a; padding: 24px;
+    transition: opacity .25s ease;
+  }
+  #mwlLade.weg { opacity: 0; pointer-events: none; }
+  .mwl-lade-in { width: 100%; max-width: 280px; text-align: center; }
+  .mwl-lade-bar { height: 3px; border-radius: 2px; background: #2a2a4e; overflow: hidden; margin-bottom: 14px; }
+  .mwl-lade-bar i { display: block; height: 100%; width: 0; background: #4E79A7; transition: width .2s linear; }
+  .mwl-lade-in span { display: block; font-size: 13px; color: #e0e0e0; }
+  .mwl-lade-in small { display: block; margin-top: 6px; font-size: 11.5px; color: #555; line-height: 1.5; }
+  @media (prefers-reduced-motion: reduce) {
+    #mwlLade, .mwl-lade-bar i { transition: none; }
+  }
 `;
 html = html.replace('</style>', BAR_CSS + '</style>');
 
@@ -157,6 +209,69 @@ const BAR_HTML = `<div class="mwl-bar">
 </div>
 `;
 html = html.replace('<body>', '<body>\n' + BAR_HTML);
+
+// ── 4. Aufbau-Hinweis ────────────────────────────────────────────────────────
+// Der Hinweis liegt IM Graph-Container, damit er nur die rechnende Flaeche
+// abdeckt — Suche und Gruppenliste bleiben bedienbar.
+const LADE_HTML = `<div id="mwlLade" role="status" aria-live="polite">
+  <div class="mwl-lade-in">
+    <div class="mwl-lade-bar"><i></i></div>
+    <span id="mwlLadeTxt">Graph wird aufgebaut …</span>
+    <small>${de(nodes)} Knoten und ${de(edges)} Kanten finden einmalig ihre Anordnung.</small>
+  </div>
+</div>`;
+const vorGraph = html;
+html = html.replace('<div id="graph"></div>', '<div id="graph">\n' + LADE_HTML + '\n</div>');
+if (html === vorGraph) {
+  console.error('[publish-graph] ✗ <div id="graph"></div> nicht gefunden — Ausgabeformat von graphify geaendert?');
+  process.exit(1);
+}
+
+// `network` ist ein const auf oberster Skriptebene: eine spaetere klassische
+// Skript-Marke im selben globalen Gueltigkeitsbereich sieht es, window.network
+// gibt es dagegen NICHT.
+// 🔴 Und `typeof network` ist hier KEIN sicherer Test: bei einem const in der
+// temporalen Todeszone wirft schon typeof. Bricht das Hauptskript ab (vis nicht
+// geladen, Integrity-Pruefung gescheitert), bleibt die Bindung uninitialisiert —
+// ein ungeschuetztes typeof reisst dann auch diesen Hinweis mit in den Fehler,
+// und uebrig bleibt genau die leere Flaeche, um die es hier geht.
+const LADE_JS = `<script>
+(function(){
+  var el = document.getElementById('mwlLade');
+  if (!el) return;
+  var txt = document.getElementById('mwlLadeTxt');
+  var bar = el.querySelector('.mwl-lade-bar i');
+  var netz = null;
+  try { netz = network; } catch (e) {}
+  if (!netz) {
+    el.classList.add('fehler');
+    txt.textContent = 'Der Graph konnte nicht aufgebaut werden.';
+    el.querySelector('small').textContent = typeof vis === 'undefined'
+      ? 'Die Graph-Bibliothek wurde nicht geladen. Seite neu laden — bleibt es dabei, hilft die Übersicht unter /archflow/.'
+      : 'Seite neu laden. Bleibt es dabei, hilft die Übersicht unter /archflow/.';
+    return;
+  }
+  netz.on('stabilizationProgress', function (p) {
+    var pct = Math.round(p.iterations / p.total * 100);
+    bar.style.width = pct + '%';
+    txt.textContent = 'Anordnung wird berechnet … ' + pct + ' %';
+  });
+  var ab = false;
+  function weg() {
+    if (ab) return; ab = true;
+    bar.style.width = '100%';
+    el.classList.add('weg');
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+  }
+  // Zwei Ausloeser: das Ende der Stabilisierung, und — als Netz darunter — das
+  // erste gezeichnete Bild. Waere die Stabilisierung schon durch, bevor dieses
+  // Skript laeuft, bliebe der Hinweis sonst ewig stehen.
+  netz.once('stabilizationIterationsDone', weg);
+  netz.once('afterDrawing', weg);
+})();
+</script>
+`;
+html = html.replace('</body>', LADE_JS + '</body>');
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.writeFileSync(OUT, html, 'utf8');

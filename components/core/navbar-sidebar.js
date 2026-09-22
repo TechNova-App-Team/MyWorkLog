@@ -603,26 +603,6 @@
     })();
 
     // Global Ctrl+K / ⌘K shortcut
-    // Keep the generated shell compatible with the current Graphify naming.
-    // Update the already-rendered link without touching generated HTML files.
-    function applyGraphifySidebarLabel() {
-        document.querySelectorAll('a[href="/archflow/"]').forEach((link) => {
-            link.setAttribute('aria-label', 'Graphify');
-            link.childNodes.forEach((node) => {
-                if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('ArchFlow')) {
-                    node.textContent = node.textContent.replace('ArchFlow', 'Graphify');
-                }
-            });
-            if (!link.querySelector('.nav-badge') && !link.querySelector('.nav-badge-new')) {
-                const badge = document.createElement('span');
-                badge.className = 'nav-badge-new';
-                badge.textContent = 'NEU';
-                link.appendChild(badge);
-            }
-        });
-    }
-    applyGraphifySidebarLabel();
-
     document.addEventListener('keydown', (e) => {
         // Master-Schalter (shortcuts.js) — Default AUS. Palette bleibt per
         // Sidebar-Button / Mobile-Nav erreichbar, kein Lockout.

@@ -294,7 +294,7 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=7.4.10"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.4.11"></script>
 </head>
 <body>
 <div id="loader">
@@ -569,7 +569,30 @@ function hxa(hex,a){const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
 function s2w(sx,sy){return{x:(sx-tx)/sc,y:(sy-ty)/sc};}
 
-function render(){
+/* Ein Bild je Frame. Rad und Mausbewegung feuern mehrfach pro Frame, und jeder
+   Aufruf malte bisher sofort das ganze Diagramm neu (gemessen 5-12 ms) — beim
+   Zoomen liefen so drei bis fuenf komplette Durchlaeufe in EIN Frame. render()
+   merkt nur noch vor, renderNow() malt sofort (nur der PNG-Export braucht das). */
+let _raf=0;
+function render(){if(_raf)return;_raf=requestAnimationFrame(()=>{_raf=0;draw();});}
+function renderNow(){if(_raf){cancelAnimationFrame(_raf);_raf=0;}draw();}
+
+/* Nachbarn des gewaehlten Knotens einmal je Auswahl statt je Knoten und Bild.
+   Vorher stand in der Knotenschleife ein EDGES.some(...) — bei 542 Knoten x 336
+   Kanten sind das 182.000 Vergleiche pro Bild, nur um die Deckkraft zu waehlen. */
+let _nbId=null,_nbSet=null,_nbEdges=null;
+function nachbarn(id){
+  if(_nbId!==id){
+    _nbId=id;_nbSet=new Set([id]);_nbEdges=[];
+    EDGES.forEach(e=>{
+      if(e.from===id){_nbSet.add(e.to);_nbEdges.push(e);}
+      else if(e.to===id){_nbSet.add(e.from);_nbEdges.push(e);}
+    });
+  }
+  return{set:_nbSet,edges:_nbEdges};
+}
+
+function draw(){
   const W=wrap.clientWidth,H=wrap.clientHeight;
   ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(tx,ty);ctx.scale(sc,sc);
 
@@ -577,6 +600,13 @@ function render(){
      Statt unlesbarem Matsch zeigt die Uebersicht Struktur (Bloecke + Gruppennamen),
      die Namen kommen beim Hineinzoomen dazu. */
   const LOD=sc<0.5?0:sc<0.8?1:2;
+
+  /* Sichtfenster in Weltkoordinaten. Der Canvas schneidet zwar ab, aber der
+     Rasterizer baut trotzdem jede Kurve und jede Karte auf — und genau beim
+     starken Hineinzoomen liegt fast alles ausserhalb. Der Test ist eine
+     Huellkasten-Pruefung: er wirft nur weg, was sicher nicht ins Bild ragt. */
+  const vx0=-tx/sc,vy0=-ty/sc,vx1=(W-tx)/sc,vy1=(H-ty)/sc;
+  const sichtbar=(x0,y0,x1,y1,m)=>x1>=vx0-m&&x0<=vx1+m&&y1>=vy0-m&&y0<=vy1+m;
 
   /* Gruppenrahmen: neutrale Flaeche + Beschriftung. Die Zugehoerigkeit steckt in
      der Position, nicht in einer Farbe. */
@@ -588,6 +618,7 @@ function render(){
     GROUPS.forEach(g=>{
       if(!g._box)return;
       const{ox,oy,bW,bH}=g._box;
+      if(!sichtbar(ox,oy,ox+bW,oy+bH,4))return;
       ctx.fillStyle='rgba(255,255,255,0.018)';rr(ox,oy,bW,bH,14);ctx.fill();
       ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;rr(ox,oy,bW,bH,14);ctx.stroke();
       ctx.font='600 '+gf+'px Inter,sans-serif';ctx.fillStyle='rgba(233,233,239,'+(LOD?0.62:0.78)+')';
@@ -604,8 +635,11 @@ function render(){
 
   /* Kanten: Farbe = Typ des geladenen Ziels. Gestrichelt = Stylesheet. */
   const hasSel=sel!==null;
+  const selSet=hasSel?nachbarn(sel).set:null;
   EDGES.forEach(e=>{
     const a=positions[e.from],b=positions[e.to];if(!a||!b)return;
+    /* 48 = groesste Auslenkung der Kurve (44) plus Pfeilspitze. */
+    if(!sichtbar(Math.min(a.x,b.x),Math.min(a.y,b.y),Math.max(a.x,b.x),Math.max(a.y,b.y),48))return;
     const active=sel&&(e.from===sel||e.to===sel);
     ctx.globalAlpha=hasSel?(active?1:.05):(LOD===0?.20:.32);
     const col=tcol(RAW.nodes[e.to]);
@@ -628,8 +662,9 @@ function render(){
      Kein Leuchten, kein Emoji, keine Gruppenfarbe. */
   NODES.forEach(n=>{
     const p=positions[n.id];if(!p)return;
+    if(!sichtbar(p.x-NW/2,p.y-NH/2,p.x+NW/2,p.y+NH/2,2))return;
     const isSel=n.id===sel,isHov=n.id===hov;
-    const active=sel&&(n.id===sel||EDGES.some(e=>(e.from===sel&&e.to===n.id)||(e.to===sel&&e.from===n.id)));
+    const active=hasSel&&selSet.has(n.id);
     ctx.globalAlpha=hasSel?(active?1:.12):1;
     const col=tcol(n);
     const x=p.x-NW/2,y=p.y-NH/2;
@@ -677,10 +712,14 @@ function render(){
   if(activeId){
     const sp=positions[activeId];
     if(sp){
-      EDGES.filter(e=>e.from===activeId||e.to===activeId).forEach(e=>{
+      nachbarn(activeId).edges.forEach(e=>{
         const isOut=e.from===activeId;
         const otherId=isOut?e.to:e.from;
         const op=positions[otherId];if(!op)return;
+        /* index.html haengt an 98 Kanten; jede traegt unten eine Beschriftung mit
+           measureText und eigener Schriftumstellung. Was nicht ins Bild ragt,
+           braucht die Rechnung nicht. */
+        if(!sichtbar(Math.min(sp.x,op.x),Math.min(sp.y,op.y),Math.max(sp.x,op.x),Math.max(sp.y,op.y),12))return;
         const col=tcol(RAW.nodes[isOut?e.to:e.from]);
         ctx.globalAlpha=.95;
         ctx.beginPath();ctx.moveTo(sp.x,sp.y);ctx.lineTo(op.x,op.y);
@@ -1001,6 +1040,9 @@ function buildList(){
   }
 }
 function exportPNG(){
+  /* render() malt erst im naechsten Frame — vor dem Abgreifen also erzwingen,
+     sonst liegt im PNG der Stand von vor der letzten Bewegung. */
+  renderNow();
   /* Der Canvas ist transparent — fuer eine brauchbare PNG die Flaeche unterlegen. */
   const t=document.createElement('canvas');t.width=cvs.width;t.height=cvs.height;
   const c=t.getContext('2d');c.fillStyle='#030305';c.fillRect(0,0,t.width,t.height);c.drawImage(cvs,0,0);
