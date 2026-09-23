@@ -12,6 +12,11 @@
     <meta name="description" content="Vier digitale Berichtshefte für Azubis nebeneinander: Kosten, Nutzung ohne Betrieb, Offline, Speicherort, Zeiterfassung, Ausbilder-Freigabe, KI. Belegt mit den Angaben der Anbieter, Stand 18.09.2026.">
     <meta name="keywords" content="Zubido Alternative, Azubiheft Alternative, BLok Alternative, digitales Berichtsheft Vergleich, Berichtsheft App kostenlos, Ausbildungsnachweis digital Vergleich, IHK Berichtsheft Nachfolger, Berichtsheft offline">
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.11"></script>
+    <script>/* Anlauf-Zustaende gelten nur mit JS — sonst bliebe der Hero unsichtbar. */
+    document.documentElement.className += ' js';</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="canonical" href="https://myworklog.de/vergleich/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/vergleich/">
@@ -26,33 +31,53 @@
     <meta property="og:locale" content="de_DE">
 
     <style>
+        /* Dieselbe Handschrift wie /about/: Bricolage fuer Aussagen, Geist fuer
+           Text, ein Licht von oben, Korn. Anders als /about/ traegt diese Seite
+           ein helles Theme (Theme-Sync liest themeMode) — jede Farbe steht
+           deshalb als Token, und [data-theme="light"] definiert sie alle neu. */
         :root {
-            --bg-deep: #030305;
-            --bg-card: rgba(255,255,255,0.025);
+            --bg-deep: #07060b;
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-card-2: rgba(255,255,255,0.055);
+            --bg-solid: #0f0e16;
             --primary: #a855f7;
             --primary-rgb: 168, 85, 247;
-            --primary-dim: rgba(168,85,247,0.15);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --primary-dim: rgba(168,85,247,0.12);
+            --text-main: #f4f2f8;
+            --text-muted: #a29eb1;
+            --text-dim: #6e6a7d;
             --border: rgba(255,255,255,0.08);
             --border-hover: rgba(255,255,255,0.16);
+            --edge: rgba(255,255,255,0.07);
+            --shadow: 0 40px 100px -40px rgba(0,0,0,0.85);
+            --glow: 0.26;
+            --grain: 0.045;
             --success: #10b981;
             --warning: #f59e0b;
-            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --fd: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+            --font-main: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            --ease-out: cubic-bezier(.22, 1, .36, 1);
+            --ease-spring: cubic-bezier(.32, .72, 0, 1);
         }
         [data-theme="light"] {
-            --bg-deep: #f8fafc;
-            --bg-card: rgba(7,16,35,0.02);
-            --text-main: #071023;
-            --text-muted: #475569;
-            --text-dim: #64748b;
-            --border: rgba(7,16,35,0.08);
-            --border-hover: rgba(7,16,35,0.16);
+            --bg-deep: #f7f6fa;
+            --bg-card: rgba(20,16,40,0.025);
+            --bg-card-2: rgba(20,16,40,0.045);
+            --bg-solid: #ffffff;
+            --text-main: #0d0b17;
+            --text-muted: #4d4960;
+            --text-dim: #7a7690;
+            --border: rgba(20,16,40,0.09);
+            --border-hover: rgba(20,16,40,0.18);
+            --edge: rgba(255,255,255,0.9);
+            --shadow: 0 30px 80px -40px rgba(40,20,80,0.25);
+            --glow: 0.14;
+            --grain: 0.03;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         button, input, select, textarea, optgroup { font-family: inherit; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: var(--font-main);
             background: var(--bg-deep);
@@ -62,172 +87,306 @@
             -webkit-font-smoothing: antialiased;
             line-height: 1.6;
         }
+        /* Korn: fest und ohne Zeiger, scrollt nicht mit → kein Repaint beim Scrollen. */
+        body::after {
+            content: ''; position: fixed; inset: 0; z-index: 2000; pointer-events: none;
+            opacity: var(--grain); mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        ::selection { background: rgba(var(--primary-rgb), 0.3); }
 
         .ambient {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background: radial-gradient(60% 40% at 50% 0%, rgba(var(--primary-rgb), 0.10), transparent 70%);
+            position: absolute; top: 0; left: 0; right: 0; height: 900px; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(55% 60% at 50% -10%, rgba(var(--primary-rgb), var(--glow)), transparent 70%),
+                radial-gradient(35% 40% at 88% 10%, rgba(var(--primary-rgb), calc(var(--glow) * 0.35)), transparent 70%);
         }
 
         /* Breiter als /wechseln/ (860): fuenf Spalten brauchen Platz. Fliesstext
            bleibt trotzdem bei ~70 Zeichen (max-width an den Absaetzen). */
-        .shell { position: relative; z-index: 1; max-width: 1040px; margin: 0 auto; padding: 28px 20px 60px; }
-        .prose { max-width: 70ch; }
+        .shell { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 28px 24px 40px; }
+        .prose { max-width: 68ch; }
 
-        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.75rem; color: var(--text-dim); flex-wrap: wrap; }
-        nav a { color: var(--text-dim); text-decoration: none; }
-        nav a:hover { color: var(--text-muted); }
+        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap; margin: 0; }
+        nav li { margin: 0; }
+        nav a { color: var(--text-dim); text-decoration: none; transition: color 0.2s var(--ease-out); }
+        nav a:hover { color: var(--text-main); }
 
         .back-btn {
             display: inline-flex; align-items: center; gap: 7px;
-            margin: 10px 0 26px; padding: 7px 13px;
-            border: 1px solid var(--border); border-radius: 8px;
+            margin: 14px 0 0; padding: 7px 14px 7px 11px;
+            border: 1px solid var(--border); border-radius: 999px; background: var(--bg-card);
             color: var(--text-muted); text-decoration: none;
-            font-size: 0.82rem; transition: border-color 0.15s ease, color 0.15s ease;
+            font-size: 0.82rem; font-weight: 500;
+            transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
         }
         .back-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
-        .back-btn svg { width: 15px; height: 15px; }
+        .back-btn svg { width: 15px; height: 15px; transition: transform 0.3s var(--ease-spring); }
+        .back-btn:hover svg { transform: translateX(-2px); }
 
-        .hero { margin-bottom: 30px; }
+        /* ── Hero ── */
+        .hero { margin: clamp(56px, 9vw, 110px) 0 0; max-width: none; }
         h1 {
-            font-size: clamp(1.7rem, 4.5vw, 2.5rem); font-weight: 800;
-            letter-spacing: -0.03em; line-height: 1.12; margin-bottom: 14px; max-width: 24ch;
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.5rem, 6.4vw, 5.4rem); font-weight: 600;
+            letter-spacing: -0.045em; line-height: 0.98; margin-bottom: 28px; max-width: 15ch;
+            text-wrap: balance;
         }
-        .hero-sub { font-size: 1.03rem; color: var(--text-muted); }
+        .hero-sub { font-size: clamp(1.02rem, 1.4vw, 1.16rem); line-height: 1.65; color: var(--text-muted); max-width: 60ch; text-wrap: pretty; }
 
-        h2 {
-            font-size: 1.32rem; font-weight: 700; letter-spacing: -0.02em;
-            margin: 38px 0 14px; scroll-margin-top: 20px;
+        /* Einmaliger Anlauf beim Laden, sonst keine Einblendungen beim Scrollen. */
+        .js .hero h1, .js .hero-sub, .js .glance-card {
+            opacity: 0; transform: translate3d(0, 24px, 0);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring);
         }
-        h3 { font-size: 1rem; font-weight: 650; margin-bottom: 6px; }
+        .js .hero-sub { transition-delay: 0.12s; }
+        .js.ready .hero h1, .js.ready .hero-sub, .js.ready .glance-card { opacity: 1; transform: none; }
+
+        /* ── Auf einen Blick: aus Tabellenzeile 1+2 gebaut (JS), damit keine
+              zweite Kopie der Preise gepflegt werden muss und /en/ die
+              uebersetzten Zellen mitnimmt. Reihenfolge wie in der Tabelle —
+              das ist keine Rangliste, und es wird nichts gezaehlt. ── */
+        .glance {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+            margin: clamp(48px, 7vw, 80px) 0 0;
+        }
+        .glance:empty { display: none; }
+        .glance-card {
+            position: relative; display: flex; flex-direction: column;
+            padding: 22px 22px 20px; border-radius: 22px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border);
+            box-shadow: inset 0 1px 0 var(--edge);
+            transition-delay: calc(0.25s + var(--i, 0) * 0.08s);
+        }
+        /* Subgrid: Name, Anbieter und die zwei Kostenzeilen stehen ueber alle
+           Karten auf gleicher Hoehe, auch wenn ein Anbietername umbricht. */
+        @supports (grid-template-rows: subgrid) {
+            .glance-card { display: grid; grid-row: span 4; grid-template-rows: subgrid; row-gap: 0; align-content: start; }
+        }
+        .glance-card.is-mine {
+            border-color: rgba(var(--primary-rgb), 0.45);
+            background:
+                radial-gradient(120% 90% at 0% 0%, rgba(var(--primary-rgb), 0.18), transparent 60%),
+                linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            box-shadow: inset 0 1px 0 var(--edge), 0 0 0 4px rgba(var(--primary-rgb), 0.07), 0 20px 60px -20px rgba(var(--primary-rgb), 0.5);
+        }
+        .glance-name { font-family: var(--fd); font-size: 1.5rem; font-weight: 600; letter-spacing: -0.04em; line-height: 1.1; }
+        .glance-card.is-mine .glance-name { color: var(--primary); }
+        .glance-org { font-size: 0.74rem; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+        .glance-row { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+        .glance-label { display: block; font-size: 0.72rem; color: var(--text-dim); margin-bottom: 2px; }
+        .glance-val { display: block; font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
+        .glance-val small { display: block; font-size: 0.74rem; font-weight: 400; color: var(--text-dim); margin-top: 2px; }
+
+        /* ── Abschnitte ── */
+        h2 {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.9rem, 3.6vw, 3rem); font-weight: 600; letter-spacing: -0.04em; line-height: 1.02;
+            margin: clamp(80px, 11vw, 130px) 0 22px; scroll-margin-top: 24px; text-wrap: balance;
+        }
+        h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 8px; line-height: 1.35; }
         p { color: var(--text-muted); margin-bottom: 12px; }
         p strong, li strong { color: var(--text-main); font-weight: 600; }
-        a.inl { color: var(--primary); }
+        a.inl { color: var(--primary); text-decoration-thickness: 1px; text-underline-offset: 3px; }
 
         ol, ul { margin: 0 0 12px 20px; color: var(--text-muted); }
         li { margin-bottom: 6px; }
 
         /* ── Stand + Legende: eine Zeile, weil beides zur Tabelle gehoert ── */
         .meta-row {
-            display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center;
-            margin: 0 0 12px; font-size: 0.82rem; color: var(--text-dim);
+            display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; justify-content: space-between;
+            margin: 0 0 16px; font-size: 0.82rem; color: var(--text-dim);
         }
-        .meta-row .stand { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); }
-        .meta-row .stand svg { width: 14px; height: 14px; }
-        .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+        .meta-row .stand {
+            display: inline-flex; align-items: center; gap: 7px; color: var(--text-muted);
+            padding: 6px 12px; border-radius: 999px; background: var(--bg-card); border: 1px solid var(--border);
+        }
+        .meta-row .stand svg { width: 14px; height: 14px; color: var(--primary); }
+        .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; }
         .legend span { display: inline-flex; align-items: center; gap: 5px; }
 
-        /* ── Die Tabelle ist der Inhalt. Erste Spalte klebt, damit man am Handy
+        /* ── Die Tabelle ist der Inhalt. Rahmen mit Aussenschale und Kern wie
+              die Aufnahmen auf /about/. Erste Spalte klebt, damit man am Handy
               beim Querscrollen noch weiss, in welcher Zeile man ist. ── */
-        .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.86rem; min-width: 880px; }
-        th, td { padding: 11px 13px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
-        tr:last-child td { border-bottom: none; }
-        thead th {
-            color: var(--text-main); font-weight: 700; font-size: 0.86rem;
-            background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
-            position: sticky; top: 0; z-index: 2;
+        .tbl-frame {
+            padding: 7px; border-radius: 26px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow);
         }
-        thead th small { display: block; font-weight: 500; font-size: 0.72rem; color: var(--text-dim); margin-top: 1px; }
-        td { color: var(--text-muted); }
+        .tbl-wrap {
+            overflow-x: auto; border-radius: 19px; -webkit-overflow-scrolling: touch;
+            background: var(--bg-solid); border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.87rem; min-width: 900px; }
+        th, td { padding: 15px 16px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+        tr:last-child td, tr:last-child th { border-bottom: none; }
+        thead th {
+            color: var(--text-main); font-weight: 600; font-size: 0.95rem; letter-spacing: -0.01em;
+            background: var(--bg-solid);
+            position: sticky; top: 0; z-index: 2; padding-top: 20px; padding-bottom: 16px;
+        }
+        thead th > span:first-child { font-family: var(--fd); font-size: 1.15rem; letter-spacing: -0.035em; }
+        thead th:first-child > span:first-child { font-family: var(--font-main); font-size: 0.8rem; font-weight: 500; letter-spacing: 0; color: var(--text-dim); }
+        thead th small { display: block; font-weight: 400; font-size: 0.72rem; color: var(--text-dim); margin-top: 3px; letter-spacing: 0; }
+        td { color: var(--text-muted); line-height: 1.5; }
         /* Haupttext inline, damit die Fussnote dahinter steht; das Kleingedruckte
            bricht als Block darunter. Die Fussnote steht im Markup deshalb VOR <small>. */
-        td > span:first-child { display: inline; }
+        td > span:first-child { display: inline; color: var(--text-main); }
         td > .st:first-child { display: inline-flex; }   /* schlaegt die Zeile darueber (0,2,1 > 0,1,2) */
-        td small { display: block; font-size: 0.76rem; color: var(--text-dim); margin-top: 2px; }
+        td small { display: block; font-size: 0.76rem; color: var(--text-dim); margin-top: 3px; }
         tbody th {
-            color: var(--text-main); font-weight: 600; width: 190px; min-width: 190px;
+            color: var(--text-main); font-weight: 500; width: 200px; min-width: 200px;
             position: sticky; left: 0; z-index: 1;
-            background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
+            background: var(--bg-solid);
             border-right: 1px solid var(--border);
         }
         thead th:first-child { left: 0; z-index: 3; border-right: 1px solid var(--border); }
-        col.mine { background: rgba(var(--primary-rgb), 0.05); }
-        thead th.mine { color: var(--primary); }
+        /* Die eigene Spalte: Tonflaeche + Akzentkante oben im Kopf. Kein
+           Rahmen um die ganze Spalte — der kollidiert mit den Klebezellen. */
+        col.mine { background: rgba(var(--primary-rgb), 0.06); }
+        thead th.mine { color: var(--primary); background: linear-gradient(rgba(var(--primary-rgb), 0.1), rgba(var(--primary-rgb), 0.1)), var(--bg-solid); box-shadow: inset 0 3px 0 var(--primary); }
 
         /* Zustand vor dem Text: gruener Haken = belegt ja; Strich = auf der
            Anbieterseite nicht genannt; Kreuz = belegt nein. Das Kreuz ist bewusst
            NICHT rot — die Tabelle bewertet nicht, sie zaehlt auf. */
-        .st { display: inline-flex; align-items: flex-start; gap: 6px; }
-        .st svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 0.28em; }   /* an der ERSTEN Zeile, nicht mittig zwischen zweien */
+        .st { display: inline-flex; align-items: flex-start; gap: 7px; }
+        .st svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 0.22em; }   /* an der ERSTEN Zeile, nicht mittig zwischen zweien */
         .st-yes svg { color: var(--success); }
         .st-no svg, .st-na svg { color: var(--text-dim); }
-        .st-na { color: var(--text-dim); }
-        .fn { color: var(--text-dim); text-decoration: none; font-size: 0.7rem; vertical-align: super; margin-left: 2px; }
+        td > .st-na:first-child, .st-na { color: var(--text-dim); }
+        .fn { color: var(--text-dim); text-decoration: none; font-size: 0.68rem; vertical-align: super; margin-left: 3px; font-weight: 600; }
         .fn:hover { color: var(--primary); }
 
         .card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--edge);
+            border-radius: 22px; padding: 26px 26px 22px; margin-bottom: 14px;
         }
-        .card h3 { margin-bottom: 6px; }
+        .card h3 { margin-bottom: 8px; }
         .card p:last-child { margin-bottom: 0; }
-        .cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
         .cases .card { margin: 0; }
+        .cases h3 { font-family: var(--fd); font-size: 1.35rem; letter-spacing: -0.035em; line-height: 1.12; margin-bottom: 12px; }
+        /* Der eigene Fall zuletzt in der Liste (bewusst, siehe Text „keinen
+           Sieger") — hervorgehoben nur, damit man ihn findet. */
+        .cases .card:last-child {
+            border-color: rgba(var(--primary-rgb), 0.35);
+            background: radial-gradient(120% 90% at 100% 0%, rgba(var(--primary-rgb), 0.14), transparent 60%), linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+        }
 
         .note {
-            border-left: 3px solid var(--primary);
-            padding: 11px 15px; margin: 16px 0;
-            background: var(--primary-dim); border-radius: 0 10px 10px 0;
-            font-size: 0.9rem;
+            position: relative; padding: 18px 22px; margin: 22px 0;
+            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.25); border-radius: 18px;
+            font-size: 0.92rem;
         }
-        .note.warn { border-left-color: var(--warning); background: rgba(245,158,11,0.07); }
+        .note.warn { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.07); }
         .note p:last-child { margin-bottom: 0; }
 
+        /* FAQ: Plus dreht zum Kreuz — die Bewegung zeigt, was aufging. */
+        .card.faq { padding: 6px 26px; }
         .faq-item { border-bottom: 1px solid var(--border); }
         .faq-item:last-child { border-bottom: none; }
         .faq-item summary {
-            cursor: pointer; padding: 13px 0; font-weight: 600;
-            font-size: 0.94rem; list-style: none; display: flex;
-            justify-content: space-between; gap: 12px; align-items: center;
+            cursor: pointer; padding: 20px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em;
+            list-style: none; display: flex; justify-content: space-between; gap: 16px; align-items: center;
+            transition: color 0.2s var(--ease-out);
         }
+        .faq-item summary:hover { color: var(--primary); }
         .faq-item summary::-webkit-details-marker { display: none; }
-        .faq-item summary::after { content: '+'; color: var(--primary); font-size: 1.2rem; flex-shrink: 0; }
-        .faq-item[open] summary::after { content: '−'; }
-        .faq-item p { padding-bottom: 13px; margin-bottom: 0; font-size: 0.9rem; }
+        .faq-item summary::after {
+            content: ''; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+            border: 1px solid var(--border);
+            background:
+                linear-gradient(var(--primary), var(--primary)) center / 11px 1.6px no-repeat,
+                linear-gradient(var(--primary), var(--primary)) center / 1.6px 11px no-repeat;
+            transition: transform 0.4s var(--ease-spring), background-color 0.2s var(--ease-out);
+        }
+        .faq-item[open] summary::after { transform: rotate(45deg); background-color: var(--primary-dim); }
+        .faq-item p { padding-bottom: 20px; margin-bottom: 0; font-size: 0.94rem; max-width: 68ch; }
 
-        .sources { font-size: 0.82rem; }
-        .sources ol { margin-left: 22px; }
-        .sources li { margin-bottom: 4px; color: var(--text-dim); }
+        .sources { font-size: 0.84rem; }
+        .sources ol { margin-left: 0; list-style: none; counter-reset: q; }
+        .sources li { position: relative; margin-bottom: 8px; padding-left: 34px; color: var(--text-dim); counter-increment: q; }
+        .sources li::before {
+            content: counter(q); position: absolute; left: 0; top: 1px;
+            width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+            font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
+            background: var(--bg-card-2); border: 1px solid var(--border);
+        }
+        .sources li:target::before { background: var(--primary); color: #fff; border-color: var(--primary); }
         .sources a { color: var(--text-muted); text-decoration: none; border-bottom: 1px solid var(--border); }
         .sources a:hover { color: var(--text-main); border-color: var(--border-hover); }
+        .sources p { margin-top: 18px; }
 
+        /* ── Finale ── */
         .cta {
-            display: flex; flex-wrap: wrap; gap: 11px; align-items: center;
-            margin-top: 34px; padding: 22px; border-radius: 14px;
-            background: var(--bg-card); border: 1px solid var(--border);
+            position: relative; overflow: hidden; isolation: isolate;
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0;
+            margin-top: clamp(90px, 12vw, 140px); padding: clamp(48px, 8vw, 88px) 24px;
+            border-radius: 30px; border: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            box-shadow: inset 0 1px 0 var(--edge);
         }
-        .cta-text { flex: 1; min-width: 210px; }
-        .cta-text strong { display: block; font-size: 1.02rem; margin-bottom: 3px; }
-        .cta-text span { font-size: 0.86rem; color: var(--text-muted); }
+        .cta::before {
+            content: ''; position: absolute; left: 50%; bottom: -60%; width: 900px; height: 600px; z-index: -1;
+            transform: translateX(-50%); pointer-events: none;
+            background: radial-gradient(50% 50% at 50% 50%, rgba(var(--primary-rgb), calc(var(--glow) * 1.3)), transparent 70%);
+        }
+        .cta-text { max-width: 760px; }
+        .cta-text strong {
+            display: block; font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.4rem, 6vw, 4.4rem); font-weight: 600; letter-spacing: -0.05em; line-height: 0.98;
+            margin-bottom: 16px; text-wrap: balance;
+        }
+        .cta-text span { font-size: 1.05rem; color: var(--text-muted); }
+        .cta-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 32px; }
         .btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 11px 20px; border-radius: 9px; text-decoration: none;
-            font-size: 0.9rem; font-weight: 600; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 13px 22px; border-radius: 999px; text-decoration: none;
+            font-size: 0.93rem; font-weight: 600;
+            transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.16s var(--ease-out), box-shadow 0.3s var(--ease-out);
             border: 1px solid var(--border);
         }
-        .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .btn-primary:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
-        .btn-ghost { color: var(--text-muted); }
-        .btn-ghost:hover { border-color: var(--border-hover); color: var(--text-main); }
-        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary {
+            background: var(--text-main); border-color: transparent; color: var(--bg-deep);
+            box-shadow: 0 12px 40px -10px rgba(var(--primary-rgb), 0.55);
+        }
+        .btn-primary:hover { box-shadow: 0 16px 50px -10px rgba(var(--primary-rgb), 0.8); }
+        .btn-ghost { color: var(--text-muted); background: var(--bg-card); }
+        .btn-ghost:hover { border-color: rgba(var(--primary-rgb), 0.35); color: var(--text-main); }
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
 
         /* Touch hat kein :hover — Ziele muessen auch ohne erkennbar sein. */
         @media (hover: none) { .btn-ghost { color: var(--text-main); } }
 
-        .scroll-hint { display: none; font-size: 0.78rem; color: var(--text-dim); margin: 8px 0 0; }
+        .scroll-hint { display: none; font-size: 0.78rem; color: var(--text-dim); margin: 10px 0 0; }
+        @media (max-width: 900px) { .glance { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 760px) {
             .cases { grid-template-columns: 1fr; }
             .scroll-hint { display: block; }
         }
         @media (max-width: 560px) {
-            .shell { padding: 20px 15px 44px; }
+            .shell { padding: 20px 16px 32px; }
+            .glance { gap: 10px; }
+            .glance-card { padding: 18px 16px 16px; border-radius: 18px; }
+            .glance-name { font-size: 1.25rem; }
+            .tbl-frame { padding: 5px; border-radius: 20px; }
+            .tbl-wrap { border-radius: 15px; }
             table { font-size: 0.82rem; min-width: 780px; }
-            th, td { padding: 9px 10px; }
+            th, td { padding: 11px 12px; }
             tbody th { width: 140px; min-width: 140px; }
-            .cta { flex-direction: column; align-items: stretch; }
-            .btn { justify-content: center; }
+            .card, .card.faq { padding-left: 20px; padding-right: 20px; }
+            .cta-actions { flex-direction: column; align-items: stretch; width: 100%; }
         }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+        @media (max-width: 380px) { .glance { grid-template-columns: 1fr; } }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            * { transition: none !important; }
+            .js .hero h1, .js .hero-sub, .js .glance-card { transform: none; }
+        }
     </style>
     <script defer src="/Assets/js/version-loader.js?v=7.4.11"></script>
     <script defer src="/Assets/js/ph-init.js?v=7.4.11"></script>
@@ -265,6 +424,11 @@
             </p>
         </header>
 
+        <!-- Auf einen Blick: baut das Skript unten aus den ersten zwei
+             Tabellenzeilen. aria-hidden, weil die Tabelle dieselben Angaben
+             traegt — ein Screenreader soll sie nicht zweimal vorlesen. -->
+        <div class="glance" id="glance" aria-hidden="true"></div>
+
         <h2 id="tabelle">Die Gegenüberstellung</h2>
         <div class="meta-row">
             <span class="stand">
@@ -278,6 +442,7 @@
             </span>
         </div>
 
+        <div class="tbl-frame">
         <div class="tbl-wrap">
             <table>
                 <colgroup>
@@ -405,6 +570,7 @@
                 </tbody>
             </table>
         </div>
+        </div>
         <p class="scroll-hint">Die Tabelle lässt sich seitlich schieben.</p>
 
         <div class="note prose">
@@ -458,7 +624,7 @@
         </div>
 
         <h2 id="faq">Häufige Fragen</h2>
-        <div class="card">
+        <div class="card faq">
             <details class="faq-item">
                 <summary>Warum steht bei manchen Feldern „nicht genannt" statt „nein"?</summary>
                 <p>
@@ -535,8 +701,10 @@
                 <strong>Selbst ausprobieren</strong>
                 <span>Kostenlos, ohne Konto, ohne Installation.</span>
             </div>
-            <a href="/" class="btn btn-primary">MyWorkLog öffnen</a>
-            <a href="/wechseln/" class="btn btn-ghost">Daten übernehmen</a>
+            <div class="cta-actions">
+                <a href="/" class="btn btn-primary">MyWorkLog öffnen</a>
+                <a href="/wechseln/" class="btn btn-ghost">Daten übernehmen</a>
+            </div>
         </div>
     </div>
 
@@ -555,6 +723,47 @@
         {"@type":"Question","name":"Wie wurde geprüft?","acceptedAnswer":{"@type":"Answer","text":"Jede Zelle geht auf eine öffentliche Seite des Anbieters zurück, gelesen am 18. September 2026. Zitate stehen in Anführungszeichen. Ändert ein Anbieter seine Angaben, reicht ein Hinweis an info@myworklog.de."}}
       ]
     }
+    </script>
+
+    <script>
+    /* Auf einen Blick: Name, Anbieter und die zwei Kostenzeilen je Spalte,
+       gelesen aus der Tabelle. Nur textContent — keine Zelle wird als HTML
+       uebernommen. Fehlt etwas (Tabelle umgebaut), bleibt der Kasten leer
+       und ist per :empty ausgeblendet, statt halb gefuellt dazustehen. */
+    (function () {
+        var box = document.getElementById('glance');
+        var heads = document.querySelectorAll('thead th');
+        var rows = document.querySelectorAll('tbody tr');
+        function ready() { requestAnimationFrame(function () { document.documentElement.classList.add('ready'); }); }
+        if (!box || heads.length < 2 || rows.length < 2) { ready(); return; }
+        function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+        function mainText(cell) {
+            var first = cell && cell.querySelector(':scope > span');
+            return first ? first.textContent.trim() : '';
+        }
+        var frag = document.createDocumentFragment();
+        for (var c = 1; c < heads.length; c++) {
+            var th = heads[c];
+            var card = el('div', 'glance-card' + (th.classList.contains('mine') ? ' is-mine' : ''));
+            card.style.setProperty('--i', c - 1);
+            card.appendChild(el('span', 'glance-name', mainText(th)));
+            var org = th.querySelector('small');
+            card.appendChild(el('span', 'glance-org', org ? org.textContent.trim() : ''));
+            for (var r = 0; r < 2; r++) {
+                var cell = rows[r].children[c];
+                var row = el('div', 'glance-row');
+                row.appendChild(el('span', 'glance-label', mainText(rows[r].querySelector('th'))));
+                var val = el('span', 'glance-val', mainText(cell));
+                var sm = cell && cell.querySelector('small');
+                if (sm) val.appendChild(el('small', null, sm.textContent.trim()));
+                row.appendChild(val);
+                card.appendChild(row);
+            }
+            frag.appendChild(card);
+        }
+        box.appendChild(frag);
+        ready();
+    })();
     </script>
 
     <script>
