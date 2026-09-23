@@ -12,6 +12,11 @@
     <meta name="description" content="Das IHK-Berichtsheft endet am 31.12.2026, ab 1.1.2027 kein Zugriff mehr. Was Azubis und Ausbilder jetzt tun müssen – und wie der PDF-Export in MyWorkLog weiterläuft.">
     <meta name="keywords" content="IHK Berichtsheft eingestellt, Digitales Berichtsheft IHK Abschaltung 2026, Serviceportal Bildung Berichtsheft Export, IHK Berichtsheft Alternative, IHK Berichtsheft PDF importieren, Ausbildungsnachweis weiterführen, Berichtsheft App kostenlos">
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.11"></script>
+    <script>/* Anlauf-Zustaende gelten nur mit JS — sonst bliebe der Hero unsichtbar. */
+    document.documentElement.className += ' js';</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="canonical" href="https://myworklog.de/ihk-berichtsheft/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ihk-berichtsheft/">
@@ -26,34 +31,57 @@
     <meta property="og:locale" content="de_DE">
 
     <style>
+        /* Handschrift wie /about/ und /vergleich/ (Bricolage + Geist, Korn,
+           Aufnahmen im Rahmen). Eigene Note dieser Seite: die Frist ist
+           BERNSTEIN, nicht Markenton — die Uhr ist die der IHK, nicht die von
+           MyWorkLog. Alles, was MyWorkLog tut, steht im Markenton. Helles Theme
+           per Theme-Sync (themeMode), deshalb jede Farbe als Token. */
         :root {
-            --bg-deep: #030305;
-            --bg-card: rgba(255,255,255,0.025);
+            --bg-deep: #07060b;
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-card-2: rgba(255,255,255,0.055);
+            --bg-solid: #0f0e16;
             --primary: #a855f7;
             --primary-rgb: 168, 85, 247;
-            --primary-dim: rgba(168,85,247,0.15);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --primary-dim: rgba(168,85,247,0.12);
+            --text-main: #f4f2f8;
+            --text-muted: #a29eb1;
+            --text-dim: #6e6a7d;
             --border: rgba(255,255,255,0.08);
             --border-hover: rgba(255,255,255,0.16);
+            --edge: rgba(255,255,255,0.07);
+            --shadow: 0 40px 100px -40px rgba(0,0,0,0.85);
+            --glow: 0.26;
+            --grain: 0.045;
             --success: #10b981;
             --warning: #f59e0b;
             --warning-rgb: 245, 158, 11;
-            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --fd: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+            --font-main: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            --ease-out: cubic-bezier(.22, 1, .36, 1);
+            --ease-spring: cubic-bezier(.32, .72, 0, 1);
         }
         [data-theme="light"] {
-            --bg-deep: #f8fafc;
-            --bg-card: rgba(7,16,35,0.02);
-            --text-main: #071023;
-            --text-muted: #475569;
-            --text-dim: #64748b;
-            --border: rgba(7,16,35,0.08);
-            --border-hover: rgba(7,16,35,0.16);
+            --bg-deep: #f7f6fa;
+            --bg-card: rgba(20,16,40,0.025);
+            --bg-card-2: rgba(20,16,40,0.045);
+            --bg-solid: #ffffff;
+            --text-main: #0d0b17;
+            --text-muted: #4d4960;
+            --text-dim: #7a7690;
+            --border: rgba(20,16,40,0.09);
+            --border-hover: rgba(20,16,40,0.18);
+            --edge: rgba(255,255,255,0.9);
+            --shadow: 0 30px 80px -40px rgba(40,20,80,0.25);
+            --glow: 0.14;
+            --grain: 0.03;
+            --warning: #d97706;
+            --warning-rgb: 217, 119, 6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         button, input, select, textarea, optgroup { font-family: inherit; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: var(--font-main);
             background: var(--bg-deep);
@@ -63,85 +91,135 @@
             -webkit-font-smoothing: antialiased;
             line-height: 1.6;
         }
+        /* Korn: fest und ohne Zeiger, scrollt nicht mit → kein Repaint beim Scrollen. */
+        body::after {
+            content: ''; position: fixed; inset: 0; z-index: 2000; pointer-events: none;
+            opacity: var(--grain); mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        ::selection { background: rgba(var(--primary-rgb), 0.3); }
 
-        /* Der Schein ist hier bernsteinfarben, nicht im Markenton: die Uhr auf
-           dieser Seite ist die der IHK, nicht die von MyWorkLog. */
+        /* Der Schein oben ist bernsteinfarben: er gehoert zur Frist. */
         .ambient {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background: radial-gradient(60% 40% at 50% 0%, rgba(var(--warning-rgb), 0.07), transparent 70%);
+            position: absolute; top: 0; left: 0; right: 0; height: 1000px; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(55% 55% at 30% -8%, rgba(var(--warning-rgb), calc(var(--glow) * 0.55)), transparent 70%),
+                radial-gradient(40% 40% at 90% 15%, rgba(var(--primary-rgb), calc(var(--glow) * 0.4)), transparent 70%);
+        }
+        .progress {
+            position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 1000;
+            background: linear-gradient(90deg, var(--warning), var(--primary));
+            transform: scaleX(0); transform-origin: left;
         }
 
-        .shell { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
-        .prose { max-width: 70ch; }
+        .shell { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 28px 24px 40px; }
+        .prose { max-width: 68ch; }
 
-        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.75rem; color: var(--text-dim); flex-wrap: wrap; }
-        nav a { color: var(--text-dim); text-decoration: none; }
-        nav a:hover { color: var(--text-muted); }
+        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap; margin: 0; }
+        nav li { margin: 0; }
+        nav a { color: var(--text-dim); text-decoration: none; transition: color 0.2s var(--ease-out); }
+        nav a:hover { color: var(--text-main); }
 
         .back-btn {
             display: inline-flex; align-items: center; gap: 7px;
-            margin: 10px 0 26px; padding: 7px 13px;
-            border: 1px solid var(--border); border-radius: 8px;
+            margin: 14px 0 0; padding: 7px 14px 7px 11px;
+            border: 1px solid var(--border); border-radius: 999px; background: var(--bg-card);
             color: var(--text-muted); text-decoration: none;
-            font-size: 0.82rem; transition: border-color 0.15s ease, color 0.15s ease;
+            font-size: 0.82rem; font-weight: 500;
+            transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
         }
         .back-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
-        .back-btn svg { width: 15px; height: 15px; }
+        .back-btn svg { width: 15px; height: 15px; transition: transform 0.3s var(--ease-spring); }
+        .back-btn:hover svg { transform: translateX(-2px); }
 
-        .hero { margin-bottom: 26px; }
+        /* ── Hero ── */
+        .hero { margin: clamp(40px, 6vw, 72px) 0 0; max-width: none; }
         h1 {
-            font-size: clamp(1.75rem, 4.8vw, 2.6rem); font-weight: 800;
-            letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; max-width: 22ch;
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.4rem, 5.4vw, 4.6rem); font-weight: 600;
+            letter-spacing: -0.045em; line-height: 0.98; margin-bottom: 24px; max-width: 19ch;
+            text-wrap: balance;
         }
-        .hero-sub { font-size: 1.03rem; color: var(--text-muted); }
-        .hero-sub + .hero-sub { margin-top: 10px; }
+        .hero-sub { font-size: clamp(1.02rem, 1.4vw, 1.14rem); line-height: 1.65; color: var(--text-muted); max-width: 62ch; text-wrap: pretty; }
+        .hero-sub + .hero-sub { margin-top: 12px; font-size: 0.98rem; }
+
+        /* Anlauf beim Laden: einmal, dann Ruhe. */
+        .js .hero h1, .js .hero-sub, .js .frist {
+            opacity: 0; transform: translate3d(0, 24px, 0);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring);
+        }
+        .js .hero-sub { transition-delay: 0.1s; }
+        .js .frist { transition-delay: 0.22s; }
+        .js.ready .hero h1, .js.ready .hero-sub, .js.ready .frist { opacity: 1; transform: none; }
 
         h2 {
-            font-size: 1.32rem; font-weight: 700; letter-spacing: -0.02em;
-            margin: 40px 0 14px; scroll-margin-top: 20px;
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.9rem, 3.6vw, 3rem); font-weight: 600; letter-spacing: -0.04em; line-height: 1.02;
+            margin: clamp(80px, 11vw, 130px) 0 22px; scroll-margin-top: 24px; text-wrap: balance; max-width: 22ch;
         }
-        h3 { font-size: 1rem; font-weight: 650; margin-bottom: 6px; }
+        h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 8px; line-height: 1.35; }
         p { color: var(--text-muted); margin-bottom: 12px; }
         p strong, li strong, dd strong { color: var(--text-main); font-weight: 600; }
-        a.inl { color: var(--primary); }
+        a.inl { color: var(--primary); text-decoration-thickness: 1px; text-underline-offset: 3px; }
         code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; color: var(--text-main); }
 
         ol, ul { margin: 0 0 12px 20px; color: var(--text-muted); }
         li { margin-bottom: 6px; }
 
-        /* ── Die Frist: ein Jahresstreifen, auf dem heute steht. Was bleibt, ist
-              bernsteinfarben; was vorbei ist, grau. Die Marken liegen in DEMSELBEN
+        /* ── Die Frist: die Signatur der Seite. Oben die Resttage als grosse
+              Zahl (das Skript laesst sie beim Laden von 365 herunterlaufen),
+              darunter der Jahresstreifen. Die Marken liegen in DEMSELBEN
               Raster wie die Monate (12 Zellen), damit nichts verrutschen kann. ── */
         .frist {
-            border: 1px solid rgba(var(--warning-rgb), 0.35);
-            border-radius: 16px; padding: 20px 22px 18px;
-            background: linear-gradient(rgba(var(--warning-rgb), 0.05), rgba(var(--warning-rgb), 0.05)), var(--bg-deep);
+            position: relative; overflow: hidden;
+            margin-top: clamp(32px, 4vw, 48px);
+            border: 1px solid rgba(var(--warning-rgb), 0.3);
+            border-radius: 28px; padding: clamp(24px, 4vw, 44px);
+            background:
+                radial-gradient(80% 120% at 0% 0%, rgba(var(--warning-rgb), 0.12), transparent 60%),
+                linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow);
         }
-        .frist-lead { font-size: 1.12rem; color: var(--text-main); margin-bottom: 16px; line-height: 1.4; }
-        .frist-lead strong { color: var(--warning); font-weight: 800; }
-        .frist-track { position: relative; height: 44px; margin: 0 0 10px; }
+        .frist-lead {
+            font-size: clamp(1.1rem, 1.9vw, 1.45rem); color: var(--text-main); margin-bottom: clamp(24px, 4vw, 40px);
+            line-height: 1.35; max-width: 42ch; letter-spacing: -0.01em;
+        }
+        .frist-lead strong {
+            display: block; color: var(--warning);
+            font-family: var(--fd); font-variation-settings: 'opsz' 96; font-weight: 600;
+            font-size: clamp(3.6rem, 12vw, 9.5rem); letter-spacing: -0.06em; line-height: 0.9;
+            margin: 4px 0 10px; font-variant-numeric: tabular-nums;
+        }
+        .frist-track { position: relative; height: 52px; margin: 0 0 14px; }
         .frist-bar {
-            position: absolute; left: 0; right: 0; top: 10px; height: 10px;
-            border-radius: 6px; background: var(--border); overflow: hidden;
+            position: absolute; left: 0; right: 0; top: 10px; height: 12px;
+            border-radius: 8px; background: var(--border); overflow: hidden;
         }
-        .frist-rest { position: absolute; top: 0; bottom: 0; right: 0; left: 72%; background: var(--warning); border-radius: 0 6px 6px 0; }
+        .frist-rest {
+            position: absolute; top: 0; bottom: 0; right: 0; left: 72%;
+            background: linear-gradient(90deg, var(--warning), rgba(var(--warning-rgb), 0.7));
+            border-radius: 0 8px 8px 0;
+            transform-origin: right; transition: transform 1.4s var(--ease-spring) 0.5s;
+        }
+        .js .frist .frist-rest { transform: scaleX(0); }
+        .js.ready .frist .frist-rest { transform: none; }
         .frist-months {
-            position: absolute; left: 0; right: 0; top: 24px;
+            position: absolute; left: 0; right: 0; top: 30px;
             display: grid; grid-template-columns: repeat(12, 1fr);
-            font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.02em;
+            font-size: 0.72rem; color: var(--text-dim);
         }
         .frist-months span { text-align: center; border-left: 1px solid var(--border); line-height: 1.2; padding-top: 2px; }
         .frist-months span:first-child { border-left: none; }
         .frist-heute {
-            position: absolute; top: 3px; left: 72%; width: 24px; height: 24px; margin-left: -12px;
+            position: absolute; top: 4px; left: 72%; width: 24px; height: 24px; margin-left: -12px;
             border-radius: 50%; background: var(--bg-deep);
-            border: 3px solid var(--text-main); box-shadow: 0 0 0 4px rgba(var(--warning-rgb), 0.25);
+            border: 3px solid var(--text-main); box-shadow: 0 0 0 5px rgba(var(--warning-rgb), 0.25), 0 0 24px rgba(var(--warning-rgb), 0.6);
         }
         .frist-ende {
-            position: absolute; top: 4px; right: -1px; width: 3px; height: 22px;
+            position: absolute; top: 4px; right: -1px; width: 3px; height: 24px;
             background: var(--text-main); border-radius: 2px;
         }
-        .frist-legend { list-style: none; margin: 0; display: grid; gap: 6px; font-size: 0.88rem; }
+        .frist-legend { list-style: none; margin: 0; display: grid; gap: 8px; font-size: 0.9rem; }
         .frist-legend li { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: baseline; margin: 0; color: var(--text-muted); }
         .frist-legend i { display: block; width: 12px; height: 12px; border-radius: 50%; position: relative; top: 1px; }
         .frist-legend .l-heute i { border: 3px solid var(--text-main); background: var(--bg-deep); box-sizing: border-box; }
@@ -152,127 +230,298 @@
            statt einen abgelaufenen Zaehler zu zeigen (JS setzt die Klasse). */
         .frist.is-vorbei .frist-rest { display: none; }
         .frist.is-vorbei { border-color: var(--border); background: var(--bg-card); }
-        .frist.is-vorbei .frist-lead strong { color: var(--text-main); }
+        .frist.is-vorbei .frist-lead strong { color: var(--text-main); font-size: clamp(2.2rem, 5vw, 3.6rem); }
 
         .facts {
-            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
-            margin: 18px 0 0;
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+            margin: clamp(24px, 4vw, 36px) 0 0;
         }
-        .facts div { border-left: 2px solid var(--border); padding-left: 14px; }
-        .facts dt { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 3px; }
-        .facts dd { font-size: 0.92rem; color: var(--text-main); }
+        .facts div { padding: 16px 18px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); }
+        .facts dt { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 4px; }
+        .facts dd { font-size: 0.94rem; color: var(--text-main); line-height: 1.5; }
 
         /* ── Zwei Leser, zwei Spalten. Karten nur hier, weil es wirklich zwei
               getrennte Anleitungen sind. ── */
-        .wer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+        .wer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
         .card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--edge);
+            border-radius: 22px; padding: 28px 28px 24px; margin-bottom: 14px;
         }
         .wer .card { margin: 0; min-width: 0; }
-        .card h3 { margin-bottom: 10px; }
+        .wer .card h3 { font-family: var(--fd); font-size: 1.7rem; letter-spacing: -0.04em; margin-bottom: 16px; }
         .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
+        .wer ul { margin-left: 0; list-style: none; }
+        .wer ul li { position: relative; padding-left: 18px; margin-bottom: 10px; }
+        .wer ul li::before { content: ''; position: absolute; left: 0; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
 
         /* ── Schritte: eine echte Reihenfolge, deshalb nummeriert. Die Nummer
               sitzt in einer eigenen Spur, der Text bricht darunter nicht ein. ── */
         .steps { list-style: none; margin: 0 0 8px; counter-reset: s; }
         .steps > li {
-            counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 12px;
+            counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 14px;
             padding: 12px 0; border-top: 1px solid var(--border); margin: 0;
         }
         .steps > li:first-child { border-top: none; padding-top: 0; }
         .steps > li::before {
-            content: counter(s); font-weight: 700; font-size: 0.92rem; color: var(--text-main);
-            width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border);
+            content: counter(s); font-weight: 600; font-size: 0.9rem; color: var(--text-main);
+            width: 30px; height: 30px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card-2);
             display: inline-flex; align-items: center; justify-content: center; margin-top: 1px;
         }
         .steps h3 { margin-bottom: 4px; }
-        .steps p { margin-bottom: 6px; font-size: 0.93rem; }
+        .steps p { margin-bottom: 6px; font-size: 0.95rem; }
         .steps p:last-child { margin-bottom: 0; }
-        .card .steps > li { grid-template-columns: 26px 1fr; gap: 10px; padding: 9px 0; }
-        .card .steps > li::before { width: 24px; height: 24px; font-size: 0.82rem; border-radius: 7px; }
-        .card .steps p { font-size: 0.9rem; }
+        .card .steps > li { grid-template-columns: 28px 1fr; gap: 12px; padding: 10px 0; }
+        .card .steps > li::before { width: 26px; height: 26px; font-size: 0.8rem; border-radius: 8px; }
+        .card .steps p { font-size: 0.92rem; }
 
+        /* ═══ DER IMPORT ALS KAMERAFAHRT ═══
+           Links klebt die Buehne, rechts laufen die fuenf Schritte durch. Die
+           Kamera faehrt IN die Aufnahme: Werkzeugleiste → Ablegefeld →
+           Wochenliste → Import-Knopf. Brennpunkte gemessen an den Aufnahmen
+           (Anteil der Bildbreite/-hoehe): IHK-PDF-Knopf 56 % / 55 % in
+           berichtsheft.webp, Ablegefeld 50 % / 47 % in import-start.webp,
+           „Wochen importieren" 66 % / 85 % in import-wochen.webp. Werden die
+           Bilder neu aufgenommen und verschiebt sich das Layout, muessen die
+           Zahlen mit. Der aktive Schritt steht als data-step an .flow. */
+        .flow {
+            display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            gap: clamp(40px, 6vw, 80px); align-items: start; margin-top: 36px;
+        }
+        .flow-sticky { position: sticky; top: max(40px, calc(50vh - 240px)); }
+        .flow-stage {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border-hover);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow), 0 0 90px -30px rgba(var(--primary-rgb), 0.45);
+        }
+        .flow-screen { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-solid); aspect-ratio: 2880 / 1800; }
+        .flow-screen img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+            opacity: 0; transform: scale(1.02);
+            transition: opacity 0.7s var(--ease-out), transform 1.2s var(--ease-spring);
+        }
+        .flow[data-step="1"] img[data-shot="bh"],
+        .flow[data-step="2"] img[data-shot="bh"] { opacity: 1; transform: none; }
+        .flow[data-step="2"] img[data-shot="bh"] { transform-origin: 56% 55%; transform: scale(2.2); }
+        .flow[data-step="3"] img[data-shot="start"] { opacity: 1; transform-origin: 50% 47%; transform: scale(1.35); }
+        .flow[data-step="4"] img[data-shot="wochen"] { opacity: 1; transform: none; }
+        .flow[data-step="5"] img[data-shot="wochen"] { opacity: 1; transform-origin: 66% 85%; transform: scale(2); }
+        /* Ein Ring um das, worauf die Kamera zeigt — Schritt 2 und 5, die
+           beiden, bei denen es um EINEN Knopf geht. */
+        .flow-ring {
+            position: absolute; left: 50%; top: 50%; width: 38%; height: 16%;
+            transform: translate(-50%, -50%) scale(1.2); border-radius: 999px; pointer-events: none;
+            border: 2px solid var(--primary); box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0.18), 0 0 40px rgba(var(--primary-rgb), 0.5);
+            opacity: 0; transition: opacity 0.4s var(--ease-out), transform 0.7s var(--ease-spring);
+        }
+        /* transform-origin haelt den Brennpunkt beim Zoomen an seiner Stelle —
+           der Ring sitzt deshalb genau dort; Groesse = Knopf x Zoomfaktor + Luft. */
+        .flow[data-step="2"] .flow-ring { left: 56%; top: 55%; width: 28%; height: 13%; }
+        .flow[data-step="5"] .flow-ring { left: 66%; top: 85%; width: 30%; height: 12%; }
+        .flow[data-step="2"] .flow-ring, .flow[data-step="5"] .flow-ring { opacity: 1; transform: translate(-50%, -50%); transition-delay: 0.5s; }
+        .flow-dots { display: flex; gap: 6px; margin: 16px 0 0 8px; }
+        .flow-dots i { display: block; width: 18px; height: 3px; border-radius: 3px; background: var(--border-hover); transition: background 0.4s var(--ease-out), width 0.5s var(--ease-spring); }
+        .flow[data-step="1"] .flow-dots i:nth-child(1), .flow[data-step="2"] .flow-dots i:nth-child(2),
+        .flow[data-step="3"] .flow-dots i:nth-child(3), .flow[data-step="4"] .flow-dots i:nth-child(4),
+        .flow[data-step="5"] .flow-dots i:nth-child(5) { background: var(--primary); width: 36px; }
+
+        .flow .steps > li {
+            min-height: min(56vh, 460px); align-content: center; padding: 28px 0;
+            grid-template-columns: 44px 1fr; gap: 18px;
+        }
+        .flow .steps > li:first-child { padding-top: 28px; }
+        .flow .steps > li::before {
+            width: 40px; height: 40px; border-radius: 13px; font-size: 1rem;
+            transition: background 0.4s var(--ease-out), color 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+        }
+        .flow .steps h3 {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.6rem, 2.6vw, 2.3rem); letter-spacing: -0.045em; line-height: 1.02; margin-bottom: 12px;
+            color: var(--text-dim); transition: color 0.5s var(--ease-out);
+        }
+        .flow .steps p { font-size: 1rem; line-height: 1.7; color: var(--text-dim); transition: color 0.5s var(--ease-out); }
+        .flow .steps > li.on::before { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .flow .steps > li.on h3 { color: var(--text-main); }
+        .flow .steps > li.on p { color: var(--text-muted); }
+
+        /* ── Bilder im Rahmen, die beim Scrollen aus der Schraeglage flach
+              kippen (--hp 0…1 schreibt das Skript; nur auf .tilt-in, der
+              Reveal gehoert dem Elternteil). ── */
+        .tilt { perspective: 2000px; margin: 36px 0 0; }
+        .tilt-in {
+            --hp: 0; transform-origin: 50% 0%;
+            transform: rotateX(calc((1 - var(--hp)) * 20deg)) scale(calc(0.92 + var(--hp) * 0.08));
+        }
+        .frame {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border-hover);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow), 0 0 100px -30px rgba(var(--primary-rgb), 0.4);
+        }
+        .frame-in { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-solid); }
+        .frame-in img { display: block; width: 100%; height: auto; }
+        .tilt .frame-in::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.07) 45%, transparent 60%);
+            background-size: 250% 100%; background-position: calc(100% - var(--hp) * 100%) 0;
+        }
+        .cap { margin: 14px 4px 0; font-size: 0.88rem; color: var(--text-dim); max-width: 64ch; }
+        .cap b { color: var(--text-main); font-weight: 600; }
+
+        .sichern { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 5vw, 64px); align-items: center; }
 
         .note {
-            border-left: 3px solid var(--primary);
-            padding: 11px 15px; margin: 16px 0;
-            background: var(--primary-dim); border-radius: 0 10px 10px 0;
-            font-size: 0.9rem;
+            position: relative; padding: 18px 22px; margin: 22px 0;
+            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.25); border-radius: 18px;
+            font-size: 0.92rem;
         }
-        .note.warn { border-left-color: var(--warning); background: rgba(var(--warning-rgb), 0.07); }
+        .note.warn { border-color: rgba(var(--warning-rgb), 0.35); background: rgba(var(--warning-rgb), 0.08); }
         .note p:last-child { margin-bottom: 0; }
 
-        .zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 28px; }
-        .zwei ul { margin-bottom: 0; }
+        .zwei { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 28px; }
+        .zwei > div { padding: 26px 28px; border-radius: 22px; background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card)); border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--edge); }
+        .zwei h3 { font-family: var(--fd); font-size: 1.4rem; letter-spacing: -0.035em; margin-bottom: 14px; }
+        .zwei ul { margin: 0; list-style: none; }
+        .zwei li { position: relative; padding-left: 26px; margin-bottom: 9px; font-size: 0.94rem; }
+        .zwei > div:first-child li::before, .zwei > div:last-child li::before {
+            content: ''; position: absolute; left: 0; top: 0.35em; width: 15px; height: 15px; border-radius: 5px;
+        }
+        .zwei > div:first-child li::before {
+            background: rgba(16,185,129,0.15) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 10px no-repeat;
+        }
+        .zwei > div:last-child li::before { background: var(--bg-card-2); border: 1px solid var(--border-hover); }
 
         .check { list-style: none; margin: 0 0 12px; }
-        .check li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; margin-bottom: 9px; }
+        .check li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; margin-bottom: 12px; }
         .check svg { width: 18px; height: 18px; color: var(--success); margin-top: 3px; }
         .check b { color: var(--text-main); font-weight: 600; }
 
+        /* FAQ: Plus dreht zum Kreuz — die Bewegung zeigt, was aufging. */
+        .card.faq { padding: 6px 26px; }
         .faq-item { border-bottom: 1px solid var(--border); }
         .faq-item:last-child { border-bottom: none; }
         .faq-item summary {
-            cursor: pointer; padding: 13px 0; font-weight: 600;
-            font-size: 0.94rem; list-style: none; display: flex;
-            justify-content: space-between; gap: 12px; align-items: center;
+            cursor: pointer; padding: 20px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em;
+            list-style: none; display: flex; justify-content: space-between; gap: 16px; align-items: center;
+            transition: color 0.2s var(--ease-out);
         }
+        .faq-item summary:hover { color: var(--primary); }
         .faq-item summary::-webkit-details-marker { display: none; }
-        .faq-item summary::after { content: '+'; color: var(--primary); font-size: 1.2rem; flex-shrink: 0; }
-        .faq-item[open] summary::after { content: '−'; }
-        .faq-item p { padding-bottom: 13px; margin-bottom: 0; font-size: 0.9rem; }
+        .faq-item summary::after {
+            content: ''; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+            border: 1px solid var(--border);
+            background:
+                linear-gradient(var(--primary), var(--primary)) center / 11px 1.6px no-repeat,
+                linear-gradient(var(--primary), var(--primary)) center / 1.6px 11px no-repeat;
+            transition: transform 0.4s var(--ease-spring), background-color 0.2s var(--ease-out);
+        }
+        .faq-item[open] summary::after { transform: rotate(45deg); background-color: var(--primary-dim); }
+        .faq-item p { padding-bottom: 20px; margin-bottom: 0; font-size: 0.94rem; max-width: 68ch; }
 
-        .sources { font-size: 0.82rem; }
-        .sources ol { margin-left: 22px; }
-        .sources li { margin-bottom: 4px; color: var(--text-dim); }
+        .sources { font-size: 0.84rem; }
+        .sources ol { margin-left: 0; list-style: none; counter-reset: q; }
+        .sources li { position: relative; margin-bottom: 8px; padding-left: 34px; color: var(--text-dim); counter-increment: q; }
+        .sources li::before {
+            content: counter(q); position: absolute; left: 0; top: 1px;
+            width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+            font-size: 0.7rem; font-weight: 600; color: var(--text-muted);
+            background: var(--bg-card-2); border: 1px solid var(--border);
+        }
+        .sources li:target::before { background: var(--primary); color: #fff; border-color: var(--primary); }
         .sources a { color: var(--text-muted); text-decoration: none; border-bottom: 1px solid var(--border); }
         .sources a:hover { color: var(--text-main); border-color: var(--border-hover); }
-        .fn { color: var(--text-dim); text-decoration: none; font-size: 0.7rem; vertical-align: super; margin-left: 2px; }
+        .fn { color: var(--text-dim); text-decoration: none; font-size: 0.68rem; vertical-align: super; margin-left: 3px; font-weight: 600; }
         .fn:hover { color: var(--primary); }
 
+        /* ── Finale ── */
         .cta {
-            display: flex; flex-wrap: wrap; gap: 11px; align-items: center;
-            margin-top: 34px; padding: 22px; border-radius: 14px;
-            background: var(--bg-card); border: 1px solid var(--border);
+            position: relative; overflow: hidden; isolation: isolate;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            margin-top: clamp(90px, 12vw, 140px); padding: clamp(48px, 8vw, 88px) 24px;
+            border-radius: 30px; border: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            box-shadow: inset 0 1px 0 var(--edge);
         }
-        .cta-text { flex: 1; min-width: 210px; }
-        .cta-text strong { display: block; font-size: 1.02rem; margin-bottom: 3px; }
-        .cta-text span { font-size: 0.86rem; color: var(--text-muted); }
+        .cta::before {
+            content: ''; position: absolute; left: 50%; bottom: -60%; width: 900px; height: 600px; z-index: -1;
+            transform: translateX(-50%); pointer-events: none;
+            background: radial-gradient(50% 50% at 50% 50%, rgba(var(--primary-rgb), calc(var(--glow) * 1.3)), transparent 70%);
+        }
+        .cta-text { max-width: 760px; }
+        .cta-text strong {
+            display: block; font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.3rem, 5.6vw, 4.2rem); font-weight: 600; letter-spacing: -0.05em; line-height: 0.98;
+            margin-bottom: 16px; text-wrap: balance;
+        }
+        .cta-text span { font-size: 1.05rem; color: var(--text-muted); }
+        .cta-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 32px; }
         .btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 11px 20px; border-radius: 9px; text-decoration: none;
-            font-size: 0.9rem; font-weight: 600; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 13px 22px; border-radius: 999px; text-decoration: none;
+            font-size: 0.93rem; font-weight: 600;
+            transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.16s var(--ease-out), box-shadow 0.3s var(--ease-out);
             border: 1px solid var(--border);
         }
-        .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .btn-primary:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
-        .btn-ghost { color: var(--text-muted); }
-        .btn-ghost:hover { border-color: var(--border-hover); color: var(--text-main); }
-        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--text-main); border-color: transparent; color: var(--bg-deep); box-shadow: 0 12px 40px -10px rgba(var(--primary-rgb), 0.55); }
+        .btn-primary:hover { box-shadow: 0 16px 50px -10px rgba(var(--primary-rgb), 0.8); }
+        .btn-ghost { color: var(--text-muted); background: var(--bg-card); }
+        .btn-ghost:hover { border-color: rgba(var(--primary-rgb), 0.35); color: var(--text-main); }
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
 
         /* Touch hat kein :hover — Ziele muessen auch ohne erkennbar sein. */
         @media (hover: none) { .btn-ghost { color: var(--text-main); } }
 
+        /* ═══ SCROLL-EINBLENDUNG ═══ EIN Schreiber: der Observer setzt .is-in.
+           filter:none im Ziel, damit kein Filter-Stapelkontext stehen bleibt;
+           kein clip-path (kappt, was aus dem Kasten ragt — siehe /about/). */
+        .js [data-reveal] {
+            opacity: 0; transform: translate3d(0, 32px, 0); filter: blur(6px);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring), filter 0.9s var(--ease-out);
+            transition-delay: calc(var(--i, 0) * 0.08s);
+        }
+        .js [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
+
+        @media (max-width: 900px) {
+            .flow { grid-template-columns: 1fr; gap: 8px; }
+            /* Randlos und ohne Rundung: an einer runden Ecke schiene der
+               darunter durchlaufende Text durch. */
+            .flow-sticky { top: 0; z-index: 3; margin: 0 -24px; padding: 12px 24px 10px; background: var(--bg-deep); box-shadow: 0 14px 18px -6px var(--bg-deep); }
+            .flow-stage { padding: 5px; border-radius: 18px; }
+            .flow-screen { border-radius: 13px; }
+            .flow-dots { margin-top: 10px; }
+            .flow .steps > li { min-height: 58vh; }
+            .sichern { grid-template-columns: 1fr; }
+        }
         @media (max-width: 760px) {
             .wer, .zwei { grid-template-columns: 1fr; }
             .facts { grid-template-columns: 1fr; gap: 10px; }
         }
         @media (max-width: 560px) {
-            .shell { padding: 20px 15px 44px; }
-            .frist { padding: 16px 16px 14px; }
-            .frist-lead { font-size: 1.02rem; }
+            .shell { padding: 20px 16px 32px; }
+            .flow-sticky { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+            .frist { border-radius: 22px; }
             .frist-months { font-size: 0.62rem; }
-            .cta { flex-direction: column; align-items: stretch; }
-            .btn { justify-content: center; }
+            .card, .card.faq, .zwei > div { padding-left: 20px; padding-right: 20px; }
+            .frame { padding: 5px; border-radius: 18px; }
+            .frame-in { border-radius: 13px; }
+            .cta-actions { flex-direction: column; align-items: stretch; width: 100%; }
         }
-        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            * { transition: none !important; }
+            .js [data-reveal] { transform: none; filter: none; }
+            .tilt-in { transform: none; }
+            .js .hero h1, .js .hero-sub, .js .frist { transform: none; }
+        }
     </style>
     <script defer src="/Assets/js/version-loader.js?v=7.4.11"></script>
     <script defer src="/Assets/js/ph-init.js?v=7.4.11"></script>
 </head>
 <body>
     <div class="ambient"></div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
 
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
         <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
@@ -338,9 +587,9 @@
             </dl>
         </section>
 
-        <h2 id="jetzt">Was jetzt zu tun ist</h2>
+        <h2 id="jetzt" data-reveal>Was jetzt zu tun ist</h2>
         <div class="wer">
-            <div class="card">
+            <div class="card" data-reveal>
                 <h3>Als Azubi</h3>
                 <ol class="steps">
                     <li>
@@ -358,7 +607,7 @@
                 </ol>
                 <p style="margin-top:10px;font-size:0.86rem;color:var(--text-dim);">Wer nach dem Export noch Wochen im Portal einträgt, exportiert danach einfach noch einmal — die PDF enthält immer alles bis zu diesem Moment.</p>
             </div>
-            <div class="card">
+            <div class="card" data-reveal style="--i:1">
                 <h3>Als Ausbilder</h3>
                 <ul>
                     <li><span>Azubis jetzt informieren. Die Kammern bitten die Betriebe ausdrücklich darum.</span><a class="fn" href="#q4">4</a></li>
@@ -370,13 +619,30 @@
             </div>
         </div>
 
-        <h2 id="import">So kommt der IHK-Export in MyWorkLog</h2>
+        <h2 id="import" data-reveal>So kommt der IHK-Export in MyWorkLog</h2>
         <p class="prose">
             MyWorkLog liest die PDF aus dem Serviceportal direkt ein — jede Woche, jeder Tag,
             die Stunden und der Stand der Abzeichnung. Das passiert im Browser auf deinem Gerät;
             die Datei wird nirgendwohin geschickt.
         </p>
-        <ol class="steps prose">
+        <!-- Kamerafahrt durch den Import. Bilder: tools/about-screenshots.mjs
+             (berichtsheft) und tools/ihk-screenshots.mjs (import-*). KEINE id an
+             .flow oder seinen Kindern: der i18n-Schluessel eines Textes haengt an
+             der naechsten id darueber, eine neue id wuerde alle Schritte in eine
+             neue Gruppe verschieben und ihre Uebersetzungen verwaisen lassen. -->
+        <div class="flow" data-step="1">
+            <div class="flow-sticky">
+                <div class="flow-stage" data-reveal>
+                    <div class="flow-screen">
+                        <img data-shot="bh" src="/Grafiken/about/berichtsheft.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Berichtsheft von MyWorkLog mit der Werkzeugleiste, darin der Knopf IHK-PDF Import">
+                        <img data-shot="start" src="/Grafiken/ihk/import-start.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Dialog IHK-Export importieren mit dem Feld zum Ablegen der PDF">
+                        <img data-shot="wochen" src="/Grafiken/ihk/import-wochen.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Erkannte Wochen nach dem Einlesen: Name, Beruf und Betrieb, darunter jede Woche mit Stunden und Stand, zwei davon als bereits vorhanden markiert">
+                        <span class="flow-ring" aria-hidden="true"></span>
+                    </div>
+                </div>
+                <div class="flow-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+        <ol class="steps">
             <li><div>
                 <h3>Berichtsheft öffnen</h3>
                 <p><span>Unter</span> <a class="inl" href="/berichtsheft/?import=ihk">myworklog.de/berichtsheft</a> <span>— ohne Konto, ohne Installation. Der Link öffnet den Import direkt.</span></p>
@@ -398,9 +664,10 @@
                 <p>„Wochen importieren" — fertig. Die Wochen tragen die Herkunft „IHK-Import". Ein Ausbilder mit MyWorkLog-Konto sieht sie als „Bei der IHK abgezeichnet" und bekommt keine offene Freigabe dafür.</p>
             </div></li>
         </ol>
+        </div>
 
         <div class="zwei">
-            <div>
+            <div data-reveal>
                 <h3>Was übernommen wird</h3>
                 <ul>
                     <li>Je Woche: Zeitraum, Kalenderwoche, Ausbildungsjahr</li>
@@ -412,7 +679,7 @@
                     <li>Name, Beruf, Betrieb und Ausbildungsbeginn in die Angaben für den PDF-Export, wenn dort noch nichts steht</li>
                 </ul>
             </div>
-            <div>
+            <div data-reveal style="--i:1">
                 <h3>Was nicht geht</h3>
                 <ul>
                     <li>Unterschriftsbilder und Anhänge. Der amtliche Beleg der Abzeichnung bleibt die PDF selbst — deshalb aufbewahren.</li>
@@ -420,13 +687,24 @@
             </div>
         </div>
 
-        <h2 id="danach">Danach: das Heft weiterführen</h2>
+        <h2 id="danach" data-reveal>Danach: das Heft weiterführen</h2>
         <p class="prose">
             Ab hier ist es ein normales Berichtsheft. Täglich oder wöchentlich schreiben, die
             Berufsschultage markieren, am Ende der Woche fertigstellen. Zur Prüfung erzeugt
             MyWorkLog das PDF auf dem Vordruck deiner Kammer — DIHK-Muster, Köln und
             Frankfurt, München; andere Kammern bekommen das DIHK-Muster, und das steht so dabei.
         </p>
+        <!-- Kippt beim Scrollen flach: --hp setzt das Skript auf .tilt-in. -->
+        <div class="tilt" data-reveal>
+            <div class="tilt-in">
+                <figure class="frame">
+                    <div class="frame-in">
+                        <img src="/Grafiken/ihk/vordruck.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="PDF-Export im Berichtsheft: links Name, Betrieb, Ausbilder und die Wahl von Kammer und Vordruck, rechts die Live-Vorschau einer Woche auf dem DIHK-Muster">
+                    </div>
+                </figure>
+            </div>
+            <p class="cap"><b>PDF-Export.</b> <span>Links Kammer und Vordruck, rechts die Woche so, wie sie auf dem Blatt steht — Tätigkeiten, Unterweisungen, Berufsschule, Stunden, Unterschriftsfelder.</span></p>
+        </div>
         <p class="prose">
             <span>Die Freigabe läuft ohne Kammer: Der Ausbilder legt ein Konto an, verbindet sich
             mit dem Betrieb und zeichnet Wochen mit digitaler Signatur ab; der Azubi sieht die
@@ -439,7 +717,9 @@
             sich ebenfalls übernehmen —</span> <a class="inl" href="/wechseln/">wie, steht hier</a><span>.</span>
         </p>
 
-        <h2 id="sichern">Sichern, bevor etwas schiefgeht</h2>
+        <h2 id="sichern" data-reveal>Sichern, bevor etwas schiefgeht</h2>
+        <div class="sichern">
+        <div data-reveal>
         <p class="prose">
             MyWorkLog speichert auf deinem Gerät, im Browser. Das ist der Grund, warum es ohne
             Konto und offline funktioniert — und der Grund für diese Liste:
@@ -451,15 +731,22 @@
             <li><svg><use href="#i-check"/></svg><span><b>Cloud-Abgleich</b> <span>optional, mit Konto: die Daten liegen zusätzlich auf einem Server in der EU und stehen auf jedem Gerät bereit.</span></span></li>
             <li><svg><use href="#i-check"/></svg><span><b>Recovery Center</b> <span>in den Einstellungen: holt frühere Stände zurück, die die App selbst im Browser angelegt hat — wenn etwas fehlt, zuerst dort nachsehen.</span></span></li>
         </ul>
-        <div class="note warn prose">
+        </div>
+        <figure class="frame" data-reveal style="--i:1">
+            <div class="frame-in">
+                <img src="/Grafiken/about/recovery.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Recovery Center von MyWorkLog: gespeicherte Stände mit Wiederherstellen und JSON-Export, darunter das Feld für eine Backup-Datei">
+            </div>
+        </figure>
+        </div>
+        <div class="note warn prose" data-reveal>
             <p>
                 <strong>Was ohne Backup nicht zurückkommt:</strong>
                 <span>Werden die Browserdaten für myworklog.de gelöscht — Verlauf leeren mit „Websitedaten", Browser neu installieren, Gerät zurücksetzen — sind die lokalen Daten weg. Kein Konto, kein Server, also auch keine Kopie, die jemand für dich hätte. Die PDF und ein Backup sind der Schutz davor.</span>
             </p>
         </div>
 
-        <h2 id="faq">Häufige Fragen</h2>
-        <div class="card">
+        <h2 id="faq" data-reveal>Häufige Fragen</h2>
+        <div class="card faq" data-reveal>
             <details class="faq-item">
                 <summary>Ist MyWorkLog der Nachfolger des IHK-Berichtshefts?</summary>
                 <p>
@@ -524,8 +811,8 @@
             </details>
         </div>
 
-        <h2 id="quellen">Quellen</h2>
-        <div class="sources prose">
+        <h2 id="quellen" data-reveal>Quellen</h2>
+        <div class="sources prose" data-reveal>
             <p>Alle Angaben zur Abschaltung stammen von den Kammern selbst, gelesen am 20. September 2026.</p>
             <ol>
                 <li id="q1"><a href="https://www.ihk.de/nordschwarzwald/aus-und-weiterbildung/ausbildung/ausbildung-digital/serviceportal-bildung-berichtsheft/service-digitales-berichtsheft-wird-eingestellt-6821804" rel="noopener" target="_blank">IHK Nordschwarzwald</a> <span>— „zum 31. Dezember 2026 bundesweit eingestellt"; Nachweispflicht für die Zulassung bleibt</span></li>
@@ -540,13 +827,15 @@
             </p>
         </div>
 
-        <div class="cta">
+        <div class="cta" data-reveal>
             <div class="cta-text">
                 <strong>Export einlesen und weiterführen</strong>
                 <span>Kostenlos, ohne Konto, ohne Installation.</span>
             </div>
-            <a href="/berichtsheft/?import=ihk" class="btn btn-primary">IHK-PDF importieren</a>
-            <a href="/ausbilder/" class="btn btn-ghost">Als Ausbilder starten</a>
+            <div class="cta-actions">
+                <a href="/berichtsheft/?import=ihk" class="btn btn-primary">IHK-PDF importieren</a>
+                <a href="/ausbilder/" class="btn btn-ghost">Als Ausbilder starten</a>
+            </div>
         </div>
     </div>
 
@@ -606,7 +895,7 @@
         if (tage > 1) {
             setLead(EN ? 'Still ' : 'Noch ',
                     EN ? tage + ' days' : tage + ' Tage',
-                    EN ? ' to export your report book from the IHK portal.' : ', um das Heft aus dem IHK-Portal zu exportieren.');
+                    EN ? ' to export your report book from the IHK portal.' : ' bleiben, um das Heft aus dem IHK-Portal zu exportieren.');
         } else if (tage === 1) {
             setLead('', EN ? 'Today is the last day.' : 'Heute ist der letzte Tag.',
                     EN ? ' After 31 December 2026 no export is possible.' : ' Nach dem 31. Dezember 2026 ist kein Export mehr möglich.');
@@ -616,6 +905,99 @@
                     EN ? ' Since 1 January 2027 there has been no access; what was not exported is no longer reachable.'
                        : ' Seit dem 1. Januar 2027 gibt es keinen Zugriff mehr; was nicht exportiert wurde, ist nicht mehr erreichbar.');
         }
+    })();
+    </script>
+
+    <script>
+    /* Bewegung: Anlauf beim Laden, Countdown, Einblenden, Kamerafahrt,
+       Neigung, Fortschritt. Eine rAF-Runde je Scroll/Resize; erst alles
+       messen, dann schreiben. */
+    (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        requestAnimationFrame(function () { document.documentElement.classList.add('ready'); });
+
+        /* Countdown: die Zahl im Lead (vom Frist-Skript darueber gesetzt)
+           laeuft von 365 auf den echten Wert. Nur die fuehrende Zahl wird
+           ersetzt, der Rest des Textes („Tage"/„days") bleibt, wie er ist. */
+        var strong = document.querySelector('#fristLead strong');
+        var m = strong && !document.getElementById('frist').classList.contains('is-vorbei') && strong.textContent.match(/^(\d+)(.*)$/);
+        if (m && !reduce) {
+            var ziel = parseInt(m[1], 10), rest = m[2], von = 365, t0 = null, dauer = 1600;
+            strong.textContent = von + rest;
+            setTimeout(function () {
+                requestAnimationFrame(function tick(now) {
+                    if (t0 === null) t0 = now;
+                    var p = Math.min(1, (now - t0) / dauer), e = 1 - Math.pow(1 - p, 4);
+                    strong.textContent = Math.round(von + (ziel - von) * e) + rest;
+                    if (p < 1) requestAnimationFrame(tick);
+                });
+            }, 450);
+        }
+
+        var els = document.querySelectorAll('[data-reveal]');
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add('is-in');
+                    io.unobserve(e.target);
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+            els.forEach(function (el) { io.observe(el); });
+        }
+        /* Fallback: haengt alles am Observer und der feuert nicht
+           (Hintergrund-Tab, Automations-Browser), bliebe die Seite leer. */
+        setTimeout(function () { els.forEach(function (el) {
+            if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+        }); }, 2500);
+
+        var bar = document.getElementById('progress');
+        var flow = document.querySelector('.flow');
+        var steps = flow ? Array.prototype.slice.call(flow.querySelectorAll('.steps > li')) : [];
+        var sticky = flow ? flow.querySelector('.flow-sticky') : null;
+        var tilts = Array.prototype.slice.call(document.querySelectorAll('.tilt-in'));
+        var narrow = window.matchMedia('(max-width: 900px)');
+        var cur = -1, pending = false, hp = tilts.map(function () { return -1; });
+        if (steps.length) steps[0].classList.add('on');
+
+        function frame() {
+            pending = false;
+            var vh = window.innerHeight, y = window.pageYOffset;
+            var docH = document.documentElement.scrollHeight - vh;
+            var t = docH > 0 ? Math.min(1, Math.max(0, y / docH)) : 0;
+            /* Einspaltig verdeckt die klebende Buehne die Bildmitte: die
+               Leselinie liegt dann im freien Bereich darunter. */
+            var line = vh * 0.5;
+            if (narrow.matches && sticky) {
+                var sb = sticky.getBoundingClientRect().bottom;
+                line = Math.min(sb + (vh - sb) * 0.4, vh * 0.9);
+            }
+            var best = 0, bestD = Infinity;
+            for (var q = 0; q < steps.length; q++) {
+                var r = steps[q].getBoundingClientRect();
+                var d = Math.abs(r.top + r.height / 2 - line);
+                if (d < bestD) { bestD = d; best = q; }
+            }
+            var next = tilts.map(function (el) {
+                if (reduce) return 1;
+                var top = el.getBoundingClientRect().top;
+                return Math.round(Math.min(1, Math.max(0, (vh - top) / (vh * 0.85))) * 1000) / 1000;
+            });
+
+            if (bar) bar.style.transform = 'scaleX(' + t.toFixed(4) + ')';
+            if (steps.length && best !== cur) {
+                cur = best;
+                flow.setAttribute('data-step', best + 1);
+                for (var z = 0; z < steps.length; z++) steps[z].classList.toggle('on', z === best);
+            }
+            for (var k = 0; k < tilts.length; k++) {
+                if (next[k] !== hp[k]) { hp[k] = next[k]; tilts[k].style.setProperty('--hp', next[k]); }
+            }
+        }
+        function schedule() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule);
+        frame();
     })();
     </script>
 
