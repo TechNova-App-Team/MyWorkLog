@@ -3815,13 +3815,13 @@ function buildProtocol(exportEntries) {
     lines.push(L('Schweregrad-Zusammenfassung:', 'Severity summary:'));
     ['critical', 'high', 'medium', 'low', 'note'].forEach(sev => {
         const c = exportEntries.filter(e => e.severity === sev).length;
-        if (c > 0) lines.push('  ' + SEVERITY_LABELS[sev] + ': ' + c + L(' Einträge', c === 1 ? ' entry' : ' entries'));
+        if (c > 0) lines.push('  ' + SEVERITY_LABELS[sev] + ': ' + c + L(c === 1 ? ' Eintrag' : ' Einträge', c === 1 ? ' entry' : ' entries'));
     });
     lines.push('');
     lines.push(L('Status-Zusammenfassung:', 'Status summary:'));
     STATUS_ORDER.forEach(s => {
         const c = exportEntries.filter(e => (e.status || 'open') === s).length;
-        if (c > 0) lines.push('  ' + STATUS_META[s].label + ': ' + c + L(' Einträge', c === 1 ? ' entry' : ' entries'));
+        if (c > 0) lines.push('  ' + STATUS_META[s].label + ': ' + c + L(c === 1 ? ' Eintrag' : ' Einträge', c === 1 ? ' entry' : ' entries'));
     });
 
     const lostTime = computeLostTrainingTime(exportEntries);

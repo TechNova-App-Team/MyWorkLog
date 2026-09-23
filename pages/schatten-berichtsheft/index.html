@@ -13,7 +13,7 @@
     <!-- Projekt-Schriften (core.css): Inter + JetBrains Mono. Vorher lagen hier
          drei fremde Familien, davon eine schmale Plakatschrift als Display-Face —
          die Autoritaet holt sich die Seite jetzt aus Gewicht und Laufweite. -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
     <title>Schatten-Berichtsheft: verschlüsseltes zweites Heft für Azubis | MyWorkLog</title>
     <link rel="canonical" href="https://myworklog.de/schatten-berichtsheft/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/schatten-berichtsheft/">
@@ -1732,10 +1732,181 @@
             .entry-card { padding-left: 0 !important; }
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
+
+        /* ══════════════════════════════════════════════
+           GESPERRTER ZUSTAND IN DER HANDSCHRIFT DER INFOSEITEN
+           Nur unter #lockScreen: Pitch, Tresor-Karte und Erklaerung. Die App
+           nach dem Entsperren (#mainApp) behaelt Inter und ihr eigenes Bild.
+           Die Aufnahmen zeigt tools/schatten-screenshots.mjs — ein frischer
+           Tresor mit erfundenen Eintraegen, befuellt ueber die Funktionen
+           dieser Seite.
+           ══════════════════════════════════════════════ */
+        #lockScreen {
+            --fd: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+            --ease-spring: cubic-bezier(.32, .72, 0, 1);
+            --edge: rgba(255, 255, 255, 0.07);
+            font-family: 'Geist', var(--font-body);
+        }
+        #lockScreen .lock-hero { position: relative; }
+        #lockScreen .lock-hero::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background:
+                radial-gradient(45% 55% at 25% 20%, rgba(var(--primary-rgb), 0.18), transparent 70%),
+                radial-gradient(30% 40% at 80% 60%, rgba(var(--primary-rgb), 0.08), transparent 70%);
+        }
+        #lockScreen .lock-wrap { max-width: 1120px; grid-template-columns: 1fr 410px; gap: clamp(3rem, 6vw, 5.5rem); }
+        #lockScreen .lock-pitch { max-width: 38rem; }
+        #lockScreen .lock-eyebrow {
+            font-family: inherit; font-size: 0.8rem; font-weight: 500; letter-spacing: 0; text-transform: none;
+            color: var(--text-1); padding: 6px 13px 6px 10px; border-radius: 999px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-strong); margin-bottom: 1.75rem;
+        }
+        #lockScreen .lock-eyebrow svg { color: var(--primary); opacity: 1; }
+        #lockScreen .lock-title {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.8rem, 6vw, 5rem); font-weight: 600;
+            letter-spacing: -0.05em; line-height: 0.95; margin-bottom: 1.5rem;
+        }
+        #lockScreen .lock-lede { font-size: clamp(1.05rem, 1.4vw, 1.18rem); line-height: 1.6; max-width: 36rem; }
+        #lockScreen .lock-facts { margin-top: 2.25rem; gap: 1rem; }
+        #lockScreen .lock-facts li { font-size: 0.95rem; }
+        #lockScreen .lock-facts svg { color: var(--primary); }
+
+        /* Die Tresor-Karte als Geraet: Aussenschale, Innenkante, Licht. */
+        #lockScreen .lock-card {
+            border-radius: 26px; padding: 1.9rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)), var(--bg-1);
+            border-color: var(--border-strong);
+            box-shadow: inset 0 1px 0 var(--edge), 0 40px 100px -30px rgba(0, 0, 0, 0.9), 0 0 0 6px rgba(255, 255, 255, 0.02),
+                        0 0 90px -30px rgba(var(--primary-rgb), 0.45);
+        }
+        #lockScreen .lock-card-title { font-family: var(--fd); font-size: 1.05rem; letter-spacing: -0.03em; }
+
+        /* — Erklaerung — */
+        #lockScreen .sb-info { padding-top: clamp(4rem, 9vw, 7rem); }
+        #lockScreen .sb-info-inner { max-width: 1120px; }
+        #lockScreen .sb-block { margin-bottom: clamp(5rem, 10vw, 8rem); }
+        #lockScreen .sb-block > .sb-h2,
+        #lockScreen .sb-block > .sb-p,
+        #lockScreen .sb-block > .sb-note { max-width: 68ch; }
+        #lockScreen .sb-h2 {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2rem, 3.8vw, 3.1rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1.02;
+            margin-bottom: 1.4rem; max-width: 20ch;
+        }
+        #lockScreen .sb-p { font-size: 1.02rem; }
+
+        /* Aufnahmen im Rahmen; die grosse kippt beim Scrollen flach (--hp). */
+        .sb-shot { perspective: 2000px; margin-top: 2.5rem; }
+        .sb-shot .tilt-in {
+            --hp: 0; transform-origin: 50% 0%;
+            transform: rotateX(calc((1 - var(--hp)) * 20deg)) scale(calc(0.92 + var(--hp) * 0.08));
+        }
+        .sb-frame {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+            border: 1px solid var(--border-strong);
+            box-shadow: inset 0 1px 0 var(--edge), 0 40px 100px -40px rgba(0, 0, 0, 0.9), 0 0 100px -30px rgba(var(--primary-rgb), 0.4);
+        }
+        .sb-frame-in { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-1); }
+        .sb-frame-in img { display: block; width: 100%; height: auto; }
+        .sb-shot .sb-frame-in::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.07) 45%, transparent 60%);
+            background-size: 250% 100%; background-position: calc(100% - var(--hp) * 100%) 0;
+        }
+        .sb-cap { margin: 14px 4px 0; font-size: 0.88rem; color: var(--text-2); max-width: 70ch; }
+        .sb-cap b { color: var(--text-0); font-weight: 600; }
+
+        /* Text neben Bild; das Bild klebt, der Text laeuft. */
+        .sb-split {
+            display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            gap: clamp(2rem, 5vw, 4.5rem); align-items: start;
+        }
+        .sb-split.is-rev { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); }
+        .sb-split > .sb-frame { position: sticky; top: 2rem; }
+
+        #lockScreen .sb-compare { gap: 12px; max-width: 900px; }
+        #lockScreen .sb-compare-card {
+            border-radius: 22px; padding: 1.75rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012));
+            box-shadow: inset 0 1px 0 var(--edge);
+        }
+        #lockScreen .sb-compare-card--accent {
+            border-color: rgba(var(--primary-rgb), 0.4);
+            background: radial-gradient(120% 90% at 100% 0%, rgba(var(--primary-rgb), 0.16), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+        }
+        #lockScreen .sb-compare-label { font-family: var(--fd); font-size: 1.35rem; letter-spacing: -0.035em; color: var(--text-0); margin-bottom: 1rem; }
+        #lockScreen .sb-list li { font-size: 0.95rem; }
+        #lockScreen .sb-compare-card--accent .sb-list li::before { background: var(--primary); }
+
+        #lockScreen .sb-grid-list { grid-template-columns: 1fr; gap: 0; }
+        #lockScreen .sb-grid-list li { font-size: 0.95rem; padding: 1.05rem 0; color: var(--text-1); }
+        #lockScreen .sb-grid-list strong { font-family: var(--fd); font-size: 1.2rem; letter-spacing: -0.03em; margin-bottom: 0.3rem; }
+
+        #lockScreen .sb-h3 {
+            font-family: var(--fd); font-size: 1.25rem; letter-spacing: -0.03em; margin: 0; padding-top: 1.6rem;
+            border-top: 1px solid var(--border); max-width: 60ch;
+        }
+        #lockScreen .sb-h3 + .sb-p { margin: 0.6rem 0 1.6rem; }
+
+        #lockScreen .sb-cta {
+            position: relative; overflow: hidden; isolation: isolate; text-align: center;
+            padding: clamp(3rem, 7vw, 5.5rem) 1.5rem; border-radius: 30px;
+            border: 1px solid var(--border);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+            box-shadow: inset 0 1px 0 var(--edge);
+        }
+        #lockScreen .sb-cta::before {
+            content: ''; position: absolute; left: 50%; bottom: -60%; width: 900px; height: 600px; z-index: -1;
+            transform: translateX(-50%); pointer-events: none;
+            background: radial-gradient(50% 50% at 50% 50%, rgba(var(--primary-rgb), 0.3), transparent 70%);
+        }
+        #lockScreen .sb-cta .sb-p {
+            font-family: var(--fd); font-size: clamp(1.3rem, 2.4vw, 1.8rem); line-height: 1.3; letter-spacing: -0.025em;
+            color: var(--text-0); margin: 0 auto; max-width: 34ch; text-wrap: balance;
+        }
+        #lockScreen .sb-cta-row { justify-content: center; margin-top: 2rem; }
+        #lockScreen .sb-btn { border-radius: 999px; padding: 0.8rem 1.35rem; font-size: 0.92rem; }
+        #lockScreen .sb-btn-primary { box-shadow: 0 12px 40px -10px rgba(var(--primary-rgb), 0.6); }
+
+        /* Einblenden beim Scrollen: EIN Schreiber (der Observer setzt .is-in). */
+        .js #lockScreen [data-reveal] {
+            opacity: 0; transform: translate3d(0, 32px, 0);
+            transition: opacity 0.9s var(--ease), transform 1s var(--ease-spring);
+            transition-delay: calc(var(--i, 0) * 0.08s);
+        }
+        .js #lockScreen [data-reveal].is-in { opacity: 1; transform: none; }
+
+        /* Dieselben Umbrueche wie oben (940 / 700): die Regeln dort haben keine
+           #lockScreen-Spezifitaet und verloeren sonst gegen die hier. */
+        @media (max-width: 940px) {
+            #lockScreen .lock-wrap { grid-template-columns: 1fr; gap: 2.75rem; max-width: 32rem; }
+            #lockScreen .lock-pitch { max-width: none; }
+        }
+        @media (max-width: 700px) {
+            #lockScreen .sb-info { padding-top: 3.5rem; }
+            #lockScreen .sb-block { margin-bottom: 4rem; }
+            #lockScreen .sb-compare { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 900px) {
+            .sb-split, .sb-split.is-rev { grid-template-columns: 1fr; }
+            .sb-split > .sb-frame { position: static; order: -1; }
+        }
+        @media (max-width: 560px) {
+            .sb-frame { padding: 5px; border-radius: 18px; }
+            .sb-frame-in { border-radius: 13px; }
+            #lockScreen .lock-card { border-radius: 22px; padding: 1.4rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sb-shot .tilt-in { transform: none; }
+            .js #lockScreen [data-reveal] { transform: none; }
+        }
     </style>
     <script defer src="/Assets/js/ph-init.js?v=7.4.12"></script>
 </head>
 <body>
+<script>document.documentElement.className += ' js';</script>
 
 <!-- ══════════════════════════════════════════
      BACKGROUND
@@ -1878,13 +2049,26 @@
     <main class="sb-info" id="was-ist-das">
         <article class="sb-info-inner">
 
-            <section class="sb-block">
+            <section class="sb-block" data-reveal>
                 <h2 class="sb-h2">Was ist ein Schatten-Berichtsheft?</h2>
                 <p class="sb-p">Dein offizielles Berichtsheft unterschreibt dein Ausbildungsbetrieb. Genau deshalb landen bestimmte Dinge dort nie: die zwei Stunden Überstunden, die niemand aufgeschrieben hat. Der dritte Tag hintereinander in der Lagerhalle statt in der Ausbildung. Der Spruch vom Chef, über den du dich immer noch ärgerst.</p>
                 <p class="sb-p">Das Schatten-Berichtsheft ist das zweite Heft daneben — privat, verschlüsselt und nur auf deinem Gerät. Du hältst dort mit Datum fest, was wirklich passiert ist. Nicht, um jemanden anzuschwärzen, sondern damit du es später noch genau weißt, wenn du es klären willst.</p>
+                <!-- Aufnahmen: tools/schatten-screenshots.mjs (frischer Tresor, erfundene
+                     Eintraege). KEINE id an den neuen Huellen — der i18n-Schluessel
+                     haengt an der naechsten id darueber. -->
+                <div class="sb-shot" data-reveal>
+                    <div class="tilt-in">
+                        <figure class="sb-frame">
+                            <div class="sb-frame-in">
+                                <img src="/Grafiken/schatten/tresor.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Entsperrter Tresor mit sechs Einträgen: Zähler nach Schweregrad, darunter die Einträge mit Datum des Vorfalls, Kategorie, Beschreibung und Zeugen">
+                            </div>
+                        </figure>
+                    </div>
+                    <p class="sb-cap"><b>Der entsperrte Tresor.</b> <span>Jeder Eintrag mit dem Tag, an dem es passiert ist, dem Schweregrad und wer dabei war. Aufgenommen mit erfundenen Einträgen.</span></p>
+                </div>
             </section>
 
-            <section class="sb-block">
+            <section class="sb-block" data-reveal>
                 <h2 class="sb-h2">Der Unterschied zum offiziellen Berichtsheft</h2>
                 <div class="sb-compare">
                     <div class="sb-compare-card">
@@ -1911,6 +2095,8 @@
             </section>
 
             <section class="sb-block">
+                <div class="sb-split">
+                <div data-reveal>
                 <h2 class="sb-h2">Was Azubis hier dokumentieren</h2>
                 <ul class="sb-grid-list">
                     <li><strong>Überstunden ohne Ausgleich</strong> — wann, wie lange, angeordnet von wem.</li>
@@ -1921,9 +2107,23 @@
                     <li><strong>Zugesagtes und Gebrochenes</strong> — Versprechen zu Übernahme, Urlaub oder Abteilungswechsel.</li>
                 </ul>
                 <p class="sb-note">Wer erst ein halbes Jahr später erzählt, was vorgefallen ist, hat meist nur noch ein ungefähres „irgendwann im Frühjahr". Eine datierte Notiz ist konkreter — im Gespräch mit dem Ausbilder, der <a class="sb-inline-link" href="/rechte-checker/">JAV oder der IHK</a>.</p>
+                </div>
+                <figure class="sb-frame" data-reveal style="--i:1">
+                    <div class="sb-frame-in">
+                        <img src="/Grafiken/schatten/eintrag.webp?v=7.4.12" width="1920" height="1800" loading="lazy" decoding="async" alt="Formular für einen neuen Eintrag: Zeitbezug, Schweregrad, Kategorie Ausbildungsfremde Tätigkeiten, Status und die Beschreibung, was passiert ist">
+                    </div>
+                </figure>
+                </div>
             </section>
 
             <section class="sb-block">
+                <div class="sb-split is-rev">
+                <figure class="sb-frame" data-reveal>
+                    <div class="sb-frame-in">
+                        <img src="/Grafiken/schatten/protokoll.webp?v=7.4.12" width="1920" height="1800" loading="lazy" decoding="async" alt="Export als IHK-Beschwerde-Protokoll: Zeitbezug, Zeitraum und Schweregrad-Filter, darunter die Vorschau des Protokolls mit Aktenzeichen und Zusammenfassung">
+                    </div>
+                </figure>
+                <div data-reveal style="--i:1">
                 <h2 class="sb-h2">Wie die Verschlüsselung funktioniert</h2>
                 <p class="sb-p">Beim ersten Öffnen legst du ein Passwort fest. Daraus leitet der Browser per PBKDF2 mit 600.000 Iterationen einen Schlüssel ab und verschlüsselt damit jeden Eintrag mit AES-256-GCM. Passwort und Schlüssel verlassen dein Gerät nie.</p>
                 <ul class="sb-list sb-list--tight">
@@ -1932,9 +2132,11 @@
                     <li>Export als IHK-Beschwerde-Protokoll, wenn du die Einträge brauchst</li>
                 </ul>
                 <p class="sb-note sb-note--warn">Kehrseite: Ein vergessenes Passwort bedeutet, dass die Einträge dauerhaft unzugänglich sind. Es gibt niemanden, der sie zurückholen kann — auch uns nicht.</p>
+                </div>
+                </div>
             </section>
 
-            <section class="sb-block">
+            <section class="sb-block" data-reveal>
                 <h2 class="sb-h2">Häufige Fragen</h2>
 
                 <h3 class="sb-h3">Ersetzt das Schatten-Berichtsheft mein offizielles Berichtsheft?</h3>
@@ -1953,7 +2155,7 @@
                 <p class="sb-p">Nichts. Das Schatten-Berichtsheft gehört zu <a class="sb-inline-link" href="/">MyWorkLog</a>, ist kostenlos, werbefrei und ohne Konto nutzbar.</p>
             </section>
 
-            <section class="sb-block sb-cta">
+            <section class="sb-block sb-cta" data-reveal>
                 <p class="sb-p">Scroll wieder nach oben, um deinen Tresor anzulegen — oder sieh dir zuerst an, was MyWorkLog sonst für deine Ausbildung mitbringt.</p>
                 <div class="sb-cta-row">
                     <a class="sb-btn sb-btn-primary" href="#lockScreen">Tresor anlegen</a>
@@ -2740,5 +2942,45 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
-<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script><script>
+/* Gesperrter Zustand: Einblenden beim Scrollen und das Kippen der grossen
+   Aufnahme. Nach dem Entsperren ist #lockScreen ausgeblendet — der Observer
+   meldet dann nichts, die Neigung misst nichts, beides kostet nichts. */
+(function () {
+    var box = document.getElementById('lockScreen');
+    if (!box) return;
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var els = box.querySelectorAll('[data-reveal]');
+    if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (!e.isIntersecting) return;
+                e.target.classList.add('is-in');
+                io.unobserve(e.target);
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+        els.forEach(function (el) { io.observe(el); });
+    }
+    /* Fallback: feuert der Observer nicht (Hintergrund-Tab, Automations-
+       Browser), bliebe der sichtbare Teil leer. */
+    setTimeout(function () { els.forEach(function (el) {
+        if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+    }); }, 2500);
+
+    var tilt = box.querySelector('.sb-shot .tilt-in');
+    var hp = -1, pending = false;
+    function frame() {
+        pending = false;
+        if (!tilt) return;
+        var vh = window.innerHeight;
+        var next = reduce ? 1 : Math.round(Math.min(1, Math.max(0, (vh - tilt.getBoundingClientRect().top) / (vh * 0.85))) * 1000) / 1000;
+        if (next !== hp) { hp = next; tilt.style.setProperty('--hp', next); }
+    }
+    function schedule() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    frame();
+})();
+</script>
+</body>
 </html>
