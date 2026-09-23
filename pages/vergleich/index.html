@@ -387,12 +387,136 @@
             * { transition: none !important; }
             .js .hero h1, .js .hero-sub, .js .glance-card { transform: none; }
         }
+
+        /* ═══ SCROLL-BEWEGUNG ═══
+           EIN Schreiber pro Element: .is-in setzt der Observer, sonst fasst
+           niemand transform/opacity dieser Elemente an. Kein clip-path hier —
+           er wuerde die Sprechblasen und klebenden Tabellenzellen beschneiden
+           (siehe /about/). filter:none im Zielzustand, damit kein
+           stehengebliebener Filter einen Stapelkontext um die Tabelle legt. */
+        .js [data-reveal] {
+            opacity: 0; transform: translate3d(0, 32px, 0); filter: blur(6px);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring), filter 0.9s var(--ease-out);
+            transition-delay: calc(var(--i, 0) * 0.08s);
+        }
+        .js [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
+        /* Tabellenzeilen: nur Deckkraft — ein transform auf <tr> reisst die
+           klebende erste Spalte aus ihrer Spur. */
+        .js .tbl-frame tbody tr { opacity: 0; transition: opacity 0.6s var(--ease-out); }
+        .js .tbl-frame.is-in tbody tr { opacity: 1; }
+        .js .tbl-frame.is-in tbody tr:nth-child(n) { transition-delay: calc(0.25s + var(--r, 0) * 0.045s); }
+
+        .progress {
+            position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 1000;
+            background: var(--primary); transform: scaleX(0); transform-origin: left;
+        }
+
+        /* Die Karten „Auf einen Blick" kippen beim Laden aus der Flaeche auf. */
+        .glance { perspective: 1400px; }
+        .js .glance-card { transform: translate3d(0, 40px, 0) rotateX(18deg); transform-origin: 50% 100%; }
+
+        /* ═══ WO MYWORKLOG ANDERS IST ═══ */
+        .show { position: relative; margin-top: clamp(90px, 12vw, 150px); }
+        .show-title { margin-top: 0; }
+        .show-grid {
+            display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            gap: clamp(40px, 6vw, 80px); align-items: start; margin-top: 40px;
+        }
+        .show-sticky { position: sticky; top: max(40px, calc(50vh - 260px)); }
+        .show-stage { position: relative; padding-bottom: 12%; }
+        .show-screen {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border-hover);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow), 0 0 90px -30px rgba(var(--primary-rgb), 0.45);
+        }
+        .show-screen-in {
+            position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-solid);
+            aspect-ratio: 2880 / 1800;
+        }
+        /* Alle Aufnahmen liegen uebereinander; sichtbar ist die zum Schritt.
+           Schritt 2 (Handy) laesst das Dashboard stehen und dimmt es — das
+           Handy faehrt davor ein. */
+        .show-screen-in img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+            opacity: 0; transform: scale(1.04);
+            transition: opacity 0.7s var(--ease-out), transform 1.1s var(--ease-spring), filter 0.7s var(--ease-out);
+        }
+        .show[data-step="1"] img[data-shot="1"],
+        .show[data-step="2"] img[data-shot="1"],
+        .show[data-step="3"] img[data-shot="3"],
+        .show[data-step="4"] img[data-shot="4"] { opacity: 1; transform: none; }
+        .show[data-step="2"] img[data-shot="1"] { filter: brightness(0.45) blur(2px); transform: scale(0.98); }
+
+        .show-phone {
+            position: absolute; right: 6%; bottom: 0; width: 24%; margin: 0; padding: 5px; z-index: 2;
+            border-radius: 28px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04));
+            border: 1px solid rgba(255,255,255,0.14);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 40px 90px -20px rgba(0,0,0,0.9);
+            opacity: 0; transform: translate3d(0, 30%, 0) rotate(6deg);
+            transition: opacity 0.6s var(--ease-out), transform 0.9s var(--ease-spring);
+            pointer-events: none;
+        }
+        .show-phone-in { border-radius: 23px; overflow: hidden; background: var(--bg-solid); }
+        .show-phone img { display: block; width: 100%; height: auto; }
+        .show[data-step="2"] .show-phone { opacity: 1; transform: none; }
+
+        .show-dots { position: absolute; left: 8px; bottom: 0; display: flex; gap: 6px; }
+        .show-dots i {
+            display: block; width: 22px; height: 3px; border-radius: 3px; background: var(--border-hover);
+            transition: background 0.4s var(--ease-out), width 0.5s var(--ease-spring);
+        }
+        .show[data-step="1"] .show-dots i:nth-child(1),
+        .show[data-step="2"] .show-dots i:nth-child(2),
+        .show[data-step="3"] .show-dots i:nth-child(3),
+        .show[data-step="4"] .show-dots i:nth-child(4) { background: var(--primary); width: 40px; }
+
+        .show-step {
+            min-height: min(70vh, 560px); display: flex; flex-direction: column; justify-content: center;
+            padding: 24px 0; border-top: 1px solid var(--border);
+        }
+        .show-step:first-child { border-top: 0; }
+        .show-row { font-size: 0.76rem; color: var(--text-dim); margin-bottom: 14px; transition: color 0.4s var(--ease-out); }
+        .show-step h3 {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.7rem, 2.8vw, 2.5rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1.02;
+            margin-bottom: 16px; color: var(--text-dim); transition: color 0.5s var(--ease-out);
+            text-wrap: balance;
+        }
+        .show-step p { font-size: 1rem; line-height: 1.7; max-width: 44ch; margin: 0; color: var(--text-dim); transition: color 0.5s var(--ease-out); }
+        .show-step.on .show-row { color: var(--primary); }
+        .show-step.on h3 { color: var(--text-main); }
+        .show-step.on p { color: var(--text-muted); }
+
+        /* Einspaltig: die Buehne klebt oben (kleiner), die Punkte laufen
+           darunter durch. Die Leselinie rechnet das Skript aus dem freien
+           Bereich unter der Buehne, nicht aus der Bildschirmmitte. */
+        @media (max-width: 900px) {
+            .show-grid { grid-template-columns: 1fr; gap: 8px; }
+            .show-sticky { top: 12px; z-index: 3; }
+            /* Randlos und ohne Rundung: an einer runden Ecke schiene der
+               darunter durchlaufende Text durch. */
+            .show-stage { margin: 0 -16px; padding: 10px 16px calc(10px + 9%); background: var(--bg-deep); box-shadow: 0 14px 18px -6px var(--bg-deep); }
+            .show-phone { width: 22%; right: 8%; bottom: 10px; border-radius: 18px; padding: 3px; }
+            .show-phone-in { border-radius: 15px; }
+            .show-dots { left: 22px; bottom: 12px; }
+            .show-screen { padding: 5px; border-radius: 18px; }
+            .show-screen-in { border-radius: 13px; }
+            .show-step { min-height: 62vh; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .js [data-reveal] { transform: none; filter: none; }
+            .js .glance-card { transform: none; }
+            .show-phone { transform: none; }
+        }
     </style>
     <script defer src="/Assets/js/version-loader.js?v=7.4.11"></script>
     <script defer src="/Assets/js/ph-init.js?v=7.4.11"></script>
 </head>
 <body>
     <div class="ambient"></div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
 
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
         <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
@@ -429,8 +553,63 @@
              traegt — ein Screenreader soll sie nicht zweimal vorlesen. -->
         <div class="glance" id="glance" aria-hidden="true"></div>
 
-        <h2 id="tabelle">Die Gegenüberstellung</h2>
-        <div class="meta-row">
+        <!-- ═══ WO MYWORKLOG ANDERS IST ═══
+             Vier Zeilen der Tabelle, in denen die MyWorkLog-Spalte sich von den
+             anderen unterscheidet — mit echten Aufnahmen der App (dieselben
+             Dateien wie /about/, tools/about-screenshots.mjs). Links klebt die
+             Buehne, rechts laufen die Punkte durch; der aktive steht als
+             data-step am Abschnitt, CSS haengt alles daran. Die Aussagen
+             behaupten nichts, was nicht auch in der Tabelle steht. -->
+        <section class="show" id="anders" data-step="1">
+            <h2 class="show-title" data-reveal>Wo MyWorkLog anders ist</h2>
+            <p class="prose show-lede" data-reveal>Vier Zeilen aus der Tabelle, in denen sich die MyWorkLog-Spalte von den anderen unterscheidet — und wie das in der App aussieht.</p>
+
+            <div class="show-grid">
+                <div class="show-sticky">
+                    <div class="show-stage" data-reveal>
+                        <figure class="show-screen">
+                            <div class="show-screen-in">
+                                <img data-shot="1" src="/Grafiken/about/dashboard.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog: Wochen- und Monatsabweichung, Gleitzeitkonto und Resturlaub">
+                                <img data-shot="3" src="/Grafiken/about/berichtsheft.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Berichtsheft von MyWorkLog: Wochen-Übersicht des Jahres und die Liste der Wochen mit Stand">
+                                <img data-shot="4" src="/Grafiken/about/recovery.webp?v=7.4.11" width="2880" height="1800" loading="lazy" decoding="async" alt="Recovery Center von MyWorkLog: gespeicherte Stände zum Wiederherstellen und das Feld für eine Backup-Datei">
+                            </div>
+                        </figure>
+                        <figure class="show-phone">
+                            <div class="show-phone-in">
+                                <img src="/Grafiken/about/handy.webp?v=7.4.11" width="780" height="1688" loading="lazy" decoding="async" alt="MyWorkLog am Handy als installierte App">
+                            </div>
+                        </figure>
+                        <div class="show-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+                    </div>
+                </div>
+
+                <div class="show-steps">
+                    <article class="show-step" data-i="1">
+                        <span class="show-row">Zeile: Arbeitszeit mit Soll, Gleitzeit und Überstunden</span>
+                        <h3>Arbeitszeit und Berichtsheft in einer App</h3>
+                        <p>Stunden gegen dein Tagessoll, das Gleitzeitkonto, Überstunden und Urlaub — und aus denselben Einträgen das Berichtsheft. Bei den anderen drei steht zur Arbeitszeit auf der Anbieterseite nichts.</p>
+                    </article>
+                    <article class="show-step" data-i="2">
+                        <span class="show-row">Zeilen: Nutzbar ohne Betrieb, Offline, Wo die Daten liegen</span>
+                        <h3>Ohne Konto, offline, auf deinem Gerät</h3>
+                        <p>Öffnen und loslegen, ohne Registrierung. Die App läuft auch ohne Netz und speichert im Browser deines Geräts; der Abgleich mit der Cloud ist ein Schalter, kein Muss.</p>
+                    </article>
+                    <article class="show-step" data-i="3">
+                        <span class="show-row">Zeilen: Kosten für den Betrieb, Export für IHK oder HWK</span>
+                        <h3>Freigabe und IHK-Vordruck, auch für den Betrieb kostenlos</h3>
+                        <p>Der Ausbilder gibt Wochen mit digitaler Signatur frei, ohne Tarif und ohne Rechnung. Das Heft kommt als PDF auf dem Vordruck deiner Kammer heraus — DIHK-Muster, Köln/Frankfurt oder München.</p>
+                    </article>
+                    <article class="show-step" data-i="4">
+                        <span class="show-row">Zeile: Quellcode einsehbar</span>
+                        <h3>Offener Quellcode, Sicherungen in deiner Hand</h3>
+                        <p>Der Code steht unter MIT-Lizenz offen. Frühere Stände holst du im Recovery Center zurück, ein Backup liegt als verschlüsselte Datei bei dir — nicht bei uns.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <h2 id="tabelle" data-reveal>Die Gegenüberstellung</h2>
+        <div class="meta-row" data-reveal>
             <span class="stand">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 <span>Geprüft am 18. September 2026, Preise wie dort angegeben (netto)</span>
@@ -442,7 +621,7 @@
             </span>
         </div>
 
-        <div class="tbl-frame">
+        <div class="tbl-frame" data-reveal>
         <div class="tbl-wrap">
             <table>
                 <colgroup>
@@ -573,7 +752,7 @@
         </div>
         <p class="scroll-hint">Die Tabelle lässt sich seitlich schieben.</p>
 
-        <div class="note prose">
+        <div class="note prose" data-reveal>
             <p>
                 <strong>Wer heute das Berichtsheft im IHK-Serviceportal führt:</strong>
                 <span>Die Kammern stellen es bundesweit zum 31. Dezember 2026 ein; ab dem
@@ -584,13 +763,13 @@
             </p>
         </div>
 
-        <h2 id="wofuer">Wofür welches Werkzeug</h2>
-        <p class="prose">
+        <h2 id="wofuer" data-reveal>Wofür welches Werkzeug</h2>
+        <p class="prose" data-reveal>
             Die Tabelle hat keinen Sieger, weil die Frage nicht dieselbe ist. Vier Situationen,
             in denen die Antwort ziemlich klar ausfällt:
         </p>
         <div class="cases">
-            <div class="card">
+            <div class="card" data-reveal style="--i:0">
                 <h3>Die Kammer deines Betriebs hat BLok lizenziert</h3>
                 <p>
                     Dann ist BLok für dich kostenlos, der Betrieb ist schon registriert, und die
@@ -598,21 +777,21 @@
                     zusätzlich deine Arbeitszeit führen willst.
                 </p>
             </div>
-            <div class="card">
+            <div class="card" data-reveal style="--i:1">
                 <h3>Der Betrieb will Rahmenplan, Lernquiz und Messenger in einer App</h3>
                 <p>
                     Das ist Zubidos Paket, und der Betrieb zahlt es je Azubi. Für dich bleibt es
                     kostenlos, auch im Solomodus ohne Betrieb.
                 </p>
             </div>
-            <div class="card">
+            <div class="card" data-reveal style="--i:2">
                 <h3>Deine IHK stellt auf Azubiheft um</h3>
                 <p>
                     Dann bekommst du die Konditionen deiner IHK und einen Ausbilder, der schon
                     dort freigibt. Die Daten liegen in einem Frankfurter Rechenzentrum.
                 </p>
             </div>
-            <div class="card">
+            <div class="card" data-reveal style="--i:3">
                 <h3>Du willst Berichtsheft und Arbeitszeit zusammen, ohne Konto</h3>
                 <p>
                     Dann ist MyWorkLog gebaut für dich: Stunden, Gleitzeit und Berichtsheft auf
@@ -623,8 +802,8 @@
             </div>
         </div>
 
-        <h2 id="faq">Häufige Fragen</h2>
-        <div class="card faq">
+        <h2 id="faq" data-reveal>Häufige Fragen</h2>
+        <div class="card faq" data-reveal>
             <details class="faq-item">
                 <summary>Warum steht bei manchen Feldern „nicht genannt" statt „nein"?</summary>
                 <p>
@@ -678,8 +857,8 @@
             </details>
         </div>
 
-        <h2 id="quellen">Quellen</h2>
-        <div class="sources prose">
+        <h2 id="quellen" data-reveal>Quellen</h2>
+        <div class="sources prose" data-reveal>
             <ol>
                 <li id="q1"><a href="https://zubido.de/preise" rel="noopener" target="_blank">zubido.de/preise</a> <span>— Tarife, Solomodus, Testphase</span></li>
                 <li id="q2"><a href="https://zubido.de/fuer-azubis" rel="noopener" target="_blank">zubido.de/fuer-azubis</a> <span>— Funktionen, Offline, Apps</span></li>
@@ -696,7 +875,7 @@
             </p>
         </div>
 
-        <div class="cta">
+        <div class="cta" data-reveal>
             <div class="cta-text">
                 <strong>Selbst ausprobieren</strong>
                 <span>Kostenlos, ohne Konto, ohne Installation.</span>
@@ -763,6 +942,69 @@
         }
         box.appendChild(frag);
         ready();
+    })();
+
+    /* Scroll: Einblenden, Fortschrittsbalken, aktiver Punkt in „Wo MyWorkLog
+       anders ist". Eine rAF-Schleife, die nur bei Scroll/Resize laeuft; erst
+       messen, dann schreiben. */
+    (function () {
+        var rows = document.querySelectorAll('.tbl-frame tbody tr');
+        for (var r = 0; r < rows.length; r++) rows[r].style.setProperty('--r', r);
+
+        var els = document.querySelectorAll('[data-reveal]');
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add('is-in');
+                    io.unobserve(e.target);
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+            els.forEach(function (el) { io.observe(el); });
+        }
+        /* Fallback wie auf /about/: haengt alles am Observer und der feuert
+           nicht (Hintergrund-Tab, Automations-Browser), bliebe die Seite leer. */
+        setTimeout(function () { els.forEach(function (el) {
+            if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+        }); }, 2500);
+
+        var bar = document.getElementById('progress');
+        var show = document.getElementById('anders');
+        var steps = show ? Array.prototype.slice.call(show.querySelectorAll('.show-step')) : [];
+        var stage = show ? show.querySelector('.show-stage') : null;
+        var narrow = window.matchMedia('(max-width: 900px)');
+        var cur = -1, pending = false;
+        if (steps.length) steps[0].classList.add('on');
+
+        function frame() {
+            pending = false;
+            var y = window.pageYOffset;
+            var docH = document.documentElement.scrollHeight - window.innerHeight;
+            var t = docH > 0 ? Math.min(1, Math.max(0, y / docH)) : 0;
+            /* Einspaltig verdeckt die klebende Buehne die Bildmitte: die
+               Leselinie liegt dann im freien Bereich darunter. */
+            var line = window.innerHeight * 0.5;
+            if (narrow.matches && stage) {
+                var sb = stage.getBoundingClientRect().bottom;
+                line = Math.min(sb + (window.innerHeight - sb) * 0.4, window.innerHeight * 0.9);
+            }
+            var best = 0, bestD = Infinity;
+            for (var q = 0; q < steps.length; q++) {
+                var b = steps[q].getBoundingClientRect();
+                var d = Math.abs(b.top + b.height / 2 - line);
+                if (d < bestD) { bestD = d; best = q; }
+            }
+            if (bar) bar.style.transform = 'scaleX(' + t.toFixed(4) + ')';
+            if (steps.length && best !== cur) {
+                cur = best;
+                show.setAttribute('data-step', best + 1);
+                for (var z = 0; z < steps.length; z++) steps[z].classList.toggle('on', z === best);
+            }
+        }
+        function schedule() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule);
+        frame();
     })();
     </script>
 
