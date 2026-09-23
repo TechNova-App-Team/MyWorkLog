@@ -47,13 +47,16 @@
     var chapters=[], letzteAufnahme=0;
     for(var i=0;i<N;i++){
       var el=chEls[i];
-      var f=(el.dataset.f||'').split(',').map(parseFloat);
+      // data-f: ein Brennpunkt, oder mehrere mit ';' — dann schwenkt die Kamera
+      // vom ersten zum naechsten (Kapitel 1: erst Woche+Monat, dann Gleitzeit+Urlaub).
+      var f=(el.dataset.f||'').split(';').map(function(r){return r.split(',').map(parseFloat);})
+        .filter(function(r){return r.length===4&&!r.some(isNaN);});
       if(el.dataset.shot!=null) letzteAufnahme=parseInt(el.dataset.shot,10);
       chapters.push({
         el:el, s:H_END+i*CL, e:H_END+(i+1)*CL,
         shot:letzteAufnahme, neu:el.dataset.shot!=null,
         phone:el.dataset.phone==='1',
-        f:f.length===4?f:null
+        f:f.length?f:null
       });
       var eb=el.querySelector('.vi-eyebrow'); if(eb) eb.setAttribute('data-n', String(i+1));
     }
@@ -186,10 +189,18 @@
 
       /* Kamera an den Brennpunkt */
       var c=0;
-      if(ch && ch.f && !ch.phone) c=Math.min(eIO(seg(t,0.22,0.55)), 1-eIO(seg(t,0.78,1)));
+      var F=null;
+      if(ch && ch.f && !ch.phone){
+        var mehr=ch.f.length>1;
+        c=Math.min(eIO(seg(t,0.2,mehr?0.4:0.55)), 1-eIO(seg(t,0.82,1)));
+        F=ch.f[0];
+        if(mehr){
+          var m=eIO(seg(t,0.5,0.66)), G=ch.f[1];
+          F=[F[0]+(G[0]-F[0])*m, F[1]+(G[1]-F[1])*m, F[2]+(G[2]-F[2])*m, F[3]+(G[3]-F[3])*m];
+        }
+      }
       var Z=1, TX=0, TY=0;
       if(c>0){
-        var F=ch.f;
         var z=clamp(Math.min(0.86/F[2],0.86/F[3]),1,2.2);
         Z=1+(z-1)*c;
         var mxF=F[0]+F[2]/2, myF=F[1]+F[3]/2;
@@ -201,7 +212,7 @@
         ring.style.transform='translate3d('+(TX+F[0]*SWI*Z-pad).toFixed(1)+'px,'+(TY+F[1]*SHI*Z-pad).toFixed(1)+'px,0)';
       }
       ring.style.opacity=seg(c,0.55,1).toFixed(3);
-      view.style.transform='translate3d('+TX.toFixed(1)+'px,'+TY.toFixed(1)+'px,0) scale('+Z.toFixed(4)+')';
+      view.style.transform='translate('+TX.toFixed(1)+'px,'+TY.toFixed(1)+'px) scale('+Z.toFixed(4)+')';
 
       /* Handy: im Hero vorn rechts am Bildschirm, faehrt beim Aufrichten hinaus;
          im Kapitel „Unterwegs“ kommt es allein zurueck. */
