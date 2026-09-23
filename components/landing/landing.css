@@ -1,18 +1,21 @@
 /* ═══ LANDING / VIDEO-INTRO ═══
-   Das Video ist der Hauptdarsteller, nicht die Tapete. Frueher lag es als
-   .vi-bg mit object-fit:cover ueber die volle 100vh-Buehne und darueber ein
-   Schleier mit 70 % Deckkraft — auf einem 16:9-Video in einem hohen Viewport
-   blieb davon sichtbar fast nichts uebrig. Jetzt sitzt es in einem eigenen
-   16:9-Rahmen (also kein Beschnitt) und der Text steht daneben statt darauf. */
+   Das Video ist der Hauptdarsteller, nicht die Tapete: es sitzt in einem
+   eigenen 16:9-Rahmen (kein Beschnitt), der Text steht daneben statt darauf.
+   Seit v7.5: Bricolage/Geist wie die Infoseiten (landing.js laedt die Schrift
+   erst, wenn das Intro wirklich laeuft — Wiederkehrer zahlen nichts dafuer),
+   im Hero die echte Dashboard-Aufnahme statt des schwarzen ersten Filmbilds,
+   eine Kapitel-Leiste fuer die sechs Szenen und ein Ausstieg ganz oben. */
 
     #pro-intro{
+      --vi-fd:'Bricolage Grotesque','Geist',system-ui,sans-serif;
+      --vi-spring:cubic-bezier(.32,.72,0,1);
       position:fixed;inset:0;z-index:99999;
       overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
       /* Fallback PFLICHT: ein undefiniertes var() ist invalid at computed-value time
          und faellt auf den Initialwert (transparent) — dann scheint die App durch. */
       background:var(--bg-deep,#07070e);
       color:#fff;
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
       scrollbar-width:none;-ms-overflow-style:none;
     }
     #pro-intro::-webkit-scrollbar{display:none}
@@ -24,13 +27,19 @@
     .vi-scroll{position:relative;height:800vh}
     .vi-stick{position:sticky;top:0;width:100%;height:100dvh;overflow:hidden}
 
-    /* Ruhiger Grund + ein Schimmer in Akzentfarbe hinter dem Bildschirm.
-       Kein Vollflaechen-Schleier mehr ueber dem Video. */
+    /* Ein Lichtkegel von oben, einer hinter dem Bildschirm, Rand abgedunkelt.
+       Kein Vollflaechen-Schleier ueber dem Video. */
     .vi-amb{
       position:absolute;inset:0;z-index:0;pointer-events:none;
       background:
-        radial-gradient(60% 55% at 50% 44%, rgba(var(--primary-rgb),0.14) 0%, rgba(var(--primary-rgb),0) 70%),
-        radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%);
+        radial-gradient(50% 40% at 50% 0%, rgba(var(--primary-rgb),0.22) 0%, rgba(var(--primary-rgb),0) 70%),
+        radial-gradient(55% 50% at 50% 62%, rgba(var(--primary-rgb),0.16) 0%, rgba(var(--primary-rgb),0) 70%),
+        radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.6) 100%);
+    }
+    /* Korn: sitzt in der klebenden Buehne (bewegt sich nicht mit), ohne Zeiger. */
+    .vi-amb::after{
+      content:'';position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     }
 
     /* ═══ BUEHNE ═══ */
@@ -38,21 +47,24 @@
 
     /* ═══ DER BILDSCHIRM — Doppelrand: Aussenschale + Innenkern ═══
        Der Rahmen ist 16:9, das Video ist 16:9 → object-fit:cover schneidet nichts ab.
-       Bewegt wird ausschliesslich per transform (GPU), nie per width/height. */
+       Bewegt wird ausschliesslich per transform (GPU), nie per width/height.
+       --rx kippt ihn im Hero nach hinten; beim ersten Abschnitt richtet er
+       sich auf (dieselbe Transition wie die Stellungswechsel). */
     .vi-screen{
       position:absolute;top:50%;left:50%;
       width:min(94vw,1240px);aspect-ratio:16/9;
-      --sx:0px;--sy:0px;--sc:1;
-      transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(var(--sc));
-      transform-origin:center;
-      transition:transform 1.05s cubic-bezier(.22,1,.36,1),opacity .7s ease,filter .7s ease;
+      --sx:0px;--sy:0px;--sc:1;--rx:0deg;
+      transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) perspective(1800px) rotateX(var(--rx)) scale(var(--sc));
+      transform-origin:50% 30%;
+      transition:transform 1.15s var(--vi-spring),opacity .7s ease,filter .7s ease;
       will-change:transform;
       padding:8px;border-radius:26px;
-      background:rgba(255,255,255,0.035);
-      border:1px solid rgba(255,255,255,0.10);
+      background:linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.025));
+      border:1px solid rgba(255,255,255,0.12);
       box-shadow:
-        0 40px 120px -30px rgba(0,0,0,0.85),
-        0 0 90px -20px rgba(var(--primary-rgb),0.30);
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        0 50px 140px -40px rgba(0,0,0,0.9),
+        0 0 110px -20px rgba(var(--primary-rgb),0.38);
     }
     .vi-screen-in{
       position:relative;width:100%;height:100%;
@@ -61,21 +73,29 @@
       box-shadow:inset 0 1px 1px rgba(255,255,255,0.14);
     }
     .vi-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-    /* Ganz leichter Lichtabfall an der Unterkante, damit der Rahmen Tiefe bekommt */
+    /* Das erste Bild des Films ist schwarz (Einblendung). Im Hero liegt deshalb
+       die echte Dashboard-Aufnahme darueber — dieselbe Szene, mit der der Film
+       beginnt — und blendet aus, sobald der Film uebernimmt. */
+    .vi-poster{
+      position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 0;display:block;
+      opacity:0;transition:opacity .6s ease;pointer-events:none;
+    }
+    [data-mode="hero"] .vi-poster{opacity:1}
+    /* Glanz auf dem Glas und Lichtabfall an der Unterkante */
     .vi-screen-in::after{
-      content:'';position:absolute;inset:0;pointer-events:none;
-      background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0) 22%,rgba(0,0,0,0.28) 100%);
+      content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+      background:
+        linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.06) 45%,rgba(255,255,255,0) 60%),
+        linear-gradient(180deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0) 22%,rgba(0,0,0,0.26) 100%);
     }
 
-    /* Stellungen je Abschnitt-Modus */
-    /* Seit v7.4.0 steht unter dem Slogan die Positionierung (.vi-lede, zwei bis
-       drei Zeilen). Der Bildschirm rueckt dafuer tiefer und etwas kleiner —
-       vorher (11.5vh / .70) lag seine Oberkante genau unter der Slogan-Zeile,
-       der Text stand dann im Bild. Gemessen bei 1280x800: Versionszeile endet 351 px,
-       Bildschirm-Oberkante 364 px, Unterkante 756 px. */
-    [data-mode="hero"]  .vi-screen{--sx:0px;--sy:20vh;--sc:.58}
+    /* Stellungen je Abschnitt-Modus. Hero: Text oben (Titel, Zeile, Lede,
+       zwei Knoepfe), Bildschirm darunter gekippt und angeschnitten.
+       Gemessen bei 1440x900: Knopfreihe endet 468 px, Oberkante des gekippten
+       Bildschirms 520 px. */
+    [data-mode="hero"]  .vi-screen{--sx:0px;--sy:31vh;--sc:.72;--rx:26deg}
     [data-mode="split"] .vi-screen{--sx:-17.5%;--sy:0px;--sc:.615}
-    [data-mode="cta"]   .vi-screen{--sx:0px;--sy:0px;--sc:.80;opacity:.30;filter:blur(3px)}
+    [data-mode="cta"]   .vi-screen{--sx:0px;--sy:0px;--sc:.80;opacity:.25;filter:blur(4px)}
 
     /* ═══ TEXTSPALTE ═══ */
     .vi-panels{position:absolute;inset:0;pointer-events:none}
@@ -90,120 +110,159 @@
     [data-mode="hero"] .vi-s,[data-mode="cta"] .vi-s{
       inset:0;align-items:center;justify-content:center;text-align:center;padding:0 6vw;
     }
-    [data-mode="hero"] .vi-s{justify-content:flex-start;padding-top:12vh}
+    [data-mode="hero"] .vi-s{justify-content:flex-start;padding-top:9.5vh}
 
     /* Modus SPLIT: rechte Spalte, linksbuendig */
     [data-mode="split"] .vi-s{
       top:50%;right:max(4vw,28px);left:auto;
-      width:min(38vw,440px);
+      width:min(38vw,460px);
       transform:translateY(-50%);
       align-items:flex-start;text-align:left;
     }
 
     /* Gestaffelter Einlauf der Kinder */
     .vi-s > *{
-      opacity:0;transform:translateY(14px);filter:blur(4px);
-      transition:opacity .5s cubic-bezier(.23,1,.32,1),transform .6s cubic-bezier(.23,1,.32,1),filter .5s ease;
+      opacity:0;transform:translateY(16px);filter:blur(5px);
+      transition:opacity .55s cubic-bezier(.23,1,.32,1),transform .7s var(--vi-spring),filter .55s ease;
     }
     .vi-s.on > *{opacity:1;transform:translateY(0);filter:blur(0)}
     .vi-s.on > :nth-child(1){transition-delay:.04s}
     .vi-s.on > :nth-child(2){transition-delay:.10s}
     .vi-s.on > :nth-child(3){transition-delay:.16s}
     .vi-s.on > :nth-child(4){transition-delay:.22s}
+    .vi-s.on > :nth-child(5){transition-delay:.28s}
 
-    /* ═══ TYPOGRAFIE ═══
-       Tracking ist groessenabhaengig: grosse Schrift bekommt negatives,
-       kleine Grossbuchstaben-Labels positives. Nie ein Wert fuer alles. */
+    /* ═══ TYPOGRAFIE ═══ */
     .vi-eyebrow{
-      display:inline-flex;align-items:center;gap:.5em;
-      font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.16em;
-      color:rgba(var(--primary-rgb),0.95);
-      padding:.4em .85em;border-radius:100px;
-      background:rgba(var(--primary-rgb),0.10);
-      border:1px solid rgba(var(--primary-rgb),0.22);
+      display:inline-flex;align-items:center;gap:.55em;
+      font-size:.8rem;font-weight:500;letter-spacing:0;
+      color:rgba(255,255,255,0.75);
+      padding:.42em .9em .42em .7em;border-radius:100px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.12);
     }
-    .vi-h{
-      font-size:clamp(1.55rem,3.1vw,2.5rem);font-weight:750;line-height:1.1;
-      letter-spacing:-.028em;margin-top:1.1rem;
+    .vi-eyebrow::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.22)}
+    #pro-intro .vi-h{
+      font-family:var(--vi-fd);font-variation-settings:'opsz' 96;
+      font-size:clamp(1.9rem,3.6vw,3.2rem);font-weight:600;line-height:1;
+      letter-spacing:-.045em;margin-top:1.2rem;text-wrap:balance;
     }
-    .vi-p{
-      font-size:clamp(.92rem,1.25vw,1.02rem);line-height:1.62;
-      color:rgba(255,255,255,0.62);margin-top:.85rem;max-width:42ch;
+    #pro-intro .vi-p{
+      font-size:clamp(.95rem,1.25vw,1.06rem);line-height:1.65;
+      color:rgba(255,255,255,0.64);margin-top:1rem;max-width:42ch;text-wrap:pretty;
     }
 
     /* ═══ S1: HERO ═══ */
     .vi-logo{
-      font-size:clamp(3rem,10.5vw,7rem);font-weight:800;letter-spacing:-.055em;line-height:1;
-      color:#fff;text-shadow:0 0 80px rgba(var(--primary-rgb),0.30);
+      font-family:var(--vi-fd);font-variation-settings:'opsz' 96;
+      font-size:clamp(3.2rem,10vw,7.4rem);font-weight:600;letter-spacing:-.045em;line-height:.92;
+      color:#fff;text-shadow:0 0 90px rgba(var(--primary-rgb),0.35);
     }
-    .vi-sub-row{display:flex;align-items:center;gap:2px;margin-top:1rem;min-height:1.6em}
-    .vi-typed{font-size:clamp(1rem,2.1vw,1.35rem);color:rgba(255,255,255,0.55);letter-spacing:-.01em}
-    .vi-caret{color:var(--primary);font-weight:300;font-size:clamp(1rem,2.2vw,1.4rem);animation:viBlink 1s step-end infinite}
+    #pro-intro .vi-sub-row{display:flex;align-items:center;gap:2px;margin-top:1.1rem;min-height:1.6em}
+    .vi-typed{
+      font-family:var(--vi-fd);font-size:clamp(1.15rem,2.3vw,1.6rem);font-weight:500;
+      color:rgba(255,255,255,0.86);letter-spacing:-.025em;
+    }
+    .vi-caret{color:var(--primary);font-weight:300;font-size:clamp(1.15rem,2.4vw,1.65rem);animation:viBlink 1s step-end infinite}
     /* Marge ueber #pro-intro, wie beim .vi-cta unten: der Reset #pro-intro * schlaegt sonst. */
-    #pro-intro .vi-lede{margin-top:1.1rem;max-width:58ch;font-size:clamp(.92rem,1.5vw,1.08rem);line-height:1.55;color:rgba(255,255,255,0.72)}
-    .vi-ver{margin-top:.9rem;font-size:.68rem;color:rgba(255,255,255,0.22);letter-spacing:.14em}
+    #pro-intro .vi-lede{margin-top:1rem;max-width:56ch;font-size:clamp(.95rem,1.4vw,1.08rem);line-height:1.6;color:rgba(255,255,255,0.64);text-wrap:balance}
     @keyframes viBlink{50%{opacity:0}}
+
+    /* Die zwei Wege aus dem Hero: sofort in die App, oder der Rundgang.
+       Bis v7.4 gab es oben nur das kleine X — wer die App wollte, musste
+       acht Bildschirmhoehen scrollen oder es finden. */
+    #pro-intro .vi-hero-cta{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-top:1.6rem}
+    .vi-btn{
+      display:inline-flex;align-items:center;gap:.7rem;border-radius:999px;cursor:pointer;
+      font-family:inherit;font-size:.95rem;font-weight:600;white-space:nowrap;text-decoration:none;
+      transition:transform .16s ease-out,box-shadow .3s ease,background .2s ease,border-color .2s ease,color .2s ease;
+    }
+    .vi-btn:active{transform:scale(.97)}
+    .vi-btn:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:4px}
+    .vi-btn-main{
+      padding:.4rem .4rem .4rem 1.35rem;border:0;background:#fff;color:#0a0a10;
+      box-shadow:0 14px 44px -12px rgba(var(--primary-rgb),.7);
+    }
+    .vi-btn-disc{
+      display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;
+      background:var(--primary);color:#fff;transition:transform .45s var(--vi-spring);
+    }
+    .vi-btn-disc svg{width:16px;height:16px}
+    .vi-btn-ghost{
+      padding:.78rem 1.3rem;color:rgba(255,255,255,0.85);
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.14);
+    }
+    @media(hover:hover) and (pointer:fine){
+      .vi-btn-main:hover{box-shadow:0 18px 56px -12px rgba(var(--primary-rgb),.95)}
+      .vi-btn-main:hover .vi-btn-disc{transform:translateX(3px) rotate(-45deg)}
+      .vi-btn-ghost:hover{color:#fff;border-color:rgba(var(--primary-rgb),.5);background:rgba(var(--primary-rgb),.1)}
+    }
+
+    /* Versionsmarke: klein, mit Punkt — ein lebendiges Projekt, kein Etikett. */
+    #pro-intro .vi-ver{
+      display:inline-flex;align-items:center;gap:.5rem;margin-top:1.2rem;
+      font-size:.74rem;color:rgba(255,255,255,0.4);font-variant-numeric:tabular-nums;
+    }
+    .vi-ver::before{content:'';width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.18)}
 
     /* ═══ S8: CTA ═══ */
     .vi-end-t{
-      font-size:clamp(2.6rem,8vw,5rem);font-weight:800;letter-spacing:-.045em;line-height:1;
-      text-shadow:0 0 70px rgba(var(--primary-rgb),0.22);
+      font-family:var(--vi-fd);font-variation-settings:'opsz' 96;
+      font-size:clamp(3.4rem,11vw,8rem);font-weight:600;letter-spacing:-.06em;line-height:.9;
+      text-shadow:0 0 90px rgba(var(--primary-rgb),0.3);
     }
-    .vi-end-p{margin-top:1rem;font-size:clamp(.9rem,1.4vw,1.05rem);color:rgba(255,255,255,0.55)}
+    #pro-intro .vi-end-p{margin-top:1.2rem;font-size:clamp(1rem,1.5vw,1.15rem);color:rgba(255,255,255,0.64)}
 
-    /* CTA — Vorlage von Uiverse.io (alexmaracinaru), angepasst.
-       Zwei Aenderungen am Original waren noetig:
-       1. Es faerbt Text und Linie hart in #000. Das Intro liegt auf
-          var(--bg-deep) — beides waere unsichtbar gewesen. Schrift auf Weiss,
-          Linie auf var(--primary), Pfeil auf currentColor.
-       2. Die Klassen hiessen .cta und .hover-underline-animation. landing.css
-          wird global in die App geladen; so blanke Namen haetten ueberall
-          zugeschlagen, wo die Klassen zufaellig vorkommen. Daher vi-Praefix. */
-    /* Die Marge MUSS ueber #pro-intro laufen: der Reset `#pro-intro *`
-       hat Spezifitaet (1,0,0) und schlaegt jede blanke .vi-*-Regel — mit
-       `margin:2.4rem` an .vi-cta stand der Knopf gemessene 0 px unter dem
-       Text. Galt fuer den alten .vi-btn genauso. */
-    #pro-intro .vi-cta{margin-top:2.4rem}
-    #pro-intro .vi-alt{display:block;width:max-content;margin-top:1.6rem;font-size:.92rem;color:rgba(255,255,255,0.55);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.22);padding-bottom:1px;transition:color .15s ease,border-color .15s ease}
-    .vi-alt:hover,.vi-alt:focus-visible{color:#fff;border-color:rgba(255,255,255,0.6)}
-    .vi-alt:focus-visible{outline:2px solid rgba(var(--primary-rgb),.7);outline-offset:4px;border-radius:2px}
+    /* Der Abschluss-Knopf: dieselbe Pille wie im Hero, Pfeil in der Scheibe.
+       Markup (Label + Pfeil-SVG) ist unveraendert; die frueheren Klassen
+       hiessen bewusst vi-* statt .cta — landing.css laedt global in der App. */
+    #pro-intro .vi-cta{margin-top:2.2rem}
     .vi-cta{
-      padding:0;height:auto;border:none;background:none;cursor:pointer;
-      display:inline-flex;align-items:center;
-      color:#fff;font-family:inherit;
-      transition:transform .12s ease-out;
+      display:inline-flex;align-items:center;gap:.8rem;cursor:pointer;
+      padding:.45rem .45rem .45rem 1.6rem;border:0;border-radius:999px;background:#fff;color:#0a0a10;
+      font-family:inherit;box-shadow:0 16px 50px -12px rgba(var(--primary-rgb),.75);
+      transition:transform .16s ease-out,box-shadow .3s ease;
     }
-    .vi-cta-label{
-      position:relative;
-      padding:0 15px 7px 0;
-      font-size:14px;font-weight:600;letter-spacing:4px;text-transform:uppercase;
-    }
-    .vi-cta-label::after{
-      content:'';position:absolute;left:0;bottom:0;
-      width:100%;height:2px;
-      background:var(--primary);
-      transform:scaleX(0);transform-origin:bottom right;
-      transition:transform .25s ease-out;
-    }
-    .vi-cta-arrow{
-      fill:currentColor;flex-shrink:0;
-      transform:translateX(-8px);
-      transition:transform .3s ease;
-    }
+    .vi-cta-label{font-size:1.05rem;font-weight:600;letter-spacing:-.005em}
+    #pro-intro .vi-cta .vi-btn-disc{width:40px;height:40px}
     @media(hover:hover) and (pointer:fine){
-      .vi-cta:hover .vi-cta-label::after{transform:scaleX(1);transform-origin:bottom left}
-      .vi-cta:hover .vi-cta-arrow{transform:translateX(0)}
-    }
-    /* Touch kennt kein :hover. Ohne diesen Zweig gaebe es am Handy weder
-       Linie noch Pfeilbewegung — der Knopf saehe aus wie blosser Text. */
-    @media(hover:none){
-      .vi-cta-label::after{transform:scaleX(1);transform-origin:bottom left}
-      .vi-cta-arrow{transform:translateX(0)}
+      .vi-cta:hover{box-shadow:0 20px 60px -12px rgba(var(--primary-rgb),.95)}
+      .vi-cta:hover .vi-btn-disc{transform:translateX(3px) rotate(-45deg)}
     }
     .vi-cta:active{transform:scale(.97)}
-    .vi-cta:active .vi-cta-arrow{transform:translateX(0) scale(.9)}
-    .vi-cta:focus-visible{outline:2px solid rgba(var(--primary-rgb),.7);outline-offset:6px;border-radius:4px}
-    .vi-cta:focus-visible .vi-cta-label::after{transform:scaleX(1);transform-origin:bottom left}
+    .vi-cta:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:5px}
+    #pro-intro .vi-alt{
+      display:inline-flex;margin-top:1rem;padding:.7rem 1.2rem;border-radius:999px;
+      font-size:.92rem;font-weight:500;color:rgba(255,255,255,0.75);text-decoration:none;
+      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.14);
+      transition:color .2s ease,border-color .2s ease,background .2s ease;
+    }
+    .vi-alt:hover,.vi-alt:focus-visible{color:#fff;border-color:rgba(var(--primary-rgb),.5);background:rgba(var(--primary-rgb),.1)}
+    .vi-alt:focus-visible{outline:2px solid rgba(var(--primary-rgb),.7);outline-offset:4px}
+
+    /* ═══ KAPITEL-LEISTE ═══
+       Sechs Segmente fuer die sechs Szenen, unten mittig; jedes fuellt sich mit
+       dem Fortschritt SEINES Abschnitts (--f, 0…1, schreibt landing.js) und ist
+       anklickbar. Die Beschriftungen kommen aus den .vi-eyebrow der Abschnitte —
+       also uebersetzt auf /en/, ohne zweite Schluesselliste. Nur im Split-Modus
+       sichtbar; `~`, weil die Leiste NEBEN #viStage liegt (siehe .vi-hint). */
+    .vi-rail{
+      position:absolute;left:50%;bottom:1.8rem;z-index:40;transform:translate(-50%,8px);
+      display:flex;gap:.35rem;opacity:0;pointer-events:none;
+      transition:opacity .5s ease,transform .6s var(--vi-spring);
+    }
+    .vi-stage[data-mode="split"]~.vi-rail{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+    .vi-rail-btn{
+      display:flex;flex-direction:column;gap:.55rem;width:clamp(78px,9vw,120px);
+      padding:.4rem 0;background:none;border:0;cursor:pointer;text-align:left;
+      font-family:inherit;font-size:.74rem;font-weight:500;color:rgba(255,255,255,0.38);
+      transition:color .3s ease;
+    }
+    .vi-rail-btn.on,.vi-rail-btn.done{color:rgba(255,255,255,0.85)}
+    .vi-rail-bar{position:relative;display:block;height:3px;border-radius:3px;background:rgba(255,255,255,0.14);overflow:hidden}
+    .vi-rail-fill{position:absolute;inset:0;background:var(--primary);transform:scaleX(var(--f,0));transform-origin:left}
+    .vi-rail-btn:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:4px;border-radius:4px}
+    @media(hover:hover) and (pointer:fine){.vi-rail-btn:hover{color:#fff}}
 
     /* ═══ FORTSCHRITT ═══ */
     .vi-prog{position:absolute;bottom:0;left:0;right:0;height:2px;z-index:50;background:rgba(255,255,255,0.06)}
@@ -211,30 +270,35 @@
 
     /* ═══ SCROLL-HINWEIS ═══ */
     .vi-hint{
-      position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);z-index:40;
-      display:flex;flex-direction:column;align-items:center;gap:.5rem;
-      font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,0.30);
+      position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);z-index:40;
+      display:flex;align-items:center;gap:.5rem;
+      padding:.45rem .9rem;border-radius:999px;
+      background:rgba(10,10,16,0.55);border:1px solid rgba(255,255,255,0.1);
+      font-size:.78rem;font-weight:500;color:rgba(255,255,255,0.6);
       opacity:0;transition:opacity .5s ease;pointer-events:none;
     }
     /* `~`, nicht Nachfahre: .vi-hint liegt NEBEN #viStage in .vi-stick. Als
        `[data-mode="hero"] .vi-hint` traf die Regel nie — der Hinweis war seit
        dem Umbau (4e3943f) unsichtbar, ohne dass es im Bild auffiel. */
     .vi-stage[data-mode="hero"]~.vi-hint{opacity:1}
-    .vi-hint svg{width:15px;height:15px;animation:viNudge 1.9s cubic-bezier(.4,0,.2,1) infinite}
-    @keyframes viNudge{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(5px);opacity:1}}
+    .vi-hint svg{width:14px;height:14px;animation:viNudge 1.9s cubic-bezier(.4,0,.2,1) infinite}
+    @keyframes viNudge{0%,100%{transform:translateY(-1px);opacity:.5}50%{transform:translateY(3px);opacity:1}}
 
-    /* ═══ SKIP ═══ */
+    /* ═══ UEBERSPRINGEN ═══ Text statt X: ein X liest sich wie „Fenster zu",
+       nicht wie „in die App". */
     .vi-skip{
-      position:absolute;top:1.3rem;right:1.3rem;z-index:50;width:36px;height:36px;border-radius:50%;
-      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
-      color:rgba(255,255,255,0.45);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      position:absolute;top:1.2rem;right:1.2rem;z-index:50;
+      display:inline-flex;align-items:center;gap:.45rem;padding:.5rem .6rem .5rem .95rem;border-radius:999px;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.72);cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:500;
       transition:color .2s ease,background .2s ease,border-color .2s ease;
     }
-    .vi-skip svg{width:15px;height:15px;display:block}
+    .vi-skip svg{width:14px;height:14px;display:block}
     @media(hover:hover) and (pointer:fine){
-      .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.11);border-color:rgba(255,255,255,0.22)}
+      .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.24)}
     }
-    .vi-skip:active{transform:scale(.94)}
+    .vi-skip:active{transform:scale(.96)}
+    .vi-skip:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:3px}
 
     @keyframes viFadeOut{to{opacity:0}}
 
@@ -242,11 +306,11 @@
        Der Umschaltpunkt muss zu dem der Textspalte passen, sonst steht der Text
        neben einem Video, das die ganze Breite braucht. */
     @media(max-width:900px){
-      [data-mode="hero"]  .vi-screen{--sx:0px;--sy:10vh;--sc:.97}
-      [data-mode="split"] .vi-screen{--sx:0px;--sy:-13vh;--sc:1}
+      [data-mode="hero"]  .vi-screen{--sx:0px;--sy:26vh;--sc:.94;--rx:22deg}
+      [data-mode="split"] .vi-screen{--sx:0px;--sy:-9vh;--sc:1}
       [data-mode="cta"]   .vi-screen{--sx:0px;--sy:0px;--sc:1}
       [data-mode="split"] .vi-s{
-        top:auto;bottom:9vh;right:auto;left:50%;
+        top:auto;bottom:12vh;right:auto;left:50%;
         width:min(88vw,560px);
         transform:translateX(-50%);
         align-items:center;text-align:center;
@@ -254,17 +318,24 @@
       /* Auf schmalen Geraeten steht der Text unter dem Bildschirm — die
          Ueberschrift darf dann nicht mehr so gross sein wie in der Spalte,
          sonst frisst sie die Lueckenrechnung wieder auf. */
-      [data-mode="split"] .vi-h{font-size:clamp(1.35rem,5.4vw,1.8rem);margin-top:.75rem}
-      [data-mode="split"] .vi-p{margin-top:.6rem}
-      [data-mode="split"] .vi-p{max-width:none}
-      [data-mode="hero"] .vi-s{padding-top:7vh}
-      .vi-hint{bottom:1.4rem}
+      [data-mode="split"] .vi-h{font-size:clamp(1.5rem,6vw,2rem);margin-top:.8rem}
+      #pro-intro [data-mode="split"] .vi-p{margin-top:.6rem;max-width:none}
+      [data-mode="hero"] .vi-s{padding-top:11vh}
+      /* Kapitel oben als Story-Balken, ohne Beschriftung — sie passt nicht. */
+      .vi-rail{top:4.6rem;bottom:auto;left:1rem;right:1rem;transform:translateY(-6px);gap:.25rem}
+      .vi-stage[data-mode="split"]~.vi-rail{transform:none}
+      .vi-rail-btn{flex:1;width:auto;font-size:0;gap:0;padding:.5rem 0}
+      .vi-hint{bottom:1.2rem}
     }
     @media(max-width:600px){
       .vi-screen{padding:6px;border-radius:20px}
       .vi-screen-in{border-radius:15px}
-      .vi-skip{top:.7rem;right:.7rem;width:32px;height:32px}
-      [data-mode="split"] .vi-s{bottom:6vh}
+      .vi-skip{top:.8rem;right:.8rem}
+      [data-mode="split"] .vi-s{bottom:8vh}
+      #pro-intro .vi-hero-cta{flex-direction:column;align-items:stretch;width:min(100%,340px)}
+      .vi-btn{justify-content:center}
+      .vi-btn-main{justify-content:space-between}
+      #pro-intro .vi-lede{font-size:.95rem}
     }
 
     /* ═══ WENIGER BEWEGUNG ═══
@@ -272,13 +343,14 @@
        Verschiebung und Unschaerfe fallen weg. */
     @media(prefers-reduced-motion:reduce){
       /* Der Bildschirm MUSS seine Stellung wechseln — das ist Layout, keine Deko.
-         Also nur kurz statt lang, nicht abgeschaltet. */
+         Also nur kurz statt lang, nicht abgeschaltet. Die Kippung faellt weg. */
       .vi-screen{transition:transform .25s ease,opacity .25s ease,filter .25s ease}
+      [data-mode="hero"] .vi-screen{--rx:0deg}
       .vi-s{transition:opacity .25s ease}
       /* Nur der gestaffelte Einlauf der Kinder faellt weg — dort steckt die
          Verschiebung. Das transform von .vi-s selbst ist Zentrierung, nicht
          Bewegung, und darf hier NICHT ueberschrieben werden. */
       .vi-s > *{transition:opacity .25s ease;transform:none;filter:none}
       .vi-hint svg,.vi-caret{animation:none}
-      .vi-cta,.vi-cta-arrow,.vi-cta-label::after{transition:none}
+      .vi-cta,.vi-btn,.vi-btn-disc{transition:none}
     }

@@ -9,9 +9,25 @@
     if(/[#&]p2p=/.test(location.hash||'')){ window._introSkipped=true; return; }
     var intro=document.getElementById('pro-intro');
     intro.style.display='block';
+
+    // Schrift NUR fuer das Intro, und erst hier: Wiederkehrer (pro_intro_seen)
+    // steigen oben aus und laden sie nie. Nicht blockierend (display=swap) —
+    // bis sie da ist, steht der Text in der Systemschrift.
+    (function(){
+      if(document.getElementById('viFonts')) return;
+      var l=document.createElement('link');
+      l.id='viFonts'; l.rel='stylesheet';
+      l.href='https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Geist:wght@400;500;600&display=swap';
+      document.head.appendChild(l);
+    })();
+    var EN=document.documentElement.lang==='en';
     document.body.style.overflow='hidden';
 
     var sections=intro.querySelectorAll('.vi-s');
+    // Hier oben, nicht bei der Kapitel-Leiste: markReady() ruft update() SOFORT,
+    // wenn der Film schon im Cache liegt — dann liefe update() gegen eine noch
+    // undefinierte Liste, wuerfe, und das Intro bliebe im Hero-Zustand stehen.
+    var chapters=[];
     var stage=document.getElementById('viStage');
     var progBar=document.getElementById('viProgBar');
     var vid=document.getElementById('viBgVid');
@@ -126,7 +142,9 @@
 
     /* — S1 Typewriter — */
     var typedEl=document.getElementById('viTyped');
-    var typedText='Zeiterfassung neu definiert.';
+    // Stand bis v7.4 als deutscher Werbesatz im Skript — auf /en/ blieb er
+    // deutsch, weil die i18n-Pipeline nur Markup uebersetzt.
+    var typedText=EN?'For apprentices. Built by one.':'Für Azubis. Von einem Azubi.';
     var typedIdx=0,typedDone=false,typedTimer=null;
     function startTyped(){
       if(typedDone||typedTimer) return;
@@ -153,9 +171,47 @@
       return Math.min(1,Math.max(0,intro.scrollTop/scrollMax));
     }
 
+    /* — Kapitel-Leiste: je Szenen-Abschnitt ein Segment, Beschriftung aus
+       dessen .vi-eyebrow (auf /en/ also schon uebersetzt). Klick scrollt an
+       den Anfang des Abschnitts, etwas hinein, damit er sicher aktiv ist. — */
+    var rail=document.getElementById('viRail');
+    (function(){
+      if(!rail) return;
+      for(var i=0;i<sections.length;i++){
+        var eb=sections[i].querySelector('.vi-eyebrow');
+        if(!eb) continue;
+        var b=document.createElement('button');
+        b.type='button'; b.className='vi-rail-btn';
+        var t=document.createElement('span'); t.textContent=eb.textContent.trim();
+        var bar=document.createElement('span'); bar.className='vi-rail-bar';
+        var fill=document.createElement('span'); fill.className='vi-rail-fill';
+        bar.appendChild(fill); b.appendChild(t); b.appendChild(bar);
+        b.setAttribute('aria-label', eb.textContent.trim());
+        (function(sec){
+          b.addEventListener('click',function(){ springeZu(parseFloat(sec.dataset.s)+0.01); });
+        })(sections[i]);
+        rail.appendChild(b);
+        chapters.push({btn:b, fill:fill, s:parseFloat(sections[i].dataset.s), e:parseFloat(sections[i].dataset.e)});
+      }
+    })();
+    function springeZu(p){
+      cacheScrollMax();
+      var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      intro.scrollTo({top:p*scrollMax, behavior:reduce?'auto':'smooth'});
+    }
+    // Rundgang aus dem Hero: an den Anfang der ersten Szene.
+    window.viTour=function(){ if(chapters.length) springeZu(chapters[0].s+0.01); };
+
     function update(){
       ticking=false;
       var p=getP();
+      for(var c=0;c<chapters.length;c++){
+        var ch=chapters[c];
+        var f=Math.min(1,Math.max(0,(p-ch.s)/(ch.e-ch.s)));
+        ch.fill.style.setProperty('--f', f.toFixed(3));
+        ch.btn.classList.toggle('on', p>=ch.s&&p<=ch.e);
+        ch.btn.classList.toggle('done', p>ch.e);
+      }
       progBar.style.width=(p*100)+'%';
       if(vidReady&&vid.duration){vidTarget=p*vid.duration;startVidLoop();}
       var mode=null;   // null = kein Abschnitt aktiv (Blende) -> Stellung halten
