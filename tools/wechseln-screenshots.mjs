@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // ═══ DIE AUFNAHMEN AUF /wechseln/ NEU MACHEN ═══
 //
-// Drei Bilder unter /Grafiken/wechseln/: der Import-Assistent der App in
+// Fuenf Bilder unter /Grafiken/wechseln/: der Weg in den Import (Seitenleiste,
+// Menue „Daten uebernehmen") und der Import-Assistent in
 // seinen drei Schritten (Zeilen einfuegen, Spalten zuordnen, Vorschau mit
 // Saldo). Seed wie /about/ (tools/about-screenshots.mjs), 1440 x 900, 2x,
 // WebP. Braucht den lokalen Server (Portman, 5001).
@@ -56,10 +57,19 @@ const CLEAN = "var b=document.getElementById('localhostWarningBanner');if(b)b.re
 const warte = (body) => `(function(){return new Promise(function(done){setTimeout(function(){${CLEAN}${body}},900);})})()`;
 const EINFUEGEN = `openImportWizard();document.getElementById('impPasteArea').value=${JSON.stringify(TABELLE)};`;
 
+// Jede Aufnahme meldet den Kasten, auf den die Kamera auf /wechseln/ zeigt,
+// in Prozent des Bildes (Mitte x/y, Breite, Hoehe). Diese Zahlen gehoeren in
+// die Brennpunkt-Regeln der Seite (.flow[data-step] … transform-origin, Ring) —
+// nach jeder Neuaufnahme vergleichen.
+const MISS = "function miss(el){var r=el.getBoundingClientRect(),W=innerWidth,H=innerHeight;return 'Mitte '+((r.left+r.width/2)/W*100).toFixed(1)+'% / '+((r.top+r.height/2)/H*100).toFixed(1)+'%, Groesse '+(r.width/W*100).toFixed(1)+'% x '+(r.height/H*100).toFixed(1)+'%';}";
+const IMPORT_EINTRAG = "document.querySelector('.nav-item[onclick=\"showBackupMenu()\"]')";
+
 const shots = [
-    ['einfuegen.webp', warte(`${EINFUEGEN}var t=document.getElementById('impPasteArea');t.scrollTop=0;setTimeout(function(){done('Schritt '+_mwlImport.step);},500);`)],
-    ['spalten.webp', warte(`${EINFUEGEN}mwlImportPaste();setTimeout(function(){done('Schritt '+_mwlImport.step+', '+_mwlImport.body.length+' Zeilen');},500);`)],
-    ['vorschau.webp', warte(`${EINFUEGEN}mwlImportPaste();mwlImportBuildPreview();setTimeout(function(){done('Schritt '+_mwlImport.step+', '+document.querySelectorAll('#impPreviewBody tr').length+' Zeilen, '+document.querySelectorAll('.imp-badge.warn').length+' vorhanden');},500);`)],
+    ['seitenleiste.webp', warte(`${MISS}var n=${IMPORT_EINTRAG};n.scrollIntoView({block:'center'});setTimeout(function(){done('Import-Eintrag: '+miss(n));},500);`)],
+    ['menue.webp', warte(`${MISS}showBackupMenu();setTimeout(function(){var b=document.querySelector('button[onclick*="openImportWizard"]');done('Excel-Knopf: '+miss(b));},600);`)],
+    ['einfuegen.webp', warte(`${MISS}${EINFUEGEN}var t=document.getElementById('impPasteArea');t.scrollTop=0;setTimeout(function(){done('Einfuegefeld: '+miss(t));},500);`)],
+    ['spalten.webp', warte(`${MISS}${EINFUEGEN}mwlImportPaste();setTimeout(function(){done('Zuordnung: '+miss(document.getElementById('impMapRows'))+' · '+_mwlImport.body.length+' Zeilen');},500);`)],
+    ['vorschau.webp', warte(`${MISS}${EINFUEGEN}mwlImportPaste();mwlImportBuildPreview();setTimeout(function(){done('Saldo-Zeile: '+miss(document.getElementById('impSummary'))+' · '+document.querySelectorAll('.imp-badge.warn').length+' vorhanden');},500);`)],
 ];
 
 mkdirSync(OUT, { recursive: true });
@@ -69,5 +79,5 @@ for (const [datei, js] of shots) {
     process.stdout.write(r.stdout); process.stderr.write(r.stderr);
     if (r.status !== 0) fehler++;
 }
-console.log(fehler ? `${fehler} Aufnahme(n) fehlgeschlagen` : 'Drei Aufnahmen unter Grafiken/wechseln/ — danach bumpen, damit die ?v= wechseln.');
+console.log(fehler ? `${fehler} Aufnahme(n) fehlgeschlagen` : 'Fuenf Aufnahmen unter Grafiken/wechseln/ — danach bumpen, damit die ?v= wechseln.');
 process.exit(fehler ? 1 : 0);

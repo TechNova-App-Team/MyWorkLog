@@ -199,14 +199,22 @@
         .steps p:last-child { margin-bottom: 0; }
 
         /* ═══ DER EXCEL-WEG ALS KAMERAFAHRT ═══
-           Links klebt die Buehne mit den Aufnahmen des Import-Assistenten
-           (tools/wechseln-screenshots.mjs), rechts laufen die fuenf Schritte
-           durch. Schritt 1 und 2 zeigen den Dialog, in dem man danach steht;
-           3 faehrt aufs Einfuegefeld, 4 zeigt die Zuordnung, 5 die Vorschau mit
-           der Saldo-Zeile. Brennpunkte gemessen an den Aufnahmen (Anteil von
-           Breite/Hoehe): Einfuegefeld 50 % / 60 % in einfuegen.webp,
-           Saldo-Zeile 40 % / 28 % in vorschau.webp. Neue Aufnahmen mit
-           anderem Layout → Zahlen nachmessen. */
+           Links klebt die Buehne, rechts laufen die fuenf Schritte durch; je
+           Schritt EINE Aufnahme (tools/wechseln-screenshots.mjs meldet beim
+           Aufnehmen, wo das gemeinte Element liegt). Die Kamera zoomt um den
+           Brennpunkt (transform-origin) und schiebt ihn zur Bildmitte — aber
+           nur so weit, dass kein leerer Rand entsteht: „Import" in der
+           Seitenleiste liegt bei 7,6 % ganz links und landet deshalb bei 18 %,
+           nicht in der Mitte. Der Ring sitzt dort, wo der Brennpunkt NACH dem
+           Schieben liegt, und dunkelt den Rest ab (Schatten nach aussen, vom
+           overflow der Buehne gekappt).
+           Gemessen 2026-09-23, Mitte x / y, Groesse:
+             seitenleiste  Import-Eintrag  7,6 / 56,3   14,2 x  5,1  → 2,4x, x um +10,6
+             menue         Excel-Knopf    50,0 / 61,5   23,0 x  7,2  → 2,2x
+             einfuegen     Einfuegefeld   50,0 / 60,2   50,1 x 13,9  → 1,7x
+             spalten       Zuordnung      50,0 / 49,2   50,1 x 31,3  → 1,6x
+             vorschau      Saldo-Zeile    50,0 / 28,1   50,1 x  4,6  → 1,7x
+           Neue Aufnahmen mit anderem Layout → Zahlen nachziehen. */
         .flow {
             display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
             gap: clamp(40px, 6vw, 80px); align-items: start; margin-top: 36px;
@@ -224,20 +232,26 @@
             opacity: 0; transform: scale(1.02);
             transition: opacity 0.7s var(--ease-out), transform 1.2s var(--ease-spring);
         }
-        .flow[data-step="1"] img[data-shot="einfuegen"],
-        .flow[data-step="2"] img[data-shot="einfuegen"] { opacity: 1; transform: none; }
-        .flow[data-step="3"] img[data-shot="einfuegen"] { opacity: 1; transform-origin: 50% 60%; transform: scale(1.5); }
-        .flow[data-step="4"] img[data-shot="spalten"] { opacity: 1; transform: none; }
-        .flow[data-step="5"] img[data-shot="vorschau"] { opacity: 1; transform-origin: 40% 28%; transform: scale(1.8); }
-        /* transform-origin haelt den Brennpunkt beim Zoomen fest — der Ring
-           sitzt deshalb genau dort (Saldo-Zeile, nur Schritt 5). */
+        .flow[data-step="1"] img[data-shot="seitenleiste"] { opacity: 1; transform-origin: 7.6% 56.3%; transform: translate(10.6%, -6.3%) scale(2.4); }
+        .flow[data-step="2"] img[data-shot="menue"] { opacity: 1; transform-origin: 50% 61.5%; transform: translate(0, -11.5%) scale(2.2); }
+        .flow[data-step="3"] img[data-shot="einfuegen"] { opacity: 1; transform-origin: 50% 60.2%; transform: translate(0, -10.2%) scale(1.7); }
+        .flow[data-step="4"] img[data-shot="spalten"] { opacity: 1; transform-origin: 50% 49.2%; transform: translate(0, 0.8%) scale(1.6); }
+        .flow[data-step="5"] img[data-shot="vorschau"] { opacity: 1; transform-origin: 50% 28.1%; transform: translate(0, 21.9%) scale(1.7); }
         .flow-ring {
-            position: absolute; left: 40%; top: 28%; width: 62%; height: 12%;
-            transform: translate(-50%, -50%) scale(1.15); border-radius: 18px; pointer-events: none;
-            border: 2px solid var(--primary); box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0.18), 0 0 40px rgba(var(--primary-rgb), 0.5);
-            opacity: 0; transition: opacity 0.4s var(--ease-out), transform 0.7s var(--ease-spring);
+            position: absolute; left: 50%; top: 50%; width: 40%; height: 16%;
+            transform: translate(-50%, -50%); border-radius: 14px; pointer-events: none;
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0.18), 0 0 40px rgba(var(--primary-rgb), 0.5), 0 0 0 200vmax rgba(0, 0, 0, 0.42);
+            opacity: 0;
+            transition: opacity 0.4s var(--ease-out) 0.55s, left 0.9s var(--ease-spring), top 0.9s var(--ease-spring),
+                        width 0.9s var(--ease-spring), height 0.9s var(--ease-spring);
         }
-        .flow[data-step="5"] .flow-ring { opacity: 1; transform: translate(-50%, -50%); transition-delay: 0.5s; }
+        .flow[data-step] .flow-ring { opacity: 1; }
+        .flow[data-step="1"] .flow-ring { left: 18.2%; width: 38%; height: 16%; }
+        .flow[data-step="2"] .flow-ring { width: 55%; height: 20%; }
+        .flow[data-step="3"] .flow-ring { width: 89%; height: 28%; }
+        .flow[data-step="4"] .flow-ring { width: 84%; height: 55%; }
+        .flow[data-step="5"] .flow-ring { width: 89%; height: 12%; }
         .flow-dots { display: flex; gap: 6px; margin: 16px 0 0 8px; }
         .flow-dots i { display: block; width: 18px; height: 3px; border-radius: 3px; background: var(--border-hover); transition: background 0.4s var(--ease-out), width 0.5s var(--ease-spring); }
         .flow[data-step="1"] .flow-dots i:nth-child(1), .flow[data-step="2"] .flow-dots i:nth-child(2),
@@ -502,6 +516,8 @@
             <div class="flow-sticky">
                 <div class="flow-stage" data-reveal>
                     <div class="flow-screen">
+                        <img data-shot="seitenleiste" src="/Grafiken/wechseln/seitenleiste.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="MyWorkLog mit der Seitenleiste, darin der Eintrag Import">
+                        <img data-shot="menue" src="/Grafiken/wechseln/menue.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Menü Daten übernehmen mit den Einträgen Vollständiges Backup, Verschlüsseltes Backup und Aus Excel oder CSV übernehmen">
                         <img data-shot="einfuegen" src="/Grafiken/wechseln/einfuegen.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Import-Assistent, Schritt 1: Datei auswählen oder Zeilen aus einer Tabelle einfügen, das Feld ist mit kopierten Zeilen gefüllt">
                         <img data-shot="spalten" src="/Grafiken/wechseln/spalten.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Import-Assistent, Schritt 2: Datum, Von, Bis, Pause, Typ und Notiz sind den Spalten der Tabelle zugeordnet">
                         <img data-shot="vorschau" src="/Grafiken/wechseln/vorschau.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Import-Assistent, Schritt 3: Vorschau mit Saldo-Änderung und allen Zeilen">
