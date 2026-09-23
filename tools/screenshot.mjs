@@ -5,12 +5,16 @@
  * nicht verbunden ist oder ein definierter Datenstand gebraucht wird.
  *
  *   node tools/screenshot.mjs <url> <ausgabe.png> [--w 1280] [--h 900] [--full]
- *        [--seed datei.json] [--dark|--light] [--js "code"] [--wait 800] [--dpr 1] [--quality 85]
+ *        [--seed datei.json] [--pre datei.js] [--dark|--light] [--js "code"] [--wait 800] [--dpr 1] [--quality 85]
  *
  * --seed  JSON-Objekt {schluessel: wert}; Werte, die keine Strings sind, werden
  *         per JSON.stringify abgelegt. Gesetzt VOR dem ersten Skript der Seite
  *         (Page.addScriptToEvaluateOnNewDocument), damit die Seite mit den
  *         Daten startet statt sie nachzuladen.
+ * --pre   JS-Datei, die ebenfalls VOR dem ersten Skript der Seite laeuft —
+ *         fuer Aufnahmen, die eine Datenquelle durch Beispieldaten ersetzen
+ *         muessen (tools/ausbilder-screenshots.mjs haengt so einen Setter an
+ *         window.BHB2B, damit das Cockpit ohne echtes Konto zeichnet).
  * --js    wird nach dem Laden ausgefuehrt (z. B. einen Dialog oeffnen).
  * --full  ganze Seite statt Viewport.
  *
@@ -24,7 +28,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const argv = process.argv.slice(2);
-const opt = { w: 1280, h: 900, full: false, seed: null, theme: null, js: null, wait: 800, dpr: 1, format: null, quality: 85 };
+const opt = { w: 1280, h: 900, full: false, seed: null, pre: null, theme: null, js: null, wait: 800, dpr: 1, format: null, quality: 85 };
 const pos = [];
 for (let i = 0; i < argv.length; i++) {
   const a = argv[i];
@@ -32,6 +36,7 @@ for (let i = 0; i < argv.length; i++) {
   else if (a === '--h') opt.h = +argv[++i];
   else if (a === '--full') opt.full = true;
   else if (a === '--seed') opt.seed = JSON.parse(readFileSync(argv[++i], 'utf8'));
+  else if (a === '--pre') opt.pre = readFileSync(argv[++i], 'utf8');
   else if (a === '--dark') opt.theme = 'dark';
   else if (a === '--light') opt.theme = 'light';
   else if (a === '--js') opt.js = argv[++i];
@@ -88,6 +93,7 @@ try {
       `localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(typeof v === 'string' ? v : JSON.stringify(v))});`).join('') + '}catch(e){}';
     await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: src });
   }
+  if (opt.pre) await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: opt.pre });
 
   const loaded = new Promise(r => cdp.on('Page.loadEventFired', r));
   await cdp.send('Page.navigate', { url });

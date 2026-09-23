@@ -11,6 +11,11 @@
     <meta name="description" content="Als Ausbilder alle Berichtsheft-Wochen Ihrer Azubis an einem Ort prüfen, abzeichnen oder zurückgeben — mit Konto als Sammelübersicht, ohne Konto per Link.">
     <meta name="keywords" content="Berichtsheft Ausbilder, Ausbildungsnachweis prüfen, Ausbildungsnachweis unterschreiben, Berichtsheft abzeichnen, §14 BBiG, Ausbildungsbetrieb, Ausbilder-Übersicht">
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.12"></script>
+    <script>/* Einblend-Zustaende im Einstieg gelten nur mit JS — sonst bliebe er leer. */
+    document.documentElement.className += ' js';</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
     <script defer src="/Assets/js/version-loader.js?v=7.4.12"></script>
     <script defer src="/Assets/js/ph-init.js?v=7.4.12"></script>
     <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
@@ -971,6 +976,160 @@
         @media (prefers-reduced-motion: reduce) {
             * { transition: none !important; animation: none !important; }
         }
+
+        /* ═══ EINSTIEG (#abIntro) — Handschrift der Infoseiten ═══════════
+           Alles hier ist auf #abIntro begrenzt: .ab-eyebrow und .ab-title
+           benutzen auch die Wochenpruefung und das Cockpit (per JS), und
+           die sollen bleiben, wie sie sind. Die Aufnahmen zeichnet der
+           echte Code dieser Seite mit Beispieldaten
+           (tools/ausbilder-screenshots.mjs).
+           Breiter als .ab-wrap (680 px Lesebreite fuer EINEN Nachweis):
+           der Einstieg bricht per margin nach beiden Seiten aus. 48 px
+           Luft statt 100vw, weil 100vw den Scrollbalken mitzaehlt. */
+        #abIntro {
+            --fd: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+            --ease-out: cubic-bezier(.22, 1, .36, 1);
+            --ease-spring: cubic-bezier(.32, .72, 0, 1);
+            --edge: rgba(255, 255, 255, 0.07);
+            --shadow-deep: 0 40px 100px -40px rgba(0, 0, 0, 0.85);
+            position: relative;
+            width: min(1120px, calc(100vw - 48px));
+            margin-left: calc(50% - min(560px, 50vw - 24px));
+            font-family: 'Geist', var(--font-main);
+        }
+        [data-theme="light"] #abIntro { --edge: rgba(255, 255, 255, 0.9); --shadow-deep: 0 30px 80px -40px rgba(40, 20, 80, 0.25); }
+        #abIntro::before {
+            content: ''; position: absolute; left: -10%; right: -10%; top: -120px; height: 900px; z-index: -1; pointer-events: none;
+            background: radial-gradient(50% 50% at 35% 0%, rgba(var(--primary-rgb), 0.2), transparent 70%);
+        }
+
+        #abIntro .ab-eyebrow {
+            display: inline-flex; align-items: center; gap: 8px; margin: clamp(24px, 5vw, 56px) 0 22px;
+            padding: 6px 13px 6px 10px; border-radius: 999px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            font-size: 0.8rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-muted);
+        }
+        #abIntro .ab-eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+        #abIntro .ab-title {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.4rem, 5.6vw, 4.6rem); font-weight: 600;
+            letter-spacing: -0.045em; line-height: 0.98; max-width: 16ch; text-wrap: balance;
+        }
+        #abIntro .ab-lead { font-size: clamp(1.02rem, 1.4vw, 1.14rem); line-height: 1.65; max-width: 62ch; margin-top: 24px; text-wrap: pretty; }
+
+        /* Bilder im Rahmen; das obere kippt beim Scrollen flach (--hp auf .tilt-in). */
+        .abi-tilt { perspective: 2000px; margin-top: clamp(40px, 6vw, 64px); }
+        .abi-tilt .tilt-in {
+            --hp: 0; transform-origin: 50% 0%;
+            transform: rotateX(calc((1 - var(--hp)) * 20deg)) scale(calc(0.92 + var(--hp) * 0.08));
+        }
+        .abi-frame {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+            border: 1px solid var(--border-strong);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow-deep), 0 0 100px -30px rgba(var(--primary-rgb), 0.4);
+        }
+        .abi-frame-in { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-card); }
+        .abi-frame-in img { display: block; width: 100%; height: auto; }
+        .abi-tilt .abi-frame-in::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.07) 45%, transparent 60%);
+            background-size: 250% 100%; background-position: calc(100% - var(--hp) * 100%) 0;
+        }
+        .abi-cap { margin: 14px 4px 0; font-size: 0.88rem; color: var(--text-faint); max-width: 70ch; }
+        .abi-cap b { color: var(--text-main); font-weight: 600; }
+
+        /* Zwei Wege, jeder neben seiner Aufnahme; das Bild klebt, der Text laeuft. */
+        .abi-split {
+            display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: clamp(32px, 5vw, 72px); align-items: start; margin-top: clamp(80px, 11vw, 130px);
+        }
+        .abi-split.is-rev { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+        .abi-split .abi-frame { position: sticky; top: 90px; }
+        #abIntro .ab-way { margin-top: 0; }
+        #abIntro .ab-way.is-lead { padding: 0; background: none; border: 0; border-radius: 0; }
+        #abIntro .ab-way-t {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.8rem, 3.2vw, 2.7rem); font-weight: 600; letter-spacing: -0.04em; line-height: 1.02;
+            text-wrap: balance;
+        }
+        #abIntro .ab-way.is-lead .ab-way-t { font-size: clamp(1.8rem, 3.2vw, 2.7rem); }
+        #abIntro .ab-way-s { font-size: 1rem; line-height: 1.7; margin-top: 16px; }
+        #abIntro .ab-feats { margin-top: 22px; }
+        #abIntro .ab-feats li { padding: 13px 0 13px 30px; font-size: 0.95rem; line-height: 1.55; }
+        #abIntro .ab-feats:not(.ab-roles) li::before {
+            top: 15px; width: 18px; height: 18px; border-radius: 6px;
+            background: rgba(var(--success-rgb), 0.15) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2310b981' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 11px no-repeat;
+        }
+        #abIntro .ab-cta {
+            margin-top: 28px; padding: 13px 22px; border-radius: 999px;
+            background: var(--text-main); color: var(--bg-deep);
+            box-shadow: 0 12px 40px -10px rgba(var(--primary-rgb), 0.6);
+            transition: box-shadow 0.3s var(--ease-out), transform 0.16s var(--ease-out);
+        }
+        #abIntro .ab-cta:hover { background: var(--text-main); box-shadow: 0 16px 50px -10px rgba(var(--primary-rgb), 0.85); }
+        #abIntro .ab-cta:active { transform: scale(0.97); }
+
+        /* Ohne Konto: eine echte Reihenfolge, deshalb nummeriert. */
+        #abIntro .ab-steps { margin-top: 24px; }
+        #abIntro .ab-step { gap: 16px; padding: 16px 0; align-items: flex-start; }
+        #abIntro .ab-step-n {
+            width: 34px; height: 34px; border-radius: 11px; font-size: 0.9rem;
+            background: rgba(var(--primary-rgb), 0.12); border-color: rgba(var(--primary-rgb), 0.3); color: var(--primary);
+        }
+        #abIntro .ab-step-t { font-size: 1rem; line-height: 1.55; padding-top: 5px; color: var(--text-main); }
+        #abIntro .ab-note { border-radius: 16px; border-left-width: 1px; border-color: rgba(var(--primary-rgb), 0.3); background: rgba(var(--primary-rgb), 0.07); }
+
+        /* Wer was sieht: drei Rollen nebeneinander, keine davon hervorgehoben. */
+        /* #abIntro davor: sonst schlaegt "#abIntro .ab-way { margin-top: 0 }" (1,1,0) die Regel. */
+        #abIntro .abi-roles { margin-top: clamp(80px, 11vw, 130px); }
+        #abIntro .ab-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
+        #abIntro .ab-roles li {
+            display: block; padding: 24px 24px 22px; border: 1px solid var(--border); border-radius: 20px; max-width: none;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015));
+            box-shadow: inset 0 1px 0 var(--edge);
+        }
+        #abIntro .ab-roles li::before { display: none; }
+        #abIntro .ab-role { display: block; font-family: var(--fd); font-size: 1.4rem; letter-spacing: -0.035em; margin-bottom: 10px; }
+
+        /* Was der Betrieb davon hat: das Schlusswort, gross gesetzt. */
+        #abIntro .abi-nutzen {
+            margin-top: clamp(80px, 11vw, 130px); padding: clamp(28px, 5vw, 56px); border-radius: 28px;
+            border: 1px solid var(--border);
+            background:
+                radial-gradient(70% 90% at 100% 0%, rgba(var(--primary-rgb), 0.16), transparent 60%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+            box-shadow: inset 0 1px 0 var(--edge);
+        }
+        #abIntro .abi-nutzen .ab-way-s:first-of-type {
+            font-family: var(--fd); font-size: clamp(1.25rem, 2.2vw, 1.7rem); line-height: 1.35;
+            letter-spacing: -0.02em; color: var(--text-main); max-width: 44ch;
+        }
+        #abIntro .ab-foot-link { margin-top: 40px; }
+
+        /* Einblenden beim Scrollen: EIN Schreiber (der Observer setzt .is-in). */
+        .js #abIntro [data-reveal] {
+            opacity: 0; transform: translate3d(0, 32px, 0);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring);
+            transition-delay: calc(var(--i, 0) * 0.08s);
+        }
+        .js #abIntro [data-reveal].is-in { opacity: 1; transform: none; }
+
+        @media (max-width: 900px) {
+            .abi-split, .abi-split.is-rev { grid-template-columns: 1fr; }
+            .abi-split .abi-frame { position: static; }
+            .abi-split.is-rev .abi-frame { order: -1; }
+            #abIntro .ab-roles { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 560px) {
+            .abi-frame { padding: 5px; border-radius: 18px; }
+            .abi-frame-in { border-radius: 13px; }
+            #abIntro .ab-cta { width: 100%; justify-content: center; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .abi-tilt .tilt-in { transform: none; }
+            .js #abIntro [data-reveal] { transform: none; }
+        }
     </style>
 </head>
 <body>
@@ -997,7 +1156,29 @@
             <h1 class="ab-title">Berichtshefte Ihrer Azubis prüfen und abzeichnen</h1>
             <p class="ab-lead">Diese Seite hat zwei Betriebsarten. Mit einem Konto ist sie die Übersicht über alle Azubis Ihres Betriebs und deren Wochen. Ohne Konto zeigt sie eine einzelne Woche — die, deren Link Ihr Azubi Ihnen geschickt hat.</p>
 
-            <section class="ab-way is-lead">
+            <!-- Aufnahmen: tools/ausbilder-screenshots.mjs (echter Code, Beispieldaten).
+                 KEINE id an den neuen Huellen: der i18n-Schluessel haengt an der
+                 naechsten id darueber (#abIntro), eine neue id verschoebe alle
+                 Texte in eine neue Gruppe. -->
+            <div class="abi-tilt" data-reveal>
+                <div class="tilt-in">
+                    <figure class="abi-frame">
+                        <div class="abi-frame-in">
+                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.4.12" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: Kacheln für offene Wochen, Azubis und Abgezeichnetes, darunter eine Azubi-Karte mit Wochenstreifen und den offenen Wochen">
+                        </div>
+                    </figure>
+                </div>
+                <p class="abi-cap"><b>Die Übersicht eines Betriebs.</b> <span>Offene Wochen, Azubis und was schon abgezeichnet ist; darunter jede Woche mit Zeitraum und Stand. Aufgenommen mit Beispieldaten.</span></p>
+            </div>
+
+            <div class="abi-split">
+                <figure class="abi-frame" data-reveal>
+                    <div class="abi-frame-in">
+                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Zwei Azubi-Karten in der Übersicht: abgezeichnete und offene Wochen als Balken und Wochenstreifen, eine überarbeitete Woche hervorgehoben">
+                    </div>
+                </figure>
+
+            <section class="ab-way is-lead" data-reveal style="--i:1">
                 <h2 class="ab-way-t">Mit Konto: alle Azubis an einem Ort</h2>
                 <p class="ab-way-s">Ihre Azubis verbinden ihr Berichtsheft einmalig über einen Einladungscode mit Ihrem Betrieb. Danach erscheint jede fertige Woche hier von selbst. Sie sammeln nichts ein, drucken nichts aus und verwalten keine Links.</p>
                 <ul class="ab-feats">
@@ -1015,8 +1196,11 @@
                 </a>
                 <p class="ab-way-note">Noch kein Betrieb hinterlegt? Nach dem Anmelden legen Sie ihn hier an und erzeugen den ersten Einladungscode. Der Weg über ein Konto ist neu — der Weg über den Link darunter bleibt unverändert bestehen.</p>
             </section>
+            </div>
 
-            <section class="ab-way">
+            <div class="abi-split is-rev">
+
+            <section class="ab-way" data-reveal>
                 <h2 class="ab-way-t">Ohne Konto: eine einzelne Woche über den Link</h2>
                 <p class="ab-way-s">Für Betriebe, die kein Konto anlegen möchten. Sie brauchen nichts weiter als den Link oder den QR-Code Ihres Azubis.</p>
 
@@ -1039,11 +1223,17 @@
                     <p class="ab-note-t">Bei diesem Weg steckt die Woche im Link selbst. Sie wird nicht an einen Server übertragen und nirgends gespeichert — der Teil einer Adresse hinter dem Rautezeichen verlässt das Gerät nicht.</p>
                 </div>
             </section>
+                <figure class="abi-frame" data-reveal style="--i:1">
+                    <div class="abi-frame-in">
+                        <img src="/Grafiken/ausbilder/woche.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
+                    </div>
+                </figure>
+            </div>
 
             <!-- Rollen und Betriebsnutzen standen bis v7.4.1 nur in der Datenbank
                  (RLS) und im Kopf — hier als Text, damit ein Betrieb vor dem
                  Anmelden weiss, wer was sieht. -->
-            <section class="ab-way">
+            <section class="ab-way abi-roles" data-reveal>
                 <h2 class="ab-way-t">Wer was sieht</h2>
                 <p class="ab-way-s">Drei Rollen, jede sieht nur, was sie braucht. Der Betrieb sieht nie die Zeiterfassung, das Gleitzeitkonto oder die Notizen eines Azubis — nur die Berichtsheft-Wochen, die der Azubi verbunden hat, mit dem, was im Nachweis steht.</p>
                 <ul class="ab-feats ab-roles">
@@ -1053,7 +1243,7 @@
                 </ul>
             </section>
 
-            <section class="ab-way">
+            <section class="ab-way abi-nutzen" data-reveal>
                 <h2 class="ab-way-t">Was der Betrieb davon hat</h2>
                 <p class="ab-way-s">Kein Papier, das eingesammelt und abgeheftet wird. Eine Übersicht statt einer Mail je Azubi und Woche, und die Monatsfrist nach §14 BBiG meldet sich von selbst. Keine Kosten, keine Tarife, kein Vertrag — und die Daten der Azubis liegen weiter bei den Azubis, nicht auf einem Server des Betriebs.</p>
                 <p class="ab-way-s"><span>Das Digitale Berichtsheft der IHK endet zum 31. Dezember 2026. Wer dort Azubis betreut, findet auf der Seite</span> <a class="ab-inl" href="/ihk-berichtsheft/">IHK-Berichtsheft endet 2026</a> <span>Frist, Exportweg und wie der Export hier weitergeführt wird.</span></p>
@@ -1169,6 +1359,48 @@
     </div>
 
     <div id="page-footer"></div>
+
+    <script>
+    /* Einstieg: Einblenden beim Scrollen und das Kippen der oberen Aufnahme.
+       Laeuft auch, wenn die Seite in Cockpit oder Wochenpruefung wechselt —
+       dann ist #abIntro ausgeblendet, der Observer meldet nichts und die
+       Neigung misst eine Hoehe von 0; beides kostet nichts. */
+    (function () {
+        var intro = document.getElementById('abIntro');
+        if (!intro) return;
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var els = intro.querySelectorAll('[data-reveal]');
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add('is-in');
+                    io.unobserve(e.target);
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+            els.forEach(function (el) { io.observe(el); });
+        }
+        /* Fallback: haengt alles am Observer und der feuert nicht
+           (Hintergrund-Tab, Automations-Browser), bliebe der Einstieg leer. */
+        setTimeout(function () { els.forEach(function (el) {
+            if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+        }); }, 2500);
+
+        var tilt = intro.querySelector('.tilt-in');
+        var hp = -1, pending = false;
+        function frame() {
+            pending = false;
+            if (!tilt) return;
+            var vh = window.innerHeight;
+            var next = reduce ? 1 : Math.round(Math.min(1, Math.max(0, (vh - tilt.getBoundingClientRect().top) / (vh * 0.85))) * 1000) / 1000;
+            if (next !== hp) { hp = next; tilt.style.setProperty('--hp', next); }
+        }
+        function schedule() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule);
+        frame();
+    })();
+    </script>
 
     <script defer src="/Assets/js/mwl-codec.js?v=7.4.12"></script>
     <script defer src="/Assets/js/mwl-sign.js?v=7.4.12"></script>
