@@ -26,11 +26,12 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 //
 // /Grafiken/*.mp4 muss mit, obwohl dort sonst nur Icons liegen: _headers gibt dem
 // ganzen Ordner `max-age=31536000, immutable`. Fuer Icons stimmt das (die aendern
-// sich nie unter gleichem Namen), fuer intro.mp4 nicht — die Datei wird ersetzt,
+// sich nie unter gleichem Namen), fuer Videos nicht — die Datei wird ersetzt,
 // der Name bleibt. `immutable` heisst, der Browser fragt NIE nach: auch nicht beim
 // Neuladen und auch nicht nach einem Cloudflare-Purge, denn der raeumt die Kante,
 // nicht den Geraete-Cache. Ergebnis war ein Handy, das nach dem Deploy weiter den
-// alten Clip zeigte. Mit ?v=<version> aendert sich der Cache-Key bei jedem Bump.
+// alten Clip zeigte (intro.mp4, seit v7.5.0 entfernt). Mit ?v=<version> aendert
+// sich der Cache-Key bei jedem Bump.
 // Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
 // jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen.
 const RE = /(\s(?:src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;

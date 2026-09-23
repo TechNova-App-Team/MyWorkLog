@@ -809,9 +809,16 @@
     if (!v) return;
     var out = translate(v);
     if (out === null) return;
-    node.nodeValue = v.match(/^\s*/)[0] + out + v.match(/\s*$/)[0];
+    var neu = v.match(/^\s*/)[0] + out + v.match(/\s*$/)[0];
+    if (neu !== v) node.nodeValue = neu;
   }
 
+  // Nur schreiben, wenn sich der Wert AENDERT. setAttribute mit demselben Wert
+  // loest trotzdem eine Mutation aus; der Observer unten reiht das Element dann
+  // wieder ein, und bei Woertern, die im Englischen gleich bleiben (MAP bildet
+  // sie auf sich selbst ab), lief das ohne Ende — mit jeder Runde mehr
+  // Eintraegen. Gemessen auf /en/ (v7.5.0): Hauptthread-Bloecke 96, 256, 589,
+  // 1173, 2394, 4844 ms, ein 100-ms-Timer kam nach 1876 ms.
   function translateEl(el) {
     for (var i = 0; i < ATTRS.length; i++) {
       var a = ATTRS[i];
@@ -819,7 +826,7 @@
         var val = el.getAttribute(a);
         if (!val) continue;
         var out = translate(val);
-        if (out !== null) el.setAttribute(a, out);
+        if (out !== null && out !== val) el.setAttribute(a, out);
       }
     }
   }

@@ -254,7 +254,7 @@ Aktuelle Version: **v7.5.0** · 2026-09-23
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **7.5.0** | 2026-09-23 | Die Startseite zeigt die App sofort und führt in Kapiteln durch den Rundgang |
+| **7.5.0** | 2026-09-23 | Die Startseite führt mit echten Aufnahmen durch die App statt mit einem Film |
 | 7.4.13 | 2026-09-23 | Der Einstieg ins Schatten-Berichtsheft zeigt den Tresor, und das Beschwerde-Protokoll zählt richtig |
 | 7.4.12 | 2026-09-23 | Die Infoseiten zeigen die App in echten Aufnahmen, und die Import-Vorschau rechnet mit Komma |
 | 7.4.11 | 2026-09-22 | Graphify zoomt wieder flüssig, und der Code-Graph passt aufs Handy |

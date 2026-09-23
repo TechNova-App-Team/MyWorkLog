@@ -599,122 +599,119 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 <!-- Skip-to-content für Barrierefreiheit -->
 <a href="#mainContent" class="skip-link">Zum Inhalt springen</a>
 
-<!-- VIDEO INTRO -->
+<!-- INTRO (Erstbesuch) — echte App-Aufnahmen statt Film, seit v7.5.0.
+     Alles, was sich bewegt, rechnet landing.js aus der Scrollposition. -->
 <div id="pro-intro" style="display: none;">
   <div class="vi-scroll">
     <div class="vi-stick">
 
-      <div class="vi-amb"></div>
+      <div class="vi-amb" aria-hidden="true"></div>
 
-      <div class="vi-stage" id="viStage" data-mode="hero">
+      <!-- id viStage bleibt: die i18n-Schluessel aller Texte hier drin haengen an ihr -->
+      <div class="vi-stage" id="viStage">
 
-        <!-- Der Bildschirm — 16:9-Rahmen, das Video wird nicht beschnitten -->
-        <div class="vi-screen">
-          <div class="vi-screen-in">
-            <video class="vi-bg" muted playsinline preload="metadata" id="viBgVid"
-              poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='9'%3E%3Crect fill='%2307070e' width='16' height='9'/%3E%3C/svg%3E">
-              <source src="/Grafiken/intro.mp4?v=7.5.0" type="video/mp4">
-            </video>
-            <!-- Nur im Hero sichtbar: das erste Filmbild ist schwarz (Einblendung),
-                 die Aufnahme zeigt dieselbe Szene, mit der der Film beginnt.
-                 loading=lazy: #pro-intro ist fuer Wiederkehrer display:none, dann
-                 laedt der Browser das Bild gar nicht erst. alt leer, weil der Film
-                 dieselbe Szene traegt. -->
-            <img class="vi-poster" src="/Grafiken/about/dashboard.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+        <!-- Die Aufnahmen. Alle loading=lazy: #pro-intro ist fuer Wiederkehrer
+             display:none, dann laedt der Browser keines davon. Die Kapitelbilder
+             sind zusaetzlich display:none, bis die erste Aufnahme da ist (.vi-go) —
+             sonst liegen alle sieben gleichzeitig im Bild und laden gleichzeitig. -->
+        <div class="vi-rig" id="viRig" aria-hidden="true">
+          <div class="vi-screen" id="viScreen">
+            <div class="vi-screen-in">
+              <div class="vi-view" id="viView">
+                <img class="vi-shot" src="/Grafiken/about/dashboard.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+                <img class="vi-shot" src="/Grafiken/about/berichtsheft.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+                <img class="vi-shot" src="/Grafiken/ihk/vordruck.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+                <img class="vi-shot" src="/Grafiken/wechseln/vorschau.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+                <img class="vi-shot" src="/Grafiken/about/recovery.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+                <img class="vi-shot" src="/Grafiken/ausbilder/cockpit.webp?v=7.5.0" width="2880" height="1800" loading="lazy" decoding="async" alt="">
+              </div>
+              <div class="vi-ring" id="viRing"></div>
+            </div>
+          </div>
+          <div class="vi-phone" id="viPhone">
+            <div class="vi-phone-in"><img src="/Grafiken/about/handy.webp?v=7.5.0" width="780" height="1688" loading="lazy" decoding="async" alt=""></div>
           </div>
         </div>
 
-        <!-- Textspalte — jeder Abschnitt liegt auf einer Szene im Film -->
-        <div class="vi-panels">
-
-          <!-- S1 — Auftakt -->
-          <div class="vi-s" data-s="0" data-e="0.075" data-mode-of="hero">
-            <h1 class="vi-logo">MyWorkLog</h1>
-            <div class="vi-sub-row"><span class="vi-typed" id="viTyped"></span><span class="vi-caret" aria-hidden="true">|</span></div>
-            <!-- Die Positionierung steht hier als echter Text, nicht im Typewriter:
-                 das ist die erste Aussage der Seite, die ein Crawler zu lesen bekommt.
-                 Bis v7.4.0 stand auf / nirgends, fuer wen die App ist. -->
-            <p class="vi-lede">Berichtsheft, Arbeitszeit und Überstunden für Azubis — kostenlos, offline, deine Daten bleiben auf deinem Gerät. Für jeden Ausbildungsberuf; Fachinformatiker bekommen dazu den IT-Hub.</p>
-            <div class="vi-hero-cta">
-              <button type="button" class="vi-btn vi-btn-main" onclick="finishIntro()"><span>Direkt loslegen</span><span class="vi-btn-disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></button>
-              <button type="button" class="vi-btn vi-btn-ghost" onclick="viTour()"><span>Rundgang starten</span></button>
-            </div>
-            <span class="vi-ver" data-app-version translate="no">v7.5.0</span>
+        <!-- Hero -->
+        <div class="vi-hero" id="viHero">
+          <h1 class="vi-logo" id="viLogo">MyWorkLog</h1>
+          <div class="vi-sub-row"><span class="vi-typed" id="viTyped"></span><span class="vi-caret" aria-hidden="true">|</span></div>
+          <!-- Die Positionierung steht hier als echter Text, nicht im Typewriter:
+               das ist die erste Aussage der Seite, die ein Crawler zu lesen bekommt. -->
+          <p class="vi-lede">Berichtsheft, Arbeitszeit und Überstunden für Azubis — kostenlos, offline, deine Daten bleiben auf deinem Gerät. Für jeden Ausbildungsberuf; Fachinformatiker bekommen dazu den IT-Hub.</p>
+          <div class="vi-hero-cta">
+            <button type="button" class="vi-btn vi-btn-main" onclick="finishIntro()"><span>Direkt loslegen</span><span class="vi-btn-disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></button>
+            <button type="button" class="vi-btn vi-btn-ghost" onclick="viTour()"><span>Rundgang starten</span></button>
           </div>
+        </div>
 
-          <!-- S2 — Dashboard (Szene 1) -->
-          <div class="vi-s" data-s="0.076" data-e="0.158">
-            <span class="vi-eyebrow">Dashboard</span>
+        <!-- Kapitel. data-shot = Index der Aufnahme in #viView, fehlt es, bleibt
+             die vorige stehen (das Handy-Kapitel). data-f = Brennpunkt der
+             Kamerafahrt als Anteil der Aufnahme: links, oben, Breite, Hoehe —
+             gemessen an den 2880x1800-Aufnahmen. -->
+        <div class="vi-copy">
+          <section class="vi-ch" data-shot="0" data-f="0.55,0.133,0.439,0.197">
+            <span class="vi-eyebrow">Zeiterfassung</span>
             <h2 class="vi-h">Vier Zahlen, und du weißt Bescheid.</h2>
-            <p class="vi-p">Woche, Monat, Gleitzeit, Resturlaub. Jede Abweichung an einer sichtbaren Nulllinie mit bezifferten Enden — kein Ring, der einen Saldo als Fortschritt verkleidet.</p>
-          </div>
+            <p class="vi-p">Woche, Monat, Gleitzeit, Resturlaub. Jede Abweichung an einer Nulllinie mit bezifferten Enden, erfasst per Knopf, per NFC-Tag oder nachträglich.</p>
+          </section>
+          <section class="vi-ch" data-shot="1" data-f="0.266,0.522,0.35,0.054">
+            <span class="vi-eyebrow">Berichtsheft</span>
+            <h2 class="vi-h">Dein Berichtsheft, Woche für Woche.</h2>
+            <p class="vi-p">Aus deinen erfassten Tagen vorbefüllt, vom Papier abfotografiert oder aus dem IHK-PDF übernommen. Die Übersicht zeigt, welche Woche fehlt, bevor es jemand anderes tut.</p>
+          </section>
+          <section class="vi-ch" data-shot="2" data-f="0.451,0.201,0.319,0.375">
+            <span class="vi-eyebrow">IHK-Vordruck</span>
+            <h2 class="vi-h">Druckreif im Vordruck deiner Kammer.</h2>
+            <p class="vi-p">DIHK-Muster, die Neufassung aus Köln und Frankfurt, der Bogen der IHK München. Eine Woche, ein Blatt, als PDF.</p>
+          </section>
+          <section class="vi-ch" data-shot="3" data-f="0.25,0.258,0.5,0.3">
+            <span class="vi-eyebrow">Umzug</span>
+            <h2 class="vi-h">Deine alten Zeiten kommen mit.</h2>
+            <p class="vi-p">Aus Excel, CSV oder per Einfügen. Die Vorschau zeigt Zeile für Zeile, was übernommen wird und wie sich dein Saldo ändert.</p>
+          </section>
+          <section class="vi-ch" data-phone="1">
+            <span class="vi-eyebrow">Unterwegs</span>
+            <h2 class="vi-h">Offline, und in deiner Hosentasche.</h2>
+            <p class="vi-p">Installierbar wie eine App, läuft ohne Netz. Kein Konto nötig: deine Daten bleiben auf deinem Gerät.</p>
+          </section>
+          <section class="vi-ch" data-shot="4" data-f="0.267,0.39,0.465,0.31">
+            <span class="vi-eyebrow">Sicherheit</span>
+            <h2 class="vi-h">Nichts geht verloren.</h2>
+            <p class="vi-p">Automatische Sicherungen mit Zeitstempel, mit einem Klick wiederhergestellt oder ergänzt. Dazu verschlüsselter Export und Cloud-Sync, wenn du willst.</p>
+          </section>
+          <section class="vi-ch" data-shot="5" data-f="0.2,0.47,0.6,0.2">
+            <span class="vi-eyebrow">Ausbilder</span>
+            <h2 class="vi-h">Und dein Ausbilder zeichnet online ab.</h2>
+            <p class="vi-p">Offene Wochen, Lücken im Verlauf, die Prüfpflicht nach §14 BBiG. Ohne Papierstapel, ohne Nachlaufen.</p>
+          </section>
+        </div>
 
-          <!-- S3 — Saldo-Trend (Szene 2) -->
-          <div class="vi-s" data-s="0.196" data-e="0.320">
-            <span class="vi-eyebrow">Saldo-Trend</span>
-            <h2 class="vi-h">Dein Verlauf, nicht nur dein Heute.</h2>
-            <p class="vi-p">Höchststand, Tiefststand, Tendenz auf einen Blick. Umschaltbar auf 7, 14, 30, 90 Tage oder die ganze Zeit.</p>
-          </div>
-
-          <!-- S4 — Verteilung (Szene 3) -->
-          <div class="vi-s" data-s="0.357" data-e="0.482">
-            <span class="vi-eyebrow">Verteilung</span>
-            <h2 class="vi-h">Wohin die Stunden wirklich gehen.</h2>
-            <p class="vi-p">Arbeit, Berufsschule, Krank, Urlaub, Feiertag — nach Anteil sortiert, in Stunden und Prozent. Ein Balken, fünf Kategorien, keine Deutung nötig.</p>
-          </div>
-
-          <!-- S5 — Verlauf (Szene 4) -->
-          <div class="vi-s" data-s="0.518" data-e="0.644">
-            <span class="vi-eyebrow">Verlauf</span>
-            <h2 class="vi-h">Jeder Eintrag bleibt auffindbar.</h2>
-            <p class="vi-p">Nach Typ filtern, in Notizen und Projekten suchen, als CSV oder JSON exportieren. Gelöschtes liegt im Papierkorb, nicht im Nichts.</p>
-          </div>
-
-          <!-- S6 — Performance (Szene 5) -->
-          <div class="vi-s" data-s="0.680" data-e="0.806">
-            <span class="vi-eyebrow">Performance</span>
-            <h2 class="vi-h">Muster, die dir sonst entgehen.</h2>
-            <p class="vi-p">Urlaubs-Pacing gegen den Jahresverlauf, dein bestes Startfenster, die längste Fokusphase, der Monatstrend.</p>
-          </div>
-
-          <!-- S7 — Urlaubsplaner (Szene 6) -->
-          <div class="vi-s" data-s="0.842" data-e="0.930">
-            <span class="vi-eyebrow">Urlaubsplaner</span>
-            <h2 class="vi-h">Wenige Tage, maximal frei.</h2>
-            <p class="vi-p">Rechnet Brückentage aus den Feiertagen deines Bundeslands und deinem Wochenplan. Nach Ausbeute sortiert, per Klick eingetragen.</p>
-          </div>
-
-          <!-- S8 — Abschluss -->
-          <div class="vi-s" data-s="0.931" data-e="1.0" data-mode-of="cta">
-            <p class="vi-end-t">Bereit?</p>
-            <p class="vi-end-p">Läuft offline. Deine Daten bleiben auf deinem Gerät.</p>
-            <button class="vi-cta" onclick="finishIntro()">
-              <span class="vi-cta-label">Los geht&rsquo;s</span>
-              <span class="vi-btn-disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-            </button>
-            <!-- Zweiter Weg fuer die zweite Zielgruppe. Das Intro erklaert nur die
-                 Azubi-Seite (sechs Dashboard-Szenen); ein Ausbilder, der aus der Suche
-                 kommt, hatte bis v7.4.0 keinen Einstieg von hier. -->
-            <a class="vi-alt" href="/ausbilder/">Ich bin Ausbilder</a>
-          </div>
-
+        <!-- Abschluss: alle Aufnahmen des Rundgangs als schraege Wand dahinter -->
+        <div class="vi-wall" id="viWall" aria-hidden="true"><div class="vi-wall-in" id="viWallIn"></div></div>
+        <div class="vi-end" id="viEnd">
+          <p class="vi-end-t">Bereit?</p>
+          <p class="vi-end-p">Läuft offline. Deine Daten bleiben auf deinem Gerät.</p>
+          <button type="button" class="vi-cta" onclick="finishIntro()">
+            <span class="vi-cta-label">Los geht&rsquo;s</span>
+            <span class="vi-btn-disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+          </button>
+          <!-- Zweiter Weg fuer die zweite Zielgruppe (Ausbilder aus der Suche). -->
+          <a class="vi-alt" href="/ausbilder/">Ich bin Ausbilder</a>
+          <span class="vi-ver" data-app-version translate="no">v7.5.0</span>
         </div>
       </div>
 
-      <!-- Scroll-Hinweis -->
-      <div class="vi-hint" aria-hidden="true">
+      <div class="vi-hint" id="viHint" aria-hidden="true">
         <span>Scrollen</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
       </div>
 
-      <!-- Progress -->
-      <div class="vi-prog"><div class="vi-prog-bar" id="viProgBar"></div></div>
-
-      <!-- Kapitel: baut landing.js aus den .vi-eyebrow der Abschnitte -->
+      <!-- Kapitel: baut landing.js aus den .vi-eyebrow der Kapitel -->
       <nav class="vi-rail" id="viRail" aria-label="Kapitel"></nav>
 
-      <!-- Skip -->
-      <button class="vi-skip" onclick="finishIntro()"><span>Überspringen</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button type="button" class="vi-skip" onclick="finishIntro()"><span>Überspringen</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
   </div>
 
