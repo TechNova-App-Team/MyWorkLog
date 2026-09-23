@@ -552,6 +552,19 @@ function mwlImpL(de, en) {
     return (document.documentElement.lang === 'en') ? en : de;
 }
 
+// Zahlen und Datum in der Sprache der Seite: toFixed() schrieb im deutschen
+// Dialog „8.75" und „+1.27 h", das Datum stand als ISO-Wert und brach in der
+// schmalen Spalte in zwei Zeilen um.
+function mwlImpNum(n) {
+    return Number(n).toLocaleString(mwlImpL('de-DE', 'en-GB'), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function mwlImpDate(iso) {
+    const t = String(iso || '').split('-');
+    if (t.length !== 3) return String(iso || '');
+    return mwlImpL(t[2] + '.' + t[1] + '.' + t[0], t[2] + '/' + t[1] + '/' + t[0]);
+}
+
 function mwlImpEsc(s) {
     return (typeof esc === 'function') ? esc(s) : String(s == null ? '' : s)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -744,11 +757,11 @@ function mwlImportRenderPreview() {
         const warn = (r.warn || []).map(w => `<span class="imp-badge">${mwlImpEsc(w)}</span>`).join('');
         return `<tr class="${r.take ? '' : 'imp-row-off'}">
             <td><input type="checkbox" ${r.take ? 'checked' : ''} onchange="mwlImportToggleRow(${i}, this.checked)"></td>
-            <td>${mwlImpEsc(e.date)}</td>
+            <td class="imp-date">${mwlImpEsc(mwlImpDate(e.date))}</td>
             <td>${mwlImpEsc(mwlImportTypeLabel(e.type))}</td>
-            <td class="imp-num">${e.worked.toFixed(2)}</td>
-            <td class="imp-num">${e.expected.toFixed(2)}</td>
-            <td class="imp-num ${e.diff < 0 ? 'neg' : 'pos'}">${e.diff > 0 ? '+' : ''}${e.diff.toFixed(2)}</td>
+            <td class="imp-num">${mwlImpNum(e.worked)}</td>
+            <td class="imp-num">${mwlImpNum(e.expected)}</td>
+            <td class="imp-num ${e.diff < 0 ? 'neg' : 'pos'}">${e.diff > 0 ? '+' : ''}${mwlImpNum(e.diff)}</td>
             <td class="imp-note">${mwlImpEsc((e.project ? e.project + ' · ' : '') + e.info)}${badge}${warn}</td>
         </tr>`;
     }).join('');
@@ -783,8 +796,8 @@ function mwlImportUpdateSummary() {
     const el = document.getElementById('impSummary');
     if (el) {
         el.innerHTML = mwlImpL(
-            `<strong>${gut.length}</strong> von ${p.length} Zeilen werden übernommen · Saldo-Änderung <strong>${saldo > 0 ? '+' : ''}${saldo.toFixed(2)} h</strong>`,
-            `<strong>${gut.length}</strong> of ${p.length} rows will be imported · balance change <strong>${saldo > 0 ? '+' : ''}${saldo.toFixed(2)} h</strong>`);
+            `<strong>${gut.length}</strong> von ${p.length} Zeilen werden übernommen · Saldo-Änderung <strong>${saldo > 0 ? '+' : ''}${mwlImpNum(saldo)} h</strong>`,
+            `<strong>${gut.length}</strong> of ${p.length} rows will be imported · balance change <strong>${saldo > 0 ? '+' : ''}${mwlImpNum(saldo)} h</strong>`);
     }
     const btn = document.getElementById('impApplyBtn');
     if (btn) btn.disabled = gut.length === 0;

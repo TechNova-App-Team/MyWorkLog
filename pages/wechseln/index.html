@@ -11,7 +11,12 @@
     <title>MyWorkLog | Zeiterfassung wechseln ohne Datenverlust</title>
     <meta name="description" content="Von Excel, Papier oder einer anderen Zeiterfassung zu MyWorkLog wechseln: CSV- und Excel-Import, Foto vom Papier-Berichtsheft, alles lokal im Browser. Schritt für Schritt erklärt.">
     <meta name="keywords" content="Zeiterfassung wechseln, Excel Zeiterfassung importieren, Arbeitszeiten CSV importieren, Berichtsheft übertragen, Stundenzettel digitalisieren, Zeiterfassung Daten übernehmen, Azubi Zeiterfassung Umstieg">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.11"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.4.12"></script>
+    <script>/* Anlauf-Zustaende gelten nur mit JS — sonst bliebe der Hero unsichtbar. */
+    document.documentElement.className += ' js';</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="canonical" href="https://myworklog.de/wechseln/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/wechseln/">
@@ -26,33 +31,55 @@
     <meta property="og:locale" content="de_DE">
 
     <style>
+        /* Handschrift wie /about/, /vergleich/ und /ihk-berichtsheft/
+           (Bricolage + Geist, Korn, echte Aufnahmen im Rahmen). Helles Theme
+           per Theme-Sync (themeMode), deshalb jede Farbe als Token. */
         :root {
-            --bg-deep: #030305;
-            --bg-card: rgba(255,255,255,0.025);
+            --bg-deep: #07060b;
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-card-2: rgba(255,255,255,0.055);
+            --bg-solid: #0f0e16;
             --primary: #a855f7;
             --primary-rgb: 168, 85, 247;
-            --primary-dim: rgba(168,85,247,0.15);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --primary-dim: rgba(168,85,247,0.12);
+            --text-main: #f4f2f8;
+            --text-muted: #a29eb1;
+            --text-dim: #6e6a7d;
             --border: rgba(255,255,255,0.08);
             --border-hover: rgba(255,255,255,0.16);
+            --edge: rgba(255,255,255,0.07);
+            --shadow: 0 40px 100px -40px rgba(0,0,0,0.85);
+            --glow: 0.26;
+            --grain: 0.045;
             --success: #10b981;
             --warning: #f59e0b;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+            --warning-rgb: 245, 158, 11;
+            --fd: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+            --font-main: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            --ease-out: cubic-bezier(.22, 1, .36, 1);
+            --ease-spring: cubic-bezier(.32, .72, 0, 1);
         }
         [data-theme="light"] {
-            --bg-deep: #f8fafc;
-            --bg-card: rgba(7,16,35,0.02);
-            --text-main: #071023;
-            --text-muted: #475569;
-            --text-dim: #64748b;
-            --border: rgba(7,16,35,0.08);
-            --border-hover: rgba(7,16,35,0.16);
+            --bg-deep: #f7f6fa;
+            --bg-card: rgba(20,16,40,0.025);
+            --bg-card-2: rgba(20,16,40,0.045);
+            --bg-solid: #ffffff;
+            --text-main: #0d0b17;
+            --text-muted: #4d4960;
+            --text-dim: #7a7690;
+            --border: rgba(20,16,40,0.09);
+            --border-hover: rgba(20,16,40,0.18);
+            --edge: rgba(255,255,255,0.9);
+            --shadow: 0 30px 80px -40px rgba(40,20,80,0.25);
+            --glow: 0.14;
+            --grain: 0.03;
+            --warning: #d97706;
+            --warning-rgb: 217, 119, 6;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        button, input, select, textarea, optgroup { font-family: inherit; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: var(--font-main);
             background: var(--bg-deep);
@@ -62,130 +89,369 @@
             -webkit-font-smoothing: antialiased;
             line-height: 1.6;
         }
+        /* Korn: fest und ohne Zeiger, scrollt nicht mit → kein Repaint beim Scrollen. */
+        body::after {
+            content: ''; position: fixed; inset: 0; z-index: 2000; pointer-events: none;
+            opacity: var(--grain); mix-blend-mode: overlay;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        ::selection { background: rgba(var(--primary-rgb), 0.3); }
 
         .ambient {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background: radial-gradient(60% 40% at 50% 0%, rgba(var(--primary-rgb), 0.10), transparent 70%);
+            position: absolute; top: 0; left: 0; right: 0; height: 1000px; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(55% 55% at 30% -8%, rgba(var(--primary-rgb), var(--glow)), transparent 70%),
+                radial-gradient(40% 40% at 90% 15%, rgba(var(--primary-rgb), calc(var(--glow) * 0.4)), transparent 70%);
+        }
+        .progress {
+            position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 1000;
+            background: var(--primary);
+            transform: scaleX(0); transform-origin: left;
         }
 
-        .shell { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+        .shell { position: relative; z-index: 1; max-width: 1120px; margin: 0 auto; padding: 28px 24px 40px; }
+        .prose { max-width: 68ch; }
 
-        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.75rem; color: var(--text-dim); flex-wrap: wrap; }
-        nav a { color: var(--text-dim); text-decoration: none; }
-        nav a:hover { color: var(--text-muted); }
+        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.8rem; color: var(--text-dim); flex-wrap: wrap; margin: 0; }
+        nav li { margin: 0; }
+        nav a { color: var(--text-dim); text-decoration: none; transition: color 0.2s var(--ease-out); }
+        nav a:hover { color: var(--text-main); }
 
         .back-btn {
             display: inline-flex; align-items: center; gap: 7px;
-            margin: 10px 0 26px; padding: 7px 13px;
-            border: 1px solid var(--border); border-radius: 8px;
+            margin: 14px 0 0; padding: 7px 14px 7px 11px;
+            border: 1px solid var(--border); border-radius: 999px; background: var(--bg-card);
             color: var(--text-muted); text-decoration: none;
-            font-size: 0.82rem; transition: all 0.15s ease;
+            font-size: 0.82rem; font-weight: 500;
+            transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
         }
         .back-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
-        .back-btn svg { width: 15px; height: 15px; }
+        .back-btn svg { width: 15px; height: 15px; transition: transform 0.3s var(--ease-spring); }
+        .back-btn:hover svg { transform: translateX(-2px); }
 
-        .hero { margin-bottom: 40px; }
+        /* ── Hero ── */
+        .hero { margin: clamp(48px, 7vw, 90px) 0 0; max-width: none; }
         .hero-badge {
-            display: inline-block; padding: 4px 11px; border-radius: 20px;
-            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.25);
-            color: var(--primary); font-size: 0.72rem; font-weight: 600;
-            letter-spacing: 0.04em; margin-bottom: 14px;
+            display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
+            padding: 6px 13px 6px 10px; border-radius: 999px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
         }
+        .hero-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+        /* Kein Akzent auf „alten Zeiten": die Zeile ist die Aussage, nicht ein Wort darin. */
+        h1 span { color: inherit; }
         h1 {
-            font-size: clamp(1.9rem, 5vw, 2.7rem); font-weight: 800;
-            letter-spacing: -0.03em; line-height: 1.12; margin-bottom: 14px;
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.4rem, 5.4vw, 4.6rem); font-weight: 600;
+            letter-spacing: -0.045em; line-height: 0.98; margin-bottom: 24px; max-width: 19ch;
+            text-wrap: balance;
         }
-        h1 span { color: var(--primary); }
-        .hero-sub { font-size: 1.03rem; color: var(--text-muted); max-width: 62ch; }
+        .hero-sub { font-size: clamp(1.02rem, 1.4vw, 1.14rem); line-height: 1.65; color: var(--text-muted); max-width: 62ch; text-wrap: pretty; }
+        .hero-sub + .hero-sub { margin-top: 12px; font-size: 0.98rem; }
+
+        /* Anlauf beim Laden: einmal, dann Ruhe. */
+        .js .hero-badge, .js .hero h1, .js .hero-sub, .js .hero-shot {
+            opacity: 0; transform: translate3d(0, 24px, 0);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring);
+        }
+        .js .hero h1 { transition-delay: 0.05s; }
+        .js .hero-sub { transition-delay: 0.12s; }
+        .js .hero-shot { transition-delay: 0.3s; transform: translate3d(0, 60px, 0); }
+        .js.ready .hero-badge, .js.ready .hero h1, .js.ready .hero-sub, .js.ready .hero-shot { opacity: 1; transform: none; }
+        .hero-shot { margin-top: clamp(40px, 6vw, 64px); }
 
         h2 {
-            font-size: 1.32rem; font-weight: 700; letter-spacing: -0.02em;
-            margin: 38px 0 14px; scroll-margin-top: 20px;
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.9rem, 3.6vw, 3rem); font-weight: 600; letter-spacing: -0.04em; line-height: 1.02;
+            margin: clamp(80px, 11vw, 130px) 0 22px; scroll-margin-top: 24px; text-wrap: balance; max-width: 22ch;
         }
-        h3 { font-size: 1rem; font-weight: 650; margin-bottom: 6px; }
+        h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 8px; line-height: 1.35; }
         p { color: var(--text-muted); margin-bottom: 12px; }
-        p strong, li strong { color: var(--text-main); font-weight: 600; }
-
-        .card {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
-        }
-        .card-head { display: flex; align-items: center; gap: 11px; margin-bottom: 10px; }
-        .card-ico {
-            width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--primary-dim); border: 1px solid var(--border); color: var(--primary);
-        }
-        .card-ico svg { width: 17px; height: 17px; }
-        .card h3 { margin: 0; }
-        .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
+        p strong, li strong, dd strong { color: var(--text-main); font-weight: 600; }
+        a.inl { color: var(--primary); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.88em; color: var(--text-main); }
 
         ol, ul { margin: 0 0 12px 20px; color: var(--text-muted); }
         li { margin-bottom: 6px; }
 
-        .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 460px; }
-        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { color: var(--text-dim); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        .card {
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--edge);
+            border-radius: 22px; padding: 28px 28px 24px; margin-bottom: 14px;
+        }
+        .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
+
+        /* ── Schritte: eine echte Reihenfolge, deshalb nummeriert. Die Nummer
+              sitzt in einer eigenen Spur, der Text bricht darunter nicht ein. ── */
+        .steps { list-style: none; margin: 0 0 8px; counter-reset: s; }
+        .steps > li {
+            counter-increment: s; display: grid; grid-template-columns: 34px 1fr; gap: 14px;
+            padding: 12px 0; border-top: 1px solid var(--border); margin: 0;
+        }
+        .steps > li:first-child { border-top: none; padding-top: 0; }
+        .steps > li::before {
+            content: counter(s); font-weight: 600; font-size: 0.9rem; color: var(--text-main);
+            width: 30px; height: 30px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card-2);
+            display: inline-flex; align-items: center; justify-content: center; margin-top: 1px;
+        }
+        .steps h3 { margin-bottom: 4px; }
+        .steps p { margin-bottom: 6px; font-size: 0.95rem; }
+        .steps p:last-child { margin-bottom: 0; }
+
+        /* ═══ DER EXCEL-WEG ALS KAMERAFAHRT ═══
+           Links klebt die Buehne mit den Aufnahmen des Import-Assistenten
+           (tools/wechseln-screenshots.mjs), rechts laufen die fuenf Schritte
+           durch. Schritt 1 und 2 zeigen den Dialog, in dem man danach steht;
+           3 faehrt aufs Einfuegefeld, 4 zeigt die Zuordnung, 5 die Vorschau mit
+           der Saldo-Zeile. Brennpunkte gemessen an den Aufnahmen (Anteil von
+           Breite/Hoehe): Einfuegefeld 50 % / 60 % in einfuegen.webp,
+           Saldo-Zeile 40 % / 28 % in vorschau.webp. Neue Aufnahmen mit
+           anderem Layout → Zahlen nachmessen. */
+        .flow {
+            display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+            gap: clamp(40px, 6vw, 80px); align-items: start; margin-top: 36px;
+        }
+        .flow-sticky { position: sticky; top: max(40px, calc(50vh - 240px)); }
+        .flow-stage {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border-hover);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow), 0 0 90px -30px rgba(var(--primary-rgb), 0.45);
+        }
+        .flow-screen { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-solid); aspect-ratio: 2880 / 1800; }
+        .flow-screen img {
+            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+            opacity: 0; transform: scale(1.02);
+            transition: opacity 0.7s var(--ease-out), transform 1.2s var(--ease-spring);
+        }
+        .flow[data-step="1"] img[data-shot="einfuegen"],
+        .flow[data-step="2"] img[data-shot="einfuegen"] { opacity: 1; transform: none; }
+        .flow[data-step="3"] img[data-shot="einfuegen"] { opacity: 1; transform-origin: 50% 60%; transform: scale(1.5); }
+        .flow[data-step="4"] img[data-shot="spalten"] { opacity: 1; transform: none; }
+        .flow[data-step="5"] img[data-shot="vorschau"] { opacity: 1; transform-origin: 40% 28%; transform: scale(1.8); }
+        /* transform-origin haelt den Brennpunkt beim Zoomen fest — der Ring
+           sitzt deshalb genau dort (Saldo-Zeile, nur Schritt 5). */
+        .flow-ring {
+            position: absolute; left: 40%; top: 28%; width: 62%; height: 12%;
+            transform: translate(-50%, -50%) scale(1.15); border-radius: 18px; pointer-events: none;
+            border: 2px solid var(--primary); box-shadow: 0 0 0 6px rgba(var(--primary-rgb), 0.18), 0 0 40px rgba(var(--primary-rgb), 0.5);
+            opacity: 0; transition: opacity 0.4s var(--ease-out), transform 0.7s var(--ease-spring);
+        }
+        .flow[data-step="5"] .flow-ring { opacity: 1; transform: translate(-50%, -50%); transition-delay: 0.5s; }
+        .flow-dots { display: flex; gap: 6px; margin: 16px 0 0 8px; }
+        .flow-dots i { display: block; width: 18px; height: 3px; border-radius: 3px; background: var(--border-hover); transition: background 0.4s var(--ease-out), width 0.5s var(--ease-spring); }
+        .flow[data-step="1"] .flow-dots i:nth-child(1), .flow[data-step="2"] .flow-dots i:nth-child(2),
+        .flow[data-step="3"] .flow-dots i:nth-child(3), .flow[data-step="4"] .flow-dots i:nth-child(4),
+        .flow[data-step="5"] .flow-dots i:nth-child(5) { background: var(--primary); width: 36px; }
+
+        .flow .steps > li {
+            min-height: min(56vh, 460px); align-content: center; padding: 28px 0;
+            grid-template-columns: 44px 1fr; gap: 18px;
+        }
+        .flow .steps > li:first-child { padding-top: 28px; }
+        .flow-intro { padding-bottom: 8px; }
+        .flow-intro .card-head h3 { font-family: var(--fd); font-size: 1.7rem; letter-spacing: -0.04em; margin: 0; line-height: 1.1; }
+        .flow-intro p { font-size: 1rem; line-height: 1.7; }
+        .flow .steps > li::before {
+            width: 40px; height: 40px; border-radius: 13px; font-size: 1rem;
+            transition: background 0.4s var(--ease-out), color 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+        }
+        .flow .steps h3 {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.6rem, 2.6vw, 2.3rem); letter-spacing: -0.045em; line-height: 1.02; margin-bottom: 12px;
+            color: var(--text-dim); transition: color 0.5s var(--ease-out);
+        }
+        .flow .steps p { font-size: 1rem; line-height: 1.7; color: var(--text-dim); transition: color 0.5s var(--ease-out); }
+        .flow .steps .st-txt {
+            font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(1.45rem, 2.3vw, 2rem); font-weight: 500; letter-spacing: -0.035em; line-height: 1.15;
+            color: var(--text-dim); transition: color 0.5s var(--ease-out); text-wrap: balance;
+        }
+        .flow .steps .st-txt strong { color: inherit; font-weight: 700; }
+        .flow .steps > li.on .st-txt { color: var(--text-main); }
+        .flow .steps > li.on::before { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .flow .steps > li.on h3 { color: var(--text-main); }
+        .flow .steps > li.on p { color: var(--text-muted); }
+
+        /* ── Die uebrigen drei Wege: nebeneinander, jede Karte gleich
+              gewichtet (es gibt keinen „besten" Weg, nur deinen). ── */
+        .ways { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: clamp(48px, 7vw, 90px); }
+        .ways .card { margin: 0; display: flex; flex-direction: column; }
+        .ways .card .note { margin: 14px 0 0; }
+        .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .card-head h3 { margin: 0; }
+        .card-ico {
+            display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+            width: 40px; height: 40px; border-radius: 13px; color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1); border: 1px solid rgba(var(--primary-rgb), 0.22);
+        }
+        .card-ico svg { width: 18px; height: 18px; }
+        .ways h3 { font-family: var(--fd); font-size: 1.25rem; letter-spacing: -0.03em; line-height: 1.15; }
+
+        /* ── Spalten-Tabelle im Rahmen, erste Spalte als Feldname ── */
+        .tbl-frame {
+            margin-top: 28px; padding: 7px; border-radius: 24px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--edge), var(--shadow);
+        }
+        .tbl-wrap { overflow-x: auto; border-radius: 17px; background: var(--bg-solid); border: 1px solid var(--border); -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 560px; }
+        th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+        th { font-size: 0.78rem; font-weight: 500; color: var(--text-dim); }
         td { color: var(--text-muted); }
         td:first-child { color: var(--text-main); font-weight: 600; white-space: nowrap; }
         tr:last-child td { border-bottom: none; }
-        code { font-family: var(--font-mono); font-size: 0.86em; color: var(--text-main); }
+        td code {
+            display: inline-block; margin: 0 2px 3px 0; padding: 1px 7px; border-radius: 6px;
+            background: var(--bg-card-2); border: 1px solid var(--border); font-size: 0.8rem;
+        }
+        .tbl-note { margin-top: 14px; font-size: 0.9rem; }
+
+        /* ── Soll und Saldo: Regeln als Liste mit Marke ── */
+        .regeln { list-style: none; margin: 22px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .regeln li {
+            margin: 0; padding: 20px 22px; border-radius: 18px; font-size: 0.94rem;
+            background: var(--bg-card); border: 1px solid var(--border);
+        }
+        .regeln li strong { display: block; font-family: var(--fd); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 6px; }
+
+        /* ── Bilder im Rahmen, die beim Scrollen aus der Schraeglage flach
+              kippen (--hp 0…1 schreibt das Skript; nur auf .tilt-in, der
+              Reveal gehoert dem Elternteil). ── */
+        .tilt { perspective: 2000px; margin: 36px 0 0; }
+        .tilt-in {
+            --hp: 0; transform-origin: 50% 0%;
+            transform: rotateX(calc((1 - var(--hp)) * 20deg)) scale(calc(0.92 + var(--hp) * 0.08));
+        }
+        .frame {
+            position: relative; margin: 0; padding: 8px; border-radius: 26px;
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            border: 1px solid var(--border-hover);
+            box-shadow: inset 0 1px 0 var(--edge), var(--shadow), 0 0 100px -30px rgba(var(--primary-rgb), 0.4);
+        }
+        .frame-in { position: relative; border-radius: 18px; overflow: hidden; background: var(--bg-solid); }
+        .frame-in img { display: block; width: 100%; height: auto; }
+        .tilt .frame-in::after {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.07) 45%, transparent 60%);
+            background-size: 250% 100%; background-position: calc(100% - var(--hp) * 100%) 0;
+        }
+        .cap { margin: 14px 4px 0; font-size: 0.88rem; color: var(--text-dim); max-width: 64ch; }
+        .cap b { color: var(--text-main); font-weight: 600; }
 
         .note {
-            border-left: 3px solid var(--primary);
-            padding: 11px 15px; margin: 16px 0;
-            background: var(--primary-dim); border-radius: 0 10px 10px 0;
-            font-size: 0.9rem;
+            position: relative; padding: 18px 22px; margin: 22px 0;
+            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.25); border-radius: 18px;
+            font-size: 0.92rem;
         }
-        .note.warn { border-left-color: var(--warning); background: rgba(245,158,11,0.07); }
+        .note.warn { border-color: rgba(var(--warning-rgb), 0.35); background: rgba(var(--warning-rgb), 0.08); }
         .note p:last-child { margin-bottom: 0; }
 
+        /* FAQ: Plus dreht zum Kreuz — die Bewegung zeigt, was aufging. */
+        .card.faq { padding: 6px 26px; }
         .faq-item { border-bottom: 1px solid var(--border); }
         .faq-item:last-child { border-bottom: none; }
         .faq-item summary {
-            cursor: pointer; padding: 13px 0; font-weight: 600;
-            font-size: 0.94rem; list-style: none; display: flex;
-            justify-content: space-between; gap: 12px; align-items: center;
+            cursor: pointer; padding: 20px 0; font-weight: 600; font-size: 1rem; letter-spacing: -0.01em;
+            list-style: none; display: flex; justify-content: space-between; gap: 16px; align-items: center;
+            transition: color 0.2s var(--ease-out);
         }
+        .faq-item summary:hover { color: var(--primary); }
         .faq-item summary::-webkit-details-marker { display: none; }
-        .faq-item summary::after { content: '+'; color: var(--primary); font-size: 1.2rem; flex-shrink: 0; }
-        .faq-item[open] summary::after { content: '−'; }
-        .faq-item p { padding-bottom: 13px; margin-bottom: 0; font-size: 0.9rem; }
-
-        .cta {
-            display: flex; flex-wrap: wrap; gap: 11px; align-items: center;
-            margin-top: 34px; padding: 22px; border-radius: 14px;
-            background: var(--bg-card); border: 1px solid var(--border);
+        .faq-item summary::after {
+            content: ''; flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+            border: 1px solid var(--border);
+            background:
+                linear-gradient(var(--primary), var(--primary)) center / 11px 1.6px no-repeat,
+                linear-gradient(var(--primary), var(--primary)) center / 1.6px 11px no-repeat;
+            transition: transform 0.4s var(--ease-spring), background-color 0.2s var(--ease-out);
         }
-        .cta-text { flex: 1; min-width: 210px; }
-        .cta-text strong { display: block; font-size: 1.02rem; margin-bottom: 3px; }
-        .cta-text span { font-size: 0.86rem; color: var(--text-muted); }
+        .faq-item[open] summary::after { transform: rotate(45deg); background-color: var(--primary-dim); }
+        .faq-item p { padding-bottom: 20px; margin-bottom: 0; font-size: 0.94rem; max-width: 68ch; }
+
+        /* ── Finale ── */
+        .cta {
+            position: relative; overflow: hidden; isolation: isolate;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            margin-top: clamp(90px, 12vw, 140px); padding: clamp(48px, 8vw, 88px) 24px;
+            border-radius: 30px; border: 1px solid var(--border);
+            background: linear-gradient(180deg, var(--bg-card-2), var(--bg-card));
+            box-shadow: inset 0 1px 0 var(--edge);
+        }
+        .cta::before {
+            content: ''; position: absolute; left: 50%; bottom: -60%; width: 900px; height: 600px; z-index: -1;
+            transform: translateX(-50%); pointer-events: none;
+            background: radial-gradient(50% 50% at 50% 50%, rgba(var(--primary-rgb), calc(var(--glow) * 1.3)), transparent 70%);
+        }
+        .cta-text { max-width: 760px; }
+        .cta-text strong {
+            display: block; font-family: var(--fd); font-variation-settings: 'opsz' 96;
+            font-size: clamp(2.3rem, 5.6vw, 4.2rem); font-weight: 600; letter-spacing: -0.05em; line-height: 0.98;
+            margin-bottom: 16px; text-wrap: balance;
+        }
+        .cta-text span { font-size: 1.05rem; color: var(--text-muted); }
+        .cta-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 32px; }
         .btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 11px 20px; border-radius: 9px; text-decoration: none;
-            font-size: 0.9rem; font-weight: 600; transition: all 0.15s ease;
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 13px 22px; border-radius: 999px; text-decoration: none;
+            font-size: 0.93rem; font-weight: 600;
+            transition: border-color 0.2s var(--ease-out), color 0.2s var(--ease-out), background 0.2s var(--ease-out), transform 0.16s var(--ease-out), box-shadow 0.3s var(--ease-out);
             border: 1px solid var(--border);
         }
-        .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .btn-primary:hover { filter: brightness(1.1); }
-        .btn-ghost { color: var(--text-muted); }
-        .btn-ghost:hover { border-color: var(--border-hover); color: var(--text-main); }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--text-main); border-color: transparent; color: var(--bg-deep); box-shadow: 0 12px 40px -10px rgba(var(--primary-rgb), 0.55); }
+        .btn-primary:hover { box-shadow: 0 16px 50px -10px rgba(var(--primary-rgb), 0.8); }
+        .btn-ghost { color: var(--text-muted); background: var(--bg-card); }
+        .btn-ghost:hover { border-color: rgba(var(--primary-rgb), 0.35); color: var(--text-main); }
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 6px; }
 
         /* Touch hat kein :hover — Ziele muessen auch ohne erkennbar sein. */
         @media (hover: none) { .btn-ghost { color: var(--text-main); } }
 
+        /* ═══ SCROLL-EINBLENDUNG ═══ EIN Schreiber: der Observer setzt .is-in.
+           filter:none im Ziel, damit kein Filter-Stapelkontext stehen bleibt;
+           kein clip-path (kappt, was aus dem Kasten ragt — siehe /about/). */
+        .js [data-reveal] {
+            opacity: 0; transform: translate3d(0, 32px, 0); filter: blur(6px);
+            transition: opacity 0.9s var(--ease-out), transform 1s var(--ease-spring), filter 0.9s var(--ease-out);
+            transition-delay: calc(var(--i, 0) * 0.08s);
+        }
+        .js [data-reveal].is-in { opacity: 1; transform: none; filter: none; }
+
+        @media (max-width: 900px) {
+            .flow { grid-template-columns: 1fr; gap: 8px; }
+            /* Randlos und ohne Rundung: an einer runden Ecke schiene der
+               darunter durchlaufende Text durch. */
+            .flow-sticky { top: 0; z-index: 3; margin: 0 -24px; padding: 12px 24px 10px; background: var(--bg-deep); box-shadow: 0 14px 18px -6px var(--bg-deep); }
+            .flow-stage { padding: 5px; border-radius: 18px; }
+            .flow-screen { border-radius: 13px; }
+            .flow-dots { margin-top: 10px; }
+            .flow .steps > li { min-height: 58vh; }
+            .ways { grid-template-columns: 1fr; }
+            .regeln { grid-template-columns: 1fr; }
+        }
         @media (max-width: 560px) {
-            .shell { padding: 20px 15px 44px; }
-            .cta { flex-direction: column; align-items: stretch; }
-            .btn { justify-content: center; }
+            .shell { padding: 20px 16px 32px; }
+            .flow-sticky { margin: 0 -16px; padding-left: 16px; padding-right: 16px; }
+            .card, .card.faq { padding-left: 20px; padding-right: 20px; }
+            .frame { padding: 5px; border-radius: 18px; }
+            .frame-in { border-radius: 13px; }
+            .cta-actions { flex-direction: column; align-items: stretch; width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            * { transition: none !important; }
+            .js [data-reveal] { transform: none; filter: none; }
+            .tilt-in { transform: none; }
+            .js .hero-badge, .js .hero h1, .js .hero-sub, .js .hero-shot { transform: none; }
         }
     </style>
-    <script defer src="/Assets/js/version-loader.js?v=7.4.11"></script>
-    <script defer src="/Assets/js/ph-init.js?v=7.4.11"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.4.12"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.4.12"></script>
 </head>
 <body>
     <div class="ambient"></div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
 
     <div class="shell">
         <nav aria-label="Breadcrumb">
@@ -211,13 +477,41 @@
             </p>
         </header>
 
-        <h2 id="ueberblick">Was übernommen werden kann</h2>
-        <p>
-            Drei Wege, je nachdem, wo deine Zeiten heute liegen. Alle drei laufen vollständig
+        <!-- Die Vorschau des Import-Assistenten, kippt beim Scrollen flach (--hp
+             auf .tilt-in). Aufnahme: tools/wechseln-screenshots.mjs. -->
+        <div class="tilt hero-shot">
+            <div class="tilt-in">
+                <figure class="frame">
+                    <div class="frame-in">
+                        <img src="/Grafiken/wechseln/vorschau.webp?v=7.4.12" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Vorschau des Imports in MyWorkLog: jede Zeile mit Datum, Typ, Ist, Soll und Differenz, oben 30 von 32 Zeilen und die Saldo-Änderung">
+                    </div>
+                </figure>
+            </div>
+            <p class="cap"><b>Vorschau vor dem Speichern.</b> <span>Jede Zeile mit Ist, Soll und Differenz, oben die Saldo-Änderung. Tage, die es schon gibt, sind abgewählt.</span></p>
+        </div>
+
+        <h2 id="ueberblick" data-reveal>Was übernommen werden kann</h2>
+        <p class="prose" data-reveal>
+            Vier Wege, je nachdem, wo deine Zeiten heute liegen. Alle vier laufen vollständig
             im Browser — keine Datei wird hochgeladen, kein Konto ist nötig.
         </p>
 
-        <div class="card">
+        <!-- KEINE id an .flow oder seinen Kindern: der i18n-Schluessel eines
+             Textes haengt an der naechsten id darueber. -->
+        <div class="flow" data-step="1">
+            <div class="flow-sticky">
+                <div class="flow-stage" data-reveal>
+                    <div class="flow-screen">
+                        <img data-shot="einfuegen" src="/Grafiken/wechseln/einfuegen.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Import-Assistent, Schritt 1: Datei auswählen oder Zeilen aus einer Tabelle einfügen, das Feld ist mit kopierten Zeilen gefüllt">
+                        <img data-shot="spalten" src="/Grafiken/wechseln/spalten.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Import-Assistent, Schritt 2: Datum, Von, Bis, Pause, Typ und Notiz sind den Spalten der Tabelle zugeordnet">
+                        <img data-shot="vorschau" src="/Grafiken/wechseln/vorschau.webp?v=7.4.12" width="2880" height="1800" loading="lazy" decoding="async" alt="Import-Assistent, Schritt 3: Vorschau mit Saldo-Änderung und allen Zeilen">
+                        <span class="flow-ring" aria-hidden="true"></span>
+                    </div>
+                </div>
+                <div class="flow-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+            </div>
+            <div class="flow-body">
+            <div class="flow-intro" data-reveal>
             <div class="card-head">
                 <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span>
                 <h3>Excel, LibreOffice oder Google Tabellen</h3>
@@ -227,16 +521,20 @@
                 Du kannst die Zeilen auch einfach in der Tabelle markieren, kopieren und ins
                 Einfügefeld werfen — das ist oft der schnellste Weg.
             </p>
-            <ol>
-                <li>In MyWorkLog links in der Seitenleiste auf <strong>Import</strong>.</li>
-                <li><strong>Aus Excel oder CSV übernehmen</strong> wählen.</li>
-                <li>Datei aussuchen oder die kopierten Zeilen einfügen.</li>
-                <li>Spalten prüfen — meistens sind sie schon richtig zugeordnet.</li>
-                <li>In der Vorschau abhaken, was übernommen werden soll.</li>
+            </div>
+            <ol class="steps">
+                <li><span class="st-txt">In MyWorkLog links in der Seitenleiste auf <strong>Import</strong>.</span></li>
+                <li><span class="st-txt"><strong>Aus Excel oder CSV übernehmen</strong> wählen.</span></li>
+                <li><span class="st-txt">Datei aussuchen oder die kopierten Zeilen einfügen.</span></li>
+                <li><span class="st-txt">Spalten prüfen — meistens sind sie schon richtig zugeordnet.</span></li>
+                <li><span class="st-txt">In der Vorschau abhaken, was übernommen werden soll.</span></li>
             </ol>
+            </div>
         </div>
 
-        <div class="card">
+        <div class="ways">
+
+        <div class="card" data-reveal style="--i:0">
             <div class="card-head">
                 <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
                 <h3>Aus einer anderen Zeiterfassungs-App</h3>
@@ -249,7 +547,7 @@
             </p>
         </div>
 
-        <div class="card">
+        <div class="card" data-reveal style="--i:1">
             <div class="card-head">
                 <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></span>
                 <h3>Papier-Berichtsheft abfotografieren</h3>
@@ -268,7 +566,7 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card" data-reveal style="--i:2">
             <div class="card-head">
                 <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg></span>
                 <h3>Aus dem Digitalen Berichtsheft der IHK</h3>
@@ -282,11 +580,14 @@
             </p>
         </div>
 
-        <h2 id="spalten">Welche Spalten erkannt werden</h2>
-        <p>
+        </div>
+
+        <h2 id="spalten" data-reveal>Welche Spalten erkannt werden</h2>
+        <p class="prose" data-reveal>
             Die Kopfzeile wird automatisch gedeutet — deutsche und englische Bezeichnungen.
             Passt etwas nicht, stellst du es per Auswahlfeld um. Nur das Datum ist Pflicht.
         </p>
+        <div class="tbl-frame" data-reveal>
         <div class="tbl-wrap">
             <table>
                 <thead>
@@ -303,24 +604,25 @@
                 </tbody>
             </table>
         </div>
-        <p style="margin-top:12px;font-size:0.88rem;">
+        </div>
+        <p class="tbl-note prose">
             Excel-Datumszellen und Uhrzeiten als Tagesbruchteil werden mitgelesen — du musst
             in der Tabelle nichts umformatieren. Zeilen ohne brauchbares Datum landen nicht
             still im Nichts, sondern stehen mit Grund in der Vorschau.
         </p>
 
-        <h2 id="soll">Was mit Soll-Stunden und Saldo passiert</h2>
-        <p>
+        <h2 id="soll" data-reveal>Was mit Soll-Stunden und Saldo passiert</h2>
+        <p class="prose" data-reveal>
             Deine alte Tabelle kennt in der Regel nur die geleisteten Stunden. Das Tagessoll
             kommt deshalb aus deinen Einstellungen in MyWorkLog — nicht aus der Datei.
         </p>
-        <ul>
+        <ul class="regeln" data-reveal>
             <li><strong>Vor dem Import die Arbeitszeiten einstellen.</strong> Sonst rechnet der Saldo gegen die Vorgabewerte statt gegen deinen echten Wochenplan.</li>
             <li><strong>Urlaub, Krankheit, Feiertag</strong> bekommen automatisch das Tagessoll gutgeschrieben, ihr Saldo-Beitrag ist null.</li>
             <li><strong>Gleittage</strong> ziehen das Tagessoll vom Guthaben ab — genau wie manuell erfasst.</li>
             <li><strong>Mehrere Einträge am selben Tag</strong> zählen das Tagessoll nur einmal; der zweite Block ist reine Zusatzzeit.</li>
         </ul>
-        <div class="note">
+        <div class="note" data-reveal>
             <p>
                 Die Vorschau zeigt die Saldo-Änderung, bevor irgendetwas gespeichert wird.
                 Und falls es doch danebengeht: <strong>Import rückgängig</strong> steht direkt
@@ -328,8 +630,8 @@
             </p>
         </div>
 
-        <h2 id="faq">Häufige Fragen</h2>
-        <div>
+        <h2 id="faq" data-reveal>Häufige Fragen</h2>
+        <div class="card faq" data-reveal>
             <details class="faq-item">
                 <summary>Werden meine Daten irgendwohin hochgeladen?</summary>
                 <p>
@@ -380,13 +682,15 @@
             </details>
         </div>
 
-        <div class="cta">
+        <div class="cta" data-reveal>
             <div class="cta-text">
                 <strong>Bereit zum Umstieg?</strong>
                 <span>Kostenlos, ohne Konto, ohne Installation.</span>
             </div>
-            <a href="/" class="btn btn-primary">MyWorkLog öffnen</a>
-            <a href="/berichtsheft/" class="btn btn-ghost">Zum Berichtsheft</a>
+            <div class="cta-actions">
+                <a href="/" class="btn btn-primary">MyWorkLog öffnen</a>
+                <a href="/berichtsheft/" class="btn btn-ghost">Zum Berichtsheft</a>
+            </div>
         </div>
     </div>
 
@@ -405,6 +709,81 @@
         {"@type":"Question","name":"Muss ich alles auf einmal übernehmen?","acceptedAnswer":{"@type":"Answer","text":"Nein, in der Vorschau wird zeilenweise abgehakt. Man kann auch erst einen Monat einlesen und den Rest später nachziehen."}}
       ]
     }
+    </script>
+
+    <script>
+    /* Bewegung: Anlauf beim Laden, Einblenden, Kamerafahrt,
+       Neigung, Fortschritt. Eine rAF-Runde je Scroll/Resize; erst alles
+       messen, dann schreiben. */
+    (function () {
+        var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        requestAnimationFrame(function () { document.documentElement.classList.add('ready'); });
+
+        var els = document.querySelectorAll('[data-reveal]');
+        if ('IntersectionObserver' in window) {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) {
+                    if (!e.isIntersecting) return;
+                    e.target.classList.add('is-in');
+                    io.unobserve(e.target);
+                });
+            }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
+            els.forEach(function (el) { io.observe(el); });
+        }
+        /* Fallback: haengt alles am Observer und der feuert nicht
+           (Hintergrund-Tab, Automations-Browser), bliebe die Seite leer. */
+        setTimeout(function () { els.forEach(function (el) {
+            if (el.getBoundingClientRect().top < window.innerHeight) el.classList.add('is-in');
+        }); }, 2500);
+
+        var bar = document.getElementById('progress');
+        var flow = document.querySelector('.flow');
+        var steps = flow ? Array.prototype.slice.call(flow.querySelectorAll('.steps > li')) : [];
+        var sticky = flow ? flow.querySelector('.flow-sticky') : null;
+        var tilts = Array.prototype.slice.call(document.querySelectorAll('.tilt-in'));
+        var narrow = window.matchMedia('(max-width: 900px)');
+        var cur = -1, pending = false, hp = tilts.map(function () { return -1; });
+        if (steps.length) steps[0].classList.add('on');
+
+        function frame() {
+            pending = false;
+            var vh = window.innerHeight, y = window.pageYOffset;
+            var docH = document.documentElement.scrollHeight - vh;
+            var t = docH > 0 ? Math.min(1, Math.max(0, y / docH)) : 0;
+            /* Einspaltig verdeckt die klebende Buehne die Bildmitte: die
+               Leselinie liegt dann im freien Bereich darunter. */
+            var line = vh * 0.5;
+            if (narrow.matches && sticky) {
+                var sb = sticky.getBoundingClientRect().bottom;
+                line = Math.min(sb + (vh - sb) * 0.4, vh * 0.9);
+            }
+            var best = 0, bestD = Infinity;
+            for (var q = 0; q < steps.length; q++) {
+                var r = steps[q].getBoundingClientRect();
+                var d = Math.abs(r.top + r.height / 2 - line);
+                if (d < bestD) { bestD = d; best = q; }
+            }
+            var next = tilts.map(function (el) {
+                if (reduce) return 1;
+                var top = el.getBoundingClientRect().top;
+                return Math.round(Math.min(1, Math.max(0, (vh - top) / (vh * 0.85))) * 1000) / 1000;
+            });
+
+            if (bar) bar.style.transform = 'scaleX(' + t.toFixed(4) + ')';
+            if (steps.length && best !== cur) {
+                cur = best;
+                flow.setAttribute('data-step', best + 1);
+                for (var z = 0; z < steps.length; z++) steps[z].classList.toggle('on', z === best);
+            }
+            for (var k = 0; k < tilts.length; k++) {
+                if (next[k] !== hp[k]) { hp[k] = next[k]; tilts[k].style.setProperty('--hp', next[k]); }
+            }
+        }
+        function schedule() { if (!pending) { pending = true; requestAnimationFrame(frame); } }
+        window.addEventListener('scroll', schedule, { passive: true });
+        window.addEventListener('resize', schedule);
+        frame();
+    })();
     </script>
 
     <script>
