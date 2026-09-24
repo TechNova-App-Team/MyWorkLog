@@ -254,7 +254,12 @@
       wall.style.opacity=fin.toFixed(3);
       if(fin>0){
         var drift=(p-C_END)*H*2.2;
-        wallIn.style.transform='translate(-50%,-50%) rotateX(52deg) rotateZ(-26deg) translate3d(0,'+(-drift).toFixed(1)+'px,0)';
+        // Schmal flach statt im Raum gekippt: eine affine Ebene rastert Chrome nur
+        // im sichtbaren Ausschnitt (Grund steht bei .vi-wall in landing.css).
+        // scaleY(.616) = cos 52° — dieselbe Stauchung wie rotateX(52deg), ohne Fluchtpunkt.
+        wallIn.style.transform=SCHMAL
+          ? 'translate(-50%,-50%) scaleY(.616) rotate(-26deg) translateY('+(-drift).toFixed(1)+'px)'
+          : 'translate(-50%,-50%) rotateX(52deg) rotateZ(-26deg) translate3d(0,'+(-drift).toFixed(1)+'px,0)';
       }
       end.classList.toggle('on', p>=F_ON);
     }

@@ -381,7 +381,12 @@
       .vi-rail.on{transform:none}
       .vi-rail-btn{flex:1;width:auto;font-size:0;gap:0;padding:.5rem 0}
       .vi-hint{bottom:1.2rem}
-      .vi-wall-in{grid-template-columns:repeat(3,1fr);width:230vmax}
+      /* Schmal ohne Perspektive: landing.js neigt die Wand dort flach (Stauchen +
+         Drehen). Mit perspective + rotateX war sie EINE 3D-Ebene von 2049x1734 CSS-px,
+         bei DPR 3,5 rund 174 MB — Chrome auf Android liess Kacheln aus, und mit
+         ihnen die ganze Abschluss-Ebene („Bereit?“ + Knoepfe). Gemeldet 24.09.2026. */
+      .vi-wall{perspective:none}
+      .vi-wall-in{grid-template-columns:repeat(3,1fr);width:230vmax;will-change:auto}
     }
     @media(max-width:600px){
       .vi-skip{top:.8rem;right:.8rem}
