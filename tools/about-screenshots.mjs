@@ -59,7 +59,7 @@ for (let d = new Date(start); d <= ende; d.setDate(d.getDate() + 1)) {
     if (urlaub.has(date)) { entries.push({ ...base, type: 'vacation', worked: expected, expected, diff: 0, info: 'Urlaubstag', breakMins: 0, start: '', end: '' }); continue; }
     if (date === krank) { entries.push({ ...base, type: 'sick', worked: expected, expected, diff: 0, info: 'Krank', breakMins: 0, start: '', end: '' }); continue; }
     if (dow === 2) { entries.push({ ...base, type: 'school', worked: expected, expected, diff: 0, info: 'Berufsschule - Dienstag (Datenbanken, Wirtschaft)', breakMins: 0, start: '07:45', end: '14:30' }); continue; }
-    const sh = 7, sm = 20 + Math.floor(rnd() * 50);
+    const sh = 7, sm = 15 + Math.floor(rnd() * 45);   // 15–59: bis v7.5.3 stand hier *50, das ergab Uhrzeiten wie 07:61
     const workedH = expected - 0.3 + rnd() * 0.7;   // um das Soll herum, Freitag hat 4,5 h
     const breakMins = 30;
     const endMin = sh * 60 + sm + Math.round(workedH * 60) + breakMins;

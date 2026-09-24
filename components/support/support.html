@@ -1,335 +1,263 @@
 <div id="view-support" class="view-section">
 
         <!-- ══════════════════════════════════════════════════════
-             SUPPORT PAGE — PARALLAX UI
-             Styles scoped to #view-support to avoid leaking.
+             SUPPORT — im Stil von /about/ und dem Intro auf /:
+             echte Aufnahmen im Geraeterahmen, links ausgerichtet,
+             EIN bewegtes Element (der Bildschirm kippt beim Scrollen
+             flach). Styles bleiben unter #view-support.
+
+             🔴 Die Aufnahmen tragen data-src, nicht src. Diese Ansicht
+             steckt in der index.html und waere sonst bei JEDEM App-Start
+             dabei (~450 KB fuer eine Seite, die kaum einer oeffnet).
+             supportLoadShots() setzt src erst, wenn die Ansicht aufgeht.
+             `loading="lazy"` allein reicht nicht: ob ein Browser ein Bild
+             in einem display:none-Elternteil zurueckhaelt, ist nicht
+             festgelegt. stamp-assets.js stempelt data-src mit ?v=.
+             Neu aufnehmen: node tools/support-screenshots.mjs
         ══════════════════════════════════════════════════════ -->
         <style>
-            /* ── layout wrapper ── */
             #view-support {
+                --sp-rule:   rgba(255,255,255,.07);
+                --sp-edge:   rgba(255,255,255,.1);
+                --sp-glass1: rgba(255,255,255,.09);
+                --sp-glass2: rgba(255,255,255,.025);
+                --sp-shade:  rgba(0,0,0,.9);
+                --sp-ease:   cubic-bezier(.32,.72,0,1);
                 padding: 0 !important;
                 position: relative;
-                overflow-x: hidden;
-                overflow-y: visible;
+                /* clip statt hidden: hidden macht die Ansicht zum Scroll-
+                   Container, dann klebt nichts mehr an .main. */
+                overflow-x: clip;
+            }
+            [data-theme="light"] #view-support {
+                --sp-rule:   rgba(7,16,35,.1);
+                --sp-edge:   rgba(7,16,35,.12);
+                --sp-glass1: rgba(7,16,35,.07);
+                --sp-glass2: rgba(7,16,35,.02);
+                --sp-shade:  rgba(15,23,42,.28);
             }
 
-            /* ── parallax sections ── */
-            #sp-hero {
+            .sp-shell {
+                max-width: 1180px; margin: 0 auto;
+                padding-inline: clamp(1rem, 4vw, 2.5rem);
+            }
+
+            /* ── Kopf ── */
+            .sp-hero { position: relative; padding-top: clamp(2.5rem, 7vw, 5.5rem); padding-bottom: clamp(3.5rem, 8vw, 6rem); }
+            .sp-hero::before {
+                content: ''; position: absolute; inset: 0 0 auto 0; height: 70%;
+                background: radial-gradient(60% 55% at 30% 0%, rgba(var(--primary-rgb),.16), transparent 70%);
+                pointer-events: none;
+            }
+            .sp-title {
                 position: relative;
-                padding: 4rem 2.2rem 3.5rem;
-                overflow: hidden;
-                min-height: 340px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-            }
-
-            /* animated blobs */
-            .sp-blob {
-                position: absolute;
-                border-radius: 50%;
-                filter: blur(80px);
-                pointer-events: none;
-                will-change: transform;
-            }
-            .sp-blob-1 {
-                width: 500px; height: 500px;
-                background: radial-gradient(circle, rgba(var(--primary-rgb),.32), transparent 68%);
-                top: -180px; left: -160px;
-                animation: sp-drift1 18s ease-in-out infinite;
-            }
-            .sp-blob-2 {
-                width: 360px; height: 360px;
-                background: radial-gradient(circle, rgba(139,92,246,.22), transparent 68%);
-                bottom: -120px; right: -80px;
-                animation: sp-drift2 24s ease-in-out infinite;
-            }
-            .sp-blob-3 {
-                width: 260px; height: 260px;
-                background: radial-gradient(circle, rgba(192,132,252,.18), transparent 68%);
-                top: 30%; right: 10%;
-                animation: sp-drift3 30s ease-in-out infinite;
-            }
-            @keyframes sp-drift1 {
-                0%,100% { transform: translate(0,0) scale(1); }
-                40%      { transform: translate(60px,40px) scale(1.12); }
-                70%      { transform: translate(30px,80px) scale(.92); }
-            }
-            @keyframes sp-drift2 {
-                0%,100% { transform: translate(0,0) scale(1); }
-                35%      { transform: translate(-50px,-30px) scale(1.18); }
-                70%      { transform: translate(-25px,-70px) scale(1.04); }
-            }
-            @keyframes sp-drift3 {
-                0%,100% { transform: translate(-50%,-50%) scale(1); }
-                50%      { transform: translate(-50%,-50%) scale(1.35); }
-            }
-
-            /* grid overlay */
-            .sp-grid {
-                position: absolute; inset: 0;
-                background-image:
-                    linear-gradient(rgba(var(--primary-rgb),.04) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(var(--primary-rgb),.04) 1px, transparent 1px);
-                background-size: 52px 52px;
-                pointer-events: none;
-                will-change: transform;
-            }
-
-            /* geo floating lines */
-            .sp-geo-line {
-                position: absolute;
-                height: 1px;
-                background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb),.14), transparent);
-                pointer-events: none;
-                animation: sp-line-drift linear infinite;
-            }
-            @keyframes sp-line-drift {
-                0%   { transform: translateX(-110%); opacity: 0; }
-                8%   { opacity: 1; }
-                92%  { opacity: 1; }
-                100% { transform: translateX(110vw); opacity: 0; }
-            }
-
-            /* ── hero eyebrow ── */
-            .sp-eyebrow {
-                display: inline-flex; align-items: center; gap: .45rem;
-                padding: .35rem 1.1rem;
-                background: rgba(var(--primary-rgb),.1);
-                border: 1px solid rgba(var(--primary-rgb),.3);
-                border-radius: 40px;
-                color: #c084fc;
-                font-size: .72rem; font-weight: 700;
-                letter-spacing: .1em; text-transform: uppercase;
-                margin-bottom: 1.5rem;
-                position: relative; z-index: 2;
-                animation: sp-reveal .7s ease both;
-            }
-            .sp-eyebrow-dot {
-                width: 6px; height: 6px; border-radius: 50%;
-                background: var(--primary);
-                animation: sp-dot-pulse 2s ease-in-out infinite;
-                flex-shrink: 0;
-            }
-            @keyframes sp-dot-pulse {
-                0%,100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb),.6); }
-                50%      { box-shadow: 0 0 0 5px rgba(var(--primary-rgb),0); }
-            }
-
-            /* ── hero title ── */
-            .sp-hero-title {
-                font-family: 'DM Serif Display', serif;
-                font-size: clamp(2rem, 5.5vw, 3.2rem);
-                line-height: 1.1; letter-spacing: -.028em;
-                margin-bottom: .8rem;
-                position: relative; z-index: 2;
-                animation: sp-reveal .8s .08s ease both;
-            }
-            .sp-hero-title em {
-                font-style: italic;
-                background: linear-gradient(135deg, #c084fc 0%, var(--primary) 55%, #f0c060 100%);
-                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            }
-            .sp-hero-sub {
-                font-size: .93rem; line-height: 1.75;
-                color: var(--text-muted); max-width: 500px;
-                position: relative; z-index: 2;
-                animation: sp-reveal .9s .16s ease both;
-            }
-            @keyframes sp-reveal {
-                from { opacity: 0; transform: translateY(24px); }
-                to   { opacity: 1; transform: translateY(0); }
-            }
-
-            /* ── scroll reveal ── */
-            .sp-sr {
-                opacity: 0; transform: translateY(32px);
-                transition: opacity .65s ease, transform .65s ease;
-            }
-            .sp-sr.sp-visible { opacity: 1; transform: translateY(0); }
-            .sp-sr-d1 { transition-delay: .08s; }
-            .sp-sr-d2 { transition-delay: .16s; }
-            .sp-sr-d3 { transition-delay: .24s; }
-            .sp-sr-d4 { transition-delay: .32s; }
-
-            /* ── section padding ── */
-            .sp-section {
-                padding: 2.8rem 2.2rem;
-                position: relative;
-            }
-            .sp-section-alt {
-                background: linear-gradient(180deg, rgba(var(--primary-rgb),.03) 0%, transparent 100%);
-                border-top: 1px solid rgba(var(--primary-rgb),.1);
-                border-bottom: 1px solid rgba(var(--primary-rgb),.1);
-            }
-
-            /* ── section label ── */
-            .sp-label {
-                display: inline-block;
-                padding: .25rem .9rem;
-                background: rgba(var(--primary-rgb),.08);
-                border: 1px solid rgba(var(--primary-rgb),.2);
-                border-radius: 40px;
-                color: #c084fc; font-size: .68rem; font-weight: 700;
-                letter-spacing: .1em; text-transform: uppercase;
-                margin-bottom: .9rem;
-            }
-            .sp-section-title {
-                font-family: 'DM Serif Display', serif;
-                font-size: clamp(1.5rem, 3.5vw, 2rem);
-                line-height: 1.15; letter-spacing: -.022em;
-                margin-bottom: .6rem;
-            }
-            .sp-section-title em {
-                font-style: italic;
-                background: linear-gradient(135deg, var(--primary), #c084fc);
-                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            }
-            .sp-section-desc {
-                color: var(--text-muted); font-size: .875rem; line-height: 1.75;
-                max-width: 480px; margin-bottom: 2rem;
-            }
-
-            /* ── running divider ── */
-            .sp-divider {
-                position: relative; height: 2px; overflow: hidden; margin: 0;
-            }
-            .sp-divider-line {
-                position: absolute; width: 200%; height: 1px; top: 50%;
-                background: linear-gradient(90deg, transparent 0%, rgba(var(--primary-rgb),.12) 15%, var(--primary) 50%, rgba(var(--primary-rgb),.12) 85%, transparent 100%);
-                animation: sp-divider-scroll 7s linear infinite;
-            }
-            @keyframes sp-divider-scroll {
-                0%   { transform: translateX(0); }
-                100% { transform: translateX(-50%); }
-            }
-
-            /* ── DONATE GRID ── */
-            .sp-donate-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-                gap: 10px; margin-bottom: 1.5rem;
-            }
-            .sp-donate-btn {
-                display: flex; flex-direction: column; align-items: center;
-                padding: 1rem .5rem;
-                background: rgba(0,112,201,.07);
-                border: 1px solid rgba(0,112,201,.22);
-                border-radius: 14px;
-                color: #4da6ff; font-weight: 700; font-size: .92rem;
-                cursor: pointer; transition: all .22s;
-                font-family: var(--font-main);
-                position: relative; overflow: hidden;
-            }
-            .sp-donate-btn::before {
-                content: '';
-                position: absolute; inset: 0;
-                background: radial-gradient(circle at 50% 0%, rgba(0,112,201,.12), transparent 65%);
-                opacity: 0; transition: opacity .3s;
-            }
-            .sp-donate-btn:hover::before { opacity: 1; }
-            .sp-donate-btn:hover {
-                border-color: rgba(0,112,201,.5);
-                background: rgba(0,112,201,.13);
-                transform: translateY(-3px);
-                box-shadow: 0 8px 24px rgba(0,112,201,.15);
-            }
-            .sp-donate-btn.sp-donate-featured {
-                background: rgba(0,112,201,.13);
-                border-color: rgba(0,112,201,.42);
-                box-shadow: 0 0 0 1px rgba(0,112,201,.12), 0 4px 16px rgba(0,112,201,.1);
-            }
-            .sp-donate-badge {
-                font-size: .6rem; color: #4da6ff; opacity: .75;
-                font-weight: 600; letter-spacing: .05em; margin-top: .2rem;
-            }
-            .sp-donate-custom {
-                background: rgba(255,255,255,.03);
-                border-color: rgba(255,255,255,.1);
-                color: var(--text-muted); font-size: .85rem;
-            }
-            .sp-donate-custom:hover {
-                border-color: rgba(var(--primary-rgb),.35);
-                background: rgba(var(--primary-rgb),.07);
+                font-size: clamp(2.5rem, 7vw, 5.2rem);
+                font-weight: 800; line-height: .98; letter-spacing: -.045em;
+                margin: 0 0 clamp(1.5rem, 3vw, 2.2rem);
                 color: var(--text-main);
             }
-
-            /* ── CONTRIBUTE GRID ── */
-            .sp-contrib-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-                gap: 12px;
+            .sp-title > span { display: block; }
+            .sp-title > span + span { color: var(--primary); }
+            .sp-hero-row {
+                position: relative;
+                display: grid; grid-template-columns: minmax(0, 1fr) auto;
+                gap: 1.5rem 3rem; align-items: end;
             }
-            .sp-contrib-card {
-                padding: 1.4rem 1.1rem;
-                border-radius: 16px;
-                border: 1px solid rgba(255,255,255,.07);
-                background: rgba(255,255,255,.025);
-                text-align: center; text-decoration: none; color: inherit;
-                display: block; cursor: pointer;
-                transition: all .28s cubic-bezier(.22,.68,0,1.2);
-                position: relative; overflow: hidden;
+            .sp-lede {
+                font-size: 1.06rem; line-height: 1.65; color: var(--text-muted);
+                max-width: 46ch; text-wrap: pretty; margin: 0;
             }
-            .sp-contrib-card::after {
-                content: '';
-                position: absolute; inset: 0;
-                background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb),.1), transparent 60%);
-                opacity: 0; transition: opacity .3s;
+            .sp-btns { display: flex; gap: .6rem; flex-wrap: wrap; }
+            .sp-btn {
+                display: inline-flex; align-items: center; gap: .75rem;
+                min-height: 48px; padding: 0 1.3rem; border-radius: 999px;
+                font: inherit; font-size: .92rem; font-weight: 600; cursor: pointer;
+                border: 1px solid var(--sp-edge); background: transparent; color: var(--text-main);
+                transition: background-color .2s var(--sp-ease), border-color .2s var(--sp-ease), transform .15s var(--sp-ease);
             }
-            .sp-contrib-card:hover::after { opacity: 1; }
-            .sp-contrib-card:hover {
-                border-color: rgba(var(--primary-rgb),.4);
-                transform: translateY(-5px);
-                box-shadow: 0 12px 32px rgba(var(--primary-rgb),.12);
+            .sp-btn:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+            .sp-btn:active { transform: scale(.98); }
+            .sp-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+            .sp-btn--main {
+                padding-right: .35rem;
+                background: var(--text-main); color: var(--bg-deep); border-color: transparent;
             }
-            .sp-contrib-icon { font-size: 1.9rem; margin-bottom: .6rem; display: block; }
-            .sp-contrib-title { font-weight: 700; font-size: .88rem; margin-bottom: .25rem; }
-            .sp-contrib-desc { color: var(--text-muted); font-size: .75rem; line-height: 1.5; }
-
-            /* ── STATS GRID (parallax card) ── */
-            .sp-stats-panel {
-                background: linear-gradient(135deg, rgba(var(--primary-rgb),.08), rgba(139,92,246,.05));
-                border: 1px solid rgba(var(--primary-rgb),.18);
-                border-radius: 20px;
-                padding: 1.8rem;
-                position: relative; overflow: hidden;
-            }
-            .sp-stats-panel::before {
-                content: '';
-                position: absolute; top: -40%; right: -15%;
-                width: 300px; height: 300px;
-                background: radial-gradient(circle, rgba(var(--primary-rgb),.08), transparent);
-                border-radius: 50%; pointer-events: none;
-            }
-            #supportStatsGrid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-                gap: 12px;
+            .sp-btn--main:hover { background: color-mix(in srgb, var(--text-main) 88%, var(--primary)); border-color: transparent; }
+            .sp-btn-ic {
+                display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+                background: var(--primary); color: #fff;
+                transition: transform .3s var(--sp-ease);
             }
 
-            /* ── FEEDBACK PANEL ── */
+            /* ── Das Geraet: kippt beim Scrollen flach (--hp 0…1 aus dem rAF-Lauf) ── */
+            .sp-device { position: relative; margin-top: clamp(3rem, 6vw, 4.5rem); perspective: 2200px; }
+            .sp-device::before {
+                content: ''; position: absolute; left: 8%; right: 8%; top: 10%; height: 70%;
+                background: radial-gradient(50% 50% at 50% 50%, rgba(var(--primary-rgb),.32), transparent 70%);
+                filter: blur(60px); pointer-events: none;
+            }
+            .sp-tilt {
+                --hp: 0;
+                position: relative; transform-origin: 50% 0%;
+                transform: rotateX(calc((1 - var(--hp)) * 22deg)) scale(calc(.92 + var(--hp) * .08));
+            }
+            .sp-screen {
+                position: relative; margin: 0; padding: 9px; min-width: 0;
+                border-radius: 22px;
+                background: linear-gradient(180deg, var(--sp-glass1), var(--sp-glass2));
+                border: 1px solid var(--sp-edge);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 50px 140px -40px var(--sp-shade);
+            }
+            .sp-screen-in {
+                position: relative; border-radius: 13px; overflow: hidden;
+                background: linear-gradient(var(--bg-glass), var(--bg-glass)), var(--bg-deep);
+                aspect-ratio: 16 / 10;
+            }
+            .sp-tilt .sp-screen-in::after {
+                content: ''; position: absolute; inset: 0; pointer-events: none;
+                background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.06) 45%, transparent 60%);
+                background-size: 250% 100%;
+                background-position: calc(100% - var(--hp) * 100%) 0;
+            }
+            .sp-shot {
+                display: block; width: 100%; height: 100%; object-fit: cover;
+                opacity: 0; transition: opacity .6s var(--sp-ease);
+            }
+            .sp-shot.is-loaded { opacity: 1; }
+            .sp-phone {
+                position: absolute; right: -2.5%; bottom: -9%; width: 19%; margin: 0; padding: 6px; z-index: 3;
+                border-radius: 34px;
+                background: linear-gradient(180deg, var(--sp-glass1), var(--sp-glass2)), var(--bg-deep);
+                border: 1px solid var(--sp-edge);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 40px 90px -20px var(--sp-shade);
+            }
+            .sp-phone-in {
+                border-radius: 28px; overflow: hidden; aspect-ratio: 780 / 1688;
+                background: linear-gradient(var(--bg-glass), var(--bg-glass)), var(--bg-deep);
+            }
+
+            /* ── "Dein Stand": die eigenen Zahlen liegen vor der App ── */
+            .sp-mine {
+                position: absolute; left: -2.5%; bottom: -7%; width: min(340px, 34%); z-index: 4;
+                padding: 1.25rem 1.35rem 1.1rem; border-radius: 18px;
+                /* Zwei Ebenen: --bg-sidebar hat Alpha, sonst scheint die Aufnahme durch. */
+                background: linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep);
+                border: 1px solid var(--sp-edge);
+                box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 40px 90px -20px var(--sp-shade);
+            }
+            .sp-mine-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .6rem; }
+            .sp-mine-title { font-size: .86rem; font-weight: 700; color: var(--text-main); }
+            .sp-mine-note { font-size: .72rem; color: var(--text-muted); }
+            .sp-mine-rows { display: grid; }
+            .sp-mine-row {
+                display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+                padding: .5rem 0; border-top: 1px solid var(--sp-rule);
+            }
+            .sp-mine-row:first-child { border-top: 0; }
+            .sp-mine-key { font-size: .8rem; color: var(--text-muted); }
+            .sp-mine-val { font-family: var(--font-mono); font-size: .92rem; font-weight: 500; color: var(--text-main); font-variant-numeric: tabular-nums; }
+            .sp-mine-empty { font-size: .8rem; line-height: 1.55; color: var(--text-muted); margin: .2rem 0 0; }
+
+            .sp-cap {
+                margin: 0; font-size: .86rem; line-height: 1.6; color: var(--text-muted); text-wrap: pretty;
+            }
+            .sp-cap b { color: var(--text-main); font-weight: 600; }
+            .sp-device > .sp-cap { position: relative; margin: 5rem 0 0 auto; max-width: 44ch; }
+
+            /* ── Abschnitte ── */
+            .sp-sec { padding-block: clamp(3.5rem, 8vw, 6rem); border-top: 1px solid var(--sp-rule); }
+            .sp-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 2rem clamp(2rem, 5vw, 4.5rem); align-items: start; }
+            .sp-h2 {
+                font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 800;
+                line-height: 1.05; letter-spacing: -.035em; margin: 0 0 .8rem; color: var(--text-main);
+                text-wrap: balance;
+            }
+            .sp-desc { font-size: .95rem; line-height: 1.65; color: var(--text-muted); max-width: 42ch; margin: 0; text-wrap: pretty; }
+            .sp-head--wide { margin-bottom: clamp(2rem, 4vw, 3rem); }
+            .sp-head--wide .sp-desc { max-width: 60ch; }
+
+            /* ── Mitmachen: eine Liste, keine Kartenwand ── */
+            .sp-actions { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--sp-rule); }
+            .sp-actions > li { border-bottom: 1px solid var(--sp-rule); }
+            .sp-action {
+                display: grid; grid-template-columns: 40px minmax(0, 1fr) 20px; gap: 1rem; align-items: center;
+                width: 100%; padding: 1.05rem .75rem; margin: 0;
+                font: inherit; text-align: left; color: inherit; text-decoration: none;
+                background: transparent; border: 0; border-radius: 12px; cursor: pointer;
+                transition: background-color .2s var(--sp-ease);
+            }
+            .sp-action:hover { background: var(--hover-fill); }
+            .sp-action:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+            .sp-action-ic {
+                display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px;
+                background: rgba(var(--primary-rgb),.1); color: var(--primary);
+            }
+            .sp-action-txt { display: grid; gap: 2px; min-width: 0; }
+            .sp-action-t { font-size: .98rem; font-weight: 650; color: var(--text-main); }
+            .sp-action-d { font-size: .82rem; color: var(--text-muted); }
+            .sp-action-go { color: var(--text-muted); transition: color .2s; }
+            .sp-action:hover .sp-action-go { color: var(--primary); }
+
+            /* ── Feedback ── */
             .sp-feedback-panel {
-                background: rgba(255,255,255,.025);
-                border: 1px solid rgba(255,255,255,.07);
+                background: linear-gradient(180deg, var(--sp-glass2), transparent);
+                border: 1px solid var(--sp-edge);
                 border-radius: 20px;
-                padding: 2rem 1.8rem;
+                padding: clamp(1.2rem, 3vw, 1.8rem);
+                transition: border-color .2s var(--sp-ease);
             }
-            .sp-feedback-panel:focus-within {
-                border-color: rgba(var(--primary-rgb),.3);
-                box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.06);
-            }
+            .sp-feedback-panel:focus-within { border-color: var(--hover-border); }
             .sp-emoji-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.2rem; }
             .sp-emoji-btn {
-                padding: 10px 16px; border-radius: 12px;
-                background: rgba(255,255,255,.03);
-                border: 1px solid rgba(255,255,255,.07);
-                font-size: 1.35rem; cursor: pointer;
-                transition: transform .2s, box-shadow .2s;
-                font-family: var(--font-main);
+                display: grid; place-items: center; width: 52px; height: 48px; border-radius: 12px;
+                background: transparent; color: var(--text-muted);
+                border: 1px solid var(--sp-edge); cursor: pointer;
+                transition: background-color .2s var(--sp-ease), border-color .2s var(--sp-ease), color .2s;
             }
-            .sp-emoji-btn:hover { transform: scale(1.18); box-shadow: 0 4px 16px rgba(var(--primary-rgb),.2); }
+            .sp-emoji-btn:hover { background: var(--hover-fill); border-color: var(--hover-border); color: var(--text-main); }
+            .sp-emoji-btn:active { transform: scale(.96); }
+            .sp-emoji-btn.is-picked { background: var(--hover-fill-strong); border-color: var(--primary); color: var(--primary); }
+            .sp-emoji-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+            .sp-textarea {
+                display: block; width: 100%; min-height: 96px; padding: 12px 14px;
+                background: transparent; border: 1px solid var(--sp-edge); border-radius: 12px;
+                color: var(--text-main); font: inherit; font-size: 16px; line-height: 1.5;
+                resize: vertical; outline: none; transition: border-color .2s var(--sp-ease);
+            }
+            .sp-textarea:focus { border-color: var(--hover-border); }
+            @media (min-width: 900px) { .sp-textarea { font-size: .9rem; } }
+
+            /* ── Der aktuelle Stand: zwei flache Rahmen ── */
+            .sp-duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 3vw, 2.5rem); }
+            .sp-duo .sp-screen { padding: 7px; border-radius: 18px; }
+            .sp-duo .sp-screen-in { border-radius: 11px; }
+            .sp-fig { margin: 0; min-width: 0; }
+            .sp-duo figcaption { margin-top: 1rem; padding-inline: 2px; }
+
+            @media (max-width: 1000px) {
+                .sp-hero-row { grid-template-columns: 1fr; }
+            }
+            /* Unter 900 px steht "Dein Stand" UNTER dem Geraet: ueberlappend
+               verdeckte die Karte dort die halbe Aufnahme. */
+            @media (max-width: 900px) {
+                .sp-split { grid-template-columns: 1fr; }
+                .sp-duo { grid-template-columns: 1fr; }
+                .sp-screen { padding: 5px; border-radius: 16px; }
+                .sp-screen-in { border-radius: 12px; }
+                .sp-phone { width: 27%; right: -1%; bottom: -12%; padding: 4px; border-radius: 22px; }
+                .sp-phone-in { border-radius: 18px; }
+                .sp-mine { position: relative; left: auto; bottom: auto; width: 100%; margin-top: 4.5rem; }
+                .sp-device > .sp-cap { margin: 1.5rem 0 0; max-width: none; }
+            }
+            @media (max-width: 560px) {
+                .sp-btns > .sp-btn { flex: 1 1 100%; justify-content: space-between; }
+                .sp-btns > .sp-btn:not(.sp-btn--main) { justify-content: center; }
+                .sp-action { padding-inline: .25rem; }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .sp-tilt { transform: none; }
+                .sp-shot, .sp-btn, .sp-btn-ic, .sp-action, .sp-action-go, .sp-emoji-btn { transition: none; }
+            }
 
             /* ── CHANGELOG — Release-Ledger ─────────────────────────────
                Vorher: acht Eintraege à ~880 Zeichen Fliesstext offen unter-
@@ -669,281 +597,241 @@
                 .cl-body, .cl-row__chev, button.cl-day, .cl-tip { transition: none; }
                 button.cl-day:hover { transform: none; }
             }
-
-            /* ── FLOATING CARD (parallax depth) ── */
-            .sp-float-card {
-                background: linear-gradient(135deg, rgba(var(--primary-rgb),.12), rgba(10,8,20,.95));
-                border: 1px solid rgba(var(--primary-rgb),.25);
-                border-radius: 18px;
-                padding: 1.4rem 1.6rem;
-                position: relative;
-                animation: sp-float-anim 6s ease-in-out infinite;
-                backdrop-filter: blur(12px);
-            }
-            @keyframes sp-float-anim {
-                0%,100% { transform: translateY(0) rotate(-.3deg); }
-                50%      { transform: translateY(-8px) rotate(.3deg); }
-            }
-            .sp-float-metric {
-                font-family: 'DM Serif Display', serif;
-                font-size: 2.4rem; line-height: 1;
-                background: linear-gradient(135deg, var(--primary), #c084fc);
-                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            }
-            .sp-float-label { font-size: .72rem; color: var(--text-muted); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; margin-top: .3rem; }
-
-            /* ── SPLIT LAYOUT ── */
-            .sp-split {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 2.5rem;
-                align-items: center;
-            }
-            @media (max-width: 720px) {
-                .sp-split { grid-template-columns: 1fr; }
-            }
-            .sp-float-stack {
-                display: flex; flex-direction: column; gap: 1rem;
-            }
-            .sp-float-row { display: flex; gap: 1rem; }
-            .sp-float-row .sp-float-card { flex: 1; }
-
         </style>
 
-        <!-- ══ PARALLAX HERO ══════════════════════════════ -->
-        <div id="sp-hero">
-            <div class="sp-blob sp-blob-1" id="sp-blob1"></div>
-            <div class="sp-blob sp-blob-2" id="sp-blob2"></div>
-            <div class="sp-blob sp-blob-3" id="sp-blob3"></div>
-            <div class="sp-grid" id="sp-grid"></div>
-            <div id="sp-geo-container"></div>
-
-            <div class="sp-eyebrow">
-                <span class="sp-eyebrow-dot"></span>
-                Support & Community
-            </div>
-            <h1 class="sp-hero-title">
-                Danke, dass du<br><em>MyWorkLog</em> nutzt.
-            </h1>
-            <p class="sp-hero-sub">
-                Dieses Projekt lebt durch dein Feedback, deine Unterstützung
-                und die Community. Alles, was du hier tust, hilft direkt.
-            </p>
-        </div>
-
-        <!-- ══ DIVIDER ════════════════════════════════════ -->
-        <div class="sp-divider"><div class="sp-divider-line"></div></div>
-
-        <!-- ══ STATS FLOAT (parallax depth) ══════════════ -->
-        <div class="sp-section">
-            <div class="sp-split">
-                <div>
-                    <span class="sp-label sp-sr">Deine Zahlen</span>
-                    <h2 class="sp-section-title sp-sr sp-sr-d1">Dein persönlicher <em>Fortschritt</em></h2>
-                    <p class="sp-section-desc sp-sr sp-sr-d2">Alles, was du mit MyWorkLog festgehalten hast — live aus deinem localStorage.</p>
-                </div>
-                <div class="sp-stats-panel sp-sr sp-sr-d3">
-                    <div style="font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:1rem; display:flex; align-items:center; gap:.5rem;">
-                        <span><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span> MyWorkLog Statistiken
+        <!-- ══ KOPF ══════════════════════════════════════
+             🔴 Keine ids an Textcontainern hier: die i18n-Gruppe haengt an der
+             naechsten id (#view-support). Eine neue id verschiebt alle
+             Schluessel darunter in eine neue Gruppe, und die vorhandenen
+             Uebersetzungen laufen ins Leere. -->
+        <section class="sp-hero">
+            <div class="sp-shell">
+                <h1 class="sp-title">
+                    <span>Danke, dass du</span>
+                    <span>MyWorkLog nutzt.</span>
+                </h1>
+                <div class="sp-hero-row">
+                    <p class="sp-lede">Hier sagst du, was fehlt, meldest Fehler und siehst, was sich zuletzt geändert hat. Jede Rückmeldung landet direkt beim Entwickler.</p>
+                    <div class="sp-btns">
+                        <button type="button" class="sp-btn sp-btn--main" onclick="supportScrollTo('feedback')"><span>Feedback schreiben</span><span class="sp-btn-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></span></button>
+                        <button type="button" class="sp-btn" onclick="supportScrollTo('updates')"><span>Was neu ist</span></button>
                     </div>
-                    <div id="supportStatsGrid"><!-- filled by JS --></div>
                 </div>
             </div>
-        </div>
 
-        <!-- ══ DIVIDER ════════════════════════════════════ -->
-        <div class="sp-divider"><div class="sp-divider-line"></div></div>
+            <div class="sp-shell">
+                <div class="sp-device">
+                    <div class="sp-tilt" id="spTilt">
+                        <figure class="sp-screen">
+                            <div class="sp-screen-in">
+                                <img class="sp-shot" data-src="/Grafiken/support/performance.webp?v=7.5.4" width="2880" height="1800" decoding="async" alt="Performance-Ansicht von MyWorkLog: der Saldo über 90 Tage als Kurve gegen die Nulllinie, darunter Soll und Ist je Kalenderwoche">
+                            </div>
+                        </figure>
+                        <figure class="sp-phone">
+                            <div class="sp-phone-in">
+                                <img class="sp-shot" data-src="/Grafiken/support/verlauf-handy.webp?v=7.5.4" width="780" height="1688" decoding="async" alt="Verlauf von MyWorkLog am Handy: Zeitband mit Saldo und Wochenbalken, darunter die Einträge des Monats mit Stunden und Saldo">
+                            </div>
+                        </figure>
+                    </div>
 
-        <!-- ══ CONTRIBUTE ════════════════════════════════ -->
-        <div class="sp-section">
-            <span class="sp-label sp-sr">Mitmachen</span>
-            <h2 class="sp-section-title sp-sr sp-sr-d1">So kannst du <em>beitragen</em></h2>
-            <p class="sp-section-desc sp-sr sp-sr-d2">Kein Geld nötig — auch Zeit, Ideen und Weitersagen helfen enorm.</p>
+                    <aside class="sp-mine">
+                        <div class="sp-mine-head">
+                            <span class="sp-mine-title">Dein Stand</span>
+                            <span class="sp-mine-note">nur auf diesem Gerät</span>
+                        </div>
+                        <div class="sp-mine-rows" id="supportStatsGrid"></div>
+                    </aside>
 
-            <div class="sp-contrib-grid sp-sr sp-sr-d2">
-                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer" class="sp-contrib-card">
-                    <span class="sp-contrib-icon"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></svg></span>
-                    <div class="sp-contrib-title">Code beitragen</div>
-                    <div class="sp-contrib-desc">Fork & Pull Request auf GitHub</div>
-                </a>
-                <a href="https://github.com/TechNova-App-Team/MyWorkLog/issues" target="_blank" rel="noopener noreferrer" class="sp-contrib-card">
-                    <span class="sp-contrib-icon"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg></span>
-                    <div class="sp-contrib-title">Bugs melden</div>
-                    <div class="sp-contrib-desc">GitHub Issues öffnen</div>
-                </a>
-                <div class="sp-contrib-card" onclick="supportFeatureRequest()">
-                    <span class="sp-contrib-icon"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
-                    <div class="sp-contrib-title">Feature-Wunsch</div>
-                    <div class="sp-contrib-desc">Ideen einreichen</div>
+                    <p class="sp-cap"><b>Performance.</b> <span>Wie dein Saldo über 90 Tage wächst, und Woche für Woche Soll gegen Ist. Daneben am Handy der Verlauf — jeder Eintrag mit seinem Saldo.</span></p>
                 </div>
-                <div class="sp-contrib-card" onclick="supportShare()">
-                    <span class="sp-contrib-icon"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 9v6"/><path d="M3 10a2 2 0 0 1 2-2h2.5L14 4v16l-6.5-4H5a2 2 0 0 1-2-2z"/><path d="M20 9v6"/></svg></span>
-                    <div class="sp-contrib-title">Teilen</div>
-                    <div class="sp-contrib-desc">Erzähl's weiter!</div>
-                </div>
-                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer" class="sp-contrib-card" style="border-color:rgba(var(--primary-rgb),.2); background:rgba(var(--primary-rgb),.05);">
-                    <span class="sp-contrib-icon"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg></span>
-                    <div class="sp-contrib-title">Star auf GitHub</div>
-                    <div class="sp-contrib-desc">README & Guides</div>
-                </a>
             </div>
-        </div>
+        </section>
 
-        <!-- ══ DIVIDER ════════════════════════════════════ -->
-        <div class="sp-divider sp-section-alt"><div class="sp-divider-line"></div></div>
+        <!-- ══ MITMACHEN ═════════════════════════════════ -->
+        <section class="sp-sec">
+            <div class="sp-shell sp-split">
+                <header>
+                    <h2 class="sp-h2">So kannst du beitragen</h2>
+                    <p class="sp-desc">Kein Geld nötig — Zeit, Ideen und Weitersagen helfen genauso.</p>
+                </header>
+                <ul class="sp-actions">
+                    <li><a class="sp-action" href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer">
+                        <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+                        <span class="sp-action-txt"><span class="sp-action-t">Code beitragen</span><span class="sp-action-d">Stern, Fork oder Pull Request auf GitHub</span></span>
+                        <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+                    </a></li>
+                    <li><a class="sp-action" href="https://github.com/TechNova-App-Team/MyWorkLog/issues" target="_blank" rel="noopener noreferrer">
+                        <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span>
+                        <span class="sp-action-txt"><span class="sp-action-t">Bugs melden</span><span class="sp-action-d">GitHub Issues öffnen</span></span>
+                        <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+                    </a></li>
+                    <li><button type="button" class="sp-action" onclick="supportFeatureRequest()">
+                        <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+                        <span class="sp-action-txt"><span class="sp-action-t">Feature-Wunsch</span><span class="sp-action-d">Ideen einreichen</span></span>
+                        <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </button></li>
+                    <li><button type="button" class="sp-action" onclick="supportShare()">
+                        <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></span>
+                        <span class="sp-action-txt"><span class="sp-action-t">Teilen</span><span class="sp-action-d">Erzähl anderen Azubis davon</span></span>
+                        <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                    </button></li>
+                </ul>
+            </div>
+        </section>
 
-        <!-- ══ FEEDBACK ══════════════════════════════════ -->
-        <div id="supportFeedbackSection" class="sp-section sp-section-alt">
-            <span class="sp-label sp-sr">Feedback</span>
-            <h2 class="sp-section-title sp-sr sp-sr-d1">Wie fandest du <em>MyWorkLog?</em></h2>
-            <p class="sp-section-desc sp-sr sp-sr-d2">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
+        <!-- ══ FEEDBACK ══════════════════════════════════
+             Die Knoepfe Minimal/Vollstaendig faerbt support-feedback.js per
+             style — deshalb bleiben ihre Inline-Styles hier stehen. -->
+        <section id="supportFeedbackSection" class="sp-sec" data-sp="feedback">
+            <div class="sp-shell sp-split">
+                <header>
+                    <h2 class="sp-h2">Wie findest du MyWorkLog?</h2>
+                    <p class="sp-desc">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
+                </header>
 
-            <div class="sp-feedback-panel sp-sr sp-sr-d2">
-                <div class="sp-emoji-row">
-                    <button class="sp-emoji-btn" onclick="supportRate(5)" title="Fantastisch!" aria-label="Fantastisch"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                    <button class="sp-emoji-btn" onclick="supportRate(4)" title="Gut!" aria-label="Gut"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                    <button class="sp-emoji-btn" onclick="supportRate(3)" title="Okay" aria-label="Okay"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                    <button class="sp-emoji-btn" onclick="supportRate(2)" title="Nicht so gut" aria-label="Nicht so gut"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M8 9h2"/><path d="M14 9h2"/></svg></button>
-                    <button class="sp-emoji-btn" onclick="supportRate(1)" title="Schlecht" aria-label="Schlecht"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                </div>
+                <div class="sp-feedback-panel">
+                    <div class="sp-emoji-row">
+                        <button class="sp-emoji-btn" onclick="supportRate(5)" title="Fantastisch!" aria-label="Fantastisch"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
+                        <button class="sp-emoji-btn" onclick="supportRate(4)" title="Gut!" aria-label="Gut"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
+                        <button class="sp-emoji-btn" onclick="supportRate(3)" title="Okay" aria-label="Okay"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
+                        <button class="sp-emoji-btn" onclick="supportRate(2)" title="Nicht so gut" aria-label="Nicht so gut"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M8 9h2"/><path d="M14 9h2"/></svg></button>
+                        <button class="sp-emoji-btn" onclick="supportRate(1)" title="Schlecht" aria-label="Schlecht"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
+                    </div>
 
-                <textarea id="supportFeedbackText"
-                    placeholder="Was können wir besser machen? (Emoji Optional)"
-                    style="width:100%; min-height:80px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; color:var(--text-main); font-family:var(--font-main); font-size:.85rem; resize:vertical; outline:none; transition:border-color .2s;"
-                    onfocus="this.style.borderColor='rgba(var(--primary-rgb),.4)'"
-                    onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
+                    <textarea id="supportFeedbackText" class="sp-textarea"
+                        placeholder="Was können wir besser machen? (Emoji Optional)"></textarea>
 
-                <!-- DSGVO Toggle -->
-                <div style="margin-top:12px; padding:12px 14px; background:rgba(var(--primary-rgb),.04); border:1px solid rgba(var(--primary-rgb),.12); border-radius:12px;">
-                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                        <span style="font-size:.78rem; color:var(--text-muted);">Mitgesendete Daten</span>
-                        <div style="display:flex; gap:6px;">
-                            <button id="feedbackModeMinimal" onclick="setFeedbackDataMode('minimal')" class="btn"
-                                style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.3); color:#10b981; font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Minimal</button>
-                            <button id="feedbackModeFull" onclick="setFeedbackDataMode('full')" class="btn"
-                                style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); color:var(--text-muted); font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Vollständig</button>
+                    <!-- DSGVO Toggle -->
+                    <div style="margin-top:12px; padding:12px 14px; background:rgba(var(--primary-rgb),.04); border:1px solid rgba(var(--primary-rgb),.12); border-radius:12px;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <span style="font-size:.78rem; color:var(--text-muted);">Mitgesendete Daten</span>
+                            <div style="display:flex; gap:6px;">
+                                <button id="feedbackModeMinimal" onclick="setFeedbackDataMode('minimal')" class="btn"
+                                    style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.3); color:#10b981; font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Minimal</button>
+                                <button id="feedbackModeFull" onclick="setFeedbackDataMode('full')" class="btn"
+                                    style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); color:var(--text-muted); font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Vollständig</button>
+                            </div>
+                        </div>
+                        <div id="feedbackDataModeInfo" style="display:flex; align-items:flex-start; gap:7px; font-size:.7rem; color:var(--text-muted); margin-top:8px; line-height:1.5;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <span>Minimal: Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.</span>
+                        </div>
+                        <div style="margin-top:6px; display:flex; flex-wrap:wrap; column-gap:16px;">
+                            <button type="button" onclick="showFeedbackDataPreview()"
+                                style="display:inline-flex; align-items:center; gap:6px; background:none; border:none; padding:8px 0; font:inherit; font-size:.7rem; color:var(--primary); text-decoration:underline; cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Welche Daten werden gesendet?</button>
+                            <a href="/email/send" target="_blank"
+                                style="display:inline-flex; align-items:center; gap:6px; padding:8px 0; font-size:.7rem; color:var(--primary); text-decoration:underline; opacity:.7;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>E-Mail-Vorlage ansehen</a>
                         </div>
                     </div>
-                    <div id="feedbackDataModeInfo" style="display:flex; align-items:flex-start; gap:7px; font-size:.7rem; color:var(--text-muted); margin-top:8px; line-height:1.5;">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        <span>Minimal: Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.</span>
+    
+                    <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px;">
+                        <input type="checkbox" id="feedbackDSGVOConsent"
+                            style="margin-top:3px; accent-color:var(--primary); min-width:16px; min-height:16px; cursor:pointer;">
+                        <label for="feedbackDSGVOConsent" style="font-size:.72rem; color:var(--text-muted); line-height:1.5; cursor:pointer;">
+                            Ich stimme zu, dass mein Feedback über <strong>EmailJS</strong> an den Entwickler gesendet wird.
+                            <a href="/DSGVO/" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
+                        </label>
                     </div>
-                    <div style="margin-top:6px; display:flex; flex-wrap:wrap; column-gap:16px;">
-                        <button type="button" onclick="showFeedbackDataPreview()"
-                            style="display:inline-flex; align-items:center; gap:6px; background:none; border:none; padding:8px 0; font:inherit; font-size:.7rem; color:var(--primary); text-decoration:underline; cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Welche Daten werden gesendet?</button>
-                        <a href="/email/send" target="_blank"
-                            style="display:inline-flex; align-items:center; gap:6px; padding:8px 0; font-size:.7rem; color:var(--primary); text-decoration:underline; opacity:.7;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>E-Mail-Vorlage ansehen</a>
+                    <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                        <button class="btn btn-primary" onclick="supportSendFeedback()" style="gap:8px; padding:10px 28px; font-size:.85rem;"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Feedback senden</span></button>
                     </div>
-                </div>
-
-                <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px;">
-                    <input type="checkbox" id="feedbackDSGVOConsent"
-                        style="margin-top:3px; accent-color:var(--primary); min-width:16px; min-height:16px; cursor:pointer;">
-                    <label for="feedbackDSGVOConsent" style="font-size:.72rem; color:var(--text-muted); line-height:1.5; cursor:pointer;">
-                        Ich stimme zu, dass mein Feedback über <strong>EmailJS</strong> an den Entwickler gesendet wird.
-                        <a href="/DSGVO/" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
-                    </label>
-                </div>
-                <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-                    <button class="btn btn-primary" onclick="supportSendFeedback()" style="padding:10px 28px; font-size:.85rem;"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Feedback senden</span></button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- ══ DIVIDER ════════════════════════════════════ -->
-        <div class="sp-divider"><div class="sp-divider-line"></div></div>
+        <!-- ══ DER AKTUELLE STAND ═══════════════════════ -->
+        <section class="sp-sec">
+            <div class="sp-shell">
+                <header class="sp-head--wide">
+                    <h2 class="sp-h2">Der aktuelle Stand</h2>
+                    <p class="sp-desc">Jahres- und Monatsansicht, mit Beispieldaten aufgenommen — so sieht die App heute aus. Wie sie dahin kam, steht darunter.</p>
+                </header>
+                <div class="sp-duo">
+                    <figure class="sp-fig">
+                        <div class="sp-screen"><div class="sp-screen-in">
+                            <img class="sp-shot" data-src="/Grafiken/support/jahr.webp?v=7.5.4" width="2880" height="1800" decoding="async" alt="Jahresansicht von MyWorkLog: geleistete Stunden im Jahr, Saldo und Prognose, darunter jeder Tag des Jahres als Feld">
+                        </div></div>
+                        <figcaption class="sp-cap"><b>Jahresansicht.</b> <span>Jeder Tag ein Feld. Die Farbe zeigt Menge, Art oder Saldo — welches, wählst du.</span></figcaption>
+                    </figure>
+                    <figure class="sp-fig">
+                        <div class="sp-screen"><div class="sp-screen-in">
+                            <img class="sp-shot" data-src="/Grafiken/support/monat.webp?v=7.5.4" width="2880" height="1800" decoding="async" alt="Monatsansicht von MyWorkLog: Saldo des Monats, ein Kalender mit der geleisteten Zeit je Tag als Balken, darunter der Monat im Vergleich zu den übrigen">
+                        </div></div>
+                        <figcaption class="sp-cap"><b>Monatsansicht.</b> <span>Die Balkenhöhe ist die geleistete Zeit, die Linie das Tagessoll. Darunter steht der Monat neben den anderen.</span></figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
 
         <!-- ══ CHANGELOG ═════════════════════════════════ -->
-        <div class="sp-section">
-            <span class="sp-label sp-sr">Changelog</span>
-            <h2 class="sp-section-title sp-sr sp-sr-d1">Letzte <em>Updates</em></h2>
-            <p class="sp-section-desc sp-sr sp-sr-d2">Jede Version, die je ausgeliefert wurde — mit Datum, durchsuchbar, im Volltext.</p>
+        <section class="sp-sec" data-sp="updates">
+            <div class="sp-shell">
+                <header class="sp-head--wide">
+                    <h2 class="sp-h2">Letzte Updates</h2>
+                    <p class="sp-desc">Jede Version, die je ausgeliefert wurde — mit Datum, durchsuchbar, im Volltext.</p>
+                </header>
 
-            <!-- Inhalt kommt vollstaendig aus config/version.json (changelog +
-                 changelogDates) — siehe renderSupportChangelog() unten. Nicht
-                 hardcoden: die Datei ist die einzige Quelle. -->
-            <div class="sp-clog sp-sr sp-sr-d2" id="supportChangelog">
-                <div class="cl-empty-state">Lädt Änderungen…</div>
+                <!-- Inhalt kommt vollstaendig aus config/version.json (changelog +
+                     changelogDates) — siehe renderSupportChangelog() unten. Nicht
+                     hardcoden: die Datei ist die einzige Quelle. -->
+                <div class="sp-clog" id="supportChangelog">
+                    <div class="cl-empty-state">Lädt Änderungen…</div>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <!-- ══ FOOTER ════════════════════════════════════ -->
         <div id="support-footer"></div>
 
-        <!-- ══ PARALLAX & REVEAL JS ════════════════════════ -->
         <script>
+        /* Bilder erst beim Oeffnen — siehe Kopfkommentar. Einmalig: danach
+           traegt kein <img> mehr data-src, der zweite Aufruf findet nichts. */
+        function supportLoadShots() {
+            document.querySelectorAll('#view-support img[data-src]').forEach(function(img) {
+                img.addEventListener('load', function() { img.classList.add('is-loaded'); }, { once: true });
+                img.src = img.getAttribute('data-src');
+                img.removeAttribute('data-src');
+            });
+        }
+        function supportScrollTo(key) {
+            var el = document.querySelector('#view-support [data-sp="' + key + '"]');
+            if (!el) return;
+            var ruhig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+            el.scrollIntoView({ behavior: ruhig ? 'auto' : 'smooth', block: 'start' });
+        }
         (function() {
-            /* ── init geo lines ── */
-            var geoContainer = document.getElementById('sp-geo-container');
-            if (geoContainer) {
-                for (var i = 0; i < 6; i++) {
-                    var line = document.createElement('div');
-                    line.className = 'sp-geo-line';
-                    var top = 5 + Math.random() * 88;
-                    var w   = 180 + Math.random() * 420;
-                    var dur = 9 + Math.random() * 14;
-                    var del = -(Math.random() * dur);
-                    line.style.cssText = 'top:' + top + '%;width:' + w + 'px;animation-duration:' + dur + 's;animation-delay:' + del + 's';
-                    geoContainer.appendChild(line);
-                }
-            }
-
-            /* ── scroll parallax bound to .main container ── */
-            var mainScroll = document.querySelector('.main');
-            var blob1 = document.getElementById('sp-blob1');
-            var blob2 = document.getElementById('sp-blob2');
-            var blob3 = document.getElementById('sp-blob3');
-            var grid  = document.getElementById('sp-grid');
-
-            function onSupportScroll() {
-                var viewEl = document.getElementById('view-support');
-                if (!viewEl || !viewEl.classList.contains('active')) return;
-                var y = mainScroll ? mainScroll.scrollTop : 0;
-                if (blob1) blob1.style.transform = 'translateY(' + (y * .13) + 'px)';
-                if (blob2) blob2.style.transform = 'translateY(' + (-y * .09) + 'px)';
-                if (blob3) blob3.style.transform = 'translateY(' + (y * .06) + 'px)';
-                if (grid)  grid.style.transform  = 'translateY(' + (y * .035) + 'px)';
-            }
-
-            if (mainScroll) {
-                mainScroll.addEventListener('scroll', onSupportScroll, { passive: true });
-            }
-
-            /* ── scroll reveal via IntersectionObserver ── */
-            var srObserver = new IntersectionObserver(function(entries) {
-                entries.forEach(function(e) {
-                    if (e.isIntersecting) {
-                        e.target.classList.add('sp-visible');
-                        srObserver.unobserve(e.target);
-                    }
-                });
-            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-            /* observe when tab becomes active */
-            function observeSupportItems() {
-                document.querySelectorAll('#view-support .sp-sr').forEach(function(el) {
-                    srObserver.observe(el);
-                });
-            }
-
-            /* watch for tab activation via MutationObserver */
             var viewSupport = document.getElementById('view-support');
-            if (viewSupport) {
-                new MutationObserver(function(muts) {
-                    muts.forEach(function(m) {
-                        if (m.type === 'attributes' && m.attributeName === 'class') {
-                            if (viewSupport.classList.contains('active')) {
-                                setTimeout(observeSupportItems, 80);
-                            }
-                        }
-                    });
-                }).observe(viewSupport, { attributes: true });
+            var tilt = document.getElementById('spTilt');
+            var mainScroll = document.querySelector('.main');
+            var ruhig = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+            var wartet = false;
 
-                /* also check if already active on load */
-                if (viewSupport.classList.contains('active')) {
-                    setTimeout(observeSupportItems, 80);
-                }
+            /* Der Bildschirm steht gekippt, solange er unten im Bild ist, und
+               liegt flach, sobald seine Oberkante das obere Sechstel erreicht.
+               Aus der Lage gerechnet, nicht aus scrollTop — so ist egal, ob
+               .main oder das Fenster scrollt. */
+            function kippen() {
+                wartet = false;
+                if (!tilt || ruhig.matches || !viewSupport.classList.contains('active')) return;
+                var r = tilt.getBoundingClientRect(), vh = window.innerHeight || 800;
+                var hp = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (vh * 0.68)));
+                tilt.style.setProperty('--hp', hp.toFixed(3));
             }
+            function anstossen() { if (!wartet) { wartet = true; requestAnimationFrame(kippen); } }
+            window.addEventListener('scroll', anstossen, { passive: true });
+            window.addEventListener('resize', anstossen, { passive: true });
+            if (mainScroll) mainScroll.addEventListener('scroll', anstossen, { passive: true });
+
+            function aufgegangen() {
+                if (!viewSupport.classList.contains('active')) return;
+                supportLoadShots();
+                if (typeof supportMarkRating === 'function') supportMarkRating();
+                anstossen();
+            }
+            if (viewSupport) {
+                new MutationObserver(aufgegangen).observe(viewSupport, { attributes: true, attributeFilter: ['class'] });
+                aufgegangen();
+            }
+
 
             /* ── Changelog: Release-Ledger aus config/version.json ──────────
                Einzige Quelle ist die Datei: `changelog` (Text je Version),

@@ -40,6 +40,7 @@
         const labels = ['', 'Schlecht', 'Nicht so gut', 'Okay', 'Gut', 'Fantastisch'];
         data.supportRating = rating;
         save();
+        if (typeof supportMarkRating === 'function') supportMarkRating();
 
         // Haptic feedback (vibration)
         if (navigator.vibrate) {

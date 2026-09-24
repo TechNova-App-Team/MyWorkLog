@@ -1032,7 +1032,11 @@
         var next = !st[id];
         if (next) {
             st[id] = true;
-            t.doneAt = new Date().toISOString();
+            /* Ortszeit, nicht toISOString(): doneDay() liest den Tag per
+               slice(0, 10), und UTC buchte einen Haken zwischen 0 und 2 Uhr
+               auf gestern (bis v7.5.3). */
+            var jetzt = new Date();
+            t.doneAt = iso(jetzt) + 'T' + [jetzt.getHours(), jetzt.getMinutes(), jetzt.getSeconds()].map(function (n) { return String(n).padStart(2, '0'); }).join(':');
             stats.done = (stats.done || 0) + 1;
             (t.subtasks || []).forEach(function (s) { s.done = true; });
         } else {

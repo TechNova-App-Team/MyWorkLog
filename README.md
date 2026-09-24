@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-7.5.3-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-7.5.4-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -250,15 +250,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v7.5.3** · 2026-09-24
+Aktuelle Version: **v7.5.4** · 2026-09-25
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **7.5.3** | 2026-09-24 | Mehr Schutz für den Betriebs-Weg und die Geräte-Kopplung |
+| **7.5.4** | 2026-09-25 | Die Support-Seite zeigt die App in echten Aufnahmen |
+| 7.5.3 | 2026-09-24 | Mehr Schutz für den Betriebs-Weg und die Geräte-Kopplung |
 | 7.5.2 | 2026-09-24 | Der Abschluss des Rundgangs erscheint auch auf Handys vollständig |
 | 7.5.1 | 2026-09-24 | Der Rundgang auf der Startseite zoomt im ersten Kapitel wieder |
 | 7.5.0 | 2026-09-23 | Die Startseite führt mit echten Aufnahmen durch die App statt mit einem Film |
-| 7.4.13 | 2026-09-23 | Der Einstieg ins Schatten-Berichtsheft zeigt den Tresor, und das Beschwerde-Protokoll zählt richtig |
 
 <!-- changelog:end -->
 

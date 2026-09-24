@@ -33,8 +33,9 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 // alten Clip zeigte (intro.mp4, seit v7.5.0 entfernt). Mit ?v=<version> aendert
 // sich der Cache-Key bei jedem Bump.
 // Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
-// jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen.
-const RE = /(\s(?:src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
+// jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen. data-src
+// gehoert dazu: die Support-Ansicht setzt ihre Bilder erst beim Oeffnen ein.
+const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
 
 // Versionsnummern, die im HTML stehen MUESSEN und daher unweigerlich veralten:
 //  - <meta name="generator">: Crawler lesen statisches HTML, JS kommt zu spaet.

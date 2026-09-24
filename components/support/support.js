@@ -1,30 +1,47 @@
 // ═══ SUPPORT MODULE ═══
 
+    // "Dein Stand" liegt als Karte vor der Aufnahme im Kopf der Support-Seite.
+    // Zeilen statt Kacheln, keine Farben je Zahl: die Werte sind Zustand, keine
+    // Wertung. JS-Text erfasst die statische i18n-Pipeline nicht, daher spL().
     function renderSupportStats() {
         const grid = document.getElementById('supportStatsGrid');
         if (!grid) return;
+        const isEN = document.documentElement.lang === 'en';
+        const spL = (de, en) => isEN ? en : de;
 
-        const entries = data.entries || [];
-        const totalEntries = entries.length;
-        const workEntries = entries.filter(e => e.type === 'work');
-        const totalHours = workEntries.reduce((s, e) => s + (e.worked || 0), 0);
-        const firstEntry = entries.length > 0 ? entries.reduce((a, b) => a.date < b.date ? a : b) : null;
-        const daysSinceFirst = firstEntry ? Math.floor((Date.now() - new Date(firstEntry.date).getTime()) / 86400000) : 0;
-        const streakDays = calculateCurrentStreak();
+        const entries = (typeof data !== 'undefined' && data && data.entries) || [];
+        if (!entries.length) {
+            grid.innerHTML = `<p class="sp-mine-empty">${spL(
+                'Noch keine Einträge. Sobald du den ersten Tag erfasst, steht hier dein Stand.',
+                'No entries yet. Once you log your first day, your numbers show up here.')}</p>`;
+            return;
+        }
+        const totalHours = entries.filter(e => e.type === 'work').reduce((s, e) => s + (e.worked || 0), 0);
+        const firstDate = entries.reduce((a, b) => a.date < b.date ? a : b).date;
+        const p = String(firstDate).split('-');
+        const daysSinceFirst = Math.max(0, Math.floor((Date.now() - new Date(+p[0], +p[1] - 1, +p[2]).getTime()) / 86400000));
+        const streak = typeof calculateCurrentStreak === 'function' ? calculateCurrentStreak() : 0;
+        const nf = new Intl.NumberFormat(isEN ? 'en-GB' : 'de-DE');
 
-        const stats = [
-            { icon: '📝', label: 'Einträge', value: totalEntries, color: 'var(--primary)' },
-            { icon: '⏱️', label: 'Stunden gesamt', value: totalHours.toFixed(0) + 'h', color: '#06b6d4' },
-            { icon: '📆', label: 'Tage dabei', value: daysSinceFirst, color: 'var(--success)' },
-            { icon: '🔥', label: 'Aktuelle Streak', value: streakDays + 'd', color: '#fbbf24' },
+        const rows = [
+            [spL('Einträge', 'Entries'), nf.format(entries.length)],
+            [spL('Stunden gearbeitet', 'Hours worked'), nf.format(Math.round(totalHours)) + ' h'],
+            [spL('Tage seit dem ersten Eintrag', 'Days since first entry'), nf.format(daysSinceFirst)],
+            [spL('Aktuelle Serie', 'Current streak'), nf.format(streak) + ' ' + spL(streak === 1 ? 'Tag' : 'Tage', streak === 1 ? 'day' : 'days')],
         ];
-
-        grid.innerHTML = stats.map(s => `
-            <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
-                <div style="margin-bottom:4px; line-height:0;">${mwlIconFromEmoji(s.icon, 20)}</div>
-                <div style="font-size:1.3rem; font-weight:800; color:${s.color}; font-family:var(--font-mono);">${s.value}</div>
-                <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">${s.label}</div>
-            </div>
-        `).join('');
+        grid.innerHTML = rows.map(([k, v]) =>
+            `<div class="sp-mine-row"><span class="sp-mine-key">${k}</span><span class="sp-mine-val">${v}</span></div>`
+        ).join('');
     }
 
+    // Die gewaehlte Bewertung bleibt sichtbar markiert (data.supportRating
+    // schreibt supportRate() in support-feedback.js).
+    function supportMarkRating() {
+        const r = (typeof data !== 'undefined' && data) ? data.supportRating : null;
+        document.querySelectorAll('#view-support .sp-emoji-btn').forEach(btn => {
+            const m = (btn.getAttribute('onclick') || '').match(/supportRate\((\d)\)/);
+            const on = !!m && +m[1] === r;
+            btn.classList.toggle('is-picked', on);
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+    }
