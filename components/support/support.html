@@ -199,33 +199,106 @@
             .sp-action:hover .sp-action-go { color: var(--primary); }
 
             /* ── Feedback ── */
-            .sp-feedback-panel {
-                background: linear-gradient(180deg, var(--sp-glass2), transparent);
+            .sp-facts { list-style: none; margin: 2rem 0 0; padding: 0; display: grid; gap: .85rem; max-width: 40ch; }
+            .sp-facts li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: .75rem; align-items: start; font-size: .88rem; line-height: 1.5; color: var(--text-muted); }
+            .sp-facts svg { margin-top: 2px; color: var(--primary); }
+
+            .sp-form {
+                display: grid; gap: 1.75rem;
+                padding: clamp(1.25rem, 3vw, 2rem);
+                border-radius: 22px;
+                background: linear-gradient(180deg, var(--sp-glass2), transparent 70%);
                 border: 1px solid var(--sp-edge);
-                border-radius: 20px;
-                padding: clamp(1.2rem, 3vw, 1.8rem);
-                transition: border-color .2s var(--sp-ease);
             }
-            .sp-feedback-panel:focus-within { border-color: var(--hover-border); }
-            .sp-emoji-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.2rem; }
-            .sp-emoji-btn {
-                display: grid; place-items: center; width: 52px; height: 48px; border-radius: 12px;
+            .sp-field { display: grid; gap: .7rem; min-width: 0; }
+            .sp-lbl { display: flex; align-items: baseline; gap: .5rem; font-size: .9rem; font-weight: 650; color: var(--text-main); }
+            .sp-opt { font-size: .76rem; font-weight: 500; color: var(--text-muted); }
+
+            /* Bewertung: eine Skala von schlecht nach gut, jede Stufe beschriftet */
+            .sp-rate { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+            .sp-rate-btn {
+                display: grid; justify-items: center; gap: .45rem;
+                padding: .8rem .25rem .7rem; border-radius: 12px;
+                font: inherit; font-size: .74rem; font-weight: 550; line-height: 1.2; text-align: center;
                 background: transparent; color: var(--text-muted);
                 border: 1px solid var(--sp-edge); cursor: pointer;
                 transition: background-color .2s var(--sp-ease), border-color .2s var(--sp-ease), color .2s;
             }
-            .sp-emoji-btn:hover { background: var(--hover-fill); border-color: var(--hover-border); color: var(--text-main); }
-            .sp-emoji-btn:active { transform: scale(.96); }
-            .sp-emoji-btn.is-picked { background: var(--hover-fill-strong); border-color: var(--primary); color: var(--primary); }
-            .sp-emoji-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+            .sp-rate-btn:hover { background: var(--hover-fill); border-color: var(--hover-border); color: var(--text-main); }
+            .sp-rate-btn:active { transform: scale(.97); }
+            .sp-rate-btn.is-picked { background: var(--hover-fill-strong); border-color: var(--primary); color: var(--text-main); }
+            .sp-rate-btn.is-picked svg { color: var(--primary); }
+            .sp-rate-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
             .sp-textarea {
-                display: block; width: 100%; min-height: 96px; padding: 12px 14px;
-                background: transparent; border: 1px solid var(--sp-edge); border-radius: 12px;
-                color: var(--text-main); font: inherit; font-size: 16px; line-height: 1.5;
-                resize: vertical; outline: none; transition: border-color .2s var(--sp-ease);
+                display: block; width: 100%; min-height: 128px; padding: 14px 16px;
+                background: linear-gradient(var(--bg-glass), var(--bg-glass)), var(--bg-deep);
+                border: 1px solid var(--sp-edge); border-radius: 14px;
+                color: var(--text-main); font: inherit; font-size: 16px; line-height: 1.55;
+                resize: vertical; outline: none;
+                transition: border-color .2s var(--sp-ease), box-shadow .2s var(--sp-ease);
             }
-            .sp-textarea:focus { border-color: var(--hover-border); }
-            @media (min-width: 900px) { .sp-textarea { font-size: .9rem; } }
+            .sp-textarea::placeholder { color: var(--text-muted); opacity: .75; }
+            .sp-textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.15); }
+            @media (min-width: 900px) { .sp-textarea { font-size: .95rem; } }
+
+            /* Datenumfang: ein Schalter, zwei Stellungen */
+            .sp-seg {
+                display: inline-grid; grid-template-columns: 1fr 1fr; justify-self: start;
+                padding: 4px; gap: 4px; border-radius: 12px;
+                border: 1px solid var(--sp-edge); background: var(--sp-glass2);
+            }
+            .sp-seg-btn {
+                display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+                min-height: 38px; padding: 0 1.1rem; border-radius: 9px; border: 0;
+                font: inherit; font-size: .84rem; font-weight: 600;
+                background: transparent; color: var(--text-muted); cursor: pointer;
+                transition: background-color .2s var(--sp-ease), color .2s;
+            }
+            .sp-seg-btn:hover { color: var(--text-main); }
+            .sp-seg-btn.is-on { background: var(--hover-fill-strong); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hover-border); }
+            .sp-seg-btn.is-on svg { color: var(--primary); }
+            .sp-seg-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+            .sp-hint { margin: 0; font-size: .82rem; line-height: 1.55; color: var(--text-muted); max-width: 60ch; }
+            .sp-links { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
+            .sp-link {
+                padding: .35rem 0; border: 0; background: none; cursor: pointer;
+                font: inherit; font-size: .82rem; font-weight: 550; color: var(--primary);
+                text-decoration: underline; text-decoration-color: rgba(var(--primary-rgb),.35); text-underline-offset: 3px;
+                transition: text-decoration-color .2s;
+            }
+            .sp-link:hover { text-decoration-color: currentColor; }
+            .sp-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+
+            /* Zustimmung + Senden: eine Zeile am Fuss, am Handy untereinander */
+            .sp-form-foot {
+                display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.25rem 1.5rem; align-items: center;
+                padding-top: 1.5rem; border-top: 1px solid var(--sp-rule);
+            }
+            .sp-consent { position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: .75rem; align-items: start; cursor: pointer; }
+            /* Das echte Kaestchen bleibt bedienbar (Tastatur, Screenreader) und liegt
+               unsichtbar ueber dem gezeichneten. */
+            .sp-consent input { position: absolute; left: 0; top: 1px; width: 20px; height: 20px; margin: 0; opacity: 0; cursor: pointer; }
+            .sp-check {
+                display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px; border-radius: 6px;
+                border: 1.5px solid var(--sp-edge); color: transparent;
+                transition: background-color .15s var(--sp-ease), border-color .15s var(--sp-ease), color .15s;
+            }
+            .sp-consent:hover .sp-check { border-color: var(--hover-border); }
+            .sp-consent input:checked + .sp-check { background: var(--primary); border-color: var(--primary); color: #fff; }
+            .sp-consent input:focus-visible + .sp-check { outline: 2px solid var(--primary); outline-offset: 2px; }
+            .sp-consent-txt { font-size: .82rem; line-height: 1.55; color: var(--text-muted); }
+            .sp-consent-txt a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+            .sp-consent.is-missing .sp-check { border-color: var(--danger); }
+            #supportSendBtn.is-busy { opacity: .65; pointer-events: none; }
+
+            @media (max-width: 640px) {
+                .sp-form-foot { grid-template-columns: 1fr; }
+                .sp-form-foot .sp-btn { justify-content: space-between; }
+                .sp-rate-btn { font-size: .68rem; padding-inline: 2px; }
+                .sp-seg { justify-self: stretch; }
+            }
+
 
             /* ── Der aktuelle Stand: zwei flache Rahmen ── */
             .sp-duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 3vw, 2.5rem); }
@@ -256,7 +329,7 @@
             }
             @media (prefers-reduced-motion: reduce) {
                 .sp-tilt { transform: none; }
-                .sp-shot, .sp-btn, .sp-btn-ic, .sp-action, .sp-action-go, .sp-emoji-btn { transition: none; }
+                .sp-shot, .sp-btn, .sp-btn-ic, .sp-action, .sp-action-go, .sp-rate-btn, .sp-seg-btn, .sp-textarea, .sp-check { transition: none; }
             }
 
             /* ── CHANGELOG — Release-Ledger ─────────────────────────────
@@ -680,60 +753,61 @@
         </section>
 
         <!-- ══ FEEDBACK ══════════════════════════════════
-             Die Knoepfe Minimal/Vollstaendig faerbt support-feedback.js per
-             style — deshalb bleiben ihre Inline-Styles hier stehen. -->
+             Zustaende nur ueber Klassen: .is-picked (Bewertung, supportMarkRating),
+             .is-on (Datenumfang, setFeedbackDataMode), .is-busy (Senden).
+             🔴 Kein Text neben einem Element im selben Knoten (Zustimmung,
+             Bewertungen): die i18n-Pipeline ueberspringt gemischte Knoten
+             still, der Satz bliebe auf /en/ deutsch. -->
         <section id="supportFeedbackSection" class="sp-sec" data-sp="feedback">
             <div class="sp-shell sp-split">
                 <header>
                     <h2 class="sp-h2">Wie findest du MyWorkLog?</h2>
                     <p class="sp-desc">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
+                    <ul class="sp-facts">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Geht als E-Mail direkt an den Entwickler.</span></li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Von sich aus nur Nachricht, Bewertung, Zeitpunkt und dein Name.</span></li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Ohne deine Zustimmung wird nichts gesendet.</span></li>
+                    </ul>
                 </header>
 
-                <div class="sp-feedback-panel">
-                    <div class="sp-emoji-row">
-                        <button class="sp-emoji-btn" onclick="supportRate(5)" title="Fantastisch!" aria-label="Fantastisch"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                        <button class="sp-emoji-btn" onclick="supportRate(4)" title="Gut!" aria-label="Gut"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                        <button class="sp-emoji-btn" onclick="supportRate(3)" title="Okay" aria-label="Okay"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                        <button class="sp-emoji-btn" onclick="supportRate(2)" title="Nicht so gut" aria-label="Nicht so gut"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M8 9h2"/><path d="M14 9h2"/></svg></button>
-                        <button class="sp-emoji-btn" onclick="supportRate(1)" title="Schlecht" aria-label="Schlecht"><svg class="mwl-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></button>
-                    </div>
-
-                    <textarea id="supportFeedbackText" class="sp-textarea"
-                        placeholder="Was können wir besser machen? (Emoji Optional)"></textarea>
-
-                    <!-- DSGVO Toggle -->
-                    <div style="margin-top:12px; padding:12px 14px; background:rgba(var(--primary-rgb),.04); border:1px solid rgba(var(--primary-rgb),.12); border-radius:12px;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
-                            <span style="font-size:.78rem; color:var(--text-muted);">Mitgesendete Daten</span>
-                            <div style="display:flex; gap:6px;">
-                                <button id="feedbackModeMinimal" onclick="setFeedbackDataMode('minimal')" class="btn"
-                                    style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.3); color:#10b981; font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Minimal</button>
-                                <button id="feedbackModeFull" onclick="setFeedbackDataMode('full')" class="btn"
-                                    style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); color:var(--text-muted); font-weight:600;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Vollständig</button>
-                            </div>
-                        </div>
-                        <div id="feedbackDataModeInfo" style="display:flex; align-items:flex-start; gap:7px; font-size:.7rem; color:var(--text-muted); margin-top:8px; line-height:1.5;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0; margin-top:2px;"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <span>Minimal: Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.</span>
-                        </div>
-                        <div style="margin-top:6px; display:flex; flex-wrap:wrap; column-gap:16px;">
-                            <button type="button" onclick="showFeedbackDataPreview()"
-                                style="display:inline-flex; align-items:center; gap:6px; background:none; border:none; padding:8px 0; font:inherit; font-size:.7rem; color:var(--primary); text-decoration:underline; cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Welche Daten werden gesendet?</button>
-                            <a href="/email/send" target="_blank"
-                                style="display:inline-flex; align-items:center; gap:6px; padding:8px 0; font-size:.7rem; color:var(--primary); text-decoration:underline; opacity:.7;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>E-Mail-Vorlage ansehen</a>
+                <div class="sp-form">
+                    <div class="sp-field">
+                        <div class="sp-lbl"><span>Deine Bewertung</span> <span class="sp-opt">optional</span></div>
+                        <div class="sp-rate">
+                            <button type="button" class="sp-rate-btn" onclick="supportRate(1)" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Schlecht</span></button>
+                            <button type="button" class="sp-rate-btn" onclick="supportRate(2)" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M8 9h2"/><path d="M14 9h2"/></svg><span>Nicht so gut</span></button>
+                            <button type="button" class="sp-rate-btn" onclick="supportRate(3)" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Okay</span></button>
+                            <button type="button" class="sp-rate-btn" onclick="supportRate(4)" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Gut</span></button>
+                            <button type="button" class="sp-rate-btn" onclick="supportRate(5)" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Fantastisch</span></button>
                         </div>
                     </div>
-    
-                    <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px;">
-                        <input type="checkbox" id="feedbackDSGVOConsent"
-                            style="margin-top:3px; accent-color:var(--primary); min-width:16px; min-height:16px; cursor:pointer;">
-                        <label for="feedbackDSGVOConsent" style="font-size:.72rem; color:var(--text-muted); line-height:1.5; cursor:pointer;">
-                            Ich stimme zu, dass mein Feedback über <strong>EmailJS</strong> an den Entwickler gesendet wird.
-                            <a href="/DSGVO/" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
+
+                    <div class="sp-field">
+                        <label class="sp-lbl" for="supportFeedbackText"><span>Deine Nachricht</span></label>
+                        <textarea id="supportFeedbackText" class="sp-textarea" rows="5"
+                            placeholder="Was fehlt dir, was stört dich, was gefällt dir?"></textarea>
+                    </div>
+
+                    <div class="sp-field">
+                        <div class="sp-lbl"><span>Mitgesendete Daten</span></div>
+                        <div class="sp-seg">
+                            <button type="button" id="feedbackModeMinimal" class="sp-seg-btn is-on" aria-pressed="true" onclick="setFeedbackDataMode('minimal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Minimal</span></button>
+                            <button type="button" id="feedbackModeFull" class="sp-seg-btn" aria-pressed="false" onclick="setFeedbackDataMode('full')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Vollständig</span></button>
+                        </div>
+                        <p class="sp-hint" id="feedbackDataModeInfo">Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.</p>
+                        <div class="sp-links">
+                            <button type="button" class="sp-link" onclick="showFeedbackDataPreview()"><span>Welche Daten werden gesendet?</span></button>
+                            <a class="sp-link" href="/email/send/" target="_blank" rel="noopener"><span>E-Mail-Vorlage ansehen</span></a>
+                        </div>
+                    </div>
+
+                    <div class="sp-form-foot">
+                        <label class="sp-consent" for="feedbackDSGVOConsent">
+                            <input type="checkbox" id="feedbackDSGVOConsent">
+                            <span class="sp-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                            <span class="sp-consent-txt"><span>Ich stimme zu, dass mein Feedback über EmailJS an den Entwickler gesendet wird.</span> <a href="/DSGVO/" target="_blank" rel="noopener">Datenschutzerklärung</a></span>
                         </label>
-                    </div>
-                    <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-                        <button class="btn btn-primary" onclick="supportSendFeedback()" style="gap:8px; padding:10px 28px; font-size:.85rem;"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Feedback senden</span></button>
+                        <button type="button" id="supportSendBtn" class="sp-btn sp-btn--main" onclick="supportSendFeedback()"><span class="sp-send-lbl">Feedback senden</span><span class="sp-btn-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></span></button>
                     </div>
                 </div>
             </div>

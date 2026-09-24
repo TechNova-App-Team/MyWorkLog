@@ -35,91 +35,13 @@
         return streak;
     }
 
+    // Die Wahl zeigt der Knopf selbst (.is-picked, supportMarkRating in
+    // support.js) — kein Toast je Klick; gesendet wird erst mit der Nachricht.
     function supportRate(rating) {
-        const emojis = ['', '😞', '😕', '😐', '😊', '🤩'];
-        const labels = ['', 'Schlecht', 'Nicht so gut', 'Okay', 'Gut', 'Fantastisch'];
         data.supportRating = rating;
         save();
         if (typeof supportMarkRating === 'function') supportMarkRating();
-
-        // Haptic feedback (vibration)
-        if (navigator.vibrate) {
-            navigator.vibrate(20);
-        }
-
-        // Find and animate the clicked button
-        const btn = document.querySelector(`[onclick="supportRate(${rating})"]`);
-        if (btn) {
-            btn.style.transition = 'none';
-            btn.style.transform = 'scale(1.2)';
-            btn.style.filter = 'drop-shadow(0 0 16px rgba(16, 185, 129, 0.8))';
-            setTimeout(() => {
-                btn.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-                btn.style.transform = 'scale(1)';
-                btn.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))';
-                setTimeout(() => {
-                    btn.style.transition = 'filter 1.5s ease';
-                    btn.style.filter = 'drop-shadow(0 0 0px rgba(16, 185, 129, 0))';
-                }, 400);
-            }, 0);
-        }
-
-        // Show modern feedback toast
-        showFeedbackToast(emojis[rating], labels[rating]);
-    }
-
-    function showFeedbackToast(emoji, label) {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(var(--bg-sidebar-rgb, 15, 15, 20), 0.95);
-            backdrop-filter: blur(20px);
-            padding: 16px 24px;
-            border-radius: 14px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            z-index: 5000;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            max-width: 90%;
-            animation: slideUpFeedback 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        `;
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideUpFeedback {
-                from { transform: translateX(-50%) translateY(120px); opacity: 0; }
-                to { transform: translateX(-50%) translateY(0); opacity: 1; }
-            }
-            @keyframes slideDownFeedback {
-                from { transform: translateX(-50%) translateY(0); opacity: 1; }
-                to { transform: translateX(-50%) translateY(120px); opacity: 0; }
-            }
-        `;
-        if (!document.querySelector('style[data-feedback-toast]')) {
-            style.setAttribute('data-feedback-toast', '');
-            document.head.appendChild(style);
-        }
-
-        toast.innerHTML = `
-            <span style="font-size: 1.4rem; display: inline-block;">${emoji}</span>
-            <div style="flex: 1;">
-                <div style="color: var(--text-main); font-weight: 600; font-size: 0.95rem;">${label}!</div>
-                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">Bewertung gespeichert • Jetzt senden</div>
-            </div>
-        `;
-
-        document.body.appendChild(toast);
-
-        const removeToast = () => {
-            toast.style.animation = 'slideDownFeedback 0.3s ease forwards';
-            setTimeout(() => toast.remove(), 300);
-        };
-
-        setTimeout(removeToast, 3500);
+        if (navigator.vibrate) navigator.vibrate(20);
     }
 
     function gatherAppStats() {
@@ -272,35 +194,20 @@
     function sfL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
     // Lucide-Style Icons für die Modus-Zeile (kein Emoji im UI)
-    const FEEDBACK_MODE_ICONS = {
-        minimal: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-        full: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'
-    };
-
-    function feedbackModeInfoHTML(mode, text) {
-        return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
-            + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0; margin-top:2px;">'
-            + FEEDBACK_MODE_ICONS[mode] + '</svg><span>' + text + '</span>';
-    }
-
     function setFeedbackDataMode(mode) {
         feedbackDataMode = mode;
-        const minBtn = document.getElementById('feedbackModeMinimal');
-        const fullBtn = document.getElementById('feedbackModeFull');
+        [['feedbackModeMinimal', 'minimal'], ['feedbackModeFull', 'full']].forEach(([id, m]) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.classList.toggle('is-on', m === mode);
+            btn.setAttribute('aria-pressed', m === mode ? 'true' : 'false');
+        });
         const info = document.getElementById('feedbackDataModeInfo');
-        if (mode === 'minimal') {
-            if (minBtn) { minBtn.style.background = 'rgba(16,185,129,0.15)'; minBtn.style.borderColor = 'rgba(16,185,129,0.3)'; minBtn.style.color = '#10b981'; }
-            if (fullBtn) { fullBtn.style.background = 'rgba(255,255,255,0.03)'; fullBtn.style.borderColor = 'rgba(255,255,255,0.08)'; fullBtn.style.color = 'var(--text-muted)'; }
-            if (info) info.innerHTML = feedbackModeInfoHTML('minimal', sfL(
-                'Minimal: Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.',
-                'Minimal: only your message, rating, time and name are sent. No device data, no statistics.'));
-        } else {
-            if (fullBtn) { fullBtn.style.background = 'rgba(var(--primary-rgb),0.15)'; fullBtn.style.borderColor = 'rgba(var(--primary-rgb),0.3)'; fullBtn.style.color = 'var(--primary)'; }
-            if (minBtn) { minBtn.style.background = 'rgba(255,255,255,0.03)'; minBtn.style.borderColor = 'rgba(255,255,255,0.08)'; minBtn.style.color = 'var(--text-muted)'; }
-            if (info) info.innerHTML = feedbackModeInfoHTML('full', sfL(
-                'Vollständig: Zusätzlich Nutzungsstatistiken, App-Einstellungen und Gerätedaten. Nie einzelne Einträge, Notizen oder das Schatten-Berichtsheft.',
-                'Full: additionally usage statistics, app settings and device data. Never individual entries, notes or the shadow report book.'));
-        }
+        if (info) info.textContent = mode === 'minimal'
+            ? sfL('Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.',
+                  'Only your message, rating, time and name are sent. No device data, no statistics.')
+            : sfL('Zusätzlich Nutzungsstatistiken, App-Einstellungen und Gerätedaten. Nie einzelne Einträge, Notizen oder das Schatten-Berichtsheft.',
+                  'Additionally usage statistics, app settings and device data. Never individual entries, notes or the shadow report book.');
     }
 
     function buildFeedbackData(message, rating) {
@@ -475,59 +382,71 @@
         if (modal && modal.style.display !== 'none') closeFeedbackDataPreview();
     });
 
+    // Der Knopf behaelt sein Markup; beim Senden wechselt nur die Beschriftung.
+    function setFeedbackSending(on) {
+        const btn = document.getElementById('supportSendBtn');
+        if (!btn) return;
+        btn.classList.toggle('is-busy', on);
+        btn.disabled = on;
+        const lbl = btn.querySelector('.sp-send-lbl');
+        if (lbl) lbl.textContent = on ? sfL('Wird gesendet …', 'Sending …') : sfL('Feedback senden', 'Send feedback');
+    }
+
     function supportSendFeedback() {
         const text = document.getElementById('supportFeedbackText');
         if (!text || !text.value.trim()) {
-            showCustomMessage('💬 Feedback', 'Bitte schreibe etwas in das Textfeld.', 'warning');
+            showCustomMessage(sfL('Feedback', 'Feedback'), sfL('Bitte schreibe etwas in das Textfeld.', 'Please write something in the text field.'), 'warning');
+            if (text) text.focus();
             return;
         }
 
-        // DSGVO: Check consent
         const consent = document.getElementById('feedbackDSGVOConsent');
         if (!consent || !consent.checked) {
-            showCustomMessage('🔒 Datenschutz', 'Bitte stimme der Datenschutzerklärung zu, bevor du dein Feedback sendest.', 'warning');
-            if (consent) { consent.parentElement.style.animation = 'shake 0.4s ease'; setTimeout(() => consent.parentElement.style.animation = '', 500); }
+            showCustomMessage(sfL('Datenschutz', 'Privacy'), sfL('Bitte stimme der Datenschutzerklärung zu, bevor du dein Feedback sendest.', 'Please agree to the privacy policy before sending your feedback.'), 'warning');
+            const row = consent && consent.closest('.sp-consent');
+            if (row) {
+                row.classList.add('is-missing');
+                consent.addEventListener('change', () => row.classList.remove('is-missing'), { once: true });
+            }
             return;
         }
 
+        const message = text.value.trim();
         const rating = data.supportRating || 0;
-        const feedbackData = buildFeedbackData(text.value.trim(), rating);
-
-        // Send via EmailJS
-        if (typeof emailjs !== 'undefined') {
-            const sendBtn = document.querySelector('#view-support .btn-primary[onclick*="supportSendFeedback"]');
-            if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '⏳ Sende...'; }
-
-            emailjs.send('service_22m5bcs', 'template_xe5xc1k', feedbackData)
-                .then(() => {
-                    // Also store locally
-                    if (!data.feedback) data.feedback = [];
-                    data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: true, dataMode: feedbackDataMode, consent: true });
-                    save();
-                    text.value = '';
-                    data.supportRating = 0;
-                    if (consent) consent.checked = false;
-                    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '📨 Feedback senden'; }
-                    showCustomMessage('📨 Gesendet!', 'Dein Feedback wurde erfolgreich zugestellt. Vielen Dank!', 'success');
-                })
-                .catch((err) => {
-                    console.warn('EmailJS Fehler:', err);
-                    // Fallback: store locally
-                    if (!data.feedback) data.feedback = [];
-                    data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: false, dataMode: feedbackDataMode, consent: true });
-                    save();
-                    text.value = '';
-                    if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '📨 Feedback senden'; }
-                    showCustomMessage('📨 Gespeichert', 'Feedback lokal gespeichert (Senden fehlgeschlagen). Wir arbeiten dran!', 'warning');
-                });
-        } else {
-            // No EmailJS — store locally only
+        const feedbackData = buildFeedbackData(message, rating);
+        const merken = (sent) => {
             if (!data.feedback) data.feedback = [];
-            data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: false, dataMode: feedbackDataMode, consent: true });
+            data.feedback.push({ date: new Date().toISOString(), text: message, rating: rating, sent: sent, dataMode: feedbackDataMode, consent: true });
             save();
+        };
+        const leeren = () => {
             text.value = '';
-            showCustomMessage('📨 Gespeichert!', 'Dein Feedback wurde lokal gespeichert.', 'success');
+            data.supportRating = 0;
+            consent.checked = false;
+            if (typeof supportMarkRating === 'function') supportMarkRating();
+        };
+
+        if (typeof emailjs === 'undefined') {
+            merken(false);
+            leeren();
+            showCustomMessage(sfL('Gespeichert', 'Saved'), sfL('Dein Feedback wurde lokal gespeichert.', 'Your feedback was saved locally.'), 'success');
+            return;
         }
+
+        setFeedbackSending(true);
+        emailjs.send('service_22m5bcs', 'template_xe5xc1k', feedbackData)
+            .then(() => {
+                merken(true);
+                leeren();
+                showCustomMessage(sfL('Gesendet', 'Sent'), sfL('Dein Feedback ist angekommen. Danke!', 'Your feedback has arrived. Thank you!'), 'success');
+            })
+            .catch((err) => {
+                console.warn('EmailJS Fehler:', err);
+                merken(false);
+                // Text bleibt stehen: wer es gleich nochmal versucht, soll nicht neu tippen.
+                showCustomMessage(sfL('Nicht gesendet', 'Not sent'), sfL('Senden hat nicht geklappt. Dein Text steht noch im Feld und ist zusätzlich lokal gespeichert — versuch es gleich nochmal.', 'Sending failed. Your text is still in the field and was also saved locally — please try again.'), 'warning');
+            })
+            .finally(() => setFeedbackSending(false));
     }
 
     async function supportFeatureRequest() {

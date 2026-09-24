@@ -38,7 +38,7 @@
     // schreibt supportRate() in support-feedback.js).
     function supportMarkRating() {
         const r = (typeof data !== 'undefined' && data) ? data.supportRating : null;
-        document.querySelectorAll('#view-support .sp-emoji-btn').forEach(btn => {
+        document.querySelectorAll('#view-support .sp-rate-btn').forEach(btn => {
             const m = (btn.getAttribute('onclick') || '').match(/supportRate\((\d)\)/);
             const on = !!m && +m[1] === r;
             btn.classList.toggle('is-picked', on);
