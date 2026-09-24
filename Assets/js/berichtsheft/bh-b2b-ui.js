@@ -40,7 +40,14 @@
 
     function el() { return document.getElementById('b2bCard'); }
 
-    function esc(s) { return (typeof escapeHtml === 'function') ? escapeHtml(s) : String(s == null ? '' : s); }
+    // Eigenstaendig statt auf escapeHtml() (bh-bericht.js) zu bauen: dessen
+    // Rueckfall war der ROHE Text, und hier landen Namen und Anmerkungen, die
+    // ein anderes Konto (Ausbilder) geschrieben hat.
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
 
     function toast(msg, art) {
         if (typeof showToast === 'function') showToast(msg, art || 'info');
@@ -529,8 +536,8 @@
                 // ob etwas faul ist.
                 (p.trust === 'other-device'
                     ? ' ' + (report.approval && report.approval.by
-                        ? b2bL('Unterschrieben von ' + report.approval.by + ' — ein anderes Gerät als bei der ersten Freigabe.',
-                               'Signed by ' + report.approval.by + ' — a different device than the first approval.')
+                        ? b2bL('Unterschrieben von ' + esc(report.approval.by) + ' — ein anderes Gerät als bei der ersten Freigabe.',
+                               'Signed by ' + esc(report.approval.by) + ' — a different device than the first approval.')
                         : b2bL('(anderes Gerät als beim ersten Mal)', '(different device than the first time)'))
                     : '') +
                 '</p>';

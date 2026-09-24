@@ -50,6 +50,8 @@
         peer: null,
         role: null, // 'host' | 'client'
         connected: false,
+        viaLink: false,   // Einladung kam per Link/QR von aussen → kein Auto-Sync
+
         crypto: { keyPair: null, pub: null, key: null, sas: null, active: false },
         syncStats: { sent: 0, received: 0, merged: 0 },
         heartbeatInterval: null,
@@ -291,6 +293,7 @@
         document.getElementById('p2pStep2Dot').className = 'p2p-step-dot';
         document.getElementById('p2pStep3Dot').className = 'p2p-step-dot';
         document.getElementById('p2pWizardSubtitle').textContent = 'Rolle wählen';
+        p2pSync.viaLink = false;
 
         // Ein Schluessel gehoert zu GENAU einer Verbindung. Bleibt ein alter liegen,
         // verschluesselt der zweite Versuch gegen ein Geheimnis, das die neue
@@ -1047,8 +1050,10 @@
             p2pStartHeartbeat();
 
             // Auto-sync if enabled
-            if (document.getElementById('p2pAutoSync')?.checked) {
+            if (document.getElementById('p2pAutoSync')?.checked && !p2pSync.viaLink) {
                 setTimeout(() => p2pExecuteSync(), 500);
+            } else if (p2pSync.viaLink) {
+                p2pLog('Per Link verbunden: erst Prüfziffer vergleichen, dann übertragen');
             }
 
             p2pLog('Verbindung hergestellt');
@@ -1607,6 +1612,11 @@
 
         // Standardfall: Einladung gescannt -> direkt in die Empfaenger-Rolle
         openP2PWizard();
+        // Einen solchen Link kann auch ein Fremder schicken ("klick, schick mir den
+        // Code zurueck"). Mit Auto-Sync gingen dann alle Eintraege raus, BEVOR
+        // jemand die Pruefziffer verglichen hat (Audit 2026-09-24). Hier also
+        // erst nach Klick auf "Übertragen".
+        p2pSync.viaLink = true;
         p2pStartClient();
         const inp = document.getElementById('p2pOfferInput');
         if (inp) inp.value = code;

@@ -303,6 +303,41 @@ try {
     const rolleNoch = await tr(`betrieb_mitglieder?user_id=eq.${azId}&betrieb_id=eq.${betriebId}&select=rolle`);
     ok(rolleNoch.body?.[0]?.rolle === 'azubi', 'und er ist danach immer noch Azubi');
 
+    // ── Bindungen aus dem Audit 2026-09-24 ───────────────────────────────
+    // Jede Pruefung verlangt den RICHTIGEN Ablehnungsgrund: eine zufaellige
+    // uuid scheitert sonst schon am Fremdschluessel, und der Test waere gruen,
+    // ohne die Policy je erreicht zu haben.
+    const fremdeId = crypto.randomUUID();
+
+    // Freigabe fuer einen Bericht, der nicht zum Betrieb gehoert → RLS (42501),
+    // nicht erst der Fremdschluessel (23503).
+    const fremdFrei = await tr('freigaben', {
+        method: 'POST', body: JSON.stringify({
+            bericht_id: fremdeId, betrieb_id: betriebId, ausbilder_id: trId,
+            entscheidung: 'approved', pruefsumme: 'x',
+        }),
+    });
+    ok(fremdFrei.status >= 400 && fremdFrei.body?.code === '42501',
+        'Freigabe nur fuer Berichte des eigenen Betriebs (RLS, nicht Fremdschluessel)');
+
+    // Bericht in einen Betrieb schieben, in dem der Azubi nicht Mitglied ist.
+    const schieb = await az(`berichte?id=eq.${berichtId}`, {
+        method: 'PATCH', body: JSON.stringify({ betrieb_id: fremdeId }),
+    });
+    ok(schieb.status >= 400 && /verschoben/.test(schieb.body?.message || ''),
+        'Azubi kann einen Bericht nicht in einen fremden Betrieb schieben (Trigger)');
+    const nochHier = await tr(`berichte?id=eq.${berichtId}&select=betrieb_id`);
+    ok(nochHier.body?.[0]?.betrieb_id === betriebId, 'und der Bericht steht weiter im Betrieb');
+
+    // Mitglieder entstehen nur ueber die RPCs; direkt aendern kann der Ausbilder nichts.
+    const befoerdern = await tr(`betrieb_mitglieder?betrieb_id=eq.${betriebId}&user_id=eq.${azId}`, {
+        method: 'PATCH', body: JSON.stringify({ rolle: 'ausbilder' }),
+    });
+    ok(Array.isArray(befoerdern.body) && befoerdern.body.length === 0,
+        'Ausbilder kann Mitgliedschaften nicht direkt umschreiben (keine UPDATE-Policy)');
+    const rolleDanach = await tr(`betrieb_mitglieder?user_id=eq.${azId}&betrieb_id=eq.${betriebId}&select=rolle`);
+    ok(rolleDanach.body?.[0]?.rolle === 'azubi', 'Gegenprobe: die Zeile ist sichtbar und unveraendert');
+
     // Der letzte Ausbilder darf nicht gehen, solange Azubis da sind.
     const raus = await tr(`betrieb_mitglieder?betrieb_id=eq.${betriebId}&user_id=eq.${trId}`, { method: 'DELETE' });
     ok(raus.status >= 400, 'der letzte Ausbilder kann den Betrieb nicht verlassen');

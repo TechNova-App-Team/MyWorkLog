@@ -10,6 +10,13 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Cross-Origin-Opener-Policy: same-origin
   Permissions-Policy: camera=(), microphone=(self), payment=(), usb=(), interest-cohort=()
+  # Grundlinie fuer ALLE Seiten (Audit 2026-09-24) — die Standalone-Seiten hatten
+  # gar keine CSP. Bewusst ohne script-src/connect-src: die App haengt an
+  # onclick-Attributen und ~20 Seiten laden je andere Dienste; eine Liste, die
+  # eine davon vergisst, bricht still ein Feature. Gemessen: kein <form action>,
+  # kein <base>, kein <iframe>. <object> nur im Schatten-Berichtsheft fuer die
+  # PDF-Vorschau aus einer blob:-URL — daher object-src 'self' blob:, nicht 'none'.
+  Content-Security-Policy: object-src 'self' blob:; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
 
 # ========================================================
 # Cache-Control Headers

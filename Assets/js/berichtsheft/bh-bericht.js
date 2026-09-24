@@ -462,10 +462,11 @@ function bhIcon(value, fallback) {
     return typeof escapeHtml === 'function' ? escapeHtml(v) : '';
 }
 
+// Auch Anfuehrungszeichen: das Ergebnis landet in Attributen (title="…").
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
-    return div.innerHTML;
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 async function deleteReport(id) {

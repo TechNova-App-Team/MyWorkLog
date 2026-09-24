@@ -472,6 +472,7 @@
     // ab und gibt es unveraendert zurueck. Gilt fuer jede neue Log-Regel hier.
     [/^(\[\d\d:\d\d:\d\d\] )?Verbindung hergestellt$/g, '$1Connection established'],
     [/^(\[\d\d:\d\d:\d\d\] )?Verbindung getrennt$/g, '$1Connection closed'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Per Link verbunden: erst Prüfziffer vergleichen, dann übertragen$/g, '$1Connected via link: compare the check code first, then transfer'],
     [/^(\[\d\d:\d\d:\d\d\] )?Starte Übertragung …$/g, '$1Starting transfer …'],
     [/^(\[\d\d:\d\d:\d\d\] )?Führe Einträge zusammen …$/g, '$1Merging entries …'],
     [/^(\[\d\d:\d\d:\d\d\] )?Synchronisation abgeschlossen$/g, '$1Transfer complete'],
