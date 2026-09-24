@@ -31,6 +31,10 @@ window.ResizeObserver = class { observe() {} disconnect() {} };
 window.IntersectionObserver = class { constructor(cb) { this.cb = cb; } observe(el) { this.cb([{ target: el, isIntersecting: true }]); } unobserve() {} disconnect() {} };
 window.fetch = () => Promise.reject(new Error('offline'));
 window.matchMedia = () => ({ matches: false, addEventListener() {}, addListener() {} });
+// Abbildung 4 wuerfelt Spur und Sektor per Math.random — ungestellt fiel der
+// Faktor-Check auf CI gelegentlich durch (205x am 23.09.2026). Fester Samen.
+let seed = 42;
+window.Math.random = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
 
 // rAF von Hand takten: jeder Aufruf = ein Bild
 let queue = [];
@@ -118,9 +122,11 @@ console.log('\nAbbildung 4 — Vergleich');
 frames(40, 50);
 check('SSD-Zugriffszeit 0,09 ms', val('cmpSsd') === '0,09 ms', val('cmpSsd'));
 const factor = Number(val('cmpFactor').replace('×', '').replace(/\./g, ''));
-check('Faktor zufaellig 4 KiB zwischen 60 und 200', factor > 60 && factor < 200, val('cmpFactor'));
+// Grenzen aus dem Modell: Seek 0,32..13,8 ms + Latenz 0..8,33 ms + Transfer 0,02 ms
+// gegen 0,087 ms SSD ergibt ~4x..~253x, HDD hoechstens ~22,2 ms.
+check('Faktor zufaellig 4 KiB zwischen 3 und 260', factor > 3 && factor < 260, val('cmpFactor'));
 const hddMs = Number(val('cmpHdd').replace(' ms', '').replace(',', '.'));
-check('HDD-Zeit laeuft hoch und bleibt plausibel', hddMs > 0 && hddMs < 20, val('cmpHdd'));
+check('HDD-Zeit laeuft hoch und bleibt plausibel', hddMs > 0 && hddMs < 23, val('cmpHdd'));
 check('SSD-Zaehler laeuft mit', Number(val('cmpCount').replace(/\./g, '')) > 0, val('cmpCount'));
 doc.querySelector('[data-mode="seq"]').click(); frames(10, 50);
 check('sequenziell: SSD 1,99 ms', val('cmpSsd') === '1,99 ms', val('cmpSsd'));
