@@ -98,7 +98,6 @@ Die App ist reines HTML, CSS und JavaScript und läuft vollständig im Browser. 
 - DOMPurify für alle Nutzereingaben, strenge CSP
 - Cloud nur nach Anmeldung; Row-Level Security in der Datenbank
 - Anmeldung per Magic-Link, Google, GitHub, Discord oder Passkey
-- Boss-Key: eine Taste, und die App sieht aus wie eine Tabellenkalkulation
 
 ### PWA
 - Installierbar auf iOS, Android und Desktop
@@ -171,7 +170,7 @@ MyWorkLog/
 │  ├─ dashboard/            KPI-Ringe, Eintrag erfassen, Widgets
 │  ├─ history/ weekview/ yearview/ monthcompare/   Auswertungen
 │  ├─ ihk/ school/ untis/ jobs/ goals/             Ausbildung, Schule, Jobs, Ziele
-│  ├─ import/ urlaubsplaner/ bbig-scanner/ ghost/  Wechsel-Brücke, Urlaub, Rechte, Boss-Key
+│  ├─ import/ urlaubsplaner/ bbig-scanner/         Wechsel-Brücke, Urlaub, Rechte
 │  └─ …                     eine Komponente je Ansicht, Dialog und Werkzeug
 │
 ├─ pages/                   Eigenständige Seiten, je pages/<name>/index.html

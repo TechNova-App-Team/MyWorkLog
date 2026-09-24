@@ -559,10 +559,9 @@
         [data-theme="light"] .sidebar-cloud-chip:hover { background: rgba(0,0,0,0.025); }
 
         /* ── POST-SAVE CLOUD REMINDER TOAST ── */
-        /* bottom: 76px → über dem Ghost-Panic-Button (44px @ bottom:16px + 16px gap) */
         .cloud-sync-prompt {
             position: fixed;
-            bottom: 76px;
+            bottom: 20px;
             right: 20px;
             z-index: 9998;
             display: flex;
@@ -610,9 +609,12 @@
             transition: opacity 0.15s;
         }
         .cloud-sync-prompt-close:hover { opacity: 1; }
+        /* Unter 768 px steht die untere Leiste (mobile-nav.css), gemessen 75 px hoch — 88 px lassen 12 px Luft. */
+        @media (max-width: 767px) {
+            .cloud-sync-prompt { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
+        }
         @media (max-width: 540px) {
-            /* Mobile: über Mobile-Bottom-Nav (~64px) + Ghost-Btn → 130px gibt Platz für beide */
-            .cloud-sync-prompt { left: 12px; right: 12px; bottom: 130px; max-width: none; }
+            .cloud-sync-prompt { left: 12px; right: 12px; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); max-width: none; }
         }
         [data-theme="light"] .cloud-sync-prompt {
             background: linear-gradient(165deg, rgba(255,255,255,0.99), rgba(248,249,251,0.99));

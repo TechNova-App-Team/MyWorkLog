@@ -12,7 +12,7 @@
     // waere unsichtbar dahinter, Eingaben unmoeglich, die Seite wirkt eingefroren.
     // Deshalb Intro ueberspringen — und 'pro_intro_seen' bewusst NICHT setzen, damit es
     // beim naechsten normalen Aufruf ganz normal kommt.
-    if(/[#&]p2p=/.test(location.hash||'')){ window._introSkipped=true; return; }
+    if(/[#&]p2p=/.test(location.hash||'')){ return; }
     var intro=document.getElementById('pro-intro');
     intro.style.display='block';
 
@@ -293,8 +293,6 @@
       setTimeout(function(){
         intro.style.display='none';
         document.body.style.overflow='';
-        // Ghost-Knopf sofort zeigen (das Banner bleibt verzoegert)
-        if (window._showGhostButton) window._showGhostButton();
       },REDUCE?300:520);
     };
 

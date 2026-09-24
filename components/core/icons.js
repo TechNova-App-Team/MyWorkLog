@@ -3,7 +3,7 @@
 // Eine Quelle fuer alle Icons, die JS zur Laufzeit erzeugt. Vorher trugen
 // mindestens fuenf Dateien ihre eigene kleine Pfad-Sammlung (`apIcon` in
 // analytics-pro.js, `INSIGHT_ICONS` in insights.js, weitere in settings-panel.js,
-// support-feedback.js, ghost.js) — und der Rest der App behalf sich mit Emojis.
+// support-feedback.js) — und der Rest der App behalf sich mit Emojis.
 //
 // 🔴 Emojis sind hier keine Option: sie faerben sich nicht mit dem Theme, werden
 // auf jedem Betriebssystem anders gezeichnet und in einer anderen Schrift als der

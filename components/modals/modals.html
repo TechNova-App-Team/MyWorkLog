@@ -612,7 +612,6 @@
                                 <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
                                 <span class="pfield-text">
                                     <span class="pfield-label">Ausbildungsberuf</span>
-                                    <span class="pfield-hint">Beeinflusst deinen Ghost-Mode-Skin</span>
                                 </span>
                                 <span class="pfield-value is-empty" data-pvalue-for="confJob">Nicht gewählt</span>
                                 <span class="pfield-affix pfield-affix--chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
@@ -683,26 +682,6 @@
                                         <option value="TH">Thüringen</option>
                                 </select>
                             </label>
-                        </div>
-
-                        <!-- Ghost-Mode: Skin-Wahl -->
-                        <div class="ghost-skin-block">
-                            <div class="ghost-skin-label">Ghost-Mode-Skin</div>
-                            <div class="accent-segment" id="ghostSkinSegment" role="group" aria-label="Ghost-Mode-Skin">
-                                <button type="button" class="accent-segment-btn" data-skin="auto">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                                    <span>Automatisch</span>
-                                </button>
-                                <button type="button" class="accent-segment-btn" data-skin="excel">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
-                                    <span>Tabelle</span>
-                                </button>
-                                <button type="button" class="accent-segment-btn" data-skin="vscode">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                                    <span>Code-Editor</span>
-                                </button>
-                            </div>
-                            <div class="ghost-skin-hint" id="ghostSkinHint"></div>
                         </div>
                     </div>
                     <script>
@@ -809,44 +788,10 @@
                                     }
                                 }
 
-                                // ── Ghost-Mode-Skin ──
-                                var skinSeg  = card.querySelector('#ghostSkinSegment');
-                                var skinHint = card.querySelector('#ghostSkinHint');
-
                                 // `data` ist ein let-Global (state-config.js), nicht window.data.
                                 function appSettings(){
                                     try { return (typeof data !== 'undefined' && data && data.settings) ? data.settings : null; }
                                     catch(e){ return null; }
-                                }
-
-                                function syncSkin(){
-                                    if (!skinSeg) return;
-                                    var st = appSettings();
-                                    var chosen = (st && st.ghostSkin) || 'auto';
-                                    skinSeg.querySelectorAll('.accent-segment-btn').forEach(function(b){
-                                        b.classList.toggle('active', b.dataset.skin === chosen);
-                                    });
-                                    if (!skinHint) return;
-                                    if (chosen === 'auto'){
-                                        var resolved = (typeof getGhostSkin === 'function') ? getGhostSkin() : 'excel';
-                                        skinHint.textContent = 'Richtet sich nach deinem Beruf — aktuell: ' +
-                                            (resolved === 'vscode' ? 'Code-Editor' : 'Tabelle') + '.';
-                                    } else if (chosen === 'excel'){
-                                        skinHint.textContent = 'Der Panic-Button zeigt immer eine Tabellenkalkulation.';
-                                    } else {
-                                        skinHint.textContent = 'Der Panic-Button zeigt immer einen Code-Editor.';
-                                    }
-                                }
-
-                                if (skinSeg){
-                                    skinSeg.addEventListener('click', function(e){
-                                        var btn = e.target.closest('.accent-segment-btn');
-                                        var st = appSettings();
-                                        if (!btn || !st) return;
-                                        st.ghostSkin = btn.dataset.skin;
-                                        if (typeof save === 'function') save();
-                                        syncSkin();
-                                    });
                                 }
 
                                 if (nameInput) {
@@ -874,7 +819,7 @@
                                         initialsInput.select();
                                     });
                                 }
-                                if (jobSelect)  jobSelect.addEventListener('change', function(){ sync(); syncSkin(); });
+                                if (jobSelect)  jobSelect.addEventListener('change', sync);
                                 if (bundSelect) bundSelect.addEventListener('change', sync);
 
                                 function applyAllAvatars(){
@@ -900,13 +845,12 @@
                                             if (initialsInput && st && typeof st.avatarInitials !== 'undefined') {
                                                 initialsInput.value = st.avatarInitials || '';
                                             }
-                                            setTimeout(function(){ sync(); syncSkin(); }, 30);
+                                            setTimeout(sync, 30);
                                         }
                                     });
                                     obs.observe(modal, { attributes:true, attributeFilter:['class'] });
                                 }
                                 sync();
-                                syncSkin();
                                 applyAllAvatars();
                             });
                         }

@@ -200,7 +200,6 @@
     'Ausbilder / Betrieb verbinden': 'Trainer / connect company',
     'IT Professional Hub': 'IT professional hub',
     'IHK': 'IHK',
-    'Ghost Mode': 'Ghost mode',
 
     // ─── Saldo-Trend-Karte (charts.js renderTrend: Richtung + Volatilitaet) ───
     'Steigend': 'Rising', 'Fallend': 'Falling', 'Stabil': 'Stable',
@@ -364,11 +363,6 @@
     'Website-Farbe': 'Website color',
     'Nutzt deinen Akzent aus den Einstellungen': 'Uses your accent color from Settings',
 
-    // Ghost-Mode-Skin: Hinweiszeile unter der Auswahl (settings, JS-generiert)
-    'Der Panic-Button zeigt immer eine Tabellenkalkulation.': 'The panic button always shows a spreadsheet.',
-    'Der Panic-Button zeigt immer einen Code-Editor.': 'The panic button always shows a code editor.',
-    'Richtet sich nach deinem Beruf — aktuell: Tabelle.': 'Follows your occupation — currently: Spreadsheet.',
-    'Richtet sich nach deinem Beruf — aktuell: Code-Editor.': 'Follows your occupation — currently: Code editor.',
     'Linienstärke': 'Line width',
     'Linienstil': 'Line style',
     'Voll': 'Solid',

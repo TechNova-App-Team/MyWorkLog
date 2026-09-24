@@ -49,8 +49,7 @@ ok('App definiert mwlEvent inline',
    /window\.mwlEvent\s*=\s*function/.test(readFileSync('index.template.html', 'utf8')));
 
 // ── Die reparierten Aufrufstellen: richtiger Name, richtige Anzahl ──
-for (const [f, n] of [['components/ghost/ghost.js', 1],
-                      ['components/umfrage/umfrage.js', 3],
+for (const [f, n] of [['components/umfrage/umfrage.js', 3],
                       ['components/urlaubsplaner/urlaubsplaner.js', 1],
                       ['Assets/js/berichtsheft/foto-import.js', 2],
                       // v7.4.2: Einladung erzeugt / eingeloest — in der Funktion,

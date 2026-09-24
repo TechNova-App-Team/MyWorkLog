@@ -21,7 +21,7 @@ function shortcutsEnabled() {
 window.shortcutsEnabled = shortcutsEnabled;
 
 // Fallback für Shortcuts aus localStorage, die noch kein `allowInInput`-Flag tragen
-const DEFAULT_ALLOW_IN_INPUT = ['data.save', 'search.open', 'ghost.toggle'];
+const DEFAULT_ALLOW_IN_INPUT = ['data.save', 'search.open'];
 
 const defaultShortcuts = {
     // TIMER CONTROL
@@ -136,15 +136,6 @@ const defaultShortcuts = {
         keys: ['ctrl', 'f'],
         action: 'openSearch',
         allowInInput: true
-    },
-
-    // GHOST MODE
-    'ghost.toggle': {
-        name: 'Ghost Mode',
-        category: 'Stealth',
-        keys: ['ctrl', 'shift', 'k'],
-        action: 'toggleGhostMode',
-        allowInInput: true
     }
 };
 
@@ -160,7 +151,14 @@ class ShortcutManager {
         const saved = localStorage.getItem('tg_shortcuts');
         if (saved) {
             try {
-                return JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                // Der Ghost Mode ist seit v7.5.4 entfernt; gespeicherte Listen
+                // trugen seinen Eintrag noch und zeigten ihn als Kuerzel ohne Ziel.
+                if (parsed && parsed['ghost.toggle']) {
+                    delete parsed['ghost.toggle'];
+                    try { localStorage.setItem('tg_shortcuts', JSON.stringify(parsed)); } catch (e2) {}
+                }
+                return parsed;
             } catch (e) {
                 console.warn('Fehler beim Laden der Shortcuts:', e);
             }

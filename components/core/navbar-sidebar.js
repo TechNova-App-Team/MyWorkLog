@@ -37,7 +37,6 @@
             rights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
             'schatten-berichtsheft': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
             'it-hub': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
-            ghost: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V11a6 6 0 0112 0v9l-2.5-2-2 2-1.5-2-1.5 2-2-2z"/><path d="M9.5 10h.01M14.5 10h.01"/></svg>'
         };
         return icons[id] || '';
     }    // ===== NAVBAR CUSTOMIZATION: render based on settings and allow drag/drop =====
@@ -513,8 +512,6 @@
         { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Impressum/', '_blank') },
         { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./DSGVO/', '_blank') },
         { id: 'about',        label: 'Was ist MyWorkLog?', icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./about/', '_blank') },
-        // Ghost Mode
-        { id: 'ghost',        label: 'Ghost Mode',        icon: getIconSvgById('ghost'), group: 'Tools',      action: () => toggleGhostMode() },
     ];
 
     let cmdSelectedIdx = 0;

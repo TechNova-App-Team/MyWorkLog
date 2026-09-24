@@ -52,12 +52,6 @@
         function activateCamo() {
             if (camoActive) return;
             if (!isCamoEnabled()) return;
-            // Don't camouflage during ghost mode — it already has its own title
-            const ghostExcel = document.getElementById('ghostModeOverlay');
-            const ghostVSC = document.getElementById('ghostModeVSCode');
-            if ((ghostExcel && ghostExcel.classList.contains('active')) ||
-                (ghostVSC && ghostVSC.classList.contains('active'))) return;
-
             realTitle = document.title;
             saveOriginalIcons();
             currentDisguise = camoDisguises[Math.floor(Math.random() * camoDisguises.length)];

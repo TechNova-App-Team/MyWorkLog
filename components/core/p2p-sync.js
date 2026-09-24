@@ -1566,7 +1566,6 @@
         document.body.style.overflow = '';
         // 'pro_intro_seen' bewusst NICHT setzen — das Intro kommt beim naechsten
         // normalen Aufruf ganz regulaer.
-        try { if (window._showGhostButton) window._showGhostButton(); } catch (e) {}
     }
 
     async function p2pHandleDeepLink() {
