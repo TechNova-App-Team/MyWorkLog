@@ -66,7 +66,16 @@
         // Diese Ehrlichkeit steht so auch in der Oberfläche und bleibt.
         freigabeKopf:   'Digital freigegeben',
         freigabeKennung: 'Kennung',
-        freigabeHinweis: 'Digitale Freigabe im Berichtsheft erfasst. Sie ersetzt die eigenhändige Unterschrift nicht.'
+        freigabeHinweis: 'Digitale Freigabe im Berichtsheft erfasst. Sie ersetzt die eigenhändige Unterschrift nicht.',
+        // Wie der Betrieb zum Zeitpunkt der Freigabe bestaetigt war (vom Server
+        // an die Freigabe gestempelt). Belegt, was belegt ist — die Domain, den
+        // Namen im Impressum, die Zustimmung ueber die Impressum-Adresse —,
+        // nicht mehr.
+        nachweisManuell: 'Betrieb von MyWorkLog geprüft',
+        nachweisDns:     'Betrieb bestätigt per DNS-Eintrag',
+        nachweisEmail:   'Betrieb bestätigt: Firmenadresse',
+        nachweisImpressum: 'Name im Impressum',
+        nachweisFirma:   'Zustimmung über'
     };
 
     const TAGE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -317,6 +326,18 @@
     // 🔴 Keine Zeichen ueber U+00FF: jsPDF-Standardschriften koennen nur WinAnsi,
     // ein Haken oder Pfeil kaeme als falsches Glyph heraus. Deshalb Wortlaut
     // statt Symbol, und als Trenner ein Komma statt eines Mittelpunkts.
+    function nachweisZeile(n) {
+        if (!n || !n.art) return '';
+        if (n.art === 'manuell') return T.nachweisManuell;
+        const teile = [];
+        if (n.art === 'dns') teile.push(T.nachweisDns + (n.domain ? ' ' + n.domain : ''));
+        else if (n.art === 'email') teile.push(T.nachweisEmail + (n.domain ? ' @' + n.domain : ''));
+        else return '';
+        if (n.impressum) teile.push(T.nachweisImpressum);
+        if (n.firma) teile.push(T.nachweisFirma + ' ' + n.firma);
+        return teile.join(', ');
+    }
+
     function normalizeApproval(a) {
         if (!a || a.state !== 'approved') return null;
         let datum = '';
@@ -337,7 +358,10 @@
             datum: datum,
             // Kurzkennung der Signatur: genug, um einen Ausdruck dem Eintrag in
             // der App zuzuordnen, ohne eine 90-Zeichen-Zeile aufs Blatt zu setzen.
-            kennung: String(a.sig || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase()
+            kennung: String(a.sig || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase(),
+            // Aeltere Freigaben (vor v7.6.1) tragen keinen Stempel — dann
+            // bleibt die Zeile weg, statt einen Stand zu behaupten.
+            nachweis: nachweisZeile(a.nachweis)
         };
     }
 
@@ -530,7 +554,10 @@
                 '<div class="fm-sig-line"></div>' +
                 '<div class="fm-sig-lab">' + esc(s) + '</div></div>').join('') +
              '</div>';
-        if (model.approval) h += '<div class="fm-sig-note">' + esc(T.freigabeHinweis) + '</div>';
+        if (model.approval) {
+            h += '<div class="fm-sig-note">' + esc(T.freigabeHinweis) +
+                 (model.approval.nachweis ? '<br>' + esc(model.approval.nachweis) : '') + '</div>';
+        }
 
         h += '</div>';
         return h;
@@ -932,7 +959,7 @@
         // Der Hinweis unter dem Block braucht eine eigene Zeile. Ohne diese
         // Reserve schoebe er sich in die Fusszeile — feste mm-Hoehen sind hier
         // genau die Falle, gegen die allocateBlocks() gebaut wurde.
-        const extra = model.approval ? 6 : 0;
+        const extra = model.approval ? (model.approval.nachweis ? 9 : 6) : 0;
         if (model.sigStyle === 'dated') return 26 + extra;
         return Math.ceil(model.signatures.length / 2) * 17 + extra;
     }
@@ -978,7 +1005,13 @@
 
         if (model.approval) {
             doc.setFontSize(6);
-            doc.text(T.freigabeHinweis, PDF.ML, y + sigBlockHeight(model) - 1.5);
+            const unten = y + sigBlockHeight(model) - 1.5;
+            if (model.approval.nachweis) {
+                doc.text(T.freigabeHinweis, PDF.ML, unten - 3);
+                doc.text(model.approval.nachweis, PDF.ML, unten);
+            } else {
+                doc.text(T.freigabeHinweis, PDF.ML, unten);
+            }
         }
     }
 

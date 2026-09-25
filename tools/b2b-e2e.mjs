@@ -15,6 +15,7 @@
 // bleiben stehen.
 
 import { readFileSync } from 'node:fs';
+import { randomBytes, createHash } from 'node:crypto';
 
 const cfg = readFileSync(new URL('../config/supabase-config.js', import.meta.url), 'utf8');
 const BASE = cfg.match(/URL:\s*'([^']+)'/)[1];
@@ -26,7 +27,14 @@ const V = {
     trainerPw: process.env.B2B_E2E_TRAINER_PW,
     azubiPw: process.env.B2B_E2E_AZUBI_PW,
 };
+// Optional: nur damit laesst sich der Betrieb im Lauf ueber den Link der Firma
+// freischalten (Stufe 2). Ohne ihn endet der Lauf nach den Sperr-Pruefungen.
+const SERVICE_KEY = process.env.B2B_E2E_SERVICE_KEY || '';
+class Ueberspringen extends Error {}
+let uebersprungen = false;
+
 if (!V.trainerPw || !V.azubiPw) {
+
     console.log('uebersprungen — B2B_E2E_TRAINER_PW und/oder B2B_E2E_AZUBI_PW nicht gesetzt.');
     console.log('Passwoerter stehen in .claude/notes/berichtsheft-b2b.md.');
     process.exit(2);
@@ -203,14 +211,107 @@ try {
     });
     ok(impAz.status === 403, 'impressum-pruefen verweigert dem Azubi den Aufruf');
 
+    // ── Stufe 1 + 2 (v7.6.1): die Firmenadresse ALLEIN reicht nicht ──────
+    // Ein Azubi mit eigener Adresse @firma.de haette sie auch. Dazu gehoeren
+    // der Name im Impressum und die Zustimmung der Firma ueber eine Adresse
+    // aus dem Impressum.
+    const nurEmail = await tr('freigaben', {
+        method: 'POST', body: JSON.stringify({
+            bericht_id: berichtId, betrieb_id: betriebId, ausbilder_id: trId,
+            entscheidung: 'approved', pruefsumme: 'ps-e',
+        }),
+    });
+    ok(nurEmail.status >= 400, 'Abzeichnen mit Firmenadresse allein wird abgelehnt (Impressum + Firma fehlen)');
+
+    await tr(`betriebe?id=eq.${betriebId}`, {
+        method: 'PATCH', body: JSON.stringify({
+            impressum_url: 'https://x', impressum_geprueft_at: new Date().toISOString(),
+            impressum_emails: ['ich@selbst.de'], firma_email: 'ich@selbst.de', firma_bestaetigt_at: new Date().toISOString(),
+        }),
+    });
+    const nachFirmaFake = await tr(`betriebe?id=eq.${betriebId}&select=impressum_geprueft_at,impressum_emails,firma_bestaetigt_at`);
+    ok(nachFirmaFake.status === 200 && nachFirmaFake.body?.[0] && nachFirmaFake.body[0].firma_bestaetigt_at === null &&
+        nachFirmaFake.body[0].impressum_emails === null && nachFirmaFake.body[0].impressum_geprueft_at === null,
+        'Client kann sich Impressum-Treffer und Zustimmung der Firma nicht selbst schreiben (Trigger)');
+
+    const fsTr = await rpc(trTok, 'firma_anfrage_stand', { p_betrieb: betriebId });
+    ok(fsTr.status === 200, 'Ausbilder liest den Stand der Anfrage an die Firma');
+    const fsAz = await rpc(azTok, 'firma_anfrage_stand', { p_betrieb: betriebId });
+    ok(fsAz.status >= 400, 'Azubi sieht den Stand der Anfrage nicht');
+    const lesenDirekt = await rpc(trTok, 'firma_anfrage_lesen', { p_token_hash: 'x' });
+    const entDirekt = await rpc(trTok, 'firma_anfrage_entscheiden', { p_token_hash: 'x', p_ja: true });
+    const anlDirekt = await rpc(trTok, 'firma_anfrage_anlegen', { p_betrieb: betriebId, p_user: trId, p_an: 'a@b.de', p_token_hash: 'x' });
+    ok(lesenDirekt.status >= 400 && entDirekt.status >= 400 && anlDirekt.status >= 400,
+        'die Anfrage-RPCs sind fuer Clients gesperrt (nur die Edge Functions)');
+    const fbUnbekannt = await fetch(`${BASE}/functions/v1/firma-bestaetigen`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: 'A'.repeat(43), aktion: 'ja' }),
+    }).then(r => r.json()).catch(() => null);
+    ok(fbUnbekannt && fbUnbekannt.ok === false && fbUnbekannt.zustand === 'unbekannt',
+        'firma-bestaetigen: ein erfundener Token bestaetigt nichts');
+    const faAz = await fetch(`${BASE}/functions/v1/firma-anfragen`, {
+        method: 'POST',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + azTok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ betrieb_id: betriebId, an: 'info@b2b-test.invalid' }),
+    }).then(r => r.json()).catch(() => null);
+    ok(faAz && faAz.ok !== true, 'firma-anfragen verschickt nichts im Auftrag des Azubis (' + (faAz && faAz.grund) + ')');
+
+    // Freischalten fuer den Rest des Laufs — ueber den ECHTEN Link der Firma.
+    // Den Token kennt sonst nur das Postfach im Impressum; die Test-Domain
+    // (.invalid) hat keins. Deshalb legt der Lauf die Anfrage mit dem
+    // Service-Schluessel an und kennt so den Token.
+    if (!SERVICE_KEY) throw new Ueberspringen();
+    const svc = async (path, opts = {}) => {
+        const r = await fetch(`${BASE}/rest/v1/${path}`, {
+            method: opts.method || 'POST',
+            headers: { apikey: SERVICE_KEY, Authorization: 'Bearer ' + SERVICE_KEY, 'Content-Type': 'application/json',
+                Prefer: 'return=representation' },
+            body: opts.body,
+        });
+        const t = await r.text();
+        let body; try { body = t ? JSON.parse(t) : null; } catch { body = t; }
+        return { status: r.status, body };
+    };
+    await svc(`betriebe?id=eq.${betriebId}`, {
+        method: 'PATCH', body: JSON.stringify({
+            impressum_url: 'https://b2b-test.invalid/impressum', impressum_geprueft_at: new Date().toISOString(),
+            impressum_emails: ['info@b2b-test.invalid'],
+        }),
+    });
+    const token = randomBytes(32).toString('base64url');
+    const anl = await svc('rpc/firma_anfrage_anlegen', {
+        body: JSON.stringify({ p_betrieb: betriebId, p_user: trId, p_an: 'info@b2b-test.invalid',
+            p_token_hash: createHash('sha256').update(token).digest('hex') }),
+    });
+    ok(anl.status === 200 && anl.body?.ok === true, 'Anfrage an die Impressum-Adresse angelegt');
+    const fb = (aktion) => fetch(`${BASE}/functions/v1/firma-bestaetigen`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, aktion }),
+    }).then(r => r.json()).catch(() => null);
+    const gelesen = await fb('lesen');
+    ok(gelesen?.zustand === 'offen' && gelesen?.ausbilder_email === V.trainerEmail.toLowerCase(),
+        'Firma sieht die offene Anfrage mit der Adresse des Ausbilders');
+    const nachLesen = await tr(`betriebe?id=eq.${betriebId}&select=firma_bestaetigt_at`);
+    ok(nachLesen.body?.[0]?.firma_bestaetigt_at === null, 'Lesen allein bestaetigt nichts (Mail-Scanner-Fall)');
+    const ja = await fb('ja');
+    ok(ja?.ok === true && ja?.zustand === 'bestaetigt', 'Firma bestaetigt ueber den Link');
+    const nachJa = await tr(`betriebe?id=eq.${betriebId}&select=firma_email,firma_bestaetigt_at`);
+    ok(nachJa.body?.[0]?.firma_email === 'info@b2b-test.invalid' && !!nachJa.body?.[0]?.firma_bestaetigt_at,
+        'Betrieb traegt die Zustimmung der Firma');
+    const nochmal = await fb('nein');
+    ok(nochmal?.ok === false && nochmal?.zustand === 'bestaetigt', 'derselbe Link entscheidet kein zweites Mal');
+
     const ap = await tr('freigaben', {
         method: 'POST', body: JSON.stringify({
             bericht_id: berichtId, betrieb_id: betriebId, ausbilder_id: trId,
             entscheidung: 'approved', anmerkung: 'E2E ok', pruefsumme: 'ps-1',
             ausbilder_email: 'gefaelscht@example.com',
+            betrieb_nachweis: { art: 'manuell' },
         }),
     });
     ok(ap.status === 201, 'Ausbilder schreibt eine Freigabe');
+    const stempel = ap.body?.[0]?.betrieb_nachweis;
+    ok(stempel && stempel.art === 'email' && stempel.impressum === true && stempel.firma === 'info@b2b-test.invalid',
+        'Nachweis an der Freigabe stempelt der Server, nicht der Client: ' + JSON.stringify(stempel));
     ok(ap.body?.[0]?.ausbilder_email === V.trainerEmail.toLowerCase() || ap.body?.[0]?.ausbilder_email === V.trainerEmail,
         'Adresse des Abzeichnenden stempelt der Server, nicht der Client');
     const at = ap.body?.[0]?.erstellt_at;
@@ -396,10 +497,18 @@ try {
     ok(raus.status >= 400, 'der letzte Ausbilder kann den Betrieb nicht verlassen');
     const nochMitglied = await tr(`betrieb_mitglieder?user_id=eq.${trId}&betrieb_id=eq.${betriebId}&select=rolle`);
     ok(nochMitglied.body?.[0]?.rolle === 'ausbilder', 'und ist danach noch Ausbilder');
+} catch (e) {
+    if (!(e instanceof Ueberspringen)) throw e;
+    uebersprungen = true;
 } finally {
     const rm = await tr(`betriebe?id=eq.${betriebId}`, { method: 'DELETE', prefer: 'return=minimal' });
     ok(rm.status === 204 || rm.status === 200, 'Aufraeumen: Testbetrieb geloescht (Cascade)');
 }
 
-console.log(`\nB2B-E2E: ${ok_} ok, ${fehl} fehlgeschlagen`);
-process.exit(fehl ? 1 : 0);
+if (uebersprungen) {
+    console.log('\nRest UEBERSPRUNGEN: ohne B2B_E2E_SERVICE_KEY laesst sich der Betrieb nicht ueber den');
+    console.log('Link der Firma freischalten (der Token steht nur in der Mail). Schluessel: Supabase-');
+    console.log('Dashboard → Project Settings → API → service_role. Nie committen.');
+}
+console.log(`\nB2B-E2E: ${ok_} ok, ${fehl} fehlgeschlagen${uebersprungen ? ', Rest uebersprungen' : ''}`);
+process.exit(fehl ? 1 : uebersprungen ? 2 : 0);

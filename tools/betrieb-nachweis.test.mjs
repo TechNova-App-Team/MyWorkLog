@@ -39,7 +39,13 @@ const faelle = [
     [null, false, 'kein Betrieb'],
     [{}, false, 'keine Art'],
     [{ nachweis_art: 'manuell' }, true, 'manuell braucht keine Domain (GMX-Betrieb)'],
-    [{ nachweis_art: 'email', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt }, true, 'E-Mail mit Domain + Zeitpunkt'],
+    // Stufe 1 + 2 (v7.6.1): beim E-Mail-Weg reicht die Domain NICHT — ein
+    // Azubi mit eigener Firmenadresse haette sie auch.
+    [{ nachweis_art: 'email', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt }, false, 'E-Mail nur mit Domain reicht nicht mehr'],
+    [{ nachweis_art: 'email', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt, impressum_geprueft_at: jetzt }, false, 'E-Mail + Impressum, aber Firma hat nicht zugestimmt'],
+    [{ nachweis_art: 'email', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt, firma_bestaetigt_at: jetzt }, false, 'E-Mail + Firma, aber kein Impressum-Treffer'],
+    [{ nachweis_art: 'email', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt, impressum_geprueft_at: jetzt, firma_bestaetigt_at: jetzt }, true, 'E-Mail + Impressum + Zustimmung der Firma'],
+    [{ nachweis_art: 'dns', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt, impressum_geprueft_at: null }, true, 'DNS braucht weder Impressum noch Firma'],
     [{ nachweis_art: 'dns', domain: 'brush-zahn.com', domain_verifiziert_at: jetzt }, true, 'DNS mit Domain + Zeitpunkt'],
     [{ nachweis_art: 'email', domain: 'brush-zahn.com', domain_verifiziert_at: null }, false, 'E-Mail ohne Zeitpunkt'],
     [{ nachweis_art: 'dns', domain: null, domain_verifiziert_at: jetzt }, false, 'DNS ohne Domain'],
@@ -67,6 +73,11 @@ function holeVar(name) {
     if (!m) throw new Error('var nicht gefunden: ' + name);
     return m[0];
 }
+function holeBlock(anfang, ende) {
+    const a = SEITE.indexOf('        ' + anfang);
+    if (a === -1) throw new Error('Block nicht gefunden: ' + anfang);
+    return SEITE.slice(a, SEITE.indexOf('\n' + ende + '\n', a) + ende.length + 1);
+}
 const escQuelle = hole('esc');
 function lade(lang, kontoDaten) {
     const quelle = [
@@ -75,7 +86,14 @@ function lade(lang, kontoDaten) {
         hole('abL'), escQuelle, holeVar('SUPPORT_MAIL'), holeVar('HAKEN'),
         hole('nachweisZeile'), hole('wegFirmenadresse'), hole('wegManuell'),
         hole('freischaltText'), hole('freischaltMailto'),
-        'return { nachweisZeile, wegFirmenadresse, wegManuell, freischaltText, freischaltMailto };',
+        // Stufen beim E-Mail-Weg. domainPanel und abLocale sind hier nur
+        // Attrappen — geprueft wird der Text der Stufen, nicht das DNS-Panel.
+        'function domainPanel() { return "<div>DNS</div>"; }',
+        'function abLocale() { return "de-DE"; }',
+        'var firmaStand = ' + JSON.stringify((kontoDaten && kontoDaten.__stand) || null) + ';',
+        'var firmaMeldung = ' + JSON.stringify((kontoDaten && kontoDaten.__meldung) || '') + ';',
+        hole('stufe'), hole('stufenInhalt'), hole('fmtTag'), holeBlock('var FIRMA_GRUND = {', '        };'), hole('firmaInhalt'),
+        'return { nachweisZeile, wegFirmenadresse, wegManuell, freischaltText, freischaltMailto, stufenInhalt, firmaInhalt };',
     ].join('\n');
     return new Function(quelle)();
 }
@@ -126,6 +144,55 @@ ok(ze.includes('@brush-zahn.com') && ze.includes('abkImpressum'), 'E-Mail: Domai
 const zi = z({ nachgewiesen: true, nachweisArt: 'dns', domain: 'brush-zahn.com', impressumUrl: 'https://brush-zahn.com/impressum' });
 ok(zi.includes('Name steht im Impressum') && !zi.includes('abkImpressum()'), 'Impressum gefunden: Aussage statt Knopf');
 ok(z({ nachgewiesen: true, nachweisArt: 'email', domain: '<b>x' }).includes('&lt;b&gt;x'), 'Domain escaped');
+const zf = z({ nachgewiesen: true, nachweisArt: 'email', domain: 'brush-zahn.com', impressumUrl: 'https://brush-zahn.com/impressum', firmaEmail: 'info@brush-zahn.com' });
+ok(zf.includes('Firma hat zugestimmt') && zf.includes('info@brush-zahn.com'), 'E-Mail-Weg: Kopfzeile nennt die Zustimmung und die Adresse');
+ok(!z({ nachgewiesen: true, nachweisArt: 'dns', domain: 'x.de' }).includes('Firma hat zugestimmt'), 'Gegenprobe: ohne Zustimmung keine solche Marke');
+
+gruppe('Stufen beim E-Mail-Weg');
+const EM = { betrieb: 'Walder GmbH', domain: 'walder.com', nachweisArt: 'email', nachgewiesen: false,
+    impressumUrl: '', impressumEmails: [], betriebId: 'x', kontoEmail: 'azubi@walder.com' };
+const s1 = lade('de', EM).stufenInhalt(EM);
+ok(s1.includes('id="abkImpBtn"') && s1.includes('id="abkImpErgebnis"'), 'ohne Impressum: Knopf + Ergebnisfeld in Schritt 2');
+ok(s1.includes('is-spaeter') && !s1.includes('id="abkFirma"'), 'Schritt 3 wartet, solange das Impressum fehlt');
+ok((s1.match(/class="abk-stufe /g) || []).length === 3, 'genau drei Schritte');
+ok(!s1.includes('So ein Postfach kann jeder anlegen') && !s1.includes('Sie haben eine Firmenadresse?'),
+    'Rueckfall-Weg ohne die Saetze fuer Freemail-Konten');
+ok(s1.includes('abkMailKopieren'), 'Rueckfall-Weg (Freischaltung per Mail) ist erreichbar');
+const EM2 = Object.assign({}, EM, { impressumUrl: 'https://walder.com/impressum', impressumEmails: ['info@walder.com'] });
+const s2 = lade('de', EM2).stufenInhalt(EM2);
+ok(s2.includes('id="abkFirma"') && !s2.includes('id="abkImpBtn"'), 'mit Impressum: Schritt 3 aktiv, kein Impressum-Knopf mehr');
+ok((s2.match(/abk-stufe is-ok/g) || []).length === 2, 'zwei Schritte erledigt');
+const boeseS = Object.assign({}, EM, { betrieb: '<img src=x onerror=1>', domain: '"><b>' });
+const s3 = lade('de', boeseS).stufenInhalt(boeseS);
+ok(!s3.includes('<img') && !s3.includes('"><b>'), 'Betriebsname und Domain escaped');
+ok(s3.includes('&lt;img'), 'Gegenprobe: der Name kam ueberhaupt an');
+
+gruppe('Zustimmung der Firma — Schritt 3');
+const fi = (d) => lade('de', d).firmaInhalt(d);
+const eine = fi(EM2);
+ok(eine.includes('Anfrage an info@walder.com senden') && !eine.includes('type="radio"'), 'eine Adresse: direkter Knopf, keine Auswahl');
+const zwei = fi(Object.assign({}, EM2, { impressumEmails: ['info@walder.com', 'buero@walder.com'] }));
+ok((zwei.match(/type="radio"/g) || []).length === 2 && (zwei.match(/ checked/g) || []).length === 1, 'zwei Adressen: Auswahl, erste vorgewaehlt');
+ok(fi(Object.assign({}, EM2, { impressumEmails: [] })).includes('keine E-Mail-Adresse gefunden'), 'keine Adresse: Hinweis auf den manuellen Weg');
+const offen = fi(Object.assign({}, EM2, { __stand: { zustand: 'offen', an: 'info@walder.com', erstellt_at: '2026-09-25T10:00:00Z', laeuft_ab_at: '2026-10-02T10:00:00Z' } }));
+ok(offen.includes('<b>info@walder.com</b>') && offen.includes('Erneut senden') && offen.includes('Stand prüfen'), 'offene Anfrage: Adresse, Stand pruefen, erneut senden');
+ok(fi(Object.assign({}, EM2, { __stand: { zustand: 'abgelehnt', an: 'info@walder.com', entschieden_at: '2026-09-25T10:00:00Z' } })).includes('abgelehnt'), 'Ablehnung wird genannt');
+ok(fi(Object.assign({}, EM2, { __stand: { zustand: 'abgelaufen', an: 'info@walder.com' } })).includes('abgelaufen') , 'abgelaufene Anfrage: neu senden moeglich');
+ok(fi(Object.assign({}, EM2, { __meldung: 'zu_oft' })).includes('drei Anfragen'), 'Mengenbremse wird erklaert');
+const xa = fi(Object.assign({}, EM2, { impressumEmails: ['a"><img src=x>@x.de', 'b@x.de'] }));
+ok(!xa.includes('<img'), 'Adresse aus dem Impressum escaped (kommt von einer fremden Website)');
+
+gruppe('Link fuer die Firma: erst lesen, dann auf Klick entscheiden');
+const bf = SEITE.slice(SEITE.indexOf('        async function bootFirma('), SEITE.indexOf('        window.abfEntscheiden'));
+ok(bf.length > 200, 'bootFirma gefunden');
+ok(bf.includes("firmaAntwort(token, 'lesen')") && !/'ja'|'nein'/.test(bf), 'beim Oeffnen nur lesen — ein Mail-Scanner bestaetigt nichts');
+const ent = SEITE.slice(SEITE.indexOf('        window.abfEntscheiden'), SEITE.indexOf('        // ── Start'));
+ok(ent.includes("ja ? 'ja' : 'nein'") && ent.includes('replaceState'), 'Entscheidung erst im Klick-Handler, danach Token aus der Adresszeile');
+const bootQ = SEITE.slice(SEITE.indexOf('        async function boot()'));
+ok(bootQ.indexOf('firma=') > -1 && bootQ.indexOf('firma=') < bootQ.indexOf('[#&]w='), '#firma= wird vor #w= und vor dem Konto-Weg ausgewertet');
+ok(B2B.slice(B2B.indexOf('async function bhb2bFirmaAntwort'), B2B.indexOf('/** Pruefung anstossen')).includes('fetch(') &&
+   !B2B.slice(B2B.indexOf('async function bhb2bFirmaAntwort'), B2B.indexOf('/** Pruefung anstossen')).includes('client()'),
+   'die Firma laedt keine Supabase-Bibliothek, nur ein fetch');
 
 gruppe('Abzeichnen-Knopf erklaert die Sperre, statt still zu scheitern');
 const zweig = SEITE.slice(SEITE.indexOf("if (k === 'approve') {"), SEITE.indexOf("if (k === 'zur-bestaetigung')"));
@@ -140,6 +207,8 @@ ok(dz.includes('st.nachgewiesen') && dz.includes("st.nachweisArt === 'manuell'")
 ok(!/st\.domainOk/.test(dz), 'haengt nicht mehr am alten domainOk (DNS-only)');
 ok((UI.match(/domainZeile\(st\)/g) || []).length >= 2, 'steht beim Beitreten UND im Panel „Verbunden"');
 ok(UI.includes('f.ausbilder_email'), 'Verlauf zeigt die Adresse des Abzeichnenden');
+ok(dz.includes('st.firmaEmail'), 'domainZeile nennt die Zustimmung der Firma');
+
 
 console.log(`\nbetrieb-nachweis: ${bestanden} ok, ${fehler} fehlgeschlagen`);
 if (bestanden < 20 || fehler) process.exit(1);

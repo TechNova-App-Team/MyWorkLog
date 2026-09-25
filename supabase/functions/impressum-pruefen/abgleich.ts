@@ -126,6 +126,83 @@ export function impressumLinks(html: string, basis: string, erlaubt: (host: stri
   return aus;
 }
 
+// Cloudflare "Email Obfuscation": <a data-cfemail="HEX"> bzw.
+// href="/cdn-cgi/l/email-protection#HEX". Erstes Byte ist der XOR-Schluessel.
+// Die Einstellung ist bei Cloudflare-Zonen voreingestellt an — ohne diese
+// Zeile faende man auf solchen Seiten keine einzige Adresse im Klartext.
+function cfemail(hex: string): string {
+  if (!/^[0-9a-f]+$/i.test(hex) || hex.length < 4 || hex.length % 2) return '';
+  const key = parseInt(hex.slice(0, 2), 16);
+  let s = '';
+  for (let i = 2; i < hex.length; i += 2) s += String.fromCharCode(parseInt(hex.slice(i, i + 2), 16) ^ key);
+  return s;
+}
+
+const ADRESSE = /[a-z0-9._%+-]+@[a-z0-9-]+(?:[.][a-z0-9-]+)+/gi;
+const KEINE_ADRESSE = /[.](png|jpe?g|gif|webp|svg|avif|css|js)$/i;
+// "info [at] firma [dot] de". Eine schliessende eckige Klammer muss in einer
+// Zeichenklasse maskiert sein — der Backslash entsteht hier zur Laufzeit.
+const ZU = '[' + String.fromCharCode(92) + '])}>]';
+const KLAMMER_AT = new RegExp(' *[[({<] *(at|ät|@) *' + ZU + ' *', 'gi');
+const KLAMMER_DOT = new RegExp(' *[[({<] *(dot|punkt) *' + ZU + ' *', 'gi');
+
+/**
+ * E-Mail-Adressen, die im Impressum stehen — an eine davon geht die Anfrage
+ * an die Firma. Nur was im Impressum steht, nie etwas, das der Ausbilder
+ * eintippt: sonst schickt er die Bestaetigung an sein eigenes Postfach.
+ *
+ * Erkannt: mailto-Links, Klartext, "info [at] firma [dot] de" und die
+ * Cloudflare-Verschleierung. NICHT erkannt: Adressen als Bild oder per
+ * JavaScript zusammengesetzt — dann bleibt der Weg der manuellen Freischaltung.
+ *
+ * Ohne Backslash geschrieben: die Datei muss den JSON-Parameter von
+ * deploy_edge_function unbeschaedigt ueberstehen.
+ */
+export function impressumAdressen(html: string): string[] {
+  const roh = String(html || '');
+  const funde: string[] = [];
+
+  for (const m of roh.matchAll(/data-cfemail=["']([0-9a-f]+)["']/gi)) funde.push(cfemail(m[1]));
+  for (const m of roh.matchAll(/email-protection#([0-9a-f]+)/gi)) funde.push(cfemail(m[1]));
+  for (const m of roh.matchAll(/mailto:([^"'?<> ]+)/gi)) {
+    try { funde.push(decodeURIComponent(entitaetenAufloesen(m[1]))); } catch (_) { funde.push(m[1]); }
+  }
+
+  // Leerraum ohne Backslash-Klasse: jedes Steuerzeichen und das geschuetzte
+  // Leerzeichen wird zu einem normalen.
+  let text = Array.from(entitaetenAufloesen(seitenText(roh)),
+    (c) => (c.charCodeAt(0) <= 32 || c.charCodeAt(0) === 160 ? ' ' : c)).join('');
+  text = text.replace(KLAMMER_AT, '@').replace(KLAMMER_DOT, '.');
+  for (const m of text.matchAll(ADRESSE)) funde.push(m[0]);
+
+  const aus: string[] = [];
+  for (const f of funde) {
+    const a = String(f || '').trim().toLowerCase().replace(/[.]+$/, '');
+    const [lokal, dom] = a.split('@');
+    if (!lokal || !dom || a.length > 254 || KEINE_ADRESSE.test(a)) continue;
+    if (!/^[a-z0-9._%+-]+@[a-z0-9-]+([.][a-z0-9-]+)*[.][a-z]{2,}$/.test(a)) continue;
+    if (!aus.includes(a)) aus.push(a);
+  }
+  return aus.slice(0, 6);
+}
+
+/**
+ * Welche Adressen zur Wahl stehen. Gibt es welche auf der nachgewiesenen
+ * Domain, NUR diese — im Impressum steht oft auch der Hoster oder die
+ * Datenschutzbehoerde, und die sollen keine Bestaetigungs-Mail bekommen.
+ * Nur wenn die Firma ihr Postfach woanders hat (t-online, gmx …), gilt die
+ * ganze Liste. Allgemeine Postfaecher (info@, kontakt@ …) zuerst: die liest
+ * eher das Buero als eine einzelne Person.
+ */
+export function adressenAuswahl(liste: string[], domain: string): string[] {
+  const dom = String(domain || '').toLowerCase();
+  const eigen = (a: string) => { const d = a.split('@')[1] || ''; return d === dom || d.endsWith('.' + dom); };
+  const allgemein = ['info', 'kontakt', 'contact', 'office', 'mail', 'post', 'buero', 'verwaltung', 'service'];
+  const basis = liste.some(eigen) ? liste.filter(eigen) : [...liste];
+  const rang = (a: string) => (allgemein.includes(a.split('@')[0]) ? 0 : 1);
+  return basis.sort((a, b) => rang(a) - rang(b));
+}
+
 /** Private, Loopback- und Link-Local-Adressen — dorthin wird nie abgefragt. */
 export function istPrivateIp(ip: string): boolean {
   const s = String(ip || '').toLowerCase();

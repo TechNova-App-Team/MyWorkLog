@@ -210,6 +210,9 @@
         else if (st.nachweisArt === 'email') text = b2bL('Ausbilder mit Firmenadresse @', 'Trainer uses a company address @') + esc(st.domain);
         else text = b2bL('Domain per DNS nachgewiesen: ', 'Domain proven via DNS: ') + esc(st.domain);
         if (st.impressumUrl) text += b2bL(' · Name steht im Impressum', ' · name found in the legal notice');
+        // Die staerkste Aussage beim E-Mail-Weg: nicht der Ausbilder selbst,
+        // sondern das Postfach aus dem Impressum hat zugestimmt.
+        if (st.firmaEmail) text += b2bL(' · Firma hat über ', ' · company agreed via ') + esc(st.firmaEmail) + b2bL(' zugestimmt', '');
         return '<span class="b2b-domok">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
             'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +

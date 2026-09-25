@@ -1,12 +1,14 @@
-// Impressum-Abgleich der Edge Function `impressum-pruefen`.
+// Impressum-Abgleich der Edge Function `impressum-pruefen`, die Adressen daraus
+// und der Text der Mail an die Firma (`firma-anfragen/mail.ts`).
 // Laedt das echte Modul (Node >= 22.18 streift die TypeScript-Typen selbst ab).
 //
 //   node tools/impressum-abgleich.test.mjs
 
 import {
     namensKern, normalisieren, nameImImpressum, istImpressum,
-    impressumLinks, istPrivateIp, entitaetenAufloesen,
+    impressumLinks, istPrivateIp, entitaetenAufloesen, impressumAdressen, adressenAuswahl,
 } from '../supabase/functions/impressum-pruefen/abgleich.ts';
+import { anfrageMail, entschaerfen } from '../supabase/functions/firma-anfragen/mail.ts';
 
 let bestanden = 0, fehler = 0;
 function ok(bed, name) {
@@ -84,5 +86,49 @@ const oeffentlich = ['93.184.216.34', '172.32.0.1', '8.8.8.8', '2606:4700::1111'
 for (const ip of privat) ok(istPrivateIp(ip) === true, 'privat: ' + ip);
 for (const ip of oeffentlich) ok(istPrivateIp(ip) === false, 'oeffentlich: ' + ip);
 
+// ── 7. Adressen aus dem Impressum (Stufe 2: an eine davon geht die Anfrage) ──
+// Cloudflare-Verschleierung nachbauen: erstes Byte Schluessel, Rest XOR.
+const cf = (adr, key = 0x5a) => key.toString(16).padStart(2, '0') +
+    [...adr].map((c) => (c.charCodeAt(0) ^ key).toString(16).padStart(2, '0')).join('');
+const impAdr = `<h1>Impressum</h1><p>Angaben gemäß § 5 DDG</p><p>Walder GmbH</p>
+  <p>E-Mail: <a href="mailto:Info@Walder.com?subject=Anfrage">schreiben Sie uns</a></p>
+  <p>Buchhaltung: buero [at] walder [dot] com</p>
+  <p>Chef: chef(at)walder.com.</p>
+  <p><a href="/cdn-cgi/l/email-protection#${cf('kontakt@walder.com')}"><span class="__cf_email__" data-cfemail="${cf('kontakt@walder.com')}">[email&#160;protected]</span></a></p>
+  <img src="/logo@2x.png"><p>Webhosting: support@hoster.example</p>
+  <p>Presse: presse&#64;walder&#46;com</p>`;
+const gef = impressumAdressen(impAdr);
+ok(gef.length > 0, 'es gibt ueberhaupt Treffer (Gegenprobe fuer die Negativ-Pruefungen unten)');
+for (const a of ['info@walder.com', 'buero@walder.com', 'chef@walder.com', 'kontakt@walder.com', 'presse@walder.com']) {
+    ok(gef.includes(a), 'gefunden: ' + a + ' (' + gef.join(', ') + ')');
+}
+ok(!gef.some((a) => a.includes('logo@2x')), 'Bildname mit @ ist keine Adresse');
+ok(!gef.includes('chef@walder.com.'), 'Satzpunkt gehoert nicht zur Adresse');
+ok(gef.every((a) => a === a.toLowerCase()), 'alles klein');
+const wahl = adressenAuswahl(gef, 'walder.com');
+ok(!wahl.includes('support@hoster.example'), 'Hoster-Adresse faellt raus, wenn es eigene gibt');
+ok(wahl[0] === 'info@walder.com' || wahl[0] === 'kontakt@walder.com' || wahl[0] === 'buero@walder.com', 'allgemeines Postfach zuerst: ' + wahl[0]);
+ok(wahl.indexOf('chef@walder.com') > wahl.indexOf('info@walder.com'), 'persoenliche Adresse nach info@');
+const fremd = adressenAuswahl(['walder@t-online.de'], 'walder.com');
+ok(fremd.length === 1, 'Postfach bei einem anderen Anbieter bleibt waehlbar, wenn es das einzige ist');
+ok(impressumAdressen('<p>Impressum ohne Adresse</p>').length === 0, 'keine Adresse = leere Liste');
+
+// ── 8. Mail an die Firma: frei getippte Werte werden keine Links ─────────
+const mail = anfrageMail({
+    betrieb: 'Walder GmbH https://evil.example/login', domain: 'walder.com',
+    ausbilderName: '<script>x</script> www.evil.example', ausbilderEmail: 'max@walder.com',
+    link: 'https://myworklog.de/ausbilder/#firma=abc',
+});
+ok(!mail.html.includes('<script>'), 'kein HTML aus dem Anzeigenamen');
+ok((mail.html.match(/href=/g) || []).length === 1, 'genau EIN Link in der Mail — der Bestaetigungslink');
+ok(mail.html.includes('href="https://myworklog.de/ausbilder/#firma=abc"'), 'der Link zeigt auf myworklog.de');
+ok(!mail.text.includes('https://evil') && !mail.text.includes('www.evil'), 'Schema und www aus Nutzertext entfernt');
+ok(mail.text.includes('max@walder.com') && mail.text.includes('walder.com'), 'Person und Domain stehen drin');
+ok(!/[\r\n]/.test(mail.betreff), 'Betreff einzeilig');
+ok(entschaerfen('a'.repeat(200), 80).length === 80, 'Laenge begrenzt');
+const mailEn = anfrageMail({ betrieb: 'Walder GmbH', domain: 'walder.com', ausbilderName: '', ausbilderEmail: 'max@walder.com', link: 'https://myworklog.de/en/ausbilder/#firma=abc', en: true });
+ok(mailEn.betreff.startsWith('Please confirm') && mailEn.text.includes('max@walder.com'), 'englische Fassung, ohne Namen mit Adresse');
+
 console.log(`impressum-abgleich: ${bestanden} bestanden, ${fehler} fehlgeschlagen`);
+
 if (bestanden === 0 || fehler) process.exit(1);

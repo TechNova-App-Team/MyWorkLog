@@ -4,6 +4,10 @@
 // dass die Seite zu dieser Person gehoert. Das Impressum verbindet die Domain
 // dann mit dem Namen — `brush-zahn.com` mit "Zahn Pinsel GmbH".
 //
+// Beim E-Mail-Weg ist der Treffer Pflicht (private.betrieb_nachgewiesen), und
+// die hier gefundenen Adressen sind die einzigen, an die firma-anfragen die
+// Bitte um Bestaetigung schicken darf.
+//
 // Was es NICHT beweist: dass die Firma echt ist. Wer sich `zahn-pinsel.de`
 // kauft und ein Impressum hineinschreibt, besteht diese Pruefung. Dagegen hilft
 // nur die manuelle Freischaltung (Rueckruf an die oeffentliche Nummer).
@@ -16,7 +20,7 @@
 // domain-pruefen) — sonst "Failed to fetch" ohne Log.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { nameImImpressum, impressumLinks, istPrivateIp } from './abgleich.ts';
+import { nameImImpressum, impressumLinks, istPrivateIp, impressumAdressen, adressenAuswahl } from './abgleich.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -147,17 +151,17 @@ Deno.serve(async (req) => {
   const geprueft: string[] = [];
   let letzterGrund = 'nicht_erreichbar';
   const kandidaten = [`https://${dom}/impressum`, `https://www.${dom}/impressum`, `https://${dom}/impressum.html`];
-  const versuchen = async (adresse: string) => {
+  const versuchen = async (adresse: string): Promise<Seite | null> => {
     const s = await holen(adresse, erlaubt, zaehler);
     if (!s) return null;
     geprueft.push(s.url);
     const a = nameImImpressum(b.name, s.html);
-    if (a.ok) return s.url;
+    if (a.ok) return s;
     letzterGrund = a.grund;
     return null;
   };
 
-  let treffer: string | null = null;
+  let treffer: Seite | null = null;
   for (const k of kandidaten) { treffer = await versuchen(k); if (treffer) break; }
   if (!treffer) {
     for (const startUrl of [`https://${dom}/`, `https://www.${dom}/`, `http://${dom}/`]) {
@@ -177,9 +181,17 @@ Deno.serve(async (req) => {
   }
 
   // 4. Nur von hier wird der Treffer geschrieben (Trigger sperrt Clients).
+  // Die Adressen aus DEMSELBEN Impressum: an eine davon geht spaeter die
+  // Anfrage an die Firma (firma-anfragen), und die RPC dort nimmt nur, was
+  // hier steht.
+  const postfaecher = adressenAuswahl(impressumAdressen(treffer.html), dom);
   const { error } = await alsServer.from('betriebe')
-    .update({ impressum_url: treffer.slice(0, 300), impressum_geprueft_at: new Date().toISOString() })
+    .update({
+      impressum_url: treffer.url.slice(0, 300),
+      impressum_geprueft_at: new Date().toISOString(),
+      impressum_emails: postfaecher,
+    })
     .eq('id', betriebId);
   if (error) return json({ ok: false, fehler: error.message }, 500);
-  return json({ ok: true, url: treffer, domain: dom });
+  return json({ ok: true, url: treffer.url, domain: dom, adressen: postfaecher });
 });

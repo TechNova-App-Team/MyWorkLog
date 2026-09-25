@@ -194,6 +194,9 @@
             // Eine Azubi-Adresse an dieser Stelle ist der sichtbare Beleg, dass
             // sich jemand selbst abgezeichnet hat.
             email: f.ausbilder_email || '',
+            // Wie der Betrieb im Moment DIESER Freigabe bestaetigt war — vom
+            // Trigger gestempelt, aendert sich nicht mehr mit dem Betrieb.
+            nachweis: f.betrieb_nachweis || null,
             at: f.erstellt_at || '',
             note: f.anmerkung || '',
             pruefsumme: f.pruefsumme || '',
@@ -237,8 +240,8 @@
 
             // Den Token braucht nur der Ausbilder (er traegt ihn ins DNS ein).
             const spalten = row.rolle === 'ausbilder'
-                ? 'name, domain, domain_token, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at'
-                : 'name, domain, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at';
+                ? 'name, domain, domain_token, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at, impressum_emails, firma_email, firma_bestaetigt_at'
+                : 'name, domain, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at, firma_email, firma_bestaetigt_at';
             let b = null;
             const bt = await sb.from('betriebe').select(spalten).eq('id', row.betrieb_id).maybeSingle();
             if (bt && bt.data) b = bt.data;
@@ -262,6 +265,11 @@
                 nachweisArt: (b && b.nachweis_art) || '',
                 nachgewiesen: nachweisGilt(b),
                 impressumUrl: (b && b.impressum_geprueft_at && b.impressum_url) || '',
+                // Adressen aus dem Impressum — nur an eine davon darf die
+                // Anfrage an die Firma gehen (firma_anfrage_anlegen prueft das).
+                impressumEmails: (b && Array.isArray(b.impressum_emails)) ? b.impressum_emails : [],
+                // Stufe 2: die Firma hat ueber diese Impressum-Adresse zugestimmt.
+                firmaEmail: (b && b.firma_bestaetigt_at && b.firma_email) || '',
                 kontoEmail: (u && u.email) || ''
             };
             statusCache = { at: Date.now(), wert: wert };
@@ -277,10 +285,17 @@
     // Spiegel von private.betrieb_nachgewiesen() — NUR fuer die Anzeige. Die
     // Sperre selbst sitzt in der Policy freigaben_insert; weicht diese Zeile
     // ab, zeigt die Seite einen Knopf, den der Server ablehnt, nicht umgekehrt.
+    //
+    // Beim E-Mail-Weg reicht die Domain nicht: ein Azubi mit eigener
+    // Firmenadresse haette sie auch. Dazu gehoeren der Name im Impressum und
+    // die Zustimmung der Firma ueber eine Impressum-Adresse.
     function nachweisGilt(b) {
         if (!b || !b.nachweis_art) return false;
         if (b.nachweis_art === 'manuell') return true;
-        return (b.nachweis_art === 'email' || b.nachweis_art === 'dns') && !!b.domain && !!b.domain_verifiziert_at;
+        const domainOk = !!b.domain && !!b.domain_verifiziert_at;
+        if (b.nachweis_art === 'dns') return domainOk;
+        if (b.nachweis_art === 'email') return domainOk && !!b.impressum_geprueft_at && !!b.firma_bestaetigt_at;
+        return false;
     }
 
     // ── Onboarding ────────────────────────────────────────────────────
@@ -802,7 +817,7 @@
 
             const [{ data: fr, error: e1 }, { data: be, error: e2 }] = await Promise.all([
                 sb.from('freigaben')
-                    .select('bericht_id, entscheidung, ausbilder_name, ausbilder_email, anmerkung, pruefsumme, signatur, erstellt_at')
+                    .select('bericht_id, entscheidung, ausbilder_name, ausbilder_email, betrieb_nachweis, anmerkung, pruefsumme, signatur, erstellt_at')
                     .order('erstellt_at', { ascending: true }),   // aeltere zuerst → neuere gewinnt
                 sb.from('berichte')
                     .select('id, client_id')
@@ -1032,7 +1047,7 @@
                     // dann vor dem September. `datum_von` ist das echte Datum.
                     // Dieselbe Falle wie in der Berichtsheft-Uebersicht (v6.9.12).
                     .order('datum_von', { ascending: true }),
-                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, ausbilder_email, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
+                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, ausbilder_email, betrieb_nachweis, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
                     .order('erstellt_at', { ascending: true })   // aelteste zuerst
             ]);
@@ -1091,7 +1106,8 @@
                 betrieb: st.name, azubis: azubis, betriebId: st.betriebId,
                 domain: st.domain, domainToken: st.domainToken, domainOk: st.domainOk,
                 nachweisArt: st.nachweisArt, nachgewiesen: st.nachgewiesen,
-                impressumUrl: st.impressumUrl, kontoEmail: st.kontoEmail
+                impressumUrl: st.impressumUrl, impressumEmails: st.impressumEmails,
+                firmaEmail: st.firmaEmail, kontoEmail: st.kontoEmail
             };
         } catch (e) {
             console.warn('[B2B] Sammelansicht:', e && e.message);
@@ -1113,7 +1129,7 @@
                 .eq('client_id', String(clientId)).limit(1);
             if (be.error || !be.data || !be.data[0]) return null;
             const fr = await sb.from('freigaben')
-                .select('entscheidung, ausbilder_name, ausbilder_email, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
+                .select('entscheidung, ausbilder_name, ausbilder_email, betrieb_nachweis, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
                 .eq('bericht_id', be.data[0].id)
                 .order('erstellt_at', { ascending: true });
             if (fr.error) return null;
@@ -1267,6 +1283,61 @@
         return data;
     }
 
+    // Antwort einer Edge Function mit Fehlerstatus: der Grund steckt dann in
+    // error.context, nicht in data.
+    async function fnKoerper(error) {
+        let koerper = null;
+        try { koerper = error.context && await error.context.json(); } catch (e) { /* ohne */ }
+        return koerper;
+    }
+
+    /**
+     * Stufe 2: Bitte um Bestaetigung an eine Adresse aus dem Impressum.
+     * → { ok, an } | { ok:false, grund }
+     */
+    async function bhb2bFirmaAnfragen(an, sprache) {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sb = await client();
+        const { data, error } = await sb.functions.invoke('firma-anfragen', {
+            body: { betrieb_id: st.betriebId, an: String(an || ''), sprache: sprache === 'en' ? 'en' : 'de' }
+        });
+        if (error) {
+            const k = await fnKoerper(error);
+            if (k && k.grund) return k;
+            throw new Error(error.message || 'Versand nicht erreichbar.');
+        }
+        statusVergessen();
+        return data;
+    }
+
+    /** Letzte Anfrage an die Firma (ohne Token). → { zustand, an, erstellt_at, … } | null */
+    async function bhb2bFirmaStand() {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') return null;
+        const sb = await client();
+        const { data, error } = await sb.rpc('firma_anfrage_stand', { p_betrieb: st.betriebId });
+        if (error) throw new Error(error.message);
+        return data || null;
+    }
+
+    /**
+     * Die Firma antwortet — OHNE Konto, der Token aus der Mail ist die
+     * Berechtigung. Bewusst ein nackter fetch: die Person im Buero soll nicht
+     * die ganze Supabase-Bibliothek laden, nur um Ja zu sagen.
+     * aktion: 'lesen' | 'ja' | 'nein'
+     */
+    async function bhb2bFirmaAntwort(token, aktion) {
+        const c = config();
+        if (!c) throw new Error('Konfiguration fehlt.');
+        const r = await fetch(c.URL + '/functions/v1/firma-bestaetigen', {
+            method: 'POST',
+            headers: { apikey: c.ANON_KEY, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: String(token || ''), aktion: aktion || 'lesen' })
+        });
+        return r.json();
+    }
+
     /** Pruefung anstossen. → { ok, domain, geprueft, gefunden, fehler } */
     async function bhb2bDomainPruefen() {
         const st = await bhb2bStatus(true);
@@ -1336,6 +1407,9 @@
         domainAusEmail: bhb2bDomainAusEmail,
         kontoEmailDomain: bhb2bKontoEmailDomain,
         impressumPruefen: bhb2bImpressumPruefen,
+        firmaAnfragen: bhb2bFirmaAnfragen,
+        firmaStand: bhb2bFirmaStand,
+        firmaAntwort: bhb2bFirmaAntwort,
         austreten: bhb2bAustreten,
         // fuer Tests
         _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, nachweisGilt, inhaltDiff: bhb2bInhaltDiff, meldungenEindampfen }

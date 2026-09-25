@@ -364,5 +364,32 @@ for (const formId of ['dihk-w', 'dihk-t', 'neu-w', 'muc-w', 'neu-w-arp', 'neu-t-
         'Inhaltsseiten: ' + inhalt + ' (gesamt ' + r.rec.pages + ')');
 }
 
+// ═══ 9. Wie der Betrieb bestaetigt war — vom Server an die Freigabe gestempelt ═══
+// Seit v7.6.1 traegt jede Freigabe `betrieb_nachweis`. Auf dem Blatt steht er
+// als eigene Zeile unter dem Hinweis; aeltere Freigaben ohne Stempel bleiben
+// ohne Zeile, statt einen Stand zu behaupten.
+console.log('\nBetriebs-Nachweis an der Freigabe');
+const NACHWEIS = { art: 'email', domain: 'walder.com', impressum: true, firma: 'info@walder.com' };
+const mitN = render('dihk-w', { approval: { ...FREIGABE, nachweis: NACHWEIS } });
+check('E-Mail-Weg: Domain, Impressum und Zustimmung stehen im PDF',
+    mitN.pdf.includes('Firmenadresse @walder.com') && mitN.pdf.includes('Name im Impressum') &&
+    mitN.pdf.includes('Zustimmung über info@walder.com'), mitN.model.approval.nachweis);
+check('und in der Vorschau', mitN.html.includes('Zustimmung über info@walder.com'), '');
+check('ohne Stempel keine Nachweis-Zeile', !mit.pdf.includes('Betrieb bestätigt') && mit.model.approval.nachweis === '', '');
+check('manuell: eigener Wortlaut', render('dihk-w', { approval: { ...FREIGABE, nachweis: { art: 'manuell' } } })
+    .pdf.includes('Betrieb von MyWorkLog geprüft'), '');
+check('DNS ohne Firma: keine erfundene Zustimmung', (() => {
+    const t = render('dihk-w', { approval: { ...FREIGABE, nachweis: { art: 'dns', domain: 'x.de' } } }).model.approval.nachweis;
+    return t.includes('DNS-Eintrag x.de') && !t.includes('Zustimmung');
+})(), '');
+const ueberN = [...mitN.pdf].filter(c => c.codePointAt(0) > 0xFF);
+check('Nachweis-Zeile bleibt WinAnsi', ueberN.length === 0, [...new Set(ueberN)].join(' '));
+for (const formId of ['dihk-w', 'dihk-t', 'neu-w', 'muc-w', 'neu-w-arp', 'neu-t-arp']) {
+    const r = render(formId, { approval: { ...FREIGABE, nachweis: NACHWEIS } });
+    const inhalt = r.rec.pages - (r.model.cover ? 1 : 0);
+    check(`${formId}: mit Nachweis-Zeile bleibt eine Woche eine Seite`, inhalt === 1, 'Inhaltsseiten: ' + inhalt);
+}
+
+
 console.log(fails ? `\n${fails} Pruefung(en) fehlgeschlagen\n` : '\nAlle Pruefungen bestanden\n');
 process.exit(fails ? 1 : 0);

@@ -10,14 +10,14 @@
 </script>
     <meta name="description" content="Als Ausbilder alle Berichtsheft-Wochen Ihrer Azubis an einem Ort prüfen, abzeichnen oder zurückgeben — mit Konto als Sammelübersicht, ohne Konto per Link.">
     <meta name="keywords" content="Berichtsheft Ausbilder, Ausbildungsnachweis prüfen, Ausbildungsnachweis unterschreiben, Berichtsheft abzeichnen, §14 BBiG, Ausbildungsbetrieb, Ausbilder-Übersicht">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.6.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.7.0"></script>
     <script>/* Einblend-Zustaende im Einstieg gelten nur mit JS — sonst bliebe er leer. */
     document.documentElement.className += ' js';</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=7.6.0"></script>
-    <script defer src="/Assets/js/ph-init.js?v=7.6.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.7.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.7.0"></script>
     <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
@@ -372,12 +372,74 @@
         .abk-best-dns[open] summary { margin-bottom: 12px; }
         .abk-gesperrt { margin-top: 10px; font-size: 0.8rem; color: var(--warning); line-height: 1.55; }
         .abk-gesperrt .abk-imp-btn { margin-left: 4px; font-size: 0.8rem; }
+        /* Stufen beim E-Mail-Weg. Nummern, weil es wirklich eine Reihenfolge
+           ist: ohne Impressum kennt der Server keine Adresse, an die er die
+           Firma fragen koennte. */
+        .abk-stufen { list-style: none; margin: 18px 0 0; padding: 0; }
+        .abk-stufe {
+            display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 12px;
+            position: relative; padding-bottom: 18px;
+        }
+        .abk-stufe:last-child { padding-bottom: 0; }
+        /* Verbindungslinie zwischen den Markern — endet am letzten Schritt. */
+        .abk-stufe:not(:last-child)::before {
+            content: ""; position: absolute; left: 12.5px; top: 28px; bottom: 2px;
+            width: 1px; background: var(--border-strong);
+        }
+        .abk-stufe-mark {
+            width: 26px; height: 26px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: var(--text-faint);
+            border: 1px solid var(--border-strong); background: var(--bg-card);
+        }
+        .abk-stufe-mark svg { width: 13px; height: 13px; }
+        .abk-stufe.is-ok .abk-stufe-mark {
+            color: var(--success); border-color: rgba(var(--success-rgb), 0.45);
+            background: rgba(var(--success-rgb), 0.1);
+        }
+        .abk-stufe.is-jetzt .abk-stufe-mark {
+            color: var(--primary); border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        }
+        .abk-stufe-t { font-size: 0.92rem; font-weight: 600; line-height: 26px; }
+        /* Der Haken im Marker ist aria-hidden — "erledigt" muss der
+           Screenreader trotzdem hoeren. */
+        .ab-sr {
+            position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip-path: inset(50%); white-space: nowrap;
+        }
+        .abk-stufe.is-spaeter .abk-stufe-t { color: var(--text-muted); }
+        .abk-stufe-s {
+            font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;
+            max-width: 62ch; overflow-wrap: anywhere;
+        }
+        .abk-stufe-s b { color: var(--text-main); font-weight: 600; }
+        .abk-stufe .abk-best-cta { margin-top: 12px; }
+        .abk-adr-liste { display: grid; gap: 6px; margin-top: 12px; max-width: 420px; }
+        .abk-adr {
+            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 0.86rem; cursor: pointer; overflow-wrap: anywhere;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .abk-adr:hover { border-color: var(--border-strong); }
+        .abk-adr:has(input:checked) { border-color: var(--primary); background: var(--primary-dim); }
+        .abk-adr input { accent-color: var(--primary); margin: 0; flex: 0 0 auto; }
+        .abk-adr input:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.5); outline-offset: 2px; }
+        .abk-firma-offen {
+            margin-top: 10px; padding: 11px 13px; border-radius: var(--radius-sm);
+            background: var(--bg-raise); border: 1px solid var(--border);
+            font-size: 0.82rem; line-height: 1.6; color: var(--text-muted); max-width: 62ch;
+            overflow-wrap: anywhere;
+        }
+        .abk-firma-offen b { color: var(--text-main); font-weight: 600; }
+        .abk-firma-offen .abk-imp-btn { font-size: 0.82rem; }
         @media (max-width: 560px) {
             .abk-best { padding: 17px 16px; }
             .abk-best .abk-best-cta { width: 100%; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .abk-best, .abk-best .abk-best-cta { transition: none; }
+            .abk-best, .abk-best .abk-best-cta, .abk-adr { transition: none; }
             .abk-best .abk-best-cta:active { transform: none; }
         }
         .abk-dom-zeile { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -928,6 +990,29 @@
         .ab-result-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
         .ab-result-sub { font-size: 0.92rem; color: var(--text-muted); margin-top: 8px; }
 
+        /* ── Anfrage an die Firma (#firma=…, Link aus der Mail) ──────
+           Liest jemand im Buero, der MyWorkLog nie gesehen hat. Deshalb:
+           eine Frage als Titel, die Fakten als Liste, zwei Knoepfe. */
+        .abf-s { font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-top: 10px; max-width: 60ch; }
+        .abf-fakten {
+            display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 9px 18px;
+            margin-top: 22px; padding: 16px 18px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+        }
+        .abf-fakten dt { font-size: 0.82rem; color: var(--text-faint); }
+        .abf-fakten dd { font-size: 0.9rem; color: var(--text-main); overflow-wrap: anywhere; }
+        .abf-folge { margin-top: 18px; display: grid; gap: 10px; }
+        .abf-folge p { font-size: 0.86rem; color: var(--text-muted); line-height: 1.6; max-width: 62ch; }
+        .abf-folge b { color: var(--text-main); font-weight: 600; }
+        .abf-knoepfe { display: flex; gap: 10px; margin-top: 24px; }
+        .abf-knoepfe .ab-btn-ghost:hover { border-color: var(--border-strong); color: var(--text-main); }
+        .abf-fehler { margin-top: 12px; font-size: 0.85rem; color: var(--danger); }
+        @media (max-width: 560px) {
+            .abf-fakten { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+            .abf-fakten dd { margin-bottom: 8px; }
+            .abf-knoepfe { flex-direction: column-reverse; }
+        }
+
         .ab-qr {
             margin: 24px auto 0; padding: 16px;
             background: #ffffff; border-radius: var(--radius);
@@ -1138,6 +1223,11 @@
         /* Wer was sieht: drei Rollen nebeneinander, keine davon hervorgehoben. */
         /* #abIntro davor: sonst schlaegt "#abIntro .ab-way { margin-top: 0 }" (1,1,0) die Regel. */
         #abIntro .abi-roles { margin-top: clamp(80px, 11vw, 130px); }
+        /* Zweiter Kartenblock direkt unter "Wer was sieht": weniger Abstand,
+           sonst zerfaellt die Seite in lauter gleich grosse Luecken. */
+        #abIntro .abi-roles.abi-nachweis { margin-top: clamp(56px, 7vw, 88px); }
+        #abIntro .abi-nachweis .ab-way-note { margin-top: 18px; }
+
         #abIntro .ab-roles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
         #abIntro .ab-roles li {
             display: block; padding: 24px 24px 22px; border: 1px solid var(--border); border-radius: 20px; max-width: none;
@@ -1219,7 +1309,7 @@
                 <div class="tilt-in">
                     <figure class="abi-frame">
                         <div class="abi-frame-in">
-                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.6.0" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: Kacheln für offene Wochen, Azubis und Abgezeichnetes, darunter eine Azubi-Karte mit Wochenstreifen und den offenen Wochen">
+                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.7.0" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: Kacheln für offene Wochen, Azubis und Abgezeichnetes, darunter eine Azubi-Karte mit Wochenstreifen und den offenen Wochen">
                         </div>
                     </figure>
                 </div>
@@ -1229,7 +1319,7 @@
             <div class="abi-split">
                 <figure class="abi-frame" data-reveal>
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.6.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Zwei Azubi-Karten in der Übersicht: abgezeichnete und offene Wochen als Balken und Wochenstreifen, eine überarbeitete Woche hervorgehoben">
+                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.7.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Zwei Azubi-Karten in der Übersicht: abgezeichnete und offene Wochen als Balken und Wochenstreifen, eine überarbeitete Woche hervorgehoben">
                     </div>
                 </figure>
 
@@ -1280,7 +1370,7 @@
             </section>
                 <figure class="abi-frame" data-reveal style="--i:1">
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/woche.webp?v=7.6.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
+                        <img src="/Grafiken/ausbilder/woche.webp?v=7.7.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
                     </div>
                 </figure>
             </div>
@@ -1296,6 +1386,21 @@
                     <li><span class="ab-role">Ausbilder</span> <span>legt den Betrieb an, erzeugt Einladungscodes, prüft die Wochen aller verbundenen Azubis, bestätigt oder gibt mit Anmerkung zurück. Jede Entscheidung trägt seinen Namen und wird auf seinem Gerät signiert.</span></li>
                     <li><span class="ab-role">Vertretung</span> <span>ist ein zweiter Ausbilder desselben Betriebs, eingeladen über einen befristeten Code — etwa für den Urlaub. Sie sieht und entscheidet wie der erste Ausbilder; wer entschieden hat, steht im Prüfverlauf.</span></li>
                 </ul>
+            </section>
+
+            <!-- Seit v7.6.1: wie ein Betrieb bestaetigt wird, als Text VOR dem
+                 Anmelden. Vorher stand das nur im angemeldeten Cockpit — die
+                 oeffentliche Seite sagte nichts dazu, und ein Betrieb wusste
+                 nicht, was ihn nach der Anmeldung erwartet. -->
+            <section class="ab-way abi-roles abi-nachweis" data-reveal>
+                <h2 class="ab-way-t">Wie ein Betrieb bestätigt wird</h2>
+                <p class="ab-way-s">Einen Betriebsnamen kann jeder eintippen. Abzeichnen kann ein Betrieb deshalb erst, wenn er auf einem von drei Wegen bestätigt ist. Welcher es war, sehen Ihre Azubis, und er steht auf jedem abgezeichneten Nachweis.</p>
+                <ul class="ab-feats ab-roles">
+                    <li><span class="ab-role">Firmenadresse</span> <span>Sie melden sich mit Ihrer Adresse der Firma an. Weil so eine Adresse auch Azubis haben, reicht sie allein nicht: Der Betriebsname muss im Impressum Ihrer Website stehen, und die Firma stimmt über die Adresse aus dem Impressum zu — mit einem Klick in einer Mail, ohne eigenes Konto.</span></li>
+                    <li><span class="ab-role">DNS-Eintrag</span> <span>Für IT-Verantwortliche: ein TXT-Eintrag in der Domain der Firma. Wer die Domain verwaltet, spricht für die Firma.</span></li>
+                    <li><span class="ab-role">Von Hand</span> <span>Ohne eigene Website oder mit einer GMX-Adresse: eine kurze Mail an uns. Wir prüfen den Betrieb anhand von Impressum oder Handelsregister und rufen bei Bedarf unter der dort genannten Nummer zurück.</span></li>
+                </ul>
+                <p class="ab-way-note">Was keiner der Wege leisten kann: bestätigen, dass eine bestimmte Person Ausbilder ist — dafür gibt es keine Stelle, die man fragen könnte. Deshalb trägt jede Freigabe die Adresse dessen, der abgezeichnet hat, und wie der Betrieb zu diesem Zeitpunkt bestätigt war.</p>
             </section>
 
             <section class="ab-way abi-nutzen" data-reveal>
@@ -1321,6 +1426,11 @@
              statischer Text, damit die i18n-Pipeline hier nichts anfassen
              muss. -->
         <section id="abKonto" style="display:none"></section>
+
+        <!-- ══ Anfrage an die Firma (#firma=<token>, Link aus der Mail) ══
+             Wie #abKonto komplett aus dem Skript (abL), ohne statischen
+             Text. Die Person, die das oeffnet, hat kein Konto. -->
+        <section id="abFirma" style="display:none"></section>
 
         <!-- ══ Die Woche(n) ══════════════════════════════════════════ -->
         <section id="abWeek" style="display:none">
@@ -1457,13 +1567,13 @@
     })();
     </script>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=7.6.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=7.6.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=7.7.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=7.7.0"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.6.0"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.7.0"></script>
 
     <script>
     (function () {
@@ -2650,7 +2760,7 @@
                 // OFFEN ganz oben — er sperrt die Hauptfunktion dieser Seite und
                 // gehoert deshalb nicht hinter einen Knopf.
                 (d.nachgewiesen ? '' : '<section class="abk-best" id="abkBest" aria-labelledby="abkBestT">' +
-                    bestaetigenInhalt(d) + '</section>') +
+                    (d.nachweisArt === 'email' ? stufenInhalt(d) : bestaetigenInhalt(d)) + '</section>') +
                 '<div class="abk-kacheln">' +
                 kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
                                              : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
@@ -2799,10 +2909,16 @@
             }
             var impressum = '';
             if (d.nachweisArt !== 'manuell') {
+                // Beim E-Mail-Weg stehen hier immer beide Marken: ohne sie
+                // waere der Betrieb gar nicht nachgewiesen.
                 impressum = d.impressumUrl
                     ? '<span class="abk-imp is-ok">' + abL('Name steht im Impressum', 'Name found in legal notice') + '</span>'
-                    : '<button type="button" class="abk-imp-btn" onclick="abkImpressum()">' +
+                    : '<button type="button" class="abk-imp-btn" id="abkImpBtn" onclick="abkImpressum()">' +
                       abL('Impressum abgleichen', 'Match legal notice') + '</button>';
+                if (d.firmaEmail) {
+                    impressum += '<span class="abk-imp is-ok">' + abL('Firma hat zugestimmt (', 'Company agreed (') +
+                        esc(d.firmaEmail) + ')</span>';
+                }
             }
             return '<p class="abk-domok">' + HAKEN + '<span>' + text + '</span>' + impressum + '</p>' +
                 '<div id="abkImpErgebnis" aria-live="polite"></div>';
@@ -2824,7 +2940,172 @@
                 '</details>';
         }
 
+        // ── Stufen beim E-Mail-Weg ──────────────────────────────────
+        // Die Firmenadresse allein genuegt nicht (seit v7.6.1): ein Azubi mit
+        // eigener Adresse @firma.de haette sie auch. Dazu kommen der Name im
+        // Impressum und die Zustimmung der FIRMA ueber eine Adresse aus ihrem
+        // Impressum — das Postfach liest das Buero, nicht der Azubi. Dieselbe
+        // Regel wie private.betrieb_nachgewiesen(); gesperrt wird dort.
+        var firmaStand = null;      // letzte Anfrage aus firma_anfrage_stand(), nie der Token
+        var firmaMeldung = '';      // Grund der letzten fehlgeschlagenen Anfrage
+
+        function stufe(zustand, nr, titel, inhalt) {
+            return '<li class="abk-stufe is-' + zustand + '">' +
+                '<span class="abk-stufe-mark" aria-hidden="true">' + (zustand === 'ok' ? HAKEN : nr) + '</span>' +
+                '<div><p class="abk-stufe-t">' + titel +
+                (zustand === 'ok' ? '<span class="ab-sr">' + abL(' — erledigt', ' — done') + '</span>' : '') +
+                '</p>' + inhalt + '</div></li>';
+        }
+
+        function stufenInhalt(d) {
+            var impOk = !!d.impressumUrl;
+            var dom = esc(d.domain || '');
+            var name = esc(d.betrieb || '');
+            return '<h2 class="abk-best-t" id="abkBestT">' + (impOk
+                    ? abL('Noch ein Schritt: die Zustimmung Ihrer Firma', 'One more step: your company’s approval')
+                    : abL('Noch zwei Schritte, dann können Sie abzeichnen', 'Two more steps before you can sign off')) + '</h2>' +
+                '<p class="abk-best-s">' + abL(
+                    'Eine Adresse @' + dom + ' haben oft auch Azubis. Deshalb prüfen wir zusätzlich, ob Ihr Betrieb im Impressum von ' + dom + ' steht, und fragen die Firma selbst — über die Adresse, die sie dort angibt.',
+                    'Apprentices often have an @' + dom + ' address too. So we also check that your company is named in the legal notice of ' + dom + ' and ask the company itself — via the address it lists there.') + '</p>' +
+                '<ol class="abk-stufen">' +
+                stufe('ok', 1, abL('Firmenadresse', 'Company address'),
+                    '<p class="abk-stufe-s">' + abL('@' + dom + ' — durch Ihre Anmeldung belegt.', '@' + dom + ' — proven by your sign-in.') + '</p>') +
+                stufe(impOk ? 'ok' : 'jetzt', 2, abL('Name im Impressum', 'Name in the legal notice'),
+                    '<p class="abk-stufe-s">' + (impOk
+                        ? abL('„' + name + '“ steht im Impressum von ' + dom + '.', '“' + name + '” appears in the legal notice of ' + dom + '.')
+                        : abL('Wir suchen „' + name + '“ im Impressum von ' + dom + '.', 'We look for “' + name + '” in the legal notice of ' + dom + '.')) + '</p>' +
+                    (impOk ? '' :
+                        '<button type="button" class="ab-btn abk-best-cta" id="abkImpBtn" onclick="abkImpressum()">' +
+                        '<span>' + abL('Impressum abgleichen', 'Match legal notice') + '</span></button>' +
+                        '<div id="abkImpErgebnis" aria-live="polite"></div>')) +
+                stufe(impOk ? 'jetzt' : 'spaeter', 3, abL('Zustimmung der Firma', 'Company approval'),
+                    impOk
+                        ? '<div id="abkFirma" aria-live="polite"><p class="abk-stufe-s">' + abL('Wird geladen …', 'Loading …') + '</p></div>'
+                        : '<p class="abk-stufe-s">' + abL(
+                            'Danach schicken wir eine kurze Anfrage an die E-Mail-Adresse aus Ihrem Impressum. Dort bestätigt jemand mit einem Klick.',
+                            'Then we send a short request to the email address from your legal notice. Someone there confirms with one click.') + '</p>') +
+                '</ol>' +
+                '<details class="abk-best-dns">' +
+                '<summary>' + abL('Kommen Sie hier nicht weiter? Freischaltung per E-Mail anfragen',
+                                  'Stuck here? Request activation by email') + '</summary>' +
+                wegManuell(null, true) +
+                '</details>' +
+                '<details class="abk-best-dns" id="abkBestDns">' +
+                '<summary>' + abL('Mit DNS-Eintrag bestätigen (für IT-Verantwortliche)',
+                                  'Confirm with a DNS record (for IT staff)') + '</summary>' +
+                '<div id="abkDomain">' + domainPanel(d, '', false) + '</div>' +
+                '</details>';
+        }
+
+        function fmtTag(iso) {
+            var t = new Date(iso);
+            return isNaN(t) ? '' : t.toLocaleDateString(abLocale(), { day: 'numeric', month: 'long' });
+        }
+
+        var FIRMA_GRUND = {
+            versand_fehlt: ['Der Mailversand ist gerade nicht eingerichtet. Versuchen Sie es später noch einmal oder fragen Sie die Freischaltung per E-Mail an.',
+                            'Sending email is not set up right now. Try again later or request activation by email.'],
+            versand_gescheitert: ['Die Mail ließ sich nicht zustellen. Wählen Sie eine andere Adresse oder versuchen Sie es später.',
+                                  'The email could not be delivered. Pick another address or try again later.'],
+            zu_oft: ['Heute sind schon drei Anfragen rausgegangen. Ab morgen geht es wieder.',
+                     'Three requests have already gone out today. You can send again tomorrow.'],
+            adresse_fremd: ['Diese Adresse steht nicht (mehr) im Impressum. Gleichen Sie das Impressum neu ab.',
+                            'This address is not (or no longer) in the legal notice. Match the legal notice again.'],
+            abgelehnt: ['Die Firma hat die letzte Anfrage abgelehnt. Eine neue ist erst nach sieben Tagen möglich.',
+                        'The company declined the last request. A new one is possible after seven days.'],
+            kein_impressum: ['Erst das Impressum abgleichen.', 'Match the legal notice first.']
+        };
+
+        function firmaInhalt(d) {
+            var adr = d.impressumEmails || [];
+            var st = firmaStand;
+            var fehler = firmaMeldung
+                ? '<p class="abk-best-hint is-fehler">' + abL.apply(null, FIRMA_GRUND[firmaMeldung] ||
+                    ['Die Anfrage ging nicht raus.', 'The request did not go out.']) + '</p>'
+                : '';
+
+            if (st && st.zustand === 'offen') {
+                return '<div class="abk-firma-offen">' + abL(
+                        'Anfrage an <b>' + esc(st.an) + '</b> gesendet am ' + fmtTag(st.erstellt_at) + '. Sobald dort jemand bestätigt, können Sie abzeichnen. Der Link in der Mail gilt bis ' + fmtTag(st.laeuft_ab_at) + '.',
+                        'Request sent to <b>' + esc(st.an) + '</b> on ' + fmtTag(st.erstellt_at) + '. As soon as someone there confirms, you can sign off. The link in the email is valid until ' + fmtTag(st.laeuft_ab_at) + '.') +
+                    ' <button type="button" class="abk-imp-btn" onclick="abkFirmaNeuLaden(this)">' + abL('Stand prüfen', 'Check status') + '</button>' +
+                    ' <button type="button" class="abk-imp-btn" onclick="abkFirmaSenden(' + "'" + esc(st.an) + "'" + ', this)">' + abL('Erneut senden', 'Send again') + '</button>' +
+                    '</div>' + fehler;
+            }
+            if (st && st.zustand === 'abgelehnt') {
+                return '<p class="abk-stufe-s">' + abL(
+                    'Die Firma hat die Anfrage am ' + fmtTag(st.entschieden_at) + ' abgelehnt. Eine neue Anfrage ist sieben Tage danach möglich. Liegt ein Irrtum vor, schreiben Sie an ',
+                    'The company declined the request on ' + fmtTag(st.entschieden_at) + '. A new request is possible seven days later. If this is a mistake, write to ') +
+                    '<a class="ab-inl" href="mailto:' + SUPPORT_MAIL + '">' + SUPPORT_MAIL + '</a>.</p>';
+            }
+            if (!adr.length) {
+                return '<p class="abk-stufe-s">' + abL(
+                    'Im Impressum von ' + esc(d.domain) + ' haben wir keine E-Mail-Adresse gefunden, die sich lesen lässt — etwa weil sie als Bild eingebunden ist. Fragen Sie die Freischaltung dann per E-Mail an (unten).',
+                    'We found no readable email address in the legal notice of ' + esc(d.domain) + ' — for instance because it is embedded as an image. In that case, request activation by email (below).') + '</p>' +
+                    '<button type="button" class="abk-imp-btn" style="margin:8px 0 0" onclick="abkImpressum()">' + abL('Impressum neu abgleichen', 'Match legal notice again') + '</button>';
+            }
+            var vorher = st && st.zustand === 'abgelaufen'
+                ? '<p class="abk-stufe-s">' + abL('Die letzte Anfrage an ' + esc(st.an) + ' ist abgelaufen.', 'The last request to ' + esc(st.an) + ' has expired.') + '</p>'
+                : '';
+            var auswahl = adr.length === 1 ? '' :
+                '<div class="abk-adr-liste" role="radiogroup" aria-label="' + abL('Adresse aus dem Impressum', 'Address from the legal notice') + '">' +
+                adr.map(function (a, i) {
+                    return '<label class="abk-adr"><input type="radio" name="abkAdr" value="' + esc(a) + '"' +
+                        (i === 0 ? ' checked' : '') + ' onchange="abkAdrGewaehlt()"><span>' + esc(a) + '</span></label>';
+                }).join('') + '</div>';
+            return vorher + '<p class="abk-stufe-s">' + abL(
+                    'Wir schicken eine kurze Mail an ' + (adr.length === 1 ? '<b>' + esc(adr[0]) + '</b>' : 'eine Adresse aus Ihrem Impressum') + '. Dort bestätigt jemand mit einem Klick, dass Sie bei der Firma ausbilden. Ein Konto braucht dafür niemand.',
+                    'We send a short email to ' + (adr.length === 1 ? '<b>' + esc(adr[0]) + '</b>' : 'an address from your legal notice') + '. Someone there confirms with one click that you train at the company. Nobody needs an account for that.') + '</p>' +
+                auswahl +
+                '<button type="button" class="ab-btn abk-best-cta" id="abkFirmaBtn" onclick="abkFirmaSenden(null, this)">' +
+                '<span>' + abL('Anfrage an ', 'Send request to ') + esc(adr[0]) + abL(' senden', '') + '</span></button>' +
+                fehler;
+        }
+
+        async function firmaLaden() {
+            if (!$('abkFirma') || !kontoDaten) return;
+            try { firmaStand = await BHB2B.firmaStand(); }
+            catch (e) { firmaStand = null; }
+            var box = $('abkFirma');
+            if (box) box.innerHTML = firmaInhalt(kontoDaten);
+        }
+
+        window.abkAdrGewaehlt = function () {
+            var r = document.querySelector('input[name="abkAdr"]:checked');
+            var b = document.querySelector('#abkFirmaBtn span');
+            if (r && b) b.textContent = abL('Anfrage an ', 'Send request to ') + r.value + abL(' senden', '');
+        };
+
+        window.abkFirmaSenden = async function (an, btn) {
+            if (!an) {
+                var r = document.querySelector('input[name="abkAdr"]:checked');
+                an = r ? r.value : ((kontoDaten && kontoDaten.impressumEmails) || [])[0];
+            }
+            if (!an) return;
+            if (btn) { btn.disabled = true; }
+            firmaMeldung = '';
+            try {
+                var res = await BHB2B.firmaAnfragen(an, document.documentElement.lang === 'en' ? 'en' : 'de');
+                if (res && res.ok) {
+                    if (typeof mwlEvent === 'function') mwlEvent('b2b_firma_angefragt', {});
+                } else {
+                    firmaMeldung = (res && res.grund) || 'versand_gescheitert';
+                }
+            } catch (e) {
+                firmaMeldung = 'versand_gescheitert';
+            }
+            await firmaLaden();
+        };
+
+        window.abkFirmaNeuLaden = async function (btn) {
+            if (btn) btn.disabled = true;
+            await nachweisNeuLaden();
+            if (kontoDaten && kontoDaten.nachgewiesen) { renderKonto(); return; }
+            await firmaLaden();
+        };
+
         async function bestaetigenLaden() {
+            if (kontoDaten && kontoDaten.nachweisArt === 'email') { firmaLaden(); return; }
             var box = $('abkBestWeg');
             if (!box) return;
             if (!kontoMail) {
@@ -2854,13 +3135,16 @@
         // eingerichtetes Mailprogramm passiert beim Klick auf mailto GAR
         // NICHTS, ohne Meldung — deshalb stehen Adresse und „Text kopieren"
         // direkt daneben, nicht in einer Fehlermeldung, die nie kommt.
-        function wegManuell(dom) {
+        // `alsRueckfall`: steht unter den Stufen des E-Mail-Wegs — dort ohne
+        // den Satz ueber die Anmelde-Adresse (die IST ja eine Firmenadresse)
+        // und ohne den Tipp, sich mit einer anzumelden.
+        function wegManuell(dom, alsRueckfall) {
             return '<div class="abk-best-weg">' +
-                '<p class="abk-best-hint is-oben">' + (dom
+                (alsRueckfall ? '' : '<p class="abk-best-hint is-oben">' + (dom
                     ? abL('Sie sind mit einer Adresse bei <b>' + esc(dom) + '</b> angemeldet. So ein Postfach kann jeder anlegen — es bestätigt deshalb keinen Betrieb.',
                           'You are signed in with an address at <b>' + esc(dom) + '</b>. Anyone can create such a mailbox, so it does not confirm a company.')
                     : abL('Ihre Anmelde-Adresse bestätigt keinen Betrieb.', 'Your sign-in address does not confirm a company.')) +
-                '</p>' +
+                '</p>') +
                 '<a class="ab-btn abk-best-cta" href="' + esc(freischaltMailto()) + '" onclick="abkMailGeklickt()">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>' +
                 '<span>' + abL('Freischaltung per E-Mail anfragen', 'Request activation by email') + '</span></a>' +
@@ -2871,9 +3155,9 @@
                 '<a class="ab-inl" href="mailto:' + SUPPORT_MAIL + '">' + SUPPORT_MAIL + '</a> ' +
                 '<button type="button" class="abk-imp-btn" onclick="abkMailKopieren(this)">' +
                 abL('Text kopieren', 'Copy text') + '</button></p>' +
-                '<p class="abk-best-hint">' + abL(
-                    'Sie haben eine Firmenadresse? Melden Sie sich damit an — dann geht die Bestätigung mit einem Klick.',
-                    'Have a company address? Sign in with it — then confirming takes one click.') + '</p>' +
+                (alsRueckfall ? '' : '<p class="abk-best-hint">' + abL(
+                    'Sie haben eine Firmenadresse? Melden Sie sich damit an — dann geht die Bestätigung in wenigen Schritten.',
+                    'Have a company address? Sign in with it — then confirming takes just a few steps.') + '</p>') +
                 '</div>';
         }
 
@@ -2926,7 +3210,7 @@
         async function nachweisNeuLaden() {
             var st = await BHB2B.status(true);
             if (!st || !kontoDaten) return;
-            ['domain', 'domainToken', 'domainOk', 'nachweisArt', 'nachgewiesen', 'impressumUrl', 'kontoEmail']
+            ['domain', 'domainToken', 'domainOk', 'nachweisArt', 'nachgewiesen', 'impressumUrl', 'impressumEmails', 'firmaEmail', 'kontoEmail']
                 .forEach(function (k) { kontoDaten[k] = st[k]; });
         }
 
@@ -2968,8 +3252,9 @@
 
         window.abkImpressum = async function () {
             var box = $('abkImpErgebnis');
-            var btn = document.querySelector('.abk-domok .abk-imp-btn');
-            if (btn) { btn.disabled = true; btn.textContent = abL('Wird abgeglichen …', 'Matching …'); }
+            var btn = $('abkImpBtn');
+            var btnText = btn && (btn.querySelector('span') || btn);
+            if (btn) { btn.disabled = true; btnText.textContent = abL('Wird abgeglichen …', 'Matching …'); }
             try {
                 var r = await BHB2B.impressumPruefen();
                 if (r && r.ok) {
@@ -2979,13 +3264,19 @@
                 }
                 var g = IMP_GRUND[(r && r.grund) || 'nicht_erreichbar'] || IMP_GRUND.nicht_erreichbar;
                 box = $('abkImpErgebnis');
-                if (box) box.innerHTML = '<p class="abk-imp-info">' + abL(g[0], g[1]) + ' ' + abL(
-                    'Die Bestätigung bleibt gültig — der Abgleich ist ein Zusatz.',
-                    'The confirmation stays valid — the match is an extra.') + '</p>';
+                // Beim E-Mail-Weg sperrt ein fehlender Treffer das Abzeichnen,
+                // bei DNS ist er ein Zusatz — der Satz muss das auseinanderhalten.
+                var folge = kontoDaten && kontoDaten.nachweisArt === 'email'
+                    ? abL('Ohne diesen Abgleich bleibt das Abzeichnen gesperrt. Klappt er nicht, fragen Sie die Freischaltung per E-Mail an (unten).',
+                          'Without this match, signing off stays locked. If it does not work, request activation by email (below).')
+                    : abL('Die Bestätigung bleibt gültig — der Abgleich ist ein Zusatz.',
+                          'The confirmation stays valid — the match is an extra.');
+                if (box) box.innerHTML = '<p class="abk-imp-info">' + abL(g[0], g[1]) + ' ' + folge + '</p>';
             } catch (e) {
                 if (box) box.innerHTML = '<p class="abk-imp-info">' + esc((e && e.message) || 'Fehler') + '</p>';
             }
-            if (btn) { btn.disabled = false; btn.textContent = abL('Erneut abgleichen', 'Match again'); }
+            btn = $('abkImpBtn');
+            if (btn) { btn.disabled = false; (btn.querySelector('span') || btn).textContent = abL('Erneut abgleichen', 'Match again'); }
         };
 
         function domainPanel(d, meldung, tonRot) {
@@ -3209,6 +3500,122 @@
             renderKonto();
         }
 
+        // ── Anfrage an die Firma ─────────────────────────────────────
+        // Zwei Schritte: erst lesen, dann auf Klick entscheiden. Ein
+        // Mail-Scanner, der den Link vorab oeffnet, sieht so nur die Frage.
+        var firmaToken = '';
+
+        function firmaZeigen(html) {
+            show('abIntro', false);
+            show('abFirma', true);
+            $('abHeadNote').textContent = abL('Anfrage an Ihre Firma', 'Request to your company');
+            $('abFirma').innerHTML = html;
+        }
+
+        function firmaErgebnis(ok, titel, text) {
+            firmaZeigen('<div class="ab-result">' +
+                '<div class="ab-seal ' + (ok ? 'ab-seal-ok' : 'ab-seal-no') + '">' + (ok ? HAKEN :
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>') +
+                '</div>' +
+                '<p class="ab-result-title">' + titel + '</p>' +
+                '<p class="ab-result-sub">' + text + '</p></div>');
+        }
+
+        var FIRMA_ZUSTAND = {
+            unbekannt: ['Dieser Link ist nicht gültig', 'This link is not valid',
+                        'Vielleicht wurde er beim Kopieren abgeschnitten. Öffnen Sie ihn bitte direkt aus der Mail.',
+                        'It may have been cut off when copied. Please open it directly from the email.'],
+            ersetzt: ['Es gibt eine neuere Anfrage', 'There is a newer request',
+                      'Diese Anfrage wurde durch eine neuere ersetzt. Bitte nutzen Sie den Link aus der neuesten Mail.',
+                      'This request was replaced by a newer one. Please use the link from the latest email.'],
+            abgelaufen: ['Diese Anfrage ist abgelaufen', 'This request has expired',
+                         'Der Link galt sieben Tage. Wer die Bestätigung braucht, kann eine neue Anfrage schicken.',
+                         'The link was valid for seven days. Whoever needs the confirmation can send a new request.'],
+            veraltet: ['Diese Anfrage gilt nicht mehr', 'This request is no longer valid',
+                       'Seit dem Versand wurde der Betrieb umbenannt, die Website geändert oder die Person ist nicht mehr als Ausbilder eingetragen. Sie müssen nichts tun.',
+                       'Since it was sent, the company was renamed, the website changed or the person is no longer listed as a trainer. You do not need to do anything.'],
+            bestaetigt: ['Schon bestätigt', 'Already confirmed',
+                         'Diese Anfrage wurde bereits bestätigt. Sie müssen nichts weiter tun.',
+                         'This request has already been confirmed. You do not need to do anything else.'],
+            abgelehnt: ['Schon abgelehnt', 'Already declined',
+                        'Diese Anfrage wurde bereits abgelehnt. Das Konto kann nicht abzeichnen.',
+                        'This request has already been declined. The account cannot sign off.']
+        };
+
+        function firmaZustandZeigen(z) {
+            var t = FIRMA_ZUSTAND[z] || FIRMA_ZUSTAND.unbekannt;
+            firmaErgebnis(z === 'bestaetigt', abL(t[0], t[1]), abL(t[2], t[3]));
+        }
+
+        async function bootFirma(token) {
+            firmaToken = token;
+            firmaZeigen('<p class="abk-load">' + abL('Anfrage wird geladen …', 'Loading request …') + '</p>');
+            var a = null;
+            try { a = b2bDa() ? await BHB2B.firmaAntwort(token, 'lesen') : null; }
+            catch (e) { a = null; }
+            if (!a) {
+                firmaErgebnis(false, abL('Die Anfrage ließ sich nicht laden', 'The request could not be loaded'),
+                    abL('Bitte prüfen Sie Ihre Verbindung und laden Sie die Seite neu.', 'Please check your connection and reload the page.'));
+                return;
+            }
+            if (a.zustand !== 'offen') { firmaZustandZeigen(a.zustand); return; }
+
+            var wer = a.ausbilder_name ? esc(a.ausbilder_name) : esc(a.ausbilder_email);
+            firmaZeigen(
+                '<p class="ab-eyebrow">' + abL('Anfrage von MyWorkLog', 'Request from MyWorkLog') + '</p>' +
+                '<h1 class="ab-title">' + abL('Bildet ' + wer + ' bei ' + esc(a.betrieb) + ' aus?',
+                                              'Does ' + wer + ' train apprentices at ' + esc(a.betrieb) + '?') + '</h1>' +
+                '<p class="abf-s">' + abL(
+                    'Diese Person möchte in MyWorkLog die Berichtshefte Ihrer Auszubildenden digital abzeichnen. Wir fragen Sie, weil Ihre Adresse im Impressum von ' + esc(a.domain) + ' steht.',
+                    'This person wants to sign off your apprentices’ training records (Berichtsheft) digitally in MyWorkLog. We are asking you because your address is listed in the legal notice of ' + esc(a.domain) + '.') + '</p>' +
+                '<dl class="abf-fakten">' +
+                '<dt>' + abL('Person', 'Person') + '</dt><dd>' + (a.ausbilder_name ? esc(a.ausbilder_name) + ', ' : '') + esc(a.ausbilder_email) + '</dd>' +
+                '<dt>' + abL('Betrieb', 'Company') + '</dt><dd>' + esc(a.betrieb) + '</dd>' +
+                '<dt>' + abL('Website', 'Website') + '</dt><dd>' + esc(a.domain) + '</dd>' +
+                '<dt>' + abL('Angefragt am', 'Requested on') + '</dt><dd>' + fmtTag(a.erstellt_at) + '</dd>' +
+                '</dl>' +
+                '<div class="abf-folge">' +
+                '<p>' + abL('<b>Ja:</b> Die Person kann danach die Wochen der Azubis abzeichnen, die sich mit diesem Betrieb verbinden. Jede Unterschrift trägt ihre Adresse ' + esc(a.ausbilder_email) + '.',
+                            '<b>Yes:</b> The person can then sign off the weeks of apprentices who connect to this company. Every sign-off carries their address ' + esc(a.ausbilder_email) + '.') + '</p>' +
+                '<p>' + abL('<b>Nein:</b> Das Konto kann nicht abzeichnen, und sieben Tage lang ist keine neue Anfrage möglich.',
+                            '<b>No:</b> The account cannot sign off, and no new request is possible for seven days.') + '</p>' +
+                '<p>' + abL('Ein Konto ist dafür nicht nötig, und es entstehen keine Kosten. Fragen: ', 'You do not need an account and there are no costs. Questions: ') +
+                '<a class="ab-inl" href="mailto:' + SUPPORT_MAIL + '">' + SUPPORT_MAIL + '</a></p>' +
+                '</div>' +
+                '<div class="abf-knoepfe">' +
+                '<button type="button" class="ab-btn ab-btn-ghost" onclick="abfEntscheiden(false)"><span>' +
+                abL('Nein, stimmt nicht', 'No, that is not right') + '</span></button>' +
+                '<button type="button" class="ab-btn ab-btn-primary" onclick="abfEntscheiden(true)">' + HAKEN + '<span>' +
+                abL('Ja, bildet bei uns aus', 'Yes, trains with us') + '</span></button>' +
+                '</div><p class="abf-fehler" id="abfFehler" aria-live="polite"></p>');
+        }
+
+        window.abfEntscheiden = async function (ja) {
+            var knoepfe = document.querySelectorAll('.abf-knoepfe .ab-btn');
+            knoepfe.forEach(function (b) { b.disabled = true; });
+            var r = null;
+            try { r = await BHB2B.firmaAntwort(firmaToken, ja ? 'ja' : 'nein'); }
+            catch (e) { r = null; }
+            if (!r) {
+                knoepfe.forEach(function (b) { b.disabled = false; });
+                $('abfFehler').textContent = abL('Das hat nicht geklappt. Bitte versuchen Sie es noch einmal.', 'That did not work. Please try again.');
+                return;
+            }
+            // Der Token hat seinen Zweck erfuellt — raus aus Adresszeile und Verlauf.
+            try { history.replaceState(null, '', location.pathname); } catch (e) { /* egal */ }
+            if (!r.ok) { firmaZustandZeigen(r.zustand); return; }
+            if (typeof mwlEvent === 'function') mwlEvent('b2b_firma_entschieden', { ja: !!ja });
+            if (ja) {
+                firmaErgebnis(true, abL('Danke, bestätigt', 'Thank you, confirmed'), abL(
+                    'Die Person kann jetzt für ' + esc(r.betrieb) + ' abzeichnen. Sie müssen nichts weiter tun. Soll das später nicht mehr gelten, schreiben Sie an ' + SUPPORT_MAIL + '.',
+                    'The person can now sign off for ' + esc(r.betrieb) + '. You do not need to do anything else. If this should stop applying later, write to ' + SUPPORT_MAIL + '.'));
+            } else {
+                firmaErgebnis(false, abL('Abgelehnt', 'Declined'), abL(
+                    'Das Konto kann für ' + esc(r.betrieb) + ' nicht abzeichnen. Danke, dass Sie Bescheid gegeben haben.',
+                    'The account cannot sign off for ' + esc(r.betrieb) + '. Thank you for letting us know.'));
+            }
+        };
+
         // ── Start ────────────────────────────────────────────────────
         async function boot() {
             $('abRejectBtn').addEventListener('click', function () { openSheet('rejected', 0); });
@@ -3260,6 +3667,11 @@
                 e.preventDefault();
                 head.click();
             });
+
+            // Link aus der Mail an die Firma — geht vor allem anderen, auch
+            // vor einer Ausbilder-Sitzung im selben Browser.
+            var fm = /[#&]firma=([A-Za-z0-9_-]+)/.exec(location.hash || '');
+            if (fm) { await bootFirma(fm[1]); return; }
 
             var m = /[#&]w=([A-Za-z0-9\-_]+)/.exec(location.hash || '');
             if (!m) {
