@@ -1666,7 +1666,6 @@
         goals:       '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
         calendar:    '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
         history:     '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
-        support:     '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><line x1="5.6" y1="5.6" x2="9.5" y2="9.5"/><line x1="14.5" y1="14.5" x2="18.4" y2="18.4"/><line x1="14.5" y1="9.5" x2="18.4" y2="5.6"/><line x1="5.6" y1="18.4" x2="9.5" y2="14.5"/>',
         help:        '<circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.8-2.8 2.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
     };
 
@@ -1765,12 +1764,6 @@
                     groups: [{ kind: 'list', label: qhL('Funktionen', 'Features'), items: [
                         { text: qhL('Nach Datum, Projekt oder Typ filtern.', 'Filter by date, project or type.') },
                         { text: qhL('Einträge bearbeiten oder exportieren.', 'Edit or export entries.') }
-                    ]}]};
-            case 'view-support':
-                return { icon: 'support', title: qhL('Support', 'Support'),
-                    sub: qhL('Hilfe, Feedback und Kontakt', 'Help, feedback and contact'),
-                    groups: [{ kind: 'list', label: qhL('Optionen', 'Options'), items: [
-                        { text: qhL('Fehler melden, Feedback geben oder die Doku lesen.', 'Report bugs, send feedback or read the docs.') }
                     ]}]};
             default:
                 return { icon: 'help', title: qhL('Schnell-Hilfe', 'Quick help'),

@@ -88,7 +88,7 @@ function cacheSchluessel(url) {
 
 // 🔴 SWR frischt per Definition bei JEDEM Treffer auf — ohne Fenster waeren das
 // hier drei Abrufe von version.json pro Seitenaufruf (onboarding.js,
-// version-loader.js, support.html), also gut 1 MB, nur eben im Hintergrund statt
+// version-loader.js, /support/), also gut 1 MB, nur eben im Hintergrund statt
 // blockierend. Am Netzverkehr aendert das nichts, und genau der war der Anlass.
 // Mit Fenster: hoechstens EIN Abruf je Datei und Fenster, die anderen sehen einen
 // frischen Eintrag und ruehren das Netz nicht an. Fuenf Minuten liegen deutlich

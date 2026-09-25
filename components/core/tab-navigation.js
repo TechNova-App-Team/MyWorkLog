@@ -39,7 +39,6 @@
             'weekview': 'Wochenansicht',
             'urlaubsplaner': 'Urlaubsplaner',
             'aibot': 'AI-Bot Assistent',
-            'support': 'Support',
             'analytics-pro': 'Analytics Pro',
             'aufgaben': 'Aufgaben',
             'aufgaben-tab': 'Aufgaben',
@@ -83,9 +82,6 @@
         }
         if (tabId === 'aibot') {
             initializeAIBot();
-        }
-        if (tabId === 'support') {
-            if (typeof renderSupportStats === 'function') renderSupportStats();
         }
         if (tabId === 'analytics-pro') {
             if (typeof renderAnalyticsPro === 'function') renderAnalyticsPro();

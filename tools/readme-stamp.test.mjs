@@ -56,7 +56,7 @@ const attrappe = [
   '',
 ].join('\r\n');
 
-console.log('── Titel-Ableitung (wie clSplit in support.html)');
+console.log('── Titel-Ableitung (wie clSplit in Assets/js/support.js)');
 {
   ok(changelogTitel('Titelzeile\n\nAbsatz.') === 'Titelzeile', 'erste Zeile + Leerzeile → Titel');
   ok(changelogTitel('Erster Satz hier. Zweiter Satz.') === 'Erster Satz hier.', 'ohne Titelzeile → erster Satz');

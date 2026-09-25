@@ -6,7 +6,7 @@
  * Damit landete alles im Netz, was im Repo liegt — auch reine Quellen. Konkret war
  * abrufbar (geprueft am 2026-07-15):
  *   /index.template  → eine halb-gerenderte Kopie der Startseite (mit @include-Markern!)
- *   /components/support/support.html → das rohe Fragment
+ *   /components/history/history.html → das rohe Fragment
  *   /tools/build-index.js → Build-Tooling
  * Die "SECURITY BLOCKS" in _redirects greifen dagegen NICHT: sie nutzen Status 404,
  * und Cloudflare Pages unterstuetzt in _redirects nur 200/301/302/303/307/308 — die

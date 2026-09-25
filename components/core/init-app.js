@@ -210,9 +210,6 @@
         try { var _clsMP = document.getElementById('cls-main-pos'); if (_clsMP) _clsMP.remove(); } catch(e) {}
         window._clsBC = 'cls-main-pos-removed';
 
-        // EmailJS init (deferred SDK ist jetzt geladen)
-        try { if (typeof emailjs !== 'undefined') emailjs.init('dLaRbQLynU5R8A0ti'); } catch(e) {}
-
         // Offline beim Start ist KEIN Grund umzuleiten — die App ist per Service-Worker
         // gecacht und voll offline nutzbar. Der Netzwerk-Status-Indikator zeigt Offline an.
         window._clsBC = 'data-loaded';

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+<script>
+/* Hell/Dunkel und Akzent VOR dem ersten Bild aus dem App-Profil holen,
+   sonst blitzt die Seite im falschen Modus auf. Die App kennt
+   themeMode 'dark' | 'light' | 'system' (settings.js, setThemeMode). */
+(function(){try{var d=JSON.parse(localStorage.getItem('tg_pro_data')||'null');var m=d&&d.settings&&d.settings.themeMode;var light=m==='light'||(m==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches);if(light)document.documentElement.setAttribute('data-theme','light');}catch(e){}})();
+</script>
+    <title>MyWorkLog | Support</title>
+    <link rel="canonical" href="https://myworklog.de/support/">
+    <link rel="alternate" hreflang="de" href="https://myworklog.de/support/">
+    <link rel="alternate" hreflang="en" href="https://myworklog.de/en/support/">
+    <link rel="alternate" hreflang="x-default" href="https://myworklog.de/support/">
+    <meta name="description" content="Support für MyWorkLog: Feedback, Ideen und Fehler direkt an den Entwickler schicken — mit Datenvorschau und nur mit deiner Zustimmung. Dazu jede Version mit Datum, durchsuchbar im Volltext.">
+    <meta name="theme-color" content="#030305">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myworklog.de/support/">
+    <meta property="og:title" content="MyWorkLog | Support">
+    <meta property="og:description" content="Feedback, Ideen und Fehler direkt an den Entwickler — dazu jede Version mit Datum, durchsuchbar.">
+    <meta property="og:image" content="https://myworklog.de/Grafiken/icon-512.png">
+    <link rel="icon" href="/Grafiken/icon-192.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
+    <link rel="stylesheet" href="/Assets/css/support.css?v=7.5.5">
+    <script defer src="/Assets/js/version-loader.js?v=7.5.5"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.5.5"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.5.5"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SUPPORT — seit v7.5.5 eine eigene Seite statt einer Ansicht in der
+     index.html. Vorher lud jeder App-Start 90 KB Markup, den Footer und
+     das 334 KB grosse version.json fuer den Changelog mit, obwohl kaum
+     jemand die Ansicht oeffnet.
+
+     🔴 Bewusst ohne App-Aufnahmen (Entscheidung des Nutzers, v7.5.5):
+     wer hier landet, kennt die App schon; die Bilder schoben das
+     Formular unter den Falz. Gezeigt wird die App auf /about/.
+
+     🔴 Keine gemischten Knoten (Text + Element nebeneinander): die
+     i18n-Pipeline ueberspringt sie still, der Satz bliebe auf /en/
+     deutsch. Jeder Text steht in einem eigenen <span>.
+
+     🔴 Die Seite SCHREIBT nie in tg_pro_data. Ist die App in einem
+     zweiten Tab offen, haelt sie `data` im Speicher und wuerde jede
+     fremde Aenderung beim naechsten save() ueberschreiben. Gelesen
+     wird nur (Name, "Dein Stand", Vollbericht); das Protokoll der
+     Rueckmeldungen liegt unter eigenem Schluessel (mwl_feedback_log).
+═══════════════════════════════════════════════════════════════ -->
+
+<header class="sp-top" id="spTop">
+    <div class="sp-shell sp-top-in">
+        <a href="/" class="sp-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            <span>Zur App</span>
+        </a>
+        <span class="sp-brand">MyWorkLog</span>
+    </div>
+</header>
+
+<main>
+
+    <section class="sp-hero" id="spHero">
+        <div class="sp-shell sp-hero-grid">
+            <div class="sp-hero-text">
+                <h1 class="sp-title">
+                    <span>Danke, dass du</span>
+                    <span>MyWorkLog nutzt.</span>
+                </h1>
+                <p class="sp-lede">Hier sagst du, was fehlt, meldest Fehler und siehst, was sich zuletzt geändert hat. Jede Rückmeldung landet direkt beim Entwickler.</p>
+                <div class="sp-btns">
+                    <a class="sp-btn sp-btn--main" href="#feedback"><span>Feedback schreiben</span><span class="sp-btn-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></span></a>
+                    <a class="sp-btn" href="#updates"><span>Was neu ist</span></a>
+                </div>
+            </div>
+
+            <aside class="sp-mine" aria-labelledby="spMineTitle">
+                <div class="sp-mine-head">
+                    <span class="sp-mine-title" id="spMineTitle">Dein Stand</span>
+                    <span class="sp-mine-note">nur auf diesem Gerät</span>
+                </div>
+                <div class="sp-mine-rows" id="spMineRows"></div>
+            </aside>
+        </div>
+    </section>
+
+    <!-- Zustaende nur ueber Klassen: .is-picked (Bewertung), .is-on
+         (Art, Datenumfang), .is-busy (Senden), .is-missing (Zustimmung). -->
+    <section class="sp-sec" id="feedback">
+        <div class="sp-shell sp-split">
+            <header>
+                <h2 class="sp-h2">Wie findest du MyWorkLog?</h2>
+                <p class="sp-desc">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
+                <ul class="sp-facts">
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span>Geht als E-Mail direkt an den Entwickler.</span></li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Von sich aus nur Nachricht, Bewertung, Zeitpunkt und dein Name.</span></li>
+                    <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Ohne deine Zustimmung wird nichts gesendet.</span></li>
+                </ul>
+            </header>
+
+            <form class="sp-form" id="spForm" novalidate>
+                <div class="sp-field">
+                    <div class="sp-lbl" id="spKindLbl"><span>Worum geht es?</span></div>
+                    <div class="sp-seg sp-seg--3" role="group" aria-labelledby="spKindLbl">
+                        <button type="button" class="sp-seg-btn is-on" data-kind="feedback" aria-pressed="true"><span>Rückmeldung</span></button>
+                        <button type="button" class="sp-seg-btn" data-kind="idea" aria-pressed="false"><span>Idee</span></button>
+                        <button type="button" class="sp-seg-btn" data-kind="bug" aria-pressed="false"><span>Fehler</span></button>
+                    </div>
+                </div>
+
+                <div class="sp-field">
+                    <div class="sp-lbl" id="spRateLbl"><span>Deine Bewertung</span> <span class="sp-opt">optional</span></div>
+                    <div class="sp-rate" role="group" aria-labelledby="spRateLbl">
+                        <button type="button" class="sp-rate-btn" data-rate="1" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Schlecht</span></button>
+                        <button type="button" class="sp-rate-btn" data-rate="2" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 15h8"/><path d="M8 9h2"/><path d="M14 9h2"/></svg><span>Nicht so gut</span></button>
+                        <button type="button" class="sp-rate-btn" data-rate="3" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="8" x2="16" y1="15" y2="15"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Okay</span></button>
+                        <button type="button" class="sp-rate-btn" data-rate="4" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Gut</span></button>
+                        <button type="button" class="sp-rate-btn" data-rate="5" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Fantastisch</span></button>
+                    </div>
+                </div>
+
+                <div class="sp-field">
+                    <label class="sp-lbl" for="spText"><span>Deine Nachricht</span></label>
+                    <textarea id="spText" class="sp-textarea" rows="5"
+                        placeholder="Was fehlt dir, was stört dich, was gefällt dir?"></textarea>
+                </div>
+
+                <div class="sp-field">
+                    <div class="sp-lbl" id="spModeLbl"><span>Mitgesendete Daten</span></div>
+                    <div class="sp-seg" role="group" aria-labelledby="spModeLbl">
+                        <button type="button" class="sp-seg-btn is-on" data-mode="minimal" aria-pressed="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Minimal</span></button>
+                        <button type="button" class="sp-seg-btn" data-mode="full" aria-pressed="false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Vollständig</span></button>
+                    </div>
+                    <p class="sp-hint" id="spModeInfo">Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.</p>
+                    <div class="sp-links">
+                        <button type="button" class="sp-link" id="spPreviewBtn"><span>Welche Daten werden gesendet?</span></button>
+                        <a class="sp-link" href="/email/send/" target="_blank" rel="noopener"><span>E-Mail-Vorlage ansehen</span></a>
+                    </div>
+                </div>
+
+                <div class="sp-form-foot">
+                    <label class="sp-consent" for="spConsent">
+                        <input type="checkbox" id="spConsent">
+                        <span class="sp-check" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                        <span class="sp-consent-txt"><span>Ich stimme zu, dass meine Nachricht über EmailJS an den Entwickler gesendet wird.</span> <a href="/DSGVO/" target="_blank" rel="noopener">Datenschutzerklärung</a></span>
+                    </label>
+                    <button type="submit" id="spSend" class="sp-btn sp-btn--main"><span class="sp-send-lbl">Senden</span><span class="sp-btn-ic" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg></span></button>
+                </div>
+                <p class="sp-status" id="spStatus" role="status" aria-live="polite" hidden></p>
+            </form>
+        </div>
+    </section>
+
+    <section class="sp-sec" id="beitragen">
+        <div class="sp-shell sp-split">
+            <header>
+                <h2 class="sp-h2">So kannst du beitragen</h2>
+                <p class="sp-desc">Kein Geld nötig — Zeit, Ideen und Weitersagen helfen genauso.</p>
+            </header>
+            <ul class="sp-actions">
+                <li><a class="sp-action" href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer">
+                    <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+                    <span class="sp-action-txt"><span class="sp-action-t">Code beitragen</span><span class="sp-action-d">Stern, Fork oder Pull Request auf GitHub</span></span>
+                    <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+                </a></li>
+                <li><a class="sp-action" href="https://github.com/TechNova-App-Team/MyWorkLog/issues" target="_blank" rel="noopener noreferrer">
+                    <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/><path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg></span>
+                    <span class="sp-action-txt"><span class="sp-action-t">Fehler auf GitHub melden</span><span class="sp-action-d">Öffentlich, mit Verlauf und Antwort</span></span>
+                    <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+                </a></li>
+                <li><button type="button" class="sp-action" id="spIdeaBtn">
+                    <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span>
+                    <span class="sp-action-txt"><span class="sp-action-t">Idee einreichen</span><span class="sp-action-d">Geht über das Formular oben</span></span>
+                    <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+                </button></li>
+                <li><button type="button" class="sp-action" id="spShareBtn">
+                    <span class="sp-action-ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg></span>
+                    <span class="sp-action-txt"><span class="sp-action-t">Teilen</span><span class="sp-action-d" id="spShareHint">Erzähl anderen Azubis davon</span></span>
+                    <svg class="sp-action-go" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button></li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="sp-sec" id="updates">
+        <div class="sp-shell">
+            <header class="sp-head--wide">
+                <h2 class="sp-h2">Letzte Updates</h2>
+                <p class="sp-desc">Jede Version, die je ausgeliefert wurde — mit Datum, durchsuchbar, im Volltext.</p>
+            </header>
+            <!-- Inhalt kommt vollstaendig aus config/version.json (changelog,
+                 changelog_en, changelogDates) — renderChangelog() in support.js. -->
+            <div class="sp-clog" id="spChangelog">
+                <div class="cl-empty-state"><span>Lädt Änderungen…</span></div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<div id="page-footer"></div>
+
+<dialog class="sp-dlg" id="spPreview" aria-labelledby="spPreviewTitle">
+    <div class="sp-dlg-head">
+        <h3 class="sp-dlg-title" id="spPreviewTitle">Datenvorschau</h3>
+        <span class="sp-dlg-mode" id="spPreviewMode" translate="no"></span>
+        <button type="button" class="sp-dlg-x" id="spPreviewClose" aria-label="Schließen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="sp-dlg-body" id="spPreviewBody"></div>
+</dialog>
+
+<script>
+/* Theme-Sync mit der App (CLAUDE.md-Konvention fuer Standalone-Seiten):
+   Akzentfarbe und Hell/Dunkel aus dem Profil nachziehen. */
+(function () {
+    function applyAccent(hex) {
+        if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+        var s = document.documentElement.style;
+        s.setProperty('--primary', hex);
+        s.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+        s.setProperty('--hover-fill', 'rgba(' + r + ',' + g + ',' + b + ',0.07)');
+        s.setProperty('--hover-fill-strong', 'rgba(' + r + ',' + g + ',' + b + ',0.12)');
+        s.setProperty('--hover-border', 'rgba(' + r + ',' + g + ',' + b + ',0.28)');
+    }
+    function sync() {
+        try {
+            var d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
+            if (!d || !d.settings) return;
+            if (d.settings.theme) applyAccent(d.settings.theme);
+            var m = d.settings.themeMode;
+            var light = m === 'light' || (m === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches);
+            document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+        } catch (e) {}
+    }
+    sync();
+    window.addEventListener('storage', function (e) { if (e.key === 'tg_pro_data') sync(); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) sync(); });
+})();
+</script>
+
+<script>
+/* Gemeinsamer Fussbereich */
+fetch('/pages/footer/footer.html')
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+        var ph = document.getElementById('page-footer');
+        if (!ph) return;
+        var t = document.createElement('template');
+        t.innerHTML = html;
+        ph.replaceWith(t.content);
+        if (typeof loadAppVersion === 'function') loadAppVersion();
+    })
+    .catch(function () {});
+</script>
+
+<script src="/Assets/js/support.js?v=7.5.5"></script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
+</html>

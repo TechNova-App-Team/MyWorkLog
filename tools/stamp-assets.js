@@ -34,7 +34,7 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 // sich der Cache-Key bei jedem Bump.
 // Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
 // jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen. data-src
-// gehoert dazu: die Support-Ansicht setzt ihre Bilder erst beim Oeffnen ein.
+// gehoert dazu, fuer Bilder, die ein Skript erst beim Oeffnen einsetzt.
 const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
 
 // Versionsnummern, die im HTML stehen MUESSEN und daher unweigerlich veralten:
@@ -126,7 +126,7 @@ const README_ENDE = '<!-- changelog:end -->';
 const README_ANZAHL = 5;
 
 // Titel je Eintrag genau wie die Release-Ansicht der Support-Seite (clSplit in
-// components/support/support.html): erste Zeile, wenn sie <= 90 Zeichen hat und
+// Assets/js/support.js): erste Zeile, wenn sie <= 90 Zeichen hat und
 // eine Leerzeile folgt; sonst der erste Satz; zuletzt der erste Absatz. Weicht
 // das hier ab, stehen auf GitHub andere Ueberschriften als in der App.
 function changelogTitel(text) {

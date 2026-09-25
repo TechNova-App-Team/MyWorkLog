@@ -482,7 +482,6 @@
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
         { id: 'ihk',          label: 'IHK',               icon: getIconSvgById('ihk'), group: 'Navigation', action: () => switchTab('ihk') },
         { id: 'goals',        label: 'Ziele',             icon: getIconSvgById('goals'), group: 'Navigation', action: () => switchTab('goals') },
-        { id: 'support',      label: 'Support',           icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },
         { id: 'analytics-pro', label: 'Analytics Pro',     icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
@@ -501,6 +500,7 @@
         { id: 'ausbilder-betrieb', label: 'Ausbilder / Betrieb verbinden', icon: getIconSvgById('berichtsheft'), group: 'Extern', action: () => { window.location.href = './berichtsheft/?betrieb=1'; } },
         { id: 'schatten-berichtsheft', label: 'Schatten-Berichtsheft', icon: getIconSvgById('schatten-berichtsheft'), group: 'Extern', action: () => { window.location.href = './schatten-berichtsheft/'; } },
         { id: 'fahrtkosten',  label: 'Fahrtkosten',       icon: getIconSvgById('fahrtkosten'), group: 'Extern',     action: () => { window.location.href = './fahrtkosten/'; } },
+        { id: 'support',      label: 'Support',           icon: getIconSvgById('support'), group: 'Extern',     action: () => { window.location.href = './support/'; } },
         { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './aufgaben/'; } },
         { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './skill-tree/'; } },
         { id: 'it-hub',       label: 'IT Professional Hub', icon: getIconSvgById('it-hub'), group: 'Extern',     action: () => { window.location.href = './it-landing/'; } },

@@ -10,7 +10,7 @@
  * vollstaendige Datei. Damit bleiben i18n (/en/ wird per jsdom aus index.html
  * gebacken), SEO, Service-Worker und Ladezeit exakt wie vorher.
  *
- * Marker im Template:  <!-- @include components/support/support.html -->
+ * Marker im Template:  <!-- @include components/history/history.html -->
  *
  *   node tools/build-index.js          → schreibt index.html
  *   node tools/build-index.js --check  → exit 1, wenn index.html vom Soll abweicht
