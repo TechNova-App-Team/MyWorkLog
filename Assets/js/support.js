@@ -41,23 +41,37 @@
     }
     function localDay(iso) { var p = String(iso).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
 
-    // ── Serie: aus support-feedback.js uebernommen (dort nur noch fuer diese Seite gebraucht).
+    // ── Serie: dieselbe Regel wie die Dashboard-Kachel (calculateStreak in
+    // components/dashboard/dashboard.js + isConsecutiveWorkDay/getLastWorkday
+    // in dashboard-extras.js): JEDE Eintragsart zaehlt, nur Mo–Fr, nichts aus
+    // der Zukunft, Start heute oder am letzten Arbeitstag.
+    // 🔴 Bis v7.5.5 stand hier eine zweite Rechnung (nur Arbeit/Schule,
+    // Wochenenden mitgezaehlt) — Dashboard 280, Support 19 fuer dieselben
+    // Daten. Aendert sich die Regel dort, hier nachziehen;
+    // tools/support-streak.test.mjs haelt beide gegeneinander.
     function currentStreak(entries) {
-        var dates = Array.from(new Set(entries.filter(function (e) { return e.type === 'work' || e.type === 'school'; })
-            .map(function (e) { return e.date; }))).filter(Boolean).sort().reverse();
-        if (!dates.length) return 0;
         var today = new Date(); today.setHours(0, 0, 0, 0);
+        var seen = {}, dates = [];
+        entries.forEach(function (e) {
+            var p = String(e.date || '').slice(0, 10).split('-').map(Number);
+            var d = new Date(p[0], p[1] - 1, p[2]);
+            var t = d.getTime();
+            if (!Number.isFinite(t) || seen[t]) return;
+            seen[t] = true;
+            if (t <= today.getTime() && d.getDay() !== 0 && d.getDay() !== 6) dates.push(d);
+        });
+        if (!dates.length) return 0;
+        dates.sort(function (a, b) { return b - a; });
         var last = new Date(today), dow = last.getDay();
         if (dow === 0) last.setDate(last.getDate() - 2);
         else if (dow === 6) last.setDate(last.getDate() - 1);
         else { last.setDate(last.getDate() - 1); if (last.getDay() === 0) last.setDate(last.getDate() - 2); else if (last.getDay() === 6) last.setDate(last.getDate() - 1); }
-        var newest = localDay(dates[0]);
-        if (newest.getTime() !== today.getTime() && newest < last) return 0;
+        var newest = dates[0].getTime();
+        if (newest !== today.getTime() && newest !== last.getTime()) return 0;
         var streak = 1;
         for (var i = 0; i < dates.length - 1; i++) {
-            var d1 = localDay(dates[i]), d2 = localDay(dates[i + 1]);
-            var diff = Math.round((d1 - d2) / 86400000);
-            if (diff === 1 || (diff <= 3 && d2.getDay() === 5)) streak++; else break;
+            var diff = Math.round((dates[i] - dates[i + 1]) / 86400000);
+            if (diff === 1 || (diff === 3 && dates[i + 1].getDay() === 5)) streak++; else break;
         }
         return streak;
     }
@@ -82,7 +96,7 @@
             [L('Einträge', 'Entries'), nf.format(entries.length)],
             [L('Stunden gearbeitet', 'Hours worked'), nf.format(Math.round(hours)) + ' h'],
             [L('Tage seit dem ersten Eintrag', 'Days since first entry'), nf.format(days)],
-            [L('Aktuelle Serie', 'Current streak'), nf.format(streak) + ' ' + (streak === 1 ? L('Tag', 'day') : L('Tage', 'days'))]
+            [L('Aktuelle Serie', 'Current streak'), nf.format(streak) + ' ' + (streak === 1 ? L('Arbeitstag', 'workday') : L('Arbeitstage', 'workdays'))]
         ];
         host.innerHTML = rows.map(function (r) {
             return '<div class="sp-mine-row"><span class="sp-mine-key">' + r[0] + '</span><span class="sp-mine-val">' + r[1] + '</span></div>';
