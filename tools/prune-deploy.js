@@ -63,6 +63,7 @@ if (!onCF && !forced && !dryRun) {
 const REMOVE = [
   'index.template.html',   // Quelle der generierten index.html
   'tools',                 // Build-Tooling
+  'supabase',              // Quelltext der Edge Functions — laeuft bei Supabase, nicht hier
   'CLAUDE.md',
   '.eslintrc.json',
   '.github',               // Workflows — gehoeren ins Repo, nicht auf die Domain

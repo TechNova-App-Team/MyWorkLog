@@ -330,7 +330,10 @@
             }
         }
         return {
-            by: String(a.by || '').trim(),
+            // Name UND die vom Server gestempelte Adresse: ein Pruefer, der auf
+            // dem Blatt die Adresse des Azubis selbst liest, sieht die
+            // Selbstfreigabe, ohne die App zu oeffnen. Nur ASCII — WinAnsi-sicher.
+            by: [String(a.by || '').trim(), String(a.email || '').trim()].filter(Boolean).join(', '),
             datum: datum,
             // Kurzkennung der Signatur: genug, um einen Ausdruck dem Eintrag in
             // der App zuzuordnen, ohne eine 90-Zeichen-Zeile aufs Blatt zu setzen.

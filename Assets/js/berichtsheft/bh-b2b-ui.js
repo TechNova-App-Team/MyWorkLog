@@ -195,18 +195,25 @@
     function bestaetigt() { try { return localStorage.getItem(OK_KEY); } catch (e) { return null; } }
     function setBestaetigt(id) { try { localStorage.setItem(OK_KEY, id); } catch (e) { /* Privatmodus */ } }
 
-    // Der einzige Beleg, den die App wirklich pruefen kann. Er steht dort, wo
-    // der Azubi entscheidet — nicht im Kleingedruckten danach.
+    // Wie der Betrieb bestaetigt wurde — dort, wo der Azubi entscheidet, nicht
+    // im Kleingedruckten danach. Gezeigt wird, was BELEGT ist (die Domain),
+    // nicht der frei getippte Name: ob brush-zahn.com sein Betrieb ist, weiss
+    // der Azubi selbst am besten.
     function domainZeile(st) {
-        if (st.domainOk) {
-            return '<span class="b2b-domok">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
-                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
-                b2bL('Domain nachgewiesen: ', 'Domain proven: ') + esc(st.domain) + '</span>';
+        if (!st.nachgewiesen) {
+            return '<span class="b2b-domno">' + b2bL(
+                'Noch nicht bestätigt — der Betriebsname ist frei gewählt, und abzeichnen kann dieser Betrieb erst nach der Bestätigung.',
+                'Not confirmed yet — the company name is freely chosen, and this company can only sign off once confirmed.') + '</span>';
         }
-        return '<span class="b2b-domno">' + b2bL(
-            'Kein Domain-Nachweis — der Betriebsname ist frei gewählt.',
-            'No domain proof — the company name is freely chosen.') + '</span>';
+        let text;
+        if (st.nachweisArt === 'manuell') text = b2bL('Von MyWorkLog geprüft', 'Checked by MyWorkLog');
+        else if (st.nachweisArt === 'email') text = b2bL('Ausbilder mit Firmenadresse @', 'Trainer uses a company address @') + esc(st.domain);
+        else text = b2bL('Domain per DNS nachgewiesen: ', 'Domain proven via DNS: ') + esc(st.domain);
+        if (st.impressumUrl) text += b2bL(' · Name steht im Impressum', ' · name found in the legal notice');
+        return '<span class="b2b-domok">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+            '<span>' + text + '</span></span>';
     }
 
     function zeigeBestaetigen(st) {
@@ -239,6 +246,7 @@
             '<strong>' + esc(st.name || b2bL('deinem Betrieb', 'your company')) + '</strong>' +
             b2bL(' geteilt und dort abgezeichnet. Eine abgezeichnete Woche ist hier gesperrt, bis der Ausbilder sie wieder freigibt.',
                 ' and signed off there. A signed-off week is locked here until your trainer releases it again.') +
+            domainZeile(st) +
             '<span class="b2b-muted">' + (offline
                 ? b2bL('Offline — Stand vom letzten Abgleich.', 'Offline — last synced state.')
                 : b2bL('Abgleich läuft bei jedem Öffnen automatisch.', 'Syncs automatically each time you open the page.')) +
@@ -517,7 +525,10 @@
                 { day: '2-digit', month: '2-digit', year: 'numeric' });
             const was = f.entscheidung === 'approved'
                 ? b2bL('bestätigt', 'approved') : b2bL('zurückgegeben', 'sent back');
-            const wer = f.ausbilder_name ? ' · ' + esc(f.ausbilder_name) : '';
+            // Die Adresse stempelt der Server. Steht hier die eigene oder eine
+            // fremde Privatadresse, sieht das jeder Pruefer.
+            const wer = (f.ausbilder_name ? ' · ' + esc(f.ausbilder_name) : '') +
+                (f.ausbilder_email ? ' (' + esc(f.ausbilder_email) + ')' : '');
             const note = f.anmerkung ? ': ' + esc(f.anmerkung) : '';
             return '<li style="margin-bottom:4px;">' + esc(wann) + ' — ' + was + wer + note + '</li>';
         }).join('');

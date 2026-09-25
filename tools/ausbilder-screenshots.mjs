@@ -81,9 +81,9 @@ const mira = berichte.slice(n - 5).map((r, i) => {
 });
 
 const DATEN = {
-    status: { rolle: 'ausbilder', name: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true },
+    status: { rolle: 'ausbilder', name: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true, nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum' },
     konto: {
-        betrieb: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true,
+        betrieb: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true, nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum',
         azubis: [
             { userId: 'a1', name: 'Anna Beispiel', berichte: anna },
             { userId: 'a2', name: 'Jonas Keller', berichte: jonas },

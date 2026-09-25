@@ -190,6 +190,10 @@
         return {
             state: f.entscheidung,               // 'approved' | 'rejected'
             by: f.ausbilder_name || '',
+            // Vom Server gestempelt (Trigger freigaben_serverzeit), nie vom Client.
+            // Eine Azubi-Adresse an dieser Stelle ist der sichtbare Beleg, dass
+            // sich jemand selbst abgezeichnet hat.
+            email: f.ausbilder_email || '',
             at: f.erstellt_at || '',
             note: f.anmerkung || '',
             pruefsumme: f.pruefsumme || '',
@@ -233,8 +237,8 @@
 
             // Den Token braucht nur der Ausbilder (er traegt ihn ins DNS ein).
             const spalten = row.rolle === 'ausbilder'
-                ? 'name, domain, domain_token, domain_verifiziert_at'
-                : 'name, domain, domain_verifiziert_at';
+                ? 'name, domain, domain_token, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at'
+                : 'name, domain, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at';
             let b = null;
             const bt = await sb.from('betriebe').select(spalten).eq('id', row.betrieb_id).maybeSingle();
             if (bt && bt.data) b = bt.data;
@@ -252,7 +256,13 @@
                 domainToken: (b && b.domain_token) || '',
                 // Nur wahr, wenn der Server den Nachweis gesetzt hat — der
                 // Client kann das Feld nicht schreiben (Trigger auf betriebe).
-                domainOk: !!(b && b.domain && b.domain_verifiziert_at)
+                domainOk: !!(b && b.domain && b.domain_verifiziert_at),
+                // 'email' | 'dns' | 'manuell' | '' — dieselbe Regel wie
+                // private.betrieb_nachgewiesen(); nur daran haengt das Abzeichnen.
+                nachweisArt: (b && b.nachweis_art) || '',
+                nachgewiesen: nachweisGilt(b),
+                impressumUrl: (b && b.impressum_geprueft_at && b.impressum_url) || '',
+                kontoEmail: (u && u.email) || ''
             };
             statusCache = { at: Date.now(), wert: wert };
             return wert;
@@ -263,6 +273,15 @@
     }
 
     function statusVergessen() { statusCache = null; }
+
+    // Spiegel von private.betrieb_nachgewiesen() — NUR fuer die Anzeige. Die
+    // Sperre selbst sitzt in der Policy freigaben_insert; weicht diese Zeile
+    // ab, zeigt die Seite einen Knopf, den der Server ablehnt, nicht umgekehrt.
+    function nachweisGilt(b) {
+        if (!b || !b.nachweis_art) return false;
+        if (b.nachweis_art === 'manuell') return true;
+        return (b.nachweis_art === 'email' || b.nachweis_art === 'dns') && !!b.domain && !!b.domain_verifiziert_at;
+    }
 
     // ── Onboarding ────────────────────────────────────────────────────
 
@@ -783,7 +802,7 @@
 
             const [{ data: fr, error: e1 }, { data: be, error: e2 }] = await Promise.all([
                 sb.from('freigaben')
-                    .select('bericht_id, entscheidung, ausbilder_name, anmerkung, pruefsumme, signatur, erstellt_at')
+                    .select('bericht_id, entscheidung, ausbilder_name, ausbilder_email, anmerkung, pruefsumme, signatur, erstellt_at')
                     .order('erstellt_at', { ascending: true }),   // aeltere zuerst → neuere gewinnt
                 sb.from('berichte')
                     .select('id, client_id')
@@ -1013,7 +1032,7 @@
                     // dann vor dem September. `datum_von` ist das echte Datum.
                     // Dieselbe Falle wie in der Berichtsheft-Uebersicht (v6.9.12).
                     .order('datum_von', { ascending: true }),
-                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
+                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, ausbilder_email, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
                     .order('erstellt_at', { ascending: true })   // aelteste zuerst
             ]);
@@ -1070,7 +1089,9 @@
             }
             return {
                 betrieb: st.name, azubis: azubis, betriebId: st.betriebId,
-                domain: st.domain, domainToken: st.domainToken, domainOk: st.domainOk
+                domain: st.domain, domainToken: st.domainToken, domainOk: st.domainOk,
+                nachweisArt: st.nachweisArt, nachgewiesen: st.nachgewiesen,
+                impressumUrl: st.impressumUrl, kontoEmail: st.kontoEmail
             };
         } catch (e) {
             console.warn('[B2B] Sammelansicht:', e && e.message);
@@ -1092,7 +1113,7 @@
                 .eq('client_id', String(clientId)).limit(1);
             if (be.error || !be.data || !be.data[0]) return null;
             const fr = await sb.from('freigaben')
-                .select('entscheidung, ausbilder_name, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
+                .select('entscheidung, ausbilder_name, ausbilder_email, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
                 .eq('bericht_id', be.data[0].id)
                 .order('erstellt_at', { ascending: true });
             if (fr.error) return null;
@@ -1143,6 +1164,9 @@
             } catch (e) { /* ohne Signatur bleibt die Freigabe gueltig */ }
         }
 
+        if (entscheidung === 'approved' && !st.nachgewiesen) {
+            throw new Error(NICHT_NACHGEWIESEN);
+        }
         const { error } = await sb.from('freigaben').insert({
             bericht_id: berichtId,
             betrieb_id: st.betriebId,
@@ -1158,7 +1182,15 @@
             inhalt: (bericht && bericht.inhalt) || null,
             signatur: signatur
         });
-        if (error) throw new Error(error.message);
+        if (error) {
+            // Die Policy lehnt ein Abzeichnen ohne Nachweis mit 42501 ab —
+            // etwa wenn der Nachweis in einem anderen Tab entzogen wurde.
+            if (error.code === '42501' && entscheidung === 'approved') {
+                statusVergessen();
+                throw new Error(NICHT_NACHGEWIESEN);
+            }
+            throw new Error(error.message);
+        }
         return true;
     }
 
@@ -1182,6 +1214,57 @@
         if (error) throw new Error(error.message);
         statusVergessen();
         return sauber;
+    }
+
+    const NICHT_NACHGEWIESEN = 'Abzeichnen geht erst, wenn der Betrieb nachgewiesen ist.';
+
+    /**
+     * Domain der Anmelde-Adresse und ob sie etwas belegt — nur lesend.
+     * → { domain, freemail } | null
+     */
+    async function bhb2bKontoEmailDomain() {
+        const sb = await client();
+        const { data, error } = await sb.rpc('konto_email_domain');
+        if (error) throw new Error(error.message);
+        return data || null;
+    }
+
+    /**
+     * Firmen-Adresse als Nachweis uebernehmen. Die Adresse liest der Server
+     * aus dem Konto, nicht aus diesem Aufruf.
+     * → { ok, domain } | { ok:false, grund:'freemail'|'unbestaetigt', domain }
+     */
+    async function bhb2bDomainAusEmail() {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sb = await client();
+        const { data, error } = await sb.rpc('betrieb_domain_aus_email', { p_betrieb: st.betriebId });
+        if (error) throw new Error(error.message);
+        statusVergessen();
+        return data;
+    }
+
+    /**
+     * Steht der Betriebsname im Impressum der nachgewiesenen Domain?
+     * → { ok, url } | { ok:false, grund, geprueft }
+     */
+    async function bhb2bImpressumPruefen() {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sb = await client();
+        const { data, error } = await sb.functions.invoke('impressum-pruefen', {
+            body: { betrieb_id: st.betriebId }
+        });
+        // 400 "keine_domain" kommt als error mit Antwortkoerper — der Grund
+        // steckt dann in error.context, nicht in data.
+        if (error) {
+            let koerper = null;
+            try { koerper = error.context && await error.context.json(); } catch (e) { /* ohne */ }
+            if (koerper && koerper.grund) return koerper;
+            throw new Error(error.message || 'Pruefung nicht erreichbar.');
+        }
+        statusVergessen();
+        return data;
     }
 
     /** Pruefung anstossen. → { ok, domain, geprueft, gefunden, fehler } */
@@ -1250,8 +1333,11 @@
         freigabeVerlauf: bhb2bFreigabeVerlauf,
         domainSetzen: bhb2bDomainSetzen,
         domainPruefen: bhb2bDomainPruefen,
+        domainAusEmail: bhb2bDomainAusEmail,
+        kontoEmailDomain: bhb2bKontoEmailDomain,
+        impressumPruefen: bhb2bImpressumPruefen,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, inhaltDiff: bhb2bInhaltDiff, meldungenEindampfen }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, nachweisGilt, inhaltDiff: bhb2bInhaltDiff, meldungenEindampfen }
     };
 })();

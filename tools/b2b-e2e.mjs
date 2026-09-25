@@ -153,13 +153,66 @@ try {
     ok(Array.isArray(seen.body) && seen.body.some(b => b.client_id === 'e2e-1'),
         'Ausbilder sieht den Azubi-Bericht');
 
+    // ── Betriebs-Nachweis: ohne ihn kein Abzeichnen ───────────────────────
+    const ohne = await tr('freigaben', {
+        method: 'POST', body: JSON.stringify({
+            bericht_id: berichtId, betrieb_id: betriebId, ausbilder_id: trId,
+            entscheidung: 'approved', pruefsumme: 'ps-0',
+        }),
+    });
+    ok(ohne.status >= 400, 'Abzeichnen OHNE Betriebs-Nachweis wird abgelehnt (Policy)');
+
+    await tr(`betriebe?id=eq.${betriebId}`, {
+        method: 'PATCH', body: JSON.stringify({
+            nachweis_art: 'manuell', nachweis_notiz: 'selbst', domain_verifiziert_at: new Date().toISOString(),
+        }),
+    });
+    const nachFaelschung = await tr(`betriebe?id=eq.${betriebId}&select=nachweis_art,domain_verifiziert_at`);
+    ok(nachFaelschung.status === 200 && nachFaelschung.body?.[0] &&
+        nachFaelschung.body[0].nachweis_art === null && nachFaelschung.body[0].domain_verifiziert_at === null,
+        'Client kann sich den Nachweis nicht selbst schreiben (Trigger)');
+
+    const azRpc = await rpc(azTok, 'betrieb_domain_aus_email', { p_betrieb: betriebId });
+    ok(azRpc.status >= 400, 'Azubi kann den Betrieb nicht per E-Mail bestaetigen');
+
+    const kd = await rpc(trTok, 'konto_email_domain', {});
+    const trDomain = V.trainerEmail.split('@')[1].toLowerCase();
+    ok(kd.status === 200 && kd.body?.domain === trDomain && kd.body?.freemail === false,
+        'konto_email_domain nennt die Domain der Anmelde-Adresse (' + trDomain + ')');
+
+    const em = await rpc(trTok, 'betrieb_domain_aus_email', { p_betrieb: betriebId });
+    ok(em.status === 200 && em.body?.ok === true && em.body?.domain === trDomain,
+        'Ausbilder bestaetigt den Betrieb ueber die Firmenadresse');
+    const nachEm = await tr(`betriebe?id=eq.${betriebId}&select=nachweis_art,domain,domain_verifiziert_at`);
+    ok(nachEm.body?.[0]?.nachweis_art === 'email' && nachEm.body?.[0]?.domain === trDomain && !!nachEm.body?.[0]?.domain_verifiziert_at,
+        'Nachweis steht mit Art, Domain und Zeitpunkt');
+
+    // Impressum-Abgleich: die Test-Domain (.invalid) ist nie erreichbar — der
+    // Lauf prueft Anmeldung, Rechte und dass NICHTS gesetzt wird.
+    const imp = await fetch(`${BASE}/functions/v1/impressum-pruefen`, {
+        method: 'POST',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + trTok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ betrieb_id: betriebId }),
+    }).then(r => r.json()).catch(() => null);
+    ok(imp && imp.ok === false && imp.grund === 'nicht_erreichbar',
+        'impressum-pruefen laeuft und meldet die unerreichbare Test-Domain ehrlich');
+    const impAz = await fetch(`${BASE}/functions/v1/impressum-pruefen`, {
+        method: 'POST',
+        headers: { apikey: ANON, Authorization: 'Bearer ' + azTok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ betrieb_id: betriebId }),
+    });
+    ok(impAz.status === 403, 'impressum-pruefen verweigert dem Azubi den Aufruf');
+
     const ap = await tr('freigaben', {
         method: 'POST', body: JSON.stringify({
             bericht_id: berichtId, betrieb_id: betriebId, ausbilder_id: trId,
             entscheidung: 'approved', anmerkung: 'E2E ok', pruefsumme: 'ps-1',
+            ausbilder_email: 'gefaelscht@example.com',
         }),
     });
     ok(ap.status === 201, 'Ausbilder schreibt eine Freigabe');
+    ok(ap.body?.[0]?.ausbilder_email === V.trainerEmail.toLowerCase() || ap.body?.[0]?.ausbilder_email === V.trainerEmail,
+        'Adresse des Abzeichnenden stempelt der Server, nicht der Client');
     const at = ap.body?.[0]?.erstellt_at;
     ok(at && Math.abs(Date.now() - new Date(at).getTime()) < 120000,
         'erstellt_at kommt vom Server-Trigger, nicht vom Client');

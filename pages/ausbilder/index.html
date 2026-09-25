@@ -10,14 +10,14 @@
 </script>
     <meta name="description" content="Als Ausbilder alle Berichtsheft-Wochen Ihrer Azubis an einem Ort prüfen, abzeichnen oder zurückgeben — mit Konto als Sammelübersicht, ohne Konto per Link.">
     <meta name="keywords" content="Berichtsheft Ausbilder, Ausbildungsnachweis prüfen, Ausbildungsnachweis unterschreiben, Berichtsheft abzeichnen, §14 BBiG, Ausbildungsbetrieb, Ausbilder-Übersicht">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.5.9"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.6.0"></script>
     <script>/* Einblend-Zustaende im Einstieg gelten nur mit JS — sonst bliebe er leer. */
     document.documentElement.className += ' js';</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=7.5.9"></script>
-    <script defer src="/Assets/js/ph-init.js?v=7.5.9"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.6.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.6.0"></script>
     <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
@@ -324,7 +324,62 @@
             font-size: 0.75rem; color: var(--success); font-weight: 600;
         }
         .abk-domok svg { width: 13px; height: 13px; }
-        .abk-kopf .abk-domain-btn { flex: 0 0 auto; padding: 9px 15px; font-size: 0.85rem; }
+        .abk-ungeprueft.is-offen { color: var(--warning); font-weight: 600; }
+        .abk-domok { flex-wrap: wrap; row-gap: 4px; }
+        .abk-imp { font-weight: 500; color: var(--text-muted); }
+        .abk-imp.is-ok::before { content: "·"; margin: 0 6px 0 2px; color: var(--text-faint); }
+        /* Textknopf, kein Kasten: steht mitten in einer Zeile Fliesstext. */
+        .abk-imp-btn {
+            padding: 0; margin-left: 8px; background: none; border: 0; cursor: pointer;
+            font: inherit; font-size: 0.75rem; font-weight: 600; color: var(--primary);
+            border-bottom: 1px solid rgba(var(--primary-rgb), 0.35);
+        }
+        .abk-imp-btn:hover { border-bottom-color: var(--primary); }
+        .abk-imp-btn:disabled { opacity: 0.6; cursor: default; }
+        .abk-imp-btn:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.5); outline-offset: 2px; }
+        .abk-imp-info { margin-top: 6px; font-size: 0.78rem; color: var(--text-muted); line-height: 1.55; max-width: 62ch; }
+
+        /* Betrieb bestaetigen — der einzige Block dieser Seite mit Akzentrand:
+           er sperrt die Hauptfunktion, alles andere ist Information. */
+        .abk-best {
+            margin-top: 18px; padding: 20px 22px;
+            background: var(--bg-card);
+            border: 1px solid rgba(var(--warning-rgb), 0.38);
+            border-left: 3px solid var(--warning);
+            border-radius: var(--radius);
+            transition: box-shadow 0.2s ease;
+        }
+        .abk-best.is-hervor { box-shadow: 0 0 0 4px rgba(var(--warning-rgb), 0.18); }
+        .abk-best-t { font-size: 1.08rem; font-weight: 650; letter-spacing: -0.015em; line-height: 1.3; }
+        .abk-best-s { margin-top: 6px; font-size: 0.86rem; color: var(--text-muted); line-height: 1.6; max-width: 62ch; }
+        .abk-best-weg { margin-top: 16px; }
+        .abk-best .abk-best-cta {
+            flex: 0 0 auto; padding: 13px 22px; font-size: 0.95rem;
+            background: var(--primary); border-color: var(--primary); color: var(--bg-deep);
+            text-decoration: none;
+        }
+        .abk-best .abk-best-cta:hover { background: color-mix(in srgb, var(--primary) 88%, var(--text-main)); }
+        .abk-best .abk-best-cta:active { transform: scale(0.98); }
+        .abk-best .abk-best-cta:disabled { opacity: 0.6; cursor: default; transform: none; }
+        .abk-best-hint { margin-top: 10px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; max-width: 62ch; }
+        .abk-best-hint.is-oben { margin: 0 0 14px; color: var(--text-main); }
+        .abk-best-hint.is-fehler { color: var(--danger); }
+        .abk-best-rueck { margin-top: 8px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.6; overflow-wrap: anywhere; }
+        .abk-best-rueck .abk-imp-btn { font-size: 0.82rem; }
+        .abk-best-dns { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .abk-best-dns summary { cursor: pointer; font-size: 0.82rem; color: var(--text-muted); }
+        .abk-best-dns summary:hover { color: var(--text-main); }
+        .abk-best-dns[open] summary { margin-bottom: 12px; }
+        .abk-gesperrt { margin-top: 10px; font-size: 0.8rem; color: var(--warning); line-height: 1.55; }
+        .abk-gesperrt .abk-imp-btn { margin-left: 4px; font-size: 0.8rem; }
+        @media (max-width: 560px) {
+            .abk-best { padding: 17px 16px; }
+            .abk-best .abk-best-cta { width: 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .abk-best, .abk-best .abk-best-cta { transition: none; }
+            .abk-best .abk-best-cta:active { transform: none; }
+        }
         .abk-dom-zeile { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
         .abk-dom-input { flex: 1 1 200px; min-width: 0; }
         .abk-dom-zeile .abk-dom-save { flex: 0 0 auto; padding: 9px 15px; font-size: 0.83rem; }
@@ -1164,7 +1219,7 @@
                 <div class="tilt-in">
                     <figure class="abi-frame">
                         <div class="abi-frame-in">
-                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.5.9" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: Kacheln für offene Wochen, Azubis und Abgezeichnetes, darunter eine Azubi-Karte mit Wochenstreifen und den offenen Wochen">
+                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.6.0" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: Kacheln für offene Wochen, Azubis und Abgezeichnetes, darunter eine Azubi-Karte mit Wochenstreifen und den offenen Wochen">
                         </div>
                     </figure>
                 </div>
@@ -1174,7 +1229,7 @@
             <div class="abi-split">
                 <figure class="abi-frame" data-reveal>
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.5.9" width="2880" height="1800" loading="lazy" decoding="async" alt="Zwei Azubi-Karten in der Übersicht: abgezeichnete und offene Wochen als Balken und Wochenstreifen, eine überarbeitete Woche hervorgehoben">
+                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.6.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Zwei Azubi-Karten in der Übersicht: abgezeichnete und offene Wochen als Balken und Wochenstreifen, eine überarbeitete Woche hervorgehoben">
                     </div>
                 </figure>
 
@@ -1225,7 +1280,7 @@
             </section>
                 <figure class="abi-frame" data-reveal style="--i:1">
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/woche.webp?v=7.5.9" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
+                        <img src="/Grafiken/ausbilder/woche.webp?v=7.6.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
                     </div>
                 </figure>
             </div>
@@ -1402,13 +1457,13 @@
     })();
     </script>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=7.5.9"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=7.5.9"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=7.6.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=7.6.0"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.5.9"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.6.0"></script>
 
     <script>
     (function () {
@@ -2584,21 +2639,18 @@
                 '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') +
                 '<span class="abk-exp">' + abL('Experimentell', 'Experimental') + '</span></p>' +
                 '<h1 class="abk-firma">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
-                (d.domainOk
-                    ? '<p class="abk-domok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
-                      abL('Domain nachgewiesen: ', 'Domain proven: ') + esc(d.domain) + '</p>'
-                    : '<p class="abk-ungeprueft">' + abL(
-                        'Selbst angelegt — MyWorkLog prüft weder den Betrieb noch Ihre Rolle darin.',
-                        'Self-created — MyWorkLog verifies neither the company nor your role in it.') + '</p>') +
+                nachweisZeile(d) +
                 teamZeile() +
                 '</div>' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-einladen" onclick="abkEinladen()">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
                 '<span>' + abL('Azubi einladen', 'Invite apprentice') + '</span></button>' +
-                (d.domainOk ? '' :
-                    '<button type="button" class="ab-btn ab-btn-ghost abk-domain-btn" onclick="abkDomain()">' +
-                    '<span>' + abL('Domain nachweisen', 'Prove domain') + '</span></button>') +
                 '</header>' +
+                // Solange der Betrieb nicht bestaetigt ist, steht der Weg dazu
+                // OFFEN ganz oben — er sperrt die Hauptfunktion dieser Seite und
+                // gehoert deshalb nicht hinter einen Knopf.
+                (d.nachgewiesen ? '' : '<section class="abk-best" id="abkBest" aria-labelledby="abkBestT">' +
+                    bestaetigenInhalt(d) + '</section>') +
                 '<div class="abk-kacheln">' +
                 kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
                                              : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
@@ -2631,6 +2683,7 @@
                 koerper = d.azubis.map(function (a) { return azubiKarte(a, viele); }).join('');
             }
             $('abKonto').innerHTML = kopf + koerper;
+            if (!d.nachgewiesen) bestaetigenLaden();
         }
 
         // ── Einladen (bisher nur im Berichtsheft moeglich) ───────────
@@ -2714,23 +2767,237 @@
             }
         };
 
-        // ── Domain-Nachweis ─────────────────────────────────────────
-        // Der einzige Beleg, den MyWorkLog wirklich pruefen kann: wer den
-        // TXT-Eintrag setzen kann, kontrolliert die Domain. Das ist kein
-        // Beweis, dass jemand Ausbilder ist — aber es schliesst aus, dass
-        // ein Fremder eine Firma unter fremdem Namen fuehrt.
-        var domainOffen = false;
+        // ── Betrieb bestaetigen ─────────────────────────────────────
+        // Es gibt KEINE Stelle, die bestaetigt „X ist Ausbilder bei Y". Drei
+        // Wege belegen je etwas anderes, und die Seite sagt, welcher es war:
+        //   email   — die Anmelde-Adresse gehoert zu dieser Firmen-Domain
+        //   dns     — die Person verwaltet die Domain
+        //   manuell — MyWorkLog hat die Firma anhand oeffentlicher Angaben
+        //             geprueft (Impressum/Register, Rueckruf)
+        // Dazu optional der Impressum-Abgleich: er verbindet die Domain mit
+        // dem NAMEN (brush-zahn.com ↔ Zahn Pinsel GmbH). Ohne Nachweis sperrt
+        // die Policy `freigaben_insert` das Abzeichnen — der Knopf hier ist
+        // nur die Erklaerung dazu, nicht die Sperre.
+        var SUPPORT_MAIL = 'info@myworklog.de';
+        var kontoMail = null;          // { domain, freemail } aus konto_email_domain()
+
+        var HAKEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+        function nachweisZeile(d) {
+            if (!d.nachgewiesen) {
+                return '<p class="abk-ungeprueft is-offen">' + abL(
+                    'Noch nicht bestätigt — Abzeichnen ist gesperrt.',
+                    'Not confirmed yet — signing off is locked.') + '</p>';
+            }
+            var text;
+            if (d.nachweisArt === 'manuell') {
+                text = abL('Von MyWorkLog geprüft', 'Checked by MyWorkLog');
+            } else if (d.nachweisArt === 'email') {
+                text = abL('Bestätigt über die Firmenadresse @', 'Confirmed via company address @') + esc(d.domain);
+            } else {
+                text = abL('Bestätigt per DNS: ', 'Confirmed via DNS: ') + esc(d.domain);
+            }
+            var impressum = '';
+            if (d.nachweisArt !== 'manuell') {
+                impressum = d.impressumUrl
+                    ? '<span class="abk-imp is-ok">' + abL('Name steht im Impressum', 'Name found in legal notice') + '</span>'
+                    : '<button type="button" class="abk-imp-btn" onclick="abkImpressum()">' +
+                      abL('Impressum abgleichen', 'Match legal notice') + '</button>';
+            }
+            return '<p class="abk-domok">' + HAKEN + '<span>' + text + '</span>' + impressum + '</p>' +
+                '<div id="abkImpErgebnis" aria-live="polite"></div>';
+        }
+
+        function bestaetigenInhalt(d) {
+            return '<h2 class="abk-best-t" id="abkBestT">' + abL(
+                    'Bestätigen Sie Ihren Betrieb, dann können Sie abzeichnen',
+                    'Confirm your company to start signing off') + '</h2>' +
+                '<p class="abk-best-s">' + abL(
+                    'Ihre Azubis und spätere Prüfer sehen, wie Ihr Betrieb bestätigt wurde. Lesen, Einladen und Zurückgeben geht schon jetzt.',
+                    'Your apprentices and later reviewers see how your company was confirmed. Reading, inviting and sending back already work.') + '</p>' +
+                '<div id="abkBestWeg" aria-live="polite"><p class="abk-einl-lade">' +
+                abL('Anmelde-Adresse wird geprüft …', 'Checking your sign-in address …') + '</p></div>' +
+                '<details class="abk-best-dns" id="abkBestDns">' +
+                '<summary>' + abL('Mit DNS-Eintrag bestätigen (für IT-Verantwortliche)',
+                                  'Confirm with a DNS record (for IT staff)') + '</summary>' +
+                '<div id="abkDomain">' + domainPanel(d, '', false) + '</div>' +
+                '</details>';
+        }
+
+        async function bestaetigenLaden() {
+            var box = $('abkBestWeg');
+            if (!box) return;
+            if (!kontoMail) {
+                try { kontoMail = await BHB2B.kontoEmailDomain(); }
+                catch (e) { kontoMail = null; }
+            }
+            box = $('abkBestWeg');
+            if (!box) return;
+            box.innerHTML = kontoMail && kontoMail.domain && !kontoMail.freemail
+                ? wegFirmenadresse(kontoMail.domain)
+                : wegManuell(kontoMail && kontoMail.domain);
+        }
+
+        function wegFirmenadresse(dom) {
+            return '<div class="abk-best-weg">' +
+                '<button type="button" class="ab-btn abk-best-cta" onclick="abkMitEmail()">' +
+                HAKEN + '<span>' + abL('Mit @', 'Confirm with @') + esc(dom) +
+                abL(' bestätigen', '') + '</span></button>' +
+                '<p class="abk-best-hint">' + abL(
+                    'Sie sind mit einer Adresse dieser Firma angemeldet, und die Anmeldung hat bewiesen, dass Sie das Postfach öffnen können. Die Domain erscheint danach bei Ihren Azubis.',
+                    'You are signed in with an address at this company, and signing in proved you can open that mailbox. The domain is then shown to your apprentices.') + '</p>' +
+                '</div>';
+        }
+
+        // Der Weg fuer GMX, web.de, Gmail & Co. Null Aufwand: EIN Knopf, der
+        // das Mailprogramm mit fertigem Text oeffnet. 🔴 Unter Windows ohne
+        // eingerichtetes Mailprogramm passiert beim Klick auf mailto GAR
+        // NICHTS, ohne Meldung — deshalb stehen Adresse und „Text kopieren"
+        // direkt daneben, nicht in einer Fehlermeldung, die nie kommt.
+        function wegManuell(dom) {
+            return '<div class="abk-best-weg">' +
+                '<p class="abk-best-hint is-oben">' + (dom
+                    ? abL('Sie sind mit einer Adresse bei <b>' + esc(dom) + '</b> angemeldet. So ein Postfach kann jeder anlegen — es bestätigt deshalb keinen Betrieb.',
+                          'You are signed in with an address at <b>' + esc(dom) + '</b>. Anyone can create such a mailbox, so it does not confirm a company.')
+                    : abL('Ihre Anmelde-Adresse bestätigt keinen Betrieb.', 'Your sign-in address does not confirm a company.')) +
+                '</p>' +
+                '<a class="ab-btn abk-best-cta" href="' + esc(freischaltMailto()) + '" onclick="abkMailGeklickt()">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>' +
+                '<span>' + abL('Freischaltung per E-Mail anfragen', 'Request activation by email') + '</span></a>' +
+                '<p class="abk-best-hint">' + abL(
+                    'Öffnet Ihr Mailprogramm mit fertigem Text — Sie müssen nur noch senden. Wir prüfen Ihren Betrieb anhand öffentlicher Angaben wie Impressum oder Handelsregister und rufen bei Bedarf unter der dort genannten Nummer kurz zurück.',
+                    'Opens your email app with the text already filled in — just send it. We check your company against public records such as its legal notice or the commercial register and may call back briefly on the number listed there.') + '</p>' +
+                '<p class="abk-best-rueck">' + abL('Öffnet sich nichts? Schreiben Sie an ', 'Nothing opens? Write to ') +
+                '<a class="ab-inl" href="mailto:' + SUPPORT_MAIL + '">' + SUPPORT_MAIL + '</a> ' +
+                '<button type="button" class="abk-imp-btn" onclick="abkMailKopieren(this)">' +
+                abL('Text kopieren', 'Copy text') + '</button></p>' +
+                '<p class="abk-best-hint">' + abL(
+                    'Sie haben eine Firmenadresse? Melden Sie sich damit an — dann geht die Bestätigung mit einem Klick.',
+                    'Have a company address? Sign in with it — then confirming takes one click.') + '</p>' +
+                '</div>';
+        }
+
+        function freischaltText() {
+            var d = kontoDaten || {};
+            var NL = String.fromCharCode(13, 10);
+            return [
+                abL('Hallo MyWorkLog-Team,', 'Hello MyWorkLog team,'),
+                '',
+                abL('bitte schalten Sie unseren Ausbildungsbetrieb zum Abzeichnen frei.',
+                    'please activate our training company for signing off.'),
+                '',
+                abL('Betrieb: ', 'Company: ') + (d.betrieb || ''),
+                abL('Betriebs-ID: ', 'Company ID: ') + (d.betriebId || ''),
+                abL('Angemeldet als: ', 'Signed in as: ') + (d.kontoEmail || ''),
+                abL('Website oder Ort (falls zur Hand): ', 'Website or town (if handy): '),
+                '',
+                abL('Viele Grüße', 'Kind regards')
+            ].join(NL);
+        }
+
+        function freischaltMailto() {
+            var d = kontoDaten || {};
+            return 'mailto:' + SUPPORT_MAIL +
+                '?subject=' + encodeURIComponent(abL('Betrieb freischalten: ', 'Activate company: ') + (d.betrieb || '')) +
+                '&body=' + encodeURIComponent(freischaltText());
+        }
+
+        window.abkMailGeklickt = function () {
+            if (typeof mwlEvent === 'function') mwlEvent('b2b_freischaltung_angefragt', { weg: 'mailto' });
+        };
+
+        window.abkMailKopieren = async function (btn) {
+            var text = abL('An: ', 'To: ') + SUPPORT_MAIL + String.fromCharCode(10) +
+                abL('Betreff: ', 'Subject: ') + abL('Betrieb freischalten: ', 'Activate company: ') +
+                ((kontoDaten && kontoDaten.betrieb) || '') + String.fromCharCode(10, 10) + freischaltText();
+            try {
+                await navigator.clipboard.writeText(text);
+                btn.textContent = abL('Kopiert', 'Copied');
+                setTimeout(function () { btn.textContent = abL('Text kopieren', 'Copy text'); }, 1800);
+            } catch (e) {
+                btn.textContent = abL('Kopieren nicht möglich', 'Copy not available');
+            }
+            if (typeof mwlEvent === 'function') mwlEvent('b2b_freischaltung_angefragt', { weg: 'kopiert' });
+        };
+
+        // Nach jedem Erfolg die Nachweis-Felder frisch vom Server holen —
+        // nie lokal auf „ok" setzen, sonst zeigt die Seite etwas, das die
+        // Policy anders sieht.
+        async function nachweisNeuLaden() {
+            var st = await BHB2B.status(true);
+            if (!st || !kontoDaten) return;
+            ['domain', 'domainToken', 'domainOk', 'nachweisArt', 'nachgewiesen', 'impressumUrl', 'kontoEmail']
+                .forEach(function (k) { kontoDaten[k] = st[k]; });
+        }
+
+        window.abkMitEmail = async function () {
+            var btn = document.querySelector('.abk-best-cta');
+            if (btn) { btn.disabled = true; btn.querySelector('span').textContent = abL('Wird bestätigt …', 'Confirming …'); }
+            try {
+                var r = await BHB2B.domainAusEmail();
+                if (r && r.ok) {
+                    await nachweisNeuLaden();
+                    if (typeof mwlEvent === 'function') mwlEvent('b2b_betrieb_bestaetigt', { art: 'email' });
+                    renderKonto();
+                    abkImpressum();   // gleich hinterher: verbindet Domain und Namen
+                    return;
+                }
+                kontoMail = { domain: r && r.domain, freemail: true };
+                var box = $('abkBestWeg');
+                if (box) box.innerHTML = (r && r.grund === 'unbestaetigt')
+                    ? '<p class="abk-best-hint is-fehler">' + abL(
+                        'Ihre Anmelde-Adresse ist noch nicht bestätigt. Melden Sie sich einmal über den Link in der Anmelde-Mail an und versuchen Sie es dann erneut.',
+                        'Your sign-in address is not confirmed yet. Sign in once via the link in the sign-in email, then try again.') + '</p>' + wegManuell(r && r.domain)
+                    : wegManuell(r && r.domain);
+            } catch (e) {
+                var b2 = $('abkBestWeg');
+                if (b2) b2.insertAdjacentHTML('beforeend', '<p class="abk-best-hint is-fehler">' + esc((e && e.message) || 'Fehler') + '</p>');
+                if (btn) { btn.disabled = false; btn.querySelector('span').textContent = abL('Erneut versuchen', 'Try again'); }
+            }
+        };
+
+        var IMP_GRUND = {
+            name_fehlt: ['Der Betriebsname steht nicht im Impressum der Domain. Steht er dort anders geschrieben, passen Sie ihn im Berichtsheft an.',
+                         'The company name is not in the legal notice of the domain. If it is spelled differently there, adjust it in the report book.'],
+            kein_impressum: ['Auf der Website wurde kein Impressum gefunden.', 'No legal notice was found on the website.'],
+            name_zu_kurz: ['Der Betriebsname ist ohne Rechtsform zu kurz für einen verlässlichen Abgleich.',
+                           'Without its legal form the company name is too short for a reliable match.'],
+            nicht_erreichbar: ['Die Website war nicht erreichbar.', 'The website could not be reached.'],
+            keine_domain: ['Erst die Domain bestätigen, dann das Impressum.', 'Confirm the domain first, then the legal notice.']
+        };
+
+        window.abkImpressum = async function () {
+            var box = $('abkImpErgebnis');
+            var btn = document.querySelector('.abk-domok .abk-imp-btn');
+            if (btn) { btn.disabled = true; btn.textContent = abL('Wird abgeglichen …', 'Matching …'); }
+            try {
+                var r = await BHB2B.impressumPruefen();
+                if (r && r.ok) {
+                    await nachweisNeuLaden();
+                    renderKonto();
+                    return;
+                }
+                var g = IMP_GRUND[(r && r.grund) || 'nicht_erreichbar'] || IMP_GRUND.nicht_erreichbar;
+                box = $('abkImpErgebnis');
+                if (box) box.innerHTML = '<p class="abk-imp-info">' + abL(g[0], g[1]) + ' ' + abL(
+                    'Die Bestätigung bleibt gültig — der Abgleich ist ein Zusatz.',
+                    'The confirmation stays valid — the match is an extra.') + '</p>';
+            } catch (e) {
+                if (box) box.innerHTML = '<p class="abk-imp-info">' + esc((e && e.message) || 'Fehler') + '</p>';
+            }
+            if (btn) { btn.disabled = false; btn.textContent = abL('Erneut abgleichen', 'Match again'); }
+        };
 
         function domainPanel(d, meldung, tonRot) {
             var token = d.domainToken || '';
             var dom = d.domain || '';
-            return '<div class="abk-einl">' +
-                '<p class="abk-einl-t">' + abL('Domain nachweisen', 'Prove domain') + '</p>' +
-                '<p class="abk-einl-s" style="margin-top:6px;">' + abL(
+            return '<div class="abk-dns-inhalt">' +
+                '<p class="abk-einl-s" style="margin-top:0;">' + abL(
                     'Tragen Sie die Domain Ihrer Firma ein und hinterlegen Sie den TXT-Eintrag unten in deren DNS. Danach prüfen wir ihn — nicht Sie.',
                     'Enter your company domain and add the TXT record below to its DNS. We then check it — not you.') + '</p>' +
                 '<div class="abk-dom-zeile">' +
                 '<input class="ab-input abk-dom-input" id="abkDomInput" placeholder="musterfirma.de" ' +
+                'aria-label="' + abL('Domain', 'Domain') + '" ' +
                 'autocapitalize="off" autocorrect="off" spellcheck="false" value="' + esc(dom) + '">' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-dom-save" onclick="abkDomainSpeichern()">' +
                 '<span>' + abL('Übernehmen', 'Save') + '</span></button>' +
@@ -2758,24 +3025,13 @@
                 '</div>';
         }
 
-        window.abkDomain = function () {
-            var box = $('abkDomain');
-            if (!box) return;
-            if (domainOffen) { box.innerHTML = ''; domainOffen = false; return; }
-            domainOffen = true;
-            box.innerHTML = domainPanel(kontoDaten, '', false);
-            box.querySelector('.abk-einl').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        };
-
         window.abkDomainSpeichern = async function () {
             var feld = $('abkDomInput');
             if (!feld) return;
             try {
                 var neu = await BHB2B.domainSetzen(feld.value);
+                await nachweisNeuLaden();
                 kontoDaten.domain = neu;
-                kontoDaten.domainOk = false;
-                var st = await BHB2B.status(true);
-                if (st) kontoDaten.domainToken = st.domainToken;
                 $('abkDomain').innerHTML = domainPanel(kontoDaten, '', false);
             } catch (e) {
                 $('abkDomain').innerHTML = domainPanel(kontoDaten, (e && e.message) || 'Fehler', true);
@@ -2788,9 +3044,10 @@
             try {
                 var r = await BHB2B.domainPruefen();
                 if (r && r.ok) {
-                    kontoDaten.domainOk = true;
-                    domainOffen = false;
+                    await nachweisNeuLaden();
+                    if (typeof mwlEvent === 'function') mwlEvent('b2b_betrieb_bestaetigt', { art: 'dns' });
                     renderKonto();
+                    abkImpressum();
                     return;
                 }
                 $('abkDomain').innerHTML = domainPanel(kontoDaten,
@@ -2877,7 +3134,28 @@
                 var bid = card.getAttribute('data-bid');
                 var k = btn.getAttribute('data-k');
 
-                if (k === 'approve') { kontoEntscheiden(bid, 'approved', '', card); return; }
+                if (k === 'approve') {
+                    // Die Sperre sitzt in der Policy; hier nur der Weg dorthin,
+                    // statt einer Fehlermeldung nach dem Klick.
+                    if (kontoDaten && !kontoDaten.nachgewiesen) {
+                        var alt = card.querySelector('.abk-gesperrt');
+                        if (!alt) {
+                            card.querySelector('.abk-actions').insertAdjacentHTML('afterend',
+                                '<p class="abk-gesperrt" role="status">' + abL(
+                                    'Abzeichnen geht erst, wenn Ihr Betrieb bestätigt ist. ',
+                                    'Signing off works once your company is confirmed. ') +
+                                '<button type="button" class="abk-imp-btn" data-k="zur-bestaetigung">' +
+                                abL('Jetzt bestätigen', 'Confirm now') + '</button></p>');
+                        }
+                        return;
+                    }
+                    kontoEntscheiden(bid, 'approved', '', card); return;
+                }
+                if (k === 'zur-bestaetigung') {
+                    var ziel = $('abkBest');
+                    if (ziel) { ziel.scrollIntoView({ block: 'start', behavior: 'smooth' }); ziel.classList.add('is-hervor'); setTimeout(function () { ziel.classList.remove('is-hervor'); }, 1600); }
+                    return;
+                }
                 if (k === 'reject') {
                     card.querySelector('.abk-reject').hidden = false;
                     var t = card.querySelector('.abk-note'); if (t) t.focus();
