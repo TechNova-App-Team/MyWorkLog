@@ -199,7 +199,7 @@
 
             recalculateVacationUsed();
             save();
-            if (document.getElementById('view-history')?.classList.contains('active')) {
+            if (document.getElementById('view-history')?.classList.contains('active') && typeof renderHistoryView === 'function') {
                  renderHistoryView();
             }
 
@@ -368,7 +368,7 @@
         data.entries.splice(Math.min(idx, data.entries.length), 0, restored);
         recalculateVacationUsed();
         save();
-        if (document.getElementById('view-history').classList.contains('active')) {
+        if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') {
             renderHistoryView();
         }
 

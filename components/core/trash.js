@@ -21,6 +21,16 @@
         modal._escHandler = (e) => { if (e.key === 'Escape') closeTrashModal(); };
         document.addEventListener('keydown', modal._escHandler);
     }
+    // Stand bis v7.5.7 in history.js — die wird seitdem erst beim Oeffnen der
+    // Historie geladen, der Papierkorb braucht das Schliessen aber immer.
+    function closeTrashModal() {
+        const modal = document.getElementById('trashModal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 200);
+        if (modal._escHandler) { document.removeEventListener('keydown', modal._escHandler); modal._escHandler = null; }
+        if (modal._overlayClick) { modal.removeEventListener('click', modal._overlayClick); modal._overlayClick = null; }
+    }
     function renderTrashModal() {
         const list = document.getElementById('trashList');
         if (!list) return;
@@ -115,7 +125,7 @@
         data.trash.splice(trashIndex, 1);
         save();
         renderTrashModal();
-        if (document.getElementById('view-history').classList.contains('active')) renderHistoryView();
+        if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') renderHistoryView();
         showCustomMessage('Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
     }
 
@@ -277,7 +287,7 @@
         }
         // Remove restored indexes from trash (reverse order to avoid index shift)
         for (const i of indexes.sort((a,b)=>b-a)) { data.trash.splice(i,1); }
-        save(); renderTrashModal(); if (document.getElementById('view-history').classList.contains('active')) renderHistoryView(); showCustomMessage('Wiederhergestellt', 'Markierte Einträge wiederhergestellt.', 'success');
+        save(); renderTrashModal(); if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') renderHistoryView(); showCustomMessage('Wiederhergestellt', 'Markierte Einträge wiederhergestellt.', 'success');
     }
 
     function trashBulkDeleteConfirm() {

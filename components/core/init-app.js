@@ -354,11 +354,9 @@
 
         renderLists(); 
         
-        const perfData = calculatePerformanceData();
-        const deepData = calculateDeepPerformanceData();
-        renderPerformanceView(perfData, deepData);
-        
-        if (document.getElementById('view-history').classList.contains('active')) {
+        // Keine Performance-Ansicht beim Start: sie ist unsichtbar, switchTab()
+        // zeichnet sie beim Oeffnen, und performance.js wird erst dann geladen.
+        if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') {
              renderHistoryView();
         }
         if (document.getElementById('view-goals').classList.contains('active')) {

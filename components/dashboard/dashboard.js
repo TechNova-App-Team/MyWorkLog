@@ -284,7 +284,7 @@
         try { if (typeof clearDraft === 'function') clearDraft(); else localStorage.removeItem('mwl_entry_draft'); } catch(e) { /* ignore */ }
         
         // Neu laden der Historie, falls gerade aktiv
-        if (document.getElementById('view-history').classList.contains('active')) {
+        if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') {
              renderHistoryView();
         }
         // Neu laden der Ziele

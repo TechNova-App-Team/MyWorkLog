@@ -1025,12 +1025,3 @@
     window.openEntryDetail = openEntryDetail;
     window.closeEntryDetail = closeEntryDetail;
     window.renderHistoryTypeChips = renderHistoryTypeChips;
-
-    function closeTrashModal() {
-        const modal = document.getElementById('trashModal');
-        if (!modal) return;
-        modal.classList.remove('active');
-        setTimeout(() => modal.style.display = 'none', 200);
-        if (modal._escHandler) { document.removeEventListener('keydown', modal._escHandler); modal._escHandler = null; }
-        if (modal._overlayClick) { modal.removeEventListener('click', modal._overlayClick); modal._overlayClick = null; }
-    }

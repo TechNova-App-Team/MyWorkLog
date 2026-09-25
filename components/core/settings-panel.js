@@ -621,8 +621,8 @@
             try { renderSidebarNav(); } catch(e) {}
             try { renderWidgetManager(); } catch(e) {}
             try { enableWidgetDragDrop(); applyWidgetLayout(); } catch(e) {}
-            try { renderPerformanceView(calculatePerformanceData(), calculateDeepPerformanceData()); } catch(e) {}
-            try { if (document.getElementById('view-history').classList.contains('active')) renderHistoryView(); } catch(e) {}
+            try { if (typeof renderPerformanceView === 'function') renderPerformanceView(calculatePerformanceData(), calculateDeepPerformanceData()); } catch(e) {}
+            try { if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') renderHistoryView(); } catch(e) {}
             try { if (document.getElementById('view-goals').classList.contains('active')) renderGoalsView(); } catch(e) {}
 
             showCustomMessage('✅ Geladen', 'Daten aus localStorage wurden geladen und angezeigt.', 'success');

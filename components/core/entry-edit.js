@@ -285,7 +285,7 @@
         closeEditModal();
 
         // Refresh views
-        if (document.getElementById('view-history')?.classList.contains('active')) {
+        if (document.getElementById('view-history')?.classList.contains('active') && typeof renderHistoryView === 'function') {
             renderHistoryView();
         }
         try { updateUI(); } catch(e) {}
