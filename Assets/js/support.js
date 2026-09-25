@@ -48,7 +48,7 @@
     // 🔴 Bis v7.5.5 stand hier eine zweite Rechnung (nur Arbeit/Schule,
     // Wochenenden mitgezaehlt) — Dashboard 280, Support 19 fuer dieselben
     // Daten. Aendert sich die Regel dort, hier nachziehen;
-    // tools/support-streak.test.mjs haelt beide gegeneinander.
+    // tools/support-zahlen.test.mjs haelt beide gegeneinander.
     function currentStreak(entries) {
         var today = new Date(); today.setHours(0, 0, 0, 0);
         var seen = {}, dates = [];
@@ -87,7 +87,7 @@
                 'No entries on this device yet. Once you log your first day, your numbers show up here.') + '</p>';
             return;
         }
-        var hours = entries.filter(function (e) { return e.type === 'work'; }).reduce(function (s, e) { return s + (parseFloat(e.worked) || 0); }, 0);
+        var hours = workedHours(entries);
         var first = entries.map(function (e) { return e.date; }).filter(Boolean).sort()[0];
         var days = first ? Math.max(0, Math.floor((Date.now() - localDay(first).getTime()) / 86400000)) : 0;
         var streak = currentStreak(entries);
@@ -140,51 +140,104 @@
                 'Additionally usage statistics, app settings and device data. Never individual entries, notes or the shadow report book.');
     }
 
+    // ── Kennzahlen: jede Zahl nach der Regel, mit der die App sie selbst zeigt.
+    // 🔴 Bis v7.5.6 rechnete diese Seite eigene Varianten (Urlaub ohne Uebertrag
+    // und ohne Stunden-Modus, "Stunden gesamt" inkl. gutgeschriebener
+    // Urlaubsstunden, Durchschnitt nur ueber Arbeit/Schule) — der Bericht
+    // widersprach dem Dashboard. Quellen der Regeln stehen je Funktion.
+    // tools/support-zahlen.test.mjs haelt die Werte gegen die App-Funktionen.
+    var num = function (v) { return parseFloat(v) || 0; };
+
+    // Gearbeitete Stunden = workSum + schoolSum aus updateUI() (dashboard-ui.js):
+    // Schule zaehlt mit ihrem Soll, jede unbekannte/eigene Art zaehlt als Arbeit;
+    // Urlaub, Krank, Feiertag, Gleittag und Korrektur sind keine Arbeitszeit.
+    var NOT_WORK = { sick: 1, vacation: 1, gleittag: 1, holiday: 1, korrektur: 1 };
+    function workedHours(list) {
+        return list.reduce(function (a, e) {
+            if (NOT_WORK[e.type]) return a;
+            return a + (e.type === 'school' ? (num(e.expected) || num(e.worked)) : num(e.worked));
+        }, 0);
+    }
+    // Tage je Art: verschiedene Kalendertage (geteilte Schichten = ein Tag), wie die Sets in updateUI().
+    function distinctDays(list, test) {
+        var seen = {};
+        list.forEach(function (e) { if (e.date && test(e)) seen[String(e.date).slice(0, 10)] = 1; });
+        return Object.keys(seen).length;
+    }
+    // Saldo = Summe aller diff inkl. Korrektur, wie valTotal ("Gleitzeit") im Dashboard.
+    function saldo(list) { return list.reduce(function (a, e) { return a + num(e.diff); }, 0); }
+    // Durchschnitt = valAvg in updateUI(): je Eintrag der sechs Tagesarten, Schule mit Soll.
+    function avgPerDay(list) {
+        var n = 0, h = 0;
+        list.forEach(function (e) {
+            if (!/^(work|school|vacation|sick|holiday|gleittag)$/.test(e.type)) return;
+            h += e.type === 'school' ? (num(e.expected) || num(e.worked)) : num(e.worked);
+            n++;
+        });
+        return n ? h / n : 0;
+    }
+    // Urlaub wie die Dashboard-Kachel: Anspruch = total + carriedOver; genommen =
+    // Urlaubseintraege des laufenden Jahres (Tage-Modus: Anzahl, Stunden-Modus:
+    // Summe expected) + usedManual — recalculateVacationUsed() in vacation-holidays.js.
+    function vacation(data) {
+        var v = data.settings.vacation || {}, year = new Date().getFullYear() + '-';
+        var hoursMode = v.mode === 'hours';
+        var inYear = data.entries.filter(function (e) { return e.type === 'vacation' && e.date && String(e.date).indexOf(year) === 0; });
+        var auto = hoursMode ? inYear.reduce(function (a, e) { return a + num(e.expected); }, 0) : inYear.length;
+        var used = auto + num(v.usedManual);
+        var total = (v.total !== undefined && v.total !== '' ? num(v.total) : 30) + num(v.carriedOver);
+        var unit = hoursMode ? ' h' : ' Tage';
+        var r = function (x) { return String(Math.round(x * 10) / 10); };
+        return { total: r(total) + unit, used: r(used) + unit, left: r(Math.max(0, total - used)) + unit };
+    }
+
     // Feldnamen = Variablen der EmailJS-Vorlage (template_xe5xc1k) — nicht umbenennen.
     function gatherAppStats(data) {
         var entries = data.entries, s = data.settings, now = new Date(), year = String(now.getFullYear());
-        var by = function (t) { return entries.filter(function (e) { return e.type === t; }); };
-        var sum = function (list, f) { return list.reduce(function (a, e) { return a + (parseFloat(e[f]) || 0); }, 0); };
         var yearEntries = entries.filter(function (e) { return e.date && String(e.date).indexOf(year) === 0; });
-        var active = entries.filter(function (e) { return e.type === 'work' || e.type === 'school'; });
         var dates = entries.map(function (e) { return e.date; }).filter(Boolean).sort();
         var firstEntry = dates[0] || '—', lastEntry = dates[dates.length - 1] || '—';
-        var totalDiff = sum(entries, 'diff'), yearDiff = sum(yearEntries, 'diff');
+        var isWork = function (e) { return !NOT_WORK[e.type] && e.type !== 'school'; };
+        var isType = function (t) { return function (e) { return e.type === t; }; };
         var wdH = [0, 0, 0, 0, 0, 0, 0];
-        active.forEach(function (e) { if (e.date) wdH[localDay(e.date).getDay()] += parseFloat(e.worked) || 0; });
+        entries.forEach(function (e) {
+            if (!e.date || NOT_WORK[e.type]) return;
+            wdH[localDay(e.date).getDay()] += e.type === 'school' ? (num(e.expected) || num(e.worked)) : num(e.worked);
+        });
         var best = 1; for (var i = 0; i < 7; i++) if (wdH[i] > wdH[best]) best = i;
         var dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
-        var vac = s.vacation || {};
-        var vacTotal = vac.total || 30, vacUsed = vac.used || 0;
+        var vac = vacation(data);
+        var weekly = (s.hours || []).reduce(function (a, h) { return a + num(h); }, 0);
         var fb = (data.feedback || []).length + readLog().length;
-        var signed = function (n) { return (n >= 0 ? '+' : '') + n.toFixed(1); };
+        var signed = function (n) { return (n >= 0 ? '+' : '') + n.toFixed(2); };
         return {
             user_name: s.name || 'Anonym',
             total_entries: String(entries.length),
-            total_work_days: String(by('work').length),
-            total_school_days: String(by('school').length),
-            total_vacation_days: String(by('vacation').length),
-            total_sick_days: String(by('sick').length),
-            total_holiday_days: String(by('holiday').length),
-            total_hours: sum(entries, 'worked').toFixed(1),
-            total_saldo: signed(totalDiff),
+            total_work_days: String(distinctDays(entries, isWork)),
+            total_school_days: String(distinctDays(entries, isType('school'))),
+            total_vacation_days: String(distinctDays(entries, isType('vacation'))),
+            total_sick_days: String(distinctDays(entries, isType('sick'))),
+            total_holiday_days: String(distinctDays(entries, isType('holiday'))),
+            total_hours: workedHours(entries).toFixed(1),
+            total_saldo: signed(saldo(entries)),
             year: year,
             year_entries: String(yearEntries.length),
-            year_work_days: String(yearEntries.filter(function (e) { return e.type === 'work'; }).length),
-            year_school_days: String(yearEntries.filter(function (e) { return e.type === 'school'; }).length),
-            year_hours: sum(yearEntries, 'worked').toFixed(1),
-            year_saldo: signed(yearDiff),
-            avg_hours: (active.length ? sum(active, 'worked') / active.length : 0).toFixed(1),
+            year_work_days: String(distinctDays(yearEntries, isWork)),
+            year_school_days: String(distinctDays(yearEntries, isType('school'))),
+            year_hours: workedHours(yearEntries).toFixed(1),
+            year_saldo: signed(saldo(yearEntries)),
+            avg_hours: avgPerDay(entries).toFixed(1),
             first_entry: firstEntry,
             last_entry: lastEntry,
-            days_using_app: String(firstEntry !== '—' ? Math.floor((now - localDay(firstEntry)) / 86400000) : 0),
+            days_using_app: String(firstEntry !== '—' ? Math.max(0, Math.floor((now - localDay(firstEntry)) / 86400000)) : 0),
             current_streak: String(currentStreak(entries)),
             active_months: String(new Set(dates.map(function (d) { return String(d).slice(0, 7); })).size),
-            weekly_soll: (s.hours || []).reduce(function (a, h) { return a + (parseFloat(h) || 0); }, 0).toFixed(1),
+            // weeklyTargetHours() in charts.js: Summe der Tagessolls, ohne Angabe 40.
+            weekly_soll: (weekly > 0 ? weekly : 40).toFixed(1),
             break_threshold: String((s.break && s.break.thresh) || 6),
-            vacation_total: String(vacTotal),
-            vacation_used: String(vacUsed),
-            vacation_remaining: String(Math.max(0, vacTotal - vacUsed)),
+            vacation_total: vac.total,
+            vacation_used: vac.used,
+            vacation_remaining: vac.left,
             best_weekday: dayNames[best],
             best_weekday_hours: wdH[best].toFixed(1),
             custom_types_count: String((s.customTypes || []).length),
@@ -231,9 +284,9 @@
             '── PRODUKTIVITÄT ──',
             '⌀ Stunden/Tag: ' + st.avg_hours + 'h', '📐 Wöchentl. Soll: ' + st.weekly_soll + 'h',
             '🏆 Bester Tag: ' + st.best_weekday + ' (' + st.best_weekday_hours + 'h)', '📆 Aktive Monate: ' + st.active_months,
-            '🔥 Streak: ' + st.current_streak + ' Tage', '',
+            '🔥 Serie: ' + st.current_streak + ' Arbeitstage', '',
             '── URLAUB ──',
-            '🏖️ Gesamt: ' + st.vacation_total + ' | ✈️ Verbraucht: ' + st.vacation_used + ' | ✅ Übrig: ' + st.vacation_remaining, '',
+            '🏖️ Anspruch: ' + st.vacation_total + ' | ✈️ Genommen: ' + st.vacation_used + ' | ✅ Übrig: ' + st.vacation_remaining, '',
             '── APP-ENGAGEMENT ──',
             '📅 Erster Eintrag: ' + st.first_entry, '📅 Letzter Eintrag: ' + st.last_entry, '📆 Tage aktiv: ' + st.days_using_app,
             '💬 Feedbacks: ' + st.feedback_count, '💡 Feature Requests: ' + st.feature_request_count,
