@@ -2669,8 +2669,13 @@
         }
 
         // Aus einer Person ein Monogramm: erste Buchstaben von Vor- und Nachname.
+        // Nur Woerter, die mit einem Buchstaben anfangen: "Lena Test (E2E)"
+        // ergab sonst "L(". Buchstabe = hat Gross-/Kleinschreibung, das deckt
+        // Umlaute und nichtlateinische Schriften ohne Unicode-Regex ab.
         function monogramm(name) {
-            var teile = String(name || '').trim().split(/\s+/).filter(Boolean);
+            var teile = String(name || '').trim().split(/\s+/).filter(function (t) {
+                return t && t[0].toLowerCase() !== t[0].toUpperCase();
+            });
             if (!teile.length) return '?';
             if (teile.length === 1) return teile[0].slice(0, 2).toUpperCase();
             return (teile[0][0] + teile[teile.length - 1][0]).toUpperCase();
@@ -3381,7 +3386,18 @@
             var box = $('abkAnsicht');
             if (!box) return;
             box.setAttribute('aria-labelledby', 'abkR-' + ansicht);
-            if (ansicht === 'azubis') {
+            if (!kontoDaten.azubis.length && ansicht !== 'team') {
+                // Ohne Azubis gibt es nichts zu pruefen und keine Karte — der
+                // Anfang ist in beiden Reitern derselbe: einladen.
+                box.innerHTML = '<section class="abk-start">' +
+                    '<h2 class="abk-start-t">' + abL('Noch keine Azubis verbunden', 'No apprentices connected yet') + '</h2>' +
+                    '<p class="abk-start-s">' + abL(
+                        'Erzeugen Sie einen Einladungscode und geben Sie ihn Ihrem Azubi. Er trägt ihn im Berichtsheft unter „Betrieb & IHK“ ein, danach erscheinen seine Wochen hier.',
+                        'Create an invite code and pass it to your apprentice. They enter it in the report book under “Company & chamber”, after that their weeks show up here.') + '</p>' +
+                    '<button type="button" class="ab-btn abk-cta" onclick="abkEinladen()">' +
+                    '<span>' + abL('Einladungscode erzeugen', 'Create invite code') + '</span></button>' +
+                    '</section>';
+            } else if (ansicht === 'azubis') {
                 box.innerHTML = '<div class="abk-azubis">' + kontoDaten.azubis.map(azubiKarte).join('') + '</div>';
             } else if (ansicht === 'team') {
                 box.innerHTML = teamPanelHTML(teamFehler);
@@ -3463,21 +3479,12 @@
                 '</div>' + meldungenBlock() + hinweis +
                 '<div id="abkEinladung"></div><div id="abkDomain"></div>';
 
-            var koerper;
-            if (!n) {
-                koerper = '<section class="abk-start">' +
-                    '<h2 class="abk-start-t">' + abL('Noch keine Azubis verbunden', 'No apprentices connected yet') + '</h2>' +
-                    '<p class="abk-start-s">' + abL(
-                        'Erzeugen Sie einen Einladungscode und geben Sie ihn Ihrem Azubi. Er trägt ihn im Berichtsheft unter „Betrieb & IHK" ein — danach erscheinen seine Wochen hier.',
-                        'Create an invite code and pass it to your apprentice. They enter it in the report book under “Company & chamber” — after that their weeks show up here.') + '</p>' +
-                    '<button type="button" class="ab-btn abk-cta" onclick="abkEinladen()">' +
-                    '<span>' + abL('Einladungscode erzeugen', 'Create invite code') + '</span></button>' +
-                    '</section>';
-            } else {
-                koerper = reiterHTML(g, n) + '<div class="abk-ansicht" id="abkAnsicht" role="tabpanel"></div>';
-            }
-            $('abKonto').innerHTML = kopf + koerper;
-            if (n) renderAnsicht();
+            // Die Reiter stehen auch ohne Azubis da: sonst ist "Team" (und
+            // damit die Vertretung) fuer einen neuen Betrieb unerreichbar, und
+            // "Team verwalten" im Konto-Menue liefe ins Leere.
+            $('abKonto').innerHTML = kopf + reiterHTML(g, n) +
+                '<div class="abk-ansicht" id="abkAnsicht" role="tabpanel"></div>';
+            renderAnsicht();
             renderKontoMenue();
             if (!d.nachgewiesen) bestaetigenLaden();
         }

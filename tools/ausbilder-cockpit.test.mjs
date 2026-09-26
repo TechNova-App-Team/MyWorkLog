@@ -129,6 +129,12 @@ ist(mod.alterText(9) === 'seit 9 Tagen', 'unter zwei Wochen in Tagen');
 ist(mod.alterText(64) === 'seit 9 Wochen', 'ab zwei Wochen in Wochen');
 ist(mod.alterText(null) === '', 'ohne Datum kein Text');
 
+console.log('\n▶ Monogramm');
+ist(mod.monogramm('Lena Test (E2E)') === 'LT', 'Klammerwort zaehlt nicht mit (war "L(")');
+ist(mod.monogramm('Mehmet Yıldız') === 'MY', 'normaler Name');
+ist(mod.monogramm('Özge Ünal') === 'ÖÜ', 'Umlaute sind Buchstaben');
+ist(mod.monogramm('') === '?', 'leer bleibt "?"');
+
 console.log('\n▶ Azubi-Karte: drei Zustaende, nicht zwei');
 const leer = mod.azubiKarte({ name: 'Sophie Krämer', berichte: [] }, 3);
 ist(leer.includes('noch nichts eingereicht'), 'ohne Wochen: "noch nichts eingereicht"');
