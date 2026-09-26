@@ -295,15 +295,68 @@ function verlaufZeichnen() {
         box.innerHTML = '<p class="aic-verlauf-leer">' + Lx('Deine Wochen erscheinen hier.', 'Your weeks show up here.') + '</p>';
         return;
     }
+    // Loeschen-Knopf als GESCHWISTER des Eintrags, nicht darin: ein <button>
+    // in einem <button> ist ungueltiges HTML, und der Klick wuerde die Woche
+    // gleichzeitig oeffnen.
     box.innerHTML = liste.map(({ w, i }) => {
         const kw = w.calendarWeek ? Lx('KW ', 'Week ') + w.calendarWeek : Lx('Woche', 'Week');
         const wann = w.generatedAt || w.timestamp;
         const datum = wann ? new Date(wann).toLocaleDateString(istEn() ? 'en-GB' : 'de-DE', { day: 'numeric', month: 'short' }) : '';
         const erste = (w.days || []).find(d => d.entries && d.entries.length);
-        return '<button type="button" class="aic-verlauf-eintrag" onclick="AISChat.ausVerlauf(' + i + ')">' +
+        return '<div class="aic-verlauf-zeile">' +
+            '<button type="button" class="aic-verlauf-eintrag" onclick="AISChat.ausVerlauf(' + i + ')">' +
             '<span class="aic-verlauf-kw">' + esc(kw) + (datum ? '<span>' + esc(datum) + '</span>' : '') + '</span>' +
-            '<span class="aic-verlauf-vor">' + esc(erste ? erste.entries[0] : '') + '</span></button>';
-    }).join('');
+            '<span class="aic-verlauf-vor">' + esc(erste ? erste.entries[0] : '') + '</span></button>' +
+            '<button type="button" class="aic-verlauf-weg" onclick="AISChat.verlaufLoeschen(' + i + ')" aria-label="' +
+            esc(Lx(kw + ' löschen', 'Delete ' + kw)) + '"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>' +
+            '</div>';
+    }).join('') +
+        '<button type="button" class="aic-verlauf-leeren" onclick="AISChat.verlaufLoeschen(null)">' +
+        Lx('Verlauf leeren', 'Clear history') + '</button>';
+}
+
+// Loeschen fragt immer vorher: weg ist weg, es gibt keinen Papierkorb dafuer.
+async function frag(o) {
+    if (typeof mwlConfirm === 'function') return await mwlConfirm(o);
+    return window.confirm(o.text);
+}
+async function verlaufLoeschen(i) {
+    if (!studioDa()) return;
+    const alle = i === null;
+    const w = alle ? null : (AIStudio.verlauf() || [])[i];
+    if (!alle && !w) return;
+    const kw = w && w.calendarWeek ? Lx('KW ', 'Week ') + w.calendarWeek : Lx('diese Woche', 'this week');
+    const ok = await frag(alle
+        ? { title: Lx('Verlauf leeren?', 'Clear history?'),
+            text: Lx('Alle ' + AIStudio.verlauf().length + ' Wochen verschwinden aus der Liste. Berichte, die du schon gespeichert hast, bleiben erhalten.',
+                     'All ' + AIStudio.verlauf().length + ' weeks disappear from the list. Reports you already saved are kept.'),
+            confirmText: Lx('Alle löschen', 'Delete all') }
+        : { title: Lx(kw + ' löschen?', 'Delete ' + kw + '?'),
+            text: Lx('Die Woche verschwindet aus der Liste. Ein schon gespeicherter Bericht bleibt erhalten.',
+                     'The week disappears from the list. A report you already saved is kept.'),
+            confirmText: Lx('Löschen', 'Delete') });
+    if (!ok) return;
+    AIStudio.verlaufLoeschen(alle ? null : i);
+    // Karten im Gespraech, die aus dem Verlauf geholt wurden, zeigen sonst
+    // weiter eine Woche, die es nicht mehr gibt.
+    const soll = w ? JSON.stringify(w) : null;
+    gespraech.nachrichten = gespraech.nachrichten.filter(n => !n.woche || (!alle && JSON.stringify(n.woche) !== soll));
+    speichern();
+    zeichnen();
+    verlaufZeichnen();
+}
+// Das laufende Gespraech samt Entwurf. Fragt nur, wenn es etwas zu verlieren gibt.
+async function gespraechLoeschen() {
+    const hat = gespraech.nachrichten.length || entwurfHatInhalt(gespraech.entwurf);
+    if (hat && !(await frag({
+        title: Lx('Gespräch löschen?', 'Delete conversation?'),
+        text: entwurfHatInhalt(gespraech.entwurf)
+            ? Lx('Alle Nachrichten und der Wochenentwurf werden gelöscht. Was du nicht übernommen hast, ist danach weg.',
+                 'All messages and the week draft are deleted. Anything you have not added to a report is gone afterwards.')
+            : Lx('Alle Nachrichten dieses Gesprächs werden gelöscht.', 'All messages in this conversation are deleted.'),
+        confirmText: Lx('Löschen', 'Delete'),
+    }))) return;
+    neueWoche(true);
 }
 
 // ── Nachrichten ──────────────────────────────────────────────────────
@@ -884,9 +937,17 @@ function ausVerlauf(i) {
     if (v) v.classList.remove('rail-auf');
     sagen({ rolle: 'assistent', text: Lx('Diese Woche hattest du schon:', 'You had this week before:'), woche: JSON.parse(JSON.stringify(w)) });
 }
-function neueWoche() {
+// "Neue Woche" verwarf bis v8.0.0 einen gefuellten Entwurf ohne Nachfrage.
+async function neueWoche(bestaetigt) {
+    if (bestaetigt !== true && entwurfHatInhalt(gespraech.entwurf) && !gespraech.erledigt) {
+        const ok = await frag({
+            title: Lx('Neue Woche anfangen?', 'Start a new week?'),
+            text: Lx('Der Entwurf dieser Woche ist noch nicht übernommen und wird verworfen.', 'This week’s draft has not been added to a report yet and will be discarded.'),
+            confirmText: Lx('Verwerfen', 'Discard'),
+        });
+        if (!ok) return;
+    }
     frischAnfangen();
-    zuletztGeaendert = [];
     speichern();
     const v = $('aicView');
     if (v) v.classList.remove('rail-auf');
@@ -937,7 +998,7 @@ else init();
 return {
     oeffnen, schliessen, senden, einstellungen, uebernehmen, bearbeiten,
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
-    ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen,
+    ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
     _intern: {
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,

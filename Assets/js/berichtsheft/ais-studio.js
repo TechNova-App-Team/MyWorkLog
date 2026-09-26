@@ -2703,11 +2703,20 @@ function cancelDeleteHistory(idx) {
 }
 
 function confirmDeleteHistory(idx) {
-    if (idx < 0 || idx >= state.generationHistory.length) return;
-    state.generationHistory.splice(idx, 1);
+    if (!verlaufLoeschen(idx)) return;
+    showToast(L('Verlaufs-Eintrag gelöscht', 'History entry deleted'), 'info');
+}
+
+// Loeschen ohne eigene Rueckfrage — der Chat fragt mit mwlConfirm selbst.
+// idx = null leert den ganzen Verlauf. Die aktuelle Woche (Vorschau) bleibt:
+// sie kann gerade im Formular stehen.
+function verlaufLoeschen(idx) {
+    if (idx === null) state.generationHistory = [];
+    else if (idx >= 0 && idx < state.generationHistory.length) state.generationHistory.splice(idx, 1);
+    else return false;
     try { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.generationHistory)); } catch (e) { }
     renderHistory();
-    showToast(L('Verlaufs-Eintrag gelöscht', 'History entry deleted'), 'info');
+    return true;
 }
 
 
@@ -2878,6 +2887,7 @@ return {
     konfigSetzen,
     erzeugeAusText,
     wocheSetzen,
+    verlaufLoeschen,
     stundenFuer: (i) => _trackingHoursForDay(i) || bhSollStunden(i),
     woche: () => state.generatedEntries,
     verlauf: () => state.generationHistory,

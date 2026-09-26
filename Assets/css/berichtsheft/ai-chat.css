@@ -108,6 +108,50 @@ body.aic-offen { overflow: hidden; }
     transition: background-color 0.15s ease;
 }
 .aic-verlauf-eintrag:hover { background: var(--bg-hover); }
+/* Eintrag + Loeschen als Geschwister (kein Knopf im Knopf). Der Papierkorb
+   liegt ueber dem rechten Rand des Eintrags und erscheint beim Zeigen;
+   ohne Hover (Touch) steht er immer da — sonst waere Loeschen am Handy
+   unerreichbar (CLAUDE.md: "Touch hat kein :hover"). */
+.aic-verlauf-zeile { position: relative; }
+.aic-verlauf-zeile .aic-verlauf-eintrag { padding-right: 38px; }
+.aic-verlauf-weg {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    margin-top: -15px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.aic-verlauf-weg .icon { width: 15px; height: 15px; }
+.aic-verlauf-zeile:hover .aic-verlauf-weg,
+.aic-verlauf-weg:focus-visible { opacity: 1; }
+.aic-verlauf-weg:hover { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); }
+.aic-verlauf-weg:active { transform: scale(0.94); }
+@media (hover: none) { .aic-verlauf-weg { opacity: 1; } }
+.aic-verlauf-leeren {
+    align-self: flex-start;
+    margin: 10px 6px 4px;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.76rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.aic-verlauf-leeren:hover { color: var(--danger); }
 .aic-verlauf-kw {
     display: flex;
     justify-content: space-between;
@@ -259,7 +303,9 @@ body.aic-offen { overflow: hidden; }
 .aic-verlauf-eintrag:focus-visible,
 .aic-vorschlag:focus-visible,
 .aic-senden:focus-visible,
-.aic-profil-knopf:focus-visible {
+.aic-profil-knopf:focus-visible,
+.aic-verlauf-weg:focus-visible,
+.aic-verlauf-leeren:focus-visible {
     outline: 2px solid rgba(var(--primary-rgb), 0.6);
     outline-offset: 2px;
 }

@@ -211,6 +211,21 @@ t.ok(w.totalHours === w.days.reduce((n, d) => n + d.hours, 0), 'Summe stimmt');
 const nurMo = I.entwurfAlsWoche(z2.entwurf, { ...k0, tage: [0], kw: 38 });
 t.ok(nurMo.days.map(d => d.index).join() === '0,1,2,4', 'nicht gearbeitete Tage ohne Inhalt fallen weg, Tage MIT Inhalt nie', nurMo.days.map(d => d.index).join());
 
+t.gruppe('Verlauf loeschen');
+// Der Chat fragt selbst (mwlConfirm); AIStudio.verlaufLoeschen loescht ohne Rueckfrage.
+const ev = frisch({});
+const vw = (n) => ({ calendarWeek: n, days: [{ index: 0, entries: ['KW ' + n] }] });
+ev.AIStudio.wocheSetzen(vw(36)); ev.AIStudio.wocheSetzen(vw(37)); ev.AIStudio.wocheSetzen(vw(38));
+t.ok(ev.AIStudio.verlauf().length === 3, 'drei Wochen im Verlauf (Gegenprobe fuer die Zeilen darunter)', ev.AIStudio.verlauf().length);
+ev.AIStudio.wocheSetzen(vw(38));
+t.ok(ev.AIStudio.verlauf().length === 3, 'dieselbe Woche zweimal gesetzt → kein zweiter Eintrag');
+t.ok(ev.AIStudio.verlaufLoeschen(1) === true && ev.AIStudio.verlauf().map(w => w.calendarWeek).join() === '36,38', 'einzelner Eintrag weg, Rest in Reihenfolge');
+t.ok(ev.AIStudio.verlaufLoeschen(9) === false && ev.AIStudio.verlauf().length === 2, 'Index ausserhalb → nichts geloescht');
+const vorLeeren = ev.sandbox.localStorage.getItem('ais_generation_history');
+t.ok(vorLeeren && JSON.parse(vorLeeren).length === 2, 'Speicher traegt vor dem Leeren zwei Wochen (Gegenprobe)', vorLeeren && JSON.parse(vorLeeren).length);
+t.ok(ev.AIStudio.verlaufLoeschen(null) === true && ev.AIStudio.verlauf().length === 0, 'null leert alles');
+t.ok(JSON.parse(ev.sandbox.localStorage.getItem('ais_generation_history')).length === 0, 'Speicher mitgezogen (nach dem Neuladen waeren sie sonst wieder da)');
+
 t.gruppe('Speicher');
 const gel = I.entwurfLesen({ kw: 38, tage: [{ index: 2, entries: ['a', 5, 'b'], isSchoolDay: 1, dayStatus: 'quatsch' }, { index: 9 }] });
 t.ok(gel.tage[2].entries.join() === 'a,b' && gel.tage[2].isSchoolDay === true && gel.tage[2].dayStatus === '', 'gespeicherter Entwurf wird geprueft gelesen');

@@ -107,48 +107,54 @@ pruefe(new Set(MODELS).size === MODELS.length, `kein Modell doppelt (${MODELS.le
 pruefe(!MODELS.some(m => verboten.includes(m)), 'keiner der am 19.09.2026 rausgeflogenen Eintraege ist zurueck');
 pruefe(MODELS.length > 0 && MODELS.every(m => m.endsWith(':free')), 'nur :free-Modelle in der Kette');
 
-// ── /verstehen (Chat-Assistent, v4.2) ─────────────────────────────────
-// Der Chat bekommt ein OBJEKT zurueck, keine Woche. Auf "/" waere das
-// unbrauchbar (naechstes Modell), auf "/verstehen" ist es das Ergebnis.
-console.log('\n/verstehen: Antwort-Objekt statt Woche');
-const OBJEKT = JSON.stringify({ antwort: 'Alles klar, Bäcker im 1. Lehrjahr.', einstellungen: { lehrjahr: 1 }, erzeugen: false });
-const verstehAnfrage = () => new Request('https://ai-proxy.myworklog.de/verstehen', {
+// ── Chat-Assistent (App v8.0.0) ueber "/" ─────────────────────────────
+// Der Chat schickt seinen Wochenentwurf ueber den Wochen-Pfad und bekommt
+// { antwort, einstellungen, days:[…] } zurueck — mit LEEREN Tagen, weil nichts
+// erfunden wird. looksLikeWeek muss das annehmen, sonst probiert jede
+// Chat-Nachricht alle Modelle durch.
+console.log('\nChat-Entwurf { antwort, days } auf "/"');
+const ENTWURF = JSON.stringify({
+  antwort: 'Mittwoch steht drin.',
+  einstellungen: {},
+  days: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'].map(d => ({
+    day: d, entries: d === 'Mittwoch' ? ['Der erste Schultag in der 11c wurde absolviert.'] : [], schule: d === 'Mittwoch', thema: '', status: '',
+  })),
+});
+aufrufe.length = 0;
+globalThis.fetch = async (url, init) => {
+  aufrufe.push(JSON.parse(init.body).model);
+  return new Response(antwort('```json\n' + ENTWURF + '\n```'), { status: 200 });
+};
+const re = await worker.fetch(neueAnfrage(), env);
+const be = await re.json();
+pruefe(re.status === 200 && aufrufe.length === 1 && !re.headers.get('X-MWL-Salvage'),
+  `Entwurf mit vier leeren Tagen reicht dem ersten Modell (${aufrufe.length} Aufruf/e)`);
+pruefe(JSON.stringify(be).includes('erste Schultag'), 'Entwurf kommt beim Client an');
+
+// Gegenprobe: ein Objekt OHNE days ist auf "/" unbrauchbar — sonst prueft die
+// Zeile oben nichts.
+aufrufe.length = 0;
+globalThis.fetch = async (url, init) => {
+  aufrufe.push(JSON.parse(init.body).model);
+  return new Response(antwort(JSON.stringify({ antwort: 'Hallo', einstellungen: {} })), { status: 200 });
+};
+const rg = await worker.fetch(neueAnfrage(), env);
+pruefe(aufrufe.length === MODELS.length && rg.headers.get('X-MWL-Salvage') === '1',
+  `Gegenprobe: ohne days alle ${MODELS.length} Modelle probiert (${aufrufe.length})`);
+
+// ── /verstehen ist raus (v4.3) ────────────────────────────────────────
+// 410 sofort, ohne ein Modell anzufassen: eine alte, gecachte App faellt so
+// auf ihren Notweg, statt jede Nachricht durch die ganze Kette zu schicken.
+console.log('\n/verstehen: entfernt');
+aufrufe.length = 0;
+const rv = await worker.fetch(new Request('https://ai-proxy.myworklog.de/verstehen', {
   method: 'POST',
   headers: { Origin: 'https://myworklog.de', 'Content-Type': 'application/json' },
-  body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Bin Bäcker, 1. Jahr' }] }],
-                         generationConfig: { maxOutputTokens: 4096 } }),
-});
-
-aufrufe.length = 0;
-const gesendet = [];
-globalThis.fetch = async (url, init) => {
-  const b = JSON.parse(init.body);
-  aufrufe.push(b.model); gesendet.push(b);
-  return new Response(antwort('```json\n' + OBJEKT + '\n```'), { status: 200 });
-};
-const rv = await worker.fetch(verstehAnfrage(), env);
-const bv = await rv.json();
-pruefe(rv.status === 200 && aufrufe.length === 1, `ein Objekt mit "antwort" reicht dem ersten Modell (${aufrufe.length} Aufruf/e)`);
-pruefe(JSON.stringify(bv).includes('Bäcker im 1. Lehrjahr'), 'Antwort kommt beim Client an (auch mit ```json drumherum)');
-pruefe(gesendet[0].max_tokens <= 900, `Laenge gedeckelt (${gesendet[0].max_tokens} statt 4096)`);
-
-// Gegenprobe: dieselbe Antwort ist auf dem WOCHEN-Weg unbrauchbar — sonst
-// haette die Weiche nichts geaendert und der Test oben prueft nichts.
-aufrufe.length = 0;
-const rw = await worker.fetch(neueAnfrage(), env);
-pruefe(aufrufe.length === MODELS.length && rw.headers.get('X-MWL-Salvage') === '1',
-  `Gegenprobe: auf "/" wird das Objekt verworfen, alle ${MODELS.length} Modelle probiert (${aufrufe.length})`);
-
-// Ein Objekt OHNE Text in "antwort" taugt auch auf /verstehen nicht.
-aufrufe.length = 0;
-globalThis.fetch = async (url, init) => {
-  const m = JSON.parse(init.body).model;
-  aufrufe.push(m);
-  return new Response(antwort(m === MODELS[0] ? '{"antwort":"  "}' : OBJEKT), { status: 200 });
-};
-const rl = await worker.fetch(verstehAnfrage(), env);
-pruefe(rl.headers.get('X-MWL-Model') === MODELS[1] && aufrufe.length === 2,
-  `leere "antwort" → naechstes Modell (${aufrufe.join(' → ')})`);
+  body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Bin Bäcker, 1. Jahr' }] }] }),
+}), env);
+pruefe(rv.status === 410, `/verstehen antwortet 410 (war ${rv.status})`);
+pruefe(aufrufe.length === 0, `kein Modell angefasst (${aufrufe.length})`);
+pruefe(rv.headers.get('Access-Control-Allow-Origin') === 'https://myworklog.de', 'mit CORS-Kopf, sonst sieht die alte App nur "Netzwerkfehler"');
 
 console.log(`\n${ok} OK, ${fail} FAIL`);
 process.exit(fail ? 1 : 0);
