@@ -319,30 +319,23 @@
 const STORAGE_KEY = 'mwlbench_or_key';
 
 // Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.9).
-// Die Rangfolge ist das Ergebnis des Laufs vom 26.09.2026, 17:24 Uhr (16 Modelle,
-// 12 Tests, Live-Prompt, parallel 2, "unparsbar oder leer = 0/10") — die Datei
-// liegt unter .claude/notes/benchmark/benchmark-2026-09-26-1724.json. Wer die
+// Die Rangfolge ist das Ergebnis ZWEIER Laeufe vom 26.09.2026 (17:24 und 18:40,
+// beide Live-Prompt, parallel 2) — die Dateien liegen unter
+// .claude/notes/benchmark/benchmark-2026-09-26-1724.json und -1840.json. Wer die
 // Rangfolge hier aendert, aendert sie auch drueben (workers/ai-proxy/worker.js,
 // const MODELS): sonst behauptet die Karte "Primary" fuer ein Modell, das der
-// Worker als drittes anfaesst.
+// Worker als drittes anfaesst. Sortierregel und Zahlen stehen dort im Kopf.
 //
-// Was der Lauf gezeigt hat, in Kurzform (Prozent; Q = Punkte je BEANTWORTETEM Test):
-//   Ling Fin 98,7 · Santé 97,9 · North 85,1 (1x Timeout) · Ultra 68,1 (Q 10)
-//   Dots 64,7 (4x Timeout) · Laguna XS 58,7 (4x 429) · Super 57,4 (3x Timeout)
-//   Laguna S 19,1 (10x 429, Q 10) · Nano 4,3 (Q 2, 7x Timeout) · LFM 0 (11x 400)
-//   Qwen 0 (429/Timeout) · Nex Mini, Ling VL, Nex Pro, DeepSeek, GLM: 404 x12
-//   — alle fuenf nicht mehr in der Live-Liste.
-// Laguna XS steht vor Dots/Super, weil ein 429 im Worker knapp 1 s kostet,
-// ein Timeout 60 s.
+// Der Lauf um 18:40 hat ALLE 17 freien Modelle gemessen, auch die acht
+// ausserhalb der Kette — keines taugt: Gemma 4 31B + 26B und Qwen 3.8 zum
+// dritten Mal nur 429, Nemotron 3.5 Lightning 11x Timeout, Inkling + Inkling
+// Small weiter 403, Nemotron Nano 23 %. Wird die Kette wieder duenn, gehoeren
+// sie fuer EINEN Lauf wieder hier hinein (die Live-Liste kann sich aendern);
+// dauerhaft kosten sie nur Tagesbudget.
 //
 // Rausgeflogen (nicht wieder aufnehmen): minimax-m3, minimax-m2.7, nex-n2.5-mini,
 // nex-n2.5-pro, ling-3.0-flash-vl, deepseek-v4-flash-0731, glm-5.2 (nicht mehr in
-// der Live-Liste), qwen3.8-27b und nemotron-3-nano-omni (zweimal in Folge nichts
-// Brauchbares), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it
-// (ueber Wochen in JEDEM Lauf nur 429 — Entscheidung des Nutzers),
-// thinkingmachines/inkling + inkling-small (403: OpenRouter gibt sie nur an
-// gelistete Agent-Apps heraus, das erreicht kein Worker-Header),
-// nvidia/nemotron-3.5-content-safety (Klassifikator, gemessen: schreibt keine Woche).
+// der Live-Liste), liquid/lfm-2.5-2.6b (zweimal 0/12, HTTP 400).
 //
 // 🔴 Jedes Modell kostet 12 Calls je Lauf, plus Retries. OpenRouter deckelt
 // :free-Modelle (Doku, Stand 19.09.2026) auf 20 Anfragen/Minute und 1000/Tag
@@ -351,32 +344,16 @@ const STORAGE_KEY = 'mwlbench_or_key';
 // 0/10 gewertet und sieht in der Matrix genauso aus wie ein Modell, das nichts
 // kann: bei einer Nullzeile erst "Ergebnis als JSON" ziehen und `fehler` lesen.
 const MODELS = [
-  { id: 'inclusionai/ling-3.0-flash-fin:free',                label: 'Ling 3.0 Flash Fin',   role: 'Primary'     },
-  { id: 'inclusionai/ling-3.0-flash-sante:free',              label: 'Ling 3.0 Flash Santé', role: 'Fallback 1'  },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 2'  },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Fallback 3'  },
-  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 4'  },
-  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 5'  },
+  { id: 'inclusionai/ling-3.0-flash-sante:free',              label: 'Ling 3.0 Flash Santé', role: 'Primary'     },
+  { id: 'inclusionai/ling-3.0-flash-fin:free',                label: 'Ling 3.0 Flash Fin',   role: 'Fallback 1'  },
+  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 2'  },
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Fallback 3'  },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 4'  },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Fallback 5'  },
   { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Fallback 6'  },
-  // ── Reserve. Wer hier zweimal in Folge nichts liefert, fliegt.
-  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Reserve 1'   },
-  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',         role: 'Last Resort' },
-  // ── Kandidaten: NICHT in der Kette, aber in der Live-Liste (26.09.2026).
-  //    Anlass: die beiden besten Modelle kommen vom selben Anbieter; faellt
-  //    InclusionAI aus, traegt allein North. Deshalb misst dieser Lauf ALLE
-  //    freien Modelle, auch die frueher aussortierten — deren Ausschluss
-  //    beruhte auf Anbieter-429 bzw. 403, und das kann sich aendern. Wer hier
-  //    gut abschneidet, wandert in den Worker; wer wieder nichts liefert,
-  //    fliegt aus dieser Gruppe.
-  { id: 'google/gemma-4-31b-it:free',                         label: 'Gemma 4 31B',          role: 'Kandidat'    },
-  { id: 'google/gemma-4-26b-a4b-it:free',                     label: 'Gemma 4 26B A4B',      role: 'Kandidat'    },
-  { id: 'nvidia/nemotron-3.5-lightning:free',                 label: 'Nemotron 3.5 Lightning', role: 'Kandidat'  },
-  { id: 'qwen/qwen3.8-27b:free',                              label: 'Qwen 3.8 27B',         role: 'Kandidat'    },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',      role: 'Kandidat'    },
-  { id: 'thinkingmachines/inkling:free',                      label: 'Inkling',              role: 'Kandidat (bisher 403)' },
-  { id: 'thinkingmachines/inkling-small:free',                label: 'Inkling Small',        role: 'Kandidat (bisher 403)' },
-  // Gegenprobe, kein Kandidat: ein Moderations-Klassifikator muss hier 0 holen.
-  // Holt er Punkte, wertet der Benchmark falsch (so war es vor dem 19.09.).
+  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Last Resort' },
+  // Gegenprobe, nicht in der Kette: ein Moderations-Klassifikator muss hier 0
+  // holen. Holt er Punkte, wertet der Benchmark falsch (so war es vor dem 19.09.).
   { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',      role: 'Gegenprobe'  },
 ];
 
