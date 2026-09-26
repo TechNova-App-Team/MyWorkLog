@@ -10,6 +10,12 @@
 //   azubi.webp    dieselbe Uebersicht, Reiter "Azubis": Stand je Azubi
 //   woche.webp    die Link-Ansicht einer Woche (ohne Konto)
 //
+// 🔴 cockpit.webp steht AUCH im Landing-Intro (index.template.html, Kapitel
+// "Ausbilder", `data-f` = Brennpunkt als Anteil des Bildes). Aendert sich das
+// Bild, stimmen die Brennpunkte nicht mehr — die Kamera zoomte nach dem Umbau
+// v7.8.0 mitten durch Liste und Woche. Nach jedem Lauf dort nachmessen
+// (Anleitung: .claude/notes/intro-video.md).
+//
 // 🔴 Das Cockpit braucht ein Konto und liest aus Supabase. Ein echtes Konto
 // gehoert in keine oeffentliche Aufnahme (Namen, Betrieb, Texte echter
 // Azubis). Das Skript haengt deshalb per `screenshot.mjs --pre` einen Setter
