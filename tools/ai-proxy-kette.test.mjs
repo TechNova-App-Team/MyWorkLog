@@ -107,5 +107,48 @@ pruefe(new Set(MODELS).size === MODELS.length, `kein Modell doppelt (${MODELS.le
 pruefe(!MODELS.some(m => verboten.includes(m)), 'keiner der am 19.09.2026 rausgeflogenen Eintraege ist zurueck');
 pruefe(MODELS.length > 0 && MODELS.every(m => m.endsWith(':free')), 'nur :free-Modelle in der Kette');
 
+// ── /verstehen (Chat-Assistent, v4.2) ─────────────────────────────────
+// Der Chat bekommt ein OBJEKT zurueck, keine Woche. Auf "/" waere das
+// unbrauchbar (naechstes Modell), auf "/verstehen" ist es das Ergebnis.
+console.log('\n/verstehen: Antwort-Objekt statt Woche');
+const OBJEKT = JSON.stringify({ antwort: 'Alles klar, Bäcker im 1. Lehrjahr.', einstellungen: { lehrjahr: 1 }, erzeugen: false });
+const verstehAnfrage = () => new Request('https://ai-proxy.myworklog.de/verstehen', {
+  method: 'POST',
+  headers: { Origin: 'https://myworklog.de', 'Content-Type': 'application/json' },
+  body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Bin Bäcker, 1. Jahr' }] }],
+                         generationConfig: { maxOutputTokens: 4096 } }),
+});
+
+aufrufe.length = 0;
+const gesendet = [];
+globalThis.fetch = async (url, init) => {
+  const b = JSON.parse(init.body);
+  aufrufe.push(b.model); gesendet.push(b);
+  return new Response(antwort('```json\n' + OBJEKT + '\n```'), { status: 200 });
+};
+const rv = await worker.fetch(verstehAnfrage(), env);
+const bv = await rv.json();
+pruefe(rv.status === 200 && aufrufe.length === 1, `ein Objekt mit "antwort" reicht dem ersten Modell (${aufrufe.length} Aufruf/e)`);
+pruefe(JSON.stringify(bv).includes('Bäcker im 1. Lehrjahr'), 'Antwort kommt beim Client an (auch mit ```json drumherum)');
+pruefe(gesendet[0].max_tokens <= 900, `Laenge gedeckelt (${gesendet[0].max_tokens} statt 4096)`);
+
+// Gegenprobe: dieselbe Antwort ist auf dem WOCHEN-Weg unbrauchbar — sonst
+// haette die Weiche nichts geaendert und der Test oben prueft nichts.
+aufrufe.length = 0;
+const rw = await worker.fetch(neueAnfrage(), env);
+pruefe(aufrufe.length === MODELS.length && rw.headers.get('X-MWL-Salvage') === '1',
+  `Gegenprobe: auf "/" wird das Objekt verworfen, alle ${MODELS.length} Modelle probiert (${aufrufe.length})`);
+
+// Ein Objekt OHNE Text in "antwort" taugt auch auf /verstehen nicht.
+aufrufe.length = 0;
+globalThis.fetch = async (url, init) => {
+  const m = JSON.parse(init.body).model;
+  aufrufe.push(m);
+  return new Response(antwort(m === MODELS[0] ? '{"antwort":"  "}' : OBJEKT), { status: 200 });
+};
+const rl = await worker.fetch(verstehAnfrage(), env);
+pruefe(rl.headers.get('X-MWL-Model') === MODELS[1] && aufrufe.length === 2,
+  `leere "antwort" → naechstes Modell (${aufrufe.join(' → ')})`);
+
 console.log(`\n${ok} OK, ${fail} FAIL`);
 process.exit(fail ? 1 : 0);

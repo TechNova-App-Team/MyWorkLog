@@ -180,7 +180,11 @@ function _buildCloudPrompt(professionId, options) {
     const prof = PROFESSIONS[professionId];
     const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
     const daysList = options.selectedDays.map(d => DAY_NAMES[d]).join(', ');
-    const profName = prof?.name || state.customProfession || professionId;
+    // 🔴 Der NAME kommt vom Nutzer, der Wortschatz aus der Liste. "Baecker/in"
+    // wird per _detectProfession auf 'gastronomie' abgebildet (deren Objekte
+    // passen: Brotteig, Gaerschrank …) — stand hier prof.name zuerst, bekam ein
+    // Baecker seinen Bericht als "Koch/Koechin" (gemessen 26.09.2026 im Chat).
+    const profName = state.customProfession || prof?.name || professionId;
     const formId = CLOUD_FORM[options.form] ? options.form : 'stichpunkte';
     const F = CLOUD_FORM[formId];
     const umfangId = CLOUD_UMFANG[options.umfang] ? options.umfang : 'mittel';
@@ -447,7 +451,7 @@ async function generateWithCloud(professionId, options) {
         const prof = PROFESSIONS[professionId];
         const week = {
             profession: professionId,
-            professionName: prof?.name || state.customProfession || professionId,
+            professionName: state.customProfession || prof?.name || professionId,
             professionIcon: prof?.icon || bhIcon(''),
             yearNum: options.yearNum,
             umfang: options.umfang,
@@ -713,7 +717,7 @@ async function generateWithCloud(professionId, options) {
     // Build the same week structure as generateWeek()
     const week = {
         profession: professionId,
-        professionName: prof?.name || state.customProfession || professionId,
+        professionName: state.customProfession || prof?.name || professionId,
         professionIcon: prof?.icon || bhIcon(''),
         yearNum: options.yearNum,
         umfang: options.umfang,

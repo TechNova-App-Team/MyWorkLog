@@ -1,0 +1,502 @@
+/* ═══ BERICHTSHEFT-ASSISTENT (Chat, Vollbild) ═══
+   Logik: Assets/js/berichtsheft/ais-chat.js. Markup: #aicView in index.html.
+
+   Farbe ist hier knapp gehalten: Violett nur fuer die Marke des Assistenten
+   und den Fokus. Die Hauptaktionen ("Senden", "In den Bericht uebernehmen")
+   sind hell auf dunkel (--text-main auf --bg-deep) — Weiss auf --primary
+   (#8b5cf6) erreicht nur 4,2:1 und faellt unter AA fuer normalen Text.
+
+   Ebenen: das alte Panel (z 950/960, jetzt "Einstellungen") liegt UEBER dem
+   Chat (945), das Berichtsformular (1000) ebenfalls. */
+
+.aic {
+    position: fixed;
+    inset: 0;
+    z-index: 945;
+    display: grid;
+    grid-template-columns: 272px minmax(0, 1fr);
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: var(--font-main);
+}
+.aic[hidden] { display: none; }
+body.aic-offen { overflow: hidden; }
+
+/* ── Seitenleiste ─────────────────────────────────────────────── */
+.aic-rail {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    padding: 16px 12px 12px;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+}
+.aic-rail-kopf {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px 14px;
+}
+.aic-rail-marke,
+.aic-avatar,
+.aic-leer-marke {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    background: var(--primary-dim);
+    border: 1px solid rgba(var(--primary-rgb), 0.18);
+    color: var(--primary-light);
+}
+.aic-rail-marke { width: 28px; height: 28px; border-radius: 8px; }
+.aic-rail-marke .icon { width: 15px; height: 15px; }
+.aic-rail-titel { font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+
+.aic-neu,
+.aic-rail-einst {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.aic-neu:hover,
+.aic-rail-einst:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+.aic-neu .icon,
+.aic-rail-einst .icon { width: 16px; height: 16px; color: var(--text-secondary); }
+.aic-rail-einst { border-color: transparent; color: var(--text-secondary); margin-top: 6px; }
+
+.aic-rail-t {
+    margin: 16px 10px 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+.aic-verlauf {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 0 -4px;
+    padding: 0 4px;
+}
+.aic-verlauf-leer { padding: 6px 10px; font-size: 0.8rem; line-height: 1.5; color: var(--text-dim); }
+.aic-verlauf-eintrag {
+    display: grid;
+    gap: 2px;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+.aic-verlauf-eintrag:hover { background: var(--bg-hover); }
+.aic-verlauf-kw {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+.aic-verlauf-kw span { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; color: var(--text-muted); }
+.aic-verlauf-vor {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.aic-schleier { display: none; }
+
+/* ── Hauptspalte ──────────────────────────────────────────────── */
+.aic-haupt {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    min-width: 0;
+    min-height: 0;
+}
+.aic-kopf {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 56px;
+    padding: 0 12px 0 20px;
+    border-bottom: 1px solid var(--border);
+}
+.aic-titel {
+    margin-right: auto;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+.aic-kopf-knopf {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.aic-kopf-knopf:hover { background: var(--bg-hover); color: var(--text-main); }
+.aic-kopf-knopf svg { width: 18px; height: 18px; }
+.aic-menue { display: none; }
+
+.aic-scroll { overflow-y: auto; overscroll-behavior: contain; }
+.aic-spalte {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    width: 100%;
+    max-width: 760px;
+    min-height: 100%;
+    margin: 0 auto;
+    padding: 32px 24px 28px;
+}
+
+/* ── Nachrichten ──────────────────────────────────────────────── */
+.aic-n { display: flex; animation: aicRein 0.28s var(--ease-out) both; }
+@keyframes aicRein { from { opacity: 0; transform: translateY(6px); } }
+.aic-n.is-nutzer { justify-content: flex-end; }
+.aic-blase {
+    max-width: min(78%, 560px);
+    margin: 0;
+    padding: 10px 15px;
+    border-radius: 18px 18px 6px 18px;
+    background: color-mix(in srgb, var(--primary) 13%, var(--bg-card));
+    border: 1px solid rgba(var(--primary-rgb), 0.16);
+    font-size: 0.95rem;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.aic-n.is-assistent { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+.aic-avatar { width: 30px; height: 30px; border-radius: 9px; }
+.aic-avatar .icon { width: 15px; height: 15px; }
+.aic-inhalt { min-width: 0; padding-top: 4px; }
+.aic-text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+.aic-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.aic-chip {
+    padding: 3px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.aic-inhalt > .aic-knopf { margin-top: 12px; }
+
+/* "Denkt nach …" — drei Punkte, darunter der Satz als Klartext (fuer Leser
+   ohne Bewegung und fuer Screenreader). */
+.aic-tippt { display: flex; align-items: center; gap: 4px; margin: 0; padding-top: 6px; color: var(--text-muted); }
+.aic-tippt span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: aicPunkt 1.2s ease-in-out infinite;
+}
+.aic-tippt span:nth-child(2) { animation-delay: 0.15s; }
+.aic-tippt span:nth-child(3) { animation-delay: 0.3s; }
+.aic-tippt em { margin-left: 8px; font-style: normal; font-size: 0.85rem; }
+@keyframes aicPunkt { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+
+/* ── Knoepfe ──────────────────────────────────────────────────── */
+.aic-knopf {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.aic-knopf:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+.aic-knopf:active { transform: scale(0.98); }
+.aic-knopf .icon { width: 15px; height: 15px; }
+.aic-knopf.is-haupt { background: var(--text-main); border-color: var(--text-main); color: var(--bg-deep); font-weight: 600; }
+.aic-knopf.is-haupt:hover { background: color-mix(in srgb, var(--text-main) 88%, var(--bg-deep)); }
+.aic-knopf:focus-visible,
+.aic-neu:focus-visible,
+.aic-rail-einst:focus-visible,
+.aic-kopf-knopf:focus-visible,
+.aic-verlauf-eintrag:focus-visible,
+.aic-vorschlag:focus-visible,
+.aic-senden:focus-visible,
+.aic-profil-knopf:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb), 0.6);
+    outline-offset: 2px;
+}
+
+/* ── Die Woche als Karte ──────────────────────────────────────────
+   Das eine Element, das auffallen darf: es IST das Ergebnis. Tage als
+   Zeilen mit dem Namen links, damit man die Woche von oben nach unten liest
+   wie den Vordruck. */
+.aic-woche {
+    margin-top: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: var(--bg-card);
+    overflow: hidden;
+}
+.aic-woche-kopf {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+.aic-woche-meta { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; color: var(--text-muted); }
+.aic-tag {
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: 4px 16px;
+    padding: 12px 18px;
+}
+.aic-tag + .aic-tag { border-top: 1px solid var(--border); }
+.aic-tag-kopf { display: flex; flex-direction: column; gap: 3px; grid-row: span 2; }
+.aic-tag-name { font-size: 0.85rem; font-weight: 600; }
+.aic-tag-h { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+.aic-tag-marke {
+    align-self: flex-start;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(var(--info-rgb), 0.12);
+    color: var(--info);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+.aic-tag-thema { margin: 0; font-size: 0.82rem; color: var(--text-secondary); }
+.aic-tag-status { margin: 0; font-size: 0.88rem; color: var(--text-muted); }
+.aic-tag-liste {
+    margin: 0;
+    padding: 0 0 0 16px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text-main);
+}
+.aic-tag-liste li + li { margin-top: 3px; }
+.aic-tag-liste li::marker { color: var(--text-dim); }
+.aic-woche-fuss {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 18px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+}
+
+/* ── Leerzustand ──────────────────────────────────────────────── */
+.aic-leer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    flex: 1 1 auto;
+    padding: 6vh 0 2vh;
+}
+.aic-leer-marke { width: 40px; height: 40px; border-radius: 12px; margin-bottom: 18px; }
+.aic-leer-marke .icon { width: 19px; height: 19px; }
+.aic-leer-t {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.4rem, 3vw, 1.75rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    text-wrap: balance;
+}
+.aic-leer-s {
+    max-width: 54ch;
+    margin: 10px 0 26px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+}
+.aic-vorschlaege { display: grid; gap: 8px; width: 100%; }
+.aic-vorschlag {
+    padding: 12px 15px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.aic-vorschlag:hover { background: var(--bg-hover); border-color: var(--border-hover); color: var(--text-main); }
+
+/* ── Eingabe ──────────────────────────────────────────────────── */
+.aic-eingabe { padding: 0 24px calc(14px + env(safe-area-inset-bottom)); }
+.aic-box {
+    max-width: 712px;
+    margin: 0 auto;
+    padding: 10px 10px 10px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    background: var(--bg-card);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.aic-box:focus-within {
+    border-color: rgba(var(--primary-rgb), 0.45);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+.aic-profil {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+.aic-profil-teil {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--bg-hover);
+    font-size: 0.76rem;
+    color: var(--text-secondary);
+}
+.aic-profil-fehlt {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(var(--warning-rgb), 0.12);
+    font-size: 0.76rem;
+    color: var(--warning);
+}
+.aic-profil-knopf {
+    margin-left: auto;
+    padding: 2px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 0.76rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.aic-profil-knopf:hover { color: var(--text-main); }
+.aic-zeile { display: flex; align-items: flex-end; gap: 10px; }
+.aic-zeile textarea {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-height: 200px;
+    padding: 7px 0;
+    border: 0;
+    outline: none;
+    resize: none;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.97rem;
+    line-height: 1.5;
+}
+.aic-zeile textarea::placeholder { color: var(--text-muted); }
+.aic-senden {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--text-main);
+    color: var(--bg-deep);
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+.aic-senden svg { width: 18px; height: 18px; }
+.aic-senden:active { transform: scale(0.95); }
+.aic-senden:disabled { opacity: 0.3; cursor: default; transform: none; }
+.aic-hinweis {
+    max-width: 712px;
+    margin: 8px auto 0;
+    text-align: center;
+    font-size: 0.74rem;
+    color: var(--text-dim);
+}
+
+/* ── Das alte Panel als "Einstellungen" ueber dem Chat ─────────────
+   Das Wochen-Textfeld und der Generier-Knopf haben hier nichts zu suchen:
+   die Woche beschreibt man unten im Chat. Zwei Eingabefelder fuer denselben
+   Text waeren zwei Regler auf einen Zustand. */
+.ai-studio.ais-als-einstellungen .ais-section:has(#aisCustomPrompt),
+.ai-studio.ais-als-einstellungen #aisGenerateBtn { display: none; }
+/* Der schwebende Knopf gehoert zur Seite, nicht zum offenen Chat. */
+body.aic-offen .ai-studio-fab { display: none; }
+
+/* ── Schmal: Seitenleiste als Schublade ───────────────────────── */
+@media (max-width: 860px) {
+    .aic { grid-template-columns: minmax(0, 1fr); }
+    .aic-rail {
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 2;
+        width: min(300px, 86vw);
+        transform: translateX(-100%);
+        transition: transform 0.25s var(--ease-out);
+    }
+    .aic.rail-auf .aic-rail { transform: none; box-shadow: var(--shadow-lg); }
+    .aic.rail-auf .aic-schleier { display: block; position: fixed; inset: 0; z-index: 1; background: rgba(0, 0, 0, 0.5); }
+    .aic-menue { display: grid; }
+    .aic-kopf { padding: 0 8px; }
+    .aic-spalte { padding: 22px 16px 20px; gap: 18px; }
+    .aic-eingabe { padding: 0 12px calc(10px + env(safe-area-inset-bottom)); }
+    /* 16 px, sonst zoomt iOS beim Fokus in die Seite. */
+    .aic-zeile textarea { font-size: 16px; }
+    .aic-tag { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; }
+    .aic-tag-kopf { flex-direction: row; align-items: baseline; gap: 8px; grid-row: auto; }
+    .aic-woche-kopf, .aic-woche-fuss { padding-left: 14px; padding-right: 14px; }
+    .aic-woche-fuss .aic-knopf.is-haupt { flex: 1 1 100%; justify-content: center; }
+    .aic-blase { max-width: 88%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aic-n { animation: none; }
+    .aic-tippt span { animation: none; opacity: 0.6; }
+    .aic-rail { transition: none; }
+}

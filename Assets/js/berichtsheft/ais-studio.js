@@ -1302,7 +1302,9 @@ function onCustomProf(value) {
                 const displayName = document.getElementById('aisBerufName');
                 const displayEl = document.getElementById('aisBerufDisplay');
                 if (displayIcon) displayIcon.innerHTML = prof.icon;
-                if (displayName) displayName.textContent = prof.name + ' (erkannt)';
+                // Der eingegebene Name bleibt stehen; der Listenberuf liefert nur
+                // den Wortschatz der lokalen Engine.
+                if (displayName) displayName.textContent = value.trim();
                 if (displayEl) displayEl.classList.add('has-prof');
                 _renderActivityChips(state.selectedProfession);
             }
@@ -2108,6 +2110,10 @@ function _saveProfile() {
     try {
         const profile = {
             profession: state.selectedProfession,
+            // 🔴 Ein Beruf, den es in PROFESSIONS nicht gibt (Baecker, Florist …),
+            // steht als 'custom' da — der NAME dazu ging bis v7.8.x nicht mit
+            // und das Profil war nach dem Neuladen leer.
+            customProfession: state.customProfession || '',
             lehrjahr: state.lehrjahr,
             form: state.form,
             umfang: state.umfang,
@@ -2133,6 +2139,20 @@ function _loadProfile() {
             if (displayName) displayName.textContent = prof.name;
             if (displayEl) displayEl.classList.add('has-prof');
             _renderActivityChips(profile.profession);
+        } else if (profile.profession === 'custom' && profile.customProfession) {
+            state.selectedProfession = 'custom';
+            state.customProfession = String(profile.customProfession).slice(0, 80);
+            const displayIcon = document.getElementById('aisBerufIcon');
+            const displayName = document.getElementById('aisBerufName');
+            const displayEl = document.getElementById('aisBerufDisplay');
+            if (displayIcon) displayIcon.innerHTML = '<svg class="icon"><use href="#i-grad"/></svg>';
+            if (displayName) displayName.textContent = state.customProfession;
+            if (displayEl) displayEl.classList.add('has-prof');
+        }
+        if (profile.customProfession && state.selectedProfession !== 'custom') {
+            state.customProfession = String(profile.customProfession).slice(0, 80);
+            const displayName = document.getElementById('aisBerufName');
+            if (displayName) displayName.textContent = state.customProfession;
         }
         if (profile.lehrjahr) {
             state.lehrjahr = profile.lehrjahr;
@@ -2180,8 +2200,12 @@ function _updateProfileSummary() {
     if (!el) return;
     const prof = state.selectedProfession ? PROFESSIONS[state.selectedProfession]?.name : null;
     const lj = state.lehrjahr || 2;
-    if (prof) {
+    if (prof && state.customProfession) {
+        el.innerHTML = `<span class="ais-prof-badge">${bhIcon(PROFESSIONS[state.selectedProfession]?.icon)} ${escapeHtml(state.customProfession)} · ${lj}. Lehrjahr</span>`;
+    } else if (prof) {
         el.innerHTML = `<span class="ais-prof-badge">${bhIcon(PROFESSIONS[state.selectedProfession]?.icon)} ${prof} · ${lj}. Lehrjahr</span>`;
+    } else if (state.selectedProfession === 'custom' && state.customProfession) {
+        el.innerHTML = `<span class="ais-prof-badge"><svg class="icon"><use href="#i-grad"/></svg> ${escapeHtml(state.customProfession)} · ${lj}. Lehrjahr</span>`;
     } else {
         el.textContent = 'Beruf & Lehrjahr einrichten';
     }
@@ -2507,6 +2531,10 @@ async function generate() {
         stopBtnProgress(_genSuccess);
         _updateRateLimitUI();
     }
+    // Der Chat-Assistent wartet auf generate() und muss wissen, ob danach eine
+    // NEUE Woche in state.generatedEntries steht — die alte bleibt bei einem
+    // Fehler stehen und saehe sonst aus wie das Ergebnis.
+    return _genSuccess;
 }
 
 function regenerateAll() {
@@ -2695,7 +2723,146 @@ window.AIS_CLOUD.verbinde({
 // PUBLIC INTERFACE
 // ═══════════════════════════════════════
 
+// ── Konfiguration fuer den Chat-Assistenten (ais-chat.js) ───────────
+// Der Chat setzt NIE state direkt, sondern geht durch die Setter der Regler.
+// Grund: zwei Wege auf denselben Zustand driften (CLAUDE.md, "ein Zustand, ein
+// Regler") — setzt der Chat die Schreibform, muss die Karte in den
+// Einstellungen danach dieselbe zeigen, und gespeichert wird ueber
+// _saveProfile/_saveAiSettings wie bei einem Klick.
+const KONFIG_STATUS = ['krank', 'urlaub', 'feiertag'];
+
+function konfig() {
+    const prof = state.selectedProfession ? PROFESSIONS[state.selectedProfession] : null;
+    return {
+        beruf: state.selectedProfession || '',
+        // Eigener Name vor Listenname — siehe profName in ais-cloud.js.
+        berufName: state.customProfession || (prof ? prof.name : ''),
+        lehrjahr: state.lehrjahr || 2,
+        form: state.form,
+        umfang: state.umfang,
+        vorgabe: state.formHint || '',
+        abteilung: document.getElementById('aisDepartment')?.value?.trim() || '',
+        stimmung: state.activeTheme || 'normal',
+        tage: [...state.selectedDays],
+        schultage: [...state.schoolDayIndices],
+        tagStatus: { ...state.dayStatus },
+        kw: parseInt(document.getElementById('aisCalendarWeek')?.value) || getCalendarWeek(),
+        cloud: !!state.useCloud,
+        bereit: !!state.selectedProfession,
+    };
+}
+
+// Nimmt nur bekannte Felder mit erlaubten Werten — die Eingabe kommt von einem
+// Sprachmodell. Liefert die Liste der tatsaechlich geaenderten Felder, damit der
+// Chat sagen kann, was er umgestellt hat (und nichts behauptet, was nicht geschah).
+function konfigSetzen(k) {
+    const geaendert = [];
+    if (!k || typeof k !== 'object') return geaendert;
+    const vorher = konfig();
+
+    if (typeof k.beruf === 'string' && PROFESSIONS[k.beruf] && k.beruf !== state.selectedProfession) {
+        _pickBeruf(k.beruf);
+        geaendert.push('beruf');
+    } else if (typeof k.berufFrei === 'string' && k.berufFrei.trim()) {
+        const text = k.berufFrei.trim().slice(0, 80);
+        if (text !== state.customProfession) {
+            const inp = document.getElementById('aisCustomProf');
+            if (inp) inp.value = text;
+            onCustomProf(text);
+            geaendert.push('beruf');
+        }
+    }
+
+    const lj = parseInt(k.lehrjahr);
+    if (lj >= 1 && lj <= 4 && lj !== state.lehrjahr) {
+        state.lehrjahr = lj;
+        document.querySelectorAll('.ais-lj-btn').forEach(b => b.classList.toggle('sel', parseInt(b.dataset.lj) === lj));
+        _saveProfile();
+        geaendert.push('lehrjahr');
+    }
+    if (FORM_PATTERNS[k.form] && k.form !== state.form) {
+        setForm(k.form, document.querySelector(`.ais-form-card[data-form="${k.form}"]`));
+        geaendert.push('form');
+    }
+    if (UMFANG_COUNT[k.umfang] && k.umfang !== state.umfang) {
+        setUmfang(k.umfang, document.querySelector(`.ais-umfang-chip[data-umfang="${k.umfang}"]`));
+        geaendert.push('umfang');
+    }
+    if (typeof k.vorgabe === 'string' && k.vorgabe.trim() !== (state.formHint || '')) {
+        const v = k.vorgabe.trim().slice(0, 300);
+        const el = document.getElementById('aisFormHint');
+        if (el) el.value = v;
+        onFormHint(v);
+        geaendert.push('vorgabe');
+    }
+    if (typeof k.abteilung === 'string' && k.abteilung.trim() !== vorher.abteilung) {
+        const el = document.getElementById('aisDepartment');
+        if (el) el.value = k.abteilung.trim().slice(0, 80);
+        _saveProfile();
+        geaendert.push('abteilung');
+    }
+    if (typeof k.stimmung === 'string' && k.stimmung !== vorher.stimmung) {
+        const karte = document.querySelector(`.ais-mood-card[data-mood="${k.stimmung}"]`);
+        if (karte) { selectMood(k.stimmung, karte); geaendert.push('stimmung'); }
+    }
+
+    const tagListe = (a) => Array.isArray(a)
+        ? [...new Set(a.map(Number).filter(i => Number.isInteger(i) && i >= 0 && i <= 4))].sort()
+        : null;
+    const tage = tagListe(k.tage);
+    if (tage && tage.length && tage.join() !== state.selectedDays.join()) {
+        state.selectedDays = tage;
+        state.schoolDayIndices = state.schoolDayIndices.filter(i => tage.includes(i));
+        document.querySelectorAll('.ais-day-chip[data-day]').forEach(c =>
+            c.classList.toggle('selected', tage.includes(parseInt(c.dataset.day))));
+        updateSchoolDayChips();
+        _saveAiSettings();
+        geaendert.push('tage');
+    }
+    const schule = tagListe(k.schultage);
+    if (schule) {
+        const gueltig = schule.filter(i => state.selectedDays.includes(i));
+        if (gueltig.join() !== state.schoolDayIndices.join()) {
+            state.schoolDayIndices = gueltig;
+            updateSchoolDayChips();
+            _saveAiSettings();
+            geaendert.push('schultage');
+        }
+    }
+    if (k.tagStatus && typeof k.tagStatus === 'object') {
+        let st = false;
+        for (const [idx, wert] of Object.entries(k.tagStatus)) {
+            const i = parseInt(idx);
+            if (!(i >= 0 && i <= 4)) continue;
+            const neu = KONFIG_STATUS.includes(wert) ? wert : '';
+            if ((state.dayStatus[i] || '') !== neu) { setDayStatus(i, neu); st = true; }
+        }
+        if (st) geaendert.push('tagStatus');
+    }
+    const kw = parseInt(k.kw);
+    if (kw >= 1 && kw <= 53 && kw !== vorher.kw) {
+        const el = document.getElementById('aisCalendarWeek');
+        if (el) { el.value = kw; onWeekChange(); geaendert.push('kw'); }
+    }
+    if (geaendert.length) _updateProfileSummary();
+    return geaendert;
+}
+
+// Wochentext setzen und erzeugen — der Chat hat kein eigenes Textfeld fuer den
+// Generator, er schreibt in DASSELBE (#aisCustomPrompt), damit Verlauf,
+// Wochenplan-Erkennung und Prompt genau so laufen wie beim Knopf.
+async function erzeugeAusText(text) {
+    const feld = document.getElementById('aisCustomPrompt');
+    if (feld) feld.value = String(text || '').slice(0, 2000);
+    return await generate();
+}
+
 return {
+    konfig,
+    konfigSetzen,
+    erzeugeAusText,
+    woche: () => state.generatedEntries,
+    verlauf: () => state.generationHistory,
     init,
     toggle,
     open,
