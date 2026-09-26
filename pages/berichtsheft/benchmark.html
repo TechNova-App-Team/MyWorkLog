@@ -319,57 +319,48 @@
 const STORAGE_KEY = 'mwlbench_or_key';
 
 // Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.9).
-// Die Rangfolge ist das Ergebnis des Laufs vom 19.09.2026, 20:22 Uhr (19 Modelle,
-// 12 Tests, Live-Prompt, parallel 2), NACHGERECHNET mit der Regel "unparsbar
-// oder leer = 0/10" (siehe scoreResult) — die Datei liegt unter
-// .claude/notes/benchmark/benchmark-2026-09-19-2022.json. Wer die Rangfolge
-// hier aendert, aendert sie auch drueben: sonst behauptet die Karte "Primary"
-// fuer ein Modell, das der Worker als drittes anfaesst.
+// Die Rangfolge ist das Ergebnis des Laufs vom 26.09.2026, 17:24 Uhr (16 Modelle,
+// 12 Tests, Live-Prompt, parallel 2, "unparsbar oder leer = 0/10") — die Datei
+// liegt unter .claude/notes/benchmark/benchmark-2026-09-26-1724.json. Wer die
+// Rangfolge hier aendert, aendert sie auch drueben (workers/ai-proxy/worker.js,
+// const MODELS): sonst behauptet die Karte "Primary" fuer ein Modell, das der
+// Worker als drittes anfaesst.
 //
-// Was der Lauf gezeigt hat, in Kurzform (Prozent = nachgerechnet):
-//   Ling 3.0 Flash Fin 100 · Santé 98,7 · VL 98,7 · Nex Mini 96,2 · North 91,5
-//   Nex Pro 75 (2x Timeout) · DeepSeek 66 (4x Timeout) · Laguna XS 60 (5x 429)
-//   Dots 59 · Super 45 (SECHS leere 200er in 400 ms) · Laguna S 43 (7x 429)
-//   Ultra 34 (7x Timeout) · GLM 28 (9x 429) · LFM 26 (6x leer) · Nano 15
-//   Qwen 0 (12x 429 "Provider returned error") · Inkling/Inkling Small 0
-//   (12x 403 "only available on agentic harnesses" — Policy, nicht Last)
-//   Nemotron Safety: zwoelfmal "User Safety: safe", also 0 — wie erwartet raus.
+// Was der Lauf gezeigt hat, in Kurzform (Prozent; Q = Punkte je BEANTWORTETEM Test):
+//   Ling Fin 98,7 · Santé 97,9 · North 85,1 (1x Timeout) · Ultra 68,1 (Q 10)
+//   Dots 64,7 (4x Timeout) · Laguna XS 58,7 (4x 429) · Super 57,4 (3x Timeout)
+//   Laguna S 19,1 (10x 429, Q 10) · Nano 4,3 (Q 2, 7x Timeout) · LFM 0 (11x 400)
+//   Qwen 0 (429/Timeout) · Nex Mini, Ling VL, Nex Pro, DeepSeek, GLM: 404 x12
+//   — alle fuenf nicht mehr in der Live-Liste.
+// Laguna XS steht vor Dots/Super, weil ein 429 im Worker knapp 1 s kostet,
+// ein Timeout 60 s.
 //
-// Rausgeflogen (nicht wieder aufnehmen): minimax-m3, minimax-m2.7 (nicht mehr
-// in der Live-Liste), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it
+// Rausgeflogen (nicht wieder aufnehmen): minimax-m3, minimax-m2.7, nex-n2.5-mini,
+// nex-n2.5-pro, ling-3.0-flash-vl, deepseek-v4-flash-0731, glm-5.2 (nicht mehr in
+// der Live-Liste), qwen3.8-27b und nemotron-3-nano-omni (zweimal in Folge nichts
+// Brauchbares), nemotron-3.5-lightning, gemma-4-31b-it, gemma-4-26b-a4b-it
 // (ueber Wochen in JEDEM Lauf nur 429 — Entscheidung des Nutzers),
 // thinkingmachines/inkling + inkling-small (403: OpenRouter gibt sie nur an
 // gelistete Agent-Apps heraus, das erreicht kein Worker-Header),
 // nvidia/nemotron-3.5-content-safety (Klassifikator, gemessen: schreibt keine Woche).
 //
-// 🔴 16 Modelle x 12 Tests = 192 Calls je Lauf, plus Retries. OpenRouter deckelt
+// 🔴 Jedes Modell kostet 12 Calls je Lauf, plus Retries. OpenRouter deckelt
 // :free-Modelle (Doku, Stand 19.09.2026) auf 20 Anfragen/Minute und 1000/Tag
 // (mit >= 10 $ je gekauftem Guthaben, sonst 50/Tag). Vier parallele Modelle
-// koennen die Minute reissen — der Lauf vom 19.09. lief mit 2. Ein 429 wird als
+// koennen die Minute reissen — die Laeufe seit 19.09. liefen mit 2. Ein 429 wird als
 // 0/10 gewertet und sieht in der Matrix genauso aus wie ein Modell, das nichts
 // kann: bei einer Nullzeile erst "Ergebnis als JSON" ziehen und `fehler` lesen.
 const MODELS = [
-  // ── Rangliste 19.09.2026. Nach zwei Ling-Modellen bewusst ein anderer
-  //    Anbieter (Nex), damit ein InclusionAI-Ausfall hoechstens zwei Stufen
-  //    am Stueck kostet; VL ist gleich gut, aber mit 12 s halb so schnell.
   { id: 'inclusionai/ling-3.0-flash-fin:free',                label: 'Ling 3.0 Flash Fin',   role: 'Primary'     },
   { id: 'inclusionai/ling-3.0-flash-sante:free',              label: 'Ling 3.0 Flash Santé', role: 'Fallback 1'  },
-  { id: 'nex-agi/nex-n2.5-mini:free',                         label: 'Nex N2.5 Mini',        role: 'Fallback 2'  },
-  { id: 'inclusionai/ling-3.0-flash-vl:free',                 label: 'Ling 3.0 Flash VL',    role: 'Fallback 3'  },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 4'  },
-  { id: 'nex-agi/nex-n2.5-pro:free',                          label: 'Nex N2.5 Pro',         role: 'Fallback 5'  },
-  { id: 'deepseek/deepseek-v4-flash-0731:free',               label: 'DeepSeek V4 Flash',    role: 'Fallback 6'  },
-  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 7'  },
-  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 8'  },
-  // ── Unter 50 %. Bleiben als Reserve fuer den naechsten Anbieter-Ausfall;
-  //    wer hier zweimal in Folge nichts liefert, fliegt.
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Reserve 1'   },
-  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Reserve 2'   },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Reserve 3'   },
-  { id: 'z-ai/glm-5.2:free',                                  label: 'GLM 5.2',              role: 'Reserve 4'   },
-  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',         role: 'Reserve 5'   },
-  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',      role: 'Reserve 6'   },
-  { id: 'qwen/qwen3.8-27b:free',                              label: 'Qwen 3.8 27B',         role: 'Last Resort' },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 2'  },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Fallback 3'  },
+  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 4'  },
+  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 5'  },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Fallback 6'  },
+  // ── Reserve. Wer hier zweimal in Folge nichts liefert, fliegt.
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Reserve 1'   },
+  { id: 'liquid/lfm-2.5-2.6b:free',                           label: 'LFM 2.5 2.6B',         role: 'Last Resort' },
 ];
 
 // Wie viele MODELLE gleichzeitig laufen. Bewusst ueber die Modelle und nicht
