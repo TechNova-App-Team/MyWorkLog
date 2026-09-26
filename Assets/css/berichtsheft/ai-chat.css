@@ -212,7 +212,7 @@ body.aic-offen { overflow: hidden; }
     font-size: 0.78rem;
     color: var(--text-secondary);
 }
-.aic-inhalt > .aic-knopf { margin-top: 12px; }
+.aic-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
 /* "Denkt nach …" — drei Punkte, darunter der Satz als Klartext (fuer Leser
    ohne Bewegung und fuer Screenreader). */
@@ -247,9 +247,11 @@ body.aic-offen { overflow: hidden; }
 }
 .aic-knopf:hover { background: var(--bg-hover); border-color: var(--border-hover); }
 .aic-knopf:active { transform: scale(0.98); }
+.aic-knopf:disabled { opacity: 0.4; cursor: default; transform: none; }
 .aic-knopf .icon { width: 15px; height: 15px; }
 .aic-knopf.is-haupt { background: var(--text-main); border-color: var(--text-main); color: var(--bg-deep); font-weight: 600; }
 .aic-knopf.is-haupt:hover { background: color-mix(in srgb, var(--text-main) 88%, var(--bg-deep)); }
+.aic-knopf.is-haupt:disabled:hover { background: var(--text-main); }
 .aic-knopf:focus-visible,
 .aic-neu:focus-visible,
 .aic-rail-einst:focus-visible,
@@ -285,14 +287,38 @@ body.aic-offen { overflow: hidden; }
     font-weight: 600;
 }
 .aic-woche-meta { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; color: var(--text-muted); }
+/* Die Karte des Entwurfs steht in der Textspalte der Antworten (Avatar 30 px
+   + Abstand 12 px), nicht unter dem Avatar. */
+.aic-n.is-karte { display: block; padding-left: 42px; }
+.aic-n.is-karte .aic-woche { margin-top: 0; }
 .aic-tag {
+    position: relative;
     display: grid;
     grid-template-columns: 116px minmax(0, 1fr);
     gap: 4px 16px;
     padding: 12px 18px;
 }
 .aic-tag + .aic-tag { border-top: 1px solid var(--border); }
-.aic-tag-kopf { display: flex; flex-direction: column; gap: 3px; grid-row: span 2; }
+.aic-tag-kopf { display: flex; flex-direction: column; gap: 3px; }
+.aic-tag-rumpf { display: grid; gap: 4px; min-width: 0; }
+/* Leer = sichtbar leer, nicht versteckt: ein Tag ohne Eintrag gehoert nicht
+   ungefragt aufgefuellt (Entscheidung des Nutzers), er muss aber auffallen. */
+.aic-tag.is-leer .aic-tag-name { color: var(--text-muted); font-weight: 500; }
+.aic-tag-leer { margin: 0; font-size: 0.86rem; color: var(--text-dim); }
+/* Was die letzte Antwort geaendert hat: eine Kante im Akzent, die ausklingt.
+   Antwort auf eine Aktion des Nutzers, zeigt WAS sich getan hat — deshalb
+   einmalig, und nur beim Neuzeichnen nach einer Antwort (zuletztGeaendert
+   wird beim naechsten Senden geleert). */
+.aic-tag.is-neu::before {
+    content: '';
+    position: absolute;
+    inset: 8px auto 8px 0;
+    width: 2px;
+    border-radius: 2px;
+    background: var(--primary-light);
+    animation: aicNeu 2.4s var(--ease-out) both;
+}
+@keyframes aicNeu { 0%, 55% { opacity: 1; } 100% { opacity: 0; } }
 .aic-tag-name { font-size: 0.85rem; font-weight: 600; }
 .aic-tag-h { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
 .aic-tag-marke {
@@ -489,7 +515,8 @@ body.aic-offen .ai-studio-fab { display: none; }
     /* 16 px, sonst zoomt iOS beim Fokus in die Seite. */
     .aic-zeile textarea { font-size: 16px; }
     .aic-tag { grid-template-columns: minmax(0, 1fr); padding: 12px 14px; }
-    .aic-tag-kopf { flex-direction: row; align-items: baseline; gap: 8px; grid-row: auto; }
+    .aic-tag-kopf { flex-direction: row; align-items: baseline; gap: 8px; }
+    .aic-n.is-karte { padding-left: 0; }
     .aic-woche-kopf, .aic-woche-fuss { padding-left: 14px; padding-right: 14px; }
     .aic-woche-fuss .aic-knopf.is-haupt { flex: 1 1 100%; justify-content: center; }
     .aic-blase { max-width: 88%; }
@@ -497,6 +524,7 @@ body.aic-offen .ai-studio-fab { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
     .aic-n { animation: none; }
+    .aic-tag.is-neu::before { animation: none; opacity: 0.8; }
     .aic-tippt span { animation: none; opacity: 0.6; }
     .aic-rail { transition: none; }
 }

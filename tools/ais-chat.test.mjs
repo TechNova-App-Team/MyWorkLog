@@ -1,5 +1,6 @@
-// Prueft den Berichtsheft-Assistenten (Chat, v7.9.0) an der Stelle, an der er
-// den Rest der App anfasst: AIStudio.konfigSetzen() und den Cloud-Prompt.
+// Prueft den Berichtsheft-Assistenten (Chat, v7.9.0; seit v8.0.0 mit Entwurf)
+// an der Stelle, an der er den Rest der App anfasst: AIStudio.konfigSetzen(),
+// den Prompt und den Entwurf, der ins Formular wandert.
 //
 //   node tools/ais-chat.test.mjs
 //
@@ -116,7 +117,11 @@ t.gruppe('System-Prompt');
 const sp = e.sandbox.AISChat._intern.systemPrompt();
 t.ok(sp.includes('gastronomie=Koch/Köchin') && sp.includes('sysadmin=Fachinformatiker SI'), 'enthaelt die Berufsliste mit IDs');
 t.ok(sp.includes('berufFrei'), 'erklaert berufFrei fuer Berufe ausserhalb der Liste');
-t.ok(sp.includes('nicht sein Bericht'), 'sagt, dass die Antwort KEIN Bericht ist (sonst schrieb das Modell Stichpunkte als Antwort)');
+t.ok(sp.includes('ERFINDE NICHTS'), 'verbietet erfundene Taetigkeiten (Entscheidung des Nutzers: leere Tage bleiben leer)');
+t.ok(sp.includes('"nur PCs ausgepustet"'), 'traegt den gemeldeten Fall "nur X" als Beispiel (sonst fragte ein Modell zurueck)');
+t.ok(sp.includes('HÖCHSTENS eine Frage'), 'begrenzt Rueckfragen (vorher: Frageschleife "Was hast du sonst noch gemacht?")');
+t.ok(sp.includes('AKTUELLER ENTWURF'), 'gibt dem Modell den aktuellen Entwurf mit');
+t.ok(sp.includes('[SCHREIBFORM der entries') && sp.includes('Beispiel für entries eines Schultags'), 'bringt Formregeln und beide Beispiele aus CLOUD_FORM mit');
 
 // ── 4. Ein Gespraech gehoert zu einer Woche (v7.9.2) ──────────────────────
 // Bis v7.9.1 blieb EIN Gespraech fuer immer stehen; ein Fachinformatiker fand
@@ -135,21 +140,82 @@ t.ok(istAbgelaufen({ nachrichten: eine, woche: '2026-W39' }, new Date(2026, 8, 2
 t.ok(istAbgelaufen({ nachrichten: eine, woche: '2026-W39', erledigt: true }, so), 'Woche uebernommen → frisch');
 t.ok(istAbgelaufen({ nachrichten: eine }, so), 'Altbestand ohne Woche → einmal frisch');
 
-// ── 5. Wer entscheidet, ob geschrieben wird (27.09.2026) ─────────────────
-// Drei echte Antworten von Santé auf DIESELBE Nachricht ("schreib mir fuern
-// 16. Mi einen Schul-Eintrag …"). Die dritte kuendigte an und liess das Flag
-// weg — der Chat schrieb nichts.
-t.gruppe('Schreiben oder nicht');
-const { sollErzeugen, kwTabelle } = e.sandbox.AISChat._intern;
-const WT = 'Mittwoch, 16. September: Erster Schultag in der 11c, neue Lehrer kennengelernt.';
-t.ok(sollErzeugen({ antwort: 'Ich schreibe die Woche jetzt.', wochenText: WT }, '', WT, true),
-    'Flag fehlt, Antwort kuendigt an, neuer Wochentext → schreiben (der gemeldete Fall)');
-t.ok(sollErzeugen({ antwort: 'Ich schreibe die Woche jetzt.', erzeugen: true }, '', WT, true), 'Flag true → schreiben');
-t.ok(!sollErzeugen({ antwort: 'Schultag eingetragen. Hast du auch was im Beruf gemacht?', erzeugen: false }, '', WT, true),
-    'Rueckfrage in der Antwort → warten (Gegenprobe)');
-t.ok(!sollErzeugen({ antwort: 'Alles klar, 2. Lehrjahr.' }, WT, WT, true), 'Wochentext unveraendert → nicht neu schreiben');
-t.ok(!sollErzeugen({ antwort: 'Ich schreibe jetzt.', erzeugen: true }, '', WT, false), 'ohne Beruf → nie');
-t.ok(!sollErzeugen({ antwort: 'Was war los?', erzeugen: true }, '', '', true), 'ohne Taetigkeiten → nie');
+// ── 5. Der Entwurf (v8.0.0) ─────────────────────────────────────────────
+// Das Modell gibt den ganzen Entwurf zurueck; der Client legt ihn ueber den
+// alten. Antworten unten sind echte (Santé, 27.09.2026), gekuerzt.
+t.gruppe('Entwurf zusammenfuehren');
+const I = e.sandbox.AISChat._intern;
+const { kwTabelle } = I;
+const leer = I.leererEntwurf();
+let z = I.entwurfZusammenfuehren(leer, [
+    { day: 'Montag', entries: [] },
+    { day: 'Mittwoch', entries: ['Der erste Schultag in der 11c wurde absolviert.', 'Neue Lehrer wurden kennengelernt.'], schule: true, thema: 'Erster Schultag, 11c' },
+], 'saetze');
+t.ok(z.geaendert.join() === '2', 'nur Mittwoch als geaendert gemeldet', z.geaendert.join());
+t.ok(z.entwurf.tage[2].isSchoolDay && z.entwurf.tage[2].schoolTopic === 'Erster Schultag, 11c', 'Schultag mit Thema');
+t.ok(z.entwurf.tage[0].entries.length === 0 && z.entwurf.tage[4].entries.length === 0, 'leere Tage bleiben leer (nichts erfunden)');
+t.ok(leer.tage[2].entries.length === 0, 'der alte Entwurf wird nicht veraendert (Kopie)');
+
+const z2 = I.entwurfZusammenfuehren(z.entwurf, [
+    { day: 'Montag', entries: ['Die PCs wurden geöffnet und von Staub befreit.'] },
+    { day: 'Dienstag', entries: ['- Die Lüfter wurden gereinigt.', '   ', '…'] },
+    { day: 'Freitag', entries: ['x'], status: 'krank' },
+], 'saetze');
+t.ok(z2.entwurf.tage[2].entries.length === 2, 'Mittwoch fehlt in der Antwort → bleibt stehen (kein stiller Datenverlust)');
+t.ok(z2.entwurf.tage[1].entries.join() === 'Die Lüfter wurden gereinigt.', 'Spiegelstrich weg, Leeres und "…" verworfen', JSON.stringify(z2.entwurf.tage[1].entries));
+t.ok(z2.entwurf.tage[4].dayStatus === 'krank' && z2.entwurf.tage[4].entries.length === 0, 'krank → keine Eintraege');
+const z3 = I.entwurfZusammenfuehren(leer, [{ day: 'Monday', entries: ['a.', 'b.'] }, { day: 'Samstag', entries: ['c'] }, { day: 'Dienstag', entries: ['d'], status: 'kaputt' }], 'fliesstext');
+t.ok(z3.entwurf.tage[0].entries.length === 1 && z3.entwurf.tage[0].entries[0] === 'a. b.', 'Fliesstext: ein Absatz; "Monday" wird erkannt', JSON.stringify(z3.entwurf.tage[0].entries));
+t.ok(z3.geaendert.join() === '0,1', 'Samstag gibt es im Entwurf nicht', z3.geaendert.join());
+t.ok(z3.entwurf.tage[1].dayStatus === '' && z3.entwurf.tage[1].entries.join() === 'd', 'unbekannter Status → normaler Tag');
+
+t.gruppe('Nur die genannten Tage aendern sich');
+// Gemessen: auf "donnerstag war doch feiertag" schrieb Santé alle fuenf Tage neu.
+const voll = I.entwurfZusammenfuehren(leer, [0, 1, 2, 3, 4].map(i => ({ day: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'][i], entries: ['alt ' + i] })), 'saetze').entwurf;
+const ueberall = [0, 1, 2, 3, 4].map(i => ({ day: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'][i], entries: i === 3 ? [] : ['neu ' + i], status: i === 3 ? 'feiertag' : '' }));
+const erl = I.erlaubteTage('donnerstag war doch feiertag', null, []);
+const z4 = I.entwurfZusammenfuehren(voll, ueberall, 'saetze', erl);
+t.ok(z4.geaendert.join() === '3', 'nur Donnerstag geaendert', z4.geaendert.join());
+t.ok(z4.entwurf.tage[0].entries[0] === 'alt 0', 'Montag unberuehrt');
+t.ok(I.entwurfZusammenfuehren(voll, ueberall, 'saetze', null).geaendert.length === 5, 'Gegenprobe: ohne Einschraenkung waeren alle fuenf geaendert');
+const erlaubt = (s, d, g) => JSON.stringify(I.erlaubteTage(s, d || null, g || []));
+t.ok(erlaubt('mo di hab ich an ner react app gebaut, do code review gemacht, fr war ich krank') === '[0,1,3,4]', 'Kuerzel mo/di/do/fr', erlaubt('mo di hab ich an ner react app gebaut, do code review gemacht, fr war ich krank'));
+t.ok(erlaubt('montag bis mittwoch server migriert') === '[0,1,2]', 'Bereich "montag bis mittwoch"');
+t.ok(erlaubt('mo-fr kasse') === '[0,1,2,3,4]', 'Bereich "mo-fr"');
+t.ok(erlaubt('nur pc´s ausgeüpuzt') === 'null', 'kein Tag genannt → alle erlaubt');
+t.ok(erlaubt('mittwoch schule, den rest der woche lager') === 'null', '"Rest der Woche" → alle erlaubt');
+t.ok(erlaubt('füll die leeren Tage') === 'null', 'Auffuellen → alle erlaubt');
+t.ok(erlaubt('dienstag bitte in ich-form', null, ['form']) === 'null', 'Formwechsel schreibt alles neu → alle erlaubt');
+t.ok(erlaubt('morgens bis mittags am server') === 'null', '"morgens bis mittags" ist kein Tagesbereich');
+t.ok(erlaubt('schreib mir fürn 16. Mi einen eintrag', new Date(2026, 8, 16)) === '[2]', 'Datum + "Mi" → Mittwoch');
+t.ok(erlaubt('mit dem Team die Doku gemacht') === 'null', '"mit"/"die" sind keine Tage');
+
+t.gruppe('Einstellungen aus der Antwort');
+// Gemessen: Fin spiegelte auf "sonst nur PCs ausgepustet" alle neun Felder.
+const echo = { einstellungen: { beruf: 'sysadmin', schultage: [], tage: [0, 1, 2, 3, 4], tagStatus: { 4: 'krank' } } };
+const ea = I.einstellungenAus(echo, null, 'nur pc´s ausgeüpuzt');
+t.ok(!('schultage' in ea) && !('tage' in ea), 'gespiegelte Tage/Schultage ohne Tagesbezug fliegen raus', JSON.stringify(ea));
+t.ok(!('tagStatus' in ea), 'tagStatus nie ueber die Einstellungen (steht am Tag im Entwurf)');
+t.ok('schultage' in I.einstellungenAus({ einstellungen: { schultage: [2] } }, null, 'Mittwoch ist immer Berufsschule'), 'Gegenprobe: mit Tagesbezug bleibt schultage');
+t.ok(I.einstellungenAus({ einstellungen: { kw: 40 } }, new Date(2026, 8, 16), '16.9.').kw === 38, 'Datum ueberstimmt die KW des Modells');
+
+t.gruppe('Entwurf als Woche (fuer Formular, Verlauf, PDF)');
+const k0 = e.AIStudio.konfig();
+const w = I.entwurfAlsWoche(z2.entwurf, { ...k0, tage: [0, 1, 2, 3, 4], kw: 38 });
+t.ok(w.days.length === 5 && w.days.every(d => typeof d.index === 'number' && Array.isArray(d.entries)), 'fuenf Tage im Format von generate()');
+t.ok(w.calendarWeek === 38 && w.form && w.umfang, 'KW, Form und Umfang stehen drin (der Validator braucht beide)');
+t.ok(w.days[3].hours === 0 && w.days[0].hours > 0, 'leerer Tag 0 h, gefuellter Tag Soll-Stunden', JSON.stringify(w.days.map(d => d.hours)));
+t.ok(w.days[4].dayStatus === 'krank', 'Status wandert mit');
+t.ok(w.days[2].isSchoolDay === true, 'Schultag wandert mit');
+t.ok(w.totalHours === w.days.reduce((n, d) => n + d.hours, 0), 'Summe stimmt');
+const nurMo = I.entwurfAlsWoche(z2.entwurf, { ...k0, tage: [0], kw: 38 });
+t.ok(nurMo.days.map(d => d.index).join() === '0,1,2,4', 'nicht gearbeitete Tage ohne Inhalt fallen weg, Tage MIT Inhalt nie', nurMo.days.map(d => d.index).join());
+
+t.gruppe('Speicher');
+const gel = I.entwurfLesen({ kw: 38, tage: [{ index: 2, entries: ['a', 5, 'b'], isSchoolDay: 1, dayStatus: 'quatsch' }, { index: 9 }] });
+t.ok(gel.tage[2].entries.join() === 'a,b' && gel.tage[2].isSchoolDay === true && gel.tage[2].dayStatus === '', 'gespeicherter Entwurf wird geprueft gelesen');
+t.ok(gel.tage.length === 5 && gel.kw === 38, 'immer fuenf Tage');
+t.ok(I.entwurfLesen(null).tage.length === 5, 'kein Stand → leerer Entwurf');
 
 t.gruppe('Kalenderwochen zum Nachschlagen');
 const tab = kwTabelle(new Date(2026, 8, 27));

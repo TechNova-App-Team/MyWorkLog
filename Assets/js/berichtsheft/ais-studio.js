@@ -2857,10 +2857,28 @@ async function erzeugeAusText(text) {
     return await generate();
 }
 
+// Der Chat schreibt seine Woche selbst (v8.0.0). Damit Uebernehmen, Vorschau
+// und Verlauf genau so laufen wie nach generate(), wird sie hier zur
+// aktuellen Woche gemacht. Gleiche Woche zweimal → kein zweiter Verlaufseintrag.
+function wocheSetzen(week) {
+    if (!week || !Array.isArray(week.days)) return;
+    state.generatedEntries = week;
+    const letzte = state.generationHistory[state.generationHistory.length - 1];
+    const gleich = letzte && JSON.stringify({ ...letzte, timestamp: 0, generatedAt: 0 }) === JSON.stringify({ ...week, timestamp: 0, generatedAt: 0 });
+    if (!gleich) {
+        state.generationHistory.push(week);
+        if (state.generationHistory.length > 50) state.generationHistory = state.generationHistory.slice(-50);
+        try { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.generationHistory)); } catch (e) { }
+    }
+    renderPreview(week);
+}
+
 return {
     konfig,
     konfigSetzen,
     erzeugeAusText,
+    wocheSetzen,
+    stundenFuer: (i) => _trackingHoursForDay(i) || bhSollStunden(i),
     woche: () => state.generatedEntries,
     verlauf: () => state.generationHistory,
     init,
