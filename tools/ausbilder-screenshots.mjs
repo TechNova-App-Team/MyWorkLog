@@ -7,7 +7,7 @@
 //   node tools/ausbilder-screenshots.mjs   → Grafiken/ausbilder/*.webp, danach bumpen (?v=)
 //
 //   cockpit.webp  Uebersicht eines angemeldeten Ausbilders
-//   azubi.webp    dieselbe Uebersicht, weiter unten: die Wochen eines Azubis
+//   azubi.webp    dieselbe Uebersicht, Reiter "Azubis": Stand je Azubi
 //   woche.webp    die Link-Ansicht einer Woche (ohne Konto)
 //
 // 🔴 Das Cockpit braucht ein Konto und liest aus Supabase. Ein echtes Konto
@@ -81,9 +81,9 @@ const mira = berichte.slice(n - 5).map((r, i) => {
 });
 
 const DATEN = {
-    status: { rolle: 'ausbilder', name: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true, nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum' },
+    status: { rolle: 'ausbilder', name: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true, nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum', anzeigeName: 'M. Weber' },
     konto: {
-        betrieb: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true, nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum',
+        betrieb: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true, nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum', kontoEmail: 'm.weber@musterwerk.de',
         azubis: [
             { userId: 'a1', name: 'Anna Beispiel', berichte: anna },
             { userId: 'a2', name: 'Jonas Keller', berichte: jonas },
@@ -118,8 +118,10 @@ const code = await fenster.MWLCodec.encode(nutzlast);
 if (!code || code.length < 50) { console.error('Link-Kodierung fehlgeschlagen'); process.exit(1); }
 
 const shots = [
-    ['cockpit.webp', URL_AB, `new Promise(function(r){setTimeout(function(){r(document.querySelectorAll('#abKonto .abk-kacheln > *').length+' Kacheln, Azubis: '+document.querySelectorAll('#abKonto .abk-az, #abKonto [class*=azubi]').length)},1500)})`],
-    ['azubi.webp', URL_AB, `new Promise(function(r){setTimeout(function(){var k=document.querySelector('.abk-kacheln');var y=k?k.getBoundingClientRect().bottom+scrollY-40:600;window.scrollTo(0,y);setTimeout(function(){r('gescrollt '+Math.round(y))},700)},1500)})`],
+    ['cockpit.webp', URL_AB, `new Promise(function(r){setTimeout(function(){r(document.querySelectorAll('#abKonto .abk-kacheln > *').length+' Kacheln, Wochen im Stapel: '+document.querySelectorAll('#abKonto .abq-row').length)},1500)})`],
+    // Seit v7.8.0 steht die Azubi-Sicht in einem eigenen Reiter — erst
+    // umschalten, dann zur Reiterleiste scrollen.
+    ['azubi.webp', URL_AB, `new Promise(function(r){setTimeout(function(){var t=document.querySelector('[data-ansicht="azubis"]');if(t)t.click();var k=document.querySelector('.abk-reiterleiste');var y=k?k.getBoundingClientRect().top+scrollY-90:600;window.scrollTo(0,y);setTimeout(function(){r('Reiter: '+(t?'azubis':'FEHLT')+', Karten: '+document.querySelectorAll('.abk-azubi').length)},700)},1500)})`],
     ['woche.webp', URL_AB + '#w=' + code, `new Promise(function(r){setTimeout(function(){r('Wochen: '+document.querySelectorAll('.ab-wk').length+', Titel: '+(document.getElementById('abWeekTitle')||{}).textContent)},1500)})`],
 ];
 mkdirSync(OUT, { recursive: true });

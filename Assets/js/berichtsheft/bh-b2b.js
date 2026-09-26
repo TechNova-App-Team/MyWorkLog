@@ -282,6 +282,19 @@
 
     function statusVergessen() { statusCache = null; }
 
+    /* Abmelden heisst: DIESES Geraet. Die Voreinstellung von signOut() ist
+       global und wirft jede Sitzung des Kontos weg (Handy, zweiter Browser),
+       siehe CLAUDE.md, Supabase-Anmeldung Falle 1. Der Status-Merker des
+       Berichtsheft-Panels gehoert zur Sitzung und geht mit. */
+    async function bhb2bAbmelden() {
+        const sb = await client();
+        const { error } = await sb.auth.signOut({ scope: 'local' });
+        statusVergessen();
+        try { localStorage.removeItem('bh_b2b_status'); } catch (e) { /* Privatmodus */ }
+        if (error) throw error;
+        return true;
+    }
+
     // Spiegel von private.betrieb_nachgewiesen() — NUR fuer die Anzeige. Die
     // Sperre selbst sitzt in der Policy freigaben_insert; weicht diese Zeile
     // ab, zeigt die Seite einen Knopf, den der Server ablehnt, nicht umgekehrt.
@@ -1376,6 +1389,7 @@
         client: client,
         status: bhb2bStatus,
         statusVergessen: statusVergessen,
+        abmelden: bhb2bAbmelden,
         betriebGruenden: bhb2bBetriebGruenden,
         einladungEinloesen: bhb2bEinladungEinloesen,
         einladungErstellen: bhb2bEinladungErstellen,

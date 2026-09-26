@@ -10,14 +10,14 @@
 </script>
     <meta name="description" content="Als Ausbilder alle Berichtsheft-Wochen Ihrer Azubis an einem Ort prüfen, abzeichnen oder zurückgeben — mit Konto als Sammelübersicht, ohne Konto per Link.">
     <meta name="keywords" content="Berichtsheft Ausbilder, Ausbildungsnachweis prüfen, Ausbildungsnachweis unterschreiben, Berichtsheft abzeichnen, §14 BBiG, Ausbildungsbetrieb, Ausbilder-Übersicht">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.7.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=7.8.0"></script>
     <script>/* Einblend-Zustaende im Einstieg gelten nur mit JS — sonst bliebe er leer. */
     document.documentElement.className += ' js';</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=7.7.0"></script>
-    <script defer src="/Assets/js/ph-init.js?v=7.7.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=7.8.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=7.8.0"></script>
     <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
@@ -274,18 +274,18 @@
         }
 
         /* ── Kontobasierter Weg (Sammelansicht / Cockpit) ────────── */
-        /* Die 680px der .ab-wrap sind die Lesebreite EINES Nachweises.
-           Die Uebersicht ist ein anderes Format und darf breiter. */
-        .ab-wrap.is-konto { max-width: 940px; }
+        /* Die 680px der .ab-wrap sind die Lesebreite EINES Nachweises. Das
+           Cockpit ist ein Arbeitsplatz mit Liste UND Woche nebeneinander —
+           bei 940 px lag es als schmale Spalte mitten auf einem 1440er-Monitor. */
+        .ab-wrap.is-konto { max-width: 1320px; padding-top: 22px; }
+        /* Der Platzhalter #page-footer wird beim Laden durch den geteilten
+           Footer ERSETZT (replaceWith) — die id gibt es danach nicht mehr. */
+        body.is-konto .site-footer { display: none; }
 
         .abk-load {
             font-size: 0.92rem; color: var(--text-muted); line-height: 1.6;
             padding: 14px 0;
         }
-        /* Der Abstand kommt hier aus dem gap — die .ab-wk + .ab-wk-Regel des
-           Fragment-Wegs wuerde ihn sonst verdoppeln. */
-        .abk-wochen { display: flex; flex-direction: column; gap: 10px; }
-        .abk-wochen .ab-wk + .ab-wk { margin-top: 0; }
 
         /* Kopf: Monogramm, Name, Aktion — bewusst nicht zentriert. */
         .abk-kopf {
@@ -576,19 +576,7 @@
         .abk-meld-zeile .abk-meld-ok:hover { color: var(--text-main); border-color: var(--primary); }
         .abk-meld-zeile .abk-meld-ok:disabled { opacity: 0.5; cursor: default; }
 
-        /* Team (Urlaubsvertretung). Bewusst KEINE eigene Karte: wer in diesem
-           Betrieb abzeichnen darf, ist eine Angabe ueber den Betrieb und
-           gehoert in dessen Kopf. Der Kasten erscheint erst auf Klick. */
-        .abk-team-zeile {
-            margin-top: 6px; font-size: 0.75rem; color: var(--text-faint);
-            line-height: 1.55; overflow-wrap: anywhere;
-        }
-        .abk-team-btn {
-            padding: 0; margin-left: 6px; border: 0; background: none;
-            font-family: inherit; font-size: inherit; color: var(--text-muted);
-            cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
-        }
-        .abk-team-btn:hover { color: var(--primary); }
+        /* Team (Urlaubsvertretung) — seit v7.8.0 ein eigener Reiter. */
         .abk-team-liste { margin-top: 12px; display: grid; gap: 6px; }
         .abk-team-m {
             display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -655,73 +643,46 @@
         /* Gruen heisst auf dieser Seite „bestaetigen" (.ab-btn-primary). Ein
            „Code erzeugen" ist keine Bestaetigung — dafuer der Marken-Akzent.
            Zwei Klassen, weil .ab-btn weiter unten im Stylesheet steht. */
-        .abk-start .abk-cta, .abk-einl .abk-cta {
+        .abk-start .abk-cta, .abk-einl .abk-cta, .abk-az-aktion .abk-cta {
             flex: 0 0 auto; padding: 11px 20px; font-size: 0.88rem;
             background: rgba(var(--primary-rgb), 0.14);
             border-color: rgba(var(--primary-rgb), 0.34);
             color: var(--primary);
         }
-        .abk-start .abk-cta:hover, .abk-einl .abk-cta:hover { background: rgba(var(--primary-rgb), 0.2); }
-        .abk-start .abk-cta:active, .abk-einl .abk-cta:active { transform: scale(0.97); }
+        .abk-start .abk-cta:hover, .abk-einl .abk-cta:hover, .abk-az-aktion .abk-cta:hover { background: rgba(var(--primary-rgb), 0.2); }
+        .abk-start .abk-cta:active, .abk-einl .abk-cta:active, .abk-az-aktion .abk-cta:active { transform: scale(0.97); }
 
-        /* Azubi-Karte */
+        /* Azubi-Karte (Reiter "Azubis"). Kein <details> mehr: bis v7.7.0 trug
+           der zugeklappte Kopf seinen Trennstrich samt Abstand weiter, und
+           eine leere Karte sah aus wie ein halb geladener Kasten. */
+        .abk-azubis {
+            display: grid; gap: 14px;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr));
+        }
         .abk-azubi {
-            margin-top: 22px; padding: 18px 20px;
+            display: flex; flex-direction: column; min-width: 0;
+            padding: 18px 20px;
             background: var(--bg-card); border: 1px solid var(--border);
             border-radius: var(--radius);
-            animation: abkIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
-        .abk-azubi:nth-of-type(2) { animation-delay: 0.05s; }
-        .abk-azubi:nth-of-type(3) { animation-delay: 0.1s; }
-        .abk-azubi:nth-of-type(n+4) { animation-delay: 0.15s; }
-        @keyframes abkIn { from { opacity: 0; transform: translateY(6px); } }
-
-        /* 🔴 Der Kopf ist jetzt ein <summary>. Ohne diesen Reset traegt es die
-           Aufklapp-Pfeilspitze des Browsers UND `display: list-item` schlaegt
-           das flex — der Kopf faellt dann in eine Textzeile zusammen. */
+        /* Drei Spuren, drei Kinder: Monogramm, Name+Zusatz, Stand. Die Zusatz-
+           angaben stehen UNTER dem Namen — neben ihm schoben sie den Stand-Chip
+           je nach Laenge an eine andere Stelle. */
         .abk-azubi-head {
-            display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
-            padding-bottom: 13px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
-            cursor: pointer; list-style: none;
+            display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+            align-items: center; gap: 12px; margin-bottom: 16px;
         }
-        .abk-azubi-head::-webkit-details-marker { display: none; }
-        .abk-azubi-head::marker { content: ''; }
-        .abk-azubi-head:hover .abk-azubi-name { color: var(--primary); }
-        /* Der Chevron sitzt rechts und dreht sich beim Aufklappen. margin-left:
-           auto statt einer Spalte — der Kopf ist flex-wrap, eine feste Spur
-           wuerde beim Umbruch danebenliegen. */
-        .abk-azubi-chev {
-            width: 17px; height: 17px; margin-left: auto; flex: 0 0 auto;
-            color: var(--text-faint);
-            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .abk-azubi[open] > .abk-azubi-head .abk-azubi-chev { transform: rotate(180deg); }
-
-        /* Die erledigten Wochen liegen hinter einem Klick — sie sind der Grund,
-           warum die Seite bei mehreren Azubis unlesbar wurde. */
-        .abk-rest { margin-top: 12px; }
-        .abk-rest > summary {
-            cursor: pointer; list-style: none;
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 7px 13px; border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem; color: var(--text-muted);
-            transition: border-color 0.2s ease, color 0.2s ease;
-        }
-        .abk-rest > summary::-webkit-details-marker { display: none; }
-        .abk-rest > summary::marker { content: ''; }
-        .abk-rest > summary:hover { border-color: var(--border-hover, var(--primary)); color: var(--text-main); }
-        .abk-rest[open] > summary { margin-bottom: 12px; }
+        .abk-azubi-wer { min-width: 0; }
         .abk-avatar {
             display: grid; place-items: center; flex: 0 0 auto;
             width: 32px; height: 32px; border-radius: 10px;
             background: var(--bg-raise); border: 1px solid var(--border-strong);
             font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
         }
-        .abk-azubi-name { font-size: 1.02rem; font-weight: 650; letter-spacing: -0.012em; }
-        .abk-azubi-meta { font-size: 0.78rem; color: var(--text-faint); }
+        .abk-azubi-name { font-size: 1rem; font-weight: 650; letter-spacing: -0.012em; line-height: 1.3; overflow-wrap: anywhere; }
+        .abk-azubi-meta { display: flex; flex-wrap: wrap; gap: 0 12px; font-size: 0.76rem; color: var(--text-faint); }
         .abk-azubi-stand {
-            margin-left: auto; flex: 0 0 auto;
+            flex: 0 0 auto; white-space: nowrap;
             font-size: 0.74rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
             color: var(--text-faint); border: 1px solid var(--border-strong);
         }
@@ -729,6 +690,13 @@
             color: var(--primary); border-color: rgba(var(--primary-rgb), 0.32);
             background: rgba(var(--primary-rgb), 0.1);
         }
+        .abk-azubi-stand.is-ok { color: var(--success); border-color: rgba(var(--success-rgb), 0.32); }
+        .abk-az-aktion {
+            display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap;
+            margin-top: auto; padding-top: 2px;
+        }
+        .abk-az-aktion .abk-cta { flex: 0 0 auto; padding: 9px 16px; font-size: 0.85rem; }
+        .abk-wz[data-wz] { cursor: pointer; }
 
         /* Zusammensetzung der eingereichten Wochen. KEIN Fortschritt gegen
            eine Gesamtdauer — die steht nirgends, der Nenner waere erfunden. */
@@ -873,9 +841,6 @@
         .abk-leer { font-size: 0.86rem; color: var(--text-muted); line-height: 1.65; }
         .abk-hint { margin-top: 12px; font-size: 0.83rem; color: var(--text-faint); }
 
-        @media (prefers-reduced-motion: reduce) {
-            .abk-azubi { animation: none; }
-        }
         @media (max-width: 640px) {
             /* Auch die Vier-Kachel-Variante faellt hier auf zwei Spalten zurueck —
                die Regel oben ist spezifischer und muss deshalb mit umgeschaltet
@@ -885,16 +850,6 @@
             .abk-kacheln .abk-kachel:first-child { grid-column: 1 / -1; }
             .abk-kopf .abk-einladen { margin-left: 0; flex: 1 1 auto; }
             .abk-azubi { padding: 15px 14px; }
-        }
-        .abk-hinweis {
-            margin-top: 14px; padding: 10px 13px; border-radius: var(--radius-sm);
-            font-size: 0.83rem; line-height: 1.55; color: var(--text-muted);
-            background: var(--bg-raise); border: 1px solid var(--border);
-        }
-        .abk-hinweis.is-warn {
-            color: var(--text-main);
-            background: rgba(var(--warning-rgb), 0.10);
-            border-color: rgba(var(--warning-rgb), 0.35);
         }
         .abk-verlauf { margin-top: 12px; font-size: 0.82rem; }
         .abk-verlauf summary { cursor: pointer; color: var(--text-muted); }
@@ -1275,6 +1230,399 @@
             .abi-tilt .tilt-in { transform: none; }
             .js #abIntro [data-reveal] { transform: none; }
         }
+        /* ══ Cockpit als Arbeitsplatz (v7.8.0) ══════════════════════════
+           Steht bewusst am ENDE des Stylesheets: `.ab-btn { flex: 1 1 0 }`
+           und `.ab-wk-state { margin-left: auto }` stehen weiter oben, und
+           bei gleicher Spezifitaet gewinnt die spaetere Regel (CLAUDE.md). */
+
+        /* ── Konto-Menue in der Kopfleiste ───────────────────────────── */
+        .abk-konto-slot { display: flex; align-items: center; }
+        .abk-menue { position: relative; }
+        .abk-menue-knopf {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 3px 9px 3px 3px; border-radius: 999px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-main); font-size: 0.82rem; font-weight: 500; cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .abk-menue-knopf:hover,
+        .abk-menue-knopf[aria-expanded="true"] { border-color: var(--border-strong); background: var(--bg-card); }
+        .abk-menue-knopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
+        .abk-menue-name { max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .abk-menue-chev { width: 14px; height: 14px; color: var(--text-faint); flex: 0 0 auto; }
+        .abk-avatar.is-klein { width: 26px; height: 26px; border-radius: 999px; font-size: 0.62rem; }
+        .abk-menue-liste {
+            position: absolute; right: 0; top: calc(100% + 8px); z-index: 40;
+            min-width: 250px; padding: 6px;
+            /* Zwei Ebenen statt Alpha: das Menue liegt ueber beliebigem Inhalt. */
+            background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
+            border: 1px solid var(--border-strong); border-radius: 12px;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45);
+        }
+        .abk-menue-liste[hidden] { display: none; }
+        .abk-menue-wer {
+            display: grid; gap: 1px; padding: 8px 10px 10px; margin-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+        .abk-menue-wer b { font-size: 0.86rem; font-weight: 600; color: var(--text-main); }
+        .abk-menue-wer span { font-size: 0.76rem; color: var(--text-faint); overflow-wrap: anywhere; }
+        .abk-menue-liste [role="menuitem"] {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            width: 100%; padding: 8px 10px; border: 0; border-radius: 8px;
+            background: none; color: var(--text-muted);
+            font-size: 0.84rem; text-align: left; cursor: pointer;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+        .abk-menue-liste [role="menuitem"]:hover,
+        .abk-menue-liste [role="menuitem"]:focus-visible { background: var(--primary-dim); color: var(--text-main); outline: none; }
+        .abk-menue-liste .is-weg:hover,
+        .abk-menue-liste .is-weg:focus-visible { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); }
+        .abk-menue-liste [role="menuitem"]:disabled { opacity: 0.6; cursor: default; }
+
+        /* ── Kacheln als Einstieg ────────────────────────────────────── */
+        .abk-kachel.is-knopf {
+            font: inherit; color: inherit; text-align: left; cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .abk-kachel.is-knopf:hover { background: var(--bg-raise); }
+        .abk-kachel.is-knopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
+        .abk-kachel.is-knopf:active { transform: scale(0.99); }
+        .abk-wert small { font-size: 0.55em; font-weight: 500; color: var(--text-faint); letter-spacing: 0; }
+
+        /* ── Reiter ──────────────────────────────────────────────────── */
+        .abk-reiterleiste {
+            display: flex; gap: 2px; margin-top: 26px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto; scrollbar-width: none;
+        }
+        .abk-reiterleiste::-webkit-scrollbar { display: none; }
+        .abk-reiter {
+            position: relative; display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 14px 12px; border: 0; background: none;
+            color: var(--text-muted); font-size: 0.9rem; font-weight: 600;
+            white-space: nowrap; cursor: pointer; transition: color 0.2s ease;
+        }
+        .abk-reiter:hover { color: var(--text-main); }
+        .abk-reiter.is-an { color: var(--text-main); }
+        .abk-reiter.is-an::after {
+            content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px;
+            height: 2px; border-radius: 2px; background: var(--primary);
+        }
+        .abk-reiter:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: -4px; border-radius: 10px; }
+        .abk-reiter-n {
+            padding: 1px 7px; border-radius: 999px;
+            font-family: var(--font-mono); font-size: 0.7rem; font-variant-numeric: tabular-nums;
+            background: var(--bg-raise); color: var(--text-muted);
+        }
+        .abk-reiter.is-an .abk-reiter-n { background: var(--primary-dim); color: var(--primary); }
+        .abk-ansicht { padding-top: 16px; }
+        .abk-ansicht > .abk-einl { margin-top: 0; }
+
+        /* ── Filterleiste ────────────────────────────────────────────── */
+        .abq-leiste { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-bottom: 14px; }
+        .abq-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .abq-chip {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 6px 11px; border-radius: 999px;
+            border: 1px solid var(--border); background: transparent;
+            color: var(--text-muted); font-size: 0.8rem; font-weight: 500; cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+        }
+        .abq-chip:hover { color: var(--text-main); border-color: var(--border-strong); }
+        .abq-chip.is-an { color: var(--text-main); background: var(--primary-dim); border-color: rgba(var(--primary-rgb), 0.42); }
+        .abq-chip:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
+        .abq-chip-n { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+        .abq-chip.is-an .abq-chip-n { color: var(--primary); }
+        .abq-chip.is-alarm .abq-chip-n { color: var(--danger); font-weight: 700; }
+        .abq-felder { display: flex; gap: 8px; margin-left: auto; min-width: 0; flex: 1 1 340px; justify-content: flex-end; }
+        .abq-select, .abq-suche input {
+            padding: 8px 12px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--bg-card);
+            color: var(--text-main); font-size: 0.84rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        /* Die geschlossene Liste bleibt nativ (unter Windows nicht stylbar),
+           das Farbschema sorgt dafuer, dass die offene nicht weiss aufgeht. */
+        .abq-select { color-scheme: dark; max-width: 200px; cursor: pointer; }
+        [data-theme="light"] .abq-select { color-scheme: light; }
+        .abq-select:focus, .abq-suche input:focus {
+            outline: none; border-color: rgba(var(--primary-rgb), 0.55);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
+        }
+        .abq-suche { position: relative; display: flex; align-items: center; flex: 0 1 300px; min-width: 0; }
+        .abq-suche svg { position: absolute; left: 11px; width: 15px; height: 15px; color: var(--text-faint); pointer-events: none; }
+        .abq-suche input { width: 100%; padding-left: 33px; padding-right: 34px; }
+        .abq-suche input::placeholder { color: var(--text-faint); }
+        .abq-suche .abq-kbd { position: absolute; right: 9px; pointer-events: none; }
+        .abq-suche input:focus ~ .abq-kbd,
+        .abq-suche input:not(:placeholder-shown) ~ .abq-kbd { display: none; }
+
+        .abq-kbd {
+            display: inline-grid; place-items: center;
+            min-width: 18px; height: 18px; padding: 0 5px;
+            border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 5px;
+            background: var(--bg-raise); color: var(--text-faint);
+            font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600; line-height: 1;
+        }
+        .ab-btn .abq-kbd { background: transparent; border-color: currentColor; color: inherit; opacity: 0.55; }
+        .abk-menue-liste .abq-kbd { opacity: 0.8; }
+
+        /* ── Stapel + Woche ──────────────────────────────────────────── */
+        .abq-split {
+            display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+            gap: 18px; align-items: start;
+        }
+        .abq-split.is-leer { grid-template-columns: minmax(0, 1fr); }
+        /* Die Kopfleiste klebt (~60 px). Ohne Abstand schob scrollIntoView
+           den Kopf der Woche samt "Liste"-Knopf genau darunter. */
+        .abq-split, .abq-detail { scroll-margin-top: 76px; }
+        /* Die Liste klebt und scrollt in SICH: wer rechts eine lange Woche
+           liest, verliert links nicht den Platz im Stapel. */
+        .abq-liste {
+            position: sticky; top: 72px;
+            max-height: calc(100dvh - 92px); overflow-y: auto; overscroll-behavior: contain;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+        }
+        .abq-split.is-leer .abq-liste { position: static; max-height: none; }
+        .abq-lkopf {
+            position: sticky; top: 0; z-index: 1;
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 14px 9px 6px;
+            font-size: 0.76rem; color: var(--text-faint);
+            background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
+            border-bottom: 1px solid var(--border);
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .abq-lkopf-r { margin-left: auto; }
+        .abq-zeilen { padding: 4px 4px 6px; }
+        .abq-row {
+            position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: center;
+            border-radius: 10px; transition: background-color 0.15s ease;
+        }
+        .abq-row + .abq-row { margin-top: 2px; }
+        .abq-row:hover { background: rgba(var(--primary-rgb), 0.06); }
+        .abq-row.is-sel { background: rgba(var(--primary-rgb), 0.09); }
+        .abq-row.is-aktiv { background: var(--primary-dim); }
+        .abq-row.is-aktiv::before {
+            content: ""; position: absolute; left: -4px; top: 9px; bottom: 9px;
+            width: 3px; border-radius: 2px; background: var(--primary);
+        }
+        .abq-check { display: grid; place-items: center; align-self: stretch; width: 28px; cursor: pointer; }
+        span.abq-check { cursor: default; }
+        .abq-check input { width: 15px; height: 15px; margin: 0; accent-color: var(--primary); cursor: pointer; }
+        .abq-check input:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
+        .abq-open {
+            display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+            width: 100%; min-width: 0; padding: 9px 10px 9px 2px;
+            border: 0; border-radius: 8px; background: none;
+            color: inherit; font: inherit; text-align: left; cursor: pointer;
+        }
+        .abq-open:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: -2px; }
+        .abq-open .abk-avatar { width: 30px; height: 30px; border-radius: 9px; font-size: 0.64rem; }
+        .abq-main { display: grid; gap: 1px; min-width: 0; }
+        .abq-t {
+            display: flex; align-items: baseline; gap: 8px; min-width: 0;
+            font-size: 0.88rem; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap;
+        }
+        .abq-wer {
+            min-width: 0; overflow: hidden; text-overflow: ellipsis;
+            font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+        }
+        .abq-s { font-size: 0.74rem; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .abq-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .abq-side .ab-wk-state { margin-left: 0; padding: 2px 7px; font-size: 0.66rem; white-space: nowrap; }
+        .abq-alter { font-size: 0.72rem; color: var(--text-faint); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .abq-alter.is-spaet { color: var(--warning); font-weight: 600; }
+
+        .abq-rechts { min-width: 0; }
+        .abq-detail {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+        }
+        .abq-detail.is-geaendert { border-color: rgba(var(--danger-rgb), 0.42); }
+        .abq-detail.is-nachgebessert { border-color: rgba(var(--primary-rgb), 0.42); }
+        .abq-dkopf {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px;
+            padding: 18px 22px 16px; border-bottom: 1px solid var(--border);
+        }
+        .abq-dkopf-text { flex: 1 1 220px; min-width: 0; }
+        .abq-d-wer { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: 0.8rem; font-weight: 500; color: var(--text-muted); }
+        .abq-d-wer span { color: var(--text-faint); font-weight: 400; }
+        .abq-d-t {
+            display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px;
+            font-size: 1.4rem; font-weight: 700; letter-spacing: -0.022em; line-height: 1.2;
+        }
+        .abq-d-t span { font-size: 0.9rem; font-weight: 500; letter-spacing: 0; color: var(--text-muted); }
+        .abq-dkopf .ab-wk-state { margin-left: 0; }
+        .abq-dnav { display: flex; align-items: center; gap: 2px; }
+        .abq-pfeil {
+            display: grid; place-items: center; width: 30px; height: 30px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: none; color: var(--text-muted); cursor: pointer;
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        .abq-pfeil svg { width: 16px; height: 16px; }
+        .abq-pfeil:hover:not(:disabled) { color: var(--text-main); border-color: var(--border-strong); }
+        .abq-pfeil:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
+        .abq-pfeil:disabled { opacity: 0.35; cursor: default; }
+        .abq-pos { min-width: 52px; text-align: center; font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+        /* Nur schmal: dort steht die Woche ANSTELLE der Liste. */
+        .abq-zurueck {
+            display: none; align-items: center; gap: 4px; flex-basis: 100%;
+            padding: 2px 6px 2px 0; margin: -4px 0 0 -4px;
+            border: 0; background: none; color: var(--text-muted);
+            font: inherit; font-size: 0.82rem; cursor: pointer;
+        }
+        .abq-zurueck svg { width: 16px; height: 16px; }
+        .abq-detail .ab-wk-body { display: block; padding: 4px 22px 12px; }
+        .abq-detail .ab-chips { margin-top: 16px; }
+        /* Klebt am unteren Rand: zum Entscheiden muss niemand ans Ende einer
+           langen Woche scrollen. Zwei Ebenen statt Alpha, sonst liest man den
+           Text darunter mit. */
+        .abq-dfuss {
+            position: sticky; bottom: 0; z-index: 2;
+            padding: 14px 22px 16px; border-top: 1px solid var(--border);
+            background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
+            border-radius: 0 0 var(--radius) var(--radius);
+        }
+        .abq-split.hat-auswahl .abq-dfuss { bottom: 78px; }
+        .abq-dfuss > .abk-hint:first-child { margin-top: 0; }
+        .abq-dfuss > .abk-actions:first-child { margin-top: 0; }
+        .abq-dfuss .abk-actions { margin-top: 10px; justify-content: flex-end; }
+        .abq-dfuss .abk-actions .ab-btn { flex: 0 0 auto; min-width: 150px; }
+        .abq-dfuss .abk-reject .abk-actions .ab-btn { min-width: 0; }
+        .abk-hint.is-warn { color: var(--warning); }
+        .abk-hint.is-fehler { color: var(--danger); }
+
+        /* Leerzustand: eine Antwort, keine leere Flaeche. */
+        .abq-leer { display: grid; justify-items: center; gap: 8px; padding: 56px 24px 60px; text-align: center; }
+        .abq-leer-mark {
+            display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 4px;
+            border-radius: 999px; background: rgba(var(--success-rgb), 0.12); color: var(--success);
+        }
+        .abq-leer-mark svg { width: 20px; height: 20px; }
+        .abq-leer-t { font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; }
+        .abq-leer-s { max-width: 46ch; font-size: 0.86rem; line-height: 1.6; color: var(--text-muted); }
+        .abk-textknopf {
+            padding: 0; border: 0; background: none; cursor: pointer;
+            color: var(--primary); font: inherit; font-size: 0.84rem; font-weight: 600;
+            text-decoration: underline; text-decoration-color: rgba(var(--primary-rgb), 0.4); text-underline-offset: 3px;
+            transition: text-decoration-color 0.2s ease;
+        }
+        .abk-textknopf:hover { text-decoration-color: var(--primary); }
+        .abk-textknopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; border-radius: 3px; }
+
+        /* ── Sammel-Freigabe ─────────────────────────────────────────── */
+        .abq-sammel {
+            position: sticky; bottom: 16px; z-index: 25;
+            display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px;
+            width: fit-content; max-width: 100%; margin: 16px auto 0;
+            padding: 10px 10px 10px 18px; border-radius: 14px;
+            background: linear-gradient(var(--bg-raise), var(--bg-raise)), var(--bg-deep);
+            border: 1px solid var(--border-strong);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+        }
+        .abq-sammel[hidden] { display: none; }
+        .abq-sammel-n { font-size: 0.86rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+        .abq-sammel-status { font-size: 0.78rem; color: var(--text-muted); }
+        .abq-sammel-status:empty { display: none; }
+        .abq-sammel .abq-sammel-ok { flex: 0 0 auto; padding: 9px 16px; font-size: 0.86rem; }
+
+        /* ── Rueckmeldung ────────────────────────────────────────────── */
+        .abq-toast {
+            position: fixed; left: 50%; bottom: 24px; z-index: 120;
+            padding: 10px 16px; border-radius: 10px;
+            font-size: 0.86rem; font-weight: 600; color: var(--text-main);
+            background: linear-gradient(var(--bg-raise), var(--bg-raise)), var(--bg-deep);
+            border: 1px solid rgba(var(--success-rgb), 0.45);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+            opacity: 0; transform: translate(-50%, 10px); pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .abq-toast.is-da { opacity: 1; transform: translate(-50%, 0); }
+        .abq-toast.is-fehler { border-color: rgba(var(--danger-rgb), 0.5); }
+
+        /* ── Tastenkuerzel-Uebersicht ────────────────────────────────── */
+        .abq-hilfe {
+            position: fixed; inset: 0; z-index: 110;
+            display: grid; place-items: center; padding: 16px;
+            background: rgba(0, 0, 0, 0.55);
+        }
+        .abq-hilfe[hidden] { display: none; }
+        .abq-hilfe-karte {
+            width: 100%; max-width: 380px; padding: 20px 22px;
+            background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius);
+        }
+        .abq-hilfe-t { font-size: 1rem; font-weight: 650; margin-bottom: 14px; }
+        .abq-hilfe-liste {
+            display: grid; grid-template-columns: 44px 1fr; gap: 9px 12px; align-items: center;
+            font-size: 0.86rem; color: var(--text-muted);
+        }
+        .abq-hilfe-liste dt { justify-self: start; }
+        .abq-hilfe .abq-hilfe-zu { width: 100%; margin-top: 18px; padding: 10px 14px; }
+
+        /* ── Platzhalter beim Laden ──────────────────────────────────── */
+        .abk-sk { position: relative; overflow: hidden; background: var(--bg-raise); border-radius: var(--radius-sm); }
+        .abk-sk::after {
+            content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.07), transparent);
+            animation: abkSk 1.4s ease-in-out infinite;
+        }
+        @keyframes abkSk { to { transform: translateX(100%); } }
+        .abk-sk-kopf { display: flex; align-items: center; gap: 16px; padding-bottom: 22px; border-bottom: 1px solid var(--border); }
+        .abk-sk-mono { width: 48px; height: 48px; border-radius: 14px; flex: 0 0 auto; }
+        .abk-sk-t { width: 280px; max-width: 60vw; height: 26px; }
+        .abk-sk-s { width: 190px; max-width: 45vw; height: 12px; margin-top: 10px; }
+        .abk-sk-kachel { height: 74px; }
+        .abk-sk-split { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 18px; margin-top: 62px; }
+        .abk-sk-zeile { height: 50px; margin-bottom: 6px; }
+        .abk-sk-detail { height: 440px; border-radius: var(--radius); }
+
+        /* ── Touch: keine Tastatur, keine Tastenkuerzel ──────────────── */
+        @media (hover: none) {
+            .abq-kbd { display: none; }
+            .abq-hilfe .abq-kbd { display: inline-grid; }
+            .abk-menue-liste [data-m="kuerzel"] { display: none; }
+        }
+
+        /* ── Schmal: Liste ODER Woche, nie beides gequetscht ─────────── */
+        @media (max-width: 899px) {
+            .abq-split, .abk-sk-split { grid-template-columns: minmax(0, 1fr); }
+            .abk-sk-detail { display: none; }
+            .abq-liste { position: static; max-height: none; overflow: visible; }
+            .abq-rechts { display: none; }
+            .abq-split.is-detail .abq-liste { display: none; }
+            .abq-split.is-detail .abq-rechts { display: block; }
+            .abq-zurueck { display: inline-flex; }
+            .abq-felder { flex-basis: 100%; justify-content: stretch; margin-left: 0; }
+            .abq-suche { flex: 1 1 auto; }
+            .abq-select { max-width: 45%; }
+            /* 16 px, sonst zoomt iOS beim Fokus in die Seite. */
+            .abq-suche input, .abq-select, .abq-detail .ab-textarea { font-size: 16px; }
+            .abq-dkopf { padding: 14px 16px 14px; }
+            .abq-detail .ab-wk-body { padding: 2px 16px 10px; }
+            .abq-dfuss { padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+            .abq-dfuss .abk-actions .ab-btn { flex: 1 1 0; min-width: 0; }
+            .abk-menue-name { display: none; }
+            .abk-menue-knopf { padding-right: 6px; }
+            /* Monogramm und Name in EINER Zeile — allein auf einer Zeile
+               schob das Monogramm die Arbeit weitere 60 px nach unten. */
+            .abk-kopf { gap: 12px; }
+            .abk-kopf .abk-firma-mono { width: 40px; height: 40px; border-radius: 12px; font-size: 0.86rem; }
+            .abk-kopf-text { flex: 1 1 0; }
+            .abk-kopf .abk-einladen { flex: 1 1 100%; }
+            .abk-kopf { align-items: flex-start; }
+            /* Als Fliesstext statt flex: sonst steht der Haken allein in der
+               ersten Zeile, weil der Satz daneben nicht mehr hineinpasst. */
+            .abk-domok { display: block; line-height: 1.55; }
+            .abk-domok svg { display: inline; vertical-align: -2px; margin-right: 4px; }
+            .abq-sammel { width: 100%; padding: 10px 12px; }
+            .abq-sammel .abq-sammel-ok { flex: 1 1 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .abk-sk::after { animation: none; }
+            .abq-toast { transition: opacity 0.2s ease; transform: translate(-50%, 0); }
+            .abk-kachel.is-knopf:active { transform: none; }
+        }
     </style>
 </head>
 <body>
@@ -1309,17 +1657,17 @@
                 <div class="tilt-in">
                     <figure class="abi-frame">
                         <div class="abi-frame-in">
-                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.7.0" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: Kacheln für offene Wochen, Azubis und Abgezeichnetes, darunter eine Azubi-Karte mit Wochenstreifen und den offenen Wochen">
+                            <img src="/Grafiken/ausbilder/cockpit.webp?v=7.8.0" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: oben Kennzahlen, links die offenen Wochen aller Azubis als Liste, rechts die gewählte Woche mit Tagen, Stunden und den Knöpfen Zurückgeben und Bestätigen">
                         </div>
                     </figure>
                 </div>
-                <p class="abi-cap"><b>Die Übersicht eines Betriebs.</b> <span>Offene Wochen, Azubis und was schon abgezeichnet ist; darunter jede Woche mit Zeitraum und Stand. Aufgenommen mit Beispieldaten.</span></p>
+                <p class="abi-cap"><b>Die Übersicht eines Betriebs.</b> <span>Links alle Wochen, die auf eine Entscheidung warten, die älteste zuerst; rechts die gewählte Woche mit Tagen und Tätigkeiten. Aufgenommen mit Beispieldaten.</span></p>
             </div>
 
             <div class="abi-split">
                 <figure class="abi-frame" data-reveal>
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.7.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Zwei Azubi-Karten in der Übersicht: abgezeichnete und offene Wochen als Balken und Wochenstreifen, eine überarbeitete Woche hervorgehoben">
+                        <img src="/Grafiken/ausbilder/azubi.webp?v=7.8.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Reiter Azubis: je Azubi eine Karte mit abgezeichneten und offenen Wochen als Balken und Wochenstreifen und einem Knopf zu seinen offenen Wochen">
                     </div>
                 </figure>
 
@@ -1327,7 +1675,8 @@
                 <h2 class="ab-way-t">Mit Konto: alle Azubis an einem Ort</h2>
                 <p class="ab-way-s">Ihre Azubis verbinden ihr Berichtsheft einmalig über einen Einladungscode mit Ihrem Betrieb. Danach erscheint jede fertige Woche hier von selbst. Sie sammeln nichts ein, drucken nichts aus und verwalten keine Links.</p>
                 <ul class="ab-feats">
-                    <li>Offene Wochen zuerst, mit Zeitraum, Tagen und Tätigkeiten wie im Nachweis.</li>
+                    <li>Alle offenen Wochen aller Azubis in einer Liste, die älteste zuerst, daneben die Woche mit Tagen und Tätigkeiten wie im Nachweis.</li>
+                    <li>Nach dem Bestätigen geht es direkt mit der nächsten Woche weiter, auch per Tastatur. Unauffällige Wochen lassen sich gesammelt abzeichnen.</li>
                     <li>Bestätigen mit einem Klick, Zurückgeben mit Anmerkung. Ihre Entscheidung steht danach im Berichtsheft des Azubis.</li>
                     <li>Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen. Die Übersicht meldet, welche Woche zu lange liegt.</li>
                     <li>Jede Entscheidung bleibt mit Name und Zeitpunkt im Prüfverlauf und wird auf Ihrem Gerät signiert.</li>
@@ -1370,7 +1719,7 @@
             </section>
                 <figure class="abi-frame" data-reveal style="--i:1">
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/woche.webp?v=7.7.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
+                        <img src="/Grafiken/ausbilder/woche.webp?v=7.8.0" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
                     </div>
                 </figure>
             </div>
@@ -1567,13 +1916,13 @@
     })();
     </script>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=7.7.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=7.7.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=7.8.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=7.8.0"></script>
     <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.7.0"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=7.8.0"></script>
 
     <script>
     (function () {
@@ -2161,125 +2510,162 @@
                 '<ul class="abk-diff-liste">' + zeilen + '</ul></details>';
         }
 
-        function kontoKarte(b) {
+        // Stand einer Woche, an EINER Stelle. Liste, Detail, Filter und
+        // Wochen-Streifen lesen alle diese Funktion — sonst zeigt die Zeile
+        // links einen anderen Stand als die Ansicht rechts daneben.
+        // Der IHK-Zweig steht VOR allen anderen: die Woche wartet auf nichts,
+        // also darf sie auch nicht als offen erscheinen. Sobald hier doch
+        // eine Freigabe liegt, gewinnt die (schonUnterschrieben prueft auf !freigabe).
+        function standVon(b) {
             var f = b.freigabe;
-            // Der IHK-Zweig steht VOR allen anderen: die Woche wartet auf nichts,
-            // also darf sie auch nicht als offen erscheinen. Sobald hier doch
-            // eine Freigabe liegt, gewinnt die (schonUnterschrieben prueft auf !freigabe).
-            var st = schonUnterschrieben(b) ? 'ihk'
-                : b.veraendert ? 'geaendert'
-                : b.nachgebessert ? 'nachgebessert'
-                : f && f.entscheidung === 'approved' ? 'approved'
-                : f && f.entscheidung === 'rejected' ? 'rejected' : 'open';
-            var stL = st === 'ihk'
-                ? ['s-ihk', b.quelle === 'ihk-import'
-                    ? abL('Bei der IHK abgezeichnet', 'Signed off at the IHK')
-                    : abL('Bereits unterschrieben', 'Already signed')]
-                : st === 'geaendert'
-                ? ['s-alarm', abL('Nach der Freigabe geändert', 'Changed after approval')]
-                : st === 'nachgebessert'
-                ? ['s-neu', abL('Überarbeitet', 'Revised')]
-                : stateLabel(st === 'open' ? '' : st);
-            var randKlasse = st === 'geaendert' ? ' is-geaendert'
-                : st === 'nachgebessert' ? ' is-nachgebessert'
-                : st === 'ihk' ? ' is-ihk'
-                : (st !== 'open' ? ' is-' + st : '');
-            var chev = '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+            if (schonUnterschrieben(b)) return 'ihk';
+            if (b.veraendert) return 'geaendert';
+            if (b.nachgebessert) return 'nachgebessert';
+            if (f && f.entscheidung === 'approved') return 'approved';
+            if (f && f.entscheidung === 'rejected') return 'rejected';
+            return b.status === 'incomplete' ? 'arbeit' : 'open';
+        }
 
+        function standLabel(st, b) {
+            if (st === 'ihk') return ['s-ihk', b.quelle === 'ihk-import'
+                ? abL('Bei der IHK abgezeichnet', 'Signed off at the IHK')
+                : abL('Bereits unterschrieben', 'Already signed')];
+            if (st === 'geaendert') return ['s-alarm', abL('Nach der Freigabe geändert', 'Changed after approval')];
+            if (st === 'nachgebessert') return ['s-neu', abL('Überarbeitet', 'Revised')];
+            if (st === 'arbeit') return ['s-open', abL('In Arbeit', 'In progress')];
+            return stateLabel(st === 'open' ? '' : st);
+        }
+
+        // Tastenkuerzel stehen IM Knopf, nicht in einer Legende daneben: man
+        // lernt sie dort, wo man sonst klicken wuerde. Auf Touch blendet das
+        // CSS sie aus (keine Tastatur, keine Aussage).
+        function kbd(taste) { return '<kbd class="abq-kbd" aria-hidden="true">' + taste + '</kbd>'; }
+
+        function rueckgabeFeld() {
+            return '<div class="abk-reject" hidden>' +
+                '<textarea class="ab-textarea abk-note" placeholder="' +
+                abL('Was soll geändert werden?', 'What needs changing?') + '"></textarea>' +
+                '<div class="abk-actions">' +
+                '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject-cancel">' + abL('Abbrechen', 'Cancel') + '</button>' +
+                '<button type="button" class="ab-btn ab-btn-primary" data-k="reject-do">' + abL('Zurückgeben', 'Send back') + '</button>' +
+                '</div></div>';
+        }
+
+        function wochenFuss(b, st) {
+            var f = b.freigabe;
             var fuss;
-            if (b.status === 'incomplete') {
-                fuss = '<p class="abk-hint">' + abL(
-                    'Noch nicht abgeschlossen — der Azubi arbeitet daran.',
-                    'Not finished yet — the apprentice is still working on it.') + '</p>';
-            } else if (st === 'ihk') {
+            if (st === 'arbeit') {
+                return '<p class="abk-hint">' + abL(
+                    'Noch nicht abgeschlossen. Der Azubi arbeitet daran.',
+                    'Not finished yet. The apprentice is still working on it.') + '</p>';
+            }
+            if (st === 'ihk') {
                 // 🔴 Die Knoepfe bleiben. Ein erster Anlauf hat sie hier
                 // weggelassen — falsch: "unterschrieben" ist eine ANGABE aus dem
                 // Berichtsheft, kein Nachweis in diesem System. Der Ausbilder
                 // muss trotzdem gegenzeichnen koennen, sonst nimmt die Seite ihm
                 // eine Entscheidung ab, die ihm gehoert. Sie steht nur nicht mehr
                 // auf seiner Aufgabenliste.
-                fuss = '<p class="abk-hint">' + (b.quelle === 'ihk-import'
-                    ? abL('Aus dem IHK-Portal übernommen und dort bereits abgezeichnet. Für Sie ist hier nichts zu tun — Sie können trotzdem gegenzeichnen.',
-                          'Imported from the IHK portal and already signed off there. Nothing for you to do — you can still counter-sign.')
+                return '<p class="abk-hint">' + (b.quelle === 'ihk-import'
+                    ? abL('Aus dem IHK-Portal übernommen und dort bereits abgezeichnet. Für Sie ist hier nichts zu tun. Sie können trotzdem gegenzeichnen.',
+                          'Imported from the IHK portal and already signed off there. Nothing for you to do. You can still counter-sign.')
                     : abL('Im Berichtsheft als unterschrieben eingetragen, aber nicht von Ihnen in dieser App. Sie können hier gegenzeichnen.',
                           'Marked as signed in the report book, but not by you in this app. You can counter-sign here.')) + '</p>' +
                     '<div class="abk-actions">' +
-                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + '</button>' +
-                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="approve">' + abL('Gegenzeichnen', 'Counter-sign') + '</button>' +
-                    '</div>' +
-                    '<div class="abk-reject" hidden>' +
-                    '<textarea class="ab-textarea abk-note" placeholder="' +
-                    abL('Was soll geändert werden?', 'What needs changing?') + '"></textarea>' +
-                    '<div class="abk-actions">' +
-                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject-cancel">' + abL('Abbrechen', 'Cancel') + '</button>' +
-                    '<button type="button" class="ab-btn ab-btn-primary" data-k="reject-do">' + abL('Zurückgeben', 'Send back') + '</button>' +
-                    '</div></div>';
-            } else if (st === 'approved') {
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + kbd('R') + '</button>' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="approve">' + abL('Gegenzeichnen', 'Counter-sign') + kbd('A') + '</button>' +
+                    '</div>' + rueckgabeFeld();
+            }
+            if (st === 'approved') {
                 var wann = f && f.erstellt_at ? ' ' + abL('am ', 'on ') + fmtDate(String(f.erstellt_at).slice(0, 10)) : '';
-                fuss = '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>';
+                return '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>';
+            }
+            if (st === 'geaendert') {
+                fuss = '<p class="abk-hint is-warn">' + abL(
+                    'Diese Woche wurde nach Ihrer Freigabe geändert. Bitte erneut prüfen.',
+                    'This week was changed after your approval. Please review it again.') + '</p>';
+            } else if (st === 'nachgebessert') {
+                fuss = '<p class="abk-hint">' + abL(
+                    'Sie hatten diese Woche zurückgegeben. Sie wurde überarbeitet und liegt wieder bei Ihnen.',
+                    'You sent this week back. It has been revised and is waiting for you again.') + '</p>';
+            } else if (st === 'rejected') {
+                fuss = '<p class="abk-hint">' + abL(
+                    'Liegt beim Azubi zur Überarbeitung. Sie können trotzdem jetzt entscheiden.',
+                    'With the apprentice for revision. You can still decide now.') + '</p>';
             } else {
-                if (st === 'geaendert') {
-                    fuss = '<p class="abk-hint" style="color:var(--warning)">' + abL(
-                        'Diese Woche wurde nach Ihrer Freigabe geändert. Bitte erneut prüfen.',
-                        'This week was changed after your approval. Please review it again.') + '</p>';
-                } else if (st === 'nachgebessert') {
-                    fuss = '<p class="abk-hint">' + abL(
-                        'Sie hatten diese Woche zurückgegeben. Sie wurde überarbeitet und liegt wieder bei Ihnen.',
-                        'You sent this week back. It has been revised and is waiting for you again.') + '</p>';
-                } else {
-                    fuss = '';
-                }
-                fuss += '<div class="abk-actions">' +
-                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + '</button>' +
-                    '<button type="button" class="ab-btn ab-btn-primary" data-k="approve">' + abL('Bestätigen', 'Approve') + '</button>' +
-                    '</div>' +
-                    '<div class="abk-reject" hidden>' +
-                    '<textarea class="ab-textarea abk-note" placeholder="' +
-                    abL('Was soll geändert werden?', 'What needs changing?') + '"></textarea>' +
-                    '<div class="abk-actions">' +
-                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject-cancel">' + abL('Abbrechen', 'Cancel') + '</button>' +
-                    '<button type="button" class="ab-btn ab-btn-primary" data-k="reject-do">' + abL('Zurückgeben', 'Send back') + '</button>' +
-                    '</div></div>';
+                fuss = '';
             }
+            return fuss + '<div class="abk-actions">' +
+                '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + kbd('R') + '</button>' +
+                '<button type="button" class="ab-btn ab-btn-primary" data-k="approve">' + abL('Bestätigen', 'Approve') + kbd('A') + '</button>' +
+                '</div>' + rueckgabeFeld();
+        }
 
-            // Prüfverlauf: erst ab der zweiten Entscheidung interessant, oder
-            // wenn die prev_pruefsumme-Kette bricht (Datenbank-Eingriff).
-            var verlaufHTML = '';
+        // Prüfverlauf: erst ab der zweiten Entscheidung interessant, oder
+        // wenn die prev_pruefsumme-Kette bricht (Datenbank-Eingriff).
+        function verlaufHTML(b) {
             var v = b.verlauf || [];
-            if (v.length > 1 || b.ketteOk === false) {
-                var eintraege = v.map(function (fx) {
-                    return '<li>' + esc(fmtDate(String(fx.erstellt_at).slice(0, 10))) + ' — ' +
-                        (fx.entscheidung === 'approved' ? abL('bestätigt', 'approved') : abL('zurückgegeben', 'sent back')) +
-                        (fx.ausbilder_name ? ' · ' + esc(fx.ausbilder_name) : '') +
-                        (fx.anmerkung ? ': ' + esc(fx.anmerkung) : '') + '</li>';
-                }).join('');
-                verlaufHTML = '<details class="abk-verlauf"' + (b.ketteOk === false ? ' open' : '') + '>' +
-                    '<summary>' + abL('Prüfverlauf', 'Review history') + ' (' + v.length + ')' +
-                    (b.ketteOk === false
-                        ? ' — <span class="abk-kette-warn">' + abL('Kette unterbrochen', 'chain broken') + '</span>'
-                        : '') +
-                    '</summary><ul>' + eintraege + '</ul></details>';
-            }
+            if (!(v.length > 1 || b.ketteOk === false)) return '';
+            var eintraege = v.map(function (fx) {
+                return '<li>' + esc(fmtDate(String(fx.erstellt_at).slice(0, 10))) + ': ' +
+                    (fx.entscheidung === 'approved' ? abL('bestätigt', 'approved') : abL('zurückgegeben', 'sent back')) +
+                    (fx.ausbilder_name ? ', ' + esc(fx.ausbilder_name) : '') +
+                    (fx.anmerkung ? ' („' + esc(fx.anmerkung) + '“)' : '') + '</li>';
+            }).join('');
+            return '<details class="abk-verlauf"' + (b.ketteOk === false ? ' open' : '') + '>' +
+                '<summary>' + abL('Prüfverlauf', 'Review history') + ' (' + v.length + ')' +
+                (b.ketteOk === false
+                    ? ' <span class="abk-kette-warn">' + abL('Kette unterbrochen', 'chain broken') + '</span>'
+                    : '') +
+                '</summary><ul>' + eintraege + '</ul></details>';
+        }
 
-            return '<div class="ab-wk abk-card" data-bid="' + esc(b.id) + '">' +
-                '<div class="ab-wk-card' + randKlasse + '">' +
-                '<div class="ab-wk-head" role="button" tabindex="0" aria-expanded="false">' +
-                '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + b.kw + '</span>' +
-                '<span class="ab-wk-sub">' + esc(fmtRange(b.datum_von, b.datum_bis)) + '</span>' +
-                '<span class="ab-wk-state ' + stL[0] + '">' + stL[1] + '</span>' +
-                chev +
+        var PFEIL_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>';
+        var PFEIL_R = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+
+        // Die gewaehlte Woche rechts neben der Liste. Traegt `.abk-card` und
+        // `.ab-wk-body`, weil die Klick-Behandlung (bindeKonto) und die
+        // Fehlermeldung in kontoEntscheiden() genau diese beiden suchen.
+        function detailHTML(b, az, pos, gesamt) {
+            var f = b.freigabe;
+            var st = standVon(b);
+            var stL = standLabel(st, b);
+            var name = (az && az.name) || abL('Azubi ohne Namen', 'Apprentice, no name');
+            // b.jahr ist das AUSBILDUNGSjahr, nicht das Kalenderjahr.
+            var wer = esc(name) + (b.jahr ? '<span>' + abL(b.jahr + '. Lehrjahr', 'Year ' + b.jahr) + '</span>' : '');
+            var nav = gesamt > 1
+                ? '<div class="abq-dnav">' +
+                  '<button type="button" class="abq-pfeil" data-q="prev"' + (pos <= 0 ? ' disabled' : '') +
+                  ' aria-label="' + abL('Vorherige Woche', 'Previous week') + '">' + PFEIL_L + '</button>' +
+                  '<span class="abq-pos">' + (pos + 1) + ' / ' + gesamt + '</span>' +
+                  '<button type="button" class="abq-pfeil" data-q="next"' + (pos >= gesamt - 1 ? ' disabled' : '') +
+                  ' aria-label="' + abL('Nächste Woche', 'Next week') + '">' + PFEIL_R + '</button></div>'
+                : '';
+            return '<article class="abq-detail abk-card is-' + st + '" data-bid="' + esc(b.id) + '" aria-labelledby="abqDT">' +
+                '<header class="abq-dkopf">' +
+                '<button type="button" class="abq-zurueck" data-q="liste">' + PFEIL_L +
+                '<span>' + abL('Liste', 'List') + '</span></button>' +
+                '<div class="abq-dkopf-text">' +
+                '<p class="abq-d-wer">' + wer + '</p>' +
+                '<h2 class="abq-d-t" id="abqDT">' + abL('KW ', 'Week ') + b.kw +
+                '<span>' + esc(fmtRange(b.datum_von, b.datum_bis)) + '</span></h2>' +
                 '</div>' +
-                '<div class="ab-wk-body">' +
-                '<hr class="ab-rule" style="margin:16px 0;">' +
+                '<span class="ab-wk-state ' + stL[0] + '">' + stL[1] + '</span>' +
+                nav +
+                '</header>' +
+                '<div class="ab-wk-body abq-dbody">' +
                 weekBodyHTML(zeileZuWoche(b)) +
                 (f && f.anmerkung ? '<p class="ab-wk-note">' + esc(f.anmerkung) + '</p>' : '') +
                 // Der Vergleich steht direkt unter der eigenen Anmerkung: die
                 // Frage lautet „hat er getan, worum ich gebeten habe" — beides
                 // gehoert nebeneinander, nicht durch den Verlauf getrennt.
                 diffHTML(b) +
-                verlaufHTML +
-                fuss +
-                '</div></div></div>';
+                verlaufHTML(b) +
+                '</div>' +
+                // Klebt am unteren Rand: wer eine lange Woche liest, soll zum
+                // Entscheiden nicht erst ans Ende scrollen muessen.
+                '<footer class="abq-dfuss">' + wochenFuss(b, st) + '</footer>' +
+                '</article>';
         }
 
         // Aus einer Person ein Monogramm: erste Buchstaben von Vor- und Nachname.
@@ -2403,27 +2789,27 @@
             return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (t < 10 ? '0' : '') + t;
         }
 
-        function wochenStreifen(berichte) {
+        function wochenStreifen(berichte, ai) {
             var mitDatum = berichte.filter(function (b) { return b.datum_von; });
             if (mitDatum.length < 2) return '';
 
             // Zuordnung Montag → Bericht. Zwei Berichte in derselben Woche sind
-            // moeglich (Split), der staerkere Befund gewinnt.
-            var rang = { ihk: 1, approved: 2, open: 3, rejected: 4, geaendert: 5 };
-            var proWoche = {};
+            // moeglich (Split), der staerkere Befund gewinnt. Die Farbe kommt
+            // aus standVon() — derselben Quelle wie Liste und Detail. Eine
+            // ueberarbeitete Woche liegt wieder beim Ausbilder, sie ist also
+            // "offen", nicht gelb wie eine, die noch beim Azubi liegt.
+            var rang = { arbeit: 0, ihk: 1, approved: 2, open: 3, rejected: 4, geaendert: 5 };
+            var proWoche = {}, bidProWoche = {};
             var min = null, max = null;
             mitDatum.forEach(function (b) {
                 var mo = montagVon(b.datum_von);
                 if (!mo) return;
                 if (!min || mo < min) min = mo;
                 if (!max || mo > max) max = mo;
-                var st = schonUnterschrieben(b) ? 'ihk'
-                    : b.veraendert ? 'geaendert'
-                    : b.freigabe && b.freigabe.entscheidung === 'approved' ? 'approved'
-                    : b.freigabe && b.freigabe.entscheidung === 'rejected' ? 'rejected'
-                    : b.status === 'incomplete' ? 'arbeit' : 'open';
+                var st = standVon(b);
+                if (st === 'nachgebessert') st = 'open';
                 var k = isoDatum(mo);
-                if (!proWoche[k] || (rang[st] || 0) > (rang[proWoche[k]] || 0)) proWoche[k] = st;
+                if (!proWoche[k] || (rang[st] || 0) > (rang[proWoche[k]] || 0)) { proWoche[k] = st; bidProWoche[k] = b.id; }
             });
             if (!min || !max) return '';
 
@@ -2433,8 +2819,12 @@
                 var k = isoDatum(d), st = proWoche[k];
                 if (!st) luecken++;
                 var titel = d.toLocaleDateString(abLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
-                zellen += '<span class="abk-wz' + (st ? ' is-' + st : ' is-luecke') +
-                    '" title="' + esc(titel) + '"></span>';
+                // Eine Zelle mit Woche fuehrt direkt zu ihr — der Streifen ist
+                // sonst nur ein Bild, und man sucht die rote Woche danach in
+                // einer Liste von fuenfzig.
+                zellen += '<span class="abk-wz' + (st ? ' is-' + st : ' is-luecke') + '"' +
+                    (st ? ' data-wz="' + esc(bidProWoche[k]) + '" data-ai="' + esc(ai) + '"' : '') +
+                    ' title="' + esc(titel) + '"></span>';
                 // Monatswechsel bekommt eine Marke — in derselben Spalte.
                 if (d.getMonth() !== letzterMonat) {
                     letzterMonat = d.getMonth();
@@ -2463,72 +2853,67 @@
                 '</div></div>';
         }
 
-        function kachel(wert, label, ton) {
-            return '<div class="abk-kachel' + (ton ? ' is-' + ton : '') + '">' +
+        // `ziel` macht die Kachel zum Knopf in den Pruefen-Reiter. Eine Zahl,
+        // die "10 warten" sagt und nicht dorthin fuehrt, ist eine Sackgasse.
+        function kachel(wert, label, ton, ziel) {
+            var tag = ziel ? 'button' : 'div';
+            return '<' + tag + (ziel ? ' type="button" data-q="' + ziel + '"' : '') +
+                ' class="abk-kachel' + (ton ? ' is-' + ton : '') + (ziel ? ' is-knopf' : '') + '">' +
                 '<span class="abk-wert">' + wert + '</span>' +
-                '<span class="abk-label">' + label + '</span></div>';
+                '<span class="abk-label">' + label + '</span></' + tag + '>';
         }
 
-        function azubiKarte(az, vieleAzubis) {
+        // Die Azubi-Sicht: WER steht wie da. Gepruefte wird hier nicht mehr —
+        // das passiert an EINER Stelle, im Reiter "Prüfen". Zwei Oberflaechen,
+        // die dieselbe Woche abzeichnen koennen, driften (zwei Regler auf einen
+        // Zustand); die Knoepfe hier fuehren deshalb dorthin, gefiltert auf
+        // diesen Azubi.
+        function azubiKarte(az, ai) {
             var z = zahlenFuer(az.berichte);
             var name = az.name || abL('Azubi ohne Namen', 'Apprentice, no name');
 
             var meta = [];
-            if (z.lehrjahr) meta.push(z.lehrjahr + abL('. Lehrjahr', ' year'));
+            if (z.lehrjahr) meta.push(abL(z.lehrjahr + '. Lehrjahr', 'Year ' + z.lehrjahr));
             if (z.zuletzt) meta.push(abL('zuletzt ', 'last ') + fmtDate(z.zuletzt));
             if (z.inArbeit) meta.push(z.inArbeit + abL(' in Arbeit', ' in progress'));
 
+            // Drei Zustaende, nicht zwei: "nichts offen" hiess bis v7.7.0 auch
+            // der Azubi, der noch nie eine Woche eingereicht hat — das las sich
+            // wie "alles erledigt".
+            var leer = !az.berichte.length;
+            var stand = leer ? ['', abL('noch nichts eingereicht', 'nothing submitted yet')]
+                : z.offen ? [' is-offen', abL(z.offen + ' offen', z.offen + ' open')]
+                : [' is-ok', abL('nichts offen', 'nothing open')];
+
             var koerper;
-            if (!az.berichte.length) {
+            if (leer) {
                 koerper = '<p class="abk-leer">' + abL(
-                    'Noch keine Woche eingereicht. Sobald ' + esc(name) + ' im Berichtsheft eine Woche abschließt, erscheint sie hier zum Abzeichnen.',
-                    'No week submitted yet. As soon as ' + esc(name) + ' completes a week in the report book, it shows up here for signing.') + '</p>';
+                    'Noch keine Woche eingereicht. Sobald ' + esc(name) + ' im Berichtsheft eine Woche abschließt, erscheint sie im Reiter „Prüfen“.',
+                    'No week submitted yet. As soon as ' + esc(name) + ' completes a week in the report book, it shows up under “Review”.') + '</p>';
             } else {
-                // 🔴 Nicht mehr ALLE Wochen als Karten. Bei fuenf Azubis mit je
-                // einem Ausbildungsjahr waren das ueber 250 Karten am Stueck —
-                // die Seite war danach nicht mehr zu ueberblicken, und das, was
-                // der Ausbilder tun muss, verschwand zwischen dem, was erledigt
-                // ist. Direkt sichtbar ist deshalb nur, was eine Entscheidung
-                // braucht; der Rest liegt EINEN Klick entfernt und bleibt dabei
-                // im DOM (die Aktionsknoepfe darin funktionieren also weiter).
-                // Der Wochen-Streifen daruerber zeigt weiterhin ALLE Wochen — er
-                // ist eine Zeile hoch und wird von der Menge nicht voller.
-                var offene = az.berichte.filter(istOffen);
-                var rest = az.berichte.filter(function (b) { return !istOffen(b); });
-
-                var liste = offene.length
-                    ? '<div class="abk-wochen">' + offene.map(kontoKarte).join('') + '</div>'
-                    : '<p class="abk-leer">' + abL(
-                        'Keine Woche wartet auf eine Entscheidung.',
-                        'No week is waiting for a decision.') + '</p>';
-
-                if (rest.length) {
-                    liste += '<details class="abk-rest">' +
-                        '<summary>' + abL(
-                            rest.length === 1 ? '1 erledigte Woche anzeigen' : rest.length + ' erledigte Wochen anzeigen',
-                            rest.length === 1 ? 'Show 1 completed week' : 'Show ' + rest.length + ' completed weeks') +
-                        '</summary>' +
-                        '<div class="abk-wochen">' + rest.map(kontoKarte).join('') + '</div>' +
-                        '</details>';
-                }
-                koerper = anteilsBalken(z) + wochenStreifen(az.berichte) + liste;
+                var nAlle = az.berichte.length;
+                koerper = anteilsBalken(z) + wochenStreifen(az.berichte, ai) +
+                    '<div class="abk-az-aktion">' +
+                    (z.offen
+                        ? '<button type="button" class="ab-btn abk-cta" data-q="az-offen" data-ai="' + esc(ai) + '">' +
+                          abL(z.offen === 1 ? '1 offene Woche prüfen' : z.offen + ' offene Wochen prüfen',
+                              z.offen === 1 ? 'Review 1 open week' : 'Review ' + z.offen + ' open weeks') + '</button>'
+                        : '') +
+                    '<button type="button" class="abk-textknopf" data-q="az-alle" data-ai="' + esc(ai) + '">' +
+                    abL(nAlle === 1 ? '1 Woche ansehen' : 'Alle ' + nAlle + ' Wochen ansehen',
+                        nAlle === 1 ? 'View 1 week' : 'View all ' + nAlle + ' weeks') + '</button>' +
+                    '</div>';
             }
 
-            // Aufklappbar, damit mehrere Azubis nebeneinander lesbar bleiben.
-            // Ab vier Azubis standardmaessig zu — die Kopfzeile traegt mit dem
-            // Stand-Chip schon die Antwort auf "wo ist Arbeit?", man muss dafuer
-            // nichts oeffnen.
-            var offenAuf = !vieleAzubis;
-            return '<details class="abk-azubi"' + (offenAuf ? ' open' : '') + '>' +
-                '<summary class="abk-azubi-head">' +
+            return '<section class="abk-azubi">' +
+                '<header class="abk-azubi-head">' +
                 '<span class="abk-avatar" aria-hidden="true">' + esc(monogramm(name)) + '</span>' +
-                '<span class="abk-azubi-name">' + esc(name) + '</span>' +
-                (meta.length ? '<span class="abk-azubi-meta">' + esc(meta.join(' · ')) + '</span>' : '') +
-                '<span class="abk-azubi-stand' + (z.offen ? ' is-offen' : '') + '">' + (z.offen
-                    ? abL(z.offen + ' offen', z.offen + ' open')
-                    : abL('nichts offen', 'nothing open')) + '</span>' +
-                '<svg class="abk-azubi-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
-                '</summary>' + koerper + '</details>';
+                '<div class="abk-azubi-wer">' +
+                '<h3 class="abk-azubi-name">' + esc(name) + '</h3>' +
+                (meta.length ? '<p class="abk-azubi-meta">' + meta.map(function (m) { return '<span>' + esc(m) + '</span>'; }).join('') + '</p>' : '') +
+                '</div>' +
+                '<span class="abk-azubi-stand' + stand[0] + '">' + stand[1] + '</span>' +
+                '</header>' + koerper + '</section>';
         }
 
         // ── Meldungen: Wochen, die der Azubi geloescht hat ────────────
@@ -2629,19 +3014,6 @@
         // dieselben Wochen und trifft dieselben Entscheidungen. Gefehlt hat
         // nur der Weg, ihn einzuladen.
 
-        function teamZeile() {
-            if (!kontoTeam.length) return '';
-            var namen = kontoTeam.map(function (t) {
-                return (t.name || abL('ohne Namen', 'unnamed')) + (t.ich ? abL(' (Sie)', ' (you)') : '');
-            });
-            return '<p class="abk-team-zeile">' +
-                abL(kontoTeam.length === 1 ? 'Ausbilder: ' : 'Ausbilder: ',
-                    kontoTeam.length === 1 ? 'Trainer: ' : 'Trainers: ') +
-                esc(namen.join(', ')) +
-                '<button type="button" class="abk-team-btn" onclick="abkTeamPanel()">' +
-                abL('Team verwalten', 'Manage team') + '</button></p>';
-        }
-
         function teamPanelHTML(fehler) {
             var zeilen = kontoTeam.map(function (t) {
                 var seit = t.seit ? fmtDate(String(t.seit).slice(0, 10)) : '';
@@ -2670,15 +3042,14 @@
                 '</div>';
         }
 
-        var teamOffen = false;
+        // Team ist seit v7.8.0 ein eigener Reiter statt eines Kastens, der im
+        // Kopf auf- und zuklappte. `fehler` ueberlebt genau ein Zeichnen.
+        var teamFehler = '';
 
         window.abkTeamPanel = function (fehler) {
-            var box = $('abkTeam');
-            if (!box) return;
-            if (teamOffen && !fehler) { box.innerHTML = ''; teamOffen = false; return; }
-            teamOffen = true;
-            box.innerHTML = teamPanelHTML(fehler || '');
-            box.querySelector('.abk-einl').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            ansicht = 'team';
+            teamFehler = fehler || '';
+            renderKonto();
         };
 
         window.abkVertretungEinladen = async function () {
@@ -2702,45 +3073,359 @@
             try {
                 await BHB2B.mitgliedEntfernen(userId);
                 kontoTeam = kontoTeam.filter(function (t) { return t.userId !== userId; });
-                renderKonto();
                 abkTeamPanel();
             } catch (e) {
-                renderKonto();
                 abkTeamPanel((e && e.message) ||
                     abL('Konnte nicht entfernt werden.', 'Could not be removed.'));
             }
         };
 
+        // ── Prüfen: EIN Stapel über alle Azubis ──────────────────────────
+        // Bis v7.7.0 lagen die offenen Wochen je Azubi in einer eigenen
+        // Klappkarte. Wer zehn offene Wochen bei drei Azubis hatte, klappte
+        // drei Karten auf und suchte darin: die Frage "was liegt bei mir?"
+        // hatte keine Antwort an EINER Stelle. Jetzt ist die Liste links die
+        // Antwort, rechts steht die gewaehlte Woche, und die Azubi-Karten sind
+        // eine zweite Sicht darauf, die hierher fuehrt statt selbst zu pruefen.
+        var ansicht = 'pruefen';                       // 'pruefen' | 'azubis' | 'team'
+        var filter = { status: 'offen', azubi: '', q: '' };
+        var aktivId = null;
+        var auswahl = {};                              // bid → true (Sammel-Abzeichnen)
+        var mobilDetail = false;                       // schmal: Detail statt Liste
+        var sammelLaeuft = false;
+        var kontoIch = { name: '' };
+
+        var FILTER = [
+            ['offen',     ['Zu prüfen', 'To review'],         function (b) { return istOffen(b); }],
+            ['geaendert', ['Geändert', 'Changed'],            function (b) { return standVon(b) === 'geaendert'; }],
+            ['zurueck',   ['Beim Azubi', 'With apprentice'],  function (b) { return standVon(b) === 'rejected'; }],
+            ['erledigt',  ['Abgezeichnet', 'Signed off'],     function (b) { var s = standVon(b); return s === 'approved' || s === 'ihk'; }],
+            ['arbeit',    ['In Arbeit', 'In progress'],       function (b) { return standVon(b) === 'arbeit'; }],
+            ['alle',      ['Alle', 'All'],                    function () { return true; }]
+        ];
+
+        function filterFn(key) {
+            for (var i = 0; i < FILTER.length; i++) if (FILTER[i][0] === key) return FILTER[i][2];
+            return FILTER[0][2];
+        }
+
+        function istMobil() { return window.matchMedia('(max-width: 899px)').matches; }
+
+        function eintraege() {
+            var out = [];
+            kontoDaten.azubis.forEach(function (a, ai) {
+                a.berichte.forEach(function (b) { out.push({ b: b, a: a, ai: ai }); });
+            });
+            return out;
+        }
+
+        function passtAzubi(e) { return filter.azubi === '' || String(e.ai) === filter.azubi; }
+
+        // Nur die WERTE des Inhalts durchsuchen — die Schluessel (monday,
+        // dailyActivities …) wuerden sonst jede Suche nach "mon" treffen.
+        function suchText(b) {
+            if (b.__such !== undefined) return b.__such;
+            var teile = [];
+            (function lauf(v) {
+                if (v == null) return;
+                if (typeof v === 'string') { teile.push(v); return; }
+                if (typeof v === 'object') Object.keys(v).forEach(function (k) { lauf(v[k]); });
+            })(b.inhalt);
+            b.__such = teile.join(' ').toLowerCase();
+            return b.__such;
+        }
+
+        function passtSuche(e) {
+            var q = filter.q.trim().toLowerCase();
+            if (!q) return true;
+            // "30", "KW 30", "week 30" meinen die Kalenderwoche, nicht jeden
+            // Text, in dem eine 30 vorkommt.
+            var nr = q.split('kw').join('').split('week').join('').trim();
+            if (nr !== '' && String(Number(nr)) === nr) return Number(e.b.kw) === Number(nr);
+            return String(e.a.name || '').toLowerCase().indexOf(q) !== -1 || suchText(e.b).indexOf(q) !== -1;
+        }
+
+        function sichtbar() {
+            var fn = filterFn(filter.status);
+            var liste = eintraege().filter(function (e) { return passtAzubi(e) && fn(e.b) && passtSuche(e); });
+            // "Zu prüfen": die AELTESTE Woche zuerst. §14 BBiG fragt nach der
+            // aeltesten, nicht nach der neuesten. Alle anderen Sichten sind
+            // Nachschlagen, da steht das Neueste oben.
+            var richtung = filter.status === 'offen' ? 1 : -1;
+            liste.sort(function (x, y) {
+                var dx = x.b.datum_bis || '', dy = y.b.datum_bis || '';
+                if (dx === dy) return 0;
+                return (dx < dy ? -1 : 1) * richtung;
+            });
+            return liste;
+        }
+
+        // Sammel-Abzeichnen nur fuer die unauffaellige Woche. Eine geaenderte
+        // oder ueberarbeitete Woche traegt einen Vergleich, den man ANSEHEN
+        // muss: sie mit fuenf anderen blind durchzuwinken waere genau der
+        // Fall, gegen den der Vergleich gebaut ist.
+        function sammelFaehig(b) { return standVon(b) === 'open'; }
+
+        function tageSeit(iso) {
+            if (!iso) return null;
+            var t = new Date(iso + 'T12:00:00').getTime();
+            if (isNaN(t)) return null;
+            return Math.max(0, Math.floor((Date.now() - t) / 864e5));
+        }
+
+        function alterText(t) {
+            if (t === null) return '';
+            if (t < 1) return abL('seit heute', 'today');
+            if (t < 14) return abL(t === 1 ? 'seit 1 Tag' : 'seit ' + t + ' Tagen', t === 1 ? '1 day' : t + ' days');
+            var w = Math.floor(t / 7);
+            return abL('seit ' + w + ' Wochen', w + ' weeks');
+        }
+
+        function zeileHTML(e) {
+            var b = e.b, st = standVon(b), stL = standLabel(st, b);
+            var name = e.a.name || abL('Azubi ohne Namen', 'Apprentice, no name');
+            var an = String(b.id) === String(aktivId);
+            var bid = esc(b.id);
+            var offen = istOffen(b);
+            var t = offen ? tageSeit(b.datum_bis) : null;
+            // "Offen" steht nicht als Pille in der Liste: im Reiter "Zu prüfen"
+            // waere es auf jeder Zeile dasselbe Wort. Dort traegt das Alter die
+            // Information, und nur die Abweichung bekommt eine Pille.
+            var pille = st === 'open' ? '' : '<span class="ab-wk-state ' + stL[0] + '">' + stL[1] + '</span>';
+            return '<div class="abq-row' + (an ? ' is-aktiv' : '') + (auswahl[b.id] ? ' is-sel' : '') + '" data-bid="' + bid + '">' +
+                (sammelFaehig(b)
+                    ? '<label class="abq-check"><input type="checkbox" data-sel="' + bid + '"' + (auswahl[b.id] ? ' checked' : '') +
+                      ' aria-label="' + esc(abL('KW ' + b.kw + ' von ' + name + ' auswählen', 'Select week ' + b.kw + ' of ' + name)) + '"></label>'
+                    : '<span class="abq-check" aria-hidden="true"></span>') +
+                '<button type="button" class="abq-open" data-open="' + bid + '"' + (an ? ' aria-current="true"' : '') + '>' +
+                '<span class="abk-avatar" aria-hidden="true">' + esc(monogramm(name)) + '</span>' +
+                '<span class="abq-main">' +
+                '<span class="abq-t">' + abL('KW ', 'Week ') + b.kw + '<span class="abq-wer">' + esc(name) + '</span></span>' +
+                '<span class="abq-s">' + esc(fmtRange(b.datum_von, b.datum_bis)) + '</span>' +
+                '</span>' +
+                '<span class="abq-side">' + pille +
+                (t !== null ? '<span class="abq-alter' + (t > 35 ? ' is-spaet' : '') + '">' + esc(alterText(t)) + '</span>' : '') +
+                '</span></button></div>';
+        }
+
+        var LUPE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+
+        function filterleisteHTML() {
+            var basis = eintraege().filter(passtAzubi);
+            var chips = FILTER.map(function (f) {
+                var n = basis.filter(function (e) { return f[2](e.b); }).length;
+                // Leere Filter blenden sich aus — ausser den beiden, die immer
+                // eine Antwort sind ("nichts zu pruefen" ist eine), und dem
+                // gerade gewaehlten, damit er nicht unter dem Zeiger verschwindet.
+                if (!n && f[0] !== 'offen' && f[0] !== 'alle' && filter.status !== f[0]) return '';
+                var an = filter.status === f[0];
+                return '<button type="button" class="abq-chip' + (an ? ' is-an' : '') +
+                    (f[0] === 'geaendert' && n ? ' is-alarm' : '') + '" data-filter="' + f[0] + '" aria-pressed="' + an + '">' +
+                    '<span>' + abL(f[1][0], f[1][1]) + '</span><span class="abq-chip-n">' + n + '</span></button>';
+            }).join('');
+            var azOpts = kontoDaten.azubis.length > 1
+                ? '<select class="abq-select" id="abqAzubi" aria-label="' + abL('Nach Azubi filtern', 'Filter by apprentice') + '">' +
+                  '<option value="">' + abL('Alle Azubis', 'All apprentices') + '</option>' +
+                  kontoDaten.azubis.map(function (a, i) {
+                      return '<option value="' + i + '"' + (filter.azubi === String(i) ? ' selected' : '') + '>' +
+                          esc(a.name || abL('Azubi ohne Namen', 'Apprentice, no name')) + '</option>';
+                  }).join('') + '</select>'
+                : '';
+            return '<div class="abq-leiste">' +
+                '<div class="abq-chips" role="group" aria-label="' + abL('Nach Stand filtern', 'Filter by status') + '">' + chips + '</div>' +
+                '<div class="abq-felder">' + azOpts +
+                '<label class="abq-suche">' + LUPE +
+                '<input type="search" id="abqSuche" autocomplete="off" placeholder="' + abL('KW, Name oder Tätigkeit', 'Week, name or activity') +
+                '" value="' + esc(filter.q) + '" aria-label="' + abL('Wochen durchsuchen', 'Search weeks') + '">' +
+                kbd('/') + '</label>' +
+                '</div></div>';
+        }
+
+        function pruefenHTML() {
+            return filterleisteHTML() +
+                '<div class="abq-split' + (mobilDetail ? ' is-detail' : '') + '" id="abqSplit">' +
+                '<div class="abq-liste" id="abqListe"></div>' +
+                '<div class="abq-rechts" id="abqRechts"></div>' +
+                '</div>' +
+                '<div class="abq-sammel" id="abqSammel" hidden></div>';
+        }
+
+        function leerHTML() {
+            if (filter.q.trim()) {
+                return '<div class="abq-leer"><p class="abq-leer-t">' +
+                    abL('Keine Woche passt zu „' + esc(filter.q.trim()) + '“', 'No week matches “' + esc(filter.q.trim()) + '”') + '</p>' +
+                    '<button type="button" class="abk-textknopf" data-q="suche-weg">' + abL('Suche leeren', 'Clear search') + '</button></div>';
+            }
+            if (filter.status === 'offen') {
+                return '<div class="abq-leer is-fertig">' +
+                    '<span class="abq-leer-mark" aria-hidden="true">' + HAKEN + '</span>' +
+                    '<p class="abq-leer-t">' + abL('Nichts wartet auf Sie', 'Nothing is waiting for you') + '</p>' +
+                    '<p class="abq-leer-s">' + abL(
+                        'Neue Wochen erscheinen hier, sobald Ihre Azubis sie im Berichtsheft abschließen.',
+                        'New weeks show up here as soon as your apprentices complete them in the report book.') + '</p>' +
+                    '<button type="button" class="abk-textknopf" data-filter="alle">' + abL('Alle Wochen ansehen', 'View all weeks') + '</button></div>';
+            }
+            return '<div class="abq-leer"><p class="abq-leer-t">' + abL('Keine Woche in dieser Auswahl', 'No week in this selection') + '</p>' +
+                '<button type="button" class="abk-textknopf" data-filter="offen">' + abL('Zu prüfen anzeigen', 'Show weeks to review') + '</button></div>';
+        }
+
+        function renderListe() {
+            var box = $('abqListe');
+            if (!box) return;
+            var liste = sichtbar();
+            var split = $('abqSplit');
+            split.classList.toggle('is-leer', !liste.length);
+            if (!liste.length) {
+                aktivId = null;
+                mobilDetail = false;
+                split.classList.remove('is-detail');
+                box.innerHTML = leerHTML();
+                $('abqRechts').innerHTML = '';
+                renderSammel();
+                return;
+            }
+            if (!liste.some(function (e) { return String(e.b.id) === String(aktivId); })) aktivId = liste[0].b.id;
+
+            var faehig = liste.filter(function (e) { return sammelFaehig(e.b); });
+            var gewaehlt = faehig.filter(function (e) { return auswahl[e.b.id]; }).length;
+            box.innerHTML = '<div class="abq-lkopf">' +
+                (faehig.length
+                    ? '<label class="abq-check"><input type="checkbox" data-sel-alle' + (gewaehlt && gewaehlt === faehig.length ? ' checked' : '') +
+                      ' aria-label="' + abL('Alle unauffälligen Wochen auswählen', 'Select all unremarkable weeks') + '"></label>'
+                    : '<span class="abq-check" aria-hidden="true"></span>') +
+                '<span>' + abL(liste.length === 1 ? '1 Woche' : liste.length + ' Wochen', liste.length === 1 ? '1 week' : liste.length + ' weeks') + '</span>' +
+                (filter.status === 'offen' ? '<span class="abq-lkopf-r">' + abL('älteste zuerst', 'oldest first') + '</span>' : '') +
+                '</div>' +
+                '<div class="abq-zeilen">' + liste.map(zeileHTML).join('') + '</div>';
+            var alleBox = box.querySelector('[data-sel-alle]');
+            if (alleBox) alleBox.indeterminate = gewaehlt > 0 && gewaehlt < faehig.length;
+
+            renderDetail(liste);
+            renderSammel();
+        }
+
+        function renderDetail(liste) {
+            var rechts = $('abqRechts');
+            if (!rechts) return;
+            var pos = -1;
+            for (var i = 0; i < liste.length; i++) if (String(liste[i].b.id) === String(aktivId)) { pos = i; break; }
+            if (pos === -1) { rechts.innerHTML = ''; return; }
+            var e = liste[pos];
+            rechts.innerHTML = detailHTML(e.b, e.a, pos, liste.length);
+        }
+
+        function renderSammel() {
+            var box = $('abqSammel');
+            if (!box) return;
+            var n = Object.keys(auswahl).length;
+            // Die Entscheidungsleiste der Woche klebt ebenfalls unten — mit
+            // Auswahl rueckt sie ueber die Sammel-Leiste, statt darunter zu liegen.
+            var sp = $('abqSplit');
+            if (sp) sp.classList.toggle('hat-auswahl', n > 0);
+            if (!n) { box.hidden = true; box.innerHTML = ''; return; }
+            box.hidden = false;
+            box.innerHTML = '<span class="abq-sammel-n">' +
+                abL(n === 1 ? '1 Woche ausgewählt' : n + ' Wochen ausgewählt', n === 1 ? '1 week selected' : n + ' weeks selected') + '</span>' +
+                '<span class="abq-sammel-status" id="abqSammelStatus" role="status"></span>' +
+                '<button type="button" class="abk-textknopf" data-q="sel-weg">' + abL('Auswahl aufheben', 'Clear selection') + '</button>' +
+                '<button type="button" class="ab-btn ab-btn-primary abq-sammel-ok" data-q="sel-ok">' +
+                abL(n === 1 ? '1 Woche bestätigen' : n + ' Wochen bestätigen', n === 1 ? 'Approve 1 week' : 'Approve ' + n + ' weeks') + '</button>';
+        }
+
+        // Nach dem Blaettern die gewaehlte Zeile und den Kopf der Woche ins
+        // Bild holen, OHNE die Seite zu verreissen, wenn beides schon sichtbar ist.
+        function aktivInsBild() {
+            var z = document.querySelector('.abq-row.is-aktiv');
+            if (z) z.scrollIntoView({ block: 'nearest' });
+            var d = document.querySelector('.abq-detail');
+            if (d && d.getBoundingClientRect().top < 0) d.scrollIntoView({ block: 'start' });
+        }
+
+        function schritt(richtung) {
+            var liste = sichtbar();
+            if (!liste.length) return;
+            var i = -1;
+            for (var k = 0; k < liste.length; k++) if (String(liste[k].b.id) === String(aktivId)) { i = k; break; }
+            var ni = Math.min(liste.length - 1, Math.max(0, i + richtung));
+            if (ni === i) return;
+            aktivId = liste[ni].b.id;
+            renderListe();
+            aktivInsBild();
+        }
+
+        function oeffneWocheImStapel(bid, ai, status) {
+            ansicht = 'pruefen';
+            filter = { status: status, azubi: ai === undefined || ai === null ? '' : String(ai), q: '' };
+            aktivId = bid || null;
+            mobilDetail = !!bid && istMobil();
+            renderKonto();
+            var s = $('abqSplit');
+            if (s) s.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
+
+        function reiterHTML(g, n) {
+            function r(key, de, en, zahl) {
+                var an = ansicht === key;
+                return '<button type="button" class="abk-reiter' + (an ? ' is-an' : '') + '" role="tab" id="abkR-' + key + '"' +
+                    ' aria-selected="' + an + '" aria-controls="abkAnsicht" tabindex="' + (an ? '0' : '-1') + '" data-ansicht="' + key + '">' +
+                    abL(de, en) + (zahl ? '<span class="abk-reiter-n">' + zahl + '</span>' : '') + '</button>';
+            }
+            return '<div class="abk-reiterleiste" role="tablist" aria-label="' + abL('Bereiche', 'Sections') + '">' +
+                r('pruefen', 'Prüfen', 'Review', g.offen) +
+                r('azubis', 'Azubis', 'Apprentices', n) +
+                r('team', 'Team', 'Team', kontoTeam.length) +
+                '</div>';
+        }
+
+        function renderAnsicht() {
+            var box = $('abkAnsicht');
+            if (!box) return;
+            box.setAttribute('aria-labelledby', 'abkR-' + ansicht);
+            if (ansicht === 'azubis') {
+                box.innerHTML = '<div class="abk-azubis">' + kontoDaten.azubis.map(azubiKarte).join('') + '</div>';
+            } else if (ansicht === 'team') {
+                box.innerHTML = teamPanelHTML(teamFehler);
+                teamFehler = '';
+            } else {
+                box.innerHTML = pruefenHTML();
+                renderListe();
+            }
+        }
+
         function renderKonto() {
             var d = kontoDaten;
-            // Die drei Behaelter unten werden mit `kopf` neu geschrieben. Ohne
-            // das Zuruecksetzen bliebe der Merker auf "offen" stehen und der
+            // Die Behaelter unten werden mit `kopf` neu geschrieben. Ohne das
+            // Zuruecksetzen bliebe der Merker auf "offen" stehen und der
             // naechste Klick klappte einen leeren Kasten zu.
             einladungOffen = false;
-            teamOffen = false;
             var alle = [];
             d.azubis.forEach(function (a) { alle = alle.concat(a.berichte); });
             var g = zahlenFuer(alle);
 
+            // Auswahl nach jeder Aenderung bereinigen: eine inzwischen
+            // entschiedene Woche darf nicht unsichtbar mit abgezeichnet werden.
+            Object.keys(auswahl).forEach(function (id) {
+                var b = findeBericht(id);
+                if (!b || !sammelFaehig(b)) delete auswahl[id];
+            });
+
             // §14 Abs. 1 Nr. 4 BBiG: mindestens monatliche Pruefung. Ab ~5 Wochen
             // ist die aelteste offene Woche sicher ueberfaellig.
-            var ueberfaellig = g.aeltesteOffen &&
-                (Date.now() - new Date(g.aeltesteOffen + 'T12:00:00').getTime()) > 35 * 864e5;
+            var alter = g.offen ? tageSeit(g.aeltesteOffen) : null;
+            var ueberfaellig = alter !== null && alter > 35;
 
-            var hinweis = '';
-            if (g.offen && ueberfaellig) {
-                hinweis = '<div class="abk-hinweis is-warn">' +
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>' +
-                    '<span>' + abL(
+            // Nur noch der Warnfall steht als Band da. Den allgemeinen Satz
+            // "monatlich pruefen" traegt jetzt die Kachel mit dem Alter der
+            // aeltesten Woche — als Zahl, an der man es ablesen kann.
+            var hinweis = ueberfaellig
+                ? '<div class="abk-hinweis is-warn">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>' +
+                  '<span>' + abL(
                     'Die älteste unbearbeitete Woche ist vom ' + fmtDate(g.aeltesteOffen) +
                     ' und damit über einen Monat alt. Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen.',
                     'The oldest unreviewed week is from ' + fmtDate(g.aeltesteOffen) +
-                    ', more than a month ago. Under §14 BBiG training records must be reviewed at least monthly.') + '</span></div>';
-            } else if (g.offen) {
-                hinweis = '<div class="abk-hinweis"><span>' + abL(
-                    'Ausbildungsnachweise sollten nach §14 BBiG mindestens monatlich geprüft werden.',
-                    'Training records should be reviewed at least monthly under §14 BBiG.') + '</span></div>';
-            }
+                    ', more than a month ago. Under §14 BBiG training records must be reviewed at least monthly.') + '</span></div>'
+                : '';
 
             var n = d.azubis.length;
             var kopf = '<header class="abk-kopf">' +
@@ -2750,7 +3435,6 @@
                 '<span class="abk-exp">' + abL('Experimentell', 'Experimental') + '</span></p>' +
                 '<h1 class="abk-firma">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
                 nachweisZeile(d) +
-                teamZeile() +
                 '</div>' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-einladen" onclick="abkEinladen()">' +
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
@@ -2764,17 +3448,20 @@
                 '<div class="abk-kacheln">' +
                 kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
                                              : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
-                       g.offen ? (ueberfaellig ? 'warn' : 'auf') : 'ruhig') +
-                kachel(n, n === 1 ? abL('Azubi', 'apprentice') : abL('Azubis', 'apprentices')) +
+                       g.offen ? (ueberfaellig ? 'warn' : 'auf') : 'ruhig', n ? 'kachel-offen' : '') +
+                kachel(alter === null ? '—' : alter + '<small>' + abL(alter === 1 ? ' Tag' : ' Tage', alter === 1 ? ' day' : ' days') + '</small>',
+                       alter === null ? abL('keine Woche offen', 'no week open')
+                                      : abL('wartet die älteste Woche · §14 BBiG: monatlich', 'oldest week waiting · §14 BBiG: monthly'),
+                       alter === null ? 'ruhig' : (ueberfaellig ? 'warn' : '')) +
                 kachel(g.abgezeichnet, abL('von Ihnen abgezeichnet', 'signed off by you')) +
                 // Nur zeigen, wenn es sie gibt: eine Kachel mit dauerhafter Null
                 // ist eine Frage, die sich niemand gestellt hat.
-                (g.ihk ? kachel(g.ihk, abL('bereits unterschrieben · nicht von Ihnen',
-                                           'already signed · not by you'), 'ihk') : '') +
+                (g.ihk ? kachel(g.ihk, abL('bereits unterschrieben, nicht von Ihnen',
+                                           'already signed, not by you'), 'ihk') : '') +
                 // Meldungen VOR dem §14-Hinweis: eine Woche, die es nicht
                 // mehr gibt, wiegt schwerer als die allgemeine Monatsfrist.
                 '</div>' + meldungenBlock() + hinweis +
-                '<div id="abkEinladung"></div><div id="abkTeam"></div><div id="abkDomain"></div>';
+                '<div id="abkEinladung"></div><div id="abkDomain"></div>';
 
             var koerper;
             if (!n) {
@@ -2787,13 +3474,122 @@
                     '<span>' + abL('Einladungscode erzeugen', 'Create invite code') + '</span></button>' +
                     '</section>';
             } else {
-                // Ab vier Azubis starten die Karten zugeklappt — sonst scrollt
-                // man an jedem Namen ein ganzes Ausbildungsjahr vorbei.
-                var viele = d.azubis.length >= 4;
-                koerper = d.azubis.map(function (a) { return azubiKarte(a, viele); }).join('');
+                koerper = reiterHTML(g, n) + '<div class="abk-ansicht" id="abkAnsicht" role="tabpanel"></div>';
             }
             $('abKonto').innerHTML = kopf + koerper;
+            if (n) renderAnsicht();
+            renderKontoMenue();
             if (!d.nachgewiesen) bestaetigenLaden();
+        }
+
+        // ── Konto-Menue in der Kopfleiste ────────────────────────────────
+        // 🔴 Bis v7.7.0 gab es auf dieser Seite KEIN Abmelden. Ein Ausbilder
+        // am geteilten Werkstatt-PC konnte die Sitzung nur ueber die App oder
+        // die Browserdaten loswerden.
+        function renderKontoMenue() {
+            var slot = $('abHeadNote');
+            if (!slot || !kontoDaten) return;
+            var mail = kontoDaten.kontoEmail || '';
+            var name = kontoIch.name || '';
+            var zeig = name || mail || abL('Konto', 'Account');
+            // Ohne Namen und Adresse kein "?" als Monogramm — das las sich wie
+            // ein Fehler. Dann eine Person als Zeichen.
+            var mono = (name || mail)
+                ? esc(monogramm(name || mail.split('@')[0]))
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>';
+            slot.className = 'ab-head-note abk-konto-slot';
+            slot.innerHTML = '<div class="abk-menue">' +
+                '<button type="button" class="abk-menue-knopf" id="abkMenueKnopf" aria-haspopup="menu" aria-expanded="false" aria-controls="abkMenue">' +
+                '<span class="abk-avatar is-klein" aria-hidden="true">' + mono + '</span>' +
+                '<span class="abk-menue-name">' + esc(zeig) + '</span>' +
+                '<svg class="abk-menue-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+                '</button>' +
+                '<div class="abk-menue-liste" id="abkMenue" role="menu" hidden>' +
+                '<div class="abk-menue-wer">' + (name ? '<b>' + esc(name) + '</b>' : '') + (mail ? '<span>' + esc(mail) + '</span>' : '') + '</div>' +
+                '<button type="button" role="menuitem" data-m="team">' + abL('Team verwalten', 'Manage team') + '</button>' +
+                '<button type="button" role="menuitem" data-m="kuerzel">' + abL('Tastenkürzel', 'Keyboard shortcuts') + kbd('?') + '</button>' +
+                '<button type="button" role="menuitem" data-m="abmelden" class="is-weg">' + abL('Abmelden', 'Sign out') + '</button>' +
+                '</div></div>';
+        }
+
+        function menueZu() {
+            var l = $('abkMenue'), k = $('abkMenueKnopf');
+            if (l) l.hidden = true;
+            if (k) k.setAttribute('aria-expanded', 'false');
+        }
+
+        function menueAuf() {
+            var l = $('abkMenue'), k = $('abkMenueKnopf');
+            if (!l) return;
+            l.hidden = false;
+            k.setAttribute('aria-expanded', 'true');
+            var erst = l.querySelector('[role="menuitem"]');
+            if (erst) erst.focus();
+        }
+
+        async function abmelden(knopf) {
+            knopf.disabled = true;
+            knopf.textContent = abL('Wird abgemeldet …', 'Signing out …');
+            try {
+                await BHB2B.abmelden();
+                // Ohne Fragment neu laden: die Seite faellt dann von selbst auf
+                // den Einstieg zurueck (keine Sitzung → kein Cockpit).
+                location.replace(location.pathname);
+            } catch (e) {
+                knopf.disabled = false;
+                knopf.textContent = abL('Abmelden', 'Sign out');
+                toast(abL('Abmelden hat nicht geklappt. Bitte noch einmal.', 'Sign-out failed. Please try again.'), true);
+            }
+        }
+
+        // ── Rueckmeldung nach einer Entscheidung ─────────────────────────
+        // Die Woche verschwindet nach dem Bestaetigen aus "Zu prüfen" — ohne
+        // Rueckmeldung sieht das aus, als waere sie weggesprungen.
+        var toastZeit = null;
+        function toast(text, fehler) {
+            var t = $('abqToast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'abqToast';
+                t.className = 'abq-toast';
+                t.setAttribute('role', 'status');
+                document.body.appendChild(t);
+            }
+            t.textContent = text;
+            t.classList.toggle('is-fehler', !!fehler);
+            t.classList.add('is-da');
+            clearTimeout(toastZeit);
+            toastZeit = setTimeout(function () { t.classList.remove('is-da'); }, 2800);
+        }
+
+        // ── Tastenkuerzel-Hilfe ──────────────────────────────────────────
+        function kuerzelHilfe(auf) {
+            var h = $('abqHilfe');
+            if (!h) {
+                h = document.createElement('div');
+                h.id = 'abqHilfe';
+                h.className = 'abq-hilfe';
+                h.hidden = true;
+                h.innerHTML = '<div class="abq-hilfe-karte" role="dialog" aria-modal="true" aria-labelledby="abqHilfeT">' +
+                    '<p class="abq-hilfe-t" id="abqHilfeT">' + abL('Tastenkürzel', 'Keyboard shortcuts') + '</p>' +
+                    '<dl class="abq-hilfe-liste">' +
+                    [['J', abL('Nächste Woche', 'Next week')], ['K', abL('Vorherige Woche', 'Previous week')],
+                     ['A', abL('Bestätigen', 'Approve')], ['R', abL('Zurückgeben', 'Send back')],
+                     ['X', abL('Für Sammel-Freigabe auswählen', 'Select for bulk approval')],
+                     ['/', abL('Suchen', 'Search')], ['Esc', abL('Schließen, Suche verlassen', 'Close, leave search')],
+                     ['?', abL('Diese Übersicht', 'This overview')]]
+                        .map(function (p) { return '<dt><kbd class="abq-kbd">' + p[0] + '</kbd></dt><dd>' + p[1] + '</dd>'; }).join('') +
+                    '</dl>' +
+                    '<button type="button" class="ab-btn ab-btn-ghost abq-hilfe-zu" data-hilfe-zu>' + abL('Schließen', 'Close') + '</button>' +
+                    '</div>';
+                h.addEventListener('click', function (e) {
+                    if (e.target === h || e.target.closest('[data-hilfe-zu]')) kuerzelHilfe(false);
+                });
+                document.body.appendChild(h);
+            }
+            var offen = auf === undefined ? h.hidden : auf;
+            h.hidden = !offen;
+            if (offen) h.querySelector('[data-hilfe-zu]').focus();
         }
 
         // ── Einladen (bisher nur im Berichtsheft moeglich) ───────────
@@ -3365,34 +4161,104 @@
             card.style.opacity = on ? '0.6' : '';
         }
 
+        // Was nach einer erfolgreichen Freigabe am Bericht im Speicher gilt —
+        // an EINER Stelle, weil Einzel- und Sammel-Freigabe sie beide brauchen.
+        function vermerkeFreigabe(bericht, entscheidung, note) {
+            bericht.freigabe = {
+                bericht_id: bericht.id, entscheidung: entscheidung,
+                anmerkung: note || '', inhalt: bericht.inhalt,
+                erstellt_at: new Date().toISOString()
+            };
+            // Die frische Freigabe deckt den jetzigen Inhalt ab — damit ist
+            // auch jeder Aenderungsbefund erledigt, nicht nur `veraendert`.
+            // Bliebe `diff` stehen, zeigte die Karte nach dem Bestaetigen
+            // weiter „geändert seit Ihrer Rückgabe" gegen einen Stand, den
+            // es nicht mehr gibt.
+            bericht.veraendert = false;
+            bericht.nachgebessert = false;
+            bericht.diff = null;
+            delete auswahl[bericht.id];
+        }
+
         async function kontoEntscheiden(bid, entscheidung, note, card) {
             var bericht = findeBericht(bid);
             if (!bericht) return;
+            var vorher = sichtbar().map(function (e) { return String(e.b.id); });
+            var idx = vorher.indexOf(String(bid));
             kontoBusy(card, true);
             try {
                 await BHB2B.freigabeSchreiben(bid, entscheidung, note || '', bericht);
-                bericht.freigabe = {
-                    bericht_id: bid, entscheidung: entscheidung,
-                    anmerkung: note || '', inhalt: bericht.inhalt,
-                    erstellt_at: new Date().toISOString()
-                };
-                // Die frische Freigabe deckt den jetzigen Inhalt ab — damit ist
-                // auch jeder Aenderungsbefund erledigt, nicht nur `veraendert`.
-                // Bliebe `diff` stehen, zeigte die Karte nach dem Bestaetigen
-                // weiter „geändert seit Ihrer Rückgabe" gegen einen Stand, den
-                // es nicht mehr gibt.
-                bericht.veraendert = false;
-                bericht.nachgebessert = false;
-                bericht.diff = null;
+                vermerkeFreigabe(bericht, entscheidung, note);
+                // Weiter mit der naechsten Woche, statt zurueck an den Anfang:
+                // faellt die entschiedene aus der Sicht (Zu prüfen), rueckt die
+                // naechste an ihren Platz; bleibt sie (Alle), geht es eins weiter.
+                if (idx !== -1) {
+                    var nachher = sichtbar().map(function (e) { return String(e.b.id); });
+                    var jetzt = nachher.indexOf(String(bid));
+                    aktivId = jetzt !== -1
+                        ? (nachher[jetzt + 1] || bid)
+                        : (nachher[idx] || nachher[idx - 1] || null);
+                    if (!aktivId) mobilDetail = false;
+                }
                 renderKonto();
+                toast(entscheidung === 'approved'
+                    ? abL('KW ' + bericht.kw + ' bestätigt', 'Week ' + bericht.kw + ' approved')
+                    : abL('KW ' + bericht.kw + ' zurückgegeben', 'Week ' + bericht.kw + ' sent back'));
             } catch (e) {
                 kontoBusy(card, false);
                 var box = document.createElement('p');
-                box.className = 'abk-hint';
-                box.style.color = 'var(--danger)';
+                box.className = 'abk-hint is-fehler';
+                box.setAttribute('role', 'alert');
                 box.textContent = (e && e.message) || abL('Konnte nicht gespeichert werden.', 'Could not be saved.');
-                card.querySelector('.ab-wk-body').appendChild(box);
+                (card.querySelector('.abq-dfuss') || card).appendChild(box);
             }
+        }
+
+        async function sammelBestaetigen() {
+            if (sammelLaeuft) return;
+            var status = $('abqSammelStatus');
+            if (!kontoDaten.nachgewiesen) {
+                if (status) status.textContent = abL('Abzeichnen geht erst, wenn Ihr Betrieb bestätigt ist.',
+                                                     'Signing off works once your company is confirmed.');
+                return;
+            }
+            var ids = Object.keys(auswahl).filter(function (id) {
+                var b = findeBericht(id);
+                return b && sammelFaehig(b);
+            });
+            if (!ids.length) return;
+            sammelLaeuft = true;
+            var box = $('abqSammel');
+            if (box) box.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+            var ok = 0, fehler = null;
+            // Nacheinander, nicht parallel: jede Freigabe haengt per
+            // prev_pruefsumme an der vorigen desselben Berichts, und ein Fehler
+            // soll den Rest anhalten statt zehn gleiche Meldungen zu werfen.
+            for (var i = 0; i < ids.length; i++) {
+                var b = findeBericht(ids[i]);
+                if (status) status.textContent = abL((i + 1) + ' von ' + ids.length + ' …', (i + 1) + ' of ' + ids.length + ' …');
+                try {
+                    await BHB2B.freigabeSchreiben(b.id, 'approved', '', b);
+                    vermerkeFreigabe(b, 'approved', '');
+                    ok++;
+                } catch (e) { fehler = e; break; }
+            }
+            sammelLaeuft = false;
+            renderKonto();
+            if (fehler) {
+                toast(abL(ok + ' bestätigt, dann abgebrochen: ', ok + ' approved, then stopped: ') +
+                      ((fehler && fehler.message) || abL('Fehler beim Speichern', 'error while saving')), true);
+            } else {
+                toast(abL(ok === 1 ? '1 Woche bestätigt' : ok + ' Wochen bestätigt', ok === 1 ? '1 week approved' : ok + ' weeks approved'));
+            }
+        }
+
+        function auswahlUmschalten(bid, an) {
+            var b = findeBericht(bid);
+            if (!b || !sammelFaehig(b)) return;
+            if (an === undefined) an = !auswahl[bid];
+            if (an) auswahl[bid] = true; else delete auswahl[bid];
+            renderListe();
         }
 
         function bindeKonto() {
@@ -3401,20 +4267,62 @@
             var wrap = $('abKonto');
 
             wrap.addEventListener('click', function (e) {
-                var head = e.target.closest('.ab-wk-head');
-                if (head) {
-                    var wk = head.closest('.ab-wk');
-                    var offen = wk.classList.toggle('is-open');
-                    head.setAttribute('aria-expanded', String(offen));
+                var reiter = e.target.closest('[data-ansicht]');
+                if (reiter) {
+                    ansicht = reiter.getAttribute('data-ansicht');
+                    mobilDetail = false;
+                    renderKonto();
+                    var neu = $('abkR-' + ansicht);
+                    if (neu) neu.focus();
                     return;
                 }
+                var fl = e.target.closest('[data-filter]');
+                if (fl) {
+                    filter.status = fl.getAttribute('data-filter');
+                    mobilDetail = false;
+                    renderAnsicht();
+                    return;
+                }
+                var auf = e.target.closest('[data-open]');
+                if (auf) {
+                    aktivId = auf.getAttribute('data-open');
+                    if (istMobil()) mobilDetail = true;
+                    var sp = $('abqSplit');
+                    if (sp) sp.classList.toggle('is-detail', mobilDetail);
+                    renderListe();
+                    if (mobilDetail && sp) sp.scrollIntoView({ block: 'start' });
+                    return;
+                }
+                var wz = e.target.closest('[data-wz]');
+                if (wz) { oeffneWocheImStapel(wz.getAttribute('data-wz'), wz.getAttribute('data-ai'), 'alle'); return; }
+
+                var q = e.target.closest('[data-q]');
+                if (q) {
+                    var was = q.getAttribute('data-q');
+                    if (was === 'prev') schritt(-1);
+                    else if (was === 'next') schritt(1);
+                    else if (was === 'liste') {
+                        mobilDetail = false;
+                        $('abqSplit').classList.remove('is-detail');
+                        var z = document.querySelector('.abq-row.is-aktiv');
+                        if (z) z.scrollIntoView({ block: 'center' });
+                    }
+                    else if (was === 'sel-weg') { auswahl = {}; renderListe(); }
+                    else if (was === 'sel-ok') sammelBestaetigen();
+                    else if (was === 'suche-weg') { filter.q = ''; renderAnsicht(); }
+                    else if (was === 'az-offen') oeffneWocheImStapel(null, q.getAttribute('data-ai'), 'offen');
+                    else if (was === 'az-alle') oeffneWocheImStapel(null, q.getAttribute('data-ai'), 'alle');
+                    else if (was === 'kachel-offen') oeffneWocheImStapel(null, null, 'offen');
+                    return;
+                }
+
                 var mb = e.target.closest('button[data-mk]');
                 if (mb) {
                     if (mb.getAttribute('data-mk') === 'alle') {
                         meldungenQuittieren(kontoMeldungen.map(function (m) { return m.id; }));
                     } else {
-                        var z = mb.closest('.abk-meld-zeile');
-                        if (z) meldungenQuittieren([z.getAttribute('data-mid')]);
+                        var mz = mb.closest('.abk-meld-zeile');
+                        if (mz) meldungenQuittieren([mz.getAttribute('data-mid')]);
                     }
                     return;
                 }
@@ -3459,13 +4367,113 @@
                 }
             });
 
-            wrap.addEventListener('keydown', function (e) {
-                if (e.key !== 'Enter' && e.key !== ' ') return;
-                var head = e.target.closest('.ab-wk-head');
-                if (!head) return;
-                e.preventDefault();
-                head.click();
+            wrap.addEventListener('change', function (e) {
+                var sel = e.target.closest('[data-sel]');
+                if (sel) { auswahlUmschalten(sel.getAttribute('data-sel'), sel.checked); return; }
+                if (e.target.closest('[data-sel-alle]')) {
+                    var an = e.target.checked;
+                    sichtbar().forEach(function (x) {
+                        if (!sammelFaehig(x.b)) return;
+                        if (an) auswahl[x.b.id] = true; else delete auswahl[x.b.id];
+                    });
+                    renderListe();
+                    return;
+                }
+                if (e.target.id === 'abqAzubi') { filter.azubi = e.target.value; mobilDetail = false; renderAnsicht(); }
             });
+
+            // Tippen filtert nur die Liste — die Filterleiste bleibt stehen,
+            // sonst verloere das Suchfeld bei jedem Buchstaben den Fokus.
+            wrap.addEventListener('input', function (e) {
+                if (e.target.id !== 'abqSuche') return;
+                filter.q = e.target.value;
+                renderListe();
+            });
+
+            // Reiter per Pfeiltaste wechseln (ARIA-Tabs-Muster).
+            wrap.addEventListener('keydown', function (e) {
+                var r = e.target.closest('[role="tab"]');
+                if (!r || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
+                var alle = [].slice.call(wrap.querySelectorAll('[role="tab"]'));
+                var i = alle.indexOf(r) + (e.key === 'ArrowRight' ? 1 : -1);
+                var ziel = alle[(i + alle.length) % alle.length];
+                e.preventDefault();
+                ziel.click();
+            });
+
+            // Konto-Menue sitzt in der Kopfleiste, ausserhalb von #abKonto.
+            document.querySelector('.ab-head').addEventListener('click', function (e) {
+                if (e.target.closest('#abkMenueKnopf')) {
+                    if ($('abkMenue').hidden) menueAuf(); else menueZu();
+                    return;
+                }
+                var m = e.target.closest('[data-m]');
+                if (!m) return;
+                var was = m.getAttribute('data-m');
+                if (was === 'abmelden') { abmelden(m); return; }
+                menueZu();
+                if (was === 'team') abkTeamPanel();
+                else if (was === 'kuerzel') kuerzelHilfe(true);
+            });
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('.abk-menue')) menueZu();
+            });
+
+            document.addEventListener('keydown', tastenKonto);
+        }
+
+        // 🔴 Tastenkuerzel duerfen nie in ein Eingabefeld hineinfeuern — und
+        // auch nicht, solange ein Dialog offen ist (CLAUDE.md: im Berichtsheft
+        // legten N/E/T einen zweiten Dialog ueber den ersten). Deshalb zuerst
+        // Feld, contenteditable und offene Ebenen pruefen.
+        function tastenKonto(e) {
+            if (!kontoDaten || $('abKonto').style.display === 'none') return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            var t = e.target || {};
+            var tag = t.tagName;
+            var imFeld = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t.isContentEditable;
+            var hilfe = $('abqHilfe');
+            var hilfeOffen = hilfe && !hilfe.hidden;
+            var menueOffen = $('abkMenue') && !$('abkMenue').hidden;
+
+            if (e.key === 'Escape') {
+                if (hilfeOffen) { kuerzelHilfe(false); return; }
+                if (menueOffen) { menueZu(); $('abkMenueKnopf').focus(); return; }
+                if (t.id === 'abqSuche') { t.blur(); return; }
+                var rj = document.querySelector('.abq-detail .abk-reject:not([hidden])');
+                if (rj) { rj.hidden = true; return; }
+                if (mobilDetail) { var zb = document.querySelector('[data-q="liste"]'); if (zb) zb.click(); }
+                return;
+            }
+            if (imFeld || hilfeOffen || menueOffen) return;
+            if (e.key === '?') { e.preventDefault(); kuerzelHilfe(true); return; }
+            if (ansicht !== 'pruefen' || !$('abqSplit')) return;
+
+            var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+            // Pfeiltasten nur, wenn der Fokus in der Liste steht — sonst
+            // gehoeren sie dem Scrollen der Seite.
+            var inListe = t.closest && t.closest('.abq-liste');
+            if (k === 'j' || (inListe && k === 'ArrowDown')) { e.preventDefault(); schritt(1); return; }
+            if (k === 'k' || (inListe && k === 'ArrowUp')) { e.preventDefault(); schritt(-1); return; }
+            if (k === '/') { e.preventDefault(); var s = $('abqSuche'); if (s) s.focus(); return; }
+            if (k === 'x') { e.preventDefault(); if (aktivId) auswahlUmschalten(aktivId); return; }
+            if (k === 'a' || k === 'r') {
+                var b = document.querySelector('.abq-detail button[data-k="' + (k === 'a' ? 'approve' : 'reject') + '"]');
+                if (b && !b.disabled) { e.preventDefault(); b.click(); }
+            }
+        }
+
+        // Platzhalter in der Form des fertigen Cockpits. Ein "Wird geladen …"
+        // als Textzeile liess die Seite fuer die Dauer mehrerer Abfragen leer
+        // aussehen, und danach sprang alles an seinen Platz.
+        function skelettHTML() {
+            var zeilen = '';
+            for (var i = 0; i < 6; i++) zeilen += '<div class="abk-sk abk-sk-zeile"></div>';
+            return '<div class="abk-skel" aria-busy="true" role="status" aria-label="' + abL('Wird geladen', 'Loading') + '">' +
+                '<div class="abk-sk-kopf"><div class="abk-sk abk-sk-mono"></div><div><div class="abk-sk abk-sk-t"></div><div class="abk-sk abk-sk-s"></div></div></div>' +
+                '<div class="abk-kacheln"><div class="abk-sk abk-sk-kachel"></div><div class="abk-sk abk-sk-kachel"></div><div class="abk-sk abk-sk-kachel"></div></div>' +
+                '<div class="abk-sk-split"><div>' + zeilen + '</div><div class="abk-sk abk-sk-detail"></div></div>' +
+                '</div>';
         }
 
         async function bootKonto() {
@@ -3474,11 +4482,18 @@
             // Die 680px sind eine LESEBREITE fuer den einzelnen Nachweis. Das
             // Konto-Cockpit ist eine Uebersicht und braucht mehr.
             document.querySelector('.ab-wrap').classList.add('is-konto');
-            $('abHeadNote').textContent = abL('Betrieb', 'Company');
-            $('abKonto').innerHTML = '<p class="abk-load">' + abL('Wird geladen …', 'Loading …') + '</p>';
+            // Am <body>, weil auch Kopfleiste und Fusszeile umschalten: das
+            // Cockpit ist ein Werkzeug, keine Seite — der Marketing-Footer
+            // mit "App öffnen / Anbieter-Vergleich" hat darunter nichts verloren.
+            document.body.classList.add('is-konto');
+            $('abHeadNote').textContent = '';
+            $('abKonto').innerHTML = skelettHTML();
 
             try { kontoDaten = await BHB2B.azubiBerichte(); }
             catch (e) { kontoDaten = null; }
+            // Name fuer das Konto-Menue. status() ist zu diesem Zeitpunkt
+            // gecacht (boot() hat es gerade geholt) — kein zweiter Netzabruf.
+            try { var stt = await BHB2B.status(); kontoIch.name = (stt && stt.anzeigeName) || ''; } catch (e) { /* ohne Namen */ }
 
             if (!kontoDaten) {
                 $('abKonto').innerHTML = '<p class="abk-load">' + abL(
