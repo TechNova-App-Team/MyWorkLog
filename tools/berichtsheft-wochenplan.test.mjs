@@ -153,4 +153,33 @@ ok(abt.length === 0, 'die Abteilung wird kein Stichpunkt', JSON.stringify(abt));
 ok(X._customContextEntries('', 'Lagerlogistik').length === 1,
     'Gegenprobe: eine Abteilung mit bekanntem Begriff schon');
 
+// ═══════════════════════════════════════════════════════════════════════
+// Gemeldet 27.09.2026: der Assistent reicht "Mittwoch, 16.9.: erster Schultag
+// in der 11c, …" weiter. Im Heft stand "Ich habe zum Thema 16.9.: erster   in
+// der 11c eine Gruppenarbeit vorbereitet." — Datum im Text, Schulwort mitten
+// herausgeschnitten, und ein Fach-Rahmen um einen erzaehlten Satz.
+gruppe('Wochentext aus dem Assistenten (Datum, Schultag im Satz)');
+const ASSI = 'Mittwoch, 16.9.: erster Schultag in der 11c, neue Lehrer kennengelernt, den ganzen Ablauf durchgegangen.';
+const pa = X._parseWochenplan(ASSI);
+const mi = (pa.perDay[2] || []).join(' | ');
+ok(pa.schoolDays.join() === '2', 'Mittwoch ist Schultag', JSON.stringify(pa.schoolDays));
+ok(!mi.includes('16.9'), 'das Datum steht nicht im Text', mi);
+ok(mi.includes('erster Schultag in der 11c'), 'Schulwort mitten im Satz bleibt stehen', mi);
+ok(X._parseWochenplan('Mittwoch (16.): Berufsschule, Thema Routing').perDay[2]?.[0] === 'Routing',
+    '"(16.):" weg, vorn stehendes Schulwort weiterhin abgeschnitten', JSON.stringify(X._parseWochenplan('Mittwoch (16.): Berufsschule, Thema Routing').perDay));
+ok(X._parseWochenplan('Mo: 2. Etage verkabelt').perDay[0]?.[0] === '2. Etage verkabelt',
+    'Gegenprobe: "2. Etage" ist kein Datum', JSON.stringify(X._parseWochenplan('Mo: 2. Etage verkabelt').perDay));
+
+const wa = X.generateWeek('sysadmin', {
+    yearNum: 2, umfang: 'mittel', form: 'ichform',
+    selectedDays: [0, 1, 2, 3, 4], schoolDayIndices: [2], department: '', calendarWeek: 38, customPrompt: ASSI,
+});
+const miTxt = (wa.days.find(d => d.index === 2)?.entries || []).join(' | ');
+ok(miTxt.includes('Berufsschule: Neue Lehrer kennengelernt.'), 'Erzaehlung bekommt den neutralen Rahmen', miTxt);
+ok(miTxt.includes('Berufsschule: Erster Schultag in der 11c.'), 'auch der lange Satz', miTxt);
+ok(!/Thema (Erster|Neue|Den ganzen)/.test(miTxt), 'kein "zum Thema <Satz>"', miTxt);
+// Gegenprobe: ein echtes Fach behaelt die Fach-Rahmen.
+ok(X.schulSaetze('Subnetting und VLAN', 'ichform').length > 1, 'Fachbegriff → Fach-Rahmen (mehrere Varianten)');
+ok(X.schulSaetze('neue Lehrer kennengelernt', 'ichform').length === 1, 'Erzaehlung → genau der neutrale Rahmen');
+
 abschluss('Wochenplan');

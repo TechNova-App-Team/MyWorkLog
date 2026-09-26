@@ -285,7 +285,7 @@ function systemPrompt() {
         '- tage: gearbeitete Wochentage als Liste, 0=Montag bis 4=Freitag',
         '- schultage: Berufsschultage als Liste 0 bis 4, [] = keiner',
         '- tagStatus: Objekt Tag→Status, z. B. {"4":"krank"}; Status "krank" | "urlaub" | "feiertag" | "" (= wieder normal)',
-        '- kw: Kalenderwoche 1 bis 53',
+        '- kw: Kalenderwoche 1 bis 53. Nennt er ein Datum (auch nur "den 16.") oder "letzte Woche", setze kw IMMER mit — aus der Kalenderwochen-Tabelle unten, nicht selbst rechnen.',
         'Deutung: "Ausbilder streng" ohne weitere Angabe → umfang "ausfuehrlich". "locker", "entspannt", "kurz" → umfang "kurz". "nur Stichpunkte" → form "stichpunkte". "ganze Sätze" → form "saetze". Ein Wochentag mit Schule oder Berufsschule gehört in schultage.',
         '',
         'wochenText: Wenn der Azubi beschreibt, was er gemacht hat, schreib ALLE Tätigkeiten dieser Woche hier zusammen — die bisherigen (siehe unten) plus die neuen, in seinen Worten, mit Tagen, wenn er sie nennt. Sonst "".',
@@ -309,6 +309,7 @@ function systemPrompt() {
         'Bisherige Tätigkeiten dieser Woche: ' + (gespraech.wocheText || '(noch keine)'),
         'Berufsliste: ' + berufsliste(),
         'Heute ist ' + heute.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + '.',
+        'Kalenderwochen: ' + kwTabelle(heute),
     ].join('\n');
 }
 
@@ -366,6 +367,81 @@ async function verstehen(nachricht) {
     }
 }
 
+// 🔴 Das Flag `erzeugen` allein reicht nicht. Gemessen am 27.09.2026, dreimal
+// dieselbe Nachricht an Santé: einmal false mit Rueckfrage, einmal true, einmal
+// FEHLTE das Feld — waehrend die Antwort "Ich schreibe die Woche jetzt" sagte.
+// Der Chat kuendigte an und tat nichts. Die Regel aus dem Prompt ist
+// deterministisch, also rechnet der Client sie selbst nach: neue Taetigkeiten
+// und keine Rueckfrage in der Antwort → schreiben. Mit Rueckfrage wartet er,
+// sonst stuende unter "Hast du auch was im Betrieb gemacht?" schon die Woche.
+function sollErzeugen(ergebnis, textVorher, textJetzt, bereit) {
+    if (!bereit || !textJetzt) return false;
+    if (ergebnis.erzeugen === true) return true;
+    const neu = textJetzt !== textVorher;
+    const fragt = String(ergebnis.antwort || '').includes('?');
+    return neu && !fragt;
+}
+
+// Das Modell rechnet Kalenderwochen falsch (16.09.2026 → KW 39, richtig 38).
+// Nachschlagen statt rechnen: die Wochen um heute mit Montag–Sonntag.
+function kwTabelle(heute) {
+    const mo = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate());
+    mo.setDate(mo.getDate() - ((mo.getDay() + 6) % 7));
+    const fmt = (d) => d.getDate() + '.' + (d.getMonth() + 1) + '.';
+    const zeilen = [];
+    for (let w = -4; w <= 1; w++) {
+        const a = new Date(mo); a.setDate(a.getDate() + w * 7);
+        const b = new Date(a); b.setDate(b.getDate() + 6);
+        const kw = parseInt(wochenSchluessel(a).split('-W')[1], 10);
+        zeilen.push('KW ' + kw + ' = ' + fmt(a) + '–' + fmt(b) + (w === 0 ? ' (diese Woche)' : ''));
+    }
+    return zeilen.join('; ');
+}
+
+// 🔴 Auch mit der Tabelle im Prompt trifft die Kette die KW nicht verlaesslich
+// (27.09.2026, viermal "16. Mi": KW 38, fehlt, fehlt, KW 40 — und einmal
+// schultage [0] statt [2]). Steht in der Nachricht ein EINDEUTIGES Datum,
+// rechnet der Client die Woche selbst und ueberstimmt das Modell.
+// Eindeutig heisst: "16.9." / "16.09.2026", "16. September", oder "16." mit
+// Wochentag daneben ("16. Mi", "Mi 16."). Ein nacktes "2." bleibt liegen —
+// das ist fast immer "2. Lehrjahr", nie ein Datum.
+const MONATE = ['jan', 'feb', 'mär', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dez'];
+const WT_KURZ = { mo: 1, di: 2, mi: 3, do: 4, fr: 5, sa: 6, so: 0 };
+function datumAusText(text, heute) {
+    const s = String(text || '').toLowerCase();
+    const h = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate());
+    const gueltig = (d, t, m, j) => d.getFullYear() === j && d.getMonth() === m && d.getDate() === t;
+
+    let m = s.match(/(?:^|[^\d])(\d{1,2})\.\s*(\d{1,2})\.(\d{2,4})?/);
+    let tag, monat, jahr;
+    if (m) { tag = +m[1]; monat = +m[2] - 1; jahr = m[3] ? +m[3] : null; }
+    if (!m) {
+        m = s.match(/(?:^|[^\d])(\d{1,2})\.?\s*(jan|feb|mär|maer|apr|mai|jun|jul|aug|sep|okt|nov|dez)/);
+        if (m) { tag = +m[1]; monat = MONATE.indexOf(m[2] === 'maer' ? 'mär' : m[2]); jahr = null; }
+    }
+    if (m) {
+        if (jahr != null && jahr < 100) jahr += 2000;
+        let j = jahr != null ? jahr : h.getFullYear();
+        let d = new Date(j, monat, tag);
+        // Ohne Jahr: ein Datum weit in der Zukunft meint das Vorjahr ("28.12." im Januar).
+        if (jahr == null && d - h > 60 * 864e5) { j--; d = new Date(j, monat, tag); }
+        return gueltig(d, tag, monat, j) ? d : null;
+    }
+
+    // "16. Mi" oder "Mi 16." / "Mittwoch, den 16." — Tag nur mit Wochentag daneben.
+    m = s.match(/(?:^|[^\d])(\d{1,2})\.\s*(mo|di|mi|do|fr|sa|so)[a-z]*\b/) ||
+        s.match(/\b(mo|di|mi|do|fr|sa|so)[a-z]*\.?,?\s*(?:den\s+)?(\d{1,2})\./);
+    if (!m) return null;
+    const zahl = /^\d/.test(m[1]) ? +m[1] : +m[2];
+    const wt = WT_KURZ[/^\d/.test(m[1]) ? m[2] : m[1]];
+    // Im Fenster der KW-Tabelle suchen: fuenf Wochen zurueck, eine vor.
+    for (let i = -35; i <= 13; i++) {
+        const d = new Date(h); d.setDate(d.getDate() + i);
+        if (d.getDate() === zahl && d.getDay() === wt) return d;
+    }
+    return null;
+}
+
 // Was umgestellt wurde, als kurze Marken unter der Antwort — aus dem STAND
 // nach dem Setzen gelesen, nicht aus dem, was das Modell behauptet hat.
 function chipsFuer(geaendert) {
@@ -412,12 +488,15 @@ async function senden(e) {
         return;
     }
 
-    const geaendert = AIStudio.konfigSetzen(ergebnis.einstellungen || {});
+    const einst = Object.assign({}, ergebnis.einstellungen || {});
+    const datum = datumAusText(text, new Date());
+    if (datum) einst.kw = parseInt(wochenSchluessel(datum).split('-W')[1], 10);
+    const geaendert = AIStudio.konfigSetzen(einst);
+    const textVorher = gespraech.wocheText;
     if (typeof ergebnis.wochenText === 'string' && ergebnis.wochenText.trim()) {
         gespraech.wocheText = ergebnis.wochenText.trim().slice(0, 2000);
     }
-    const k = AIStudio.konfig();
-    const erzeugen = !!ergebnis.erzeugen && k.bereit && !!gespraech.wocheText;
+    const erzeugen = sollErzeugen(ergebnis, textVorher, gespraech.wocheText, AIStudio.konfig().bereit);
 
     beschaeftigt = false;
     sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert) });
@@ -607,6 +686,6 @@ return {
     oeffnen, schliessen, senden, einstellungen, uebernehmen, bearbeiten, nochmal,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
-    _intern: { ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen },
+    _intern: { ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen, sollErzeugen, kwTabelle, datumAusText },
 };
 })();

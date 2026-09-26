@@ -135,4 +135,46 @@ t.ok(istAbgelaufen({ nachrichten: eine, woche: '2026-W39' }, new Date(2026, 8, 2
 t.ok(istAbgelaufen({ nachrichten: eine, woche: '2026-W39', erledigt: true }, so), 'Woche uebernommen → frisch');
 t.ok(istAbgelaufen({ nachrichten: eine }, so), 'Altbestand ohne Woche → einmal frisch');
 
+// ── 5. Wer entscheidet, ob geschrieben wird (27.09.2026) ─────────────────
+// Drei echte Antworten von Santé auf DIESELBE Nachricht ("schreib mir fuern
+// 16. Mi einen Schul-Eintrag …"). Die dritte kuendigte an und liess das Flag
+// weg — der Chat schrieb nichts.
+t.gruppe('Schreiben oder nicht');
+const { sollErzeugen, kwTabelle } = e.sandbox.AISChat._intern;
+const WT = 'Mittwoch, 16. September: Erster Schultag in der 11c, neue Lehrer kennengelernt.';
+t.ok(sollErzeugen({ antwort: 'Ich schreibe die Woche jetzt.', wochenText: WT }, '', WT, true),
+    'Flag fehlt, Antwort kuendigt an, neuer Wochentext → schreiben (der gemeldete Fall)');
+t.ok(sollErzeugen({ antwort: 'Ich schreibe die Woche jetzt.', erzeugen: true }, '', WT, true), 'Flag true → schreiben');
+t.ok(!sollErzeugen({ antwort: 'Schultag eingetragen. Hast du auch was im Beruf gemacht?', erzeugen: false }, '', WT, true),
+    'Rueckfrage in der Antwort → warten (Gegenprobe)');
+t.ok(!sollErzeugen({ antwort: 'Alles klar, 2. Lehrjahr.' }, WT, WT, true), 'Wochentext unveraendert → nicht neu schreiben');
+t.ok(!sollErzeugen({ antwort: 'Ich schreibe jetzt.', erzeugen: true }, '', WT, false), 'ohne Beruf → nie');
+t.ok(!sollErzeugen({ antwort: 'Was war los?', erzeugen: true }, '', '', true), 'ohne Taetigkeiten → nie');
+
+t.gruppe('Kalenderwochen zum Nachschlagen');
+const tab = kwTabelle(new Date(2026, 8, 27));
+t.ok(tab.includes('KW 38 = 14.9.–20.9.'), '16.09.2026 liegt in KW 38 (das Modell hatte 39 geraten)', tab);
+t.ok(tab.includes('KW 39 = 21.9.–27.9. (diese Woche)'), 'Sonntag 27.09. → diese Woche ist KW 39', tab);
+t.ok(kwTabelle(new Date(2027, 0, 2)).includes('KW 53 = 28.12.–3.1. (diese Woche)'), 'Jahreswechsel: KW 53 von 2026');
+t.ok(e.sandbox.AISChat._intern.systemPrompt().includes('Kalenderwochen: KW '), 'Tabelle steht im System-Prompt');
+
+t.gruppe('Datum aus der Nachricht (der Client rechnet die KW)');
+const { datumAusText } = e.sandbox.AISChat._intern;
+const heute = new Date(2026, 8, 27);
+const iso = (d) => d ? d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() : null;
+const faelle = [
+    ['schreib mir mal fürn 16. Mi einen schul eintrag das war ja der erste schultag in der 11c', '2026-9-16', 'die gemeldete Nachricht'],
+    ['am 16.9. war Schule', '2026-9-16', 'T.M.'],
+    ['16.09.2026 Berufsschule', '2026-9-16', 'T.M.JJJJ'],
+    ['Mittwoch, den 16. war Schule', '2026-9-16', 'Wochentag vor dem Tag'],
+    ['am 16. September', '2026-9-16', 'Monatsname'],
+    ['28.12. Inventur', '2025-12-28', 'Datum weit in der Zukunft → Vorjahr'],
+];
+for (const [txt, soll, was] of faelle) t.ok(iso(datumAusText(txt, heute)) === soll, was, iso(datumAusText(txt, heute)));
+t.ok(datumAusText('Fachinformatiker, 2. Lehrjahr, ganze Sätze', heute) === null, '"2. Lehrjahr" ist kein Datum');
+t.ok(datumAusText('16. Di', heute) === null, '16. war kein Dienstag → kein Datum statt geraten');
+t.ok(datumAusText('31.2. krank', heute) === null, '31.2. gibt es nicht');
+t.ok(datumAusText('in der 11c', heute) === null, 'Klassenname ist kein Datum');
+t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeldete Nachricht → KW 38, nicht 39');
+
 t.abschluss('ais-chat');

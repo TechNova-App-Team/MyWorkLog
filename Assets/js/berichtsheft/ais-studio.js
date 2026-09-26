@@ -25,7 +25,7 @@ const { PROFESSIONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECH
     THEME_ACTIVITIES } = window.AIS_BERUFE;
 const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     UNIVERSAL_ACTIVITIES_EXTENDED, FORM_PATTERNS, partizipDoppelt, alsFliesstext,
-    UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, LERN_AKTIVITAETEN, UMFANG_COUNT,
+    UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, schulSaetze, LERN_AKTIVITAETEN, UMFANG_COUNT,
     PLAN_TAG_INDEX, _parseWochenplan, _planEintrag } = window.AIS_SPRACHE;
 const { RATE_LIMIT_DAILY, RateLimit, generateWithCloud } = window.AIS_CLOUD;
 
@@ -555,19 +555,19 @@ function generateSchoolDayEntries(prof, professionId, yearNum, season, excludePh
     // Subnetting und VLAN"), ist das die bessere Angabe als ein gewuerfeltes
     // aus schoolTopics — es ist die, die wirklich dran war.
     //
-    // 🔴 Der Wortlaut geht dabei durch SCHUL_FORMATE, nicht durch FAKT_RAHMEN:
+    // 🔴 Der Wortlaut geht dabei durch schulSaetze(), nicht durch FAKT_RAHMEN:
     // dessen Rahmen ("Bearbeitet wurde: …", "Ich habe an folgender Aufgabe
     // gearbeitet: …") beschreibt BETRIEBSarbeit und liest sich an einem
-    // Schultag falsch. Das Fach des Nutzers steht unveraendert darin.
+    // Schultag falsch. Das Fach des Nutzers steht unveraendert darin; ein
+    // erzaehlter Satz statt eines Fachs bekommt den neutralen Rahmen (ais-sprache.js).
     const planTexte = Array.isArray(planForDay) ? planForDay.filter(Boolean) : [];
-    const schulRahmen = SCHUL_FORMATE[form] || SCHUL_FORMATE.stichpunkte;
     const eigenesFach = planTexte.length > 0
         ? (t => t.charAt(0).toUpperCase() + t.slice(1))(String(planTexte[0]).trim())
         : '';
     planTexte.forEach(fakt => {
         const thema = String(fakt).trim();
         if (!thema) return;
-        const satz = pickRandom(schulRahmen(thema.charAt(0).toUpperCase() + thema.slice(1)));
+        const satz = pickRandom(schulSaetze(thema.charAt(0).toUpperCase() + thema.slice(1), form));
         if (satz && !entries.some(e => e.includes(satz))) entries.push(bullet + satz);
     });
 

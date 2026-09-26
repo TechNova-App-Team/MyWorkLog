@@ -439,6 +439,33 @@ const SCHUL_FORMATE = {
 };
 SCHUL_FORMATE.fliesstext = SCHUL_FORMATE.ichform;
 
+// 🔴 SCHUL_FORMATE verlangt einen FACHBEGRIFF. Mit einem erzaehlten Satz aus
+// dem Assistenten ("neue Lehrer kennengelernt", "erster Schultag in der 11c")
+// entstand "Ich habe zum Thema Neue Lehrer kennengelernt eine Gruppenarbeit
+// vorbereitet" — falsches Deutsch plus eine erfundene Gruppenarbeit
+// (gemessen 27.09.2026). Solcher Text bekommt den neutralen Rahmen, der mit
+// JEDEM Text grammatisch bleibt (Regel aus FAKT_RAHMEN).
+// Erzaehlung = fuenf Woerter und mehr, oder das letzte Wort ist ein klein
+// geschriebenes Verb/Partizip auf -t/-en. Ein Fehlgriff Richtung "Erzaehlung"
+// ist harmlos ("Berufsschule: ip-adressen" stimmt auch), der andere nicht.
+const SCHUL_FREI = {
+    stichpunkte: t => `Berufsschule: ${t}`,
+    saetze: t => `Berufsschule: ${t}.`,
+    ichform: t => `Berufsschule: ${t}.`,
+};
+SCHUL_FREI.fliesstext = SCHUL_FREI.ichform;
+function istSchulErzaehlung(t) {
+    const woerter = String(t || '').trim().split(/\s+/).filter(Boolean);
+    if (woerter.length >= 5) return true;
+    const letztes = woerter[woerter.length - 1] || '';
+    return /^[a-zäöüß]/.test(letztes) && /(t|en)$/.test(letztes);
+}
+function schulSaetze(thema, form) {
+    return istSchulErzaehlung(thema)
+        ? [(SCHUL_FREI[form] || SCHUL_FREI.stichpunkte)(thema)]
+        : (SCHUL_FORMATE[form] || SCHUL_FORMATE.stichpunkte)(thema);
+}
+
 const LERN_AKTIVITAETEN = {
     stichpunkte: [
         'Berufsschulheft nachgeführt und Lernstoff zusammengefasst',
@@ -508,6 +535,10 @@ const PLAN_TAG_INDEX = {
 // "school", damit beim Fach-Ausschneiden nicht "vocational" stehenbleibt.
 const PLAN_SCHULE = /\b(berufs?schul(e|tag)|blockunterricht|schultag|schule|vocational\s+school|school)\b/i;
 
+// Ein nacktes "2." zaehlt nur mit Doppelpunkt oder in Klammern — "Mo: 2. Etage
+// verkabelt" behaelt seine Zahl.
+const PLAN_DATUM = /^[\s,]*(?:\(\s*\d{1,2}\.(?:\s*\d{1,2}\.(?:\d{2,4})?)?\s*\)|\d{1,2}\.\s*\d{1,2}\.(?:\d{2,4})?|\d{1,2}\.\s*(?:jan|feb|mär|apr|mai|jun|jul|aug|sep|okt|nov|dez)[a-zä]*\.?(?:\s*\d{4})?|\d{1,2}\.(?=\s*:))\s*[:,\-–—]?\s*/i;
+
 function _parseWochenplan(text) {
     const perDay = {};
     const schoolDays = [];
@@ -534,15 +565,19 @@ function _parseWochenplan(text) {
 
     treffer.forEach((tr, i) => {
         const bis = i + 1 < treffer.length ? treffer[i + 1].markeAb : text.length;
-        let abschnitt = text.slice(tr.textAb, bis);
+        // Der Assistent schreibt "Mittwoch, 16.9.: …" oder "Mittwoch (16.): …".
+        // Das Datum ist Teil der Marke, nicht des Berichtstextes.
+        let abschnitt = text.slice(tr.textAb, bis).replace(PLAN_DATUM, '');
 
         if (PLAN_SCHULE.test(abschnitt)) {
             if (!schoolDays.includes(tr.tag)) schoolDays.push(tr.tag);
             // Das Fach steht im Rest des Abschnitts ("Berufsschule, Thema
             // Subnetting und VLAN" → "Subnetting und VLAN"). Ein gewuerfeltes
             // Fach waere schlechter als das, was der Nutzer selbst nennt.
+            // 🔴 Nur VORNE abschneiden: mitten im Satz ("erster Schultag in
+            // der 11c") blieb sonst "erster   in der 11c" stehen.
             abschnitt = abschnitt
-                .replace(PLAN_SCHULE, ' ')
+                .replace(new RegExp('^[\\s,;:.\\-–—]*' + PLAN_SCHULE.source, 'i'), ' ')
                 .replace(/^[\s,;:.\-–—]+/, '')
                 .replace(/^thema\s*:?\s*/i, '');
         }
@@ -584,7 +619,7 @@ return {
     OBJ_GENUS, OBJ_SONDERFORM, ART_NOM, ART_AKK, mitArtikel, wurde,
     FORM_PATTERNS, cap, partizipDoppelt,
     FLIESS_ANFANG, FLIESS_MITTE, FLIESS_ENDE, alsFliesstext,
-    UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, LERN_AKTIVITAETEN, UMFANG_COUNT,
+    UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, schulSaetze, LERN_AKTIVITAETEN, UMFANG_COUNT,
     PLAN_MARKE, PLAN_TAG_INDEX, PLAN_SCHULE, _parseWochenplan, _planStuecke, _planEintrag,
 };
 })();
