@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-7.9.1-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-7.9.2-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v7.9.1** · 2026-09-26
+Aktuelle Version: **v7.9.2** · 2026-09-27
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **7.9.1** | 2026-09-26 | Die Einstellungen des Berichtsheft-Assistenten sind neu aufgebaut |
+| **7.9.2** | 2026-09-27 | Der Assistent fängt jede Woche mit einem frischen Gespräch an |
+| 7.9.1 | 2026-09-26 | Die Einstellungen des Berichtsheft-Assistenten sind neu aufgebaut |
 | 7.9.0 | 2026-09-26 | Das Berichtsheft hat einen Assistenten, dem man die Woche einfach erzählt |
 | 7.8.0 | 2026-09-26 | Der Ausbilder-Bereich zeigt alle offenen Wochen in einer Liste, daneben die Woche selbst |
 | 7.7.0 | 2026-09-25 | Die Firmenadresse allein bestätigt keinen Betrieb mehr — die Firma stimmt selbst zu |
-| 7.6.0 | 2026-09-25 | Ausbildungsbetriebe bestätigen sich mit einem Klick über die Firmenadresse |
 
 <!-- changelog:end -->
 

@@ -118,4 +118,21 @@ t.ok(sp.includes('gastronomie=Koch/Köchin') && sp.includes('sysadmin=Fachinform
 t.ok(sp.includes('berufFrei'), 'erklaert berufFrei fuer Berufe ausserhalb der Liste');
 t.ok(sp.includes('nicht sein Bericht'), 'sagt, dass die Antwort KEIN Bericht ist (sonst schrieb das Modell Stichpunkte als Antwort)');
 
+// ── 4. Ein Gespraech gehoert zu einer Woche (v7.9.2) ──────────────────────
+// Bis v7.9.1 blieb EIN Gespraech fuer immer stehen; ein Fachinformatiker fand
+// Wochen spaeter noch sein altes "bin Koch" und wurde gefragt, ob er Koch sei.
+t.gruppe('Gespraech je Woche');
+const { wochenSchluessel, istAbgelaufen } = e.sandbox.AISChat._intern;
+t.ok(wochenSchluessel(new Date(2026, 8, 27)) === '2026-W39', 'Sonntag 27.09.2026 → KW 39', wochenSchluessel(new Date(2026, 8, 27)));
+t.ok(wochenSchluessel(new Date(2026, 8, 28)) === '2026-W40', 'Montag 28.09.2026 → KW 40');
+t.ok(wochenSchluessel(new Date(2027, 0, 1)) === '2026-W53', '01.01.2027 gehoert zur KW 53 von 2026', wochenSchluessel(new Date(2027, 0, 1)));
+t.ok(wochenSchluessel(new Date(2024, 11, 30)) === '2025-W01', '30.12.2024 gehoert zur KW 1 von 2025', wochenSchluessel(new Date(2024, 11, 30)));
+const eine = [{ rolle: 'nutzer', text: 'x' }];
+const so = new Date(2026, 8, 27, 20, 0);
+t.ok(!istAbgelaufen({ nachrichten: [], woche: '' }, so), 'leeres Gespraech ist nie abgelaufen');
+t.ok(!istAbgelaufen({ nachrichten: eine, woche: '2026-W39' }, so), 'gleiche Woche → bleibt (Gegenprobe)');
+t.ok(istAbgelaufen({ nachrichten: eine, woche: '2026-W39' }, new Date(2026, 8, 28, 7, 0)), 'Montag darauf → frisch');
+t.ok(istAbgelaufen({ nachrichten: eine, woche: '2026-W39', erledigt: true }, so), 'Woche uebernommen → frisch');
+t.ok(istAbgelaufen({ nachrichten: eine }, so), 'Altbestand ohne Woche → einmal frisch');
+
 t.abschluss('ais-chat');

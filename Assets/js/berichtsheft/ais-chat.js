@@ -32,7 +32,7 @@ const KONTEXT_RUNDEN = 6;
 
 let offen = false;
 let beschaeftigt = false;
-let gespraech = { nachrichten: [], wocheText: '' };
+let gespraech = { nachrichten: [], wocheText: '', woche: '', erledigt: false };
 
 const $ = (id) => document.getElementById(id);
 // AIStudio ist ein const auf oberster Ebene (ais-studio.js) und haengt damit
@@ -55,21 +55,48 @@ const FORM_NAME = {
 const UMFANG_NAME = { kurz: ['kurz', 'short'], mittel: ['mittel', 'medium'], ausfuehrlich: ['ausführlich', 'detailed'] };
 
 // ── Speicher ─────────────────────────────────────────────────────────
+// Ein Gespraech gehoert zu EINER Kalenderwoche. Bis v7.9.1 war es ein einziger
+// Stand ohne Ende: wer im September "bin Koch" schrieb, fand das im Oktober
+// noch vor, und die letzten Runden liefen als Kontext in jede neue Deutung
+// (der Assistent fragte einen Fachinformatiker "bist du Koch/in?").
+// Die erzeugten Wochen gehen dabei nicht verloren — die stehen im Verlauf
+// (AIStudio.verlauf(), linke Leiste). Weg ist nur das Hin und Her davor.
+function wochenSchluessel(d) {
+    const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    t.setDate(t.getDate() + 3 - ((t.getDay() + 6) % 7));        // Donnerstag der ISO-Woche
+    const jan4 = new Date(t.getFullYear(), 0, 4);
+    const kw = 1 + Math.round(((t - jan4) / 864e5 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
+    return t.getFullYear() + '-W' + String(kw).padStart(2, '0');
+}
+// Neu anfangen, wenn die Woche gewechselt hat, die Woche schon in den Bericht
+// uebernommen wurde, oder der Stand von vor v7.9.1 stammt (ohne Woche).
+function istAbgelaufen(g, jetzt) {
+    if (!g || !g.nachrichten || !g.nachrichten.length) return false;
+    if (g.erledigt) return true;
+    return g.woche !== wochenSchluessel(jetzt);
+}
 function laden() {
     try {
         const roh = localStorage.getItem(SPEICHER);
         if (!roh) return;
         const g = JSON.parse(roh);
         if (g && Array.isArray(g.nachrichten)) {
-            gespraech = { nachrichten: g.nachrichten.slice(-MAX_NACHRICHTEN), wocheText: String(g.wocheText || '') };
+            gespraech = {
+                nachrichten: g.nachrichten.slice(-MAX_NACHRICHTEN), wocheText: String(g.wocheText || ''),
+                woche: typeof g.woche === 'string' ? g.woche : '', erledigt: !!g.erledigt,
+            };
         }
     } catch (e) { /* kaputter Stand → leeres Gespraech */ }
 }
 function speichern() {
     try {
         gespraech.nachrichten = gespraech.nachrichten.slice(-MAX_NACHRICHTEN);
+        if (gespraech.nachrichten.length && !gespraech.woche) gespraech.woche = wochenSchluessel(new Date());
         localStorage.setItem(SPEICHER, JSON.stringify(gespraech));
     } catch (e) { /* Speicher voll/Privatmodus: Gespraech lebt nur bis zum Neuladen */ }
+}
+function leeresGespraech() {
+    return { nachrichten: [], wocheText: '', woche: '', erledigt: false };
 }
 
 function limitHeute() {
@@ -461,6 +488,8 @@ function oeffnen() {
     if (!v || !studioDa()) return;
     offen = true;
     v.hidden = false;
+    // Die Seite kann tagelang offen stehen — deshalb hier pruefen, nicht nur beim Laden.
+    if (istAbgelaufen(gespraech, new Date())) { gespraech = leeresGespraech(); speichern(); }
     document.body.classList.add('aic-offen');
     zeichnen();
     verlaufZeichnen();
@@ -501,6 +530,9 @@ function alsAktuell(woche) {
 function uebernehmen(nr) {
     const n = gespraech.nachrichten[nr];
     if (!n || !n.woche || !alsAktuell(n.woche)) return;
+    // Uebernommen = diese Woche ist fertig; beim naechsten Oeffnen geht es frisch los.
+    gespraech.erledigt = true;
+    speichern();
     schliessen();
     AIStudio.insertAll();
 }
@@ -521,7 +553,7 @@ function ausVerlauf(i) {
     sagen({ rolle: 'assistent', text: Lx('Diese Woche hattest du schon erzeugt:', 'You generated this week before:'), woche: JSON.parse(JSON.stringify(w)) });
 }
 function neueWoche() {
-    gespraech = { nachrichten: [], wocheText: '' };
+    gespraech = leeresGespraech();
     speichern();
     const v = $('aicView');
     if (v) v.classList.remove('rail-auf');
@@ -575,6 +607,6 @@ return {
     oeffnen, schliessen, senden, einstellungen, uebernehmen, bearbeiten, nochmal,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
-    _intern: { ersterJsonWert, systemPrompt, chipsFuer, profilTeile },
+    _intern: { ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen },
 };
 })();
