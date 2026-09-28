@@ -3688,7 +3688,10 @@ Mit freundlichen Grüßen
         const trigger = document.getElementById('searchModeTrigger');
         trigger.className = 'search-mode-trigger ' + cfg.cls;
         if (mode === 'llm') trigger.classList.toggle('has-key', !!getLlmConfig().apiKey);
-        document.getElementById('modeIcon').textContent = cfg.icon;
+        // innerHTML, nicht textContent: cfg.icon ist SVG-Markup (feste Konstante,
+        // kein Nutzertext). Seit dem Emoji→SVG-Umbau stand hier textContent —
+        // der Quelltext landete als 205 Zeichen Text im 13-px-Kasten.
+        document.getElementById('modeIcon').innerHTML = cfg.icon;
         document.getElementById('modeLabel').textContent = cfg.label;
         // Update dropdown active state
         document.querySelectorAll('.search-mode-opt[data-mode]').forEach(b => {
