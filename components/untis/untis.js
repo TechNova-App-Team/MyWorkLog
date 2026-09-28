@@ -10,19 +10,16 @@
     const PROXY_URL    = 'https://untis-proxy.myworklog.workers.dev';
     const MOCK_URL     = 'dev://mock-untis';
 
-    const SUBJECT_COLORS = [
-        { bg: 'rgba(168,85,247,0.18)',  border: 'rgba(168,85,247,0.45)',  text: '#d8b4fe' },
-        { bg: 'rgba(34,211,238,0.14)',  border: 'rgba(34,211,238,0.4)',   text: '#67e8f9' },
-        { bg: 'rgba(251,146,60,0.14)',  border: 'rgba(251,146,60,0.4)',   text: '#fdba74' },
-        { bg: 'rgba(74,222,128,0.14)',  border: 'rgba(74,222,128,0.4)',   text: '#86efac' },
-        { bg: 'rgba(251,191,36,0.14)',  border: 'rgba(251,191,36,0.4)',   text: '#fde68a' },
-        { bg: 'rgba(244,114,182,0.14)', border: 'rgba(244,114,182,0.4)',  text: '#f9a8d4' },
-        { bg: 'rgba(129,140,248,0.14)', border: 'rgba(129,140,248,0.4)',  text: '#a5b4fc' },
-        { bg: 'rgba(52,211,153,0.14)',  border: 'rgba(52,211,153,0.4)',   text: '#6ee7b7' },
-    ];
+    // Fächerfarben sind Daten, kein Akzent: sie färben nur Randstreifen und
+    // Tönung (--subj in untis.css). Text bleibt var(--text-main) — die alten
+    // Pastell-Textfarben (#d8b4fe …) waren im Light-Theme unlesbar.
+    const SUBJECT_COLORS = ['#a78bfa', '#22d3ee', '#fb923c', '#4ade80', '#fbbf24', '#f472b6', '#818cf8', '#2dd4bf'];
 
-    const DAYS_DE   = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-    const DAYS_FULL = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+    // Sprache steht beim Laden fest (lang am <html>), die Tabellen also auch.
+    function uIsEN() { return document.documentElement.lang === 'en'; }
+    function uT(de, en) { return uIsEN() ? en : de; }
+    const DAYS_DE   = uIsEN() ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const DAYS_FULL = uIsEN() ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] : ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 
     // ── Module state ─────────────────────────────────────────────────────
     let _modal        = null;
@@ -66,10 +63,8 @@
         _modal.className = 'untis-overlay';
         _modal.innerHTML = `
             <div class="untis-backdrop" onclick="if(event.target===this)_untisClose()"></div>
-            <div class="untis-setup-panel">
-                <div class="untis-orb untis-orb-1"></div>
-                <div class="untis-orb untis-orb-2"></div>
-                <div style="position:relative;z-index:1;"><div id="untis-step-content"></div></div>
+            <div class="untis-setup-panel" role="dialog" aria-modal="true" aria-label="Untis">
+                <div id="untis-step-content"></div>
             </div>`;
         document.body.appendChild(_modal);
         _renderStep(step);
@@ -80,8 +75,6 @@
         if (!el) return;
         const map = { 1: _step1, 2: _step2, 3: _step3 };
         el.innerHTML = (map[step] || _step1)();
-        const inner = el.querySelector('.untis-step-inner');
-        if (inner) { inner.style.opacity = '0'; requestAnimationFrame(() => { inner.style.opacity = ''; }); }
         window._untisGotoStep = _openSetup;
     }
 
@@ -89,42 +82,31 @@
     function _step1() {
         return `
         <div class="untis-step-inner">
-            <div style="margin-bottom:1.5rem;">
-                <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.35rem;">
-                    <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,rgba(168,85,247,0.35),rgba(147,51,234,0.2));border:1px solid rgba(168,85,247,0.4);display:flex;align-items:center;justify-content:center;">${svgCal(14)}</div>
-                    <span style="font-size:0.7rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3);">Untis Stundenplan</span>
-                </div>
-                <h2 class="untis-title">Wie willst du einrichten?</h2>
-                <p class="untis-subtitle" style="margin-bottom:0;">Wähle die passende Methode für deine Schule.</p>
-            </div>
+            <div class="untis-kicker"><span class="untis-kicker__icon">${svgCal(14)}</span><span>${uT('Stundenplan', 'Timetable')}</span></div>
+            <h2 class="untis-title">${uT('Wie willst du ihn einrichten?', 'How do you want to set it up?')}</h2>
+            <p class="untis-subtitle">${uT('Wähle, woher dein Stundenplan kommt.', 'Choose where your timetable comes from.')}</p>
 
             <div class="untis-choice-grid">
-                <button class="untis-choice-card untis-choice-ical" onclick="_untisGotoStep(2)">
-                    <div class="untis-choice-glow"></div>
-                    <div class="untis-choice-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
-                    </div>
-                    <div class="untis-choice-label">Auto-Sync</div>
-                    <div class="untis-choice-name">WebUntis iCal</div>
-                    <div class="untis-choice-desc">Direkt aus WebUntis — immer aktuell.</div>
-                    <div class="untis-choice-badge untis-badge-purple">Live · Automatisch</div>
-                    <div class="untis-choice-arrow">${svgArrow()}</div>
+                <button type="button" class="untis-choice-card" onclick="_untisGotoStep(2)">
+                    <span class="untis-choice-icon">${svgRefresh(18)}</span>
+                    <span class="untis-choice-text">
+                        <span class="untis-choice-name">${uT('Aus WebUntis laden', 'Load from WebUntis')}</span>
+                        <span class="untis-choice-desc">${uT('Per Link, aktualisiert sich von selbst.', 'Via a link, updates by itself.')}</span>
+                    </span>
+                    <span class="untis-choice-arrow">${svgArrow()}</span>
                 </button>
 
-                <button class="untis-choice-card untis-choice-manual" onclick="_untisOpenManual()">
-                    <div class="untis-choice-glow"></div>
-                    <div class="untis-choice-icon" style="background:rgba(34,211,238,0.12);border-color:rgba(34,211,238,0.25);color:#67e8f9;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-                    </div>
-                    <div class="untis-choice-label" style="color:#67e8f9;">Manuell</div>
-                    <div class="untis-choice-name">Eigener Stundenplan</div>
-                    <div class="untis-choice-desc">Perfekt für feste Berufsschultage.</div>
-                    <div class="untis-choice-badge untis-badge-cyan">Immer verfügbar</div>
-                    <div class="untis-choice-arrow">${svgArrow()}</div>
+                <button type="button" class="untis-choice-card" onclick="_untisOpenManual()">
+                    <span class="untis-choice-icon">${svgGrid(18)}</span>
+                    <span class="untis-choice-text">
+                        <span class="untis-choice-name">${uT('Selbst eintragen', 'Enter it yourself')}</span>
+                        <span class="untis-choice-desc">${uT('Für feste Berufsschultage ohne WebUntis.', 'For fixed vocational school days without WebUntis.')}</span>
+                    </span>
+                    <span class="untis-choice-arrow">${svgArrow()}</span>
                 </button>
             </div>
 
-            <button class="untis-btn untis-btn-ghost" style="width:100%;" onclick="_untisClose()">Abbrechen</button>
+            <button type="button" class="untis-btn untis-btn-ghost untis-btn--block" onclick="_untisClose()">${uT('Abbrechen', 'Cancel')}</button>
         </div>`;
     }
 
@@ -133,39 +115,39 @@
         return `
         <div class="untis-step-inner">
             ${_progressHTML(1, 2)}
-            <h2 class="untis-title" style="margin-bottom:0.3rem;">Link aus WebUntis holen</h2>
-            <p class="untis-subtitle">Folge diesen 3 Schritten:</p>
+            <h2 class="untis-title">${uT('Link aus WebUntis holen', 'Get the link from WebUntis')}</h2>
+            <p class="untis-subtitle">${uT('Drei Schritte, dann hast du den Link.', 'Three steps and you have the link.')}</p>
             <div class="untis-instructions">
                 <div class="untis-instruction-item">
                     <div class="untis-instruction-num">1</div>
                     <div class="untis-instruction-body">
-                        <div class="untis-instruction-label">WebUntis öffnen</div>
-                        <div class="untis-instruction-desc">Melde dich auf der Seite deiner Schule an.</div>
+                        <div class="untis-instruction-label">${uT('WebUntis öffnen', 'Open WebUntis')}</div>
+                        <div class="untis-instruction-desc">${uT('Melde dich auf der Seite deiner Schule an.', 'Sign in on your school’s page.')}</div>
                         <a class="untis-instruction-action" href="https://webuntis.com" target="_blank" rel="noopener">${svgExternal(12)} webuntis.com</a>
                     </div>
                 </div>
                 <div class="untis-instruction-item">
                     <div class="untis-instruction-num">2</div>
                     <div class="untis-instruction-body">
-                        <div class="untis-instruction-label">Zu "Mein Stundenplan" navigieren</div>
-                        <div class="untis-instruction-desc">In der linken Navigation auf <strong style="color:rgba(255,255,255,0.75)">Stundenplan</strong> klicken → Tab <strong style="color:rgba(255,255,255,0.75)">"Mein Stundenplan"</strong>.</div>
+                        <div class="untis-instruction-label">${uT('„Mein Stundenplan“ öffnen', 'Open “My timetable”')}</div>
+                        <div class="untis-instruction-desc">${uT('In der linken Navigation auf <strong class="untis-strong">Stundenplan</strong> klicken, dann den Tab <strong class="untis-strong">„Mein Stundenplan“</strong>.', 'Click <strong class="untis-strong">Timetable</strong> in the left navigation, then the <strong class="untis-strong">“My timetable”</strong> tab.')}</div>
                     </div>
                 </div>
                 <div class="untis-instruction-item">
                     <div class="untis-instruction-num">3</div>
                     <div class="untis-instruction-body">
-                        <div class="untis-instruction-label">"Öffentlichen Link kopieren"</div>
-                        <div class="untis-instruction-desc">Rechts oben das <strong style="color:rgba(255,255,255,0.75)">Teilen-Icon</strong> (Kette) → <strong style="color:rgba(255,255,255,0.75)">"Öffentlichen Link kopieren"</strong>. Den Link direkt im nächsten Schritt einfügen.</div>
+                        <div class="untis-instruction-label">${uT('Öffentlichen Link kopieren', 'Copy the public link')}</div>
+                        <div class="untis-instruction-desc">${uT('Rechts oben auf das <strong class="untis-strong">Teilen-Symbol</strong> (Kette), dann <strong class="untis-strong">„Öffentlichen Link kopieren“</strong>.', 'Top right, click the <strong class="untis-strong">share icon</strong> (chain), then <strong class="untis-strong">“Copy public link”</strong>.')}</div>
                     </div>
                 </div>
             </div>
-            <div class="untis-note info" style="margin-bottom:1rem;">
-                <span style="color:#67e8f9;flex-shrink:0">⚡</span>
-                <span>Kein Teilen-Icon sichtbar? → Wähle stattdessen <button onclick="_untisOpenManual()" style="background:none;border:none;color:#67e8f9;cursor:pointer;font-size:inherit;text-decoration:underline;padding:0;">Manuellen Stundenplan</button>.</span>
+            <div class="untis-note" style="margin-bottom:16px;">
+                ${svgInfo(15)}
+                <span>${uT('Kein Teilen-Symbol zu sehen? Dann', 'No share icon?')} <button type="button" class="untis-link-btn" onclick="_untisOpenManual()">${uT('trag den Stundenplan selbst ein', 'Enter your timetable yourself')}</button>.</span>
             </div>
             <div class="untis-btn-row">
-                <button class="untis-btn untis-btn-ghost" onclick="_untisGotoStep(1)">${svgArrowLeft()} Zurück</button>
-                <button class="untis-btn untis-btn-primary" onclick="_untisGotoStep(3)" style="flex:1">Link habe ich ${svgArrow()}</button>
+                <button type="button" class="untis-btn untis-btn-ghost" onclick="_untisGotoStep(1)">${svgArrowLeft()} ${uT('Zurück', 'Back')}</button>
+                <button type="button" class="untis-btn untis-btn-primary" onclick="_untisGotoStep(3)">${uT('Weiter', 'Continue')}</button>
             </div>
         </div>`;
     }
@@ -175,33 +157,32 @@
         return `
         <div class="untis-step-inner">
             ${_progressHTML(2, 2)}
-            <h2 class="untis-title" style="margin-bottom:0.3rem;">Link einfügen</h2>
-            <p class="untis-subtitle">Füge deinen WebUntis-Link ein:</p>
-            <div style="margin-bottom:0.5rem;">
-                <input id="untis-url-input" class="untis-url-input"
-                    type="text"
-                    placeholder="https://xxx.webuntis.com/WebUntis?school=…"
-                    oninput="_untisOnUrlInput(this)"
-                    onpaste="setTimeout(()=>_untisOnUrlInput(this),50)"
-                    autocomplete="off" spellcheck="false"/>
-            </div>
-            <div id="untis-url-hint" style="display:none;font-size:0.78rem;padding:0.4rem 0.7rem;margin-bottom:0.5rem;background:rgba(34,211,238,0.07);border:1px solid rgba(34,211,238,0.18);border-radius:8px;color:#67e8f9;"></div>
-            <div class="untis-note info" style="margin-bottom:0.75rem;">
-                <span style="color:#67e8f9;flex-shrink:0;">💡</span>
-                <span>Dev-Modus: gib <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;">dev://mock-untis</code> ein um mit Testdaten zu arbeiten.</span>
-            </div>
+            <h2 class="untis-title">${uT('Link einfügen', 'Paste the link')}</h2>
+            <p class="untis-subtitle">${uT('Füge den kopierten WebUntis-Link ein und teste ihn.', 'Paste the copied WebUntis link and test it.')}</p>
+            <label class="untis-field-label" for="untis-url-input">${uT('WebUntis-Link', 'WebUntis link')}</label>
+            <input id="untis-url-input" class="untis-url-input"
+                type="text" inputmode="url"
+                placeholder="https://xxx.webuntis.com/WebUntis?school=…"
+                oninput="_untisOnUrlInput(this)"
+                onpaste="setTimeout(()=>_untisOnUrlInput(this),50)"
+                autocomplete="off" spellcheck="false"/>
+            <div id="untis-url-hint" class="untis-hint"></div>
+            ${_isDevHost() ? `<div class="untis-note" style="margin-top:12px;">
+                ${svgInfo(15)}
+                <span>${uT('Nur lokal:', 'Local only:')} <code class="untis-code">${MOCK_URL}</code> ${uT('lädt Testdaten.', 'loads test data.')}</span>
+            </div>` : ''}
             <div id="untis-test-status" class="untis-test-status"></div>
-            <button id="untis-test-btn" class="untis-btn untis-btn-test" onclick="_untisTest()" disabled>${svgWifi(16)} Verbindung testen</button>
+            <button type="button" id="untis-test-btn" class="untis-btn untis-btn-test" onclick="_untisTest()" disabled>${svgWifi(16)} ${uT('Verbindung testen', 'Test connection')}</button>
             <div class="untis-btn-row">
-                <button class="untis-btn untis-btn-ghost" onclick="_untisGotoStep(2)">${svgArrowLeft()} Zurück</button>
-                <button id="untis-connect-btn" class="untis-btn untis-btn-primary" onclick="_untisSaveAndOpen()" disabled style="flex:1">Verbinden &amp; öffnen ${svgArrow()}</button>
+                <button type="button" class="untis-btn untis-btn-ghost" onclick="_untisGotoStep(2)">${svgArrowLeft()} ${uT('Zurück', 'Back')}</button>
+                <button type="button" id="untis-connect-btn" class="untis-btn untis-btn-primary" onclick="_untisSaveAndOpen()" disabled>${uT('Verbinden', 'Connect')}</button>
             </div>
         </div>`;
     }
 
     function _progressHTML(current, total) {
         return `
-        <div class="untis-progress" style="margin-bottom:1.5rem;">
+        <div class="untis-progress" aria-label="Schritt ${current} von ${total}">
             ${Array.from({length: total}, (_, i) => `
                 <div class="untis-progress-dot ${i < current - 1 ? 'done' : i === current - 1 ? 'active' : ''}">
                     ${i < current - 1 ? svgCheck(11) : i + 1}
@@ -229,26 +210,22 @@
         _modal.className = 'untis-overlay';
         _modal.innerHTML = `
             <div class="untis-backdrop"></div>
-            <div class="untis-dashboard-panel">
-                <div class="untis-orb untis-orb-1"></div>
-                <div class="untis-orb untis-orb-2" style="background:radial-gradient(circle,rgba(34,211,238,0.07),transparent);"></div>
-                <div class="untis-db-header" style="position:relative;z-index:1;">
+            <div class="untis-dashboard-panel" role="dialog" aria-modal="true" aria-label="${uT('Stundenplan erstellen', 'Create timetable')}">
+                <div class="untis-db-header">
                     <div class="untis-db-title">
-                        <div class="untis-db-icon" style="background:rgba(34,211,238,0.12);border-color:rgba(34,211,238,0.3);">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#67e8f9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-                        </div>
+                        <div class="untis-db-icon">${svgGrid(18)}</div>
                         <div>
-                            <div class="untis-db-name">Stundenplan erstellen</div>
-                            <div class="untis-db-meta">Wöchentlich wiederkehrend</div>
+                            <div class="untis-db-name">${uT('Stundenplan erstellen', 'Create timetable')}</div>
+                            <div class="untis-db-meta">${uT('Wiederholt sich jede Woche', 'Repeats every week')}</div>
                         </div>
                     </div>
                     <div class="untis-db-actions">
-                        <button class="untis-icon-btn" title="Zurück" onclick="_untisGotoStep(1)">${svgArrowLeft()}</button>
-                        <button class="untis-icon-btn" title="Schließen" onclick="_untisClose()">${svgClose(16)}</button>
+                        <button type="button" class="untis-icon-btn" title="${uT('Zurück', 'Back')}" aria-label="${uT('Zurück', 'Back')}" onclick="_untisGotoStep(1)">${svgArrowLeft()}</button>
+                        <button type="button" class="untis-icon-btn" title="${uT('Schließen', 'Close')}" aria-label="${uT('Schließen', 'Close')}" onclick="_untisClose()">${svgClose(16)}</button>
                     </div>
                 </div>
-                <div class="untis-db-body" id="untis-manual-body" style="position:relative;z-index:1;"></div>
-                <div class="untis-manual-footer" id="untis-manual-footer" style="position:relative;z-index:1;"></div>
+                <div class="untis-db-body" id="untis-manual-body"></div>
+                <div class="untis-manual-footer" id="untis-manual-footer"></div>
             </div>`;
         document.body.appendChild(_modal);
 
@@ -268,8 +245,8 @@
         // Day tabs
         const tabs = [1,2,3,4,5].map(d => {
             const hasLessons = _manualSlots.some(s => s.day === d);
-            return `<button class="untis-day-tab ${d === _manualActiveDay ? 'active' : ''} ${hasLessons ? 'has-lessons' : ''}"
-                onclick="_untisManualSetDay(${d})">${DAYS_DE[d]}</button>`;
+            return `<button type="button" class="untis-day-tab ${d === _manualActiveDay ? 'active' : ''} ${hasLessons ? 'has-lessons' : ''}"
+                aria-pressed="${d === _manualActiveDay}" onclick="_untisManualSetDay(${d})">${DAYS_DE[d]}</button>`;
         }).join('');
 
         // Lessons for active day
@@ -280,49 +257,39 @@
 
         const lessonsHTML = daySlots.length
             ? daySlots.map(s => {
-                const c = _subjectColor(s.title);
                 return `
-                <div class="untis-manual-lesson" style="border-left:2px solid ${c.border};">
-                    <div class="untis-manual-lesson-color" style="background:${c.bg};border:1px solid ${c.border};color:${c.text};padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:700;white-space:nowrap;">${esc(s.title)}</div>
+                <div class="untis-manual-lesson" style="--subj:${_subjectColor(s.title)}">
+                    <div class="untis-manual-lesson-title">${esc(s.title)}</div>
                     <div class="untis-manual-lesson-time">${esc(s.start)}–${esc(s.end)}</div>
-                    ${s.room ? `<div class="untis-manual-lesson-room">📍 ${esc(s.room)}</div>` : ''}
-                    <button class="untis-manual-lesson-del" onclick="_untisManualRemove(${s.idx})" title="Entfernen">${svgX(12)}</button>
+                    ${s.room ? `<div class="untis-manual-lesson-room">${svgPin(12)} ${esc(s.room)}</div>` : ''}
+                    <button type="button" class="untis-manual-lesson-del" onclick="_untisManualRemove(${s.idx})" title="${uT('Entfernen', 'Remove')}" aria-label="${esc(uT(s.title + ' entfernen', 'Remove ' + s.title))}">${svgX(14)}</button>
                 </div>`;
             }).join('')
             : `<div class="untis-manual-empty">
-                <div style="font-size:1.5rem;opacity:0.3;margin-bottom:0.5rem;">📅</div>
-                <div style="color:rgba(255,255,255,0.2);font-size:0.8rem;">Noch keine Fächer für ${DAYS_FULL[_manualActiveDay]}<br>Klicke "+ Fach" um zu beginnen</div>
+                ${svgCal(20)}
+                <span>${uT('Für ' + DAYS_FULL[_manualActiveDay] + ' ist noch nichts eingetragen.', 'Nothing entered for ' + DAYS_FULL[_manualActiveDay] + ' yet.')}</span>
                </div>`;
 
         body.innerHTML = `
+            <div class="untis-day-tabs" role="group" aria-label="${uT('Wochentag', 'Weekday')}">${tabs}</div>
             <div>
-                <div class="untis-section-header" style="margin-bottom:0.75rem;">
-                    <span class="untis-section-label">Wochentage</span>
-                    <div class="untis-section-line"></div>
-                </div>
-                <div class="untis-day-tabs">${tabs}</div>
-            </div>
-            <div>
-                <div class="untis-section-header" style="margin-bottom:0.75rem;">
+                <div class="untis-section-header">
                     <span class="untis-section-label">${DAYS_FULL[_manualActiveDay]}</span>
                     <div class="untis-section-line"></div>
-                    <button class="untis-btn-add-lesson" onclick="_untisManualShowForm()" title="Fach hinzufügen">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Fach
+                    <button type="button" class="untis-btn-add-lesson" onclick="_untisManualShowForm()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        ${uT('Fach hinzufügen', 'Add subject')}
                     </button>
                 </div>
                 <div id="untis-lessons-list">${lessonsHTML}</div>
                 <div id="untis-add-form"></div>
             </div>`;
 
-        // Footer
         footer.innerHTML = `
             <div class="untis-manual-footer-inner">
-                <div class="untis-manual-footer-info">
-                    <span style="font-size:0.8rem;color:rgba(255,255,255,0.35);">${totalSlots} Fach${totalSlots !== 1 ? 'er' : ''} gespeichert</span>
-                </div>
-                <button class="untis-btn untis-btn-primary" onclick="_untisManualSave()" ${totalSlots === 0 ? 'disabled' : ''}>
-                    Stundenplan speichern ${svgArrow()}
+                <div class="untis-manual-footer-info">${totalSlots} ${uT(totalSlots === 1 ? 'Fach in der Woche' : 'Fächer in der Woche', totalSlots === 1 ? 'subject per week' : 'subjects per week')}</div>
+                <button type="button" class="untis-btn untis-btn-primary" onclick="_untisManualSave()" ${totalSlots === 0 ? 'disabled' : ''}>
+                    ${uT('Stundenplan speichern', 'Save timetable')}
                 </button>
             </div>`;
     }
@@ -344,29 +311,30 @@
 
         container.innerHTML = `
             <div class="untis-manual-add-form">
-                <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:0.75rem;">Neues Fach — ${DAYS_FULL[_manualActiveDay]}</div>
+                <div class="untis-form-title">${uT('Neues Fach am ' + DAYS_FULL[_manualActiveDay], 'New subject on ' + DAYS_FULL[_manualActiveDay])}</div>
                 <div class="untis-form-row">
-                    <input id="mf-title" class="untis-form-input" placeholder="Fachname (z.B. LF1, WiSo, Mathe)" maxlength="30" autocomplete="off">
+                    <div>
+                        <label class="untis-field-label" for="mf-title">${uT('Fach', 'Subject')}</label>
+                        <input id="mf-title" class="untis-form-input" oninput="this.classList.remove('is-invalid')" placeholder="${uT('z. B. LF1, WiSo, Mathe', 'e.g. LF1, Economics, Maths')}" maxlength="30" autocomplete="off">
+                    </div>
                 </div>
                 <div class="untis-form-row">
-                    <div style="flex:1;">
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-bottom:4px;">Von</div>
+                    <div>
+                        <label class="untis-field-label" for="mf-start">${uT('Von', 'From')}</label>
                         <input id="mf-start" type="time" class="untis-form-input" value="08:00">
                     </div>
-                    <div style="flex:1;">
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-bottom:4px;">Bis</div>
-                        <input id="mf-end" type="time" class="untis-form-input" value="09:30">
+                    <div>
+                        <label class="untis-field-label" for="mf-end">${uT('Bis', 'To')}</label>
+                        <input id="mf-end" type="time" class="untis-form-input" oninput="this.classList.remove('is-invalid')" value="09:30">
                     </div>
-                    <div style="flex:1;">
-                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-bottom:4px;">Raum</div>
-                        <input id="mf-room" class="untis-form-input" placeholder="optional">
+                    <div>
+                        <label class="untis-field-label" for="mf-room">${uT('Raum', 'Room')}</label>
+                        <input id="mf-room" class="untis-form-input" placeholder="${uT('optional', 'optional')}">
                     </div>
                 </div>
-                <div class="untis-form-row" style="margin-bottom:0;">
-                    <button class="untis-btn untis-btn-ghost" style="flex:0 0 auto;" onclick="_untisManualCancelForm()">Abbrechen</button>
-                    <button class="untis-btn untis-btn-primary" style="flex:1;" onclick="_untisManualConfirmAdd()">
-                        Hinzufügen ${svgArrow()}
-                    </button>
+                <div class="untis-form-row untis-form-row--actions">
+                    <button type="button" class="untis-btn untis-btn-ghost" onclick="_untisManualCancelForm()">${uT('Abbrechen', 'Cancel')}</button>
+                    <button type="button" class="untis-btn untis-btn-primary" onclick="_untisManualConfirmAdd()">${uT('Hinzufügen', 'Add')}</button>
                 </div>
             </div>`;
 
@@ -386,12 +354,12 @@
 
         if (!title) {
             const input = document.getElementById('mf-title');
-            if (input) { input.style.borderColor = 'rgba(248,113,113,0.6)'; input.focus(); }
+            if (input) { input.classList.add('is-invalid'); input.focus(); }
             return;
         }
         if (start >= end) {
             const inp = document.getElementById('mf-end');
-            if (inp) { inp.style.borderColor = 'rgba(248,113,113,0.6)'; inp.focus(); }
+            if (inp) { inp.classList.add('is-invalid'); inp.focus(); }
             return;
         }
 
@@ -425,13 +393,13 @@
         const hint = document.getElementById('untis-url-hint');
         if (!hint) return;
         if (val === MOCK_URL) {
-            hint.innerHTML = '🧪 Dev-Modus aktiv — Testdaten werden verwendet';
-            hint.style.display = 'block';
+            hint.innerHTML = `${svgInfo(14)} ${uT('Testdaten werden verwendet.', 'Using test data.')}`;
+            hint.style.display = 'flex';
         } else if (val.includes('webuntis.com')) {
             const converted = _normalizeUntisUrl(val);
             if (converted !== val && converted.includes('/ical')) {
-                hint.innerHTML = '⚡ Automatisch erkannt — wird zu iCal-URL konvertiert';
-                hint.style.display = 'block';
+                hint.innerHTML = `${svgCheck(14)} ${uT('Link erkannt, er wird automatisch in den Kalender-Link umgewandelt.', 'Link recognised, it will be converted to the calendar link automatically.')}`;
+                hint.style.display = 'flex';
             } else {
                 hint.style.display = 'none';
             }
@@ -449,16 +417,16 @@
 
         const url = input.value.trim();
         testBtn.disabled = true;
-        testBtn.innerHTML = `<span class="untis-spinner-sm"></span> Teste…`;
+        testBtn.innerHTML = `<span class="untis-spinner-sm"></span> ${uT('Wird getestet …', 'Testing …')}`;
         statusEl.className = 'untis-test-status loading';
-        statusEl.innerHTML = `<div class="untis-spinner"></div> Verbindung wird geprüft…`;
+        statusEl.innerHTML = `<span class="untis-spinner"></span> ${uT('Verbindung wird geprüft …', 'Checking connection …')}`;
         _testSuccess = false;
         if (connectBtn) connectBtn.disabled = true;
 
         try {
             const result = await _fetchAndParse(url);
             statusEl.className = 'untis-test-status success';
-            statusEl.innerHTML = `${svgCheck(16)} Verbunden! ${result.length} Stunden gefunden.`;
+            statusEl.innerHTML = `${svgCheck(16)} ${uT('Verbunden, ' + result.length + ' Stunden gefunden.', 'Connected, ' + result.length + ' lessons found.')}`;
             _testSuccess = true;
             if (connectBtn) connectBtn.disabled = false;
             _cachedEvents = result;
@@ -468,7 +436,7 @@
         }
 
         testBtn.disabled = false;
-        testBtn.innerHTML = `${svgWifi(16)} Verbindung testen`;
+        testBtn.innerHTML = `${svgWifi(16)} ${uT('Verbindung testen', 'Test connection')}`;
     };
 
     window._untisSaveAndOpen = function() {
@@ -492,49 +460,43 @@
         _closeAll();
 
         const isManual = !!localStorage.getItem(MANUAL_KEY);
-        const modeBadge = isManual
-            ? `<span style="font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.25);color:#67e8f9;padding:2px 7px;border-radius:6px;">Manuell</span>`
-            : `<span style="font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.25);color:#d8b4fe;padding:2px 7px;border-radius:6px;">Auto-Sync</span>`;
+        const modeBadge = `<span class="untis-mode-badge">${isManual ? uT('Selbst eingetragen', 'Entered manually') : 'WebUntis'}</span>`;
 
         _modal = document.createElement('div');
         _modal.id = 'untis-modal';
         _modal.className = 'untis-overlay';
         _modal.innerHTML = `
-            <div class="untis-backdrop"></div>
-            <div class="untis-dashboard-panel">
-                <div class="untis-orb untis-orb-1"></div>
-                <div class="untis-orb untis-orb-2"></div>
-                <div class="untis-orb untis-orb-3"></div>
-                <div class="untis-db-header" style="position:relative;z-index:1;">
+            <div class="untis-backdrop" onclick="_untisClose()"></div>
+            <div class="untis-dashboard-panel" role="dialog" aria-modal="true" aria-label="${uT('Stundenplan', 'Timetable')}">
+                <div class="untis-db-header">
                     <div class="untis-db-title">
                         <div class="untis-db-icon">${svgCal(18)}</div>
                         <div>
-                            <div style="display:flex;align-items:center;gap:0.5rem;">
-                                <div class="untis-db-name">Stundenplan</div>
+                            <div class="untis-db-name-row">
+                                <div class="untis-db-name">${uT('Stundenplan', 'Timetable')}</div>
                                 ${modeBadge}
                             </div>
-                            <div class="untis-db-meta" id="untis-last-updated">Wird geladen…</div>
+                            <div class="untis-db-meta" id="untis-last-updated">${uT('Wird geladen …', 'Loading …')}</div>
                         </div>
                     </div>
                     <div class="untis-db-actions">
-                        <button class="untis-icon-btn" id="untis-refresh-btn" title="Aktualisieren" onclick="_untisRefresh()">${svgRefresh(16)}</button>
-                        <button class="untis-icon-btn" title="Einstellungen" onclick="_untisReconfigure()">${svgSettings(16)}</button>
-                        <button class="untis-icon-btn" title="Schließen" onclick="_untisClose()">${svgClose(16)}</button>
+                        ${isManual ? '' : `<button type="button" class="untis-icon-btn" id="untis-refresh-btn" title="${uT('Aktualisieren', 'Refresh')}" aria-label="${uT('Aktualisieren', 'Refresh')}" onclick="_untisRefresh()">${svgRefresh(16)}</button>`}
+                        <button type="button" class="untis-icon-btn" title="${uT('Neu einrichten', 'Set up again')}" aria-label="${uT('Neu einrichten', 'Set up again')}" onclick="_untisReconfigure()">${svgSettings(16)}</button>
+                        <button type="button" class="untis-icon-btn" title="${uT('Schließen', 'Close')}" aria-label="${uT('Schließen', 'Close')}" onclick="_untisClose()">${svgClose(16)}</button>
                     </div>
                 </div>
-                <div class="untis-db-body" id="untis-db-body" style="position:relative;z-index:1;">
+                <div class="untis-db-body" id="untis-db-body">
                     ${_dashboardSkeleton()}
                 </div>
             </div>`;
         document.body.appendChild(_modal);
 
         window._untisRefresh = _dashboardRefresh;
-        window._untisReconfigure = () => {
-            localStorage.removeItem(ICAL_KEY);
-            localStorage.removeItem(MANUAL_KEY);
-            localStorage.removeItem(CACHE_KEY);
-            _openSetup(1);
-        };
+        // Nichts löschen: bis v8.0.2 räumte das Zahnrad hier sofort alle drei
+        // Schlüssel ab — wer danach „Abbrechen" drückte, hatte seinen selbst
+        // eingetragenen Stundenplan verloren. Den alten Modus entfernt erst das
+        // Speichern des neuen (_untisManualSave / _untisSaveAndOpen).
+        window._untisReconfigure = () => _openSetup(1);
 
         _dashboardLoad();
         _refreshInt = setInterval(_dashboardRefresh, CACHE_TTL_MS);
@@ -548,9 +510,9 @@
             const body = document.getElementById('untis-db-body');
             if (body) body.innerHTML = `
                 <div class="untis-empty-state">
-                    <div class="untis-empty-icon">⚡</div>
-                    <div style="margin-bottom:1rem;">${esc(String(err.message || err))}</div>
-                    <button class="untis-btn untis-btn-secondary" onclick="_untisRefresh()">Erneut versuchen</button>
+                    <span class="untis-empty-icon">${svgX(20)}</span>
+                    <span>${esc(String(err.message || err))}</span>
+                    <button type="button" class="untis-btn untis-btn-secondary" onclick="_untisRefresh()">${uT('Erneut versuchen', 'Try again')}</button>
                 </div>`;
         }
     }
@@ -586,7 +548,7 @@
 
         html += `<div>
             <div class="untis-section-header">
-                <span class="untis-section-label">Heute — ${DAYS_FULL[now.getDay()]}, ${now.toLocaleDateString(mwlLocale(),{day:'2-digit',month:'long'})}</span>
+                <span class="untis-section-label">${uT('Heute', 'Today')}, ${DAYS_FULL[now.getDay()]}, ${now.toLocaleDateString(mwlLocale(),{day:'numeric',month:'long'})}</span>
                 <div class="untis-section-line"></div>
             </div>
             <div class="untis-today-hero">${_currentCard(current, now)}${_nextCard(upcoming, now)}</div>
@@ -595,7 +557,7 @@
         if (todayEvents.length) {
             html += `<div>
                 <div class="untis-section-header">
-                    <span class="untis-section-label">Tagesplan</span>
+                    <span class="untis-section-label">${uT('Tagesplan', 'Today’s lessons')}</span>
                     <div class="untis-section-line"></div>
                 </div>
                 <div class="untis-timeline">${todayEvents.map(e => _timelineItem(e, now)).join('')}</div>
@@ -604,7 +566,7 @@
 
         html += `<div>
             <div class="untis-section-header">
-                <span class="untis-section-label">Diese Woche</span>
+                <span class="untis-section-label">${uT('Diese Woche', 'This week')}</span>
                 <div class="untis-section-line"></div>
             </div>
             ${_weekGrid(weekEvents, now)}
@@ -627,50 +589,46 @@
     }
 
     function _currentCard(ev, now) {
-        if (!ev) return `<div class="untis-hero-card current" id="untis-current-card">
-            <div class="untis-hero-tag">Jetzt</div>
-            <div class="untis-hero-subject" style="opacity:0.35">Keine Stunde</div>
-            <div class="untis-hero-time" style="opacity:0.2">—</div>
+        // Ohne laufende Stunde ist die Karte neutral — der Akzent gehört nur einer echten Stunde.
+        if (!ev) return `<div class="untis-hero-card is-empty" id="untis-current-card">
+            <div class="untis-hero-tag">${uT('Jetzt', 'Now')}</div>
+            <div class="untis-hero-subject">${uT('Gerade keine Stunde', 'No lesson right now')}</div>
         </div>`;
         const rem = Math.max(0, Math.ceil((ev.end - now) / 60000));
         return `<div class="untis-hero-card current" id="untis-current-card">
-            <div class="untis-pulse-ring"></div>
-            <div class="untis-hero-tag">Jetzt</div>
+            <div class="untis-pulse-ring" aria-hidden="true"></div>
+            <div class="untis-hero-tag">${uT('Jetzt', 'Now')}</div>
             <div class="untis-hero-subject" title="${esc(ev.title)}">${esc(ev.title)}</div>
-            <div class="untis-hero-time">${_fmt(ev.start)} – ${_fmt(ev.end)}</div>
-            ${ev.location ? `<div class="untis-hero-room">📍 ${esc(ev.location)}</div>` : ''}
-            <div class="untis-hero-countdown">${rem}min</div>
+            <div class="untis-hero-time">${_fmt(ev.start)}–${_fmt(ev.end)}</div>
+            ${ev.location ? `<div class="untis-hero-room">${svgPin(12)} ${esc(ev.location)}</div>` : ''}
+            <div class="untis-hero-countdown">${rem}<small>${uT('Min übrig', 'min left')}</small></div>
         </div>`;
     }
 
     function _nextCard(ev, now) {
-        if (!ev) return `<div class="untis-hero-card next" id="untis-next-card">
-            <div class="untis-hero-tag">Nächste</div>
-            <div class="untis-hero-subject" style="opacity:0.35">Keine weiteren</div>
-            <div class="untis-hero-time" style="opacity:0.2">—</div>
+        if (!ev) return `<div class="untis-hero-card is-empty" id="untis-next-card">
+            <div class="untis-hero-tag">${uT('Danach', 'Next')}</div>
+            <div class="untis-hero-subject">${uT('Heute nichts mehr', 'Nothing else today')}</div>
         </div>`;
         const inMin = Math.max(0, Math.ceil((ev.start - now) / 60000));
         return `<div class="untis-hero-card next" id="untis-next-card">
-            <div class="untis-hero-tag">in ${inMin} Min</div>
+            <div class="untis-hero-tag">${uT('In ' + inMin + ' Min', 'In ' + inMin + ' min')}</div>
             <div class="untis-hero-subject" title="${esc(ev.title)}">${esc(ev.title)}</div>
-            <div class="untis-hero-time">${_fmt(ev.start)} – ${_fmt(ev.end)}</div>
-            ${ev.location ? `<div class="untis-hero-room">📍 ${esc(ev.location)}</div>` : ''}
+            <div class="untis-hero-time">${_fmt(ev.start)}–${_fmt(ev.end)}</div>
+            ${ev.location ? `<div class="untis-hero-room">${svgPin(12)} ${esc(ev.location)}</div>` : ''}
         </div>`;
     }
 
     function _timelineItem(ev, now) {
         const isCurrent = now >= ev.start && now < ev.end;
         const isPast    = ev.end < now;
-        const color     = _subjectColor(ev.title);
         return `
         <div class="untis-timeline-item">
             <div class="untis-timeline-time-col">
                 <span class="untis-timeline-time">${_fmt(ev.start)}</span>
-                <div class="untis-timeline-bar" style="${isCurrent ? 'background:rgba(168,85,247,0.3)' : ''}"></div>
             </div>
-            <div class="untis-timeline-card ${isCurrent ? 'current' : isPast ? 'past' : ''}"
-                 style="${isCurrent ? '' : `border-left:2px solid ${color.border}`}">
-                <div class="untis-timeline-subject" style="${isCurrent ? '' : `color:${color.text}`}">${esc(ev.title)}</div>
+            <div class="untis-timeline-card ${isCurrent ? 'current' : isPast ? 'past' : ''}" style="--subj:${_subjectColor(ev.title)}">
+                <div class="untis-timeline-subject">${esc(ev.title)}</div>
                 <div class="untis-timeline-detail">${_fmt(ev.start)}–${_fmt(ev.end)}${ev.location ? ' · ' + esc(ev.location) : ''}</div>
             </div>
         </div>`;
@@ -689,7 +647,7 @@
             <div class="untis-day-col">
                 <div class="untis-day-header ${isToday ? 'today' : ''}">
                     <div class="untis-day-name">${DAYS_DE[day.getDay()]}</div>
-                    <div class="untis-day-date">${day.getDate()}.${String(day.getMonth()+1).padStart(2,'0')}</div>
+                    <div class="untis-day-date">${day.toLocaleDateString(mwlLocale(), { day: '2-digit', month: '2-digit' })}</div>
                 </div>
                 ${evs.length ? evs.map(e => _lessonChip(e)).join('') : '<div class="untis-day-empty">—</div>'}
             </div>`;
@@ -698,8 +656,7 @@
     }
 
     function _lessonChip(ev) {
-        const c = _subjectColor(ev.title);
-        return `<div class="untis-lesson-chip" style="background:${c.bg};border:1px solid ${c.border};color:${c.text};"
+        return `<div class="untis-lesson-chip" style="--subj:${_subjectColor(ev.title)}"
             title="${esc(ev.title)} · ${_fmt(ev.start)}–${_fmt(ev.end)}${ev.location ? ' · '+esc(ev.location) : ''}">
             <span class="untis-lesson-name">${esc(ev.title)}</span>
             <span class="untis-lesson-t">${_fmt(ev.start)}</span>
@@ -726,7 +683,7 @@
         const el = document.getElementById('untis-last-updated');
         if (!el) return;
         const now = new Date();
-        el.textContent = `Aktualisiert ${now.toLocaleTimeString(mwlLocale(),{hour:'2-digit',minute:'2-digit'})}`;
+        el.textContent = `${uT('Aktualisiert', 'Updated')} ${now.toLocaleTimeString(mwlLocale(),{hour:'2-digit',minute:'2-digit'})}`;
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -747,7 +704,7 @@
         const cached = _loadCache();
         if (cached) { _cachedEvents = cached; return cached; }
         const url = localStorage.getItem(ICAL_KEY);
-        if (!url) throw new Error('Kein Stundenplan konfiguriert');
+        if (!url) throw new Error(uT('Kein Stundenplan eingerichtet', 'No timetable set up'));
         const events = await _fetchAndParse(url);
         _saveCache(events);
         _cachedEvents = events;
@@ -769,16 +726,16 @@
             let msg = `HTTP ${resp.status}`;
             try { const j = JSON.parse(body); msg = j.error || msg; } catch {}
             if (resp.status === 401 || resp.status === 403)
-                throw new Error('WebUntis verweigert Zugriff — iCal-Export möglicherweise deaktiviert');
+                throw new Error(uT('WebUntis verweigert den Zugriff. Eventuell hat deine Schule den Kalender-Export abgeschaltet.', 'WebUntis denied access. Your school may have turned off the calendar export.'));
             throw new Error(msg);
         }
 
         const text = await resp.text();
         if (!text.includes('BEGIN:VCALENDAR'))
-            throw new Error('Kein iCal-Feed erhalten. Tipp: "Öffentlichen Link" aus dem Stundenplan kopieren.');
+            throw new Error(uT('Unter dem Link liegt kein Kalender. Kopiere den „Öffentlichen Link“ aus dem Stundenplan.', 'The link does not lead to a calendar. Copy the “public link” from the timetable.'));
 
         const events = _parseIcal(text);
-        if (!events.length) throw new Error('Keine Termine gefunden — der Stundenplan ist eventuell leer');
+        if (!events.length) throw new Error(uT('Keine Stunden gefunden. Der Stundenplan ist eventuell leer.', 'No lessons found. The timetable may be empty.'));
         return events;
     }
 
@@ -954,8 +911,7 @@
     }
 
     // ── SVG Icons ────────────────────────────────────────────────────────
-    function svgCal(s)      { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#d8b4fe"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`; }
-    function svgLink(s)     { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`; }
+    function svgCal(s)      { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`; }
     function svgRefresh(s)  { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>`; }
     function svgCheck(s)    { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`; }
     function svgX(s)        { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`; }
@@ -965,5 +921,11 @@
     function svgSettings(s) { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`; }
     function svgWifi(s)     { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>`; }
     function svgExternal(s) { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`; }
+    function svgGrid(s)     { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>`; }
+    function svgInfo(s)     { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`; }
+    function svgPin(s)      { return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>`; }
+
+    // Der Testdaten-Hinweis stand bis v8.0.2 für ALLE Nutzer im Assistenten.
+    function _isDevHost() { return /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname); }
 
 })();

@@ -1,5 +1,14 @@
 /* ═══ UNTIS COMPONENT ═══ */
 
+/* Seit v8.0.3 auf den App-Tokens (dashboard.css / core.css). Vorher hatte das
+   Modal ein eigenes Farbuniversum: fester Lila-Verlauf (#0d0b1a…) als Fläche,
+   leuchtende "Orbs" mit filter: blur(60px), Blur-Backdrop, Texte in #d8b4fe
+   (im Light-Theme unlesbar) und Cyan als zweiter Akzent.
+   Bewusst NICHT mehr drin: backdrop-filter (Overlay ist fast deckend, der Blur
+   kostete nur GPU), Glow-Schatten, feste Hexwerte ausser den Fächerfarben.
+   Fächerfarben sind Daten (unterscheiden Fächer), kein Akzent — sie kommen als
+   --subj aus SUBJECT_COLORS in untis.js und färben nur Randstreifen + Tönung. */
+
 /* ── Overlay & Panel ── */
 .untis-overlay {
     position: fixed;
@@ -8,16 +17,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: untis-fade-in 0.25s ease;
+    padding: 16px;
 }
 
 .untis-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(3, 3, 5, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    /* 0.6 war gemessen zu dünn: das Dashboard dahinter blieb lesbar und lenkte ab.
+       Die übrigen App-Modals liegen bei 0.88 (modals.css). */
+    background: rgba(0, 0, 0, 0.8);
     cursor: pointer;
+    animation: untis-fade-in 200ms ease-out;
 }
 
 @keyframes untis-fade-in {
@@ -25,341 +35,348 @@
     to   { opacity: 1; }
 }
 
-/* ── Setup Panel ── */
-.untis-setup-panel {
-    position: relative;
-    z-index: 1;
-    width: 95%;
-    max-width: 480px;
-    background: linear-gradient(160deg, #0d0b1a 0%, #060514 50%, #0a0612 100%);
-    border: 1px solid rgba(168, 85, 247, 0.2);
-    border-radius: 24px;
-    padding: 2rem;
-    box-shadow:
-        0 0 0 1px rgba(168, 85, 247, 0.06),
-        0 40px 80px rgba(0, 0, 0, 0.6),
-        0 0 120px rgba(168, 85, 247, 0.04);
-    animation: untis-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
-}
-
-/* ── Dashboard Panel ── */
+.untis-setup-panel,
 .untis-dashboard-panel {
     position: relative;
     z-index: 1;
-    width: 98%;
+    width: 100%;
+    /* --bg-elevated traegt Alpha — zweite Ebene macht die Flaeche deckend. */
+    background: linear-gradient(var(--bg-elevated), var(--bg-elevated)), var(--bg-deep);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    box-shadow: var(--edge-top), 0 24px 64px rgba(0, 0, 0, 0.5);
+    color: var(--text-main);
+    animation: untis-panel-in 240ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.untis-setup-panel {
+    max-width: 480px;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.untis-dashboard-panel {
     max-width: 900px;
-    max-height: 92vh;
-    background: linear-gradient(160deg, #0d0b1a 0%, #060514 60%, #0a0612 100%);
-    border: 1px solid rgba(168, 85, 247, 0.18);
-    border-radius: 24px;
-    box-shadow:
-        0 0 0 1px rgba(168, 85, 247, 0.06),
-        0 40px 100px rgba(0, 0, 0, 0.7),
-        0 0 140px rgba(168, 85, 247, 0.05);
-    animation: untis-slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: calc(100dvh - 32px);
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
-@keyframes untis-slide-up {
-    from {
-        opacity: 0;
-        transform: translateY(20px) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+@keyframes untis-panel-in {
+    from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
+    to   { opacity: 1; transform: none; }
 }
 
-/* ── Ambient orbs ── */
-.untis-orb {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(60px);
+/* ── Kopfzeile im Einrichtungs-Assistenten ── */
+.untis-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
-.untis-orb-1 {
-    width: 280px;
-    height: 280px;
-    top: -100px;
-    right: -80px;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
-}
-
-.untis-orb-2 {
-    width: 200px;
-    height: 200px;
-    bottom: -80px;
-    left: -60px;
-    background: radial-gradient(circle, rgba(34, 211, 238, 0.06) 0%, transparent 70%);
-}
-
-.untis-orb-3 {
-    width: 160px;
-    height: 160px;
-    top: 40%;
-    left: 20%;
-    background: radial-gradient(circle, rgba(168, 85, 247, 0.04) 0%, transparent 70%);
+.untis-kicker__icon {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--role-accent-soft);
+    color: var(--primary);
 }
 
 /* ── Progress Steps ── */
 .untis-progress {
     display: flex;
     align-items: center;
-    gap: 0;
-    margin-bottom: 2rem;
-    justify-content: center;
+    margin-bottom: 20px;
 }
 
 .untis-progress-dot {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.35);
+    font-variant-numeric: tabular-nums;
+    background: transparent;
+    border: 1px solid var(--border-interactive);
+    color: var(--text-muted);
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
 }
 
 .untis-progress-dot.active {
-    background: rgba(168, 85, 247, 0.25);
-    border-color: rgba(168, 85, 247, 0.7);
-    color: #d8b4fe;
-    box-shadow: 0 0 16px rgba(168, 85, 247, 0.3);
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
 }
 
 .untis-progress-dot.done {
-    background: rgba(74, 222, 128, 0.2);
-    border-color: rgba(74, 222, 128, 0.6);
-    color: #86efac;
+    background: var(--role-accent-soft);
+    border-color: var(--hover-border);
+    color: var(--primary);
 }
 
 .untis-progress-line {
-    flex: 1;
-    max-width: 60px;
+    width: 40px;
     height: 1px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--border-default);
     margin: 0 8px;
 }
 
 /* ── Step Content ── */
 .untis-step-inner {
-    animation: untis-step-in 0.3s ease;
-}
-
-@keyframes untis-step-in {
-    from {
-        opacity: 0;
-        transform: translateX(12px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    animation: untis-fade-in 180ms ease-out;
 }
 
 /* ── Typography ── */
 .untis-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.03em;
-    line-height: 1.2;
-    margin: 0 0 0.4rem 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin: 0 0 6px;
 }
 
 .untis-subtitle {
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0 0 1.5rem 0;
+    color: var(--text-muted);
+    margin: 0 0 20px;
     line-height: 1.5;
 }
 
-/* ── Feature List ── */
-.untis-features {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    margin-bottom: 1.75rem;
-}
-
-.untis-feature {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 12px;
-}
-
-.untis-feature-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 1rem;
-}
-
-.untis-feature-text {
-    font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 500;
+.untis-strong {
+    color: var(--text-main);
+    font-weight: 600;
 }
 
 /* ── Instruction Steps ── */
 .untis-instructions {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    background: var(--bg-inset);
 }
 
 .untis-instruction-item {
     display: flex;
-    gap: 1rem;
+    gap: 12px;
     align-items: flex-start;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 14px;
-    transition: border-color 0.2s;
+    padding: 14px;
 }
 
-.untis-instruction-item:hover {
-    border-color: rgba(168, 85, 247, 0.2);
+.untis-instruction-item + .untis-instruction-item {
+    border-top: 1px solid var(--border-subtle);
 }
 
 .untis-instruction-num {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
-    background: rgba(168, 85, 247, 0.2);
-    border: 1px solid rgba(168, 85, 247, 0.4);
-    color: #d8b4fe;
-    font-size: 0.8rem;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--role-accent-soft);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
     flex-shrink: 0;
-    margin-top: 1px;
 }
 
 .untis-instruction-body {
     flex: 1;
+    min-width: 0;
 }
 
 .untis-instruction-label {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
     margin-bottom: 2px;
 }
 
 .untis-instruction-desc {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.85rem;
+    color: var(--text-muted);
     line-height: 1.5;
 }
 
 .untis-instruction-action {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-    padding: 4px 10px;
-    background: rgba(34, 211, 238, 0.1);
-    border: 1px solid rgba(34, 211, 238, 0.25);
-    border-radius: 6px;
-    color: #67e8f9;
-    font-size: 0.75rem;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 5px 10px;
+    border: 1px solid var(--border-interactive);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.8rem;
     font-weight: 600;
     text-decoration: none;
-    cursor: pointer;
-    transition: all 0.2s;
+    transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .untis-instruction-action:hover {
-    background: rgba(34, 211, 238, 0.18);
-    border-color: rgba(34, 211, 238, 0.5);
+    background: var(--hover-fill);
+    border-color: var(--hover-border);
 }
 
-/* ── URL Input ── */
-.untis-url-wrapper {
-    position: relative;
-    margin-bottom: 0.75rem;
+/* ── URL Input + Formularfelder ── */
+.untis-url-input,
+.untis-form-input {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-interactive);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .untis-url-input {
-    width: 100%;
-    padding: 0.875rem 1rem;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
-    color: #fff;
-    font-size: 0.875rem;
-    font-family: 'JetBrains Mono', monospace;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-sizing: border-box;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
 }
 
-.untis-url-input::placeholder {
-    color: rgba(255, 255, 255, 0.25);
+.untis-form-input {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
-.untis-url-input:focus {
-    border-color: rgba(168, 85, 247, 0.5);
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+.untis-url-input::placeholder,
+.untis-form-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+.untis-url-input:focus,
+.untis-form-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--role-accent-soft);
+}
+
+.untis-form-input.is-invalid {
+    border-color: var(--role-neg);
+}
+
+input[type="time"].untis-form-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.6;
+}
+
+[data-theme="dark"] input[type="time"].untis-form-input::-webkit-calendar-picker-indicator,
+:root:not([data-theme="light"]) input[type="time"].untis-form-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+.untis-field-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+/* ── Hinweise ── */
+.untis-hint {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.untis-hint svg { color: var(--primary); flex-shrink: 0; }
+
+.untis-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+}
+
+.untis-note > svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--primary);
+}
+
+.untis-link-btn {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--primary);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.untis-code {
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    color: var(--text-main);
 }
 
 /* ── Connection Status ── */
 .untis-test-status {
-    padding: 0.75rem 1rem;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
     display: none;
     align-items: center;
-    gap: 0.5rem;
-    animation: untis-step-in 0.2s ease;
+    gap: 8px;
+    margin: 12px 0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    animation: untis-fade-in 160ms ease-out;
 }
 
 .untis-test-status.loading {
     display: flex;
-    background: rgba(168, 85, 247, 0.1);
-    border: 1px solid rgba(168, 85, 247, 0.25);
-    color: #d8b4fe;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
 }
 
 .untis-test-status.success {
     display: flex;
-    background: rgba(74, 222, 128, 0.1);
-    border: 1px solid rgba(74, 222, 128, 0.3);
-    color: #86efac;
+    background: var(--role-pos-soft);
+    border: 1px solid transparent;
+    color: var(--role-pos);
 }
 
 .untis-test-status.error {
     display: flex;
-    background: rgba(248, 113, 113, 0.1);
-    border: 1px solid rgba(248, 113, 113, 0.3);
-    color: #fca5a5;
+    background: var(--role-neg-soft);
+    border: 1px solid transparent;
+    color: var(--role-neg);
 }
 
 /* ── Buttons ── */
@@ -367,72 +384,75 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0.8rem 1.4rem;
-    border-radius: 12px;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 8px;
     font-size: 0.9rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
-    letter-spacing: -0.01em;
+    border: 1px solid transparent;
     white-space: nowrap;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 120ms ease-out;
+}
+
+.untis-btn:not(:disabled):active { transform: scale(0.97); }
+
+.untis-btn:focus-visible,
+.untis-icon-btn:focus-visible,
+.untis-choice-card:focus-visible,
+.untis-day-tab:focus-visible,
+.untis-btn-add-lesson:focus-visible,
+.untis-manual-lesson-del:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
 }
 
 .untis-btn:disabled {
-    opacity: 0.4;
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
 .untis-btn-primary {
-    background: linear-gradient(135deg, #a855f7, #9333ea);
+    background: var(--primary);
     color: #fff;
-    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.35);
 }
 
 .untis-btn-primary:not(:disabled):hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 28px rgba(168, 85, 247, 0.5);
+    background: color-mix(in srgb, var(--primary) 88%, #fff);
 }
 
-.untis-btn-secondary {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+.untis-btn-secondary,
+.untis-btn-test {
+    background: transparent;
+    color: var(--text-main);
+    border-color: var(--border-interactive);
 }
 
-.untis-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+.untis-btn-secondary:not(:disabled):hover,
+.untis-btn-test:not(:disabled):hover {
+    background: var(--hover-fill);
+    border-color: var(--hover-border);
+}
+
+.untis-btn-test {
+    width: 100%;
+    margin: 12px 0;
 }
 
 .untis-btn-ghost {
     background: transparent;
-    color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
 }
 
 .untis-btn-ghost:hover {
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.untis-btn-test {
-    background: rgba(34, 211, 238, 0.12);
-    color: #67e8f9;
-    border: 1px solid rgba(34, 211, 238, 0.3);
-    width: 100%;
-    margin-bottom: 0.75rem;
-}
-
-.untis-btn-test:not(:disabled):hover {
-    background: rgba(34, 211, 238, 0.2);
-    border-color: rgba(34, 211, 238, 0.5);
+    background: var(--hover-fill);
+    color: var(--text-main);
 }
 
 .untis-btn-row {
     display: flex;
-    gap: 0.65rem;
+    gap: 8px;
     align-items: center;
 }
 
@@ -440,17 +460,10 @@
     flex: 1;
 }
 
-/* ── Spinner ── */
-.untis-spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(168, 85, 247, 0.3);
-    border-top-color: #a855f7;
-    border-radius: 50%;
-    animation: untis-spin 0.7s linear infinite;
-    flex-shrink: 0;
-}
+.untis-btn--block { width: 100%; }
 
+/* ── Spinner ── */
+.untis-spinner,
 .untis-spinner-sm {
     width: 14px;
     height: 14px;
@@ -458,6 +471,7 @@
     border-top-color: transparent;
     border-radius: 50%;
     animation: untis-spin 0.7s linear infinite;
+    flex-shrink: 0;
 }
 
 @keyframes untis-spin {
@@ -470,68 +484,79 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-subtle);
     flex-shrink: 0;
 }
 
 .untis-db-title {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 12px;
+    min-width: 0;
 }
 
 .untis-db-icon {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(147, 51, 234, 0.2));
-    border: 1px solid rgba(168, 85, 247, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--role-accent-soft);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
     flex-shrink: 0;
 }
 
-.untis-db-icon svg {
-    width: 18px;
-    height: 18px;
-    color: #d8b4fe;
+.untis-db-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .untis-db-name {
     font-size: 1.05rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
 }
 
 .untis-db-meta {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.35);
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
     margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.untis-mode-badge {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--role-accent-soft);
+    color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .untis-db-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 4px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .untis-icon-btn {
     width: 36px;
     height: 36px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.04);
-    color: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+    display: grid;
+    place-items: center;
     flex-shrink: 0;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
 .untis-icon-btn svg {
@@ -540,9 +565,9 @@
 }
 
 .untis-icon-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--hover-fill);
+    border-color: var(--hover-border);
+    color: var(--text-main);
 }
 
 .untis-icon-btn.spinning svg {
@@ -553,97 +578,73 @@
 .untis-db-body {
     flex: 1;
     overflow-y: auto;
-    padding: 1.25rem 1.5rem;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 24px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(168, 85, 247, 0.2) transparent;
-}
-
-.untis-db-body::-webkit-scrollbar {
-    width: 4px;
-}
-
-.untis-db-body::-webkit-scrollbar-thumb {
-    background: rgba(168, 85, 247, 0.2);
-    border-radius: 4px;
+    scrollbar-color: var(--border-interactive) transparent;
 }
 
 /* ── Section Header ── */
 .untis-section-header {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.75rem;
+    gap: 12px;
+    margin-bottom: 10px;
 }
 
 .untis-section-label {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
 }
 
 .untis-section-line {
     flex: 1;
     height: 1px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--border-subtle);
 }
 
 /* ── Today Hero Cards ── */
 .untis-today-hero {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
+    gap: 12px;
 }
 
 .untis-hero-card {
     position: relative;
-    padding: 1.1rem;
-    border-radius: 16px;
-    overflow: hidden;
+    min-width: 0;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--edge-top);
 }
 
 .untis-hero-card.current {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(147, 51, 234, 0.1));
-    border: 1px solid rgba(168, 85, 247, 0.35);
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.1);
+    border-color: var(--hover-border);
+    background: linear-gradient(var(--role-accent-soft), var(--role-accent-soft)), var(--bg-surface);
 }
 
-.untis-hero-card.next {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
+.untis-hero-card.is-empty .untis-hero-subject { color: var(--text-muted); font-weight: 600; }
 
 .untis-hero-tag {
-    display: inline-block;
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 2px 8px;
-    border-radius: 6px;
-    margin-bottom: 0.6rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
 }
 
-.untis-hero-card.current .untis-hero-tag {
-    background: rgba(168, 85, 247, 0.3);
-    color: #d8b4fe;
-}
-
-.untis-hero-card.next .untis-hero-tag {
-    background: rgba(255, 255, 255, 0.07);
-    color: rgba(255, 255, 255, 0.45);
-}
+.untis-hero-card.current .untis-hero-tag { color: var(--primary); }
 
 .untis-hero-subject {
-    font-size: 1rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.01em;
+    line-height: 1.25;
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -651,327 +652,228 @@
 }
 
 .untis-hero-time {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.5);
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 2px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .untis-hero-room {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 2px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
 }
 
 .untis-hero-countdown {
-    font-size: 1.4rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    color: #d8b4fe;
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 0.5rem;
+    margin-top: 10px;
+    font-family: var(--font-num);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+
+.untis-hero-countdown small {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-left: 2px;
 }
 
 .untis-pulse-ring {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 16px;
+    right: 16px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #a855f7;
-    box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6);
-    animation: untis-pulse 2s ease infinite;
+    background: var(--primary);
+    animation: untis-pulse 2s ease-out infinite;
 }
 
 @keyframes untis-pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.6); }
-    70%  { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+    0%   { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.5); }
+    70%  { box-shadow: 0 0 0 8px rgba(var(--primary-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
 }
 
 /* ── Today Timeline ── */
 .untis-timeline {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 6px;
 }
 
 .untis-timeline-item {
     display: flex;
-    gap: 0.75rem;
+    gap: 12px;
     align-items: stretch;
-    position: relative;
 }
 
 .untis-timeline-time-col {
-    width: 52px;
+    width: 44px;
     flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    padding-top: 2px;
+    padding-top: 12px;
+    text-align: right;
 }
 
 .untis-timeline-time {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.3);
-    font-family: 'JetBrains Mono', monospace;
-    line-height: 1;
-}
-
-.untis-timeline-bar {
-    width: 2px;
-    background: rgba(255, 255, 255, 0.06);
-    flex: 1;
-    margin-top: 4px;
-    border-radius: 2px;
-    min-height: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .untis-timeline-card {
     flex: 1;
-    padding: 0.7rem 0.9rem;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    min-height: 48px;
-    margin-bottom: 4px;
-    transition: border-color 0.2s;
-}
-
-.untis-timeline-card:hover {
-    border-color: rgba(168, 85, 247, 0.2);
+    min-width: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--subj, var(--border-interactive));
 }
 
 .untis-timeline-card.current {
-    background: rgba(168, 85, 247, 0.12);
-    border-color: rgba(168, 85, 247, 0.35);
+    background: linear-gradient(var(--role-accent-soft), var(--role-accent-soft)), var(--bg-inset);
+    border-color: var(--hover-border);
+    border-left-color: var(--primary);
 }
 
 .untis-timeline-card.past {
-    opacity: 0.45;
+    opacity: 0.5;
 }
 
 .untis-timeline-subject {
-    font-size: 0.875rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 1px;
-}
-
-.untis-timeline-card.current .untis-timeline-subject {
-    color: #d8b4fe;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .untis-timeline-detail {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Week Grid ── */
 .untis-week-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.5rem;
-    overflow-x: auto;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
 }
 
 .untis-day-col {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 6px;
 }
 
 .untis-day-header {
-    text-align: center;
-    padding: 0.5rem 0.25rem 0.4rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
 }
 
 .untis-day-name {
-    font-size: 0.7rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-main);
 }
 
 .untis-day-date {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.55);
-    font-family: 'JetBrains Mono', monospace;
-    margin-top: 2px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .untis-day-header.today {
-    background: rgba(168, 85, 247, 0.15);
-    border-color: rgba(168, 85, 247, 0.35);
+    background: var(--role-accent-soft);
+    border-color: var(--hover-border);
 }
 
-.untis-day-header.today .untis-day-name {
-    color: #d8b4fe;
-}
-
+.untis-day-header.today .untis-day-name,
 .untis-day-header.today .untis-day-date {
-    color: #c4b5fd;
+    color: var(--primary);
 }
 
 .untis-lesson-chip {
-    padding: 0.5rem 0.6rem;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 700;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--subj, var(--primary)) 12%, transparent);
+    border-left: 3px solid var(--subj, var(--primary));
+    color: var(--text-main);
+    font-size: 0.78rem;
+    font-weight: 600;
     line-height: 1.3;
-    cursor: default;
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-
-.untis-lesson-chip:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .untis-lesson-name {
-    color: inherit;
+    display: block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
 }
 
 .untis-lesson-t {
-    font-size: 0.68rem;
-    opacity: 0.6;
-    font-weight: 500;
-    font-family: 'JetBrains Mono', monospace;
     display: block;
     margin-top: 1px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .untis-day-empty {
-    padding: 0.75rem 0.5rem;
+    padding: 10px 4px;
     text-align: center;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.15);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    opacity: 0.6;
 }
 
 /* ── No Data States ── */
 .untis-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 16px;
     text-align: center;
-    padding: 2rem 1rem;
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .untis-empty-icon {
-    font-size: 2.5rem;
-    margin-bottom: 0.75rem;
-    opacity: 0.5;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--role-neg-soft);
+    color: var(--role-neg);
 }
 
 /* ── Loading skeleton ── */
 .untis-skeleton {
-    background: linear-gradient(90deg,
-        rgba(255, 255, 255, 0.04) 25%,
-        rgba(255, 255, 255, 0.08) 50%,
-        rgba(255, 255, 255, 0.04) 75%
-    );
-    background-size: 200% 100%;
-    animation: untis-shimmer 1.5s infinite;
+    background: var(--role-track);
     border-radius: 8px;
+    animation: untis-skeleton 1.4s ease-in-out infinite;
 }
 
-@keyframes untis-shimmer {
-    to { background-position: -200% 0; }
-}
-
-/* ── Note bar ── */
-.untis-note {
-    display: flex;
-    gap: 0.5rem;
-    align-items: flex-start;
-    padding: 0.7rem 0.9rem;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.55);
-    line-height: 1.5;
-}
-
-.untis-note.info {
-    background: rgba(34, 211, 238, 0.06);
-    border: 1px solid rgba(34, 211, 238, 0.15);
-}
-
-.untis-note.warning {
-    background: rgba(251, 146, 60, 0.07);
-    border: 1px solid rgba(251, 146, 60, 0.2);
-}
-
-/* ── Mobile ── */
-@media (max-width: 600px) {
-    .untis-setup-panel {
-        padding: 1.5rem;
-        border-radius: 20px;
-        max-height: 92vh;
-        overflow-y: auto;
-    }
-
-    .untis-dashboard-panel {
-        border-radius: 20px 20px 0 0;
-        align-self: flex-end;
-        max-height: 92vh;
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .untis-overlay {
-        align-items: flex-end;
-    }
-
-    .untis-today-hero {
-        grid-template-columns: 1fr;
-    }
-
-    .untis-week-grid {
-        gap: 0.35rem;
-        padding-bottom: 0.5rem;
-    }
-
-    .untis-lesson-chip {
-        padding: 0.4rem 0.45rem;
-        font-size: 0.7rem;
-    }
-
-    .untis-lesson-t {
-        display: none;
-    }
-
-    .untis-db-body {
-        padding: 1rem;
-    }
-
-    .untis-db-header {
-        padding: 1rem;
-    }
-
-    .untis-title {
-        font-size: 1.3rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .untis-day-name {
-        font-size: 0.6rem;
-    }
-    .untis-day-date {
-        font-size: 0.65rem;
-    }
-    .untis-lesson-name {
-        font-size: 0.68rem;
-    }
+@keyframes untis-skeleton {
+    50% { opacity: 0.5; }
 }
 
 /* ═══ DUAL-CHOICE CARDS (Step 1) ═══ */
@@ -979,8 +881,8 @@
 .untis-choice-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 12px;
+    margin-bottom: 12px;
 }
 
 .untis-choice-card {
@@ -988,125 +890,70 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.4rem;
-    padding: 1.2rem 1rem 1rem;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1.5px solid rgba(255, 255, 255, 0.09);
+    gap: 4px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--edge-top);
+    color: var(--text-main);
     cursor: pointer;
     text-align: left;
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    overflow: hidden;
+    transition: border-color 150ms ease, background-color 150ms ease, transform 120ms ease-out;
 }
 
 .untis-choice-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(168, 85, 247, 0.35);
-    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.12);
-}
-
-.untis-choice-card.untis-choice-manual:hover {
-    border-color: rgba(34, 211, 238, 0.35);
-    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.1);
+    border-color: var(--hover-border);
+    background: linear-gradient(var(--hover-fill), var(--hover-fill)), var(--bg-surface);
 }
 
 .untis-choice-card:active {
-    transform: translateY(0) scale(0.98);
-}
-
-.untis-choice-glow {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    border-radius: inherit;
-}
-
-.untis-choice-ical .untis-choice-glow {
-    background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
-}
-
-.untis-choice-manual .untis-choice-glow {
-    background: radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.08) 0%, transparent 70%);
-}
-
-.untis-choice-card:hover .untis-choice-glow {
-    opacity: 1;
+    transform: scale(0.98);
 }
 
 .untis-choice-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 11px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(168, 85, 247, 0.15);
-    border: 1px solid rgba(168, 85, 247, 0.3);
-    color: #d8b4fe;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: var(--role-accent-soft);
+    color: var(--primary);
     flex-shrink: 0;
-    margin-bottom: 0.25rem;
-    transition: background 0.2s, border-color 0.2s;
+    margin-bottom: 8px;
 }
 
-.untis-choice-label {
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #d8b4fe;
-    line-height: 1;
+.untis-choice-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
 }
 
 .untis-choice-name {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.25;
 }
 
 .untis-choice-desc {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
-    line-height: 1.4;
-    flex: 1;
-}
-
-.untis-choice-badge {
-    display: inline-block;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    padding: 3px 8px;
-    border-radius: 6px;
-    margin-top: 0.25rem;
-}
-
-.untis-badge-purple {
-    background: rgba(168, 85, 247, 0.15);
-    border: 1px solid rgba(168, 85, 247, 0.3);
-    color: #d8b4fe;
-}
-
-.untis-badge-cyan {
-    background: rgba(34, 211, 238, 0.12);
-    border: 1px solid rgba(34, 211, 238, 0.28);
-    color: #67e8f9;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
 }
 
 .untis-choice-arrow {
     position: absolute;
-    bottom: 0.9rem;
-    right: 0.9rem;
-    color: rgba(255, 255, 255, 0.2);
-    transition: color 0.2s, transform 0.2s;
+    top: 16px;
+    right: 16px;
+    color: var(--text-muted);
+    opacity: 0.6;
+    transition: opacity 150ms ease;
 }
 
 .untis-choice-card:hover .untis-choice-arrow {
-    color: rgba(255, 255, 255, 0.5);
-    transform: translateX(2px);
+    opacity: 1;
 }
 
 @media (max-width: 420px) {
@@ -1117,13 +964,12 @@
     .untis-choice-card {
         flex-direction: row;
         align-items: center;
-        gap: 0.85rem;
-        padding: 0.9rem 1rem;
+        gap: 12px;
+        padding: 14px;
     }
 
     .untis-choice-icon {
         margin-bottom: 0;
-        flex-shrink: 0;
     }
 
     .untis-choice-arrow {
@@ -1131,99 +977,95 @@
         margin-left: auto;
         flex-shrink: 0;
     }
-
-    .untis-choice-desc {
-        display: none;
-    }
 }
 
 /* ═══ MANUAL GRID BUILDER ═══ */
 
 /* ── Day Tabs ── */
 .untis-day-tabs {
-    display: flex;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border-radius: 10px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
 }
 
 .untis-day-tab {
     position: relative;
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    min-height: 36px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
-    border: 1.5px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
-    color: rgba(255, 255, 255, 0.45);
-    transition: all 0.2s ease;
-    flex: 1;
-    min-width: 44px;
-    text-align: center;
+    transition: background-color 150ms ease, color 150ms ease;
 }
 
 .untis-day-tab:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.75);
-    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-main);
+    background: var(--hover-fill);
 }
 
 .untis-day-tab.active {
-    background: rgba(34, 211, 238, 0.12);
-    border-color: rgba(34, 211, 238, 0.4);
-    color: #67e8f9;
-    box-shadow: 0 0 16px rgba(34, 211, 238, 0.12);
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+    color: var(--text-main);
+    box-shadow: var(--shadow-sm);
 }
 
+/* Punkt = an diesem Tag gibt es schon Fächer. */
 .untis-day-tab.has-lessons::after {
     content: '';
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 6px;
+    right: 6px;
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #67e8f9;
-    opacity: 0.7;
-}
-
-.untis-day-tab.active.has-lessons::after {
-    opacity: 1;
-    background: #67e8f9;
-    box-shadow: 0 0 6px rgba(34, 211, 238, 0.6);
+    background: var(--primary);
 }
 
 /* ── Lesson Rows ── */
 .untis-manual-lesson {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.6rem 0.8rem;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    margin-bottom: 0.4rem;
-    transition: border-color 0.2s, background 0.2s;
+    gap: 12px;
+    padding: 10px 10px 10px 14px;
+    border-radius: 10px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--subj, var(--border-interactive));
+    margin-bottom: 6px;
 }
 
-.untis-manual-lesson:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.12);
+.untis-manual-lesson-title {
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .untis-manual-lesson-time {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.4);
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
     white-space: nowrap;
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
 }
 
 .untis-manual-lesson-room {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -1231,146 +1073,214 @@
 .untis-manual-lesson-del {
     margin-left: auto;
     flex-shrink: 0;
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    border: 1px solid rgba(248, 113, 113, 0.2);
-    background: rgba(248, 113, 113, 0.07);
-    color: rgba(248, 113, 113, 0.5);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
+    display: grid;
+    place-items: center;
+    transition: background-color 150ms ease, color 150ms ease;
 }
 
 .untis-manual-lesson-del:hover {
-    background: rgba(248, 113, 113, 0.18);
-    border-color: rgba(248, 113, 113, 0.45);
-    color: #fca5a5;
+    background: var(--role-neg-soft);
+    color: var(--role-neg);
 }
 
 /* ── Empty Day State ── */
 .untis-manual-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 16px;
+    border-radius: 12px;
+    border: 1px dashed var(--border-interactive);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.5;
     text-align: center;
-    padding: 2rem 1rem;
-    border-radius: 14px;
-    border: 1.5px dashed rgba(255, 255, 255, 0.08);
 }
+
+.untis-manual-empty svg { opacity: 0.6; }
 
 /* ── Add Lesson Button ── */
 .untis-btn-add-lesson {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 0.3rem 0.7rem;
+    gap: 6px;
+    min-height: 32px;
+    padding: 0 12px;
     border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    font-size: 0.82rem;
+    font-weight: 600;
     cursor: pointer;
-    border: 1.5px solid rgba(34, 211, 238, 0.3);
-    background: rgba(34, 211, 238, 0.08);
-    color: #67e8f9;
-    transition: all 0.2s ease;
+    border: 1px solid var(--hover-border);
+    background: var(--hover-fill);
+    color: var(--primary);
     flex-shrink: 0;
     white-space: nowrap;
+    transition: background-color 150ms ease, transform 120ms ease-out;
 }
 
 .untis-btn-add-lesson:hover {
-    background: rgba(34, 211, 238, 0.15);
-    border-color: rgba(34, 211, 238, 0.5);
-    box-shadow: 0 0 12px rgba(34, 211, 238, 0.12);
+    background: var(--hover-fill-strong);
 }
+
+.untis-btn-add-lesson:active { transform: scale(0.97); }
 
 /* ── Add Form ── */
 .untis-manual-add-form {
-    padding: 1rem;
-    border-radius: 14px;
-    background: rgba(34, 211, 238, 0.04);
-    border: 1.5px solid rgba(34, 211, 238, 0.2);
-    margin-top: 0.75rem;
-    animation: untis-step-in 0.2s ease;
+    margin-top: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--edge-top);
+    animation: untis-fade-in 160ms ease-out;
+}
+
+.untis-form-title {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
 }
 
 .untis-form-row {
     display: flex;
-    gap: 0.6rem;
-    margin-bottom: 0.6rem;
+    gap: 8px;
+    margin-bottom: 10px;
     align-items: flex-end;
 }
 
-.untis-form-input {
-    width: 100%;
-    padding: 0.6rem 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    color: #fff;
-    font-size: 0.85rem;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    box-sizing: border-box;
-    -webkit-appearance: none;
-    appearance: none;
-}
+.untis-form-row > div { flex: 1; min-width: 0; }
 
-.untis-form-input::placeholder {
-    color: rgba(255, 255, 255, 0.2);
-}
-
-.untis-form-input:focus {
-    border-color: rgba(34, 211, 238, 0.45);
-    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
-}
-
-input[type="time"].untis-form-input::-webkit-calendar-picker-indicator {
-    filter: invert(0.4);
-    cursor: pointer;
-}
+.untis-form-row--actions { margin-bottom: 0; justify-content: flex-end; }
 
 /* ── Manual Footer ── */
 .untis-manual-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-subtle);
+    padding: 14px 20px;
     flex-shrink: 0;
-    background: rgba(6, 5, 20, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 
 .untis-manual-footer-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 16px;
 }
 
 .untis-manual-footer-info {
     flex: 1;
     min-width: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
+/* ── Mobile ── */
 @media (max-width: 600px) {
-    .untis-day-tab {
-        padding: 0.45rem 0.6rem;
-        font-size: 0.75rem;
+    .untis-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .untis-setup-panel,
+    .untis-dashboard-panel {
+        max-width: 100%;
+        max-height: 92dvh;
+        border-radius: 20px 20px 0 0;
+        border-bottom: 0;
+        animation-name: untis-sheet-in;
+        animation-duration: 320ms;
+        animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+    }
+
+    .untis-setup-panel {
+        padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .untis-today-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .untis-week-grid {
+        gap: 4px;
+    }
+
+    .untis-day-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+        padding: 6px 2px;
+    }
+
+    .untis-lesson-chip {
+        padding: 5px 5px 5px 6px;
+        font-size: 0.72rem;
+    }
+
+    .untis-lesson-t {
+        display: none;
+    }
+
+    .untis-db-body {
+        padding: 16px;
+    }
+
+    .untis-db-header {
+        padding: 14px 16px;
     }
 
     .untis-manual-footer {
-        padding: 0.85rem 1rem;
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
     }
 
     .untis-form-row {
-        flex-direction: column;
+        flex-wrap: wrap;
     }
 
     .untis-form-row > div {
-        width: 100%;
+        flex: 1 1 calc(50% - 4px);
     }
 
-    .untis-choice-grid {
-        grid-template-columns: 1fr;
+    .untis-manual-lesson {
+        flex-wrap: wrap;
+        row-gap: 2px;
+    }
+
+    .untis-manual-lesson-title {
+        flex: 1 1 100%;
+        order: -1;
+        padding-right: 36px;
+    }
+
+    .untis-manual-lesson { position: relative; }
+
+    .untis-manual-lesson-del {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+}
+
+@keyframes untis-sheet-in {
+    from { transform: translate3d(0, 100%, 0); }
+    to   { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .untis-setup-panel,
+    .untis-dashboard-panel {
+        animation: untis-fade-in 160ms ease-out;
+    }
+    .untis-pulse-ring,
+    .untis-skeleton {
+        animation: none;
     }
 }
