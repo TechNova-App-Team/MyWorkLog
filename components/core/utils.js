@@ -75,283 +75,179 @@
         showModernDeleteConfirm(entry, id);
     }
 
+    // ═══ DELETE CONFIRM ═══
+    // Styles in components/core/misc.css (`.dc-*`). Bis v8.0.1 stand hier ein
+    // Sheet mit Inline-Styles, backdrop-filter blur(4px) über den GANZEN
+    // Viewport plus blur(20px) auf dem Sheet selbst — die GPU musste beide
+    // Unschärfen in jedem Frame der Einblendung neu rechnen, dazu eine
+    // Überschwing-Kurve über 400 ms. Das war das „10 fps"-Ruckeln.
+    // Jetzt: deckende Flächen, nur transform/opacity, Transitions statt
+    // Keyframes (unterbrechbar, wenn man schnell wieder schliesst).
+    function dcT(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
     function showModernDeleteConfirm(entry, id) {
+        if (document.querySelector('.dc-root')) return;   // Doppelklick öffnet nicht zweimal
+
         const label = (typeof getTypeLabel === 'function') ? getTypeLabel(entry.type) : entry.type;
-        // Typ-Icon im Danger-Ton — die rote Kachel sagt „wird gelöscht", das Icon sagt „was".
-        const icon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type, 28) : '';
-        const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {day:'2-digit', month:'2-digit', year:'2-digit'});
+        const icon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type, 20) : '';
+        const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString(mwlLocale(), { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const hours = roundHours(entry.worked || 0, 2).toLocaleString(mwlLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' h';
+        const range = (entry.start && entry.end) ? entry.start + '–' + entry.end : '';
+        // entry.info ist ein Pipe-String mit generiertem Vorspann — nur die Notiz des Nutzers zeigen.
+        const note = (typeof activityUserNote === 'function') ? activityUserNote(entry) : '';
 
-        const overlay = document.createElement('div');
-        overlay.className = 'delete-confirm-overlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            z-index: 3999;
-            opacity: 0;
-            animation: fadeInOverlay 0.3s ease forwards;
-        `;
-
-        const sheet = document.createElement('div');
-        sheet.className = 'delete-confirm-sheet';
-        sheet.style.cssText = `
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(var(--bg-deep-rgb, 3, 3, 5), 0.95);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px 24px 0 0;
-            z-index: 4000;
-            padding: 24px 20px 32px;
-            max-height: 80vh;
-            animation: slideUpSheet 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            max-width: 100%;
-            box-sizing: border-box;
-            touch-action: none;
-        `;
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeInOverlay {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            @keyframes slideUpSheet {
-                from { transform: translateY(100%); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-            @keyframes slideDownSheet {
-                from { transform: translateY(0); opacity: 1; }
-                to { transform: translateY(100%); opacity: 0; }
-            }
-            @keyframes pulseDelete {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.05); }
-                100% { transform: scale(1); }
-            }
-            @keyframes fadeOutEntry {
-                0% { opacity: 1; transform: translateX(0); }
-                100% { opacity: 0; transform: translateX(100%); }
-            }
-            .delete-confirm-sheet.deleting {
-                animation: slideDownSheet 0.3s ease forwards;
-            }
-        `;
-        if (!document.querySelector('style[data-delete-confirm]')) {
-            style.setAttribute('data-delete-confirm', '');
-            document.head.appendChild(style);
-        }
-
-        sheet.innerHTML = `
-            <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: rgba(239, 68, 68, 0.15); border-radius: 16px; margin: 0 auto 16px; color: #ef4444;">${mwlIconFromEmoji(icon, 26)}</div>
-                <h2 style="color: #ef4444; margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 700;">Eintrag löschen?</h2>
-                <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">${label} • ${dateStr}</p>
-            </div>
-
-            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
-                <div style="flex: 1;">
-                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px;">Arbeitszeit</div>
-                    <div style="color: var(--text-main); font-size: 1.1rem; font-weight: 600;">${entry.worked.toFixed(1)}h</div>
+        const root = document.createElement('div');
+        root.className = 'dc-root';
+        root.innerHTML = `
+            <div class="dc-scrim"></div>
+            <div class="dc-panel" role="alertdialog" aria-modal="true" aria-labelledby="dcTitle" aria-describedby="dcDesc">
+                <div class="dc-grip" aria-hidden="true"></div>
+                <div class="dc-head">
+                    <span class="dc-icon" aria-hidden="true">${mwlIconFromEmoji(icon, 20)}</span>
+                    <div class="dc-head__text">
+                        <h2 id="dcTitle" class="dc-title">${esc(dcT('Eintrag löschen?', 'Delete entry?'))}</h2>
+                        <p id="dcDesc" class="dc-desc">${esc(dcT('Du kannst das direkt danach rückgängig machen.', 'You can undo this right afterwards.'))}</p>
+                    </div>
                 </div>
-                ${entry.info ? `<div style="flex: 1; border-left: 1px solid rgba(255, 255, 255, 0.06); padding-left: 12;">
-                    <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Info</div>
-                    <div style="color: var(--text-main); font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${esc(entry.info)}</div>
-                </div>` : ''}
-            </div>
+                <dl class="dc-entry">
+                    <div class="dc-entry__row"><dt>${esc(label)}</dt><dd>${esc(dateStr)}</dd></div>
+                    <div class="dc-entry__row"><dt>${esc(range || dcT('Arbeitszeit', 'Hours'))}</dt><dd class="dc-num">${esc(hours)}</dd></div>
+                    ${note ? `<div class="dc-entry__note">${esc(note)}</div>` : ''}
+                </dl>
+                <div class="dc-actions">
+                    <button type="button" class="dc-btn dc-btn--ghost" data-dc="cancel">${esc(dcT('Abbrechen', 'Cancel'))}</button>
+                    <button type="button" class="dc-btn dc-btn--danger" data-dc="confirm">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        <span>${esc(dcT('Löschen', 'Delete'))}</span>
+                    </button>
+                </div>
+            </div>`;
 
-            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                <button class="btn-delete-cancel" style="flex: 1; padding: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-main); border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 1rem;">Abbrechen</button>
-                <button class="btn-delete-confirm" style="flex: 1; padding: 14px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Löschen</span>
-                </button>
-            </div>
-
-            <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 12px; background: rgba(168, 85, 247, 0.08); border-radius: 10px;">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg> Du kannst den Eintrag danach noch wiederherstellen
-            </div>
-        `;
-
-        const closeSheet = (confirmed = false) => {
-            sheet.classList.add('deleting');
-            overlay.style.opacity = '0';
-            setTimeout(() => {
-                overlay.remove();
-                sheet.remove();
-            }, 300);
-            if (confirmed) performDelete();
-        };
+        const panel = root.querySelector('.dc-panel');
+        const prevFocus = document.activeElement;
+        let closed = false;
 
         const performDelete = () => {
             const idx = data.entries.findIndex(e => e.id === id);
             if (idx === -1) return;
-            const entry = data.entries[idx];
+            const removed = data.entries[idx];
 
             data.entries.splice(idx, 1);
             data.trash = data.trash || [];
-            data.trash.push({ entry: entry, originalIndex: idx, deletedAt: Date.now() });
+            data.trash.push({ entry: removed, originalIndex: idx, deletedAt: Date.now() });
 
             recalculateVacationUsed();
             save();
             if (document.getElementById('view-history')?.classList.contains('active') && typeof renderHistoryView === 'function') {
-                 renderHistoryView();
+                renderHistoryView();
             }
 
             showModernUndoToast();
         };
 
-        sheet.querySelector('.btn-delete-cancel').addEventListener('click', () => closeSheet(false));
-        sheet.querySelector('.btn-delete-confirm').addEventListener('click', () => closeSheet(true));
-        overlay.addEventListener('click', () => closeSheet(false));
+        const close = (confirmed) => {
+            if (closed) return;
+            closed = true;
+            document.removeEventListener('keydown', onKey, true);
+            // Nach einer Wischgeste aus der Fingerposition weiterfahren, nicht zurückspringen.
+            panel.style.transition = '';
+            if (panel.style.transform) panel.style.transform = 'translate3d(0, 100%, 0)';
+            root.dataset.state = 'closed';
+            // transitionend feuert nicht bei reduzierter Bewegung/verstecktem Tab — Zeitgeber als Netz.
+            setTimeout(() => root.remove(), 260);
+            if (prevFocus && typeof prevFocus.focus === 'function' && document.contains(prevFocus)) prevFocus.focus({ preventScroll: true });
+            if (confirmed) performDelete();
+        };
 
-        document.body.appendChild(overlay);
-        document.body.appendChild(sheet);
+        // Capture-Phase: sonst greifen globale Tastenkürzel (Escape schliesst sonst auch den Eintrags-Dialog dahinter).
+        const onKey = (e) => {
+            if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(false); return; }
+            if (e.key === 'Tab') {
+                const f = [...panel.querySelectorAll('button')];
+                const i = f.indexOf(document.activeElement);
+                e.preventDefault();
+                f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+            }
+        };
 
-        // Swipe-to-delete on mobile
-        let startY = 0, currentY = 0, isDragging = false;
-        sheet.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; isDragging = false; sheet.style.transition = 'none'; }, { passive: true });
-        sheet.addEventListener('touchmove', (e) => {
-            currentY = e.touches[0].clientY;
-            const diff = currentY - startY;
-            if (diff > 10) { isDragging = true; sheet.style.transform = `translateY(${Math.min(diff, window.innerHeight / 2)}px)`; sheet.style.opacity = Math.max(0.3, 1 - diff / 400); }
+        root.querySelector('[data-dc="cancel"]').addEventListener('click', () => close(false));
+        root.querySelector('[data-dc="confirm"]').addEventListener('click', () => close(true));
+        root.querySelector('.dc-scrim').addEventListener('click', () => close(false));
+        document.addEventListener('keydown', onKey, true);
+
+        document.body.appendChild(root);
+        // Erst nach dem ersten Layout umschalten, sonst startet die Transition nicht.
+        root.getBoundingClientRect();
+        root.dataset.state = 'open';
+        root.querySelector('[data-dc="cancel"]').focus({ preventScroll: true });
+
+        // Wischen zum Schliessen (nur Bottom-Sheet auf schmalen Bildschirmen).
+        // Ein kurzer schneller Wisch reicht — Schwelle ODER Geschwindigkeit.
+        let y0 = 0, t0 = 0, dy = 0, dragging = false;
+        panel.addEventListener('touchstart', (e) => {
+            if (!window.matchMedia('(max-width: 639px)').matches) return;
+            y0 = e.touches[0].clientY; t0 = performance.now(); dy = 0; dragging = true;
+            panel.style.transition = 'none';
         }, { passive: true });
-        sheet.addEventListener('touchend', () => {
-            const diff = currentY - startY;
-            if (isDragging && diff > 100) { closeSheet(false); }
-            else { sheet.style.transition = 'transform 0.3s ease, opacity 0.2s ease'; sheet.style.transform = 'translateY(0)'; sheet.style.opacity = '1'; }
-            isDragging = false;
+        panel.addEventListener('touchmove', (e) => {
+            if (!dragging) return;
+            const d = e.touches[0].clientY - y0;
+            // Nach oben mit Widerstand statt harter Wand.
+            dy = d > 0 ? d : d / 6;
+            panel.style.transform = `translate3d(0, ${dy}px, 0)`;
+        }, { passive: true });
+        panel.addEventListener('touchend', () => {
+            if (!dragging) return;
+            dragging = false;
+            const v = dy / Math.max(1, performance.now() - t0);
+            if (dy > 90 || v > 0.5) { close(false); return; }
+            panel.style.transition = '';
+            panel.style.transform = '';
         });
     }
 
     function showModernUndoToast() {
+        document.querySelectorAll('.dc-undo').forEach(t => t.remove());
+
         const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(var(--bg-sidebar-rgb, 15, 15, 20), 0.95);
-            backdrop-filter: blur(20px);
-            padding: 16px 20px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            z-index: 5000;
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            max-width: 90%;
-            animation: slideUpUndo 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        `;
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideUpUndo {
-                from { transform: translateX(-50%) translateY(120px); opacity: 0; }
-                to { transform: translateX(-50%) translateY(0); opacity: 1; }
-            }
-            @keyframes slideDownUndo {
-                from { transform: translateX(-50%) translateY(0); opacity: 1; }
-                to { transform: translateX(-50%) translateY(120px); opacity: 0; }
-            }
-        `;
-        if (!document.querySelector('style[data-undo-toast]')) {
-            style.setAttribute('data-undo-toast', '');
-            document.head.appendChild(style);
-        }
-
+        toast.className = 'dc-undo';
+        toast.setAttribute('role', 'status');
         toast.innerHTML = `
-            <div style="flex: 1; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                <span style="display:inline-grid;place-items:center;color:#10b981;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-                <span>Eintrag gelöscht</span>
-            </div>
-            <button id="undoBtn" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(168, 85, 247, 0.3); color: var(--primary); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: all 0.2s ease; white-space: nowrap;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg> Rückgängig</button>
-        `;
+            <span class="dc-undo__icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <span class="dc-undo__text">${esc(dcT('Eintrag gelöscht', 'Entry deleted'))}</span>
+            <button type="button" class="dc-undo__btn">${esc(dcT('Rückgängig', 'Undo'))}</button>`;
 
         document.body.appendChild(toast);
+        toast.getBoundingClientRect();
+        toast.dataset.state = 'open';
 
+        let gone = false;
         const removeToast = () => {
-            toast.style.animation = 'slideDownUndo 0.3s ease forwards';
-            setTimeout(() => toast.remove(), 300);
-        };
-
-        toast.querySelector('#undoBtn').addEventListener('click', () => {
-            undoDelete();
-            removeToast();
-        });
-
-        // Swipe-to-dismiss
-        let startX = 0, currentX = 0;
-        toast.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; currentX = 0; toast.style.transition = 'none'; }, { passive: true });
-        toast.addEventListener('touchmove', (e) => {
-            currentX = e.touches[0].clientX - startX;
-            if (Math.abs(currentX) > 10) { toast.style.transform = `translateX(calc(-50% + ${currentX}px))`; toast.style.opacity = Math.max(0.2, 1 - Math.abs(currentX) / 300); }
-        }, { passive: true });
-        toast.addEventListener('touchend', () => {
-            if (Math.abs(currentX) > 100) { removeToast(); }
-            else { toast.style.transition = 'all 0.3s ease'; toast.style.transform = 'translateX(-50%)'; toast.style.opacity = '1'; }
-        });
-
-        setTimeout(removeToast, 7000);
-    }
-
-    function showUndoToast() {
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-sidebar);
-            padding: 12px 16px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 2001;
-            display:flex;
-            gap:12px;
-            align-items:center;
-            max-width: 90%;
-        `;
-
-        toast.innerHTML = `
-            <div style="flex:1; color:var(--text-main); font-weight:600;">Eintrag gelöscht</div>
-            <button id="undoBtn" style="background:transparent; border:1px solid rgba(255,255,255,0.08); color:var(--primary); padding:6px 10px; border-radius:8px; cursor:pointer;">Rückgängig</button>
-        `;
-
-        document.body.appendChild(toast);
-
-        const removeToast = () => {
-            toast.style.opacity = '0';
+            if (gone) return;
+            gone = true;
+            toast.style.transition = '';   // gewischt: bleibt, wo der Finger war, und blendet aus
+            toast.dataset.state = 'closed';
             setTimeout(() => toast.remove(), 240);
         };
 
-        // Swipe-to-dismiss (touch)
-        let _uSwX = 0, _uSwD = 0, _uSwActive = false;
-        toast.addEventListener('touchstart', (e) => { _uSwX = e.touches[0].clientX; _uSwD = 0; _uSwActive = false; toast.style.transition = 'none'; }, { passive: true });
-        toast.addEventListener('touchmove', (e) => {
-            const dx = e.touches[0].clientX - _uSwX;
-            if (!_uSwActive && Math.abs(dx) > 8) _uSwActive = true;
-            if (_uSwActive) { _uSwD = dx; toast.style.transform = `translateX(calc(-50% + ${dx}px))`; toast.style.opacity = Math.max(0.2, 1 - Math.abs(dx) / 250); }
-        }, { passive: true });
-        toast.addEventListener('touchend', () => {
-            if (_uSwActive && Math.abs(_uSwD) > 80) { removeToast(); }
-            else { toast.style.transition = 'transform 0.3s ease, opacity 0.2s ease'; toast.style.transform = 'translateX(-50%)'; toast.style.opacity = '1'; }
-            _uSwActive = false;
-        });
-
-        // Undo on click
-        toast.querySelector('#undoBtn').addEventListener('click', () => {
+        toast.querySelector('.dc-undo__btn').addEventListener('click', () => {
             undoDelete();
             removeToast();
         });
 
-        // Auto entfernen nach 8 Sekunden
-        setTimeout(removeToast, 8000);
+        let x0 = 0, dx = 0;
+        toast.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; dx = 0; toast.style.transition = 'none'; }, { passive: true });
+        toast.addEventListener('touchmove', (e) => {
+            dx = e.touches[0].clientX - x0;
+            toast.style.transform = `translate3d(calc(-50% + ${dx}px), 0, 0)`;
+        }, { passive: true });
+        toast.addEventListener('touchend', () => {
+            if (Math.abs(dx) > 80) { removeToast(); return; }
+            toast.style.transition = '';
+            toast.style.transform = '';
+        });
+
+        setTimeout(removeToast, 7000);
     }
 
     function undoDelete() {

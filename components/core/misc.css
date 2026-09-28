@@ -243,3 +243,201 @@
                 bottom: 30px;
             }
         }
+
+        /* --- LOESCH-BESTAETIGUNG + RUECKGAENGIG (utils.js, showModernDeleteConfirm) ---
+           Kein backdrop-filter, nirgends: der alte Dialog hatte blur(4px) ueber dem
+           ganzen Viewport plus blur(20px) auf dem Sheet, und beide wurden in jedem
+           Frame der Einblendung neu gerechnet - daher das Ruckeln. Flaechen sind
+           deckend (--bg-elevated traegt Alpha, darum die zweite Ebene --bg-deep).
+           Animiert werden nur transform und opacity, per Transition (unterbrechbar). */
+        .dc-root {
+            position: fixed;
+            inset: 0;
+            z-index: 4000;
+            display: grid;
+            place-items: center;
+            padding: 16px;
+        }
+        .dc-scrim {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            opacity: 0;
+            transition: opacity 200ms ease-out;
+        }
+        .dc-panel {
+            position: relative;
+            width: min(400px, 100%);
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(var(--bg-elevated), var(--bg-elevated)), var(--bg-deep);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--edge-top), 0 24px 64px rgba(0, 0, 0, 0.5);
+            color: var(--text-main);
+            opacity: 0;
+            transform: translate3d(0, 8px, 0) scale(0.97);
+            transition: transform 220ms cubic-bezier(0.23, 1, 0.32, 1),
+                        opacity 160ms ease-out;
+        }
+        .dc-root[data-state="open"] .dc-scrim { opacity: 1; }
+        .dc-root[data-state="open"] .dc-panel { opacity: 1; transform: none; }
+        /* Schliessen schneller als Oeffnen: das System antwortet, der Nutzer wartet nicht. */
+        .dc-root[data-state="closed"] .dc-scrim { transition-duration: 160ms; }
+        .dc-root[data-state="closed"] .dc-panel { transition-duration: 160ms, 120ms; }
+
+        .dc-grip { display: none; }
+
+        .dc-head { display: flex; gap: 14px; align-items: flex-start; }
+        .dc-icon {
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--role-neg-soft);
+            color: var(--role-neg);
+        }
+        .dc-head__text { min-width: 0; padding-top: 1px; }
+        .dc-title { margin: 0; font-size: 1.05rem; font-weight: 700; line-height: 1.3; color: var(--text-main); }
+        .dc-desc { margin: 4px 0 0; font-size: 0.875rem; line-height: 1.45; color: var(--text-muted); }
+
+        .dc-entry {
+            margin: 18px 0 20px;
+            padding: 4px 14px;
+            border-radius: 10px;
+            background: var(--bg-inset);
+            border: 1px solid var(--border-subtle);
+        }
+        .dc-entry__row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 9px 0;
+            font-size: 0.875rem;
+        }
+        .dc-entry__row + .dc-entry__row { border-top: 1px solid var(--border-subtle); }
+        .dc-entry__row dt { color: var(--text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .dc-entry__row dd { margin: 0; color: var(--text-main); font-weight: 600; white-space: nowrap; }
+        .dc-num { font-variant-numeric: tabular-nums; }
+        .dc-entry__note {
+            padding: 9px 0;
+            border-top: 1px solid var(--border-subtle);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .dc-actions { display: flex; justify-content: flex-end; gap: 8px; }
+        .dc-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 0 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 150ms ease, border-color 150ms ease, transform 120ms ease-out;
+        }
+        .dc-btn:active { transform: scale(0.97); }
+        .dc-btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+        .dc-btn--ghost {
+            background: transparent;
+            border: 1px solid var(--border-interactive);
+            color: var(--text-main);
+        }
+        .dc-btn--ghost:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+        .dc-btn--danger {
+            background: var(--role-neg);
+            border: 1px solid transparent;
+            color: #fff;
+        }
+        .dc-btn--danger:hover { background: color-mix(in srgb, var(--role-neg) 88%, #000); }
+        .dc-btn--danger:focus-visible { outline-color: rgba(239, 68, 68, 0.55); }
+
+        /* Handy: Bottom-Sheet. Kurve wie iOS-Sheets (Ionic), kein Ueberschwingen. */
+        @media (max-width: 639px) {
+            .dc-root { place-items: end stretch; padding: 0; }
+            .dc-panel {
+                width: 100%;
+                padding: 8px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+                border-radius: 20px 20px 0 0;
+                border-bottom: 0;
+                opacity: 1;
+                transform: translate3d(0, 100%, 0);
+                transition: transform 340ms cubic-bezier(0.32, 0.72, 0, 1);
+                touch-action: none;
+            }
+            .dc-root[data-state="closed"] .dc-panel { transition-duration: 220ms; }
+            .dc-grip {
+                display: block;
+                width: 36px;
+                height: 4px;
+                margin: 0 auto 16px;
+                border-radius: 2px;
+                background: var(--border-interactive);
+            }
+            .dc-actions { flex-direction: column-reverse; }
+            .dc-btn { min-height: 48px; font-size: 1rem; }
+        }
+
+        .dc-undo {
+            position: fixed;
+            left: 50%;
+            bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: max-content;
+            max-width: calc(100vw - 32px);
+            padding: 8px 8px 8px 14px;
+            border-radius: 12px;
+            background: linear-gradient(var(--bg-elevated), var(--bg-elevated)), var(--bg-deep);
+            border: 1px solid var(--border-default);
+            box-shadow: var(--edge-top), 0 12px 36px rgba(0, 0, 0, 0.4);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            font-weight: 600;
+            opacity: 0;
+            transform: translate3d(-50%, 12px, 0);
+            transition: transform 260ms cubic-bezier(0.23, 1, 0.32, 1), opacity 200ms ease-out;
+        }
+        .dc-undo[data-state="open"] { opacity: 1; transform: translate3d(-50%, 0, 0); }
+        .dc-undo[data-state="closed"] { opacity: 0; transition-duration: 180ms, 160ms; }
+        .dc-undo__icon { display: grid; place-items: center; color: var(--role-pos); }
+        .dc-undo__btn {
+            margin-left: 6px;
+            min-height: 34px;
+            padding: 0 12px;
+            border-radius: 8px;
+            border: 1px solid var(--hover-border);
+            background: var(--hover-fill);
+            color: var(--primary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 150ms ease, transform 120ms ease-out;
+        }
+        .dc-undo__btn:hover { background: var(--hover-fill-strong); }
+        .dc-undo__btn:active { transform: scale(0.97); }
+        @media (max-width: 767px) {
+            /* Ueber der Mobil-Navigation, nicht dahinter. */
+            .dc-undo { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .dc-panel, .dc-undo { transition-property: opacity; }
+            .dc-root[data-state] .dc-panel { transform: none; }
+            .dc-undo[data-state] { transform: translate3d(-50%, 0, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) and (max-width: 639px) {
+            .dc-panel { opacity: 0; transform: none; transition: opacity 160ms ease-out; }
+            .dc-root[data-state="open"] .dc-panel { opacity: 1; }
+            .dc-root[data-state="closed"] .dc-panel { opacity: 0; }
+        }
