@@ -365,7 +365,9 @@
             position: relative;
             z-index: 50;
         }
-        .search-wrap svg {
+        /* Nur die Lupe: `.search-wrap svg` traf bis 2026-09-28 JEDES Symbol im
+           Suchbereich (Modus-Menü) und legte alle absolut auf denselben Punkt. */
+        .search-wrap > svg {
             position: absolute; left: 16px; top: 50%;
             transform: translateY(-50%);
             width: 20px; height: 20px;
@@ -390,393 +392,24 @@
             border-color: rgba(var(--primary-rgb), 0.4);
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
-        .search-mode-dropdown {
-            position: absolute; right: 12px; top: 50%;
-            transform: translateY(-50%);
-        }
-        .search-mode-trigger {
-            display: flex; align-items: center; gap: 6px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: 100px;
-            padding: 5px 12px 5px 10px;
-            cursor: pointer;
-            transition: all 0.25s;
-            font-family: var(--font);
-            font-size: 0.72rem; font-weight: 600;
-            color: var(--text-muted);
-            white-space: nowrap;
-            user-select: none;
-        }
-        .search-mode-trigger:hover {
-            border-color: rgba(var(--primary-rgb), 0.3);
-            color: var(--text);
-        }
-        /* Feste Masse statt Eigenbreite: ein <svg> mit viewBox, aber ohne
-           width/height-Attribut meldet in einem Flex-Container die Breite 0.
-           Der Wrapper faellt dann auf 0 zusammen und das Symbol legt sich
-           ueber den Text daneben. */
-        .search-mode-trigger .mode-icon {
-            display: inline-flex; flex: 0 0 auto;
-            width: 13px; height: 13px; line-height: 1;
-        }
-        .search-mode-trigger .mode-icon svg { width: 13px; height: 13px; flex-shrink: 0; }
-        .search-mode-trigger .mode-chevron {
-            display: inline-flex; flex: 0 0 auto;
-            width: 11px; height: 11px;
-            opacity: 0.5; transition: transform 0.2s;
-        }
-        .search-mode-trigger .mode-chevron svg { width: 11px; height: 11px; }
-        .search-mode-trigger.open .mode-chevron { transform: rotate(180deg); }
-        .search-mode-trigger.mode-smart  { color: var(--primary); border-color: rgba(var(--primary-rgb), 0.3); }
-        .search-mode-trigger.mode-exact  { color: var(--cyan); border-color: rgba(var(--cyan-rgb, 6,182,212), 0.3); }
-        .search-mode-trigger.mode-llm    { color: var(--success); border-color: rgba(var(--success-rgb), 0.3); }
-        .search-mode-trigger .ai-status-dot {
-            width: 5px; height: 5px; border-radius: 50%;
-            display: inline-block;
-            background: var(--danger);
-        }
-        .search-mode-trigger.has-key .ai-status-dot { background: var(--success); }
-
-        /* Dropdown Menu */
-        .search-mode-menu {
+        /* Tippfehler-Hinweis unter dem Feld. Absolut, damit er die Höhe von
+           .search-wrap nicht ändert — sonst verrutscht die Lupe (top: 50%). */
+        .search-hint {
             position: absolute;
-            top: calc(100% + 6px); right: 0;
-            background: var(--bg-card-solid);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            min-width: 220px;
-            padding: 6px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-            opacity: 0; visibility: hidden;
-            transform: translateY(-8px) scale(0.96);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 200;
-        }
-        .search-mode-menu.open {
-            opacity: 1; visibility: visible;
-            transform: translateY(0) scale(1);
-        }
-        .search-mode-menu-label {
-            font-size: 0.62rem; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.8px;
-            color: var(--text-dim); padding: 6px 10px 4px;
-        }
-        .search-mode-opt {
-            display: flex; align-items: center; gap: 10px;
-            padding: 8px 10px;
-            border-radius: var(--radius-xs);
-            cursor: pointer; transition: all 0.15s;
-            border: none; background: none; width: 100%;
-            font-family: var(--font); text-align: left;
+            top: calc(100% + 8px);
+            left: 18px; right: 18px;
+            margin: 0;
+            font-size: 0.8rem;
             color: var(--text-muted);
         }
-        .search-mode-opt:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-        .search-mode-opt.active { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); }
-        .search-mode-opt .opt-icon {
-            width: 22px; height: 16px; flex: 0 0 auto;
-            display: inline-flex; align-items: center; justify-content: center;
-            color: var(--text-dim);
-        }
-        .search-mode-opt .opt-icon svg { width: 15px; height: 15px; }
-        .search-mode-opt.active .opt-icon { color: var(--primary); }
-        .search-mode-opt .opt-info { flex: 1; min-width: 0; }
-        .search-mode-opt .opt-title { font-size: 0.8rem; font-weight: 600; }
-        .search-mode-opt .opt-desc { font-size: 0.68rem; color: var(--text-dim); margin-top: 1px; }
-        .search-mode-opt.active .opt-desc { color: rgba(var(--primary-rgb), 0.6); }
-        .search-mode-opt .opt-check {
-            display: inline-flex; flex: 0 0 auto;
-            width: 14px; height: 14px; color: var(--primary);
-            opacity: 0; transition: opacity 0.15s;
-        }
-        .search-mode-opt .opt-check svg { width: 14px; height: 14px; }
-        .search-mode-opt.active .opt-check { opacity: 1; }
-        .search-mode-divider {
-            height: 1px; background: var(--border); margin: 4px 6px;
-        }
-        .search-mode-opt.ai-settings {
-            color: var(--text-dim); font-size: 0.75rem;
-        }
-        .search-mode-opt.ai-settings:hover { color: var(--primary); }
-
-        /* AI Suggestions Dropdown */
-        .ai-suggest {
-            position: absolute;
-            top: calc(100% + 6px);
-            left: 0; right: 0;
-            background: var(--bg-card-solid);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-            z-index: 100;
-            display: none;
-            overflow: hidden;
-            max-height: 360px;
-            overflow-y: auto;
-        }
-        .ai-suggest.active { display: block; }
-        .ai-suggest-header {
-            padding: 10px 16px 6px;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-dim);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .ai-suggest-item {
-            padding: 10px 16px;
-            display: flex; align-items: center; gap: 12px;
+        .search-hint[hidden] { display: none; }
+        .search-hint button {
+            background: none; border: 0; padding: 0;
+            font: inherit; font-weight: 600;
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 2px;
             cursor: pointer;
-            transition: background 0.15s;
-            border-bottom: 1px solid var(--border);
-        }
-        .ai-suggest-item:last-child { border-bottom: none; }
-        .ai-suggest-item:hover {
-            background: rgba(var(--primary-rgb), 0.06);
-        }
-        .ai-suggest-icon {
-            display: inline-flex; flex: 0 0 auto;
-            width: 17px; height: 17px;
-            color: var(--text-dim);
-        }
-        .ai-suggest-icon svg { width: 17px; height: 17px; }
-        .ai-suggest-text {
-            flex: 1; min-width: 0;
-        }
-        .ai-suggest-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .ai-suggest-meta {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            display: flex; gap: 8px; align-items: center;
-        }
-        .ai-suggest-match {
-            font-size: 0.65rem;
-            font-family: var(--font-mono);
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(var(--primary-rgb), 0.1);
-            color: var(--primary);
-            font-weight: 600;
-        }
-        .ai-typo-hint {
-            padding: 8px 16px 10px;
-            font-size: 0.78rem;
-            color: var(--warning);
-            display: flex; align-items: center; gap: 6px;
-        }
-
-        /* ═══════════════════════════════════════
-           LLM API KEY MODAL
-        ═══════════════════════════════════════ */
-        .llm-key-overlay {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            z-index: 2000;
-            display: none; align-items: center; justify-content: center;
-            padding: 20px;
-        }
-        .llm-key-overlay.active { display: flex; }
-        .llm-key-modal {
-            background: var(--bg-card-solid);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            max-width: 480px; width: 100%;
-            padding: 28px;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-            animation: modalSlideUp 0.35s cubic-bezier(0.16,1,0.3,1);
-        }
-        .llm-key-modal h3 {
-            font-size: 1.1rem; font-weight: 700;
-            margin-bottom: 6px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .llm-key-modal .llm-key-desc {
-            font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;
-            margin-bottom: 20px;
-        }
-        .llm-key-modal label {
-            font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
-            display: block; margin-bottom: 6px;
-        }
-        .llm-key-modal select,
-        .llm-key-modal input[type="text"],
-        .llm-key-modal input[type="password"] {
-            width: 100%;
-            padding: 10px 14px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xs);
-            color: var(--text); font-size: 0.88rem;
-            font-family: var(--font-mono);
-            outline: none; transition: border-color 0.2s;
-            margin-bottom: 14px;
-        }
-        .llm-key-modal select { font-family: var(--font); }
-        .llm-key-modal input:focus,
-        .llm-key-modal select:focus {
-            border-color: rgba(var(--primary-rgb), 0.4);
-        }
-        .llm-key-actions {
-            display: flex; gap: 8px; margin-top: 6px;
-        }
-        .llm-key-actions button {
-            flex: 1; padding: 10px;
-            border-radius: var(--radius-xs);
-            font-size: 0.85rem; font-weight: 600;
-            font-family: var(--font);
-            cursor: pointer; transition: all 0.2s;
-            border: 1px solid var(--border);
-        }
-        .llm-key-save {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff; border-color: transparent !important;
-        }
-        .llm-key-save:hover { opacity: 0.9; transform: translateY(-1px); }
-        .llm-key-cancel {
-            background: var(--bg-elevated); color: var(--text-muted);
-        }
-        .llm-key-cancel:hover { color: var(--text); }
-        .llm-key-delete {
-            background: rgba(var(--danger-rgb), 0.1);
-            color: var(--danger); border-color: rgba(var(--danger-rgb), 0.2) !important;
-            flex: 0 0 auto; padding: 10px 14px;
-        }
-        .llm-key-delete:hover { background: rgba(var(--danger-rgb), 0.2); }
-        .llm-key-hint {
-            font-size: 0.72rem; color: var(--text-dim); margin-top: 10px;
-            line-height: 1.5;
-        }
-        .llm-key-hint a { color: var(--primary); text-decoration: underline; }
-
-        /* ═══════════════════════════════════════
-           LLM CHAT RESPONSE
-        ═══════════════════════════════════════ */
-        .llm-response-area {
-            max-width: 600px;
-            margin: -24px auto 32px;
-            display: none;
-        }
-        .llm-response-area.active { display: block; }
-        .llm-response-box {
-            background: var(--bg-card);
-            border: 1px solid rgba(var(--success-rgb), 0.15);
-            border-radius: var(--radius);
-            backdrop-filter: blur(12px);
-            overflow: hidden;
-        }
-        .llm-response-header {
-            padding: 12px 16px;
-            display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid var(--border);
-            background: rgba(var(--success-rgb), 0.04);
-        }
-        .llm-response-header-left {
-            display: flex; align-items: center; gap: 8px;
-            font-size: 0.78rem; font-weight: 600; color: var(--success);
-        }
-        .llm-response-close {
-            width: 28px; height: 28px;
-            border-radius: 50%; border: 1px solid var(--border);
-            background: var(--bg-elevated); color: var(--text-dim);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
-        }
-        .llm-response-close svg { width: 13px; height: 13px; }
-        .detail-close svg { width: 16px; height: 16px; }
-        .llm-key-delete svg { width: 15px; height: 15px; }
-        .law-ref-icon svg { width: 18px; height: 18px; }
-        .llm-response-close:hover { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.3); }
-        .llm-response-body {
-            padding: 16px;
-            font-size: 0.88rem;
-            color: var(--text-muted);
-            line-height: 1.7;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .llm-response-body p { margin-bottom: 10px; }
-        .llm-response-body strong { color: var(--text); }
-        .llm-response-body code {
-            background: var(--bg-elevated);
-            padding: 2px 6px; border-radius: 4px;
-            font-family: var(--font-mono); font-size: 0.82rem;
-        }
-        .llm-response-body ul, .llm-response-body ol {
-            padding-left: 18px; margin-bottom: 10px;
-        }
-        .llm-response-body li { margin-bottom: 4px; }
-        .llm-response-body blockquote {
-            border-left: 3px solid var(--primary);
-            padding: 8px 14px; margin: 10px 0;
-            background: rgba(var(--primary-rgb), 0.04);
-            border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-        }
-        .llm-response-body .llm-email-block {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 14px; margin: 10px 0;
-            white-space: pre-wrap;
-            font-size: 0.82rem;
-            line-height: 1.6;
-            position: relative;
-        }
-        .llm-email-copy {
-            position: absolute; top: 8px; right: 8px;
-            padding: 4px 10px; border-radius: var(--radius-xs);
-            border: 1px solid var(--border);
-            background: var(--bg-card); color: var(--text-dim);
-            font-size: 0.7rem; font-weight: 600; cursor: pointer;
-            font-family: var(--font); transition: all 0.2s;
-        }
-        .llm-email-copy:hover { color: var(--success); border-color: rgba(var(--success-rgb), 0.3); }
-        .llm-response-actions {
-            padding: 10px 16px;
-            border-top: 1px solid var(--border);
-            display: flex; gap: 8px; flex-wrap: wrap;
-        }
-        .llm-action-chip {
-            padding: 5px 12px;
-            border-radius: 100px;
-            border: 1px solid var(--border);
-            background: var(--bg-elevated);
-            color: var(--text-muted);
-            font-size: 0.75rem; font-weight: 600;
-            cursor: pointer; transition: all 0.2s;
-            font-family: var(--font);
-        }
-        .llm-action-chip:hover {
-            border-color: rgba(var(--primary-rgb), 0.3);
-            color: var(--primary);
-        }
-        .llm-loading {
-            display: flex; align-items: center; gap: 10px;
-            padding: 20px 16px;
-            font-size: 0.85rem; color: var(--text-dim);
-        }
-        .llm-loading-dots {
-            display: flex; gap: 4px;
-        }
-        .llm-loading-dots span {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: llmBounce 1.4s infinite ease-in-out both;
-        }
-        .llm-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .llm-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes llmBounce {
-            0%, 80%, 100% { transform: scale(0); opacity:0.3; }
-            40% { transform: scale(1); opacity:1; }
         }
 
         /* ═══════════════════════════════════════
@@ -1254,8 +887,8 @@
             clip: rect(0,0,0,0); white-space: nowrap; border: 0;
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=8.0.4"></script>
-    <script defer src="/Assets/js/version-loader.js?v=8.0.4"></script>
+    <script defer src="/Assets/js/ph-init.js?v=8.0.5"></script>
+    <script defer src="/Assets/js/version-loader.js?v=8.0.5"></script>
 </head>
 <body>
     <!-- ═══════════════ AMBIENT ═══════════════ -->
@@ -1305,64 +938,8 @@
         <div class="search-wrap fade-in fade-in-d2" role="search" aria-label="Szenarien durchsuchen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <label for="searchInput" class="sr-only">Szenario suchen</label>
-            <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off" style="padding-right:118px;">
-            <div class="search-mode-dropdown" id="searchModeDropdown">
-                <button class="search-mode-trigger mode-smart" id="searchModeTrigger" onclick="toggleModeMenu()">
-                    <span class="mode-icon" id="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></svg></span>
-                    <span class="mode-label" id="modeLabel">Smart</span>
-                    <span class="mode-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
-                </button>
-                <div class="search-mode-menu" id="searchModeMenu">
-                    <div class="search-mode-menu-label">Suchmodus</div>
-                    <button class="search-mode-opt active" data-mode="smart" onclick="setSearchMode('smart')">
-                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></svg></span>
-                        <div class="opt-info">
-                            <div class="opt-title">Smart-Suche</div>
-                            <div class="opt-desc">Tippfehler-Erkennung & Synonyme</div>
-                        </div>
-                        <span class="opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-                    </button>
-                    <button class="search-mode-opt" data-mode="exact" onclick="setSearchMode('exact')">
-                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
-                        <div class="opt-info">
-                            <div class="opt-title">Exakte Suche</div>
-                            <div class="opt-desc">Direkter Textabgleich</div>
-                        </div>
-                        <span class="opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-                    </button>
-                    <div class="search-mode-divider"></div>
-                    <div class="search-mode-menu-label">KI-Assistent</div>
-                    <button class="search-mode-opt" data-mode="llm" onclick="setSearchMode('llm')" id="llmModeBtn">
-                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
-                        <div class="opt-info">
-                            <div class="opt-title">AI-Rechtsberater</div>
-                            <div class="opt-desc" id="llmModeDesc">API-Key benötigt</div>
-                        </div>
-                        <span class="opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
-                    </button>
-                    <div class="search-mode-divider"></div>
-                    <button class="search-mode-opt ai-settings" onclick="openLlmKeyModal()">
-                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span>
-                        <div class="opt-info">
-                            <div class="opt-title">AI-Einstellungen</div>
-                            <div class="opt-desc">Anbieter & API-Key konfigurieren</div>
-                        </div>
-                    </button>
-                </div>
-            </div>
-            <div class="ai-suggest" id="aiSuggest"></div>
-        </div>
-
-        <!-- LLM Response Area (below search, above filters) -->
-        <div class="llm-response-area" id="llmResponseArea">
-            <div class="llm-response-box">
-                <div class="llm-response-header">
-                    <div class="llm-response-header-left">AI-Rechtsberater</div>
-                    <button class="llm-response-close" onclick="closeLlmResponse()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-                </div>
-                <div class="llm-response-body" id="llmResponseBody"></div>
-                <div class="llm-response-actions" id="llmResponseActions"></div>
-            </div>
+            <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off">
+            <p class="search-hint" id="searchHint" aria-live="polite" hidden></p>
         </div>
 
         <!-- Category Filters -->
@@ -1423,47 +1000,6 @@
     </div>
 
     <div id="page-footer"></div>
-
-    <!-- ═════════════ LLM API KEY MODAL ═════════════ -->
-    <div class="llm-key-overlay" id="llmKeyOverlay">
-        <div class="llm-key-modal">
-            <h3>AI-Assistent einrichten</h3>
-            <p class="llm-key-desc">Verbinde einen LLM-Anbieter. Dein API-Key bleibt lokal im Browser gespeichert – wird nie an uns gesendet.</p>
-
-            <label for="llmProvider">Anbieter</label>
-            <select id="llmProvider" onchange="updateProviderHints()">
-                <option value="openai">OpenAI (GPT-4o-mini, GPT-4o)</option>
-                <option value="claude">Anthropic Claude (Sonnet, Opus)</option>
-                <option value="gemini">Google Gemini (Flash, Pro)</option>
-                <option value="groq">Groq (Llama 3, Mixtral – kostenlos!)</option>
-                <option value="mistral">Mistral AI (Mistral Large, Small)</option>
-                <option value="deepseek">DeepSeek (Chat, Coder)</option>
-                <option value="openrouter">OpenRouter (viele Modelle)</option>
-                <option value="xai">xAI Grok</option>
-                <option value="custom">Custom (OpenAI-kompatibel)</option>
-            </select>
-
-            <label for="llmApiKey">API-Key</label>
-            <input type="password" id="llmApiKey" placeholder="sk-..." autocomplete="off">
-
-            <div id="llmCustomUrl" style="display:none;">
-                <label for="llmBaseUrl">API Base URL</label>
-                <input type="text" id="llmBaseUrl" placeholder="https://api.example.com/v1">
-            </div>
-
-            <label for="llmModel">Modell</label>
-            <input type="text" id="llmModel" placeholder="gpt-4o-mini">
-
-            <div class="llm-key-actions">
-                <button class="llm-key-cancel" onclick="closeLlmKeyModal()">Abbrechen</button>
-                <button class="llm-key-delete" onclick="deleteLlmKey()" id="llmDeleteBtn" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button>
-                <button class="llm-key-save" onclick="saveLlmKey()">Speichern</button>
-            </div>
-            <div class="llm-key-hint" id="llmProviderHint">
-                <strong>Groq</strong> ist komplett kostenlos! Hol dir einen Key auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>
-            </div>
-        </div>
-    </div>
 
     <!-- ═════════════ DETAIL OVERLAY ═════════════ -->
     <div class="detail-overlay" id="detailOverlay">
@@ -3553,12 +3089,40 @@ Mit freundlichen Grüßen
             .replace(/\s+/g, ' ');
     }
 
+    // Füllwörter, die in fast jedem Szenario-Text stehen und über den
+    // Stamm-Abgleich sonst jedes Szenario zum Treffer machen.
+    const STOPWORDS = new Set(['mein','meine','meinen','meinem','meiner','dass','will','wird','werden',
+        'habe','haben','hat','kann','darf','muss','soll','nicht','auch','oder','aber','wenn','weil','mich',
+        'sein','seine','ihre','sich','noch','schon','immer','jetzt','heute','eine','einen','einem','einer',
+        'dann','doch','nach','über','ueber','unter','beim','vom','zum','zur','mit','und','der','die','das',
+        'chef','ist','bin','ich','du','er','sie','es','wir','ihr','den','dem','des','ein','was','wie','wer','wo',
+        // /en/ läuft über dieselbe Funktion (rc-en.js tauscht nur die Daten).
+        'boss','the','and','that','this','with','for','from','have','has','had','does','did','can','could',
+        'will','would','should','must','want','wants','when','what','your','you','are','was','were','not',
+        'into','come','comes','get','gets','me','my','to','in','on','at','of','it','is','am','be','do','an']);
+
+    // Alle Wörter, die die Seite kennt (Stichwörter + Szenario-Texte). Ein
+    // Suchwort darin ist richtig geschrieben und bekommt keinen Vorschlag.
+    // Lazy: auf /en/ ersetzt rc-en.js die Daten erst vor dem ersten Rendern.
+    let KNOWN_WORDS = null;
+    function knownWords() {
+        if (KNOWN_WORDS) return KNOWN_WORDS;
+        KNOWN_WORDS = new Set();
+        Object.keys(KEYWORD_MAP).forEach(k => normalize(k).split(' ').forEach(w => KNOWN_WORDS.add(w)));
+        SCENARIOS.forEach(sc => normalize(sc.title + ' ' + sc.desc + ' ' + sc.verdictShort + ' ' + (sc.verdictDetail || ''))
+            .split(' ').forEach(w => KNOWN_WORDS.add(w)));
+        return KNOWN_WORDS;
+    }
+
     // -- Smart Search: Score each scenario against query --
     function smartSearch(query) {
         if (!query || query.length < 2) return null;
         const q = normalize(query);
         const qWords = q.split(' ').filter(w => w.length >= 2);
-        const qStems = qWords.map(stemDE);
+        // Stämme unter 4 Zeichen („und" → „u") stecken in fast jedem Wort und
+        // machten jedes Szenario zum Treffer (gemessen: „xyzqq" → 4 Treffer,
+        // „überstunden" → alle 51). Füllwörter zählen hier ebenfalls nicht.
+        const qStems = qWords.filter(w => !STOPWORDS.has(w)).map(stemDE).filter(st => st.length >= 4);
         const scores = new Map(); // scenarioId -> { score, matchType }
 
         // 1) Exact keyword match
@@ -3577,8 +3141,12 @@ Mit freundlichen Grüßen
         const fuzzyThreshold = 2; // max edit distance
         let hadTypoCorrection = false;
         let correctedWord = '';
+        let bestDist = Infinity;
+        const known = knownWords();
         for (const word of qWords) {
-            if (word.length < 3) continue;
+            // Richtig geschriebene Wörter bekommen keinen Vorschlag — vorher
+            // wurde aus „überstunden" ein „Meintest du überstunde?".
+            if (word.length < 3 || known.has(word) || STOPWORDS.has(word)) continue;
             for (const [keyword, ids] of Object.entries(KEYWORD_MAP)) {
                 const kwWords = keyword.split(' ');
                 for (const kw of kwWords) {
@@ -3592,7 +3160,8 @@ Mit freundlichen Grüßen
                             cur.matchType = cur.matchType || 'Fuzzy';
                             scores.set(id, cur);
                         });
-                        if (!hadTypoCorrection) {
+                        if (dist < bestDist) {
+                            bestDist = dist;
                             hadTypoCorrection = true;
                             correctedWord = kw;
                         }
@@ -3607,12 +3176,13 @@ Mit freundlichen Grüßen
                 s.title + ' ' + s.desc + ' ' + s.verdictShort + ' ' + s.verdictDetail +
                 ' ' + (s.tips || []).join(' ') + ' ' + (s.laws || []).map(l => l.title).join(' ')
             );
-            const scenarioStems = scenarioText.split(' ').filter(w => w.length >= 3).map(stemDE);
+            const scenarioStems = scenarioText.split(' ').filter(w => w.length >= 3 && !STOPWORDS.has(w)).map(stemDE).filter(st => st.length >= 4);
             let stemHits = 0;
             for (const qs of qStems) {
-                if (qs.length < 2) continue;
                 for (const ss of scenarioStems) {
-                    if (ss.includes(qs) || qs.includes(ss)) {
+                    // Wortanfang statt irgendwo im Wort: „lohn" soll „lohnfortzahlung"
+                    // treffen, aber nicht jedes Wort, in dem zufällig „ohn" steckt.
+                    if (ss.startsWith(qs) || qs.startsWith(ss)) {
                         stemHits++;
                         break;
                     }
@@ -3630,7 +3200,7 @@ Mit freundlichen Grüßen
         SCENARIOS.forEach(s => {
             const fields = [s.title, s.desc, s.law, s.verdictShort, s.cat].map(f => normalize(f));
             for (const word of qWords) {
-                if (word.length < 2) continue;
+                if (word.length < 3 || STOPWORDS.has(word)) continue;
                 for (const field of fields) {
                     if (field.includes(word)) {
                         const cur = scores.get(s.id) || { score: 0, matchType: '' };
@@ -3655,526 +3225,33 @@ Mit freundlichen Grüßen
         };
     }
 
-    let smartSearchEnabled = true;
-    let searchMode = 'smart'; // 'smart' | 'exact' | 'llm'
-
-    const MODE_CONFIG = {
-        smart: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></svg>', label: RL('Smart', 'Smart'), cls: 'mode-smart', placeholder: RL("Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'", "Describe your problem… e.g. 'My boss wants me to come in on Saturday'") },
-        exact: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>', label: RL('Exakt', 'Exact'), cls: 'mode-exact', placeholder: RL("Szenario suchen… z.B. Überstunden, Urlaub, Putzen", "Search a scenario… e.g. overtime, holiday, cleaning") },
-        llm:   { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>', label: 'AI',    cls: 'mode-llm',   placeholder: RL("Frag den AI-Rechtsberater… z.B. 'Darf mein Chef mir Kündigung androhen wenn ich krank bin?'", "Ask the AI legal advisor… e.g. 'Can my boss threaten me with dismissal when I am off sick?'") }
-    };
-
-    function toggleModeMenu() {
-        const menu = document.getElementById('searchModeMenu');
-        const trigger = document.getElementById('searchModeTrigger');
-        const isOpen = menu.classList.contains('open');
-        menu.classList.toggle('open', !isOpen);
-        trigger.classList.toggle('open', !isOpen);
-    }
-    function closeModeMenu() {
-        document.getElementById('searchModeMenu')?.classList.remove('open');
-        document.getElementById('searchModeTrigger')?.classList.remove('open');
-    }
-    // Close dropdown on outside click
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('#searchModeDropdown')) closeModeMenu();
-    });
-
-    function setSearchMode(mode) {
-        searchMode = mode;
-        smartSearchEnabled = (mode === 'smart');
-        const cfg = MODE_CONFIG[mode];
-        // Update trigger button
-        const trigger = document.getElementById('searchModeTrigger');
-        trigger.className = 'search-mode-trigger ' + cfg.cls;
-        if (mode === 'llm') trigger.classList.toggle('has-key', !!getLlmConfig().apiKey);
-        // innerHTML, nicht textContent: cfg.icon ist SVG-Markup (feste Konstante,
-        // kein Nutzertext). Seit dem Emoji→SVG-Umbau stand hier textContent —
-        // der Quelltext landete als 205 Zeichen Text im 13-px-Kasten.
-        document.getElementById('modeIcon').innerHTML = cfg.icon;
-        document.getElementById('modeLabel').textContent = cfg.label;
-        // Update dropdown active state
-        document.querySelectorAll('.search-mode-opt[data-mode]').forEach(b => {
-            b.classList.toggle('active', b.dataset.mode === mode);
+    // Bis 2026-09-28 gab es hier einen Modus-Schalter (Smart / Exakt /
+    // AI-Rechtsberater mit eigenem API-Key) und ein Vorschlags-Dropdown, das
+    // dieselben Treffer zeigte wie das Raster darunter. Beides entfernt: die
+    // Seite gibt nur geprüfte Szenarien aus, keine Modell-Antworten.
+    function showSearchHint(correction) {
+        const hint = document.getElementById('searchHint');
+        if (!hint) return;
+        if (!correction) { hint.hidden = true; hint.textContent = ''; return; }
+        hint.textContent = RL('Meintest du ', 'Did you mean ');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = correction;
+        btn.addEventListener('click', () => {
+            const input = document.getElementById('searchInput');
+            input.value = correction;
+            searchQuery = correction;
+            renderScenarios();
+            input.focus();
         });
-        closeModeMenu();
-        // LLM mode needs a key
-        if (mode === 'llm') {
-            const hasKey = !!getLlmConfig().apiKey;
-            if (!hasKey) {
-                openLlmKeyModal();
-                setSearchMode('smart');
-                return;
-            }
-        }
-        const input = document.getElementById('searchInput');
-        input.placeholder = cfg.placeholder;
-        searchQuery = input.value.trim();
-        renderScenarios();
-        hideAiSuggest();
-        closeLlmResponse();
+        hint.appendChild(btn);
+        hint.appendChild(document.createTextNode('?'));
+        hint.hidden = false;
     }
 
-    // -- AI Suggest Dropdown --
-    function showAiSuggest(results, typoCorrection) {
-        const box = document.getElementById('aiSuggest');
-        if (!results || results.results.length === 0) {
-            hideAiSuggest();
-            return;
-        }
-        const top = results.results.slice(0, 5);
-        let html = '';
-        if (typoCorrection) {
-            html += `<div class="ai-typo-hint">${RL('Meintest du', 'Did you mean')} "${escapeHtml(typoCorrection)}"?</div>`;
-        }
-        html += '<div class="ai-suggest-header">' + RL('Smart-Ergebnis', 'Smart result') + '</div>';
-        top.forEach(r => {
-            const s = SCENARIOS.find(x => x.id === r.id);
-            if (!s) return;
-            html += `<div class="ai-suggest-item" onclick="openDetail('${s.id}'); hideAiSuggest();">
-                <div class="ai-suggest-icon">${catIcon(s.cat)}</div>
-                <div class="ai-suggest-text">
-                    <div class="ai-suggest-title">${escapeHtml(s.title)}</div>
-                    <div class="ai-suggest-meta">
-                        <span>${getCatLabel(s.cat)}</span>
-                        <span class="ai-suggest-match">${RL(r.matchType, { 'Keyword': 'Keyword', 'Fuzzy': 'Fuzzy', 'Textanalyse': 'Text analysis', 'Textsuche': 'Text search' }[r.matchType] || r.matchType)} • ${r.score}%</span>
-                    </div>
-                </div>
-            </div>`;
-        });
-        box.innerHTML = html;
-        box.classList.add('active');
-    }
-    function hideAiSuggest() {
-        document.getElementById('aiSuggest').classList.remove('active');
-    }
-
-    // Close suggestions on outside click
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-wrap')) hideAiSuggest();
-    });
-
-    // ═══════════════════════════════════════════
-    //  LLM INTEGRATION
-    // ═══════════════════════════════════════════
-
-    // LLM-Key liegt in sessionStorage (verschwindet beim Schließen des Browsers).
-    // Defense-in-Depth: bei einer künftigen XSS-Lücke wäre der Key nicht persistent abgreifbar.
-    function getLlmConfig() {
-        try {
-            const legacy = localStorage.getItem('rc_llm_config');
-            if (legacy && !sessionStorage.getItem('rc_llm_config')) {
-                sessionStorage.setItem('rc_llm_config', legacy);
-            }
-            localStorage.removeItem('rc_llm_config');
-            return JSON.parse(sessionStorage.getItem('rc_llm_config') || '{}');
-        } catch { return {}; }
-    }
-    function saveLlmConfig(cfg) {
-        sessionStorage.setItem('rc_llm_config', JSON.stringify(cfg));
-    }
-
-    function openLlmKeyModal() {
-        const cfg = getLlmConfig();
-        document.getElementById('llmProvider').value = cfg.provider || 'openai';
-        document.getElementById('llmApiKey').value = cfg.apiKey || '';
-        document.getElementById('llmModel').value = cfg.model || '';
-        document.getElementById('llmBaseUrl').value = cfg.baseUrl || '';
-        document.getElementById('llmDeleteBtn').style.display = cfg.apiKey ? '' : 'none';
-        updateProviderHints();
-        document.getElementById('llmKeyOverlay').classList.add('active');
-    }
-    function closeLlmKeyModal() {
-        document.getElementById('llmKeyOverlay').classList.remove('active');
-    }
-    function updateProviderHints() {
-        const prov = document.getElementById('llmProvider').value;
-        const hint = document.getElementById('llmProviderHint');
-        const customUrl = document.getElementById('llmCustomUrl');
-        const modelInput = document.getElementById('llmModel');
-        customUrl.style.display = (prov === 'custom') ? 'block' : 'none';
-        const providers = {
-            openai: {
-                hint: RL('Hol dir einen Key auf <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> ist günstig & schnell.', 'Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> is cheap & fast.'),
-                placeholder: 'gpt-4o-mini'
-            },
-            claude: {
-                hint: RL('Key holen auf <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> empfohlen.', 'Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> recommended.'),
-                placeholder: 'claude-sonnet-4-20250514'
-            },
-            gemini: {
-                hint: RL('Key holen auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell.<br>Free-Tier: 15 Req/Min. Für höhere Limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Billing aktivieren</a> im Google Cloud Projekt.', 'Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> is fast.<br>Free tier: 15 req/min. For higher limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">enable billing</a> in your Google Cloud project.'),
-                placeholder: 'gemini-2.0-flash'
-            },
-            groq: {
-                hint: RL('<strong>Groq ist komplett kostenlos!</strong> Key holen auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Empfohlen: <strong>llama-3.3-70b-versatile</strong>', '<strong>Groq is completely free!</strong> Get a key at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Recommended: <strong>llama-3.3-70b-versatile</strong>'),
-                placeholder: 'llama-3.3-70b-versatile'
-            },
-            mistral: {
-                hint: RL('Key holen auf <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> ist top.', 'Get a key at <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> is great.'),
-                placeholder: 'mistral-large-latest'
-            },
-            deepseek: {
-                hint: RL('Super günstig! Key auf <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> empfohlen.', 'Very cheap! Get a key at <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> recommended.'),
-                placeholder: 'deepseek-chat'
-            },
-            openrouter: {
-                hint: RL('<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – viele Modelle, manche kostenlos. Versuche <strong>meta-llama/llama-3.3-70b-instruct</strong>', '<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – many models, some free. Try <strong>meta-llama/llama-3.3-70b-instruct</strong>'),
-                placeholder: 'meta-llama/llama-3.3-70b-instruct'
-            },
-            xai: {
-                hint: RL('Key auf <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> empfohlen.', 'Get a key at <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> recommended.'),
-                placeholder: 'grok-3-mini-fast'
-            },
-            custom: {
-                hint: RL('Jede OpenAI-kompatible API (z.B. LM Studio, Ollama, vLLM). Trage die Base URL ein.', 'Any OpenAI-compatible API (e.g. LM Studio, Ollama, vLLM). Enter the base URL.'),
-                placeholder: RL('z.B. llama3', 'e.g. llama3')
-            }
-        };
-        const p = providers[prov] || providers.custom;
-        hint.innerHTML = p.hint;
-        if (!modelInput.value) modelInput.placeholder = p.placeholder;
-    }
-    function saveLlmKey() {
-        const provider = document.getElementById('llmProvider').value;
-        const apiKey = document.getElementById('llmApiKey').value.trim();
-        const model = document.getElementById('llmModel').value.trim();
-        const baseUrl = document.getElementById('llmBaseUrl').value.trim();
-        if (!apiKey) { document.getElementById('llmApiKey').style.borderColor = 'var(--danger)'; return; }
-        saveLlmConfig({ provider, apiKey, model, baseUrl });
-        closeLlmKeyModal();
-        updateLlmBtnState();
-        setSearchMode('llm');
-    }
-    function deleteLlmKey() {
-        sessionStorage.removeItem('rc_llm_config');
-        localStorage.removeItem('rc_llm_config');
-        closeLlmKeyModal();
-        updateLlmBtnState();
-        setSearchMode('smart');
-    }
-    function updateLlmBtnState() {
-        const cfg = getLlmConfig();
-        const hasKey = !!cfg.apiKey;
-        const trigger = document.getElementById('searchModeTrigger');
-        if (searchMode === 'llm') trigger.classList.toggle('has-key', hasKey);
-        // Update the LLM option description text
-        const desc = document.getElementById('llmModeDesc');
-        if (desc) {
-            if (hasKey) {
-                const provNames = {openai:'OpenAI',claude:'Claude',gemini:'Gemini',groq:'Groq',mistral:'Mistral',deepseek:'DeepSeek',openrouter:'OpenRouter',xai:'Grok',custom:'Custom'};
-                desc.textContent = (provNames[cfg.provider] || cfg.provider) + RL(' verbunden', ' connected');
-            } else {
-                desc.textContent = RL('API-Key benötigt', 'API key required');
-            }
-        }
-    }
-
-    // Build the system prompt with full scenario context
-    function buildLlmSystemPrompt() {
-        const en = document.documentElement.lang === 'en';
-        let scenarioCtx = SCENARIOS.map(s => {
-            return `[${s.id}] ${en ? 'Category' : 'Kategorie'}: ${getCatLabel(s.cat)} | ${en ? 'Title' : 'Titel'}: ${s.title} | ${s.desc}\n` +
-                   `${en ? 'Verdict' : 'Urteil'}: ${s.verdictShort}\n${en ? 'Details' : 'Details'}: ${s.verdictDetail}\n` +
-                   `${en ? 'Laws' : 'Gesetze'}: ${(s.laws||[]).map(l => l.title + ': ' + l.text).join('\n')}\n` +
-                   `${en ? 'Tips' : 'Tipps'}: ${(s.tips||[]).join('; ')}\n` +
-                   `${en ? 'Email subject' : 'E-Mail Betreff'}: ${s.email?.subject || '-'}\n${en ? 'Email template' : 'E-Mail Vorlage'}: ${s.email?.body || '-'}`;
-        }).join('\n\n---\n\n');
-
-        if (en) {
-            return `You are the "Trainee Rights Advisor" on the website myworklog.de. You help trainees and apprentices in Germany understand their rights.
-
-IMPORTANT:
-- Always answer in English, in a friendly and understandable way.
-- German labour law still applies to English-speaking trainees in Germany. You know the BBiG (Vocational Training Act), JArbSchG (Youth Employment Protection Act), ArbZG (Working Hours Act), BUrlG (Federal Leave Act), AGG (General Equal Treatment Act) and EntgFG (Continued Remuneration Act).
-- Always cite the exact section (§) when possible; keep the original German statute abbreviations.
-- If the user has a concrete problem, give a clear assessment ("No, your boss may not do that" / "Yes, under certain conditions" / "It depends").
-- Where appropriate, offer to generate a polite email template the trainee can send to their boss.
-- Point out that your information does not replace legal advice.
-- Format with Markdown: **bold**, lists, etc.
-- Keep it short but complete. Maximum 300 words.
-
-Here is the full database of scenarios that exist on the website. Use it as your knowledge base and refer to matching scenarios:
-
-${scenarioCtx}`;
-        }
-
-        return `Du bist der "Azubi-Rechtsberater" auf der Website myworklog.de. Du hilfst Auszubildenden in Deutschland, ihre Rechte zu verstehen.
-
-WICHTIG:
-- Du antwortest immer auf Deutsch, freundlich und verständlich.
-- Du kennst das BBiG (Berufsbildungsgesetz), JArbSchG (Jugendarbeitsschutzgesetz), ArbZG (Arbeitszeitgesetz), BUrlG (Bundesurlaubsgesetz), AGG (Allgemeines Gleichbehandlungsgesetz) und EntgFG (Entgeltfortzahlungsgesetz).
-- Nenne immer den genauen Paragraphen wenn möglich.
-- Wenn der User ein konkretes Problem hat, gib eine klare Einschätzung ("Nein, das darf dein Chef nicht" / "Ja, unter bestimmten Bedingungen" / "Kommt drauf an").
-- Wenn passend, biete an eine höfliche E-Mail-Vorlage zu generieren die der Azubi an den Chef schicken kann.
-- Weise darauf hin dass deine Infos keine Rechtsberatung ersetzen.
-- Formatiere mit Markdown: **fett**, Listen, etc.
-- Halte dich kurz aber vollständig. Maximal 300 Wörter.
-
-Hier ist die vollständige Datenbank der Szenarien die auf der Website existieren. Nutze diese als Wissenbasis und verweise auf passende Szenarien:
-
-${scenarioCtx}`;
-    }
-
-    // Get API endpoint based on provider
-    function getLlmEndpoint(cfg) {
-        const prov = cfg.provider || 'openai';
-        const endpoints = {
-            openai:     'https://api.openai.com/v1/chat/completions',
-            claude:     'https://api.anthropic.com/v1/messages',
-            gemini:     null, // built dynamically
-            groq:       'https://api.groq.com/openai/v1/chat/completions',
-            mistral:    'https://api.mistral.ai/v1/chat/completions',
-            deepseek:   'https://api.deepseek.com/chat/completions',
-            openrouter: 'https://openrouter.ai/api/v1/chat/completions',
-            xai:        'https://api.x.ai/v1/chat/completions'
-        };
-        if (prov === 'gemini') {
-            const model = getLlmModel(cfg);
-            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`;
-        }
-        if (prov === 'custom' && cfg.baseUrl) return cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
-        return endpoints[prov] || endpoints.openai;
-    }
-    function getLlmModel(cfg) {
-        if (cfg.model) return cfg.model;
-        const defaults = {
-            openai: 'gpt-4o-mini',
-            claude: 'claude-sonnet-4-20250514',
-            gemini: 'gemini-2.0-flash',
-            groq:   'llama-3.3-70b-versatile',
-            mistral: 'mistral-large-latest',
-            deepseek: 'deepseek-chat',
-            openrouter: 'meta-llama/llama-3.3-70b-instruct',
-            xai: 'grok-3-mini-fast'
-        };
-        return defaults[cfg.provider] || 'gpt-4o-mini';
-    }
-
-    let llmAbortController = null;
-
-    async function queryLlm(userQuery) {
-        const cfg = getLlmConfig();
-        if (!cfg.apiKey) { openLlmKeyModal(); return; }
-
-        // Show loading
-        const area = document.getElementById('llmResponseArea');
-        const body = document.getElementById('llmResponseBody');
-        const actions = document.getElementById('llmResponseActions');
-        area.classList.add('active');
-        body.innerHTML = `<div class="llm-loading">
-            <div class="llm-loading-dots"><span></span><span></span><span></span></div>
-            ${RL('Denkt nach…', 'Thinking…')}
-        </div>`;
-        actions.innerHTML = '';
-
-        // Abort previous if any
-        if (llmAbortController) llmAbortController.abort();
-        llmAbortController = new AbortController();
-
-        try {
-            const endpoint = getLlmEndpoint(cfg);
-            const model = getLlmModel(cfg);
-            const prov = cfg.provider || 'openai';
-            let headers, reqBody;
-            console.log('[LLM] Starting query with provider:', prov, 'model:', model);
-
-            if (prov === 'claude') {
-                // Anthropic Messages API
-                headers = {
-                    'Content-Type': 'application/json',
-                    'x-api-key': cfg.apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                };
-                reqBody = JSON.stringify({
-                    model,
-                    max_tokens: 1000,
-                    system: buildLlmSystemPrompt(),
-                    messages: [{ role: 'user', content: userQuery }]
-                });
-            } else if (prov === 'gemini') {
-                // Google Gemini API (key in URL)
-                headers = { 'Content-Type': 'application/json' };
-                reqBody = JSON.stringify({
-                    system_instruction: { parts: [{ text: buildLlmSystemPrompt() }] },
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    generation_config: { max_output_tokens: 1000, temperature: 0.3 }
-                });
-            } else {
-                // OpenAI-compatible (OpenAI, Groq, Mistral, DeepSeek, OpenRouter, xAI, Custom)
-                headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + cfg.apiKey
-                };
-                if (prov === 'openrouter') {
-                    headers['HTTP-Referer'] = 'https://myworklog.de';
-                    headers['X-Title'] = 'MyWorkLog Rechte-Checker';
-                }
-                reqBody = JSON.stringify({
-                    model,
-                    messages: [
-                        { role: 'system', content: buildLlmSystemPrompt() },
-                        { role: 'user', content: userQuery }
-                    ],
-                    max_tokens: 1000,
-                    temperature: 0.3
-                });
-            }
-
-            console.log('[LLM] Fetching:', endpoint.slice(0, 80));
-            let resp = await fetch(endpoint, {
-                method: 'POST',
-                headers,
-                signal: llmAbortController.signal,
-                body: reqBody
-            });
-            console.log('[LLM] Got response:', resp.status, resp.statusText);
-
-            // Auto-retry once on 429 after short delay
-            if (resp.status === 429) {
-                console.log('[LLM] 429 rate limit – retrying in 3s...');
-                body.querySelector('.llm-loading')?.insertAdjacentHTML('beforeend', '<br><small style="opacity:.7">' + RL('Rate-Limit... automatischer Retry in 3s', 'Rate limit... automatic retry in 3s') + '</small>');
-                await new Promise(r => setTimeout(r, 3000));
-                resp = await fetch(endpoint, {
-                    method: 'POST',
-                    headers,
-                    signal: llmAbortController.signal,
-                    body: reqBody
-                });
-                console.log('[LLM] Retry response:', resp.status, resp.statusText);
-            }
-
-            if (!resp.ok) {
-                const err = await resp.text();
-                let msg = RL('API-Fehler: ', 'API error: ') + resp.status;
-                console.log('[LLM] Error body:', err);
-                if (resp.status === 401 || resp.status === 403) {
-                    msg = RL('Ungültiger API-Key. Öffne Einstellungen um ihn zu ändern.', 'Invalid API key. Open Settings to change it.');
-                } else if (resp.status === 429) {
-                    if (prov === 'gemini') {
-                        msg = RL('<strong>Gemini Rate-Limit erreicht (429).</strong><br><br>' +
-                              '<strong>Mögliche Ursachen:</strong><br>' +
-                              '• Free-Tier: Nur 15 Requests/Min – warte kurz und versuch nochmal<br>' +
-                              '• Paid-Tier: Prüfe ob <strong>Billing</strong> im <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a> aktiv ist<br>' +
-                              '• Der API-Key muss zu einem Projekt mit aktivierter Abrechnung gehören<br><br>' +
-                              'Tipp:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> ist kostenlos & hat großzügige Limits.',
-                              '<strong>Gemini rate limit reached (429).</strong><br><br>' +
-                              '<strong>Possible causes:</strong><br>' +
-                              '• Free tier: only 15 requests/min – wait a moment and try again<br>' +
-                              '• Paid tier: check whether <strong>billing</strong> is active in the <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a><br>' +
-                              '• The API key must belong to a project with billing enabled<br><br>' +
-                              'Tip:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> is free & has generous limits.');
-                    } else {
-                        msg = RL('Rate-Limit erreicht. Warte ein paar Sekunden und versuch es nochmal.', 'Rate limit reached. Wait a few seconds and try again.');
-                    }
-                } else if (resp.status === 400) {
-                    msg = RL('Ungültiges Request-Format. Prüf ob Model & Einstellungen richtig sind. <br><small>Details: ', 'Invalid request format. Check that the model & settings are correct. <br><small>Details: ') + err.slice(0, 200) + '</small>';
-                } else if (resp.status >= 500) {
-                    msg = RL('Server-Fehler (' + resp.status + '). Anbieter ist gerade überlastet. Versuch später nochmal.', 'Server error (' + resp.status + '). The provider is currently overloaded. Try again later.');
-                }
-                throw new Error(msg);
-            }
-
-            const data = await resp.json();
-            let content;
-            if (prov === 'claude') {
-                content = data.content?.[0]?.text || RL('Keine Antwort erhalten.', 'No response received.');
-            } else if (prov === 'gemini') {
-                content = data.candidates?.[0]?.content?.parts?.[0]?.text || RL('Keine Antwort erhalten.', 'No response received.');
-            } else {
-                content = data.choices?.[0]?.message?.content || RL('Keine Antwort erhalten.', 'No response received.');
-            }
-            renderLlmResponse(content, userQuery);
-        } catch (e) {
-            if (e.name === 'AbortError') return;
-            console.error('[LLM] Query error:', e.message, e);
-            body.innerHTML = `<div style="color:var(--danger)">
-                <p style="margin-bottom:12px;"><strong>${escapeHtml(e.message)}</strong></p>
-                <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">${RL('Browser Console (F12) zeigt Details', 'The browser console (F12) shows details')}</p>
-                <div style="background:rgba(var(--danger-rgb),0.05);border:1px solid rgba(var(--danger-rgb),0.2);border-radius:8px;padding:12px;font-size:0.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px;">
-                    <strong style="color:var(--text);">${RL('Tipps zum Troubleshooting:', 'Troubleshooting tips:')}</strong>
-                    <ul style="list-style-type:disc;padding-left:18px;margin:8px 0 0 0;">
-                        <li>${RL('Prüfe dein API-Key – ist er gültig und hab richtig reinkopiert?', 'Check your API key – is it valid and copied in correctly?')}</li>
-                        <li>${RL('Überprüfe den Provider – stimmt die Auswahl zu deinem Key?', 'Check the provider – does the selection match your key?')}</li>
-                        <li>${RL('Checke deinen Account-Status (Guthaben, aktiv, nicht gebannt)', 'Check your account status (credit, active, not banned)')}</li>
-                        <li>${RL('Falls Gemini: Nutze Groq statt – kostenlos & zuverlässiger', 'If Gemini: use Groq instead – free & more reliable')}</li>
-                        <li>${RL('Versuch es später nochmal – Server könnte kurzzeitig ausfallen', 'Try again later – the server might be briefly down')}</li>
-                    </ul>
-                </div>
-            </div>`;
-            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">${RL('Key ändern', 'Change key')}</button>
-                <button class="llm-action-chip" onclick="closeLlmResponse()" style="color:var(--text-dim);">${RL('Schließen', 'Close')}</button>`;
-        }
-    }
-
-    function renderLlmResponse(content, originalQuery) {
-        const body = document.getElementById('llmResponseBody');
-        const actions = document.getElementById('llmResponseActions');
-
-        // Simple markdown-to-HTML
-        let html = escapeHtml(content)
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.+?)\*/g, '<em>$1</em>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>')
-            .replace(/^[-\*] (.+)/gm, '<li>$1</li>')
-            .replace(/^(\d+)\. (.+)/gm, '<li>$1. $2</li>')
-            .replace(/(<li>.*<\/li>)/gs, (m) => '<ul>' + m + '</ul>')
-            .replace(/<\/ul>\s*<ul>/g, '')
-            .replace(/\n{2,}/g, '</p><p>')
-            .replace(/\n/g, '<br>');
-        html = '<p>' + html + '</p>';
-
-        // Detect email blocks ("Betreff:" / "Subject:")
-        html = html.replace(/((?:Betreff|Subject):.+?)(<\/p>|$)/gs, (match) => {
-            const id = 'llm_email_' + Date.now();
-            return `<div class="llm-email-block" id="${id}">
-                <button class="llm-email-copy" onclick="copyLlmEmail('${id}')">${RL('Kopieren', 'Copy')}</button>
-                ${match}
-            </div>`;
-        });
-
-        body.innerHTML = html;
-
-        // Find referenced scenarios and add action chips
-        actions.innerHTML = '';
-        SCENARIOS.forEach(s => {
-            if (content.toLowerCase().includes(s.id) ||
-                content.includes(s.law) ||
-                content.toLowerCase().includes(s.title.toLowerCase().slice(1, -1))) {
-                const chip = document.createElement('button');
-                chip.className = 'llm-action-chip';
-                chip.textContent = s.title.slice(0, 30) + '…';
-                chip.addEventListener('click', () => openDetail(s.id));
-                actions.appendChild(chip);
-            }
-        });
-        const emailChip = document.createElement('button');
-        emailChip.className = 'llm-action-chip';
-        emailChip.textContent = RL('E-Mail generieren', 'Generate email');
-        emailChip.addEventListener('click', () => queryLlm(RL('Erstelle eine höfliche E-Mail für folgendes Problem: ', 'Write a polite email for the following problem: ') + originalQuery));
-        actions.appendChild(emailChip);
-        const settingsChip = document.createElement('button');
-        settingsChip.className = 'llm-action-chip';
-        settingsChip.textContent = RL('Einstellungen', 'Settings');
-        settingsChip.addEventListener('click', () => openLlmKeyModal());
-        actions.appendChild(settingsChip);
-    }
-
-    function closeLlmResponse() {
-        document.getElementById('llmResponseArea').classList.remove('active');
-        if (llmAbortController) llmAbortController.abort();
-    }
-
-    function copyLlmEmail(elemId) {
-        const el = document.getElementById(elemId);
-        if (!el) return;
-        const text = el.innerText.replace(RL('Kopieren', 'Copy'), '').trim();
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = el.querySelector('.llm-email-copy');
-            if (btn) { btn.textContent = RL('Kopiert!', 'Copied!'); setTimeout(() => btn.textContent = RL('Kopieren', 'Copy'), 2000); }
-        });
-    }
+    // Der entfernte KI-Modus hat Anbieter-Konfiguration samt API-Key im
+    // Browser abgelegt. Ohne Leser bliebe der Key dort für immer liegen.
+    try { localStorage.removeItem('rc_llm_config'); sessionStorage.removeItem('rc_llm_config'); } catch (e) { /* privater Modus */ }
 
     // ═══════════════════════════════════════════
     //  STATE
@@ -4190,7 +3267,6 @@ ${scenarioCtx}`;
         renderScenarios();
         initSearch();
         initFilters();
-        updateLlmBtnState();
     }
     document.addEventListener('DOMContentLoaded', () => {
         // Deutsche Seite: sofort rendern. /en/: erst die englische Datenschicht laden.
@@ -4217,33 +3293,27 @@ ${scenarioCtx}`;
 
         let filtered;
 
-        if (searchQuery && smartSearchEnabled) {
-            // Smart search mode: fuzzy + NLP
+        const inCat = s => activeCat === 'all' || s.cat === activeCat;
+        if (searchQuery) {
+            // Smart-Treffer zuerst (Tippfehler, Synonyme, sortiert nach Score),
+            // danach alles, was nur der wörtliche Textabgleich findet — der war
+            // früher ein eigener Modus „Exakt"; so geht ohne Schalter nichts verloren.
             const result = smartSearch(searchQuery);
-            if (!result || result.results.length === 0) {
-                grid.innerHTML = '';
-                noResults.style.display = 'block';
-                showAiSuggest(null);
-                return;
-            }
-            showAiSuggest(result, result.typoCorrection);
-            const matchedIds = new Set(result.results.map(r => r.id));
-            filtered = result.results
-                .map(r => SCENARIOS.find(s => s.id === r.id))
-                .filter(s => s && (activeCat === 'all' || s.cat === activeCat));
+            const smartIds = result ? result.results.map(r => r.id) : [];
+            const q = searchQuery.toLowerCase();
+            const exact = SCENARIOS.filter(s => !smartIds.includes(s.id) && (
+                s.title.toLowerCase().includes(q) ||
+                s.desc.toLowerCase().includes(q) ||
+                s.law.toLowerCase().includes(q) ||
+                s.cat.toLowerCase().includes(q) ||
+                s.verdictShort.toLowerCase().includes(q)));
+            filtered = smartIds.map(id => SCENARIOS.find(s => s.id === id))
+                .concat(exact)
+                .filter(s => s && inCat(s));
+            showSearchHint(result && result.typoCorrection);
         } else {
-            hideAiSuggest();
-            filtered = SCENARIOS.filter(s => {
-                const matchCat = activeCat === 'all' || s.cat === activeCat;
-                if (!matchCat) return false;
-                if (!searchQuery) return true;
-                const q = searchQuery.toLowerCase();
-                return s.title.toLowerCase().includes(q) ||
-                       s.desc.toLowerCase().includes(q) ||
-                       s.law.toLowerCase().includes(q) ||
-                       s.cat.toLowerCase().includes(q) ||
-                       s.verdictShort.toLowerCase().includes(q);
-            });
+            showSearchHint(null);
+            filtered = SCENARIOS.filter(inCat);
         }
 
         if (filtered.length === 0) {
@@ -4365,24 +3435,8 @@ ${scenarioCtx}`;
             clearTimeout(timeout);
             timeout = setTimeout(() => {
                 searchQuery = input.value.trim();
-                if (searchMode !== 'llm') {
-                    renderScenarios();
-                }
-            }, 250);
-        });
-        // Enter key triggers LLM query in AI mode
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && searchMode === 'llm' && input.value.trim()) {
-                e.preventDefault();
-                queryLlm(input.value.trim());
-            }
-        });
-        // Show suggestions on focus if there's text
-        input.addEventListener('focus', () => {
-            if (input.value.trim() && smartSearchEnabled) {
-                searchQuery = input.value.trim();
                 renderScenarios();
-            }
+            }, 250);
         });
     }
 
