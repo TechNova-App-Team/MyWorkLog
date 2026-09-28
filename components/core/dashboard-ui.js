@@ -309,7 +309,6 @@
         
         // Update NEW Features
         if (typeof updateDailySummary === 'function') updateDailySummary();
-        if (typeof updateWeeklyGoals === 'function') updateWeeklyGoals();
         if (typeof updateLastActivities === 'function') updateLastActivities();
         if (typeof updateMoodStats === 'function') updateMoodStats();
         if (typeof updateProductivityScore === 'function') updateProductivityScore();

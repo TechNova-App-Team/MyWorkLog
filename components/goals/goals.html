@@ -1,162 +1,41 @@
 <div id="view-goals" class="view-section">
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- HERO HEADER                                 -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="gc-hero">
-                <div class="gc-hero-inner">
-                    <div>
-                        <div class="gc-status-bar">
-                            <span class="gc-chip gc-chip-live">
-                                <span class="gc-chip-dot"></span>
-                                TRACKING
-                            </span>
-                            <span class="gc-chip gc-chip-path">ZIEL-SYSTEM</span>
-                            <span class="gc-chip gc-chip-sep">/</span>
-                            <span class="gc-chip gc-chip-sub">Langzeitstrategie & Meilensteine</span>
-                        </div>
-                        <h1 class="gc-hero-title">Ziele & <span class="gc-hero-title-glow">Fokus</span></h1>
-                        <p class="gc-hero-desc">Definiere ambitionierte Ziele, verfolge deinen Fortschritt in Echtzeit und schalte Erfolge frei.</p>
-                    </div>
-                    <div class="gc-hero-ring-col">
-                        <div class="gc-ring-container">
-                            <svg class="gc-ring-svg" viewBox="0 0 120 120">
-                                <defs>
-                                    <linearGradient id="gcRingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" style="stop-color:var(--primary)"/>
-                                        <stop offset="100%" stop-color="#06b6d4"/>
-                                    </linearGradient>
-                                </defs>
-                                <circle class="gc-ring-track" cx="60" cy="60" r="52"/>
-                                <circle class="gc-ring-glow-bg" cx="60" cy="60" r="52"/>
-                                <circle id="ringGoalsProgress" class="gc-ring-fill" cx="60" cy="60" r="52"
-                                    stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
-                                <text x="60" y="54" class="gc-ring-pct-text" id="goalsProgress">0%</text>
-                                <text x="60" y="72" class="gc-ring-sub-text">ZIELERFOLG</text>
-                            </svg>
-                        </div>
-                        <span class="gc-ring-caption">Aktive Ziele</span>
-                    </div>
+            <!-- Bis v8.0.5 stand hier ein fest eingebauter Erfolg („Marathon-Start,
+                 50h erreicht"), der bei jedem Nutzer freigeschaltet war, dazu
+                 Balken mit erfundenen Nennern (/1500 h) und 40 h / 5 Tage als
+                 Wochensoll. Alles hier drunter rechnet goals.js aus den Daten;
+                 nichts im Markup behauptet einen Stand. -->
+            <div class="view-header">
+                <div>
+                    <h2 class="view-title">Ziele</h2>
+                    <p class="view-subtitle" id="glSubtitle"></p>
+                </div>
+                <div class="view-header-actions">
+                    <button type="button" class="gl-btn gl-btn--primary" id="glNewBtn" onclick="glOpenComposer()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        <span>Neues Ziel</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- KPI ROW                                     -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="gc-kpi-row">
-                <div class="gc-kpi gc-kpi-highlight">
-                    <div class="gc-kpi-label">Gesamt Saldo</div>
-                    <div class="gc-kpi-value gc-kpi-value-purple" id="goalKpiTotalDiff">+0.0h</div>
-                    <div class="gc-kpi-sub">Zeitsaldo-Bilanz</div>
-                    <div class="gc-kpi-bar"><div class="gc-kpi-bar-inner gc-bar-purple" id="gcBarSaldo" style="width:0%"></div></div>
-                </div>
-                <div class="gc-kpi">
-                    <div class="gc-kpi-label">Stunden Gearbeitet</div>
-                    <div class="gc-kpi-value gc-kpi-value-amber" id="goalKpiTotalWorked">0.0h</div>
-                    <div class="gc-kpi-sub">Kumulativ</div>
-                    <div class="gc-kpi-bar"><div class="gc-kpi-bar-inner gc-bar-amber" id="gcBarWorked" style="width:0%"></div></div>
-                </div>
-                <div class="gc-kpi">
-                    <div class="gc-kpi-label">Wochen im Plus</div>
-                    <div class="gc-kpi-value gc-kpi-value-emerald" id="goalKpiPositiveWeeks">0</div>
-                    <div class="gc-kpi-sub">Positive Bilanz</div>
-                    <div class="gc-kpi-bar"><div class="gc-kpi-bar-inner gc-bar-emerald" style="width:100%"></div></div>
-                </div>
-            </div>
+            <section class="gl-week" id="glWeek" aria-labelledby="glWeekTitle"></section>
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- WEEKLY TARGETS                              -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="gc-panel">
-                <div class="gc-panel-head">
-                    <div class="gc-panel-icon gc-panel-icon-cyan">⏱</div>
-                    <span class="gc-panel-label">WOCHENZIELE & FOKUS</span>
-                    <span class="gc-panel-badge">AKTIV</span>
-                </div>
-                <div class="gc-panel-body">
-                    <div class="gc-weekly-cols">
-                        <div>
-                            <div class="gc-weekly-item-label">Mindeststunden</div>
-                            <div class="gc-weekly-values">
-                                <span class="gc-weekly-current" id="weeklyHoursTarget">0 / 40h</span>
-                                <span class="gc-weekly-pct" id="weeklyHoursPct">0%</span>
-                            </div>
-                            <div class="gc-bar-track">
-                                <div class="gc-bar-fill gc-fill-accent" id="weeklyHoursBar" style="width:0%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="gc-weekly-item-label">Arbeitstage</div>
-                            <div class="gc-weekly-values">
-                                <span class="gc-weekly-current" id="weeklyDaysTarget">0 / 5 Tage</span>
-                                <span class="gc-weekly-pct" id="weeklyDaysPct">0%</span>
-                            </div>
-                            <div class="gc-bar-track">
-                                <div class="gc-bar-fill gc-fill-cyan" id="weeklyDaysBar" style="width:0%"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <section class="gl-composer" id="glComposer" hidden aria-labelledby="glComposerTitle"></section>
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- GOAL CREATION                               -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="gc-panel">
-                <div class="gc-panel-head">
-                    <div class="gc-panel-icon gc-panel-icon-purple">+</div>
-                    <span class="gc-panel-label">NEUES ZIEL DEFINIEREN</span>
+            <section class="gl-goals" aria-labelledby="glGoalsTitle">
+                <div class="gl-section-head">
+                    <h3 class="gl-section-title" id="glGoalsTitle">Deine Ziele</h3>
                 </div>
-                <div class="gc-panel-body">
-                    <div class="gc-form-grid">
-                        <div class="gc-field">
-                            <label class="gc-field-label">Zielname</label>
-                            <input type="text" id="goalTitle" class="gc-input" placeholder="z.B. 100h Überstunden">
-                        </div>
-                        <div class="gc-field">
-                            <label class="gc-field-label">Zieltyp</label>
-                            <select id="goalType" class="gc-select">
-                                <option value="TOTAL_WORKED_HOURS">Gesamt Gearbeitet (h)</option>
-                                <option value="TOTAL_DIFF_HOURS">Gesamt Saldo (h)</option>
-                                <option value="POSITIVE_WEEKS">Wochen im Plus (Anzahl)</option>
-                                <option value="PERFECT_SHIFTS">Perfekte Schichten (Anzahl)</option>
-                            </select>
-                        </div>
-                        <div class="gc-field">
-                            <label class="gc-field-label">Zielwert</label>
-                            <input type="number" id="goalTarget" class="gc-input" placeholder="z.B. 100">
-                        </div>
-                    </div>
-                    <div class="gc-form-footer">
-                        <button class="gc-btn-create" onclick="addCustomGoal()">
-                            <svg viewBox="0 0 16 16"><path d="M8 1a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2H9v5a1 1 0 1 1-2 0V9H2a1 1 0 0 1 0-2h5V2a1 1 0 0 1 1-1z"/></svg>
-                            Ziel erstellen
-                        </button>
-                    </div>
-                </div>
-            </div>
+                <div class="gl-grid" id="goalsList"></div>
+                <div id="glDone"></div>
+            </section>
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- ACTIVE GOALS                                -->
-            <!-- ═══════════════════════════════════════════ -->
-            <h3 class="gc-section-heading">Aktive Ziele</h3>
-            <div class="gc-goals-grid" id="goalsList"></div>
-
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- TROPHIES                                    -->
-            <!-- ═══════════════════════════════════════════ -->
-            <h3 class="gc-section-heading">Freigeschaltete Erfolge</h3>
-            <div class="gc-trophy-grid" id="trophiesList">
-                <div class="gc-trophy gc-trophy-unlocked">
-                    <span class="gc-trophy-emoji"><svg class="mwl-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg></span>
-                    <div class="gc-trophy-name">Marathon-Start</div>
-                    <div class="gc-trophy-info" style="color: #fbbf24;">50h erreicht</div>
+            <section class="gl-miles" aria-labelledby="glMilesTitle">
+                <div class="gl-section-head">
+                    <h3 class="gl-section-title" id="glMilesTitle">Meilensteine</h3>
+                    <p class="gl-section-note" id="glMilesNote"></p>
                 </div>
-                <div class="gc-trophy gc-trophy-locked">
-                    <span class="gc-trophy-emoji"><svg class="mwl-icon" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></svg></span>
-                    <div class="gc-trophy-name">Perfektionist</div>
-                    <div class="gc-trophy-info">Noch nicht erreicht</div>
-                </div>
-            </div>
+                <div class="gl-miles-grid" id="trophiesList"></div>
+            </section>
 
         </div>

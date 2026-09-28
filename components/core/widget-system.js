@@ -290,10 +290,6 @@
                 if (typeof updateProductivityScore === 'function') updateProductivityScore();
                 break;
                 
-            case 'weekly-goals':
-                if (typeof updateWeeklyGoals === 'function') updateWeeklyGoals();
-                break;
-                
             default:
                 console.log('No specific initialization needed for widget:', widgetId);
         }

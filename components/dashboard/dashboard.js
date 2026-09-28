@@ -1925,23 +1925,6 @@
         return { current: currentStreak, best: Math.max(bestStreak, currentStreak) };
     }
 
-    function calculatePositiveWeeks() {
-        const weeklyDiffs = {};
-        data.entries.forEach(e => {
-            const date = new Date(e.date);
-            const year = date.getFullYear();
-            const week = getWeek(date);
-            const key = `${year}-${week}`;
-            
-            if (!weeklyDiffs[key]) {
-                weeklyDiffs[key] = 0;
-            }
-            weeklyDiffs[key] += e.diff;
-        });
-        
-        return Object.values(weeklyDiffs).filter(diff => diff > 0.5).length; // Mehr als 0.5h im Plus zählen
-    }
-
     // ═══ VOICE INPUT MODULE ═══
     window._voiceRawText = '';
     window._voiceListening = false;

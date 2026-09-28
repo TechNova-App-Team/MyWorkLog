@@ -179,56 +179,7 @@
             if (typeof renderAnalyticsPro === 'function') renderAnalyticsPro();
         }
     }
-    function getGoalUnit(type) {
-        switch (type) {
-            case 'TOTAL_WORKED_HOURS':
-            case 'TOTAL_DIFF_HOURS':
-                return 'h';
-            case 'POSITIVE_WEEKS':
-                return ' Wochen';
-            case 'PERFECT_SHIFTS':
-                return ' Schichten';
-            default:
-                return '';
-        }
-    }
-    function addCustomGoal() {
-        const title = document.getElementById('goalTitle').value.trim();
-        const type = document.getElementById('goalType').value;
-        const target = parseFloat(document.getElementById('goalTarget').value);
-        
-        if (!title || isNaN(target) || target <= 0) {
-            return showCustomMessage('❌ Ungültige Eingabe', 'Bitte gib einen gültigen Zielnamen und einen Zielwert (> 0) ein.', 'error');
-        }
-
-        const newGoal = {
-            id: Date.now(),
-            title: title,
-            type: type,
-            target: target
-        };
-
-        data.settings.goals.push(newGoal);
-        save();
-        document.getElementById('goalTitle').value = '';
-        document.getElementById('goalTarget').value = '';
-        renderGoalsView();
-        showCustomMessage('✅ Erfolg', 'Neues Ziel erfolgreich hinzugefügt!', 'success');
-    }
     
-    function deleteCustomGoal(id) {
-         showCustomConfirm(
-             '⚠️ Ziel löschen?',
-             'Möchtest du dieses Ziel wirklich unwiderruflich löschen?',
-             () => {
-                 data.settings.goals = data.settings.goals.filter(goal => goal.id !== id);
-                 save();
-                 renderGoalsView();
-             },
-             null
-         );
-    }
-
     // Navigate to history view and highlight a specific entry
     window.goToHistoryAndHighlight = function(entryId) {
         // Set the ID to highlight

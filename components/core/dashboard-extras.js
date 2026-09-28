@@ -67,33 +67,6 @@
     }
 
     // FEATURE 3: Weekly Goals Progress
-    function updateWeeklyGoals() {
-        const now = new Date();
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - now.getDay());
-        
-        let weekHours = 0, workDays = new Set();
-        data.entries.forEach(e => {
-            const d = new Date(e.date);
-            if (d >= weekStart && d <= now) {
-                weekHours += e.diff;
-                if (e.type === 'work' || e.type === 'school') {
-                    workDays.add(e.date);
-                }
-            }
-        });
-
-        const targetHours = 40;
-        const targetDays = 5;
-        const hoursPercent = Math.min((weekHours / 3600 / targetHours) * 100, 100);
-        const daysPercent = Math.min((workDays.size / targetDays) * 100, 100);
-
-        document.getElementById('weeklyHoursTarget').innerText = (weekHours / 3600).toFixed(1) + ' / ' + targetHours + 'h';
-        document.getElementById('weeklyDaysTarget').innerText = workDays.size + ' / ' + targetDays + ' Tage';
-        document.getElementById('weeklyHoursBar').style.width = hoursPercent + '%';
-        document.getElementById('weeklyDaysBar').style.width = daysPercent + '%';
-    }
-
     // FEATURE 4: Dark/Light Mode Theme
     function setTheme(theme) {
         if (theme === 'light') {
