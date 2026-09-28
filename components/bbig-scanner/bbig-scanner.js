@@ -92,7 +92,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 17 BBiG',
-        icon: '⏰',
         title: 'Überstunden / Mehrarbeit',
         text: 'Überstunden müssen zeitnah durch Freizeit ausgeglichen oder zusätzlich vergütet werden (§ 17 Abs. 3 BBiG). Jugendliche: max. 8 h/Tag (§ 8 JArbSchG), Volljährige max. 8 h, ausnahmsweise 10 h (§ 3 ArbZG).'
     },
@@ -106,7 +105,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 8 JArbSchG',
-        icon: '🕐',
         title: 'Zu lange Arbeitszeit',
         text: 'Jugendliche dürfen max. 8 h täglich / 40 h wöchentlich arbeiten (§ 8 JArbSchG). Volljährige max. 8 h, ausnahmsweise 10 h bei Ausgleich innerhalb 6 Monaten (§ 3 ArbZG).'
     },
@@ -121,7 +119,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 14 JArbSchG',
-        icon: '🌙',
         title: 'Nachtarbeit',
         text: 'Für Jugendliche unter 18 J. ist Beschäftigung zwischen 20:00 und 06:00 Uhr verboten (§ 14 JArbSchG). Ausnahmen für ältere Jugendliche im Gaststättengewerbe bis 22 Uhr, in mehrschichtigen Betrieben bis 23 Uhr.'
     },
@@ -136,7 +133,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 17 JArbSchG',
-        icon: '🚫',
         title: 'Sonntagsarbeit',
         text: 'An Sonntagen dürfen Jugendliche grundsätzlich nicht beschäftigt werden (§ 17 JArbSchG). Ausnahmen nur in bestimmten Branchen (Gaststätten, Krankenhaus, Bäckerei). Ein Ausgleichstag in derselben Woche ist Pflicht.'
     },
@@ -149,7 +145,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 16 JArbSchG',
-        icon: 'ℹ️',
         title: 'Samstagsarbeit',
         text: 'An Samstagen dürfen Jugendliche nicht beschäftigt werden (§ 16 JArbSchG), Ausnahmen nur in bestimmten Branchen. Volljährige: erlaubt, aber Anspruch auf 2 freie Wochentage in der Woche (§ 15 JArbSchG analog).'
     },
@@ -162,7 +157,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 9 ArbZG',
-        icon: '🎄',
         title: 'Feiertagsarbeit',
         text: 'An gesetzlichen Feiertagen ist Beschäftigung von 0–24 Uhr verboten (§ 9 ArbZG). Ausnahmen nur für definierte Branchen (Gesundheit, Verkehr, Notdienst). Bei Jugendlichen gilt § 18 JArbSchG.'
     },
@@ -185,7 +179,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 11 JArbSchG',
-        icon: '☕',
         title: 'Pausenpflicht',
         text: 'Pflicht-Pausen: mind. 30 min bei > 4,5 h (Jugendliche) / > 6 h (Volljährige), mind. 60 min bei > 6 h Jugendliche / 45 min bei > 9 h Volljährige. Pausen dürfen nicht am Anfang oder Ende liegen.',
         containsNegation: true
@@ -206,7 +199,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 14 BBiG',
-        icon: '🧹',
         title: 'Ausbildungsfremde Tätigkeit',
         text: 'Tätigkeiten müssen dem Ausbildungszweck dienen (§ 14 Abs. 2 BBiG). Dauerhafte ausbildungsfremde Aufgaben (Putzen, Lager, Müll, Botengänge) sind unzulässig.'
     },
@@ -224,7 +216,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 14 BBiG',
-        icon: '🛒',
         title: 'Private Besorgungen für den Chef',
         text: 'Private Besorgungen (Kaffee holen, Wäsche, Einkauf für den Chef) sind keine Ausbildungsinhalte und dürfen nicht regelmäßig angeordnet werden (§ 14 BBiG).'
     },
@@ -240,7 +231,6 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: '§ 14 BBiG',
-        icon: '📋',
         title: 'Einseitige / monotone Aufgaben',
         text: 'Die Ausbildung muss einem sachlich und zeitlich gegliederten Ausbildungsplan folgen (§ 14 Abs. 1 Nr. 1 BBiG). Reine Routinearbeiten ohne Lernfortschritt verletzen das Ausbildungsziel.'
     },
@@ -259,7 +249,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 14 Abs. 1 BBiG',
-        icon: '🧭',
         title: 'Ausbilder / Anleitung fehlt',
         text: 'Der Ausbildende muss persönlich oder durch einen geeigneten Ausbilder die berufliche Handlungsfähigkeit vermitteln (§ 14 Abs. 1 Nr. 1 + § 28 BBiG). Alleinlassen ohne Anleitung oder ein dauerhaft abwesender Ausbilder verletzt die Ausbildungspflicht.'
     },
@@ -275,7 +264,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 19 JArbSchG / § 7 BUrlG',
-        icon: '🏖️',
         title: 'Urlaub verweigert / gestrichen',
         text: 'Urlaubswünsche sind zu berücksichtigen, sofern keine dringenden betrieblichen Belange entgegenstehen (§ 7 BUrlG). Mindesturlaub: 24 Werktage (Volljährige), 25–30 Werktage (Jugendliche je nach Alter).',
         containsNegation: true
@@ -290,7 +278,6 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: '§ 7 BUrlG',
-        icon: '📅',
         title: 'Urlaubszeitpunkt aufgezwungen',
         text: 'Der Arbeitgeber darf den Urlaubszeitpunkt nicht einseitig vorgeben — Urlaubswünsche des Azubis sind zu berücksichtigen, soweit keine dringenden betrieblichen Belange entgegenstehen (§ 7 BUrlG).'
     },
@@ -305,7 +292,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 15 BBiG / § 9 JArbSchG',
-        icon: '🎒',
         title: 'Nach der Berufsschule noch in den Betrieb',
         text: 'An einem Berufsschultag mit mehr als 5 Unterrichtsstunden (à 45 min) darf der Jugendliche nicht mehr im Betrieb beschäftigt werden (§ 9 Abs. 1 JArbSchG). Die Berufsschulzeit inkl. Pausen und Schulweg zählt als Arbeitszeit (§ 15 BBiG).'
     },
@@ -318,7 +304,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 15 BBiG',
-        icon: '🏫',
         title: 'Berufsschulzeit nicht angerechnet',
         text: 'Berufsschulzeit inkl. Pausen und Schulweg wird vollständig auf die betriebliche Ausbildungszeit angerechnet (§ 15 BBiG). Schule darf nicht als Freizeit oder Urlaub gewertet werden.',
         containsNegation: true
@@ -332,7 +317,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 15 Abs. 1+3 BBiG',
-        icon: '📝',
         title: 'Prüfungsfreistellung verweigert',
         text: 'Azubis sind für Prüfungen + den Werktag vor der schriftlichen Abschlussprüfung freizustellen (§ 15 Abs. 1, 3 BBiG). Vergütung läuft weiter (§ 19 Abs. 1 BBiG). Urlaubsverzehr ist unzulässig.'
     },
@@ -354,7 +338,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 17 BBiG',
-        icon: '💰',
         title: 'Vergütung zu niedrig / verspätet',
         text: 'Die Ausbildungsvergütung muss angemessen sein, mind. jährlich steigen (§ 17 BBiG) und spätestens am letzten Arbeitstag des Monats gezahlt werden (§ 18 BBiG). Mindestvergütung ist gesetzlich festgelegt.'
     },
@@ -369,7 +352,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 17 BBiG',
-        icon: '💸',
         title: 'Unbezahlte Arbeit',
         text: 'Die Ausbildungsvergütung ist gesetzlich vorgeschrieben (§ 17 BBiG) und muss monatlich pünktlich gezahlt werden (§ 18 BBiG). Unbezahlte Arbeitsstunden sind rechtswidrig.',
         containsNegation: true
@@ -384,7 +366,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 14 Abs. 1 Nr. 3 BBiG',
-        icon: '🔧',
         title: 'Arbeitsmaterial selbst bezahlt',
         text: 'Werkzeuge, Werkstoffe, Fachliteratur und Schutzkleidung muss der Ausbildungsbetrieb kostenlos stellen (§ 14 Abs. 1 Nr. 3 BBiG). Eine Beteiligung des Azubis ist unzulässig.'
     },
@@ -404,7 +385,6 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: '§ 5 EntgFG',
-        icon: '🏥',
         title: 'Krankmeldung & Attest',
         text: 'Krankheit muss unverzüglich gemeldet werden (§ 5 EntgFG). Ab dem 4. Krankheitstag (oder früher laut Vertrag) ist eine ärztliche AU vorzulegen. Lohnfortzahlung 6 Wochen (§ 3 EntgFG).'
     },
@@ -417,7 +397,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 19 BBiG / § 3 EntgFG',
-        icon: '🩺',
         title: 'Krank = kein Geld? Falsch.',
         text: 'Azubis haben Anspruch auf Fortzahlung der Vergütung für 6 Wochen Arbeitsunfähigkeit (§ 19 Abs. 1 Nr. 2 BBiG, § 3 EntgFG). Lohnabzüge bei Krankheit sind rechtswidrig.',
         containsNegation: true
@@ -437,7 +416,6 @@ var BBIG_RULES = [
         ],
         severity: 'warning',
         law: '§ 22 BBiG',
-        icon: '⚠️',
         title: 'Kündigungs-Drohung',
         text: 'Nach der Probezeit ist eine fristlose Kündigung durch den Ausbildenden nur aus wichtigem Grund + schriftlich möglich (§ 22 Abs. 2 BBiG). Drohungen sind kein Kündigungsgrund.'
     },
@@ -450,7 +428,6 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: '§ 20 BBiG',
-        icon: '📅',
         title: 'Probezeit',
         text: 'Die Probezeit beträgt mindestens 1, höchstens 4 Monate (§ 20 BBiG). Eine darüber hinausgehende Verlängerung ist unzulässig — Ausnahme: Unterbrechung um mehr als 1/3 (z.B. lange Krankheit).'
     },
@@ -463,7 +440,6 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: 'Arbeitsrecht',
-        icon: '📎',
         title: 'Abmahnung erhalten',
         text: 'Eine wirksame Abmahnung muss konkretes Fehlverhalten benennen, die verletzte Pflicht und Konsequenzen androhen. Du hast das Recht, eine Gegendarstellung in die Personalakte aufnehmen zu lassen.'
     },
@@ -476,7 +452,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 22 BBiG / § 159 SGB III',
-        icon: '✍️',
         title: 'Aufhebungsvertrag — VORSICHT',
         text: 'Nichts ohne Bedenkzeit unterschreiben! Aufhebungsverträge können zu einer Sperrzeit beim ALG (bis 12 Wochen, § 159 SGB III) führen. Hol vorher Rat bei IHK/Kammer, Gewerkschaft oder JAV.'
     },
@@ -507,7 +482,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 241 Abs. 2 BGB / § 12 AGG',
-        icon: '🛡️',
         title: 'Mobbing / Schikane',
         text: 'Der Arbeitgeber hat eine Fürsorgepflicht (§ 241 Abs. 2 BGB) und muss vor Mobbing schützen (§ 12 AGG). Dokumentiere Vorfälle mit Datum + Zeugen. Anlaufstellen: JAV, Betriebsrat, IHK, Gewerkschaft.'
     },
@@ -531,7 +505,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 7 AGG',
-        icon: '⚖️',
         title: 'Diskriminierung / Belästigung',
         text: 'Diskriminierung wegen Herkunft, Geschlecht, Religion, Behinderung, Alter oder sexueller Identität ist verboten (§ 7 AGG). Beschwerderecht beim Arbeitgeber (§ 13 AGG). Schadensersatz möglich (§ 15 AGG).'
     },
@@ -551,7 +524,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 3 Abs. 4 AGG',
-        icon: '🚨',
         title: 'Sexuelle Belästigung',
         text: 'Sexuelle Belästigung am Arbeitsplatz ist verboten (§ 3 Abs. 4 AGG). Du hast Anspruch auf Schutz (§ 12 AGG), Beschwerderecht (§ 13 AGG) und kannst Schadensersatz/Schmerzensgeld einfordern (§ 15 AGG). Bei Übergriffen: Polizei + Dokumentation mit Datum/Zeugen.'
     },
@@ -573,7 +545,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 618 BGB / § 3 ArbSchG',
-        icon: '💢',
         title: 'Psychische Belastung / Fürsorgepflicht',
         text: 'Der Arbeitgeber muss Leben und Gesundheit schützen (§ 618 BGB, § 3 ArbSchG) — auch psychisch. Bei dauerhaftem Druck: Gespräch mit Ausbilder, JAV/Betriebsrat, Hausarzt. Telefonseelsorge: 0800/111 0 111. Du musst da nicht alleine durch.'
     },
@@ -591,7 +562,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 3 ArbSchG / § 28 JArbSchG',
-        icon: '⛑️',
         title: 'Arbeitssicherheit / Schutzkleidung',
         text: 'Der Ausbildungsbetrieb muss Arbeitsschutz gewährleisten (§ 3 ArbSchG) und Schutzkleidung kostenlos stellen. Jugendliche dürfen keine gefährlichen Arbeiten ausführen (§ 22 JArbSchG). Unterweisungen sind Pflicht (§ 28 JArbSchG). Bei Unfall: D-Arzt + Dokumentation Pflicht.'
     },
@@ -607,7 +577,6 @@ var BBIG_RULES = [
         ],
         severity: 'danger',
         law: '§ 16 ArbZG',
-        icon: '🕵️',
         title: 'Arbeitszeit-Manipulation',
         text: 'Die Arbeitszeit ist vollständig und nachvollziehbar zu erfassen (§ 16 ArbZG, EuGH C-55/18). Manipulation der Zeiterfassung, Schwarzarbeit oder das Streichen geleisteter Stunden sind rechtswidrig und können strafbar sein (§ 266a StGB bei Sozialversicherung).'
     },
@@ -621,7 +590,6 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: '§ 16 BBiG',
-        icon: '📄',
         title: 'Ausbildungszeugnis',
         text: 'Nach Beendigung der Ausbildung hast du Anspruch auf ein schriftliches Zeugnis (§ 16 BBiG) mit Angaben zu Art, Dauer und Ergebnis. Auf Verlangen qualifiziert mit Beurteilung von Verhalten und Leistung.'
     },
@@ -634,13 +602,34 @@ var BBIG_RULES = [
         ],
         severity: 'info',
         law: '§ 13 BBiG',
-        icon: '📔',
         title: 'Berichtsheft / Ausbildungsnachweis',
         text: 'Das Berichtsheft ist während der Ausbildungszeit zu führen (§ 13 BBiG). Der Ausbildungsbetrieb muss Zeit dafür im Betrieb geben — die Erstellung in der Freizeit ist nicht verpflichtend.'
     }
 ];
 
 var DISMISSED_ALERTS = new Set();
+
+function bbigIsEN() { return document.documentElement.lang === 'en'; }
+
+// Symbol nach Schweregrad statt Emoji je Regel (bis v8.0.3: 33 verschiedene
+// Emojis, die je nach Betriebssystem anders aussahen). Lucide-Pfade.
+var SVG_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+var SEVERITY_ICON = {
+    danger:  SVG_OPEN + '<path d="M12 16h.01"/><path d="M12 8v4"/><path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z"/></svg>',
+    warning: SVG_OPEN + '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    info:    SVG_OPEN + '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
+};
+var SEVERITY_LABEL = { danger: 'Wichtig', warning: 'Achtung', info: 'Hinweis' };
+var X_ICON = SVG_OPEN + '<path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+function updateCount(container) {
+    var badge = container.querySelector('.bbig-scanner__badge');
+    if (!badge) return;
+    var n = container.querySelectorAll('.bbig-alert:not(.is-leaving)').length;
+    badge.textContent = bbigIsEN()
+        ? (n === 1 ? '1 note' : n + ' notes')
+        : (n === 1 ? '1 Hinweis' : n + ' Hinweise');
+}
 
 function createScannerEl(containerId) {
     var el = document.createElement('div');
@@ -649,21 +638,42 @@ function createScannerEl(containerId) {
     el.innerHTML = '' +
         '<div class="bbig-scanner__inner">' +
             '<div class="bbig-scanner__header">' +
-                '<svg class="bbig-scanner__shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+                '<svg class="bbig-scanner__shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
                     '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' +
                     '<polyline points="9 12 11 14 15 10"/>' +
                 '</svg>' +
                 '<span class="bbig-scanner__title">BBiG-Live-Scanner</span>' +
-                '<span class="bbig-scanner__badge">§ Legal Guard</span>' +
-                '<button class="bbig-scanner__dismiss-all" title="Alle ausblenden" onclick="bbigDismissAll(\'' + containerId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+                '<span class="bbig-scanner__badge" aria-live="polite"></span>' +
+                '<button type="button" class="bbig-scanner__dismiss-all" title="' + (bbigIsEN() ? 'Hide all' : 'Alle ausblenden') + '" aria-label="' + (bbigIsEN() ? 'Hide all' : 'Alle ausblenden') + '" onclick="bbigDismissAll(\'' + containerId + '\')">' + X_ICON + '</button>' +
             '</div>' +
             '<div class="bbig-scanner__alerts"></div>' +
             '<div class="bbig-scanner__footer">' +
-                '<div class="bbig-scanner__status-dot"></div>' +
-                '<span class="bbig-scanner__status-text">Echtzeit-Analyse · BBiG / JArbSchG / ArbZG / AGG / BUrlG</span>' +
+                '<span class="bbig-scanner__status-text">' + (bbigIsEN()
+                    ? 'Checks your text against BBiG, JArbSchG, ArbZG, AGG and BUrlG while you type. Not legal advice.'
+                    : 'Prüft deinen Text beim Tippen gegen BBiG, JArbSchG, ArbZG, AGG und BUrlG. Keine Rechtsberatung.') + '</span>' +
             '</div>' +
         '</div>';
     return el;
+}
+
+// Nicht `SEVERITY_RANK[x] || 9`: danger hat Rang 0, und `0 || 9` ist 9 —
+// bis v8.0.3 standen die wichtigsten Hinweise dadurch hinter den Infos.
+function rank(sev) {
+    return Object.prototype.hasOwnProperty.call(SEVERITY_RANK, sev) ? SEVERITY_RANK[sev] : 9;
+}
+
+// Der Treffer entsteht im normalisierten Text (klein, ü→ue, ß→ss, Leerraum
+// zusammengefasst). Angezeigt wird die Stelle so, wie der Nutzer sie getippt
+// hat: aus dem Treffer ein tolerantes Muster bauen und im Originaltext suchen.
+function originalSpelling(rawText, matched) {
+    var src = matched.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/ue/g, '(?:ü|ue)').replace(/oe/g, '(?:ö|oe)')
+        .replace(/ae/g, '(?:ä|ae)').replace(/ss/g, '(?:ß|ss)')
+        .replace(/ /g, '\\s+');
+    try {
+        var m = String(rawText).match(new RegExp(src, 'i'));
+        return m ? m[0] : matched;
+    } catch (e) { return matched; }
 }
 
 function scanText(rawText, scannerId) {
@@ -695,16 +705,15 @@ function scanText(rawText, scannerId) {
                 id: rule.id,
                 severity: rule.severity,
                 law: rule.law,
-                icon: rule.icon,
                 title: rule.title,
                 text: rule.text,
-                matchedWord: matchedWord
+                matchedWord: originalSpelling(rawText, matchedWord)
             });
         }
     }
 
     matches.sort(function(a, b) {
-        return (SEVERITY_RANK[a.severity] || 9) - (SEVERITY_RANK[b.severity] || 9);
+        return rank(a.severity) - rank(b.severity);
     });
 
     var existing = alertsEl.querySelectorAll('.bbig-alert');
@@ -712,6 +721,7 @@ function scanText(rawText, scannerId) {
         var ruleId = el.dataset.ruleId;
         var stillMatching = matches.some(function(m) { return m.id === ruleId; });
         if (!stillMatching) {
+            el.classList.add('is-leaving');
             el.style.animation = 'none';
             el.style.opacity = '0';
             el.style.transform = 'translateX(8px)';
@@ -733,25 +743,30 @@ function scanText(rawText, scannerId) {
         alertEl.dataset.ruleId = match.id;
         alertEl.style.order = String(k);
         alertEl.innerHTML = '' +
-            '<span class="bbig-alert__icon">' + bbigEsc(match.icon) + '</span>' +
+            '<span class="bbig-alert__icon" role="img" aria-label="' + SEVERITY_LABEL[match.severity] + '">' + (SEVERITY_ICON[match.severity] || SEVERITY_ICON.info) + '</span>' +
             '<div class="bbig-alert__body">' +
                 '<div class="bbig-alert__top">' +
+                    '<span class="bbig-alert__title">' + bbigEsc(match.title) + '</span>' +
                     '<span class="bbig-alert__law">' + bbigEsc(match.law) + '</span>' +
-                    '<span class="bbig-alert__keyword">' + bbigEsc(match.matchedWord) + '</span>' +
                 '</div>' +
                 '<div class="bbig-alert__text">' + bbigEsc(match.text) + '</div>' +
+                '<div class="bbig-alert__keyword">' + (bbigIsEN() ? 'Found: ' : 'Gefunden: ') + '<mark>' + bbigEsc(match.matchedWord) + '</mark></div>' +
             '</div>' +
-            '<button class="bbig-alert__close" title="Ausblenden" ' +
-                'onclick="bbigDismissRule(\'' + bbigEsc(scannerId) + '\',\'' + bbigEsc(match.id) + '\',this.closest(\'.bbig-alert\'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+            '<button type="button" class="bbig-alert__close" title="' + (bbigIsEN() ? 'Hide' : 'Ausblenden') + '" aria-label="' + (bbigIsEN() ? 'Hide' : 'Ausblenden') + '" ' +
+                'onclick="bbigDismissRule(\'' + bbigEsc(scannerId) + '\',\'' + bbigEsc(match.id) + '\',this.closest(\'.bbig-alert\'))">' + X_ICON + '</button>';
         alertsEl.appendChild(alertEl);
     }
 
-    container.classList.toggle('bbig-scanner--active', alertsEl.children.length > 0);
+    updateCount(container);
+    container.classList.toggle('bbig-scanner--active', matches.length > 0);
 }
 
 function bbigDismissRule(scannerId, ruleId, alertEl) {
     DISMISSED_ALERTS.add(scannerId + ':' + ruleId);
     if (alertEl) {
+        alertEl.classList.add('is-leaving');
+        var host = document.getElementById(scannerId);
+        if (host) updateCount(host);
         alertEl.style.transition = 'opacity 0.2s, transform 0.2s';
         alertEl.style.opacity = '0';
         alertEl.style.transform = 'translateX(8px)';

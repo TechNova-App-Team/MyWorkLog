@@ -1,301 +1,245 @@
 /* ═══ BBIG-SCANNER COMPONENT ═══ */
 
+/* Läuft an ZWEI Orten: in der App (unter #inpNotes / #editInpNotes) und auf
+   /berichtsheft/ (eigener :root, andere Schriften, KEIN --border-default,
+   --role-*, --edge-top, --bg-inset). Deshalb eigene --bb-*-Tokens mit
+   Rückfall auf die Namen, die beide Seiten kennen (--bg-surface, --border,
+   --text-main, --text-muted, --primary, --font-mono). Ein var() ohne Rückfall
+   wäre auf der jeweils anderen Seite `transparent` bzw. `border-style: none`.
+
+   Bis v8.0.3 hatte der Scanner ein eigenes Lila-Universum: Scanlines,
+   pulsierender Verlaufsbalken, glühendes Schild (drop-shadow-Animation),
+   Dauer-Puls auf jeder roten Warnung, backdrop-filter, Emoji je Regel.
+   Bewusst jetzt ohne Dauerbewegung — der Kasten steht neben einem Textfeld,
+   in dem getippt wird; alles, was dort blinkt, zieht den Blick vom Text weg. */
+
 .bbig-scanner {
-    margin-top: 8px;
+    --bb-surface: var(--bg-surface, rgba(23, 24, 29, 0.92));
+    --bb-line: var(--border-default, var(--border, rgba(255, 255, 255, 0.09)));
+    --bb-line-soft: var(--border-subtle, var(--border, rgba(255, 255, 255, 0.05)));
+    --bb-text: var(--text-main, #f8fafc);
+    --bb-muted: var(--text-muted, #94a3b8);
+    --bb-hover: rgba(var(--primary-rgb, 85, 120, 168), 0.08);
+    /* Semantik-Farben: die einzigen, die fest sein dürfen. */
+    --bb-danger: #ef4444;
+    --bb-warning: #f59e0b;
+    --bb-info: var(--primary, #5578a8);
+
+    margin: 10px 0 14px;
     display: none;
+    font-family: inherit;
 }
 
 .bbig-scanner.bbig-scanner--active {
     display: block;
-    animation: bbig-reveal 0.25s ease both;
+    animation: bbig-reveal 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 @keyframes bbig-reveal {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
 }
 
 .bbig-scanner__inner {
-    background: linear-gradient(135deg,
-        rgba(15, 10, 30, 0.95) 0%,
-        rgba(20, 8, 40, 0.9) 100%);
-    border: 1px solid rgba(168, 85, 247, 0.25);
-    border-radius: 14px;
+    background: var(--bb-surface);
+    border: 1px solid var(--bb-line);
+    border-radius: 12px;
+    box-shadow: var(--edge-top, none);
     overflow: hidden;
-    position: relative;
-    backdrop-filter: blur(20px);
 }
 
-/* Scanline effect */
-.bbig-scanner__inner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(168, 85, 247, 0.015) 2px,
-        rgba(168, 85, 247, 0.015) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Left accent bar */
-.bbig-scanner__inner::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, #a855f7, #7c3aed, #a855f7);
-    background-size: 100% 200%;
-    animation: bbig-bar-pulse 3s ease-in-out infinite;
-}
-
-@keyframes bbig-bar-pulse {
-    0%, 100% { background-position: 0% 0%; }
-    50% { background-position: 0% 100%; }
-}
-
+/* ── Kopf ── */
 .bbig-scanner__header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 14px 10px 18px;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
-    position: relative;
-    z-index: 1;
+    gap: 10px;
+    padding: 10px 8px 10px 14px;
+    border-bottom: 1px solid var(--bb-line-soft);
 }
 
 .bbig-scanner__shield {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
-    color: #a855f7;
-    filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
-    animation: bbig-shield-glow 2s ease-in-out infinite;
-}
-
-@keyframes bbig-shield-glow {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5)); }
-    50% { filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.9)); }
+    color: var(--bb-info);
 }
 
 .bbig-scanner__title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #a855f7;
-    flex: 1;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--bb-text);
 }
 
 .bbig-scanner__badge {
-    font-size: 10px;
-    background: rgba(168, 85, 247, 0.15);
-    border: 1px solid rgba(168, 85, 247, 0.3);
-    color: #c084fc;
-    padding: 2px 7px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
+    flex: 1;
+    font-size: 0.8rem;
+    color: var(--bb-muted);
+    font-variant-numeric: tabular-nums;
 }
 
-.bbig-scanner__dismiss-all svg { display: block; }
-.bbig-scanner__dismiss-all {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.3);
+.bbig-scanner__dismiss-all,
+.bbig-alert__close {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--bb-muted);
     cursor: pointer;
-    font-size: 16px;
-    line-height: 1;
-    padding: 2px 4px;
-    border-radius: 6px;
-    transition: color 0.2s, background 0.2s;
+    transition: background-color 150ms ease, color 150ms ease;
 }
 
-.bbig-scanner__dismiss-all:hover {
-    color: rgba(255,255,255,0.7);
-    background: rgba(255,255,255,0.06);
+.bbig-scanner__dismiss-all svg,
+.bbig-alert__close svg {
+    display: block;
+    width: 15px;
+    height: 15px;
 }
 
+.bbig-scanner__dismiss-all:hover,
+.bbig-alert__close:hover {
+    background: var(--bb-hover);
+    color: var(--bb-text);
+}
+
+.bbig-scanner__dismiss-all:focus-visible,
+.bbig-alert__close:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb, 85, 120, 168), 0.5);
+    outline-offset: 1px;
+}
+
+/* ── Hinweise ── */
+/* Jede Zeile trägt ihre Linie oben; die erste verschwindet unter der Linie
+   des Kopfes (-1px). Nicht per .bbig-alert + .bbig-alert: die Sortierung läuft
+   über style.order, die DOM-Reihenfolge stimmt also nicht mit der sichtbaren. */
 .bbig-scanner__alerts {
-    padding: 10px 14px 12px 18px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    position: relative;
-    z-index: 1;
+    margin-top: -1px;
 }
 
-/* Individual alert */
 .bbig-alert {
+    --bb-sev: var(--bb-info);
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: flex-start;
-    padding: 10px 12px;
-    border-radius: 10px;
-    animation: bbig-alert-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    position: relative;
-    overflow: hidden;
+    padding: 12px 8px 12px 14px;
+    /* Schweregrad als Streifen + Symbol, nicht als Flächenfarbe: drei farbige
+       Kästen untereinander lesen sich als Alarm, auch wenn zwei davon Info sind. */
+    box-shadow: inset 3px 0 0 var(--bb-sev);
+    animation: bbig-alert-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+.bbig-alert {
+    border-top: 1px solid var(--bb-line-soft);
 }
 
 @keyframes bbig-alert-in {
-    from {
-        opacity: 0;
-        transform: translateX(-8px) scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
 }
 
-/* Severity variants */
-.bbig-alert--danger {
-    background: rgba(239, 68, 68, 0.08);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-}
-.bbig-alert--danger .bbig-alert__icon { color: #f87171; }
-.bbig-alert--danger .bbig-alert__law { color: #f87171; border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
-
-.bbig-alert--warning {
-    background: rgba(245, 158, 11, 0.08);
-    border: 1px solid rgba(245, 158, 11, 0.25);
-}
-.bbig-alert--warning .bbig-alert__icon { color: #fbbf24; }
-.bbig-alert--warning .bbig-alert__law { color: #fbbf24; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
-
-.bbig-alert--info {
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-}
-.bbig-alert--info .bbig-alert__icon { color: #60a5fa; }
-.bbig-alert--info .bbig-alert__law { color: #60a5fa; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
+.bbig-alert--danger  { --bb-sev: var(--bb-danger); }
+.bbig-alert--warning { --bb-sev: var(--bb-warning); }
+.bbig-alert--info    { --bb-sev: var(--bb-info); }
 
 .bbig-alert__icon {
-    font-size: 15px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
     flex-shrink: 0;
-    margin-top: 1px;
+    border-radius: 8px;
+    color: var(--bb-sev);
+    background: color-mix(in srgb, var(--bb-sev) 14%, transparent);
+}
+
+.bbig-alert__icon svg {
+    width: 15px;
+    height: 15px;
 }
 
 .bbig-alert__body {
     flex: 1;
     min-width: 0;
+    padding-top: 1px;
 }
 
 .bbig-alert__top {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    align-items: baseline;
+    gap: 4px 10px;
     flex-wrap: wrap;
     margin-bottom: 4px;
 }
 
+.bbig-alert__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--bb-text);
+}
+
 .bbig-alert__law {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    padding: 2px 7px;
-    border-radius: 20px;
-    border: 1px solid;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    color: var(--bb-muted);
     white-space: nowrap;
 }
 
-.bbig-alert__keyword {
-    font-size: 11px;
-    color: rgba(255,255,255,0.45);
-    font-family: 'JetBrains Mono', monospace;
-}
-.bbig-alert__keyword::before { content: '→ "'; }
-.bbig-alert__keyword::after { content: '"'; }
-
 .bbig-alert__text {
-    font-size: 12px;
-    color: rgba(255,255,255,0.75);
-    line-height: 1.5;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--bb-muted);
+    max-width: 68ch;
 }
 
-.bbig-alert__close {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.25);
-    cursor: pointer;
-    font-size: 14px;
-    line-height: 1;
-    padding: 2px;
-    flex-shrink: 0;
+.bbig-alert__keyword {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    color: var(--bb-muted);
+}
+
+.bbig-alert__keyword mark {
+    padding: 0 4px;
     border-radius: 4px;
-    transition: color 0.2s, background 0.2s;
-    margin-top: 1px;
+    background: color-mix(in srgb, var(--bb-sev) 16%, transparent);
+    color: var(--bb-text);
 }
 
-.bbig-alert__close:hover {
-    color: rgba(255,255,255,0.6);
-    background: rgba(255,255,255,0.06);
-}
-
-/* Status bar at bottom */
+/* ── Fuß ── */
 .bbig-scanner__footer {
-    padding: 6px 18px 8px;
-    border-top: 1px solid rgba(255,255,255,0.04);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    position: relative;
-    z-index: 1;
-}
-
-.bbig-scanner__status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #a855f7;
-    animation: bbig-dot-blink 1.5s ease-in-out infinite;
-}
-
-@keyframes bbig-dot-blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+    padding: 8px 14px 10px;
+    border-top: 1px solid var(--bb-line-soft);
 }
 
 .bbig-scanner__status-text {
-    font-size: 10px;
-    color: rgba(255,255,255,0.3);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    color: var(--bb-muted);
 }
 
-/* Pulse ring on danger */
-.bbig-alert--danger::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 10px;
-    border: 1px solid rgba(239,68,68,0.4);
-    animation: bbig-danger-pulse 2s ease-in-out infinite;
-    pointer-events: none;
-}
-
-@keyframes bbig-danger-pulse {
-    0%, 100% { opacity: 0; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.005); }
-}
-
-/* Edit modal variant: slightly smaller */
+/* Bearbeiten-Dialog: etwas knapper, der Platz dort ist enger. */
 .edit-field .bbig-scanner {
-    margin-top: 6px;
-}
-
-.edit-field .bbig-scanner__title {
-    font-size: 10px;
+    margin-top: 8px;
 }
 
 .edit-field .bbig-alert__text {
-    font-size: 11.5px;
+    font-size: 0.78rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bbig-scanner.bbig-scanner--active,
+    .bbig-alert {
+        animation-name: bbig-fade;
+    }
+}
+
+@keyframes bbig-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
 }
