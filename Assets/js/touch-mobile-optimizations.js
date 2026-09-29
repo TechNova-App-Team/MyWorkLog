@@ -3,18 +3,18 @@
  * ────────────────────────────────────────────────────────────────────────────
  * Verbessert die Touch-Bedienung auf Handy/Tablet, OHNE Zoom oder Scroll zu
  * blockieren — die Seite erlaubt bewusst `user-scalable=yes` (Barrierefreiheit).
+ * Kein einziges preventDefault(), alle Listener passive: diese Datei kann keine
+ * Geste abfangen. `touch-action: manipulation` erlaubt Scrollen UND Pinch-Zoom
+ * und nimmt nur den Doppeltipp-Zoom (= die 300 ms Tippverzoegerung).
  *
- * Enthält:
- *   1. Touch-/Plattform-Klassen an <html> (is-touch / is-ios / is-standalone …)
- *   2. Basis-CSS: Tap-Delay weg (touch-action), Scroll-Ketten begrenzen, Safe-Area
- *   3. Robuste Viewport-Metriken als CSS-Vars: --vh, --viewport-height,
- *      --keyboard-inset (Overlap der Bildschirm-Tastatur) + .is-keyboard-open
- *   4. Delegiertes Druck-Feedback (funktioniert auch für später eingefügte
- *      Elemente; klemmt nie dank pointercancel/touchcancel/scroll/blur)
- *   5. Tastatur-bewusstes Fokus-Scrollen für Eingabefelder
- *   6. Optionales Haptik-Feedback ([data-haptic] + window.tmoHaptic())
+ * Bis 2026-09-29 standen hier zusaetzlich --vh / --viewport-height /
+ * --keyboard-inset, is-ios / is-android / is-standalone / is-no-touch, --safe-*
+ * und tmoHaptic / [data-haptic]. NIEMAND hat sie gelesen (grep ueber components,
+ * Assets, pages). Die drei Variablen wurden trotzdem bei jedem visualViewport-
+ * Scroll an <html> geschrieben und liessen den ganzen Baum neu rechnen. Wer so
+ * etwas wieder braucht: erst den Leser bauen, dann den Schreiber.
  *
- * Idempotent: mehrfacher Aufruf bindet nicht doppelt. Alle Listener passive.
+ * Idempotent: mehrfacher Aufruf bindet nicht doppelt.
  */
 (function () {
     'use strict';
@@ -25,13 +25,11 @@
         var css = [
             // Tap-Highlight & 300 ms-Doppeltipp-Verzögerung weg — pinch-zoom bleibt erlaubt
             'a,button,[role="button"],.btn,input,select,textarea,label,summary{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}',
-            // Scroll-Ketten in Overlays/Listen begrenzen (kein versehentliches Weiterscrollen der Seite darunter)
-            '.modal,[role="dialog"],.sheet,.table-scroll,.city-grid,.chip-rail,.map-side-table{overscroll-behavior:contain;}',
-            // Safe-Area-Variablen für Notch-/Rundecken-Geräte bereitstellen
-            ':root{--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--safe-left:env(safe-area-inset-left,0px);--safe-right:env(safe-area-inset-right,0px);}',
+            // Scroll-Ketten in Overlays begrenzen (kein versehentliches Weiterscrollen der Seite darunter)
+            '.modal,[role="dialog"],.sheet{overscroll-behavior:contain;}',
             // Sanftes Druck-Feedback — nur auf Touch, klemmt nie (Klasse per JS delegiert)
             '.is-touch .tmo-pressed{opacity:.62;transition:opacity .06s ease,transform .06s ease;}',
-            '@media (prefers-reduced-motion:no-preference){.is-touch .tmo-pressed:not(.no-tap-scale){transform:scale(.97);}}'
+            '@media (prefers-reduced-motion:no-preference){.is-touch .tmo-pressed{transform:scale(.97);}}'
         ].join('\n');
         var s = document.createElement('style');
         s.id = 'tmo-style';
@@ -39,27 +37,25 @@
         (document.head || document.documentElement).appendChild(s);
     }
 
-    // ── Robuste Viewport-Metriken → CSS-Variablen ──────────────────────────
-    // Nutzt visualViewport (kennt die Bildschirm-Tastatur), fällt sonst auf
-    // innerHeight zurück. Löst das klassische „100vh ist auf iOS zu hoch"-Problem
-    // und liefert --keyboard-inset, damit fixe Leisten über der Tastatur bleiben.
-    function setupViewportMetrics(root) {
+    // ── Tastatur offen? → .is-keyboard-open an <html> ──────────────────────
+    // Leser: mobile-nav.css blendet die untere Leiste aus, solange die
+    // Bildschirm-Tastatur steht. visualViewport kennt die Tastatur, innerHeight nicht.
+    function setupKeyboardClass(root) {
         var vv = window.visualViewport;
         var raf = 0;
+        var open = null;
         function apply() {
             raf = 0;
-            // Erst alle Masse lesen, dann schreiben. innerHeight/visualViewport
-            // erzwingen Style+Layout; eine Custom Property am <html> dazwischen
-            // macht den ganzen Baum (~10.000 Elemente) wieder schmutzig, und die
-            // zweite Lesung rechnet alles noch einmal — gemessen 2 x 12 ms auf
-            // dem Desktop, vor dem ersten Paint.
+            // Erst lesen, dann schreiben — und nur bei einem Wechsel. Jede
+            // Aenderung am <html> macht den ganzen Baum (~10.000 Elemente)
+            // schmutzig, und dieser Handler laeuft bei jedem visualViewport-Scroll.
             var innerH = window.innerHeight;
-            var h = vv ? vv.height : innerH;
             var kb = vv ? Math.max(0, Math.round(innerH - vv.height - vv.offsetTop)) : 0;
-            root.style.setProperty('--viewport-height', Math.round(h) + 'px');
-            root.style.setProperty('--vh', (h / 100) + 'px');
-            root.style.setProperty('--keyboard-inset', kb + 'px');
-            root.classList.toggle('is-keyboard-open', kb > 120);
+            var now = kb > 120;
+            if (now !== open) {
+                open = now;
+                root.classList.toggle('is-keyboard-open', now);
+            }
         }
         function schedule() { if (!raf) raf = requestAnimationFrame(apply); }
         apply();
@@ -75,9 +71,10 @@
     // Ein Satz Listener am document deckt ALLE (auch dynamisch eingefügte)
     // Tappables ab. Wird über pointer/touch-cancel, scroll und blur garantiert
     // wieder entfernt → kein „hängender" gedrückter Button mehr.
+    // `button` deckt jeden Knopf ab; eigene Klassen stehen hier nur fuer
+    // Nicht-Knoepfe (Links, divs).
     function setupPressFeedback() {
-        var SEL = 'button, .btn, [role="button"], a.back-btn, .nav-item, .geo-chip,' +
-                  ' .time-btn, .map-switch-btn, .tab-btn, .refresh-btn, [data-touch-press]';
+        var SEL = 'button, .btn, [role="button"], a.back-btn, .nav-item';
         var current = null;
         function press(e) {
             var el = e.target && e.target.closest ? e.target.closest(SEL) : null;
@@ -115,50 +112,27 @@
         });
     }
 
-    // ── Haptik (opt-in) ────────────────────────────────────────────────────
-    // window.tmoHaptic(ms) für gezielte Vibration; automatisch auf Elementen
-    // mit [data-haptic] (Wert = Millisekunden, Default 8). Nie aufdringlich.
-    function setupHaptics(isTouch) {
-        window.tmoHaptic = function (ms) {
-            try { if (isTouch && navigator.vibrate) navigator.vibrate(ms || 8); } catch (e) { /* noop */ }
-        };
-        if (!isTouch || !navigator.vibrate) return;
-        document.addEventListener('pointerdown', function (e) {
-            var el = e.target && e.target.closest ? e.target.closest('[data-haptic]') : null;
-            if (el) { try { navigator.vibrate(parseInt(el.getAttribute('data-haptic'), 10) || 8); } catch (err) { /* noop */ } }
-        }, { passive: true });
-    }
-
     // ── Init (idempotent) ──────────────────────────────────────────────────
     function init() {
         if (window.__tmoInitialized) return;
         window.__tmoInitialized = true;
 
         var root = document.documentElement;
-        var ua = navigator.userAgent || '';
         var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-        var isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        var isAndroid = /Android/.test(ua);
-        var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
-                           window.navigator.standalone === true;
 
-        // Viewport-Masse VOR den Klassen und dem Stylesheet lesen: als
-        // defer-Skript laeuft init() direkt nach dem Parser auf einem sauberen
-        // Baum, die Lesung kostet dann nichts. Erst eine Klasse am <html> oder
-        // ein neues <style> davor erzwingt einen kompletten Style-Durchlauf.
-        setupViewportMetrics(root);
-
-        root.classList.add(isTouch ? 'is-touch' : 'is-no-touch');
-        if (isIOS) root.classList.add('is-ios');
-        if (isAndroid) root.classList.add('is-android');
-        if (isStandalone) root.classList.add('is-standalone');
+        // Viewport-Masse VOR Klasse und Stylesheet lesen: als defer-Skript
+        // laeuft init() direkt nach dem Parser auf einem sauberen Baum, die
+        // Lesung kostet dann nichts. Erst eine Klasse am <html> oder ein neues
+        // <style> davor erzwingt einen kompletten Style-Durchlauf (gemessen
+        // 2 x 12 ms Desktop, vor dem ersten Paint).
+        setupKeyboardClass(root);
 
         injectBaseCSS();
         if (isTouch) {
+            root.classList.add('is-touch');
             setupPressFeedback();
             setupKeyboardAwareFocus();
         }
-        setupHaptics(isTouch);
     }
 
     // Für den expliziten Aufruf aus onboarding.js exportieren …
