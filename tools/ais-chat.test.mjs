@@ -258,6 +258,22 @@ t.ok(datumAusText('31.2. krank', heute) === null, '31.2. gibt es nicht');
 t.ok(datumAusText('in der 11c', heute) === null, 'Klassenname ist kein Datum');
 t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeldete Nachricht → KW 38, nicht 39');
 
+// "letzte Woche" rechnet der Client (gemeldet 29.09.2026: KW 40 statt 39).
+{
+    const { wocheAusText, wocheHinweis } = e.sandbox.AISChat._intern;
+    const di = new Date(2026, 8, 29);   // Dienstag, KW 40
+    const kw = (txt, h) => { const d = wocheAusText(txt, h || di); return d ? wochenSchluessel(d) : null; };
+    t.ok(kw('Kannst du mir eine woche schreiben? hab vergessen was ich letzte woche gemacht habe') === '2026-W39', 'die gemeldete Nachricht → KW 39', kw('hab vergessen was ich letzte woche gemacht habe'));
+    t.ok(kw('in der letzten Woche war viel los') === '2026-W39', '"letzten Woche"');
+    t.ok(kw('vorige Woche') === '2026-W39' && kw('last week') === '2026-W39', '"vorige Woche", "last week"');
+    t.ok(kw('vorletzte Woche') === '2026-W38', '"vorletzte" ist nicht "letzte"');
+    t.ok(kw('diese Woche') === '2026-W40' && kw('nächste Woche') === '2026-W41', '"diese", "naechste"');
+    t.ok(kw('letzte Woche', new Date(2027, 0, 5)) === '2026-W53', 'Jahreswechsel: letzte Woche am 5.1.2027 = KW 53/2026');
+    t.ok(wocheAusText('letzte Woche', di).getDay() === 1, 'liefert den Montag, keinen einzelnen Tag (sonst griffe "nur dieser Tag")');
+    t.ok(kw('Fachinformatiker, 2. Lehrjahr') === null && kw('die Woche war stressig') === null && kw('Wochenplan') === null, 'ohne relative Angabe: nichts');
+    t.ok(/KW 39, 21\.9\.–27\.9\.2026/.test(wocheHinweis(wocheAusText('letzte Woche', di))), 'Hinweis nennt KW und Zeitraum', wocheHinweis(wocheAusText('letzte Woche', di)));
+}
+
 // ── Vorwissen (29.09.2026) ──────────────────────────────────────────────
 // Anlass: der Nutzer schrieb sein Heft in Gemini, weil Gemini "seine
 // Standardsachen" kannte. Das Vorwissen darf den Stil tragen und beim

@@ -583,6 +583,29 @@ function datumAusText(text, heute) {
     }
     return null;
 }
+// "letzte Woche" genauso: am 29.09.2026 (KW 40) kam einmal KW 39 und einmal
+// KW 40 zurueck — der Nutzer bekam die falsche Woche. Liefert den MONTAG der
+// gemeinten Woche, nie einen einzelnen Tag: ein Tag als Hinweis wuerde die
+// Regel "nennt er ein Datum, nur dort" ausloesen und nur diesen Tag fuellen.
+const WOCHE_RELATIV = [
+    [/\b(vorletzte[nr]?\s+woche|week before last)\b/i, -2],
+    [/\b(letzte[nr]?|vorige[nr]?|vergangene[nr]?)\s+woche\b|\blast week\b/i, -1],
+    [/\b(diese[rn]?)\s+woche\b|\bthis week\b/i, 0],
+    [/\b(n[äa]chste[nr]?|kommende[nr]?)\s+woche\b|\bnext week\b/i, 1],
+];
+function wocheAusText(text, heute) {
+    const s = String(text || '');
+    const treffer = WOCHE_RELATIV.find(([re]) => re.test(s));
+    if (!treffer) return null;
+    const mo = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate());
+    mo.setDate(mo.getDate() - ((mo.getDay() + 6) % 7) + treffer[1] * 7);
+    return mo;
+}
+function wocheHinweis(mo) {
+    const so = new Date(mo); so.setDate(so.getDate() + 6);
+    const f = (d) => d.getDate() + '.' + (d.getMonth() + 1) + '.';
+    return '[Hinweis der App: gemeint ist KW ' + kwVon(mo) + ', ' + f(mo) + '–' + f(so) + so.getFullYear() + ']';
+}
 function datumHinweis(d) {
     const wt = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'][d.getDay()];
     return '[Hinweis der App: das genannte Datum ist ' + wt + ', ' + d.getDate() + '.' + (d.getMonth() + 1) + '.' + d.getFullYear() + ', KW ' + kwVon(d) + ']';
@@ -854,24 +877,29 @@ async function senden(e, vorgabeText) {
     knopfZustand();
 
     const datum = datumAusText(text, new Date());
+    // Ein genanntes Datum schlaegt "letzte Woche" — es ist genauer.
+    const woche = datum ? null : wocheAusText(text, new Date());
     let ergebnis = null, grund = '';
     // "Cloud-KI aktiv" ist der einzige Ausstieg (Notiz). Bis v7.9.3 schickte
     // der Chat jede Nachricht trotzdem an /verstehen — wer die Cloud bewusst
     // abgeschaltet hatte, wurde nicht gefragt.
     if (!AIStudio.konfig().cloud) grund = 'aus';
     else {
-        try { ergebnis = await denken(text, datum ? datumHinweis(datum) : ''); }
+        try { ergebnis = await denken(text, datum ? datumHinweis(datum) : woche ? wocheHinweis(woche) : ''); }
         catch (err) { grund = err && err.message; }
     }
     beschaeftigt = false;
 
     if (!ergebnis) { ohneAntwort(grund); return; }
 
-    const geaendert = AIStudio.konfigSetzen(einstellungenAus(ergebnis, datum, text));
+    // Fuer die KW zaehlt auch "letzte Woche"; fuer erlaubteTage nur ein echtes
+    // Datum (ein Montag aus wocheAusText ist kein genannter Tag).
+    const kwDatum = datum || woche;
+    const geaendert = AIStudio.konfigSetzen(einstellungenAus(ergebnis, kwDatum, text));
     const k = AIStudio.konfig();
     const zus = entwurfZusammenfuehren(gespraech.entwurf, ergebnis.days, k.form,
         erlaubteTage(text, datum, geaendert));
-    zus.entwurf.kw = datum ? kwVon(datum) : (geaendert.includes('kw') ? k.kw : (gespraech.entwurf.kw || k.kw));
+    zus.entwurf.kw = kwDatum ? kwVon(kwDatum) : (geaendert.includes('kw') ? k.kw : (gespraech.entwurf.kw || k.kw));
     gespraech.entwurf = zus.entwurf;
     zuletztGeaendert = zus.geaendert;
     sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert) });
@@ -1216,7 +1244,7 @@ return {
     _intern: {
         vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
-        kwTabelle, datumAusText, datumHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
+        kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
         leererEntwurf, entwurfLesen,
         gespraech: () => gespraech, setzeEntwurf: (e) => { gespraech.entwurf = e; },
     },
