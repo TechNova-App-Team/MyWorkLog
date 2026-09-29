@@ -72,10 +72,12 @@
         b2bL('Ausblenden', 'Hide') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
         'stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>';
 
-    // Die Betriebs-Anbindung ist neu und traegt kein Versprechen: es gibt
-    // keine Stelle, die einen Ausbilder bestaetigt. Das Etikett steht in
-    // JEDER Ansicht der Karte, nicht nur im Kleingedruckten.
-    const EXP = '<span class="b2b-exp">' + b2bL('Experimentell', 'Experimental') + '</span>';
+    // Reifegrad der Betriebs-Anbindung: "Open Beta" (bis 29.09.2026
+    // "Experimentell", Entscheidung des Nutzers) — offen fuer alle, kann sich
+    // noch aendern. Steht in JEDER Ansicht der Karte, nicht nur im
+    // Kleingedruckten, und genauso auf /ausbilder/ (.abk-exp): eine Funktion,
+    // ein Etikett. In beiden Sprachen gleich, deshalb ohne b2bL().
+    const EXP = '<span class="b2b-exp">Open Beta</span>';
 
     function schale(pillOn, pillText, inner, mitX) {
         return '' +
