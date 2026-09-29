@@ -541,6 +541,108 @@ body.aic-offen { overflow: hidden; }
 /* Der schwebende Knopf gehoert zur Seite, nicht zum offenen Chat. */
 body.aic-offen .ai-studio-fab { display: none; }
 
+/* ── Vorwissen ─────────────────────────────────────────────────────
+   Steht hinter .aic-knopf / .aic-profil-knopf / .aic-leer: die Modifikatoren
+   muessen nach ihren Basisregeln kommen, sonst gewinnt die Basis. */
+.aic-profil-knopf + .aic-profil-knopf { margin-left: 0; }
+.aic-profil-knopf.is-an { color: var(--primary-light); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.aic-profil-knopf.is-an::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+}
+/* display:inline-flex der Basis schlaegt sonst das hidden-Attribut. */
+.aic-knopf[hidden] { display: none; }
+.aic-knopf.is-leise { border-color: transparent; color: var(--text-secondary); }
+.aic-knopf.is-leise:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.08); border-color: transparent; }
+
+.aic-leer-vw {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px dashed var(--border-light);
+    border-radius: var(--radius);
+}
+.aic-leer-vw p { margin: 0; flex: 1 1 auto; font-size: 0.86rem; line-height: 1.55; color: var(--text-secondary); text-wrap: pretty; }
+.aic-leer-vw .aic-knopf { flex: 0 0 auto; }
+
+.aic-vw {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.55);
+}
+.aic-vw[hidden] { display: none; }
+.aic-vw-karte {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: min(640px, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 20px 22px 18px;
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    /* Zwei Ebenen: --bg-card kann Alpha tragen, darunter laege sonst der Chat. */
+    background: linear-gradient(var(--bg-card), var(--bg-card)), var(--bg-deep);
+    box-shadow: var(--shadow-lg);
+}
+.aic-vw-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.aic-vw-kopf h3 { margin: 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; letter-spacing: -0.015em; }
+.aic-vw-s { margin: 0; font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary); max-width: 60ch; text-wrap: pretty; }
+.aic-vw-quelle {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-hover);
+}
+.aic-vw-quelle h4 { margin: 0; font-size: 0.86rem; font-weight: 600; }
+.aic-vw-quelle p { margin: 0; font-size: 0.84rem; color: var(--text-secondary); }
+.aic-vw-bitte {
+    margin: 0;
+    max-height: 132px;
+    overflow-y: auto;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--bg-deep);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    user-select: all;
+}
+.aic-vw-aktionen { display: flex; flex-wrap: wrap; gap: 8px; }
+.aic-vw-label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); margin-bottom: -6px; }
+.aic-vw-text {
+    width: 100%;
+    min-height: 200px;
+    resize: vertical;
+    padding: 12px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+.aic-vw-text:focus { outline: none; border-color: rgba(var(--primary-rgb), 0.5); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12); }
+.aic-vw-fuss { display: flex; align-items: center; gap: 8px; }
+.aic-vw-zaehler { margin-right: auto; font-size: 0.76rem; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.aic-vw-zaehler.is-voll { color: var(--warning); }
+.aic-vw-privat { margin: 0; font-size: 0.76rem; color: var(--text-dim); }
+
 /* ── Schmal: Seitenleiste als Schublade ───────────────────────── */
 @media (max-width: 860px) {
     .aic { grid-template-columns: minmax(0, 1fr); }
@@ -566,6 +668,11 @@ body.aic-offen .ai-studio-fab { display: none; }
     .aic-woche-kopf, .aic-woche-fuss { padding-left: 14px; padding-right: 14px; }
     .aic-woche-fuss .aic-knopf.is-haupt { flex: 1 1 100%; justify-content: center; }
     .aic-blase { max-width: 88%; }
+    .aic-leer-vw { flex-direction: column; align-items: flex-start; }
+    /* Als Blatt von unten: am Handy braucht das Textfeld die volle Breite. */
+    .aic-vw { padding: 0; place-items: end stretch; }
+    .aic-vw-karte { width: 100%; max-height: 92dvh; border-radius: 16px 16px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+    .aic-vw-text { font-size: 16px; min-height: 160px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
