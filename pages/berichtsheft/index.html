@@ -1866,16 +1866,8 @@ Beispiel:
                             </button>
                         </div>
                     </div>
-
-                    <div class="ais-section" id="aisActivitySection">
-                        <p class="ais-sec-lbl">
-                            <span id="aisActLbl">Was hast du gemacht?</span>
-                            <small class="ais-sec-zusatz" id="aisActZusatz">Mehrfachauswahl</small>
-                        </p>
-                        <div class="ais-act-grid" id="aisActivityGrid">
-                            <span class="ais-act-none">Wähle oben deinen Beruf, dann erscheinen hier Vorschläge.</span>
-                        </div>
-                    </div>
+                    <!-- "Was hast du gemacht?" (Taetigkeits-Chips) ist seit v8.0.9 raus:
+                         das erzaehlt man dem Assistenten im Chat. -->
                 </section>
 
                 <!-- ── Schreibstil. Die Karten benennen das Ergebnis; das Beispiel
@@ -1932,17 +1924,10 @@ Beispiel:
                             </button>
                         </div>
                     </div>
-
-                    <div class="ais-section">
-                        <label class="ais-sec-lbl" for="aisFormHint">
-                            <span id="aisHintLbl">Eigene Vorgabe</span>
-                            <small class="ais-sec-zusatz" id="aisHintZusatz">optional</small>
-                        </label>
-                        <textarea class="ais-form-hint" id="aisFormHint" rows="2" maxlength="300"
-                            placeholder="z.B. Präsens statt Perfekt, oder: jeder Tag genau 4 Zeilen"
-                            oninput="AIStudio.onFormHint(this.value)"></textarea>
-                        <p class="ais-sec-hint" id="aisHintHinweis">Hat Vorrang vor der Schreibform oben. Wirkt nur mit Cloud-KI.</p>
-                    </div>
+                    <!-- "Eigene Vorgabe" ist seit v8.0.9 kein Feld mehr. Der Wert
+                         (state.formHint = konfig().vorgabe) lebt weiter: der Chat setzt
+                         ihn ("mein Ausbilder will Praesens") und zeigt ihn in seiner
+                         Profilzeile — sonst wirkte eine alte Vorgabe unsichtbar. -->
                 </section>
 
                 <!-- ── Seltenes hinter Klappen. Kopf und Koerper sind Geschwister,
@@ -1950,68 +1935,6 @@ Beispiel:
                 <section class="ais-gruppe ais-mehr" aria-labelledby="aisMehrT">
                     <h3 class="ais-gruppe-t" id="aisMehrT">Mehr</h3>
                     <div class="ais-klappen">
-                        <button type="button" class="ais-collapse-hdr" id="dayNotesCollapseHdr"
-                            onclick="AIStudio.toggleCollapse('dayNotesCollapse','dayNotesCollapseHdr')">
-                            <span class="ais-collapse-hdr-icon"><svg class="icon" aria-hidden="true"><use href="#i-edit" /></svg></span>
-                            <span class="ais-collapse-hdr-text">
-                                <span class="ais-collapse-hdr-title" id="aisTageT">Pro Tag etwas ergänzen</span>
-                                <span class="ais-collapse-hdr-sub" id="aisTageSub">Notizen, krank, Urlaub, Feiertag</span>
-                            </span>
-                            <svg class="ais-collapse-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-                        </button>
-                        <div class="ais-collapse-body" id="dayNotesCollapse">
-                            <div class="ais-collapse-inner">
-                                <div class="ais-day-notes">
-                                    <div class="ais-day-note">
-                                        <span class="ais-day-note-lbl">Mo</span>
-                                        <button type="button" class="ais-day-status-btn" data-day="0" onclick="AIStudio.cycleDayStatus(0)"
-                                            title="Status wechseln: normal, krank, Urlaub, Feiertag" aria-label="Status Montag">
-                                            <svg class="ais-day-status-svg"><use href="#i-dash" /></svg>
-                                        </button>
-                                        <input class="ais-day-note-inp" data-day="0" placeholder="Montag..." aria-label="Notiz Montag"
-                                            oninput="AIStudio.updateDayNote(0,this.value)">
-                                    </div>
-                                    <div class="ais-day-note">
-                                        <span class="ais-day-note-lbl">Di</span>
-                                        <button type="button" class="ais-day-status-btn" data-day="1" onclick="AIStudio.cycleDayStatus(1)"
-                                            title="Status wechseln: normal, krank, Urlaub, Feiertag" aria-label="Status Dienstag">
-                                            <svg class="ais-day-status-svg"><use href="#i-dash" /></svg>
-                                        </button>
-                                        <input class="ais-day-note-inp" data-day="1" placeholder="Dienstag..." aria-label="Notiz Dienstag"
-                                            oninput="AIStudio.updateDayNote(1,this.value)">
-                                    </div>
-                                    <div class="ais-day-note">
-                                        <span class="ais-day-note-lbl">Mi</span>
-                                        <button type="button" class="ais-day-status-btn" data-day="2" onclick="AIStudio.cycleDayStatus(2)"
-                                            title="Status wechseln: normal, krank, Urlaub, Feiertag" aria-label="Status Mittwoch">
-                                            <svg class="ais-day-status-svg"><use href="#i-dash" /></svg>
-                                        </button>
-                                        <input class="ais-day-note-inp" data-day="2" placeholder="Mittwoch..." aria-label="Notiz Mittwoch"
-                                            oninput="AIStudio.updateDayNote(2,this.value)">
-                                    </div>
-                                    <div class="ais-day-note">
-                                        <span class="ais-day-note-lbl">Do</span>
-                                        <button type="button" class="ais-day-status-btn" data-day="3" onclick="AIStudio.cycleDayStatus(3)"
-                                            title="Status wechseln: normal, krank, Urlaub, Feiertag" aria-label="Status Donnerstag">
-                                            <svg class="ais-day-status-svg"><use href="#i-dash" /></svg>
-                                        </button>
-                                        <input class="ais-day-note-inp" data-day="3" placeholder="Donnerstag..." aria-label="Notiz Donnerstag"
-                                            oninput="AIStudio.updateDayNote(3,this.value)">
-                                    </div>
-                                    <div class="ais-day-note">
-                                        <span class="ais-day-note-lbl">Fr</span>
-                                        <button type="button" class="ais-day-status-btn" data-day="4" onclick="AIStudio.cycleDayStatus(4)"
-                                            title="Status wechseln: normal, krank, Urlaub, Feiertag" aria-label="Status Freitag">
-                                            <svg class="ais-day-status-svg"><use href="#i-dash" /></svg>
-                                        </button>
-                                        <input class="ais-day-note-inp" data-day="4" placeholder="Freitag..." aria-label="Notiz Freitag"
-                                            oninput="AIStudio.updateDayNote(4,this.value)">
-                                    </div>
-                                </div>
-                                <p class="ais-sec-hint" id="aisTageHinweis">Der Knopf neben dem Tag wechselt den Status.</p>
-                            </div>
-                        </div>
-
                         <button type="button" class="ais-collapse-hdr" id="advancedCollapseHdr"
                             onclick="AIStudio.toggleCollapse('advancedCollapse','advancedCollapseHdr')">
                             <span class="ais-collapse-hdr-icon"><svg class="icon" aria-hidden="true"><use href="#i-gear" /></svg></span>

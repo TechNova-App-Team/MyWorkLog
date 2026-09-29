@@ -322,6 +322,16 @@ t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeld
     t.ok(liste.length === 2 && liste[0].week === 38 && liste[1].week === 36, 'eigene Berichte: neueste zuerst, leere uebersprungen', JSON.stringify(liste.map(r => r.week)));
     const alsText = I.berichteAlsVorwissen(liste);
     t.ok(alsText.includes('KW 38') && alsText.includes('Berufsschule: VLANs') && alsText.indexOf('Neu') < alsText.indexOf('Alt'), 'als Vorwissen: KW, Schulteil, Reihenfolge');
+
+    // Seit v8.0.9 hat die Vorgabe kein Feld mehr in den Einstellungen: die
+    // Profilzeile ist die einzige Stelle, an der man sieht, dass eine gilt.
+    const { profilTeile } = I;
+    t.ok(!profilTeile(e.AIStudio.konfig()).some(x => x.startsWith('Vorgabe')), 'ohne Vorgabe: keine Marke');
+    e.AIStudio.konfigSetzen({ vorgabe: 'Präsens statt Perfekt, jeder Tag genau vier Zeilen und nie mehr' });
+    const marke = profilTeile(e.AIStudio.konfig()).find(x => x.startsWith('Vorgabe: '));
+    t.ok(!!marke && marke.length <= 49 && marke.endsWith('…'), 'Vorgabe steht gekuerzt in der Profilzeile', marke);
+    e.AIStudio.konfigSetzen({ vorgabe: '' });
+    t.ok(!profilTeile(e.AIStudio.konfig()).some(x => x.startsWith('Vorgabe')), 'Vorgabe per Chat geloescht → Marke weg');
 }
 
 t.abschluss('ais-chat');

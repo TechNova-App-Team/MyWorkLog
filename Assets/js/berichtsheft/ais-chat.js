@@ -277,6 +277,9 @@ function profilTeile(k) {
     t.push(Lx(...FORM_NAME[k.form] || FORM_NAME.stichpunkte));
     t.push(Lx(...UMFANG_NAME[k.umfang] || UMFANG_NAME.mittel));
     if (k.schultage.length) t.push(Lx('Schule ', 'School ') + k.schultage.map(i => TAGE()[i].slice(0, 2)).join('/'));
+    // Die Vorgabe hat seit v8.0.9 kein eigenes Feld mehr in den Einstellungen —
+    // hier ist die einzige Stelle, an der man sieht, dass eine gilt.
+    if (k.vorgabe) t.push(Lx('Vorgabe: ', 'Rule: ') + (k.vorgabe.length > 40 ? k.vorgabe.slice(0, 39) + '…' : k.vorgabe));
     return t;
 }
 function profilZeichnen() {

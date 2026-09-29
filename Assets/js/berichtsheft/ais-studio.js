@@ -68,8 +68,6 @@ const state = {
     umfang: 'mittel',         // Textmenge pro Tag: kurz|mittel|ausfuehrlich
     formHint: '',             // "So will es mein Ausbilder" — Freitext, geht in den Prompt
     activeTheme: null,
-    selectedActivities: [],
-    dayNotes: {},
     lehrjahr: 2,
     useAufgaben: false,         // ✦ Aufgaben-Pipe: Tasks aus /pages/aufgaben/ in Prompt einspeisen
     useTracking: false,         // ✦ Tracking-Pipe: Projekt/Notizen aus der Zeiterfassung nutzen
@@ -86,7 +84,6 @@ const DAY_STATUS_LABELS = {
     feiertag: { svgId: 'i-party', label: 'Feiertag', short: 'Feiertag' },
 };
 // Reihenfolge für Cycle-Button: '' → krank → urlaub → feiertag → '' …
-const DAY_STATUS_CYCLE = ['', 'krank', 'urlaub', 'feiertag'];
 
 
 
@@ -1306,7 +1303,6 @@ function onCustomProf(value) {
                 // den Wortschatz der lokalen Engine.
                 if (displayName) displayName.textContent = value.trim();
                 if (displayEl) displayEl.classList.add('has-prof');
-                _renderActivityChips(state.selectedProfession);
             }
         } else {
             const displayEl = document.getElementById('aisBerufDisplay');
@@ -1541,14 +1537,6 @@ function setLehrjahr(lj, el) {
     state.lehrjahr = lj;
     _saveProfile();
     _updateProfileSummary();
-}
-
-function updateDayNote(dayIdx, value) {
-    if (value.trim()) {
-        state.dayNotes[dayIdx] = value.trim();
-    } else {
-        delete state.dayNotes[dayIdx];
-    }
 }
 
 // ✦ AI-Studio Settings persistieren (Tage + Schultage)
@@ -1822,44 +1810,12 @@ function _trackingHoursForDay(dayIdx) {
     return day && day.hours > 0 ? day.hours : 0;
 }
 
-// ✦ Krank/Urlaub/Feiertag: Status für einen Tag setzen
+// ✦ Krank/Urlaub/Feiertag fuer einen Tag. Die Knoepfe dafuer sind seit v8.0.9
+// raus (der Chat traegt den Status am Tag im Entwurf); geschrieben wird der Wert
+// noch von _applyTrackingPrefill() — echte Fehltage aus der Zeiterfassung.
 function setDayStatus(dayIdx, status) {
-    const btn = document.querySelector(`.ais-day-status-btn[data-day="${dayIdx}"]`);
-    const use = btn?.querySelector('use');
-    const inp = document.querySelector(`.ais-day-note-inp[data-day="${dayIdx}"]`);
-    if (status && DAY_STATUS_LABELS[status]) {
-        state.dayStatus[dayIdx] = status;
-        if (btn) {
-            btn.classList.remove('status-krank', 'status-urlaub', 'status-feiertag');
-            btn.classList.add('status-' + status);
-            if (use) use.setAttribute('href', '#' + DAY_STATUS_LABELS[status].svgId);
-        }
-        if (inp) {
-            inp.disabled = true;
-            inp.value = '';
-            inp.placeholder = `— ${DAY_STATUS_LABELS[status].short} —`;
-        }
-        delete state.dayNotes[dayIdx];
-    } else {
-        delete state.dayStatus[dayIdx];
-        const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
-        if (btn) {
-            btn.classList.remove('status-krank', 'status-urlaub', 'status-feiertag');
-            if (use) use.setAttribute('href', '#i-dash');
-        }
-        if (inp) {
-            inp.disabled = false;
-            inp.placeholder = (dayNames[dayIdx] || 'Tag') + '...';
-        }
-    }
-}
-
-// ✦ Cycle-Button: '' → krank → urlaub → feiertag → '' …
-function cycleDayStatus(dayIdx) {
-    const current = state.dayStatus[dayIdx] || '';
-    const idx = DAY_STATUS_CYCLE.indexOf(current);
-    const next = DAY_STATUS_CYCLE[(idx + 1) % DAY_STATUS_CYCLE.length];
-    setDayStatus(dayIdx, next);
+    if (status && DAY_STATUS_LABELS[status]) state.dayStatus[dayIdx] = status;
+    else delete state.dayStatus[dayIdx];
 }
 
 // Hilfe-Block zeigen/verstecken je nach Permission-Status
@@ -1997,39 +1953,8 @@ function _pickBeruf(id) {
     if (displayIcon) displayIcon.innerHTML = prof.icon;
     if (displayName) displayName.textContent = prof.name;
     if (displayEl) displayEl.classList.add('has-prof');
-    _renderActivityChips(id);
     _updateProfileSummary();
     _saveProfile();
-}
-
-function _renderActivityChips(professionId) {
-    const grid = document.getElementById('aisActivityGrid');
-    if (!grid) return;
-    const prof = PROFESSIONS[professionId];
-    if (!prof) { grid.innerHTML = `<span class="ais-act-none">${L('Kein Beruf gewählt', 'No occupation chosen')}</span>`; return; }
-
-    // Build activity suggestions from yearTasks + objects
-    const lj = state.lehrjahr || 2;
-    const yearActivities = (prof.yearTasks?.[lj] || []).slice(0, 6);
-    const objectActivities = (prof.objects || []).slice(0, 6).map(o => o.split(' ')[0] + (prof.verbs ? ' ' + prof.verbs[0] : ''));
-    const allActivities = [...new Set([...yearActivities, ...objectActivities])].slice(0, 12);
-
-    // Reset selected activities when profession changes
-    state.selectedActivities = [];
-
-    grid.innerHTML = allActivities.map(act => `
-                <div class="ais-act-chip" data-act="${escapeHtml(act)}" onclick="AIStudio.toggleActivity(this)">${escapeHtml(act)}</div>
-            `).join('');
-}
-
-function toggleActivity(el) {
-    el.classList.toggle('sel');
-    const act = el.dataset.act;
-    if (el.classList.contains('sel')) {
-        if (!state.selectedActivities.includes(act)) state.selectedActivities.push(act);
-    } else {
-        state.selectedActivities = state.selectedActivities.filter(a => a !== act);
-    }
 }
 
 function _buildEnrichedPrompt() {
@@ -2038,13 +1963,6 @@ function _buildEnrichedPrompt() {
     if (userText) parts.push(userText);
     const dept = document.getElementById('aisDepartment')?.value?.trim() || '';
     if (dept) parts.push('Abteilung / Tätigkeiten: ' + dept);
-    if (state.selectedActivities.length > 0) {
-        parts.push('Aktivitäten: ' + state.selectedActivities.join(', '));
-    }
-    const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
-    Object.entries(state.dayNotes).forEach(([idx, note]) => {
-        if (note) parts.push(`${dayNames[idx] || 'Tag'}: ${note}`);
-    });
     return parts.join('. ');
 }
 
@@ -2138,7 +2056,6 @@ function _loadProfile() {
             if (displayIcon) displayIcon.innerHTML = prof.icon;
             if (displayName) displayName.textContent = prof.name;
             if (displayEl) displayEl.classList.add('has-prof');
-            _renderActivityChips(profile.profession);
         } else if (profile.profession === 'custom' && profile.customProfession) {
             state.selectedProfession = 'custom';
             state.customProfession = String(profile.customProfession).slice(0, 80);
@@ -2184,8 +2101,6 @@ function _loadProfile() {
         document.querySelectorAll('.ais-umfang-chip').forEach(c => {
             c.classList.toggle('sel', c.dataset.umfang === state.umfang);
         });
-        const hintEl = document.getElementById('aisFormHint');
-        if (hintEl) hintEl.value = state.formHint;
         _renderFormBeispiel();
         if (profile.department) {
             const depEl = document.getElementById('aisDepartment');
@@ -2798,10 +2713,7 @@ function konfigSetzen(k) {
         geaendert.push('umfang');
     }
     if (typeof k.vorgabe === 'string' && k.vorgabe.trim() !== (state.formHint || '')) {
-        const v = k.vorgabe.trim().slice(0, 300);
-        const el = document.getElementById('aisFormHint');
-        if (el) el.value = v;
-        onFormHint(v);
+        onFormHint(k.vorgabe.trim().slice(0, 300));
         geaendert.push('vorgabe');
     }
     if (typeof k.abteilung === 'string' && k.abteilung.trim() !== vorher.abteilung) {
@@ -2917,13 +2829,10 @@ return {
     selectMood,
     setForm,
     setUmfang,
-    onFormHint,
     toggleCollapse,
     setLehrjahr,
-    updateDayNote,
     toggleBerufPicker,
     filterBeruf,
-    toggleActivity,
     _saveProfile,
     _pickBeruf,
     // ✦ Aufgaben-Pipe + Krank/Urlaub + Sonntag-Reminder + Settings-Persist
@@ -2935,7 +2844,6 @@ return {
     onWeekChange,
     loadTrackingForWeek: _loadTrackingForWeek, // vom Bericht-Modal genutzt
     setDayStatus,
-    cycleDayStatus,
     toggleSundayReminder,
     _saveAiSettings,
     VERSION,
