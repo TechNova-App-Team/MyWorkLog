@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.0.7-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.0.8-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.0.7** · 2026-09-28
+Aktuelle Version: **v8.0.8** · 2026-09-29
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.0.7** | 2026-09-28 | Der Datenhinweis nennt jetzt genau, wann Einträge verloren gehen |
+| **8.0.8** | 2026-09-29 | Die Besucherstatistik ist neu aufgebaut |
+| 8.0.7 | 2026-09-28 | Der Datenhinweis nennt jetzt genau, wann Einträge verloren gehen |
 | 8.0.6 | 2026-09-28 | Die Ziele-Seite ist neu und rechnet mit deinen echten Zahlen |
 | 8.0.5 | 2026-09-28 | Die Suche im Rechte-Checker ist aufgeräumt und findet, was du suchst |
 | 8.0.4 | 2026-09-28 | Der BBiG-Live-Scanner ist neu gestaltet |
-| 8.0.3 | 2026-09-28 | Der Stundenplan sieht aus wie der Rest der App |
 
 <!-- changelog:end -->
 

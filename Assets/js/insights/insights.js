@@ -1,20 +1,27 @@
-// Locale-Helfer: diese Datei laeuft auf einer Standalone-Seite ohne utils.js.
-// Faellt auf die globale Funktion zurueck, wenn sie doch vorhanden ist.
-var mwlLocale = window.mwlLocale || function () {
-    return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
-};
+// ═══ ANALYTICS MODULE ═══
+// Standalone-Seite /analytics/ (DE) und /en/analytics/ (EN). Kein utils.js,
+// keine Module — alles, was die Seite braucht, steht hier.
+// Datenquelle ist EIN Abruf am eigenen Worker (PostHog + Cloudflare), dazu der
+// leichte ?feed-Endpunkt fuer "Gerade eben".
+// Texte aus JS laufen ueber T(de, en) statt ueber i18n-runtime: die Runtime
+// kennt nur feste Saetze, hier stehen fast ueberall Zahlen drin.
 
-// =========================================
-//  KONFIGURATION
-// =========================================
+var EN = document.documentElement.lang === 'en';
+function T(de, en) { return EN ? en : de; }
+var mwlLocale = window.mwlLocale || function () { return EN ? 'en-GB' : 'de-DE'; };
+
 const CF_PROXY = 'https://analytics-proxy.myworklog.workers.dev';
 let currentRange = 7;
 
-// =========================================
-//  HELPERS
-// =========================================
-// Standalone-Seite: utils.js der SPA laeuft hier nicht, esc() also selbst mitbringen.
-// Pflicht — Laender-, Stadt- und Event-Namen kommen aus PostHog und landen in innerHTML.
+var view = {
+    data: null,
+    metric: 'visitors',
+    tabs: { pages: 'top', sources: 'referrers', geo: 'countries', tech: 'devices' },
+    expanded: {}
+};
+
+// ─── Formatierung ────────────────────────────────────────────
+// Pflicht — Laender-, Stadt-, Pfad- und Event-Namen kommen von aussen und landen in innerHTML.
 function esc(s) {
     if (s == null) return '';
     return String(s)
@@ -25,1818 +32,1116 @@ function esc(s) {
         .replace(/'/g, '&#39;');
 }
 
-function fmt(n) {
-    if (n == null) return '0';
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return n.toString();
+function fmtInt(n) { return (Number(n) || 0).toLocaleString(mwlLocale()); }
+
+// Ab 10.000 kompakt ("12,4 Tsd."), darunter die volle Zahl — eine Kachel mit
+// "1.5K" fuer 1.542 verschenkt Genauigkeit, die hier niemand kuerzen muss.
+function fmtNum(n) {
+    n = Number(n) || 0;
+    if (Math.abs(n) < 10000) return fmtInt(n);
+    try {
+        return new Intl.NumberFormat(mwlLocale(), { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+    } catch (e) { return fmtInt(n); }
+}
+
+function fmtDec(n, digits) {
+    return (Number(n) || 0).toLocaleString(mwlLocale(), { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+function fmtPct(ratio, digits) {
+    ratio = Number(ratio) || 0;
+    digits = digits == null ? 0 : digits;
+    // Ein Besucher von 350 ist nicht "0 %".
+    if (ratio > 0 && ratio * 100 < Math.pow(10, -digits) / 2) return '< ' + fmtDec(Math.pow(10, -digits), digits) + ' %';
+    return fmtDec(ratio * 100, digits) + ' %';
 }
 
 function fmtDuration(seconds) {
-    if (!seconds || seconds <= 0) return '0s';
-    var totalSecs = Math.round(seconds);
-    var hrs = Math.floor(totalSecs / 3600);
-    var mins = Math.floor((totalSecs % 3600) / 60);
-    var secs = totalSecs % 60;
-    if (hrs > 0) return hrs + 'h ' + mins + 'm';
-    if (mins > 0) return mins + 'm ' + secs + 's';
-    return secs + 's';
+    var s = Math.max(0, Math.round(Number(seconds) || 0));
+    if (s < 60) return s + ' s';
+    var m = Math.floor(s / 60), r = s % 60;
+    if (m < 60) return m + ' min ' + r + ' s';
+    return Math.floor(m / 60) + ' h ' + (m % 60) + ' min';
 }
 
 function fmtBytes(bytes) {
     if (!bytes || bytes <= 0) return '0 B';
     var units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    var i = Math.floor(Math.log(bytes) / Math.log(1024));
-    i = Math.min(i, units.length - 1);
-    return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    var i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    return fmtDec(bytes / Math.pow(1024, i), i === 0 ? 0 : 1) + ' ' + units[i];
 }
 
-function getRange(days) {
-    const end = Date.now();
-    const start = end - (days * 24 * 60 * 60 * 1000);
-    return { startAt: start, endAt: end };
+// 'YYYY-MM-DD' als LOKALES Datum lesen. new Date('2026-09-01') waere UTC-Mitternacht
+// und rutscht westlich von Greenwich auf den Vortag.
+function parseDay(ts) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ts || '');
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(ts);
 }
 
-function getUnit(days) {
-    if (days <= 1) return 'hour';
-    if (days <= 90) return 'day';
-    return 'month';
+// Laenderkuerzel als Kaestchen statt Flaggen-Emoji: Windows hat keine
+// Flaggen-Glyphen und zeigt dort nur zwei nackte Buchstaben.
+function ccBadge(code) {
+    if (!code || !/^[A-Za-z]{2}$/.test(code)) return '';
+    return '<span class="cc">' + esc(code.toUpperCase()) + '</span>';
 }
 
-function setTimeRange(days) {
-    currentRange = days;
-    document.querySelectorAll('.time-btn').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.range) === days);
-    });
-    const labels = { 1: '24h', 7: '7 Tage', 30: '30 Tage', 90: '90 Tage', 365: '1 Jahr' };
-    document.getElementById('chartPeriodLabel').textContent = labels[days] || days + ' Tage';
-    document.getElementById('chartPeriodLabel2').textContent = labels[days] || days + ' Tage';
-    loadAll();
-}
-
-function switchTab(btn, tab) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('tab-' + tab).classList.add('active');
-}
-
-const COUNTRY_FLAGS = {
-    'DE':'🇩🇪','AT':'🇦🇹','CH':'🇨🇭','US':'🇺🇸','GB':'🇬🇧','FR':'🇫🇷','NL':'🇳🇱',
-    'PL':'🇵🇱','IT':'🇮🇹','ES':'🇪🇸','SE':'🇸🇪','NO':'🇳🇴','DK':'🇩🇰','FI':'🇫🇮',
-    'BE':'🇧🇪','CZ':'🇨🇿','RO':'🇷🇴','PT':'🇵🇹','HU':'🇭🇺','RU':'🇷🇺','CN':'🇨🇳',
-    'JP':'🇯🇵','KR':'🇰🇷','IN':'🇮🇳','BR':'🇧🇷','CA':'🇨🇦','AU':'🇦🇺','MX':'🇲🇽',
-    'TR':'🇹🇷','UA':'🇺🇦','IE':'🇮🇪','ZA':'🇿🇦','AR':'🇦🇷','CL':'🇨🇱','CO':'🇨🇴',
-    'GR':'🇬🇷','HR':'🇭🇷','SK':'🇸🇰','SI':'🇸🇮','BG':'🇧🇬','LT':'🇱🇹','LV':'🇱🇻',
-    'EE':'🇪🇪','LU':'🇱🇺','IL':'🇮🇱','TW':'🇹🇼','SG':'🇸🇬','HK':'🇭🇰','NZ':'🇳🇿',
-};
-
-function countryName(code) {
-    const flag = COUNTRY_FLAGS[code] || '🏳️';
-    try {
-        const name = new Intl.DisplayNames(['de'], { type: 'region' }).of(code);
-        return flag + ' ' + name;
-    } catch { return flag + ' ' + code; }
+function countryName(code, fallback) {
+    try { return new Intl.DisplayNames([EN ? 'en' : 'de'], { type: 'region' }).of(code) || fallback || code; }
+    catch (e) { return fallback || code; }
 }
 
 function langName(code) {
     try {
-        const base = code.split('-')[0];
-        return new Intl.DisplayNames(['de'], { type: 'language' }).of(base) + ' (' + code + ')';
-    } catch { return code; }
+        var base = String(code).split('-')[0];
+        return new Intl.DisplayNames([EN ? 'en' : 'de'], { type: 'language' }).of(base) + ' (' + code + ')';
+    } catch (e) { return code; }
 }
 
-// (Geräte-Icons als SVG in renderDevicesDonut — siehe DEVICE_SVG. Keine Emojis.)
-const DEVICE_COLORS = { 'desktop': 'var(--primary)', 'mobile': 'var(--success)', 'tablet': 'var(--warning)', 'laptop': 'var(--info)' };
-
-// =========================================
-//  ANIMATED COUNTER
-// =========================================
-function animateValue(el, target, suffix, duration) {
-    if (!el) return;
-    suffix = suffix || '';
-    duration = duration || 800;
-    var start = 0;
-    var startTime = null;
-    var isFloat = String(target).includes('.');
-    function step(ts) {
-        if (!startTime) startTime = ts;
-        var progress = Math.min((ts - startTime) / duration, 1);
-        var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-        var current = start + (target - start) * eased;
-        el.textContent = (isFloat ? current.toFixed(1) : Math.round(current).toLocaleString(mwlLocale())) + suffix;
-        if (progress < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-}
-
-// =========================================
-//  INSIGHTS ENGINE
-// =========================================
-// SVG-Icons (Lucide-Style) statt Emojis — färben sich via currentColor mit der
-// Tonalität der Karte (siehe tone-* in renderInsights). Keine Emojis im UI.
-function icSvg(inner) {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
-}
-var INSIGHT_ICONS = {
-    trendUp:   icSvg('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'),
-    trendDown: icSvg('<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>'),
-    bars:      icSvg('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
-    target:    icSvg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
-    alert:     icSvg('<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
-    clock:     icSvg('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
-    smartphone:icSvg('<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
-    monitor:   icSvg('<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'),
-    layers:    icSvg('<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'),
-    award:     icSvg('<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>'),
-    calendar:  icSvg('<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
-    info:      icSvg('<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'),
-    zap:       icSvg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
-    refresh:   icSvg('<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>')
+var ICONS = {
+    up: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>',
+    down: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>',
+    desktop: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>',
+    mobile: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+    tablet: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+    good: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>',
+    mid: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 7v6"/><path d="M12 17h.01"/></svg>',
+    bad: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>'
 };
 
-function generateInsights(stats, prevStats, devices, pageviewsData, topPages) {
-    var insights = [];
-    var pv = extractVal(stats.pageviews);
-    var vis = extractVal(stats.visitors);
-    var visits = extractVal(stats.visits);
-    var bounces = extractVal(stats.bounces);
-    var totaltime = extractVal(stats.totaltime);
-
-    // Traffic trend
-    if (prevStats) {
-        var ppv = extractVal(prevStats.pageviews);
-        if (ppv > 0) {
-            var change = ((pv - ppv) / ppv * 100).toFixed(0);
-            if (change > 10) {
-                insights.push({ icon: INSIGHT_ICONS.trendUp, tone: 'good', text: '<strong>Traffic ↑' + change + '%</strong> im Vergleich zum Vorzeitraum — starkes Wachstum!' });
-            } else if (change < -10) {
-                insights.push({ icon: INSIGHT_ICONS.trendDown, tone: 'bad', text: 'Traffic <strong>↓' + Math.abs(change) + '%</strong> im Vergleich zum Vorzeitraum. Evtl. saisonale Schwankung.' });
-            } else {
-                insights.push({ icon: INSIGHT_ICONS.bars, tone: 'info', text: 'Traffic ist <strong>stabil</strong> im Vergleich zum Vorzeitraum (' + (change >= 0 ? '+' : '') + change + '%).' });
-            }
-        }
-    }
-
-    // Bounce rate insight
-    var br = visits > 0 ? (bounces / visits * 100) : 0;
-    if (br < 30) {
-        insights.push({ icon: INSIGHT_ICONS.target, tone: 'good', text: 'Bounce Rate nur <strong>' + br.toFixed(0) + '%</strong> — Nutzer interagieren aktiv mit der App!' });
-    } else if (br > 60) {
-        insights.push({ icon: INSIGHT_ICONS.alert, tone: 'warn', text: 'Bounce Rate bei <strong>' + br.toFixed(0) + '%</strong> — viele Nutzer verlassen die Seite sofort.' });
-    }
-
-    // Average time insight
-    var avgTime = visits > 0 ? totaltime / visits : 0;
-    if (avgTime > 300) {
-        insights.push({ icon: INSIGHT_ICONS.clock, tone: 'good', text: 'Nutzer verbringen durchschnittlich <strong>' + fmtDuration(avgTime) + '</strong> — hohe Engagement-Zeit!' });
-    } else if (avgTime > 60) {
-        insights.push({ icon: INSIGHT_ICONS.clock, tone: 'info', text: 'Ø Verweildauer: <strong>' + fmtDuration(avgTime) + '</strong> pro Session.' });
-    }
-
-    // Devices insight
-    if (devices && devices.length > 0) {
-        var totalDevices = devices.reduce(function(s,d) { return s + d.y; }, 0);
-        var mobile = devices.find(function(d) { return d.x === 'mobile'; });
-        var mobilePct = mobile ? ((mobile.y / totalDevices) * 100).toFixed(0) : 0;
-        if (mobilePct > 50) {
-            insights.push({ icon: INSIGHT_ICONS.smartphone, tone: 'info', text: '<strong>' + mobilePct + '% mobile Nutzer</strong> — die PWA wird hauptsächlich am Handy genutzt.' });
-        } else if (mobilePct > 0) {
-            insights.push({ icon: INSIGHT_ICONS.monitor, tone: 'info', text: '<strong>' + (100 - mobilePct) + '% Desktop</strong>, ' + mobilePct + '% Mobile — ausgewogene Nutzung.' });
-        }
-    }
-
-    // Pages/session insight
-    var pps = visits > 0 ? (pv / visits) : 0;
-    if (pps > 3) {
-        insights.push({ icon: INSIGHT_ICONS.layers, tone: 'good', text: '<strong>' + pps.toFixed(1) + ' Seiten pro Session</strong> — Nutzer erkunden verschiedene Features.' });
-    }
-
-    // Top page insight
-    if (topPages && topPages.length > 0) {
-        var top = topPages[0];
-        var topPct = pv > 0 ? ((top.pageviews || top.y || 0) / pv * 100).toFixed(0) : 0;
-        insights.push({ icon: INSIGHT_ICONS.award, tone: 'info', text: 'Beliebteste Seite: <strong>' + (top.name || top.x) + '</strong> mit ' + topPct + '% aller Aufrufe.' });
-    }
-
-    // Total time insight
-    if (totaltime > 3600) {
-        var hrs = (totaltime / 3600).toFixed(1);
-        insights.push({ icon: INSIGHT_ICONS.calendar, tone: 'info', text: 'Insgesamt <strong>' + hrs + ' Stunden</strong> Nutzungszeit im ausgewählten Zeitraum.' });
-    }
-
-    if (insights.length === 0) {
-        insights.push({ icon: INSIGHT_ICONS.info, tone: 'info', text: 'Noch nicht genug Daten für automatische Insights. Schau in ein paar Tagen nochmal rein!' });
-    }
-
-    return insights;
-}
-
-function renderInsights(insights) {
-    var el = document.getElementById('insightsGrid');
-    if (!el) return;
-    el.innerHTML = insights.map(function(ins) {
-        var tone = ins.tone ? ' tone-' + ins.tone : '';
-        return '<div class="insight-item"><div class="insight-icon' + tone + '">' + ins.icon + '</div><div class="insight-text">' + ins.text + '</div></div>';
-    }).join('');
-}
-
-function extractVal(v) {
-    return (typeof v === 'object' && v !== null) ? (v.value || 0) : (v || 0);
-}
-
-// =========================================
-//  BOT DETECTION & FILTERING
-//  Removes known crawler, bot, and datacenter traffic from analytics
-// =========================================
+// ─── Bots ────────────────────────────────────────────────────
+// Browser- und Systemnamen, die nach Crawler, Scanner oder Skript aussehen.
+// Wirkt nur auf die Technik-Listen; die Summen oben rechnet PostHog.
+var BOT_PATTERNS = [
+    /googlebot|google-/i, /bingbot|bingpreview/i, /slurp|yahoobot/i,
+    /duckduck|qwant|baidu|yandexbot|sogou|exabot/i, /teoma|msnbot|ccbot|naverbot|yona/i,
+    /facebookexternal|fbbot|twitterbot|pinterest|linkedin|whatsapp|telegram/i,
+    /slack|discord|viber|skype|wechat|kakao/i, /reddit|redditbot|snapchat/i,
+    /nessus|openvas|nmap|masscan|zmap|sqlmap|havij|commix|xsstrike|nikto|dirbuster|burp|acunetix/i,
+    /netsparker|mandiant|coreimpact|metasploit/i,
+    /monitoring-bot|uptime|healthcheck|pingdom|statuspage|uptimerobot|monitis|nagios|zabbix|datadog|dynatrace|newrelic/i,
+    /scrapy|selenium|puppeteer|watir|phantomjs|headless/i, /webdriver|apify|diffbot|scraperapi|scrapinghub/i,
+    /ahrefs|semrush|majestic|mj12bot/i, /feedburner|superfeedr|feedpress|ifeedbot/i,
+    /curl|wget|python|java\b|node-fetch|http-client|postman|insomnia|httpie/i,
+    /archive\.org|ia_archiver|wayback/i, /spider|crawler|scraper|robot|\bbot\b/i
+];
 function isKnownBot(name) {
     if (!name) return false;
-    const lower = name.toLowerCase();
-    
-    // Known bot/crawler patterns in browser/os/referrer names
-    const botPatterns = [
-        // Search engine bots
-        /googlebot|google-/i,
-        /bingbot|bingpreview/i,
-        /slurp|yahoobot/i,
-        /duckduck|qwant|baidu|yandexbot|sogou|exabot/i,
-        /teoma|msnbot|ccbot|naverbot|yona/i,
-        
-        // Social media crawlers
-        /facebookexternal|fbbot|twitterbot|pinterest|LinkedIn|WhatsApp|Telegram/i,
-        /slack|discord|viber|skype|whatsapp|wechat|line|kakao/i,
-        /reddit|redditbot|instagram|tiktok|snapchat/i,
-        
-        // Security scanners & penetration testing
-        /nessus|openvas|nmap|masscan|zmap|sqlmap|havij|commix|xsstrike|nikto|dirbuster|zap|burp|acunetix/i,
-        /netsparker|mandiant|coreimpact|metasploit/i,
-        
-        // Monitoring & uptime robots
-        /monitoring-bot|uptime|healthcheck|pingdom|statuspage|uptimerobot|monitis|nagios|zabbix|datadog|dynatrace|newrelic|elastic|splunk|sentry|prometheus/i,
-        /apptio|stackify|papertrail|sumo|logz/i,
-        
-        // Web scrapers & automation
-        /scrapy|selenium|puppeteer|watir|phantomjs|headless|chrome-headless/i,
-        /webdriver|apify|diffbot|scraperapi|scrapinghub/i,
-        
-        // Content aggregators
-        /ahrefs|semrush|majestic|mj12bot|ahrefsbot|semrushbot/i,
-        /feedburner|superfeedr|feedpress|rsscloud|ifeedbot/i,
-        
-        // Infrastructure & cloud
-        /aws|ec2|elasticbeanstalk|azure|gce|google-cloud|cloudflare|fastly/i,
-        /digitalocean|linode|vultr|ovh|hetzner|vps|virtualhost/i,
-        
-        // Misc tools
-        /curl|wget|python|java|node|ruby|perl|node-fetch|http-client/i,
-        /postman|insomnia|thunder|httpie|rest-client/i,
-        /archive\.org|ia_archiver|wayback|preservation/i,
-        /bot[-_]?user|spider|crawler|scraper|robot|agent/i,
-    ];
-    
-    return botPatterns.some(pattern => pattern.test(lower));
+    return BOT_PATTERNS.some(function (p) { return p.test(name); });
 }
 
-function filterBotMetrics(data) {
-    if (!Array.isArray(data)) return data;
-    return data.filter(item => {
-        // Item should have .x (name) or .name property
-        const name = item.x || item.name || '';
-        return !isKnownBot(name);
-    });
-}
-
-// =========================================
-//  FILTER: Clean & normalize page paths
-// =========================================
-
-// Paths that should be completely excluded (tokens, fragments with sensitive data, etc.)
+// ─── Pfade ───────────────────────────────────────────────────
+// Adressen mit Anmelde-Fragmenten (#access_token=…) nie anzeigen — sie kommen
+// aus dem OAuth-Ruecksprung und gehoeren nicht auf eine oeffentliche Seite.
 function isIrrelevantPage(path) {
     if (!path) return true;
-    // Filter out URLs with access tokens, auth fragments, or other sensitive data
     if (/#(access_token|token|code|state|session|error|id_token)[\s=]/i.test(path)) return true;
-    if (/#access_token=/i.test(path)) return true;
-    // Filter out very long hash fragments (likely tokens)
-    var hashIdx = path.indexOf('#');
-    if (hashIdx !== -1 && path.substring(hashIdx).length > 40) return true;
-    return false;
+    var h = path.indexOf('#');
+    return h !== -1 && path.substring(h).length > 40;
 }
 
-// Normalize path: collapse index.html, strip hashes/query
-// Frueher wurde "/" auf "/MyWorkLog/" umgeschrieben — ein GitHub-Pages-Relikt.
-// Auf der eigenen Domain ist die Startseite schlicht "/".
 function normalizePath(path) {
     if (!path) return '/';
-    // Remove hash fragments entirely
-    var hashIdx = path.indexOf('#');
-    if (hashIdx !== -1) path = path.substring(0, hashIdx);
-    // Remove query strings
-    var qIdx = path.indexOf('?');
-    if (qIdx !== -1) path = path.substring(0, qIdx);
-    // /index.html → /  (collapse index.html to directory)
+    var h = path.indexOf('#'); if (h !== -1) path = path.substring(0, h);
+    var q = path.indexOf('?'); if (q !== -1) path = path.substring(0, q);
     path = path.replace(/\/index\.html$/i, '/');
     // Legacy-Basepath aus der GitHub-Pages-Zeit einsammeln
     path = path.replace(/^\/MyWorkLog(\/|$)/i, '/');
     if (path === '') path = '/';
-    // Ensure starts with /
     if (path[0] !== '/') path = '/' + path;
     return path;
 }
 
-// Clean expanded table data (has .name, .pageviews, .visitors, .visits, .bounces, .totaltime)
-function cleanExpandedPageData(data) {
-    if (!data || !data.length) return data;
+// Gleiche Pfade nach dem Normalisieren zusammenlegen ("/index.html" und "/").
+function mergePaths(rows, key) {
     var merged = {};
-    data.forEach(function(item) {
-        var key = item.name || item.x || '';
-        if (isIrrelevantPage(key)) return;
-        var norm = normalizePath(key);
-        if (!merged[norm]) {
-            merged[norm] = { name: norm, pageviews: 0, visitors: 0, visits: 0, bounces: 0, totaltime: 0 };
-        }
-        merged[norm].pageviews += (item.pageviews || item.y || 0);
-        merged[norm].visitors  += (item.visitors || 0);
-        merged[norm].visits    += (item.visits || 0);
-        merged[norm].bounces   += (item.bounces || 0);
-        merged[norm].totaltime += (item.totaltime || 0);
+    (rows || []).forEach(function (r) {
+        if (isIrrelevantPage(r.path)) return;
+        var p = normalizePath(r.path);
+        merged[p] = (merged[p] || 0) + (Number(r[key]) || 0);
     });
-    return Object.values(merged).sort(function(a, b) { return b.pageviews - a.pageviews; });
+    return Object.keys(merged).map(function (p) { return { label: p, value: merged[p], href: p, path: true }; })
+        .sort(function (a, b) { return b.value - a.value; });
 }
 
-// Clean simple metrics data (has .x = path, .y = count)
-function cleanSimplePageData(data) {
-    if (!data || !data.length) return data;
-    var merged = {};
-    data.forEach(function(item) {
-        var key = item.x || '';
-        if (isIrrelevantPage(key)) return;
-        var norm = normalizePath(key);
-        if (!merged[norm]) {
-            merged[norm] = { x: norm, y: 0 };
-        }
-        merged[norm].y += (item.y || 0);
-    });
-    return Object.values(merged).sort(function(a, b) { return b.y - a.y; });
+// ─── Beschriftungen ──────────────────────────────────────────
+var CHANNEL_LABELS = {
+    'Direct': ['Direkt', 'Direct'],
+    'Organic Search': ['Suchmaschinen', 'Search engines'],
+    'Paid Search': ['Bezahlte Suche', 'Paid search'],
+    'Referral': ['Verweise', 'Referrals'],
+    'AI': ['KI-Assistenten', 'AI assistants'],
+    'Organic Social': ['Soziale Netzwerke', 'Social networks'],
+    'Paid Social': ['Bezahlte Social Ads', 'Paid social'],
+    'Email': ['E-Mail', 'Email'],
+    'Organic Video': ['Video', 'Video'],
+    'Unknown': ['Unbekannt', 'Unknown']
+};
+function channelLabel(c) { var l = CHANNEL_LABELS[c]; return l ? T(l[0], l[1]) : c; }
+
+function sourceLabel(s) {
+    if (!s || s === '$direct') return T('Direkt oder Lesezeichen', 'Direct or bookmark');
+    if (s === 'com.google.android.googlequicksearchbox') return T('Google-App (Android)', 'Google app (Android)');
+    return s.replace(/^www\./, '');
 }
 
-// =========================================
-//  HELPER: Aggregate daily data into weekly buckets
-// =========================================
-function aggregateWeekly(dailyData) {
-    if (!dailyData || !dailyData.length) return dailyData;
-    var weeks = {};
-    dailyData.forEach(function(item) {
-        var d = new Date(item.x);
-        // Get Monday of that week (ISO week start)
-        var day = d.getDay();
-        var diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        var monday = new Date(d);
-        monday.setDate(diff);
-        var key = monday.toISOString().substring(0, 10);
-        if (!weeks[key]) weeks[key] = { x: monday.toISOString(), y: 0 };
-        weeks[key].y += (item.y || 0);
-    });
-    return Object.values(weeks).sort(function(a, b) { return new Date(a.x) - new Date(b.x); });
-}
+var DEVICE_LABELS = { 'Mobile': ['Smartphone', 'Phone'], 'Desktop': ['Computer', 'Computer'], 'Tablet': ['Tablet', 'Tablet'] };
 
-// =========================================
-//  CHART HELPERS
-// =========================================
-function _chartGrad(id, hex, alphaLow, alphaHigh) {
-    return '<defs><linearGradient id="' + id + '" x1="0" y1="1" x2="0" y2="0">' +
-        '<stop offset="0%" stop-color="' + hex + '" stop-opacity="' + alphaLow + '"/>' +
-        '<stop offset="100%" stop-color="' + hex + '" stop-opacity="' + alphaHigh + '"/>' +
-    '</linearGradient></defs>';
-}
-
-function _chartLabel(x, i, n) {
-    var d   = new Date(x);
-    var mon = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-    var lbl;
-    if (currentRange <= 1)        lbl = d.getHours() + 'h';
-    else if (currentRange >= 365) lbl = mon[d.getMonth()];
-    else                          lbl = d.getDate() + '.' + (d.getMonth() + 1) + '.';
-    var skip = n > 16 ? Math.ceil(n / 12) : 1;
-    return (i % skip === 0) ? lbl : '';
-}
-
-// Inline SVG text — avoids all CSS-fill browser quirks
-function _svgText(x, y, txt, anchor, size, fillColor, bold) {
-    return '<text x="' + x + '" y="' + y + '"' +
-        ' text-anchor="' + (anchor || 'middle') + '"' +
-        ' font-family="IBM Plex Mono,monospace"' +
-        ' font-size="' + (size || 9) + '"' +
-        (bold ? ' font-weight="700"' : '') +
-        ' fill="' + fillColor + '"' +
-        ' pointer-events="none">' + txt + '</text>';
-}
-
-// =========================================
-//  RENDER: Dual Bar Chart (Pageviews + Sessions)
-// =========================================
-function renderBarChartDual(containerId, pageviews, sessions) {
-    var el = document.getElementById(containerId);
-    if (!el) return;
-    if (!pageviews || !pageviews.length) {
-        el.innerHTML = '<p class="ch-empty">Keine Daten verfügbar</p>';
-        return;
+var EVENT_LABELS = {
+    'entry_created':    ['Eintrag erstellt', 'Entry created'],
+    'entry_updated':    ['Eintrag bearbeitet', 'Entry edited'],
+    'timer_action':     ['Timer benutzt', 'Timer used'],
+    'data_exported':    ['Daten exportiert', 'Data exported'],
+    'pwa_installiert':  ['App installiert', 'App installed'],
+    'data_imported':    ['Daten importiert', 'Data imported'],
+    'woche_gewechselt': ['Woche gewechselt', 'Week switched'],
+    'monat_gewechselt': ['Monat gewechselt', 'Month switched'],
+    'jahr_gewechselt':  ['Jahr gewechselt', 'Year switched'],
+    'jahresraster_modus': ['Jahresraster umgeschaltet', 'Year grid mode switched'],
+    'performance_zeitraum': ['Performance: Zeitraum gewechselt', 'Performance: period switched'],
+    'ihk_daten_gespeichert': ['IHK-Daten gespeichert', 'IHK data saved'],
+    'ziel_angelegt':    ['Ziel angelegt', 'Goal created'],
+    'umfrage_geoeffnet': ['Umfrage geöffnet', 'Survey opened'],
+    'umfrage_gesendet': ['Umfrage abgeschickt', 'Survey submitted'],
+    'umfrage_abgelehnt': ['Umfrage abgelehnt', 'Survey declined'],
+    'feedback_gesendet': ['Feedback gesendet', 'Feedback sent'],
+    'foto_import_opened': ['Foto-Import geöffnet', 'Photo import opened'],
+    'foto_import_applied': ['Foto-Import übernommen', 'Photo import applied'],
+    'import_wizard_opened': ['Import geöffnet', 'Import opened'],
+    'b2b_freischaltung_angefragt': ['Betrieb: Freischaltung angefragt', 'Company: verification requested'],
+    'ausbilder_einladung': ['Ausbilder eingeladen', 'Trainer invited'],
+    'skill_uebung_gestartet': ['Skill-Baum: Übung gestartet', 'Skill tree: exercise started'],
+    'skill_uebung_beendet': ['Skill-Baum: Übung beendet', 'Skill tree: exercise finished'],
+    'skill_berichtsheft_ausgewertet': ['Skill-Baum: Berichtsheft ausgewertet', 'Skill tree: report book analysed'],
+    'ghost_mode_on':    ['Ghost Mode (seit v7.5.4 entfernt)', 'Ghost mode (removed in v7.5.4)']
+};
+// 'feature_genutzt' liefert der Worker als 'feature_genutzt::<view>'.
+var FEATURE_LABELS = {
+    'dashboard':     ['Übersicht', 'Overview'],
+    'history':       ['Historie', 'History'],
+    'performance':   ['Performance', 'Performance'],
+    'ihk':           ['IHK / Karriere', 'IHK / career'],
+    'school':        ['Berufsschule', 'Vocational school'],
+    'goals':         ['Ziele', 'Goals'],
+    'yearview':      ['Jahresübersicht', 'Year overview'],
+    'monthcompare':  ['Monats-Vergleich', 'Month comparison'],
+    'weekview':      ['Wochenansicht', 'Week view'],
+    'aibot':         ['AI-Bot', 'AI bot'],
+    'support':       ['Support', 'Support'],
+    'analytics-pro': ['Analytics Pro', 'Analytics Pro'],
+    'aufgaben':      ['Aufgaben', 'Tasks'],
+    'aufgaben-tab':  ['Aufgaben', 'Tasks'],
+    'urlaubsplaner': ['Urlaubsplaner', 'Vacation planner']
+};
+function eventLabel(name) {
+    if (name && name.indexOf('feature_genutzt::') === 0) {
+        var v = name.slice('feature_genutzt::'.length);
+        var f = FEATURE_LABELS[v];
+        return T('Ansicht: ', 'View: ') + (f ? T(f[0], f[1]) : v);
     }
-
-    var vw = window.innerWidth;
-    var fallbackW = vw <= 768 ? Math.max(vw - 64, 260) : 480;
-    var W   = Math.max(el.offsetWidth || fallbackW, 160);
-    var VAL = 16;   // top padding for value labels
-    var CH  = 126;  // bar area height
-    var LBL = 20;   // bottom area for date labels
-    var TH  = VAL + CH + LBL;  // total SVG height
-    var BASE = VAL + CH;        // y-coordinate of baseline (bottom of bars)
-    var n   = pageviews.length;
-
-    var maxVal = 1;
-    pageviews.forEach(function(d) { if (d.y > maxVal) maxVal = d.y; });
-    if (sessions) sessions.forEach(function(d) { if (d.y > maxVal) maxVal = d.y; });
-
-    var slotW = W / n;
-    var bW    = Math.max(2, Math.min(14, slotW * 0.33));
-    var bGap  = Math.max(1, slotW * 0.05);
-    var uid   = containerId.replace(/[^a-z0-9]/gi, '');
-    var showVals = n <= 20; // only show value numbers if not too crowded
-
-    var out = _chartGrad('gPV' + uid, '#a78bfa', 0.22, 0.90);
-    out    += _chartGrad('gSS' + uid, '#22d3ee', 0.10, 0.50);
-
-    // grid lines
-    [0.25, 0.5, 0.75, 1].forEach(function(p) {
-        var gy = +(BASE - CH * p).toFixed(1);
-        out += '<line x1="0" y1="' + gy + '" x2="' + W + '" y2="' + gy +
-               '" stroke="rgba(255,255,255,' + (p === 1 ? '0.07' : '0.025') + ')" stroke-width="1"/>';
-    });
-
-    pageviews.forEach(function(pv, i) {
-        var sv  = (sessions && sessions[i]) ? sessions[i].y : 0;
-        var pvH = Math.max(2, (pv.y / maxVal) * CH);
-        var svH = Math.max(2, (sv  / maxVal) * CH);
-        var cx  = parseFloat((i * slotW + slotW / 2).toFixed(1));
-        var pvX = (cx - bW - bGap / 2).toFixed(1);
-        var svX = (cx + bGap / 2).toFixed(1);
-        var pvY = (BASE - pvH).toFixed(1);
-        var svY = (BASE - svH).toFixed(1);
-        var bWs = bW.toFixed(1);
-
-        // PV bar
-        out += '<rect x="' + pvX + '" y="' + pvY + '" width="' + bWs + '" height="' + pvH.toFixed(1) +
-               '" rx="2" fill="url(#gPV' + uid + ')" style="cursor:crosshair;transition:filter .15s">' +
-               '<title>Pageviews: ' + fmt(pv.y) + '</title></rect>';
-        // SS bar
-        out += '<rect x="' + svX + '" y="' + svY + '" width="' + bWs + '" height="' + svH.toFixed(1) +
-               '" rx="2" fill="url(#gSS' + uid + ')" opacity="0.7" style="cursor:crosshair">' +
-               '<title>Sessions: ' + fmt(sv) + '</title></rect>';
-
-        // Value label above PV bar (skip if bar is very short)
-        if (showVals && pvH > 12) {
-            out += _svgText(cx, parseFloat(pvY) - 3, fmt(pv.y), 'middle', 8, 'rgba(232,230,240,0.65)');
-        }
-
-        // Date label below
-        var lbl = _chartLabel(pv.x, i, n);
-        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.60)');
-    });
-
-    el.innerHTML = '<svg width="' + W + '" height="' + TH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">' + out + '</svg>';
+    var l = EVENT_LABELS[name];
+    if (l) return T(l[0], l[1]);
+    var s = String(name || '').replace(/_/g, ' ');
+    return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// =========================================
-//  RENDER: Single Bar Chart (Sessions / Visitors)
-// =========================================
-function renderBarChartSingle(containerId, data) {
-    var el = document.getElementById(containerId);
-    if (!el) return;
-    if (!data || !data.length) {
-        el.innerHTML = '<p class="ch-empty">Keine Daten verfügbar</p>';
-        return;
-    }
-
-    var vw = window.innerWidth;
-    var fallbackW = vw <= 768 ? Math.max(vw - 64, 260) : 480;
-    var W   = Math.max(el.offsetWidth || fallbackW, 160);
-    var VAL = 16;
-    var CH  = 126;
-    var LBL = 20;
-    var TH  = VAL + CH + LBL;
-    var BASE = VAL + CH;
-    var n   = data.length;
-
-    var maxVal = 1;
-    data.forEach(function(d) { if (d.y > maxVal) maxVal = d.y; });
-
-    var slotW    = W / n;
-    var bW       = Math.max(3, Math.min(22, slotW * 0.62));
-    var uid      = containerId.replace(/[^a-z0-9]/gi, '');
-    var showVals = n <= 20;
-
-    var out = _chartGrad('gVIS' + uid, '#34d399', 0.22, 0.88);
-
-    [0.25, 0.5, 0.75, 1].forEach(function(p) {
-        var gy = +(BASE - CH * p).toFixed(1);
-        out += '<line x1="0" y1="' + gy + '" x2="' + W + '" y2="' + gy +
-               '" stroke="rgba(255,255,255,' + (p === 1 ? '0.07' : '0.025') + ')" stroke-width="1"/>';
-    });
-
-    data.forEach(function(item, i) {
-        var h  = Math.max(2, (item.y / maxVal) * CH);
-        var cx = parseFloat((i * slotW + slotW / 2).toFixed(1));
-        var bx = (cx - bW / 2).toFixed(1);
-        var by = (BASE - h).toFixed(1);
-
-        out += '<rect x="' + bx + '" y="' + by + '" width="' + bW.toFixed(1) + '" height="' + h.toFixed(1) +
-               '" rx="2" fill="url(#gVIS' + uid + ')" style="cursor:crosshair;transition:filter .15s">' +
-               '<title>' + fmt(item.y) + '</title></rect>';
-
-        // Value label above bar
-        if (showVals && h > 12) {
-            out += _svgText(cx, parseFloat(by) - 3, fmt(item.y), 'middle', 8, 'rgba(232,230,240,0.65)');
-        }
-
-        // Date label below
-        var lbl = _chartLabel(item.x, i, n);
-        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.60)');
-    });
-
-    el.innerHTML = '<svg width="' + W + '" height="' + TH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">' + out + '</svg>';
-}
-
-// =========================================
-//  RENDER: Expanded Metrics Table (path)
-// =========================================
-function renderExpandedTable(tableId, data) {
-    var tbody = document.querySelector('#' + tableId + ' tbody');
-    if (!data || !data.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">Keine Daten</td></tr>';
-        return;
-    }
-
-    var totalPV = data.reduce(function(s, d) { return s + (d.pageviews || d.y || 0); }, 0);
-
-    tbody.innerHTML = data.map(function(item, i) {
-        var pageviews = item.pageviews || item.y || 0;
-        var visitors = item.visitors || 0;
-        var visits = item.visits || 0;
-        var bounces = item.bounces || 0;
-        var totaltime = item.totaltime || 0;
-        var pct = totalPV > 0 ? ((pageviews / totalPV) * 100).toFixed(1) : 0;
-        var avgTime = visits > 0 ? fmtDuration(totaltime / visits) : '--';
-        var bounceRate = visits > 0 ? ((bounces / visits) * 100).toFixed(0) + '%' : '--';
-        var label = item.name || item.x || '(unbekannt)';
-        var shortLabel = label.length > 45 ? label.substring(0, 45) + '…' : label;
-
-        return '<tr>' +
-            '<td class="rank">' + (i + 1) + '</td>' +
-            '<td title="' + esc(label) + '">' + esc(shortLabel) + '</td>' +
-            '<td class="value">' + fmt(pageviews) + '</td>' +
-            '<td>' + fmt(visitors) + '</td>' +
-            '<td>' + bounceRate + '</td>' +
-            '<td>' + avgTime + '</td>' +
-            '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill purple" style="width:' + pct + '%"></div></div></td>' +
-        '</tr>';
-    }).join('');
-}
-
-// =========================================
-//  RENDER: Simple Metrics Table (with rank)
-// =========================================
-function renderSimpleTable(tableId, data, labelFn, colorClass) {
-    labelFn = labelFn || function(x) { return x; };
-    colorClass = colorClass || 'purple';
-    var tbody = document.querySelector('#' + tableId + ' tbody');
-    if (!data || !data.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">Keine Daten</td></tr>';
-        return;
-    }
-
-    var total = data.reduce(function(s, d) { return s + (d.y || 0); }, 0);
-
-    tbody.innerHTML = data.map(function(item, i) {
-        var pct = total > 0 ? ((item.y / total) * 100).toFixed(1) : 0;
-        var label = esc(labelFn(item.x || '(unbekannt)'));
-        return '<tr>' +
-            '<td class="rank">' + (i + 1) + '</td>' +
-            '<td>' + label + '</td>' +
-            '<td class="value">' + fmt(item.y) + '</td>' +
-            '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill ' + colorClass + '" style="width:' + pct + '%"></div></div></td>' +
-        '</tr>';
-    }).join('');
-}
-
-// =========================================
-//  RENDER: Simple Table (no rank)
-// =========================================
-function renderSimpleTableNoRank(tableId, data, labelFn, colorClass) {
-    labelFn = labelFn || function(x) { return x; };
-    colorClass = colorClass || 'purple';
-    var tbody = document.querySelector('#' + tableId + ' tbody');
-    if (!data || !data.length) {
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:2rem;">Keine Daten</td></tr>';
-        return;
-    }
-
-    var total = data.reduce(function(s, d) { return s + (d.y || 0); }, 0);
-
-    tbody.innerHTML = data.map(function(item) {
-        var pct = total > 0 ? ((item.y / total) * 100).toFixed(1) : 0;
-        var label = esc(labelFn(item.x || '(unbekannt)'));
-        return '<tr>' +
-            '<td>' + label + '</td>' +
-            '<td class="value">' + fmt(item.y) + '</td>' +
-            '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill ' + colorClass + '" style="width:' + pct + '%"></div></div></td>' +
-        '</tr>';
-    }).join('');
-}
-
-// Verweildauer-Buckets nach echter Zeit sortieren (kleinste → größte Dauer),
-// NICHT nach Session-Anzahl. So liest sich die Tabelle als Verteilung und man
-// sieht, in welchem Zeitfenster die meisten Nutzer liegen. Parst die Untergrenze
-// des Bucket-Labels ("0-10s", "10-30s", "1-3min", "30min+", "1-2h") in Sekunden.
+// "< 10s", "1-3 Min", "10+ Min" → Sekunden, damit die Verteilung in echter Reihenfolge steht.
 function durationBucketSeconds(label) {
-    if (label == null) return Infinity;
-    var s = String(label).toLowerCase();
-    var m = s.match(/(\d+(?:[.,]\d+)?)/);
-    if (!m) return Infinity;
-    var n = parseFloat(m[1].replace(',', '.'));
-    if (/\b\d+\s*(h|std|stunde|hour)/.test(s)) return n * 3600;
-    if (/min/.test(s)) return n * 60;
-    return n; // Sekunden (Default)
+    var m = String(label).match(/(\d+)/);
+    if (!m) return 0;
+    var n = parseInt(m[1], 10);
+    if (/min/i.test(label)) n *= 60;
+    if (/</.test(label)) n -= 0.5;
+    return n;
+}
+function durationBucketLabel(label) {
+    return String(label).replace(/(\d)-(\d)/, '$1–$2').replace(/Min/, 'min').replace(/(\d)s$/, '$1 s');
+}
+function firstNumber(label) { var m = String(label).match(/\d+/); return m ? +m[0] : 0; }
+function pagesBucketLabel(label) {
+    var s = String(label).replace(/(\d)-(\d)/, '$1–$2');
+    return EN ? s.replace(/Seiten?/, function (w) { return w === 'Seite' ? 'page' : 'pages'; }) : s;
 }
 
-// Erste Zahl aus einem Label ziehen ("3-5", "6+", "1" → 3, 6, 1).
-// Für "Seiten pro Session": aufsteigend nach Seitenzahl statt nach Session-Anzahl.
-function firstNumber(label) {
-    if (label == null) return Infinity;
-    var m = String(label).match(/(\d+(?:[.,]\d+)?)/);
-    return m ? parseFloat(m[1].replace(',', '.')) : Infinity;
-}
-
-// Auflösung ("1920x1080") in Pixelfläche für "kleinster → größter Screen".
-function resolutionArea(label) {
-    if (label == null) return Infinity;
-    var m = String(label).toLowerCase().match(/(\d+)\s*[x×]\s*(\d+)/);
-    if (m) return parseInt(m[1], 10) * parseInt(m[2], 10);
-    var w = String(label).match(/(\d+)/); // Fallback: nur eine Zahl → nach Breite
-    return w ? parseInt(w[1], 10) : Infinity;
-}
-
-// =========================================
-//  RENDER: Städte — Länder-Chips + City-Grid
-//  Vollbreite Karte. Chips filtern nach Land (ein Tap, alle sichtbar), die
-//  Städte füllen als responsives Grid die Breite. Flaggen-Emoji je Stadt/Land.
-// =========================================
-var _citiesData = { cities: [], names: {}, active: '' };
-
-// Globus-Icon (Lucide-Style, wie im „Herkunft"-Titel) für den „Alle"-Chip —
-// SVG statt Emoji, damit es sich im Aktiv-Zustand mit einfärbt (currentColor).
-var GLOBE_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
-
-// ISO-A2-Code → Flaggen-Emoji (Regional Indicator Symbols). Kein Asset-Load.
-function flagEmoji(code) {
-    if (!code || !/^[a-zA-Z]{2}$/.test(code)) return '🏳️';
-    var cc = code.toUpperCase();
-    return String.fromCodePoint(0x1F1E6 + cc.charCodeAt(0) - 65, 0x1F1E6 + cc.charCodeAt(1) - 65);
-}
-
-function renderCities(cities, countries) {
-    _citiesData.cities = (cities || []).slice().sort(function(a, b) {
-        return (b.visitors || 0) - (a.visitors || 0);
-    });
-    _citiesData.names  = {};
-    (countries || []).forEach(function(c) {
-        if (c.code) _citiesData.names[c.code] = c.country || c.code;
-    });
-    _citiesData.active = ''; // frische Daten → zurück auf „Alle"
-
-    var badge = document.getElementById('citiesBadge');
-    if (badge) {
-        var n = _citiesData.cities.length;
-        var EN = document.documentElement.lang === 'en';
-        badge.textContent = n + ' ' + (EN ? (n === 1 ? 'city' : 'cities') : (n === 1 ? 'Stadt' : 'Städte'));
-    }
-    renderCityChips();
-    renderCityGrid();
-}
-
-// Chip-Leiste: „Alle" + je Land (Flagge · Name · Besucher), nach Besuchern sortiert.
-function renderCityChips() {
-    var host = document.getElementById('cityCountryChips');
-    if (!host) return;
-    var EN = document.documentElement.lang === 'en';
-    var byCode = {};
-    _citiesData.cities.forEach(function(c) {
-        var k = c.code || '??';
-        byCode[k] = (byCode[k] || 0) + (c.visitors || 0);
-    });
-    var codes = Object.keys(byCode).sort(function(a, b) { return byCode[b] - byCode[a]; });
-    var total = _citiesData.cities.reduce(function(s, c) { return s + (c.visitors || 0); }, 0);
-
-    var chips = [chipHTML('', GLOBE_SVG, EN ? 'All' : 'Alle', total)];
-    codes.forEach(function(code) {
-        chips.push(chipHTML(code, flagEmoji(code), _citiesData.names[code] || code, byCode[code]));
-    });
-    host.innerHTML = chips.join('');
-}
-
-function chipHTML(code, flag, label, count) {
-    var on = _citiesData.active === code;
-    return '<button type="button" class="geo-chip' + (on ? ' active' : '') + '"' +
-        ' aria-pressed="' + (on ? 'true' : 'false') + '"' +
-        " onclick=\"filterCities('" + esc(code) + "')\">" +
-        '<span class="chip-flag">' + flag + '</span>' + esc(label) +
-        '<span class="chip-count">' + fmt(count) + '</span></button>';
-}
-
-function filterCities(code) {
-    _citiesData.active = code || '';
-    renderCityChips();
-    renderCityGrid();
-}
-
-// City-Grid nach aktivem Land. Balken skalieren zum globalen Max (vergleichbar
-// über Länder hinweg); Prozent im Tooltip bleibt relativ zu ALLEN Städten, damit
-// der Anteil einer Stadt beim Filtern nicht springt.
-function renderCityGrid() {
-    var host = document.getElementById('citiesGrid');
-    if (!host) return;
-    var EN = document.documentElement.lang === 'en';
-    var all = _citiesData.cities;
-    var grandTotal = all.reduce(function(s, c) { return s + (c.visitors || 0); }, 0);
-    var maxV = all.reduce(function(m, c) { return Math.max(m, c.visitors || 0); }, 0) || 1;
-    var pick = _citiesData.active;
-    var list = pick ? all.filter(function(c) { return (c.code || '') === pick; }) : all;
-
-    if (!list.length) {
-        host.innerHTML = '<p class="city-empty">' + (EN ? 'No data' : 'Keine Daten') + '</p>';
-        return;
-    }
-    host.innerHTML = list.map(function(c) {
-        var v = c.visitors || 0;
-        var pct = grandTotal > 0 ? ((v / grandTotal) * 100).toFixed(1) : '0';
-        var w = Math.max(4, (v / maxV) * 100);
-        var title = fmt(v) + ' ' + (EN ? 'visitors' : 'Besucher') + ' · ' + pct + '%';
-        return '<div class="city-row" title="' + esc(title) + '">' +
-            '<span class="city-name"><span class="cn-flag">' + flagEmoji(c.code) + '</span>' +
-                '<span class="cn-txt">' + esc(c.city || (EN ? '(unknown)' : '(unbekannt)')) + '</span></span>' +
-            '<span class="city-val">' + fmt(v) + '</span>' +
-            '<span class="city-bar"><i style="width:' + w.toFixed(1) + '%"></i></span>' +
-        '</div>';
-    }).join('');
-}
-
-// =========================================
-//  RENDER: Donut Chart (Devices)
-//  Uses stroke-dasharray on SVG circles — bulletproof across all browsers
-// =========================================
-function renderDevicesDonut(data) {
-    var el = document.getElementById('devicesDonut');
+// ─── Kennzahlen ──────────────────────────────────────────────
+// Liegt keine Vergleichszahl vor, bleibt die Zeile leer. Ein "+100 %" aus
+// einem Vorzeitraum von 0 waere eine Zahl ohne Nenner.
+function setDelta(id, cur, prev, lowerIsBetter) {
+    var el = document.getElementById(id);
     if (!el) return;
-
-    // Normalize + filter
-    var items = (data || []).filter(function(d) { return d && d.x && typeof d.y === 'number' && d.y > 0; });
-
-    if (!items.length) {
-        el.innerHTML = '<p class="ch-empty">Keine Gerätedaten</p>';
+    cur = Number(cur) || 0; prev = Number(prev) || 0;
+    if (!prev) { el.className = 'metric-delta'; el.textContent = ''; return; }
+    var pct = (cur - prev) / prev * 100;
+    var rounded = Math.round(pct);
+    if (rounded === 0) {
+        el.className = 'metric-delta';
+        el.textContent = T('unverändert', 'unchanged');
         return;
     }
-
-    var total = items.reduce(function(s, d) { return s + d.y; }, 0);
-    if (total === 0) { el.innerHTML = '<p class="ch-empty">Keine Gerätedaten</p>'; return; }
-
-    var PALETTE  = { desktop: '#a78bfa', mobile: '#34d399', tablet: '#fbbf24', laptop: '#22d3ee' };
-    var FALLBACK = ['#a78bfa', '#34d399', '#fbbf24', '#22d3ee', '#f87171'];
-    // Geräte-Icons als SVG (Lucide, currentColor) statt Emoji.
-    var ICONS = {
-        desktop: icSvg('<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'),
-        laptop:  icSvg('<path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9"/><line x1="2" y1="20" x2="22" y2="20"/>'),
-        mobile:  icSvg('<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
-        tablet:  icSvg('<rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>')
-    };
-    var ICON_FALLBACK = icSvg('<circle cx="12" cy="12" r="8"/>');
-
-    // SVG donut geometry
-    var SZ    = 160;                      // SVG canvas size
-    var CX    = SZ / 2;                   // center x
-    var CY    = SZ / 2;                   // center y
-    var R     = 58;                       // ring radius (midline)
-    var SW    = 20;                       // stroke-width = ring thickness
-    var CIRC  = 2 * Math.PI * R;         // full circumference ≈ 364.4 px
-    var GAP   = items.length > 1 ? 5 : 0; // gap in pixels between segments
-
-    // Background track
-    var circles = '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '"' +
-        ' fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="' + SW + '"/>';
-
-    var rows = '';
-    var cumOffset = 0; // pixels consumed so far along circumference
-
-    items.forEach(function(d, idx) {
-        var color  = PALETTE[d.x] || FALLBACK[idx % FALLBACK.length];
-        var pct    = d.y / total;
-        var segLen = Math.max(3, pct * CIRC - GAP); // visible length minus gap
-        var pctStr = (pct * 100).toFixed(1);
-        var icon   = ICONS[d.x] || ICON_FALLBACK;
-
-        // stroke-dasharray: [visible dash] [invisible gap filling the rest]
-        // stroke-dashoffset: negative = shift start of pattern forward along path
-        // rotate(-90) = start from 12 o'clock
-        circles += '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '"' +
-            ' fill="none"' +
-            ' stroke="' + color + '"' +
-            ' stroke-width="' + SW + '"' +
-            ' stroke-dasharray="' + segLen.toFixed(2) + ' ' + (CIRC + 1).toFixed(2) + '"' +
-            ' stroke-dashoffset="-' + cumOffset.toFixed(2) + '"' +
-            ' transform="rotate(-90 ' + CX + ' ' + CY + ')"' +
-            ' style="cursor:pointer;transition:opacity .2s">' +
-            '<title>' + (d.x || '?') + ': ' + fmt(d.y) + ' (' + pctStr + '%)</title>' +
-            '</circle>';
-
-        rows += '<div class="dl-row">' +
-            '<span class="dl-dot" style="background:' + color + '"></span>' +
-            '<span class="dl-name"><span class="dl-ic">' + icon + '</span>' + (d.x || '?') + '</span>' +
-            '<span class="dl-pct">' + pctStr + '%</span>' +
-            '<span class="dl-cnt">' + fmt(d.y) + '</span>' +
-        '</div>';
-
-        cumOffset += pct * CIRC; // advance by full share (gap appears between segments)
-    });
-
-    // Center text — inline attributes, no CSS classes needed
-    var centerText =
-        '<text x="' + CX + '" y="' + (CY - 4) + '"' +
-        ' text-anchor="middle" font-family="IBM Plex Mono,monospace"' +
-        ' font-size="18" font-weight="700" fill="rgba(232,230,240,0.92)">' + fmt(total) + '</text>' +
-        '<text x="' + CX + '" y="' + (CY + 13) + '"' +
-        ' text-anchor="middle" font-family="IBM Plex Mono,monospace"' +
-        ' font-size="7" fill="rgba(232,230,240,0.32)" letter-spacing="1.5">BESUCHER</text>';
-
-    var svg = '<svg width="' + SZ + '" height="' + SZ + '" viewBox="0 0 ' + SZ + ' ' + SZ +
-              '" xmlns="http://www.w3.org/2000/svg" style="display:block;">' +
-              circles + centerText + '</svg>';
-
-    el.innerHTML = '<div class="dnt-ring">' + svg + '</div><div class="dnt-list">' + rows + '</div>';
+    var good = lowerIsBetter ? pct < 0 : pct > 0;
+    el.className = 'metric-delta ' + (good ? 'is-good' : 'is-bad');
+    el.innerHTML = (pct > 0 ? ICONS.up : ICONS.down) + '<span>' + fmtInt(Math.abs(rounded)) + ' %</span>';
+    el.title = T('Vorzeitraum: ', 'Previous period: ') + (id === 'dBounce' ? fmtPct(prev, 1) : id === 'dDuration' ? fmtDuration(prev) : fmtInt(prev));
 }
 
-// =========================================
-//  RENDER: Trend Indicator
-// =========================================
-function setTrend(elId, current, previous) {
-    var el = document.getElementById(elId);
-    if (!el || previous === undefined || previous === null) {
-        el.className = 'kpi-trend neutral';
-        el.textContent = '--';
-        return;
-    }
-    if (previous === 0 && current === 0) {
-        el.className = 'kpi-trend neutral';
-        el.textContent = '→ 0%';
-        return;
-    }
-    if (previous === 0) {
-        el.className = 'kpi-trend up';
-        el.textContent = '↑ neu';
-        return;
-    }
+function renderMetrics(sum) {
+    document.getElementById('kVisitors').textContent = fmtNum(sum.visitors);
+    document.getElementById('kPageviews').textContent = fmtNum(sum.pageviews);
+    document.getElementById('kSessions').textContent = fmtNum(sum.sessions);
+    document.getElementById('kBounce').textContent = sum.sessions ? fmtPct(sum.bounceRate, 0) : '—';
+    document.getElementById('kDuration').textContent = sum.sessions ? fmtDuration(sum.avgSessionDuration) : '—';
 
-    var diff = ((current - previous) / previous) * 100;
-    if (diff > 0) {
-        el.className = 'kpi-trend up';
-        el.textContent = '↑ +' + diff.toFixed(1) + '%';
-    } else if (diff < 0) {
-        el.className = 'kpi-trend down';
-        el.textContent = '↓ ' + diff.toFixed(1) + '%';
-    } else {
-        el.className = 'kpi-trend neutral';
-        el.textContent = '→ 0%';
-    }
+    setDelta('dVisitors', sum.visitors, sum.visitorsPrev);
+    setDelta('dPageviews', sum.pageviews, sum.pageviewsPrev);
+    setDelta('dSessions', sum.sessions, sum.sessionsPrev);
+    setDelta('dBounce', sum.bounceRate, sum.bounceRatePrev, true);
+    setDelta('dDuration', sum.avgSessionDuration, sum.avgSessionDurationPrev);
 }
 
-// =========================================
-//  LIVE STATUS BADGE
-// =========================================
-function setLiveStatus(status) {
-    var dot = document.getElementById('liveDot');
-    var label = document.getElementById('liveLabel');
-    if (!dot || !label) return;
-    dot.className = 'live-dot';
-    var EN = document.documentElement.lang === 'en';
-    if (status === 'live') {
-        label.textContent = 'Live';
-    } else if (status === 'error') {
-        dot.classList.add('error');
-        label.textContent = EN ? 'Offline' : 'Offline';
-    } else if (status === 'stale') {
-        dot.classList.add('connecting');
-        label.textContent = EN ? 'Cached' : 'Cache';
-    } else {
-        dot.classList.add('connecting');
-        label.textContent = EN ? 'Connecting…' : 'Verbinde…';
+// ─── Hauptdiagramm ───────────────────────────────────────────
+var METRIC_NAMES = {
+    visitors: ['Besucher', 'Visitors'],
+    pageviews: ['Seitenaufrufe', 'Page views'],
+    sessions: ['Sitzungen', 'Sessions']
+};
+
+// Ganzzahlige Rasterschritte — Besucher gibt es nicht in Vierteln ("1,25").
+function niceStep(raw) {
+    if (raw <= 1) return 1;
+    var exp = Math.pow(10, Math.floor(Math.log10(raw)));
+    var steps = [1, 2, 5, 10];
+    for (var i = 0; i < steps.length; i++) {
+        if (steps[i] * exp >= raw) return steps[i] * exp;
     }
+    return 10 * exp;
 }
 
-// =========================================
-//  SKELETON LOADING
-// =========================================
-function showSkeletons() {
-    document.getElementById('mainKpis').style.display = 'none';
-    document.getElementById('mainKpisSkeletons').style.display = 'grid';
-    document.getElementById('pageviewsChart').parentElement.parentElement.style.display = 'none';
-    document.getElementById('pageviewsChartSkeleton').parentElement.parentElement.style.display = 'grid';
-    document.getElementById('tableSkeletonContainer').style.display = 'block';
-    var tabCard = document.getElementById('topPagesTable').closest('.section-card');
-    if (tabCard) tabCard.style.display = 'none';
-}
+// Bis 7 Tage liefert der Worker Stunden ('…T14:00:00Z', UTC), darueber Tage.
+function isHourly(series) { return !!(series.length && String(series[0].ts).indexOf('T') !== -1); }
 
-function hideSkeletons() {
-    document.getElementById('mainKpis').style.display = 'grid';
-    document.getElementById('mainKpisSkeletons').style.display = 'none';
-    document.getElementById('pageviewsChart').parentElement.parentElement.style.display = 'grid';
-    document.getElementById('pageviewsChartSkeleton').parentElement.parentElement.style.display = 'none';
-    document.getElementById('tableSkeletonContainer').style.display = 'none';
-    var tabCard = document.getElementById('topPagesTable').closest('.section-card');
-    if (tabCard) tabCard.style.display = 'block';
-}
-
-// =========================================
-//  RENDER: Sparkline (Mini-Trend in der KPI-Karte)
-// =========================================
-// Bewusst ohne Achsen, Gitter und Labels — eine Sparkline zeigt die FORM
-// des Verlaufs, nicht seine Werte. Die exakte Zahl steht daneben in der Kachel.
-function renderSparkline(containerId, points, color) {
-    var el = document.getElementById(containerId);
-    if (!el) return;
-
-    // Unter 2 Punkten gibt es keinen Verlauf. Dann die Kachel NICHT mit einer
-    // leeren Flaeche aufblaehen — Platz komplett rausnehmen.
-    if (!points || points.length < 2) {
-        el.innerHTML = '';
-        el.style.display = 'none';
-        return;
-    }
-    el.style.display = '';
-
-    var W = 100, H = 26, PAD = 2;
-    var max = 0, min = Infinity;
-    points.forEach(function(v) {
-        if (v > max) max = v;
-        if (v < min) min = v;
-    });
-    if (max === min) { max = min + 1; }
-
-    var n = points.length;
-    var uid = containerId;
-    var xs = function(i) { return (i / (n - 1)) * W; };
-    var ys = function(v) { return H - PAD - ((v - min) / (max - min)) * (H - PAD * 2); };
-
-    var line = '', area = '';
-    points.forEach(function(v, i) {
-        var x = xs(i).toFixed(1), y = ys(v).toFixed(1);
-        line += (i === 0 ? 'M' : 'L') + x + ' ' + y;
-    });
-    area = line + 'L' + W + ' ' + H + 'L0 ' + H + 'Z';
-
-    var lastX = xs(n - 1).toFixed(1);
-    var lastY = ys(points[n - 1]).toFixed(1);
-
-    el.innerHTML =
-        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" class="spark-svg" aria-hidden="true">' +
-            '<defs><linearGradient id="sp' + uid + '" x1="0" y1="0" x2="0" y2="1">' +
-                '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.28"/>' +
-                '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
-            '</linearGradient></defs>' +
-            '<path d="' + area + '" fill="url(#sp' + uid + ')"/>' +
-            '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.6" ' +
-                'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
-            '<circle cx="' + lastX + '" cy="' + lastY + '" r="1.8" fill="' + color + '" ' +
-                'vector-effect="non-scaling-stroke"/>' +
-        '</svg>';
-}
-
-// =========================================
-//  RENDER: Aktivitäts-Puls (7 Wochentage × 24 Stunden)
-// =========================================
-var PULSE_DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-
-function renderActivityPulse(activity) {
-    var el = document.getElementById('activityPulse');
-    if (!el) return;
-
-    if (!activity || !activity.length) {
-        el.innerHTML = '<p class="ch-empty">Noch keine Aktivitätsdaten</p>';
-        return;
-    }
-
-    // dow: 1=Mo … 7=So  →  Index 0..6
-    var grid = [];
-    for (var d = 0; d < 7; d++) {
-        grid.push(new Array(24).fill(0));
-    }
-    var max = 0;
-    var peak = { pv: 0, dow: 0, hour: 0 };
-
-    activity.forEach(function(a) {
-        var di = (a.dow || 1) - 1;
-        var hi = a.hour || 0;
-        if (di < 0 || di > 6 || hi < 0 || hi > 23) return;
-        var pv = a.pageviews || 0;
-        grid[di][hi] = pv;
-        if (pv > max) max = pv;
-        if (pv > peak.pv) peak = { pv: pv, dow: di, hour: hi };
-    });
-
-    // 5 Stufen. Alles > 0 bekommt mindestens Stufe 1 — sonst verschwinden
-    // einzelne Aufrufe optisch komplett und die Karte lügt.
-    function level(v) {
-        if (v <= 0) return 0;
-        if (max <= 1) return 4;
-        var r = v / max;
-        if (r <= 0.25) return 1;
-        if (r <= 0.5)  return 2;
-        if (r <= 0.75) return 3;
-        return 4;
-    }
-
-    var html = '<div class="pulse-hours">';
-    for (var h = 0; h < 24; h++) {
-        html += '<span class="pulse-hour">' + (h % 3 === 0 ? h : '') + '</span>';
-    }
-    html += '</div>';
-
-    for (var dd = 0; dd < 7; dd++) {
-        html += '<div class="pulse-row">';
-        html += '<span class="pulse-day">' + PULSE_DAYS[dd] + '</span>';
-        html += '<div class="pulse-cells">';
-        for (var hh = 0; hh < 24; hh++) {
-            var v = grid[dd][hh];
-            html += '<span class="pulse-cell" data-lvl="' + level(v) + '" title="' +
-                    PULSE_DAYS[dd] + ' ' + hh + ':00 — ' + fmt(v) + ' Aufrufe"></span>';
+// Der Worker schickt nur Zeitpunkte MIT Aufrufen. Ohne Auffuellen verbindet die
+// Linie zwei belebte Stunden quer ueber eine leere Nacht, als waere dazwischen
+// etwas los gewesen. Aufgefuellt wird ab dem ersten gelieferten Punkt, nicht ab
+// Zeitraumbeginn: davor wurde womoeglich noch gar nicht erfasst, und eine 0
+// behauptete dann eine Messung, die es nie gab.
+function fillSeries(series) {
+    if (!series.length) return series;
+    var hourly = isHourly(series);
+    var byKey = {};
+    series.forEach(function (s) { byKey[hourly ? new Date(s.ts).getTime() : s.ts] = s; });
+    var out = [];
+    if (hourly) {
+        var H = 3600000;
+        var t0 = new Date(series[0].ts).getTime();
+        var tEnd = Math.max(new Date(series[series.length - 1].ts).getTime(), Math.floor(Date.now() / H) * H);
+        for (var t = t0; t <= tEnd && out.length < 2000; t += H) {
+            out.push(byKey[t] || { ts: new Date(t).toISOString().replace('.000Z', 'Z'), pageviews: 0, visitors: 0, sessions: 0 });
         }
-        html += '</div></div>';
+    } else {
+        var d = parseDay(series[0].ts), last = parseDay(series[series.length - 1].ts), today = new Date();
+        today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (today > last) last = today;
+        while (d <= last && out.length < 2000) {
+            var k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            out.push(byKey[k] || { ts: k, pageviews: 0, visitors: 0, sessions: 0 });
+            d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+        }
+    }
+    return out;
+}
+
+function pointLabel(ts, long, hourly) {
+    var d = hourly ? new Date(ts) : parseDay(ts);
+    var time = d.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }) + (EN ? '' : ' Uhr');
+    if (hourly && currentRange <= 1) return long ? d.toLocaleDateString(mwlLocale(), { weekday: 'short' }) + ', ' + time : time.replace(' Uhr', '');
+    var date = d.toLocaleDateString(mwlLocale(), long
+        ? { weekday: 'short', day: 'numeric', month: 'long', year: currentRange > 90 ? 'numeric' : undefined }
+        : { day: 'numeric', month: 'short' });
+    return long && hourly ? date + ', ' + time : date;
+}
+
+function renderMainChart() {
+    var el = document.getElementById('mainChart');
+    if (!el || !view.data) return;
+    var series = fillSeries(view.data.series || []);
+    var hourly = isHourly(series);
+    var key = view.metric;
+    var foot = document.getElementById('chartFoot');
+    if (foot) {
+        var span = { 1: T('den 24 Stunden', 'the 24 hours'), 365: T('dem Jahr', 'the year') }[currentRange] ||
+                (EN ? 'the ' + currentRange + ' days' : 'den ' + currentRange + ' Tagen');
+        var text = T('Pfeile vergleichen mit ', 'Arrows compare with ') + span + T(' davor.', ' before.');
+        // Beginnt die Reihe spuerbar nach dem Zeitraumbeginn, lag davor keine
+        // Erfassung — das sagen, statt die Luecke stumm zu lassen.
+        if (series.length && !hourly) {
+            var first = parseDay(series[0].ts);
+            var rangeStart = new Date(Date.now() - currentRange * 86400000);
+            if (first - rangeStart > 2 * 86400000) {
+                text += ' ' + T('Erfasst wird seit ', 'Tracking started on ') +
+                    first.toLocaleDateString(mwlLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) + '.';
+            }
+        }
+        foot.textContent = text;
     }
 
+    var W = el.clientWidth, H = el.clientHeight;
+    if (!series.length || W < 50) {
+        el.innerHTML = '<div class="chart-empty">' + T('Keine Daten im Zeitraum.', 'No data in this period.') + '</div>';
+        return;
+    }
+
+    var vals = series.map(function (s) { return Number(s[key]) || 0; });
+    var step = niceStep(Math.max.apply(null, vals) / 4);
+    var max = step * 4;
+    var cs = getComputedStyle(el);
+    var padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0, padR = parseFloat(cs.paddingRight) || 0;
+    W -= padR; H -= padT + padB;
+    var L = 48, R = 8, TOP = 6, B = 26;
+    var iw = Math.max(10, W - L - R), ih = Math.max(10, H - TOP - B);
+    var n = vals.length;
+    var x = function (i) { return L + (n === 1 ? iw / 2 : i * iw / (n - 1)); };
+    var y = function (v) { return TOP + ih - (v / max) * ih; };
+
+    var out = '<defs><linearGradient id="anAreaGrad" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.28"/>' +
+        '<stop offset="100%" stop-color="var(--primary)" stop-opacity="0"/></linearGradient></defs>';
+
+    for (var g = 0; g <= 4; g++) {
+        var gv = max * g / 4, gy = y(gv).toFixed(1);
+        out += '<line class="grid-line" x1="' + L + '" x2="' + (L + iw) + '" y1="' + gy + '" y2="' + gy + '"/>';
+        out += '<text class="axis-text" x="' + (L - 10) + '" y="' + gy + '" dy="0.32em" text-anchor="end">' + esc(fmtNum(gv)) + '</text>';
+    }
+
+    // Bei Stundenwerten ueber mehrere Tage stehen die Marken an Mitternacht
+    // (Ortszeit) — sonst tragen zwei Marken denselben Tag.
+    var tickIdx = [];
+    if (hourly && currentRange > 1) {
+        series.forEach(function (s, i) { if (new Date(s.ts).getHours() === 0) tickIdx.push(i); });
+        var every = Math.max(1, Math.ceil(tickIdx.length / Math.max(2, Math.floor(iw / 80))));
+        tickIdx = tickIdx.filter(function (_, i) { return i % every === 0; });
+    } else {
+        var ticks = Math.min(n, Math.max(2, Math.floor(iw / 90)));
+        for (var t = 0; t < ticks; t++) {
+            var ti = ticks === 1 ? 0 : Math.round(t * (n - 1) / (ticks - 1));
+            if (tickIdx.indexOf(ti) === -1) tickIdx.push(ti);
+        }
+    }
+    tickIdx.forEach(function (idx) {
+        var tx = x(idx);
+        var anchor = tx - L < 30 ? 'start' : L + iw - tx < 30 ? 'end' : 'middle';
+        out += '<text class="axis-text" x="' + tx.toFixed(1) + '" y="' + (TOP + ih + 18) + '" text-anchor="' + anchor + '">' + esc(pointLabel(series[idx].ts, false, hourly)) + '</text>';
+    });
+
+    var line = vals.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join('');
+    if (n > 1) {
+        out += '<path class="area" d="' + line + 'L' + x(n - 1).toFixed(1) + ' ' + (TOP + ih) + 'L' + x(0).toFixed(1) + ' ' + (TOP + ih) + 'Z"/>';
+        out += '<path class="line" d="' + line + '"/>';
+    }
+    out += '<line class="cross" id="chartCross" y1="' + TOP + '" y2="' + (TOP + ih) + '" x1="-10" x2="-10" visibility="hidden"/>';
+    out += '<circle class="dot" id="chartDot" r="4.5" cx="' + x(0) + '" cy="' + y(vals[0]) + '"' + (n > 1 ? ' visibility="hidden"' : '') + '/>';
+    out += '<rect id="chartHit" x="' + L + '" y="0" width="' + iw + '" height="' + (TOP + ih) + '" fill="transparent"/>';
+
+    el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' +
+        esc(T(METRIC_NAMES[key][0], METRIC_NAMES[key][1])) + '">' + out + '</svg><div class="chart-tip" id="chartTip"></div>';
+
+    var svg = el.querySelector('svg'), cross = el.querySelector('#chartCross'), dot = el.querySelector('#chartDot'), tip = el.querySelector('#chartTip');
+    function at(clientX) {
+        var r = svg.getBoundingClientRect();
+        var px = (clientX - r.left) * (W / r.width);
+        var i = n === 1 ? 0 : Math.round((px - L) / iw * (n - 1));
+        i = Math.max(0, Math.min(n - 1, i));
+        var cx = x(i);
+        cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible');
+        dot.setAttribute('cx', cx); dot.setAttribute('cy', y(vals[i])); dot.setAttribute('visibility', 'visible');
+        tip.innerHTML = '<b>' + esc(fmtInt(vals[i])) + ' ' + esc(T(METRIC_NAMES[key][0], METRIC_NAMES[key][1])) + '</b><span>' + esc(pointLabel(series[i].ts, true, hourly)) + '</span>';
+        var left = cx / W * r.width;
+        var half = tip.offsetWidth / 2;
+        tip.style.left = Math.max(half, Math.min(r.width - half, left)) + 'px';
+        tip.classList.add('is-on');
+    }
+    function off() {
+        cross.setAttribute('visibility', 'hidden');
+        if (n > 1) dot.setAttribute('visibility', 'hidden');
+        tip.classList.remove('is-on');
+    }
+    svg.addEventListener('pointermove', function (e) { at(e.clientX); });
+    svg.addEventListener('pointerdown', function (e) { at(e.clientX); });
+    svg.addEventListener('pointerleave', off);
+}
+
+function setMetric(key) {
+    view.metric = key;
+    document.querySelectorAll('.metric[data-metric]').forEach(function (b) {
+        var on = b.dataset.metric === key;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    renderMainChart();
+}
+
+// ─── Listen ──────────────────────────────────────────────────
+var LIST_LIMIT = 8;
+
+function renderList(id, rows, opts) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    opts = opts || {};
+    rows = (rows || []).filter(function (r) { return r.value > 0; });
+    if (!rows.length) {
+        el.innerHTML = '<p class="list-empty">' + esc(opts.empty || T('Keine Daten im Zeitraum.', 'No data in this period.')) + '</p>';
+        return;
+    }
+    var key = opts.key || id;
+    var open = !!view.expanded[key];
+    var limit = opts.limit || LIST_LIMIT;
+    var shown = open ? rows : rows.slice(0, limit);
+    var max = rows.reduce(function (m, r) { return Math.max(m, r.value); }, 0);
+    var total = opts.total || rows.reduce(function (s, r) { return s + r.value; }, 0);
+
+    var html = shown.map(function (r) {
+        var w = max ? (r.value / max * 100) : 0;
+        var lead = r.icon ? '<span class="row-icon">' + r.icon + '</span>' : r.flag ? r.flag : '';
+        var text = r.href
+            ? '<a href="' + esc(r.href) + '"><span>' + esc(r.label) + '</span></a>'
+            : '<span>' + esc(r.label) + '</span>';
+        return '<div class="row"' + (r.title ? ' title="' + esc(r.title) + '"' : '') + '>' +
+            '<span class="row-bar" style="width:' + w.toFixed(2) + '%"></span>' +
+            '<span class="row-label' + (r.path ? ' is-path' : '') + '">' + lead + text + '</span>' +
+            '<span class="row-value">' + esc(fmtInt(r.value)) + '</span>' +
+            (opts.noShare ? '' : '<span class="row-share">' + esc(fmtPct(total ? r.value / total : 0, 0)) + '</span>') +
+            '</div>';
+    }).join('');
+
+    if (rows.length > limit) {
+        html += '<button type="button" class="list-more" data-expand="' + esc(key) + '" aria-expanded="' + open + '">' +
+            esc(open ? T('Weniger anzeigen', 'Show less') : T('Alle ' + rows.length + ' anzeigen', 'Show all ' + rows.length)) + '</button>';
+    }
+    el.innerHTML = html;
+}
+
+function setColumnLabels(labelId, label, valueId, value) {
+    var a = document.getElementById(labelId); if (a) a.textContent = label;
+    var b = valueId && document.getElementById(valueId); if (b) b.textContent = value;
+}
+
+function renderPages() {
+    var d = view.data; if (!d) return;
+    var tab = view.tabs.pages, rows, val;
+    if (tab === 'entry') { rows = mergePaths(d.entryPages, 'entries'); val = T('Einstiege', 'Entries'); }
+    else if (tab === 'exit') { rows = mergePaths(d.exitPages, 'exits'); val = T('Ausstiege', 'Exits'); }
+    else { rows = mergePaths(d.topPages, 'visitors'); val = T('Besucher', 'Visitors'); }
+    setColumnLabels('pagesColLabel', T('Pfad', 'Path'), 'pagesColValue', val);
+    renderList('pagesList', rows, { key: 'pages-' + tab });
+}
+
+function renderSources() {
+    var d = view.data; if (!d) return;
+    var tab = view.tabs.sources, rows, label = T('Quelle', 'Source'), empty;
+    if (tab === 'channels') {
+        rows = (d.channels || []).map(function (c) { return { label: channelLabel(c.channel), value: c.visitors }; });
+        label = T('Kanal', 'Channel');
+    } else if (tab === 'utm') {
+        rows = ((d.utm && d.utm.sources) || []).filter(function (u) { return u.value && u.value !== '(keine)'; })
+            .map(function (u) { return { label: u.value, value: u.visitors }; });
+        label = 'utm_source';
+        empty = T('Im Zeitraum kam niemand über einen Link mit Kampagnen-Kennung.', 'Nobody arrived via a link with a campaign tag in this period.');
+    } else {
+        // "www.bing.com" und "bing.com" kommen getrennt — nach dem Kuerzen sind es
+        // zwei gleichlautende Zeilen. Zusammenlegen (Besucher koennen dabei doppelt
+        // zaehlen, wenn jemand ueber beide kam; bei Verweisen vernachlaessigbar).
+        var byLabel = {};
+        (d.referrers || []).forEach(function (r) {
+            var l = sourceLabel(r.source);
+            byLabel[l] = (byLabel[l] || 0) + (Number(r.visitors) || 0);
+        });
+        rows = Object.keys(byLabel).map(function (l) { return { label: l, value: byLabel[l] }; })
+            .sort(function (a, b) { return b.value - a.value; });
+    }
+    setColumnLabels('sourcesColLabel', label, 'sourcesColValue', T('Besucher', 'Visitors'));
+    // UTM zaehlt nur die Besucher MIT Kennung — der Anteil soll sich auf alle beziehen.
+    renderList('sourcesList', rows, { key: 'sources-' + tab, empty: empty, total: tab === 'utm' ? (d.summary && d.summary.visitors) : 0 });
+}
+
+function deRegionLabels() {
+    var labels = {};
+    var geo = window.__GEO_DE__;
+    if (!EN && geo && geo.paths) geo.paths.forEach(function (p) { if (p.name) labels[p.id] = p.name; });
+    return labels;
+}
+
+function renderGeo() {
+    var d = view.data; if (!d) return;
+    var tab = view.tabs.geo, rows;
+    if (tab === 'regions') {
+        var names = deRegionLabels();
+        rows = (d.regions || []).filter(function (r) { return /^DE-/.test(r.id || ''); })
+            .map(function (r) { return { label: names[r.id] || r.region, value: r.visitors }; });
+        setColumnLabels('geoColLabel', T('Bundesland', 'State'));
+    } else if (tab === 'cities') {
+        rows = (d.cities || []).map(function (c) { return { label: c.city, value: c.visitors, flag: ccBadge(c.code) }; });
+        setColumnLabels('geoColLabel', T('Stadt', 'City'));
+    } else {
+        rows = (d.countries || []).map(function (c) { return { label: countryName(c.code, c.country), value: c.visitors, flag: ccBadge(c.code) }; });
+        setColumnLabels('geoColLabel', T('Land', 'Country'));
+    }
+    // Anteil gegen alle Besucher, nicht gegen die Liste: die Staedte decken nur
+    // die ersten 30 ab, die Summe der Zeilen waere ein erfundener Nenner.
+    renderList('geoList', rows, { key: 'geo-' + tab, limit: 9, total: d.summary && d.summary.visitors });
+    showMap(tab === 'regions' ? 'de' : 'world');
+    // Punkte nur bei "Staedte": auf dem Laender-Reiter deckte der Berlin-Cluster
+    // Deutschland — das Land mit 90 % der Besucher — vollstaendig zu.
+    var stage = document.getElementById('mapStage');
+    if (stage) stage.classList.toggle('show-cities', tab === 'cities');
+}
+
+function renderTech() {
+    var d = view.data; if (!d) return;
+    var tab = view.tabs.tech, rows, label;
+    if (tab === 'browsers') {
+        rows = (d.browsers || []).filter(function (b) { return !isKnownBot(b.browser); }).map(function (b) { return { label: b.browser, value: b.visitors }; });
+        label = 'Browser';
+    } else if (tab === 'os') {
+        rows = (d.os || []).filter(function (o) { return !isKnownBot(o.os); }).map(function (o) { return { label: o.os, value: o.visitors }; });
+        label = T('Betriebssystem', 'Operating system');
+    } else if (tab === 'screens') {
+        rows = (d.resolutions || []).map(function (r) { return { label: r.res, value: r.visitors }; });
+        label = T('Bildschirm', 'Screen');
+    } else if (tab === 'langs') {
+        rows = (d.languages || []).map(function (l) { return { label: langName(l.lang), value: l.visitors }; });
+        label = T('Sprache', 'Language');
+    } else {
+        rows = (d.devices || []).map(function (x) {
+            var l = DEVICE_LABELS[x.device];
+            return { label: l ? T(l[0], l[1]) : x.device, value: x.visitors, icon: ICONS[String(x.device).toLowerCase()] || ICONS.desktop };
+        });
+        label = T('Gerät', 'Device');
+    }
+    setColumnLabels('techColLabel', label);
+    renderList('techList', rows, { key: 'tech-' + tab, total: d.summary && d.summary.visitors });
+}
+
+// ─── Ladezeit (LCP) ──────────────────────────────────────────
+function renderVitals(lcp) {
+    var el = document.getElementById('vitals');
+    if (!el) return;
+    if (!lcp || !lcp.length) {
+        el.innerHTML = '<p class="list-empty">' + T('Noch keine Messwerte im Zeitraum.', 'No measurements in this period yet.') + '</p>';
+        return;
+    }
+    var classes = [
+        { k: 'good', test: /good/i, name: T('Schnell', 'Fast'), range: T('unter 2,5 s', 'under 2.5 s') },
+        { k: 'mid', test: /needs/i, name: T('Geht so', 'Needs work'), range: T('2,5 bis 4 s', '2.5 to 4 s') },
+        { k: 'bad', test: /poor/i, name: T('Langsam', 'Slow'), range: T('über 4 s', 'over 4 s') }
+    ];
+    var total = lcp.reduce(function (s, l) { return s + (l.sessions || 0); }, 0);
+    var rows = classes.map(function (c) {
+        var hit = lcp.find(function (l) { return c.test.test(l.rating || ''); }) || { sessions: 0, avgMs: 0 };
+        return { c: c, n: hit.sessions || 0, avg: hit.avgMs || 0 };
+    });
+    var bar = rows.filter(function (r) { return r.n > 0; }).map(function (r) {
+        return '<i class="bg-' + r.c.k + '" style="flex:' + r.n + '" title="' + esc(r.c.name + ': ' + fmtPct(r.n / total, 0)) + '"></i>';
+    }).join('');
+    var list = rows.map(function (r) {
+        return '<div class="vital">' +
+            '<span class="vital-icon v-' + r.c.k + '">' + ICONS[r.c.k] + '</span>' +
+            '<span class="vital-label">' + esc(r.c.name) + '<small>' + esc(r.c.range) + ' · ' + esc(fmtInt(r.n)) + ' ' + T('Sitzungen', 'sessions') + '</small></span>' +
+            '<span class="vital-avg">' + (r.avg ? 'Ø ' + esc(fmtDec(r.avg / 1000, 2)) + ' s' : '') + '</span>' +
+            '<span class="vital-share">' + esc(fmtPct(total ? r.n / total : 0, 0)) + '</span>' +
+            '</div>';
+    }).join('');
+    el.innerHTML = '<div class="vitals-bar" role="img" aria-label="' + esc(T('Anteile schnell, mittel, langsam', 'Share fast, medium, slow')) + '">' + bar + '</div><div class="vitals-rows">' + list + '</div>';
+}
+
+// ─── Nutzungszeiten ──────────────────────────────────────────
+// PostHog liefert Wochentag (1 = Montag … 7 = Sonntag) und Stunde in UTC —
+// gemessen am 2026-09-29: toHour() und die Z-Stempel der 24-h-Reihe decken
+// sich Stunde fuer Stunde. Umgerechnet wird auf die Uhr des Betrachters.
+function renderHeatmap(activity) {
+    var el = document.getElementById('heatmap');
+    if (!el) return;
+    var note = document.getElementById('heatNote');
+    var peakEl = document.getElementById('heatPeak');
+    var grid = [];
+    for (var d0 = 0; d0 < 7; d0++) { grid.push(new Array(24).fill(0)); }
+    var shift = -Math.round(new Date().getTimezoneOffset() / 60);
+    (activity || []).forEach(function (a) {
+        var dow = (Number(a.dow) || 1) - 1, h = (Number(a.hour) || 0) + shift;
+        while (h >= 24) { h -= 24; dow = (dow + 1) % 7; }
+        while (h < 0) { h += 24; dow = (dow + 6) % 7; }
+        grid[dow][h] += Number(a.pageviews) || 0;
+    });
+    var max = 0, peak = null;
+    grid.forEach(function (row, di) { row.forEach(function (v, hi) { if (v > max) { max = v; peak = [di, hi]; } }); });
+
+    var days = EN ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] : ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    var daysLong = EN ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                      : ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+    if (!max) {
+        el.innerHTML = '<p class="list-empty">' + T('Keine Daten im Zeitraum.', 'No data in this period.') + '</p>';
+        if (peakEl) peakEl.textContent = '';
+        return;
+    }
+    function lvl(v) { return v <= 0 ? '' : ' h' + Math.min(5, Math.ceil(v / max * 5)); }
+    function hh(h) { return (h < 10 ? '0' : '') + h; }
+    // "14–15 Uhr" / "14:00–15:00"
+    function span(h) { var b = (h + 1) % 24; return EN ? hh(h) + ':00–' + hh(b) + ':00' : hh(h) + '–' + hh(b) + ' Uhr'; }
+
+    var html = '<div class="heat-grid"><span></span>';
+    for (var h = 0; h < 24; h++) html += '<span class="heat-hour">' + (h % 6 === 0 ? hh(h) : '') + '</span>';
+    grid.forEach(function (row, di) {
+        html += '<span class="heat-day">' + days[di] + '</span>';
+        row.forEach(function (v, hi) {
+            html += '<span class="heat-cell' + lvl(v) + '" data-tip="' + esc(daysLong[di] + ', ' + span(hi) + ': ' + fmtInt(v) + ' ' + T('Aufrufe', 'views')) + '"></span>';
+        });
+    });
+    html += '</div><div class="heat-legend"><span>' + T('weniger', 'less') + '</span>' +
+        ['', ' h1', ' h2', ' h3', ' h4', ' h5'].map(function (c) { return '<i class="heat-cell' + c + '"></i>'; }).join('') +
+        '<span>' + T('mehr', 'more') + '</span></div>';
     el.innerHTML = html;
 
-    var peakEl = document.getElementById('pulsePeak');
-    if (peakEl && peak.pv > 0) {
-        peakEl.textContent = 'Spitze: ' + PULSE_DAYS[peak.dow] + ' ' + peak.hour + ':00 (' + fmt(peak.pv) + ')';
+    if (peakEl && peak) {
+        peakEl.textContent = T('Am meisten los: ', 'Busiest: ') + days[peak[0]] + ' ' + span(peak[1]);
+    }
+    // HogQL kappt ohne LIMIT bei 100 Zeilen (7 x 24 = 168). Solange der Worker
+    // das nicht mitschickt, fehlen die hinteren Wochentage — das sagen statt es
+    // als "ruhiger Sonntag" auszugeben.
+    if (note) {
+        var cut = (activity || []).length === 100;
+        note.hidden = !cut;
+        note.textContent = cut ? T('Der Statistik-Server hat nur 100 von 168 Feldern geliefert, die letzten Wochentage fehlen deshalb.',
+                                   'The statistics server only returned 100 of 168 cells, so the last weekdays are missing.') : '';
     }
 }
 
-// =========================================
-//  RENDER: Karten (Welt + Deutschland)
-// =========================================
+// ─── Verhalten ───────────────────────────────────────────────
+function renderHist(id, rows) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var total = rows.reduce(function (s, r) { return s + r.value; }, 0);
+    if (!total) { el.innerHTML = '<p class="list-empty">' + T('Keine Daten.', 'No data.') + '</p>'; return; }
+    var max = Math.max.apply(null, rows.map(function (r) { return r.value; }));
+    el.innerHTML = rows.map(function (r) {
+        return '<div class="hist-row" title="' + esc(fmtInt(r.value) + ' ' + T('Sitzungen', 'sessions')) + '">' +
+            '<span class="hist-label">' + esc(r.label) + '</span>' +
+            '<span class="hist-track"><span class="hist-fill" style="width:' + (r.value / max * 100).toFixed(1) + '%"></span></span>' +
+            '<span class="hist-val">' + esc(fmtPct(r.value / total, 0)) + '</span></div>';
+    }).join('');
+}
+
+function renderBehaviour(d) {
+    renderHist('durHist', (d.sessionDurationBuckets || []).slice()
+        .sort(function (a, b) { return durationBucketSeconds(a.bucket) - durationBucketSeconds(b.bucket); })
+        .map(function (b) { return { label: durationBucketLabel(b.bucket), value: b.sessions || 0 }; }));
+    renderHist('ppsHist', (d.pageviewsPerSession || []).slice()
+        .sort(function (a, b) { return firstNumber(a.bucket) - firstNumber(b.bucket); })
+        .map(function (b) { return { label: pagesBucketLabel(b.bucket), value: b.sessions || 0 }; }));
+
+    // Die Formel steht in engagement.js, weil /about/ dieselbe Zahl zeigt. Kein
+    // Inline-Ersatz: fehlt die Datei, bleibt das Feld leer und das faellt auf.
+    var sum = d.summary || {};
+    var valEl = document.getElementById('kpiEngagement'), subEl = document.getElementById('kpiEngagementSub');
+    if (!window.mwlEngagement) { valEl.textContent = '—'; subEl.textContent = T('nicht berechnet', 'not calculated'); return; }
+    var p = window.mwlEngagement.parts({ pageviews: sum.pageviews, sessions: sum.sessions, bounceRate: sum.bounceRate });
+    if (!p.hasData) { valEl.textContent = '—'; subEl.textContent = T('Keine Sitzungen im Zeitraum.', 'No sessions in this period.'); return; }
+    valEl.textContent = window.mwlEngagement.score({ pageviews: sum.pageviews, sessions: sum.sessions, bounceRate: sum.bounceRate }) + ' / 100';
+    subEl.textContent = fmtPct(1 - p.bounceRate, 0) + T(' sehen mehr als eine Seite, im Schnitt ', ' see more than one page, on average ') +
+        fmtDec(p.pagesPerSession, 1) + T(' Seiten je Sitzung.', ' pages per session.');
+}
+
+// ─── Funktionen ──────────────────────────────────────────────
+function renderEvents(events) {
+    var meta = document.getElementById('eventsMeta');
+    var rows = (events || []).map(function (e) {
+        return { label: eventLabel(e.name), value: e.count || 0,
+                 title: fmtInt(e.visitors || 0) + ' ' + T('verschiedene Besucher', 'distinct visitors') };
+    });
+    var total = rows.reduce(function (s, r) { return s + r.value; }, 0);
+    if (meta) meta.textContent = total ? fmtInt(total) + ' ' + T('Aktionen', 'actions') : '';
+    renderList('eventsList', rows, { key: 'events', limit: 12, noShare: true,
+        empty: T('Im Zeitraum wurde keine Aktion gezählt.', 'No actions were counted in this period.') });
+}
+
+// ─── Cloudflare ──────────────────────────────────────────────
+function renderCloudflare(cf) {
+    var days = document.getElementById('cfDays');
+    var set = function (id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    if (!cf || !cf.available || !cf.totals) {
+        ['cfRequests', 'cfBytes', 'cfCache', 'cfThreats'].forEach(function (id) { set(id, '—'); });
+        if (days) days.innerHTML = '<p class="list-empty">' + T('Keine Edge-Daten verfügbar.', 'No edge data available.') + '</p>';
+        return;
+    }
+    var t = cf.totals;
+    var req = t.requests || 0, cached = t.cachedRequests || 0, bytes = t.bytes || 0, cbytes = t.cachedBytes || 0;
+    set('cfWindow', EN ? 'Last ' + (cf.days || 3) + ' days' : 'Letzte ' + (cf.days || 3) + ' Tage');
+    set('cfRequests', fmtNum(req));
+    set('cfRequestsSub', fmtInt(Math.round(req / (cf.days || 3))) + T(' pro Tag', ' per day'));
+    set('cfBytes', fmtBytes(bytes));
+    set('cfBytesSub', fmtBytes(cbytes) + T(' davon aus dem Cache', ' of it from cache'));
+    set('cfCache', fmtPct(req ? cached / req : 0, 0));
+    set('cfCacheSub', T('der Anfragen', 'of requests'));
+    set('cfThreats', fmtInt(t.threats || 0));
+    set('cfThreatsSub', T('Anfragen als Angriff erkannt', 'requests flagged as attacks'));
+
+    if (!days) return;
+    var hist = Array.isArray(cf.history) ? cf.history : [];
+    if (!hist.length) { days.innerHTML = ''; return; }
+    days.innerHTML = '<div class="cf-day is-head"><span>' + T('Tag', 'Day') + '</span><span class="cf-split">' + T('Cache / Server', 'Cache / origin') +
+        '</span><span>' + T('Anfragen', 'Requests') + '</span><span>Cache</span><span>' + T('Daten', 'Data') + '</span></div>' +
+        hist.map(function (r) {
+            var hit = r.requests ? r.cachedRequests / r.requests : 0;
+            return '<div class="cf-day"><span>' + esc(parseDay(r.date).toLocaleDateString(mwlLocale(), { weekday: 'short', day: 'numeric', month: 'short' })) + '</span>' +
+                '<span class="cf-split"><span class="cf-track"><i class="cached" style="flex:' + (r.cachedRequests || 0) + '"></i><i class="origin" style="flex:' + Math.max(0, (r.requests || 0) - (r.cachedRequests || 0)) + '"></i></span></span>' +
+                '<span>' + esc(fmtInt(r.requests)) + '</span><span>' + esc(fmtPct(hit, 0)) + '</span><span>' + esc(fmtBytes(r.bytes)) + '</span></div>';
+        }).join('');
+}
+
+// ─── Karten ──────────────────────────────────────────────────
+// geo-maps.js ist GENERIERT (tools/geo/build-maps.js) und bringt
+// __GEO_WORLD__ und __GEO_DE__ mit. Fuenf gleich breite Stufen, und Karte und
+// Legende benutzen dieselbe Funktion — sonst luegt die Legende.
 var _mapData = { countries: [], regions: [], cities: [] };
 
-// Sequential-Rampe: EINE Hue, dunkel → hell. Diskrete Stufen statt stufenlosem
-// Alpha-Verlauf — Stufen sind ablesbar, ein Verlauf ist es nicht (die Legende
-// kann sonst nichts erklären). "Keine Daten" ist bewusst neutral-grau und NICHT
-// die hellste/dunkelste Stufe der Rampe, sonst liest man 0 als Wert.
-var MAP_EMPTY = 'rgba(255,255,255,0.05)';
-var MAP_RAMP = [
-    '#2b2150',   // 1 — kaum Traffic
-    '#453081',
-    '#6344b8',
-    '#8b64e3',
-    '#b794f6',   // 5 — Spitze
-];
-
-// Gleiche Klassengrenzen fuer Karte und Legende — sonst luegt die Legende.
+// Logarithmisch: Deutschland stellt rund 90 % der Besucher. Linear fiele jedes
+// andere Land in die unterste Stufe, und 1 Besucher saehe aus wie 30.
 function _mapBucket(v, max) {
     if (!v || v <= 0 || max <= 0) return -1;
-    var r = v / max;
-    if (r <= 0.2) return 0;
-    if (r <= 0.4) return 1;
-    if (r <= 0.6) return 2;
-    if (r <= 0.8) return 3;
-    return 4;
+    if (max <= 1) return 4;
+    return Math.max(0, Math.min(4, Math.ceil(Math.log(v) / Math.log(max) * 5) - 1));
+}
+function _mapBucketBounds(b, max) {
+    if (max <= 1) return [1, 1];
+    var lo = b === 0 ? 1 : Math.floor(Math.pow(max, b / 5)) + 1;
+    var hi = Math.floor(Math.pow(max, (b + 1) / 5));
+    return [lo, Math.max(lo, hi)];
 }
 
-function _mapShade(v, max) {
-    var b = _mapBucket(v, max);
-    return b < 0 ? MAP_EMPTY : MAP_RAMP[b];
-}
-
-// Gradnetz — gibt der Karte kartografische Glaubwuerdigkeit statt "Klumpen im Nichts"
-function _graticule(project, ext, scale, W, H) {
-    var out = '';
-    function pt(lon, lat) {
-        var p = project(lon, lat);
-        return [((p[0] - ext.minX) * scale).toFixed(1), ((p[1] - ext.minY) * scale).toFixed(1)];
+function _graticule(project, ext, scale) {
+    var out = '', lon, lat, d;
+    function pt(lo, la) {
+        var p = project(lo, la);
+        return ((p[0] - ext.minX) * scale).toFixed(1) + ' ' + ((p[1] - ext.minY) * scale).toFixed(1);
     }
-    var lon, lat, d, i;
     for (lon = -150; lon <= 150; lon += 30) {
-        d = '';
-        for (lat = -90; lat <= 90; lat += 5) {
-            var a = pt(lon, lat);
-            d += (d ? 'L' : 'M') + a[0] + ' ' + a[1];
-        }
+        d = ''; for (lat = -90; lat <= 90; lat += 5) d += (d ? 'L' : 'M') + pt(lon, lat);
         out += '<path d="' + d + '" class="map-grat"/>';
     }
     for (lat = -60; lat <= 80; lat += 30) {
-        d = '';
-        for (lon = -180; lon <= 180; lon += 5) {
-            var b = pt(lon, lat);
-            d += (d ? 'L' : 'M') + b[0] + ' ' + b[1];
-        }
+        d = ''; for (lon = -180; lon <= 180; lon += 5) d += (d ? 'L' : 'M') + pt(lon, lat);
         out += '<path d="' + d + '" class="map-grat"/>';
     }
-    return '<g class="map-graticule">' + out + '</g>';
+    return '<g>' + out + '</g>';
 }
 
 function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities, graticule) {
     var el = document.getElementById(containerId);
     if (!el) return;
-    if (!geo || !geo.paths) {
-        el.innerHTML = '<p class="ch-empty">Kartendaten nicht geladen</p>';
-        return;
-    }
-
+    if (!geo || !geo.paths) { el.innerHTML = '<p class="map-empty">' + T('Kartendaten nicht geladen.', 'Map data not loaded.') + '</p>'; return; }
     var max = 0;
-    Object.keys(valueByKey).forEach(function(k) {
-        if (valueByKey[k] > max) max = valueByKey[k];
-    });
-
+    Object.keys(valueByKey).forEach(function (k) { if (valueByKey[k] > max) max = valueByKey[k]; });
     var vb = geo.viewBox.split(' ').map(Number);
-    var uid = containerId;
-
-    var defs =
-        '<defs>' +
-            '<radialGradient id="ocean' + uid + '" cx="50%" cy="42%" r="72%">' +
-                '<stop offset="0%" stop-color="rgba(129,140,248,0.09)"/>' +
-                '<stop offset="100%" stop-color="rgba(129,140,248,0)"/>' +
-            '</radialGradient>' +
-            '<filter id="glow' + uid + '" x="-60%" y="-60%" width="220%" height="220%">' +
-                '<feGaussianBlur stdDeviation="2.2" result="b"/>' +
-                '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>' +
-            '</filter>' +
-        '</defs>';
-
-    var ocean = '<rect x="0" y="0" width="' + vb[2] + '" height="' + vb[3] + '" fill="url(#ocean' + uid + ')"/>';
-
-    var shapes = '';
-    geo.paths.forEach(function(p) {
-        var v = valueByKey[p.id] || 0;
-        var label = labelByKey[p.id] || p.name || p.id;
-        shapes += '<path d="' + p.d + '"' +
-               ' fill="' + _mapShade(v, max) + '"' +
-               ' class="map-shape' + (v > 0 ? ' has-data' : '') + '"' +
-               ' data-label="' + esc(label) + '"' +
-               ' data-value="' + v + '"></path>';
-    });
-
-    var grat = graticule || '';
-
-    // Städte numerisch aufbereiten — Clustering + Marker rechnen in viewBox-
-    // Einheiten und werden bei jeder Zoom-Stufe neu erzeugt (siehe _renderCities).
-    var pts = [];
-    (cities || []).forEach(function(c) {
-        if (c.x == null || c.y == null) return;
-        pts.push({ x: +c.x, y: +c.y, city: c.city, visitors: +c.visitors || 0 });
-    });
-
-    // Zoom-/Pan-Zustand haengt am Container — jede Ansicht (Welt/DE) merkt sich ihre eigene.
-    el._mapState = { k: 1, x: 0, y: 0, W: vb[2], H: vb[3], uid: uid, cities: pts, citiesRAF: 0 };
-
-    el.innerHTML =
-        '<svg viewBox="' + geo.viewBox + '" xmlns="http://www.w3.org/2000/svg" ' +
-        'preserveAspectRatio="xMidYMid meet" class="map-svg">' +
-            defs +
-            '<g class="map-zoom">' +
-                ocean + grat +
-                '<g class="map-shapes">' + shapes + '</g>' +
-                '<g class="map-cities"></g>' +
-            '</g>' +
-        '</svg>';
-
-    // Bedien-Overlay: Zoom-Buttons + dezenter Hinweis (nur die aktive Ansicht ist sichtbar).
-    el.insertAdjacentHTML('beforeend',
+    var shapes = geo.paths.map(function (p) {
+        var v = valueByKey[p.id] || 0, b = _mapBucket(v, max);
+        return '<path d="' + p.d + '" class="map-shape' + (b >= 0 ? ' b' + b : '') + '" data-label="' +
+            esc(labelByKey[p.id] || p.name || p.id) + '" data-value="' + v + '"></path>';
+    }).join('');
+    el._mapState = { k: 1, x: 0, y: 0, W: vb[2], H: vb[3], cities: cities || [], citiesRAF: 0 };
+    el.innerHTML = '<svg viewBox="' + geo.viewBox + '" preserveAspectRatio="xMidYMid meet" class="map-svg" role="img" aria-label="' +
+        esc(T('Karte der Besucher', 'Visitor map')) + '"><g class="map-zoom">' + (graticule || '') +
+        '<g class="map-shapes">' + shapes + '</g><g class="map-cities"></g></g></svg>' +
         '<div class="map-controls">' +
-            '<button type="button" class="map-ctrl" data-zoom="in" aria-label="Vergrößern" title="Vergrößern">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>' +
-            '</button>' +
-            '<button type="button" class="map-ctrl" data-zoom="out" aria-label="Verkleinern" title="Verkleinern">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg>' +
-            '</button>' +
-            '<button type="button" class="map-ctrl" data-zoom="reset" aria-label="Zurücksetzen" title="Zurücksetzen">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>' +
-            '</button>' +
-        '</div>' +
-        '<div class="map-hint" aria-hidden="true">Zum Zoomen scrollen · Ziehen zum Verschieben</div>');
-
+        '<button type="button" class="map-ctrl" data-zoom="in" aria-label="' + T('Vergrößern', 'Zoom in') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>' +
+        '<button type="button" class="map-ctrl" data-zoom="out" aria-label="' + T('Verkleinern', 'Zoom out') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 12h12"/></svg></button>' +
+        '<button type="button" class="map-ctrl" data-zoom="reset" aria-label="' + T('Zurücksetzen', 'Reset') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>' +
+        '</div>';
     _bindMapTooltip(el);
     _renderCities(el);
     _attachMapZoom(el);
 }
 
-// Greedy-Proximity-Clustering: staerkste Stadt zuerst, sie zieht alle Nachbarn
-// innerhalb von "thresh" (viewBox-Einheiten) an sich. thresh schrumpft beim
-// Zoom → dichte Ballungen brechen automatisch in Einzelstaedte auf.
+// Staerkste Stadt zuerst, sie zieht alle Nachbarn innerhalb von "thresh"
+// (viewBox-Einheiten) an sich. thresh schrumpft beim Zoom → Ballungen brechen auf.
 function _clusterCities(cities, thresh) {
-    var sorted = cities.slice().sort(function(a, b) { return b.visitors - a.visitors; });
-    var used = new Array(sorted.length);
-    var out = [];
-    var t2 = thresh * thresh;
+    var sorted = cities.slice().sort(function (a, b) { return b.visitors - a.visitors; });
+    var used = [], out = [], t2 = thresh * thresh;
     for (var i = 0; i < sorted.length; i++) {
         if (used[i]) continue;
         used[i] = true;
-        var seed = sorted[i];
-        var members = [seed];
-        var total = seed.visitors;
+        var seed = sorted[i], members = [seed], total = seed.visitors;
         for (var j = i + 1; j < sorted.length; j++) {
             if (used[j]) continue;
             var dx = sorted[j].x - seed.x, dy = sorted[j].y - seed.y;
-            if (dx * dx + dy * dy <= t2) {
-                used[j] = true;
-                members.push(sorted[j]);
-                total += sorted[j].visitors;
-            }
+            if (dx * dx + dy * dy <= t2) { used[j] = true; members.push(sorted[j]); total += sorted[j].visitors; }
         }
         out.push({ x: seed.x, y: seed.y, total: total, count: members.length, members: members });
     }
     return out;
 }
 
-// Zeichnet die Städte-Ebene fuer die aktuelle Zoom-Stufe neu. Marker-Radien
-// werden per /k gegengerechnet, damit die Punkte in JEDER Zoom-Stufe gleich
-// gross (und antippbar) bleiben, statt zu Riesen-Klecksen aufzublasen.
+// Radien per /k gegengerechnet: Punkte bleiben in jeder Zoomstufe gleich gross.
 function _renderCities(el) {
-    var st = el && el._mapState;
-    if (!st) return;
-    var g = el.querySelector('.map-cities');
-    if (!g) return;
-    if (!st.cities.length) { g.innerHTML = ''; return; }
-
+    var st = el && el._mapState, g = el && el.querySelector('.map-cities');
+    if (!st || !g) return;
     var k = st.k;
-    var clusters = _clusterCities(st.cities, 26 / k);
-
-    var top = null;
-    clusters.forEach(function(c) { if (!top || c.total > top.total) top = c; });
-
-    var html = '';
-    clusters.forEach(function(cl) {
-        var isTop = (cl === top);
+    g.innerHTML = _clusterCities(st.cities, 26 / k).map(function (cl) {
         var many = cl.count > 1;
-        var scr = many
-            ? 3.4 + Math.min(9, Math.sqrt(cl.total) * 1.5)
-            : 3.0 + Math.min(6, Math.sqrt(cl.total) * 1.3);
-        var r  = (scr / k).toFixed(2);
+        var scr = many ? 3 + Math.min(6, Math.sqrt(cl.total) * 0.8) : 2.6 + Math.min(4, Math.sqrt(cl.total) * 0.7);
         var cx = cl.x.toFixed(2), cy = cl.y.toFixed(2);
-
-        if (isTop) {
-            html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" class="map-city-pulse"></circle>';
-        }
-        if (many) {
-            html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((scr + 2.8) / k).toFixed(2) + '" class="map-cluster-ring"></circle>';
-        }
-        html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"' +
-                ' class="map-city' + (isTop ? ' is-top' : '') + (many ? ' is-cluster' : '') + '"' +
-                (isTop ? ' filter="url(#glow' + st.uid + ')"' : '') +
-                ' data-city="' + esc(cl.members[0].city || '') + '"' +
-                ' data-more="' + (cl.count - 1) + '"' +
-                ' data-value="' + cl.total + '"></circle>';
-    });
-    g.innerHTML = html;
+        return (many ? '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((scr + 2.8) / k).toFixed(2) + '" class="map-cluster-ring"></circle>' : '') +
+            '<circle cx="' + cx + '" cy="' + cy + '" r="' + (scr / k).toFixed(2) + '" class="map-city' + (many ? ' is-cluster' : '') +
+            '" data-city="' + esc(cl.members[0].city || '') + '" data-more="' + (cl.count - 1) + '" data-value="' + cl.total + '"></circle>';
+    }).join('');
 }
 
-// Zoom-/Pan-Controller. Rad = Zoom auf Cursor, Ziehen = Pan, zwei Finger =
-// Pinch, Doppelklick = rein. Marker werden rAF-gedrosselt neu geclustert.
+// Rad = Zoom auf den Zeiger, Ziehen = Verschieben, zwei Finger = Pinch.
 function _attachMapZoom(el) {
-    var st = el && el._mapState;
-    if (!st) return;
-    var svg = el.querySelector('svg');
-    var zg  = el.querySelector('.map-zoom');
-    if (!svg || !zg) return;
-
-    var MINK = 1, MAXK = 10;   // darueber liefert der 110m-Datensatz kein echtes Kontur-Detail mehr
-
-    function clampPan() {
-        if (st.k < MINK) st.k = MINK;
-        if (st.k > MAXK) st.k = MAXK;
-        var minX = st.W * (1 - st.k), minY = st.H * (1 - st.k);
-        if (st.x > 0) st.x = 0; if (st.x < minX) st.x = minX;
-        if (st.y > 0) st.y = 0; if (st.y < minY) st.y = minY;
+    var st = el && el._mapState, svg = el.querySelector('svg'), zg = el.querySelector('.map-zoom');
+    if (!st || !svg || !zg) return;
+    var MINK = 1, MAXK = 10;   // darueber liefert der 110m-Datensatz kein echtes Konturdetail mehr
+    function clamp() {
+        st.k = Math.max(MINK, Math.min(MAXK, st.k));
+        st.x = Math.min(0, Math.max(st.W * (1 - st.k), st.x));
+        st.y = Math.min(0, Math.max(st.H * (1 - st.k), st.y));
     }
-    function applyTransform() {
-        clampPan();
+    function apply() {
+        clamp();
         zg.setAttribute('transform', 'translate(' + st.x.toFixed(2) + ' ' + st.y.toFixed(2) + ') scale(' + st.k.toFixed(4) + ')');
         el.classList.toggle('is-zoomed', st.k > 1.001);
     }
-    function scheduleCities() {
+    function cities() {
         if (st.citiesRAF) return;
-        st.citiesRAF = requestAnimationFrame(function() { st.citiesRAF = 0; _renderCities(el); });
+        st.citiesRAF = requestAnimationFrame(function () { st.citiesRAF = 0; _renderCities(el); });
     }
     function toUser(cx, cy) {
-        var m = svg.getScreenCTM();
-        if (!m) return null;
-        var p = svg.createSVGPoint();
-        p.x = cx; p.y = cy;
+        var m = svg.getScreenCTM(); if (!m) return null;
+        var p = svg.createSVGPoint(); p.x = cx; p.y = cy;
         return p.matrixTransform(m.inverse());
     }
-    function zoomAt(cx, cy, factor) {
-        var u = toUser(cx, cy);
-        if (!u) return;
+    function zoomAt(cx, cy, f) {
+        var u = toUser(cx, cy); if (!u) return;
         var px = (u.x - st.x) / st.k, py = (u.y - st.y) / st.k;
-        st.k *= factor;
-        if (st.k < MINK) st.k = MINK; if (st.k > MAXK) st.k = MAXK;
-        st.x = u.x - st.k * px;
-        st.y = u.y - st.k * py;
-        applyTransform();
-        scheduleCities();
+        st.k = Math.max(MINK, Math.min(MAXK, st.k * f));
+        st.x = u.x - st.k * px; st.y = u.y - st.k * py;
+        apply(); cities();
     }
-    function centerZoom(factor) {
-        var r = svg.getBoundingClientRect();
-        zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor);
-    }
+    function centerZoom(f) { var r = svg.getBoundingClientRect(); zoomAt(r.left + r.width / 2, r.top + r.height / 2, f); }
 
-    svg.addEventListener('wheel', function(e) {
+    svg.addEventListener('wheel', function (e) {
+        // Erst ab einer Zoomstufe > 1 oder mit Strg das Rad abfangen — sonst
+        // bleibt beim Scrollen durch die Seite der Zeiger an der Karte haengen.
+        if (st.k <= 1.001 && !e.ctrlKey && e.deltaY > 0) return;
         e.preventDefault();
         zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.18 : 1 / 1.18);
     }, { passive: false });
 
-    var pointers = {}, pcount = 0, lastDist = 0;
-    svg.addEventListener('pointerdown', function(e) {
-        try { svg.setPointerCapture(e.pointerId); } catch (_) {}
-        if (!pointers[e.pointerId]) pcount++;
+    var pointers = {}, count = 0, lastDist = 0;
+    svg.addEventListener('pointerdown', function (e) {
+        if (!pointers[e.pointerId]) count++;
         pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
         lastDist = 0;
+        if (st.k > 1.001 || count > 1) { try { svg.setPointerCapture(e.pointerId); } catch (_) {} }
     });
-    svg.addEventListener('pointermove', function(e) {
-        var prev = pointers[e.pointerId];
-        if (!prev) return;
+    svg.addEventListener('pointermove', function (e) {
+        var prev = pointers[e.pointerId]; if (!prev) return;
         pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
-        if (pcount >= 2) {
-            var ids = Object.keys(pointers);
-            var a = pointers[ids[0]], b = pointers[ids[1]];
+        if (count >= 2) {
+            var ids = Object.keys(pointers), a = pointers[ids[0]], b = pointers[ids[1]];
             var dist = Math.hypot(a.x - b.x, a.y - b.y);
             if (lastDist) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, dist / lastDist);
             lastDist = dist;
-        } else if (pcount === 1 && st.k > 1.001) {
-            var m = svg.getScreenCTM();
-            if (!m) return;
-            st.x += (e.clientX - prev.x) / m.a;
-            st.y += (e.clientY - prev.y) / m.d;
-            applyTransform();
+        } else if (count === 1 && st.k > 1.001) {
+            var m = svg.getScreenCTM(); if (!m) return;
+            st.x += (e.clientX - prev.x) / m.a; st.y += (e.clientY - prev.y) / m.d;
+            apply();
         }
     });
-    function endPointer(e) {
-        if (pointers[e.pointerId]) { delete pointers[e.pointerId]; pcount--; }
-        if (pcount < 2) lastDist = 0;
-        if (pcount < 0) pcount = 0;
+    function end(e) {
+        if (pointers[e.pointerId]) { delete pointers[e.pointerId]; count--; }
+        if (count < 2) lastDist = 0;
+        if (count < 0) count = 0;
     }
-    svg.addEventListener('pointerup', endPointer);
-    svg.addEventListener('pointercancel', endPointer);
-    svg.addEventListener('dblclick', function(e) { e.preventDefault(); zoomAt(e.clientX, e.clientY, 1.6); });
+    svg.addEventListener('pointerup', end);
+    svg.addEventListener('pointercancel', end);
+    svg.addEventListener('dblclick', function (e) { e.preventDefault(); zoomAt(e.clientX, e.clientY, 1.6); });
 
-    var ctr = el.querySelector('.map-controls');
-    if (ctr) {
-        ctr.addEventListener('click', function(e) {
-            var btn = e.target.closest && e.target.closest('[data-zoom]');
-            if (!btn) return;
-            var z = btn.getAttribute('data-zoom');
-            if (z === 'in') centerZoom(1.5);
-            else if (z === 'out') centerZoom(1 / 1.5);
-            else { st.k = 1; st.x = 0; st.y = 0; applyTransform(); scheduleCities(); }
-        });
-    }
-
-    applyTransform();
+    el.querySelector('.map-controls').addEventListener('click', function (e) {
+        var b = e.target.closest && e.target.closest('[data-zoom]'); if (!b) return;
+        var z = b.getAttribute('data-zoom');
+        if (z === 'in') centerZoom(1.5);
+        else if (z === 'out') centerZoom(1 / 1.5);
+        else { st.k = 1; st.x = 0; st.y = 0; apply(); cities(); }
+    });
+    apply();
 }
 
-// Delegation statt Einzel-Listener: die Städte-Ebene wird beim Zoomen staendig
-// neu gezeichnet — ein einmal am Container gebundener Handler faengt Länder
-// (statisch) UND Cluster (dynamisch) ab, ohne Listener zu leaken.
+// Delegation am Container: die Staedte-Ebene wird beim Zoomen neu gezeichnet,
+// ein einmal gebundener Handler faengt Laender UND Cluster ohne Leck.
 function _bindMapTooltip(el) {
-    var tip = document.getElementById('mapTooltip');
+    var tip = document.getElementById('mapTooltip'), stage = document.getElementById('mapStage');
     if (!tip || el._tipBound) return;
     el._tipBound = true;
-    var svg = el.querySelector('svg');
     var hot = null;
-
     function show(node, e) {
-        var head, city = node.getAttribute('data-city');
-        if (city !== null) {                       // Städte-Cluster
+        var svg = el.querySelector('svg');
+        var city = node.getAttribute('data-city'), head;
+        if (city !== null) {
             var more = +node.getAttribute('data-more') || 0;
             head = esc(city) + (more > 0 ? ' <span class="mt-more">+' + more + '</span>' : '');
-        } else {                                   // Land / Bundesland
+        } else {
             head = esc(node.getAttribute('data-label') || '');
         }
-        var val = +node.getAttribute('data-value') || 0;
-        tip.innerHTML = '<strong>' + head + '</strong>' +
-                        '<span><b>' + fmt(val) + '</b> <em>Besucher</em></span>';
+        tip.innerHTML = '<strong>' + head + '</strong><span>' + esc(fmtInt(+node.getAttribute('data-value') || 0)) + ' ' + T('Besucher', 'visitors') + '</span>';
         tip.classList.add('show');
         if (svg) svg.classList.add('is-focused');
         if (hot && hot !== node) hot.classList.remove('is-hot');
-        node.classList.add('is-hot');
-        hot = node;
-        _moveTip(e, tip, el);
+        node.classList.add('is-hot'); hot = node;
+        move(e);
     }
     function hide() {
+        var svg = el.querySelector('svg');
         tip.classList.remove('show');
         if (svg) svg.classList.remove('is-focused');
         if (hot) { hot.classList.remove('is-hot'); hot = null; }
     }
-
-    el.addEventListener('mouseover', function(e) {
-        var node = e.target.closest && e.target.closest('.map-shape, .map-city');
-        if (node) show(node, e);
+    function move(e) {
+        var r = stage.getBoundingClientRect();
+        tip.style.left = (e.clientX - r.left) + 'px';
+        tip.style.top = (e.clientY - r.top) + 'px';
+    }
+    el.addEventListener('pointerover', function (e) {
+        var n = e.target.closest && e.target.closest('.map-shape, .map-city');
+        if (n) show(n, e);
     });
-    el.addEventListener('mousemove', function(e) {
-        if (tip.classList.contains('show')) _moveTip(e, tip, el);
-    });
-    el.addEventListener('mouseout', function(e) {
-        var node = e.target.closest && e.target.closest('.map-shape, .map-city');
-        if (!node) return;
+    el.addEventListener('pointermove', function (e) { if (tip.classList.contains('show')) move(e); });
+    el.addEventListener('pointerout', function (e) {
+        var n = e.target.closest && e.target.closest('.map-shape, .map-city');
+        if (!n) return;
         var to = e.relatedTarget;
-        if (to && to.closest && to.closest('.map-shape, .map-city')) return; // Wechsel zwischen Markern
+        if (to && to.closest && to.closest('.map-shape, .map-city')) return;
         hide();
     });
 }
 
-function _moveTip(e, tip, stage) {
-    var r = stage.getBoundingClientRect();
-    tip.style.left = (e.clientX - r.left) + 'px';
-    tip.style.top  = (e.clientY - r.top) + 'px';
-}
-
-// Equal-Earth-Projektion — MUSS identisch zu tools/geo/build-maps.js sein,
-// sonst landen die Städte-Marker neben der Karte.
+// Equal-Earth — MUSS identisch zu tools/geo/build-maps.js sein, sonst landen
+// die Staedte neben der Karte.
 function _projectEqualEarth(lon, lat) {
     var A1 = 1.340264, A2 = -0.081106, A3 = 0.000893, A4 = 0.003796;
-    var l = lon * Math.PI / 180;
-    var p = lat * Math.PI / 180;
+    var l = lon * Math.PI / 180, p = lat * Math.PI / 180;
     var th = Math.asin((Math.sqrt(3) / 2) * Math.sin(p));
     var th2 = th * th, th6 = th2 * th2 * th2;
     var den = 3 * (9 * A4 * th6 * th2 + 7 * A3 * th6 + 3 * A2 * th2 + A1);
-    var x = 2 * Math.sqrt(3) * l * Math.cos(th) / den;
-    var y = A4 * th6 * th2 * th + A3 * th6 * th + A2 * th2 * th + A1 * th;
-    return [x, -y];
+    return [2 * Math.sqrt(3) * l * Math.cos(th) / den, -(A4 * th6 * th2 * th + A3 * th6 * th + A2 * th2 * th + A1 * th)];
 }
 
-// Die Weltkarte wurde beim Bauen auf viewBox 0..1000 normiert. Um Städte
-// hineinzusetzen, brauchen wir dieselbe Normierung — die Eckpunkte der
-// Projektion sind konstant, also einmal ausrechnen.
 var _worldBounds = null;
 function _worldExtent() {
     if (_worldBounds) return _worldBounds;
-    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    var b = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
     for (var lon = -180; lon <= 180; lon += 2) {
         for (var lat = -90; lat <= 90; lat += 2) {
             var p = _projectEqualEarth(lon, lat);
-            if (p[0] < minX) minX = p[0];
-            if (p[0] > maxX) maxX = p[0];
-            if (p[1] < minY) minY = p[1];
-            if (p[1] > maxY) maxY = p[1];
+            b.minX = Math.min(b.minX, p[0]); b.maxX = Math.max(b.maxX, p[0]);
+            b.minY = Math.min(b.minY, p[1]); b.maxY = Math.max(b.maxY, p[1]);
         }
     }
-    _worldBounds = { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
-    return _worldBounds;
+    return (_worldBounds = b);
 }
 
 function renderMaps(countries, regions, cities) {
-    _mapData.countries = countries || [];
-    _mapData.regions   = regions   || [];
-    _mapData.cities    = cities    || [];
+    _mapData = { countries: countries || [], regions: regions || [], cities: cities || [] };
+    var world = window.__GEO_WORLD__;
 
-    // ── Weltkarte ──
     var cVals = {}, cLabels = {};
-    (countries || []).forEach(function(c) {
+    _mapData.countries.forEach(function (c) {
         if (!c.code) return;
-        cVals[c.code]   = c.visitors || 0;
-        cLabels[c.code] = c.country || c.code;
+        cVals[c.code] = c.visitors || 0;
+        cLabels[c.code] = countryName(c.code, c.country);
     });
 
-    // Städte-Marker auf Weltkoordinaten projizieren.
-    // ACHTUNG: Die Karte wurde OHNE Antarktis gebaut, deshalb kann die
-    // rechnerische Extent-Box nicht 1:1 verwendet werden — wir nehmen die
-    // tatsächlich verbaute viewBox als Referenz.
-    var cityMarkers = [];
-    var world = window.__GEO_WORLD__;
-    if (world && cities && cities.length) {
-        var vb = world.viewBox.split(' ').map(Number);   // [0,0,W,H]
-        var W = vb[2], H = vb[3];
-        // Die Marker MUESSEN mit derselben Box normiert werden, mit der die
-        // Karte gebaut wurde (Extent der echten Landmasse). world.bounds kommt
-        // aus build-maps.js; _worldExtent() (Globus-Ecken) ist nur Fallback fuer
-        // alte geo-Dateien ohne bounds — es schiebt die Marker sonst nach rechts.
+    // Die Marker MUESSEN mit der Box normiert werden, mit der die Karte gebaut
+    // wurde (world.bounds, Landmasse ohne Antarktis). _worldExtent() ist nur
+    // Rueckfall fuer alte geo-Dateien und schiebt die Marker sonst nach rechts.
+    var markers = [], grat = '';
+    if (world) {
+        var vb = world.viewBox.split(' ').map(Number);
         var ext = world.bounds || _worldExtent();
-        var scale = W / (ext.maxX - ext.minX);
-        cities.forEach(function(c) {
+        var scale = vb[2] / (ext.maxX - ext.minX);
+        _mapData.cities.forEach(function (c) {
             if (c.lat == null || c.lon == null) return;
             var p = _projectEqualEarth(c.lon, c.lat);
-            var x = (p[0] - ext.minX) * scale;
-            var y = (p[1] - ext.minY) * scale;
-            if (x < 0 || x > W || y < 0 || y > H) return;
-            cityMarkers.push({ x: x.toFixed(1), y: y.toFixed(1), city: c.city, visitors: c.visitors });
+            var x = (p[0] - ext.minX) * scale, y = (p[1] - ext.minY) * scale;
+            if (x < 0 || x > vb[2] || y < 0 || y > vb[3]) return;
+            markers.push({ x: x, y: y, city: c.city, visitors: +c.visitors || 0 });
         });
+        grat = _graticule(_projectEqualEarth, ext, scale);
     }
+    _renderMapSvg('mapWorld', world, cVals, cLabels, markers, grat);
 
-    var grat = '';
-    if (world) {
-        var wvb = world.viewBox.split(' ').map(Number);
-        var we = world.bounds || _worldExtent();
-        grat = _graticule(_projectEqualEarth, we, wvb[2] / (we.maxX - we.minX), wvb[2], wvb[3]);
-    }
-    _renderMapSvg('mapWorld', world, cVals, cLabels, cityMarkers, grat);
-
-    // ── Deutschland ──
-    var rVals = {}, rLabels = {};
-    (regions || []).forEach(function(r) {
+    var rVals = {}, rLabels = deRegionLabels();
+    _mapData.regions.forEach(function (r) {
         if (!r.id) return;
-        rVals[r.id]   = r.visitors || 0;
-        rLabels[r.id] = r.region || r.id;
+        rVals[r.id] = r.visitors || 0;
+        if (!rLabels[r.id]) rLabels[r.id] = r.region || r.id;
     });
-    // Labels aus der Kartendatei bevorzugen — sie sind deutsch,
-    // PostHog liefert englische Namen ("Bavaria").
-    var deGeo = window.__GEO_DE__;
-    if (deGeo && deGeo.paths) {
-        deGeo.paths.forEach(function(p) {
-            if (p.name) rLabels[p.id] = p.name;
-        });
-    }
-    _renderMapSvg('mapDE', deGeo, rVals, rLabels, null);
+    _renderMapSvg('mapDE', window.__GEO_DE__, rVals, rLabels, null);
+}
 
-    // ── Seiten-Tabellen ──
-    renderSimpleTableNoRank('countriesTable',
-        (countries || []).map(function(c) { return { x: c.country, y: c.visitors }; }),
-        function(x) { return x; }, 'green');
-
-    renderSimpleTableNoRank('regionsTable',
-        (regions || []).map(function(r) {
-            return { x: rLabels[r.id] || r.region, y: r.visitors };
-        }),
-        function(x) { return x; }, 'purple');
-
-    renderMapLegend(Math.max.apply(null, [0].concat((countries || []).map(function(c) { return c.visitors || 0; }))));
+function showMap(which) {
+    var w = document.getElementById('mapWorld'), d = document.getElementById('mapDE');
+    if (w) w.classList.toggle('is-active', which === 'world');
+    if (d) d.classList.toggle('is-active', which === 'de');
+    var vals = which === 'de'
+        ? _mapData.regions.filter(function (r) { return /^DE-/.test(r.id || ''); }).map(function (r) { return r.visitors || 0; })
+        : _mapData.countries.map(function (c) { return c.visitors || 0; });
+    renderMapLegend(Math.max.apply(null, [0].concat(vals)));
 }
 
 function renderMapLegend(max) {
     var el = document.getElementById('mapLegend');
     if (!el) return;
     if (!max) { el.innerHTML = ''; return; }
-    // Zeigt exakt die Stufen, die die Karte auch benutzt (_mapBucket).
-    var cells = MAP_RAMP.map(function(c, i) {
-        var lo = i === 0 ? 1 : Math.ceil(max * (i * 0.2));
-        var hi = Math.round(max * ((i + 1) * 0.2));
-        return '<span class="map-legend-cell" style="background:' + c + '"' +
-               ' title="' + lo + (hi > lo ? '–' + hi : '') + ' Besucher"></span>';
+    var steps = [0, 1, 2, 3, 4].map(function (b) {
+        var lh = _mapBucketBounds(b, max), lo = lh[0], hi = lh[1];
+        return '<i class="lv' + b + '" title="' + esc(lo + (hi > lo ? '–' + hi : '') + ' ' + T('Besucher', 'visitors')) + '"></i>';
     }).join('');
-    el.innerHTML = '<span class="map-legend-label">1</span>' + cells +
-                   '<span class="map-legend-label">' + fmt(max) + '</span>';
+    el.innerHTML = '<span>1</span>' + steps + '<span>' + esc(fmtInt(max)) + '</span>';
 }
 
-function switchMap(which) {
-    document.querySelectorAll('.map-switch-btn').forEach(function(b) {
-        b.classList.toggle('active', b.dataset.map === which);
-    });
-    var w = document.getElementById('mapWorld');
-    var d = document.getElementById('mapDE');
-    if (w) w.classList.toggle('active', which === 'world');
-    if (d) d.classList.toggle('active', which === 'de');
-
-    var head = document.getElementById('mapSideHead');
-    if (head) head.textContent = which === 'de' ? 'Bundesländer' : 'Länder';
-
-    var ct = document.getElementById('countriesTable');
-    var rt = document.getElementById('regionsTable');
-    if (ct) ct.style.display = which === 'de' ? 'none' : '';
-    if (rt) rt.style.display = which === 'de' ? '' : 'none';
-
-    var maxVal = which === 'de'
-        ? Math.max.apply(null, [0].concat(_mapData.regions.map(function(r) { return r.visitors || 0; })))
-        : Math.max.apply(null, [0].concat(_mapData.countries.map(function(c) { return c.visitors || 0; })));
-    renderMapLegend(maxVal);
+// ─── Status ──────────────────────────────────────────────────
+function setLiveStatus(status) {
+    var dot = document.getElementById('liveDot'), label = document.getElementById('liveLabel');
+    var map = {
+        connecting: ['is-connecting', T('Lädt…', 'Loading…')],
+        live: ['is-live', T('Aktuell', 'Up to date')],
+        stale: ['is-stale', T('Zwischenstand', 'Cached')],
+        error: ['is-error', T('Keine Verbindung', 'No connection')]
+    };
+    var s = map[status] || map.connecting;
+    if (dot) dot.className = 'status-dot ' + s[0];
+    if (label) label.textContent = s[1];
 }
 
-// =========================================
-//  RENDER: Web Vitals (LCP)
-// =========================================
-var VITAL_COLORS = {
-    'Good': '#34d399',
-    'Needs': '#fbbf24',
-    'Poor': '#f87171',
-};
-
-function _vitalColor(rating) {
-    if (/good/i.test(rating)) return VITAL_COLORS.Good;
-    if (/needs/i.test(rating)) return VITAL_COLORS.Needs;
-    return VITAL_COLORS.Poor;
+function showNotice(title, text, detail) {
+    var el = document.getElementById('notice');
+    if (!el) return;
+    document.getElementById('noticeTitle').textContent = title;
+    document.getElementById('noticeText').textContent = text;
+    var det = document.getElementById('noticeDetail');
+    det.hidden = !detail;
+    det.textContent = detail || '';
+    el.hidden = false;
 }
+function hideNotice() { var el = document.getElementById('notice'); if (el) el.hidden = true; }
 
-function renderVitals(lcp) {
-    var card = document.getElementById('vitalsCard');
-    var bar  = document.getElementById('vitalsBar');
-    var tbody = document.querySelector('#vitalsTable tbody');
-
-    if (!lcp || !lcp.length) {
-        // Ehrlich bleiben: leerer Block statt erfundener Werte
-        if (bar) bar.innerHTML = '';
-        if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">Noch keine Messwerte — Web Vitals werden erst seit dem letzten Update erfasst.</td></tr>';
-        return;
-    }
-
-    var total = lcp.reduce(function(s, l) { return s + (l.sessions || 0); }, 0);
-
-    if (bar) {
-        bar.innerHTML = lcp.map(function(l) {
-            var pct = total > 0 ? (l.sessions / total * 100) : 0;
-            return '<span class="vitals-seg" style="width:' + pct.toFixed(1) + '%;background:' + _vitalColor(l.rating) + '"' +
-                   ' title="' + esc(l.rating) + ': ' + fmt(l.sessions) + '"></span>';
-        }).join('');
-    }
-
-    if (tbody) {
-        tbody.innerHTML = lcp.map(function(l) {
-            var pct = total > 0 ? (l.sessions / total * 100).toFixed(1) : 0;
-            return '<tr>' +
-                '<td><span class="vitals-dot" style="background:' + _vitalColor(l.rating) + '"></span>' + esc(l.rating) + '</td>' +
-                '<td class="value">' + fmt(l.sessions) + '</td>' +
-                '<td>' + (l.avgMs ? (l.avgMs / 1000).toFixed(2) + 's' : '—') + '</td>' +
-                '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill purple" style="width:' + pct + '%"></div></div></td>' +
-            '</tr>';
-        }).join('');
-    }
-    if (card) card.style.display = '';
-}
-
-// =========================================
-//  RENDER: Feature-Nutzung (Custom Events)
-// =========================================
-// Event-Namen sind technische Keys — hier bekommen sie ein lesbares Label.
-var EVENT_LABELS = {
-    'entry_created':  'Eintrag erstellt',
-    'entry_updated':  'Eintrag bearbeitet',
-    'timer_action':   'Timer benutzt',
-    'data_exported':  'Daten exportiert',
-    'pwa_installiert': 'App installiert',
-};
-
-// 'feature_genutzt' wird backendseitig als 'feature_genutzt::<view>' geliefert.
-// Hier bekommt jeder View-Name sein lesbares Label (deckt sich mit switchTab-Titeln).
-var FEATURE_LABELS = {
-    'dashboard':     'Übersicht',
-    'history':       'Historie',
-    'performance':   'Performance',
-    'ihk':           'IHK / Karriere',
-    'school':        'Berufsschule',
-    'goals':         'Ziele',
-    'yearview':      'Jahresübersicht',
-    'monthcompare':  'Monats-Vergleich',
-    'weekview':      'Wochenansicht',
-    'aibot':         'AI-Bot',
-    'support':       'Support',
-    'analytics-pro': 'Analytics Pro',
-    'aufgaben':      'Aufgaben',
-    'aufgaben-tab':  'Aufgaben',
-};
-
-// Technischen Event-Key → lesbares Label. Splittet die 'feature_genutzt::<view>'-Rows.
-function eventLabel(name) {
-    if (name && name.indexOf('feature_genutzt::') === 0) {
-        var view = name.slice('feature_genutzt::'.length);
-        return 'Ansicht: ' + (FEATURE_LABELS[view] || view);
-    }
-    return EVENT_LABELS[name] || name;
-}
-
-function renderCustomEvents(events) {
-    var tbody = document.querySelector('#eventsTable tbody');
-    if (!tbody) return;
-
-    if (!events || !events.length) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">Noch keine Events — die Feature-Erfassung läuft erst seit dem letzten Update.</td></tr>';
-        return;
-    }
-
-    var total = events.reduce(function(s, e) { return s + (e.count || 0); }, 0);
-
-    tbody.innerHTML = events.map(function(e, i) {
-        var pct = total > 0 ? ((e.count / total) * 100).toFixed(1) : 0;
-        var label = eventLabel(e.name);
-        return '<tr>' +
-            '<td class="rank">' + (i + 1) + '</td>' +
-            '<td>' + esc(label) + '</td>' +
-            '<td class="value">' + fmt(e.count) + '</td>' +
-            '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill yellow" style="width:' + pct + '%"></div></div></td>' +
-        '</tr>';
-    }).join('');
-}
-
-// =========================================
-//  RENDER: Cloudflare Edge & CDN (Infrastruktur)
-// =========================================
-function renderCloudflareEdge(cfData) {
-    var card = document.getElementById('cloudflareEdgeCard');
-    if (!card) return;
-
-    var reqEl      = document.getElementById('cfValRequests');
-    var bytesEl    = document.getElementById('cfValBytes');
-    var cacheEl    = document.getElementById('cfValCache');
-    var sslEl      = document.getElementById('cfValSsl');
-    var subReq     = document.getElementById('cfSubRequests');
-    var subBytes   = document.getElementById('cfSubBytes');
-    var subCache   = document.getElementById('cfSubCache');
-    var subThreats = document.getElementById('cfSubThreats');
-    var tbody      = document.getElementById('cfHistoryBody');
-
-    if (!cfData || !cfData.available || !cfData.totals) {
-        if (reqEl) reqEl.textContent = '—';
-        if (bytesEl) bytesEl.textContent = '—';
-        if (cacheEl) cacheEl.textContent = '—';
-        if (sslEl) sslEl.textContent = '—';
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Cloudflare API-Token noch nicht im Worker hinterlegt oder keine Edge-Daten für die letzten 72h.</td></tr>';
-        }
-        return;
-    }
-
-    var t = cfData.totals;
-    var totalReqs   = t.requests || 0;
-    var cachedReqs  = t.cachedRequests || 0;
-    var totalBytes  = t.bytes || 0;
-    var cachedBytes = t.cachedBytes || 0;
-    var encReqs     = t.encryptedRequests || 0;
-    var threats     = t.threats || 0;
-
-    var hitRatio = totalReqs > 0 ? (cachedReqs / totalReqs) : 0;
-    var sslRatio = totalReqs > 0 ? (encReqs / totalReqs) : 0;
-
-    if (reqEl) {
-        reqEl.textContent = totalReqs.toLocaleString(mwlLocale());
-        animateValue(reqEl, totalReqs, '');
-    }
-    if (subReq) {
-        subReq.textContent = fmt(cachedReqs) + ' aus Cache (' + (hitRatio * 100).toFixed(1) + '%)';
-    }
-
-    if (bytesEl) {
-        bytesEl.textContent = fmtBytes(totalBytes);
-    }
-    if (subBytes) {
-        subBytes.textContent = fmtBytes(cachedBytes) + ' Bandbreite gespart';
-    }
-
-    if (cacheEl) {
-        cacheEl.textContent = (hitRatio * 100).toFixed(1) + '%';
-    }
-    if (subCache) {
-        var byteCacheRatio = totalBytes > 0 ? ((cachedBytes / totalBytes) * 100).toFixed(1) : '0.0';
-        subCache.textContent = byteCacheRatio + '% Bandbreite gecached';
-    }
-
-    if (sslEl) {
-        sslEl.textContent = (sslRatio * 100).toFixed(1) + '%';
-    }
-    if (subThreats) {
-        subThreats.textContent = threats === 0 ? 'Keine Bedrohungen' : (fmt(threats) + ' Bedrohung' + (threats > 1 ? 'en' : '') + ' abgewehrt');
-    }
-
-    if (tbody && Array.isArray(cfData.history)) {
-        if (!cfData.history.length) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">Keine Einträge für die letzten 72h.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = cfData.history.map(function(row) {
-            var hitPct = (row.cacheHitRatio * 100).toFixed(1);
-            var dStr = row.date;
-            try {
-                var parts = row.date.split('-');
-                if (parts.length === 3) {
-                    var dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-                    dStr = dObj.toLocaleDateString(mwlLocale(), { weekday: 'short', day: '2-digit', month: '2-digit' });
-                }
-            } catch (e) {}
-
-            return '<tr>' +
-                '<td style="font-weight:500; font-family:var(--font-mono); font-size:0.75rem;">' + esc(dStr) + '</td>' +
-                '<td class="value">' + fmt(row.requests) + '</td>' +
-                '<td>' + hitPct + '%<div class="progress-bar"><div class="progress-fill green" style="width:' + hitPct + '%"></div></div></td>' +
-                '<td>' + fmtBytes(row.bytes) + '</td>' +
-                '<td style="color:var(--text-secondary);">' + fmtBytes(row.cachedBytes) + '</td>' +
-                '<td>' + (row.threats > 0 ? ('<span style="color:var(--red);font-weight:600;">' + fmt(row.threats) + '</span>') : '<span style="color:var(--sub);">0</span>') + '</td>' +
-            '</tr>';
-        }).join('');
-    }
-}
-
-// =========================================
-//  LOAD ALL DATA — PostHog via Worker-Proxy
-// =========================================
-// Resilienz gegen PostHog-Rate-Limits (429): Der Proxy fächert ~22 HogQL-Queries
-// auf; PostHog drosselt sie im Burst. Statt eine leere Seite zu zeigen, cachen
-// wir die letzte gute Antwort (pro Range) und rendern sie bei Drosselung erneut,
-// mit Hinweis + Countdown + Auto-Retry nach dem Retry-Fenster.
+// ─── Laden ───────────────────────────────────────────────────
+// Der Proxy feuert je Abruf rund 30 PostHog-Abfragen; PostHog drosselt sie im
+// Burst. Statt eine leere Seite zu zeigen, bleibt die letzte gute Antwort je
+// Zeitraum im sessionStorage und wird bei Drosselung mit Countdown gezeigt.
 var _analyticsLoading = false;
 var _analyticsRetryTimer = null;
 var _analyticsCountdownTimer = null;
 
 function analyticsCacheKey() { return 'mwl_an_cache_' + currentRange; }
 function saveAnalyticsCache(d) {
-    try { sessionStorage.setItem(analyticsCacheKey(), JSON.stringify({ ts: Date.now(), data: d })); } catch (e) { /* voll/aus */ }
+    try { sessionStorage.setItem(analyticsCacheKey(), JSON.stringify({ ts: Date.now(), data: d })); } catch (e) { /* voll oder gesperrt */ }
 }
 function loadAnalyticsCache() {
     try { var raw = sessionStorage.getItem(analyticsCacheKey()); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
@@ -1856,447 +1161,185 @@ function parseRetrySeconds(errs) {
         var m = String(errs[k]).match(/in\s+(\d+)\s+second/i);
         if (m) max = Math.max(max, parseInt(m[1], 10));
     });
-    return Math.min(Math.max(max || 120, 15), 900); // 15 s … 15 min
+    return Math.min(Math.max(max || 120, 15), 900);
 }
 function clearAnalyticsRetry() {
     if (_analyticsRetryTimer) { clearTimeout(_analyticsRetryTimer); _analyticsRetryTimer = null; }
     if (_analyticsCountdownTimer) { clearInterval(_analyticsCountdownTimer); _analyticsCountdownTimer = null; }
 }
-// Zeigt die „Backend ausgelastet"-Notice + Countdown und plant den Auto-Retry.
 function enterBackendBusy(secs, staleTs) {
-    var EN = document.documentElement.lang === 'en';
     clearAnalyticsRetry();
-    var el = document.getElementById('adblockNotice');
-    if (el) {
-        el.style.display = 'block';
-        var h = el.querySelector('h4');
-        var p = el.querySelector('p');
-        if (h) h.textContent = EN ? 'Backend is busy' : 'Backend ausgelastet';
-        if (p) {
-            p.innerHTML =
-                (EN ? 'The analytics backend (PostHog) is rate-limiting requests right now.'
-                    : 'Das Analytics-Backend (PostHog) drosselt gerade die Anfragen.') +
-                (staleTs ? '<br><span style="opacity:0.6;">' +
-                    (EN ? 'Showing cached data from ' : 'Zwischengespeicherte Daten von ') +
-                    new Date(staleTs).toLocaleTimeString(mwlLocale()) + '</span>' : '');
-        }
+    var left = secs;
+    var text = T('Der Statistik-Server bremst gerade die Anfragen.', 'The statistics server is rate-limiting requests right now.') +
+        (staleTs ? ' ' + T('Angezeigt wird der Stand von ', 'Showing data from ') + new Date(staleTs).toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }) + '.' : '');
+    function tick() {
+        showNotice(T('Statistik-Server ausgelastet', 'Statistics server busy'), text,
+            T('Neuer Versuch in ', 'Retrying in ') + Math.max(0, left) + ' s');
+        left--;
     }
-    var det = document.getElementById('errorDetail');
-    if (det) {
-        det.style.display = 'block';
-        var left = secs;
-        var tick = function () {
-            det.textContent = (EN ? 'Retrying in ' : 'Neuer Versuch in ') + Math.max(0, left) + ' s …';
-            left--;
-        };
-        tick();
-        _analyticsCountdownTimer = setInterval(tick, 1000);
-    }
+    tick();
+    _analyticsCountdownTimer = setInterval(tick, 1000);
     _analyticsRetryTimer = setTimeout(function () { loadAll(); }, (secs + 2) * 1000);
 }
 
+function renderAll(d) {
+    view.data = d;
+    renderMetrics(d.summary || {});
+    renderMainChart();
+    renderPages();
+    renderSources();
+    renderMaps(d.countries, d.regions, d.cities);
+    renderGeo();
+    renderTech();
+    renderVitals(d.webVitals && d.webVitals.lcp);
+    renderHeatmap(d.activity);
+    renderBehaviour(d);
+    renderEvents(d.customEvents);
+    renderCloudflare(d.cloudflare);
+}
+
 async function loadAll() {
-    if (_analyticsLoading) return;   // kein überlappender 22-Query-Burst (verschärft die Drosselung)
+    if (_analyticsLoading) return;   // kein ueberlappender 30-Abfragen-Burst (verschaerft die Drosselung)
     _analyticsLoading = true;
     clearAnalyticsRetry();
-
     var btn = document.getElementById('refreshBtn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="an-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg> Laden…'; }
-
+    if (btn) btn.disabled = true;
     setLiveStatus('connecting');
-    showSkeletons();
+    document.body.classList.add('is-loading');
 
-    var noticeEl = document.getElementById('adblockNotice');
-    if (noticeEl) noticeEl.style.display = 'none';
-    var detailEl = document.getElementById('errorDetail');
-    if (detailEl) detailEl.style.display = 'none';
-
-    // Ohne Timeout haengt ein stiller Proxy-Stall die Seite dauerhaft im Ladezustand
+    // Ohne Timeout haengt ein stiller Proxy-Stall die Seite dauerhaft im Ladezustand.
     var ctrl = new AbortController();
-    var timeoutId = setTimeout(function() { ctrl.abort(); }, 30000);
+    var timeoutId = setTimeout(function () { ctrl.abort(); }, 30000);
 
     try {
         var res;
         try {
             res = await fetch(CF_PROXY + '?range=' + currentRange, { cache: 'no-store', signal: ctrl.signal });
         } catch (netErr) {
-            if (netErr.name === 'AbortError') throw new Error('Zeitüberschreitung: Backend hat nach 30s nicht geantwortet.');
-            throw new Error('Netzwerkfehler: ' + netErr.message + ' (Adblocker? Offline?)');
+            if (netErr.name === 'AbortError') throw new Error(T('Zeitüberschreitung nach 30 s.', 'Timed out after 30 s.'));
+            throw new Error(T('Netzwerkfehler: ', 'Network error: ') + netErr.message);
         } finally {
             clearTimeout(timeoutId);
         }
-
         if (!res.ok) {
-            var errTxt = await res.text().catch(function() { return ''; });
+            var errTxt = await res.text().catch(function () { return ''; });
             var errMsg = errTxt;
             try { errMsg = JSON.parse(errTxt).error || errTxt; } catch (e) { /* Rohtext */ }
             throw new Error('HTTP ' + res.status + ' — ' + String(errMsg).slice(0, 300));
         }
         var d = await res.json();
         if (d.error) throw new Error(d.error);
+        if (d._errors) console.warn('Analytics: Teil-Abfragen fehlgeschlagen:', d._errors);
 
-        // Teilausfaelle: Seite rendert, aber die kaputten Queries stehen in der Console
-        if (d._errors) {
-            console.warn('Analytics: Teil-Queries fehlgeschlagen:', d._errors);
-        }
-
-        // Rate-Limit-Resilienz: Kommt die Antwort inhaltsleer zurück, weil PostHog
-        // mit 429 gedrosselt hat, KEIN leeres Dashboard zeigen — stattdessen die
-        // letzte gute Antwort aus dem Cache durch den normalen Render-Pfad schicken
-        // (+ Hinweis + Auto-Retry). Ohne Cache: nur Hinweis + Retry, nichts leeren.
-        var _stale = false;
+        var stale = false;
         if (!payloadHasData(d)) {
             if (errorsAreThrottle(d._errors)) {
-                var _secs  = parseRetrySeconds(d._errors);
-                var _cache = loadAnalyticsCache();
-                if (_cache && payloadHasData(_cache.data)) {
-                    enterBackendBusy(_secs, _cache.ts);
-                    d = _cache.data;
-                    _stale = true;
+                var secs = parseRetrySeconds(d._errors), cache = loadAnalyticsCache();
+                if (cache && payloadHasData(cache.data)) {
+                    enterBackendBusy(secs, cache.ts);
+                    d = cache.data;
+                    stale = true;
                 } else {
-                    enterBackendBusy(_secs, null);
+                    enterBackendBusy(secs, null);
                     setLiveStatus('error');
-                    hideSkeletons();
-                    return; // finally setzt Button + Loading-Flag zurück
+                    return;
                 }
             }
             // nicht gedrosselt + leer = echt (noch) keine Daten → normal rendern
         } else {
             saveAnalyticsCache(d);
-            clearAnalyticsRetry();
+            hideNotice();
         }
 
-        var sum      = d.summary             || {};
-        var series   = d.series              || [];
-        var topPages = d.topPages            || [];
-        var entry    = d.entryPages          || [];
-        var exit     = d.exitPages           || [];
-        var refs     = d.referrers           || [];
-        var channels = d.channels            || [];
-        var utm      = d.utm                 || {};
-        var countries= d.countries           || [];
-        var regions  = d.regions             || [];
-        var cities   = d.cities              || [];
-        var langs    = d.languages           || [];
-        var browsers = d.browsers            || [];
-        var os       = d.os                  || [];
-        var devices  = d.devices             || [];
-        var resolut  = d.resolutions         || [];
-        var activity = d.activity            || [];
-        var custEv   = d.customEvents        || [];
-        var nvr      = d.newVsReturning      || [];
-        var durBkts  = d.sessionDurationBuckets || [];
-        var pvpSess  = d.pageviewsPerSession || [];
-        var lcp      = (d.webVitals && d.webVitals.lcp) || [];
-
-        // ── KPI Hauptmetriken ──────────────────────────────────────────────
-        var pv       = sum.pageviews       || 0;
-        var visitors = sum.visitors        || 0;
-        var sessions = sum.sessions        || 0;
-        var bounce   = sum.bounceRate      || 0;   // 0–1
-        var avgDur   = sum.avgSessionDuration || 0; // string "Xs" or seconds
-
-        var pvEl      = document.getElementById('kpiPageviews');
-        var visEl     = document.getElementById('kpiVisitors');
-        var visitsEl  = document.getElementById('kpiVisits');
-        if (pvEl)     { pvEl.textContent = fmt(pv);       animateValue(pvEl, pv, ''); }
-        if (visEl)    { visEl.textContent = fmt(visitors); animateValue(visEl, visitors, ''); }
-        if (visitsEl) { visitsEl.textContent = fmt(sessions); animateValue(visitsEl, sessions, ''); }
-
-        // Pages / Session
-        var pps    = sessions > 0 ? (pv / sessions) : 0;
-        var ppsEl  = document.getElementById('kpiPagesPerSession');
-        var ppsSub = document.getElementById('kpiPagesPerSessionSub');
-        if (ppsEl)  ppsEl.textContent  = pps.toFixed(1);
-        if (ppsSub) ppsSub.textContent = fmt(pv) + ' Seiten / ' + fmt(sessions) + ' Sessions';
-
-        // Bounce Rate
-        var bounceEl = document.getElementById('kpiBounce');
-        if (bounceEl) bounceEl.textContent = (bounce * 100).toFixed(1) + '%';
-
-        // Avg Session Duration
-        var durEl      = document.getElementById('kpiDuration');
-        var totalTimeEl= document.getElementById('kpiTotalTime');
-        var durDisplay = typeof avgDur === 'string' ? avgDur : fmtDuration(avgDur);
-        if (durEl)       durEl.textContent      = durDisplay;
-        if (totalTimeEl) totalTimeEl.textContent = 'Ø pro Session';
-
-        // Engagement Score — die Formel steht in Assets/js/insights/engagement.js,
-        // weil /about/ dieselbe Zahl zeigt. Bewusst KEIN Inline-Fallback: eine
-        // zweite Fassung hier waere genau die Dublette, die der Umzug beseitigt
-        // hat. Fehlt die Datei, bleibt die Kachel leer und das faellt auf.
-        var engScore = window.mwlEngagement
-            ? window.mwlEngagement.score({ pageviews: pv, sessions: sessions, bounceRate: bounce })
-            : null;
-        var engEl    = document.getElementById('kpiEngagement');
-        var engSubEl = document.getElementById('kpiEngagementSub');
-        if (engEl)    engEl.textContent    = engScore === null ? '–' : engScore + '%';
-        if (engSubEl) engSubEl.textContent = engScore === null ? 'nicht berechnet' :
-                                              engScore >= 75 ? 'Hervorragend' :
-                                              engScore >= 50 ? 'Gut' :
-                                              engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
-
-        // Neue vs. Wiederkehrende Besucher (Active Users Badge)
-        var activeEl = document.getElementById('activeUsers');
-        if (activeEl) {
-            var newU = nvr.find(function(r) { return r.type === 'Neu'; });
-            activeEl.innerHTML = '<div class="live-dot" style="width:8px;height:8px;"></div> '
-                + (newU ? fmt(newU.visitors) + ' neu' : '–');
-        }
-
-        // ── Trend Indikatoren ──────────────────────────────────────────────
-        setTrend('kpiPageviewsTrend', sum.pageviews,  sum.pageviewsPrev);
-        setTrend('kpiVisitorsTrend',  sum.visitors,   sum.visitorsPrev);
-        setTrend('kpiVisitsTrend',    sum.sessions,   sum.sessionsPrev);
-        setTrend('kpiBouncesTrend',   sum.bounceRate, sum.bounceRatePrev);
-
-        // ── Zeitreihe Charts ───────────────────────────────────────────────
-        var seriesPV  = series.map(function(s) { return { x: s.ts, y: s.pageviews || 0 }; });
-        var seriesSes = series.map(function(s) { return { x: s.ts, y: s.sessions  || 0 }; });
-        if (currentRange >= 30 && currentRange <= 90) {
-            seriesPV  = aggregateWeekly(seriesPV);
-            seriesSes = aggregateWeekly(seriesSes);
-        }
-        renderBarChartDual('pageviewsChart', seriesPV, seriesSes);
-        renderBarChartSingle('visitorsChart', series.map(function(s) { return { x: s.ts, y: s.visitors || 0 }; }));
-
-        // ── Sparklines in den KPI-Kacheln ──────────────────────────────────
-        renderSparkline('sparkPageviews', series.map(function(s) { return s.pageviews || 0; }), '#a78bfa');
-        renderSparkline('sparkVisitors',  series.map(function(s) { return s.visitors  || 0; }), '#34d399');
-        renderSparkline('sparkSessions',  series.map(function(s) { return s.sessions  || 0; }), '#22d3ee');
-
-        // ── Top Pages ──────────────────────────────────────────────────────
-        var topPagesNorm = cleanExpandedPageData(topPages.map(function(p) {
-            return { name: p.path, pageviews: p.pageviews, visitors: p.visitors, visits: p.sessions || 0, bounces: 0, totaltime: 0 };
-        }));
-        renderExpandedTable('topPagesTable', topPagesNorm);
-
-        // ── Entry / Exit Pages ─────────────────────────────────────────────
-        renderSimpleTable('entryPagesTable',
-            entry.map(function(p) { return { x: p.path, y: p.entries }; }),
-            function(x) { return x || '/'; }, 'green');
-        renderSimpleTable('exitPagesTable',
-            exit.map(function(p) { return { x: p.path, y: p.exits }; }),
-            function(x) { return x || '/'; }, 'cyan');
-
-        // ── Referrers ──────────────────────────────────────────────────────
-        renderSimpleTable('referrersTable',
-            refs.map(function(r) { return { x: r.source, y: r.visitors }; }),
-            function(x) { return x; }, 'purple');
-
-        // ── Channels ───────────────────────────────────────────────────────
-        renderSimpleTable('channelsTable',
-            channels.map(function(c) { return { x: c.channel, y: c.sessions }; }),
-            function(x) { return x; }, 'yellow');
-
-        // ── UTM → Titles Tab ───────────────────────────────────────────────
-        var utmData = (utm.sources || []).map(function(u) { return { x: u.value, y: u.sessions }; });
-        renderSimpleTable('titlesTable', utmData, function(x) { return x; }, 'purple');
-
-        // ── Audience: Devices, Browsers, OS ───────────────────────────────
-        renderDevicesDonut(devices.map(function(d) { return { x: d.device, y: d.visitors }; }));
-        renderSimpleTableNoRank('browsersTable',
-            filterBotMetrics(browsers.map(function(b) { return { x: b.browser, y: b.visitors }; })),
-            function(x) { return x; }, 'purple');
-        renderSimpleTableNoRank('osTable',
-            filterBotMetrics(os.map(function(o) { return { x: o.os, y: o.visitors }; })),
-            function(x) { return x; }, 'cyan');
-
-        // ── Auflösungen (exakt statt Buckets) ──────────────────────────────
-        // Nach echter Bildschirmgröße sortieren (kleinster → größter Screen),
-        // nicht nach Besucher-Zahl.
-        var resSorted = resolut.slice().sort(function(a, b) {
-            return resolutionArea(a.res) - resolutionArea(b.res);
-        });
-        renderSimpleTableNoRank('screensTable',
-            resSorted.map(function(s) { return { x: s.res, y: s.visitors }; }),
-            function(x) { return x; }, 'purple');
-
-        // ── Geo: Karten + Städte ───────────────────────────────────────────
-        renderMaps(countries, regions, cities);
-        renderCities(cities, countries);
-
-        // ── Sprachen ───────────────────────────────────────────────────────
-        renderSimpleTableNoRank('languagesTable',
-            langs.map(function(l) { return { x: l.lang, y: l.visitors }; }),
-            langName, 'cyan');
-
-        // ── Session-Verhalten ──────────────────────────────────────────────
-        // Nach echter Dauer sortieren (aufsteigend), nicht nach Session-Zahl —
-        // damit die Verweildauer als Verteilung lesbar ist.
-        var durSorted = durBkts.slice().sort(function(a, b) {
-            return durationBucketSeconds(a.bucket) - durationBucketSeconds(b.bucket);
-        });
-        renderSimpleTableNoRank('durationTable',
-            durSorted.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
-            function(x) { return x; }, 'yellow');
-        var pvpSorted = pvpSess.slice().sort(function(a, b) {
-            return firstNumber(a.bucket) - firstNumber(b.bucket);
-        });
-        renderSimpleTableNoRank('pagesPerSessionTable',
-            pvpSorted.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
-            function(x) { return x; }, 'green');
-
-        // ── Aktivitäts-Puls, Ladeperformance, Feature-Nutzung, Cloudflare Edge ──────────
-        renderActivityPulse(activity);
-        renderVitals(lcp);
-        renderCloudflareEdge(d.cloudflare);
-        renderCustomEvents(custEv);
-
-        // ── Insights ───────────────────────────────────────────────────────
-        var insights = generateInsights(
-            { pageviews: pv, visitors: visitors, visits: sessions, bounces: Math.round(bounce * sessions), totaltime: (typeof avgDur === 'number' ? avgDur * sessions : 0) },
-            { pageviews: sum.pageviewsPrev || 0, visitors: sum.visitorsPrev || 0, visits: sum.sessionsPrev || 0, bounces: 0, totaltime: 0 },
-            devices.map(function(d) { return { x: d.device, y: d.visitors }; }),
-            { pageviews: seriesPV, sessions: seriesSes },
-            topPagesNorm
-        );
-
-        // Zusätzliche PostHog Insights
-        if (lcp.length > 0) {
-            var goodLcp = lcp.find(function(l) { return l.rating && l.rating.includes('Good'); });
-            if (goodLcp) {
-                var goodPct = lcp.reduce(function(s, l) { return s + l.sessions; }, 0);
-                goodPct = goodPct > 0 ? Math.round(goodLcp.sessions / goodPct * 100) : 0;
-                insights.unshift({ icon: INSIGHT_ICONS.zap, tone: 'good', text: '<strong>' + goodPct + '% gute LCP-Werte</strong> — Seite lädt schnell für die meisten Nutzer.' });
-            }
-        }
-        if (nvr.length > 0) {
-            var retU = nvr.find(function(r) { return r.type === 'Wiederkehrend'; });
-            if (retU && retU.visitors > 0) {
-                var retPct = Math.round(retU.visitors / visitors * 100);
-                insights.push({ icon: INSIGHT_ICONS.refresh, tone: 'good', text: '<strong>' + retPct + '% wiederkehrende Nutzer</strong> — die App bindet ihre User.' });
-            }
-        }
-
-        renderInsights(insights);
-
-        // ── Timestamp ──────────────────────────────────────────────────────
+        renderAll(d);
         var lu = document.getElementById('lastUpdated');
-        if (lu) lu.textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString(mwlLocale());
-
-        setLiveStatus(_stale ? 'stale' : 'live');
-        hideSkeletons();
-
+        if (lu) lu.textContent = T('Stand ', 'Updated ') + new Date().toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }) + (EN ? '' : ' Uhr');
+        setLiveStatus(stale ? 'stale' : 'live');
     } catch (err) {
         console.error('Analytics Error:', err);
         clearAnalyticsRetry();
         setLiveStatus('error');
-        hideSkeletons();
-        var _en = document.documentElement.lang === 'en';
-        var adEl = document.getElementById('adblockNotice');
-        if (adEl) {
-            adEl.style.display = 'block';
-            var _h = adEl.querySelector('h4');
-            var _p = adEl.querySelector('p');
-            if (_h) _h.textContent = _en ? 'Analytics backend not reachable' : 'Analytics-Backend nicht erreichbar';
-            if (_p) _p.textContent = _en ? 'Could not connect to the analytics backend.' : 'Die Verbindung zum Analytics-Backend konnte nicht hergestellt werden.';
-        }
-        var detEl = document.getElementById('errorDetail');
-        if (detEl) {
-            detEl.textContent = err.message || String(err);
-            detEl.style.display = 'block';
-        }
+        showNotice(T('Statistik-Server nicht erreichbar', 'Statistics server not reachable'),
+            T('Die Verbindung konnte nicht hergestellt werden. Internetverbindung prüfen und neu laden.',
+              'The connection could not be established. Check your internet connection and reload.'),
+            err.message || String(err));
     } finally {
         _analyticsLoading = false;
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Aktualisieren';
-        }
+        if (btn) btn.disabled = false;
+        document.body.classList.remove('is-loading');
     }
 }
 
-// =========================================
-//  INIT
-// =========================================
-// =========================================
-//  LIVE-AKTIVITÄT — Echtzeit-Ticker
-//  Eigener leichter Endpunkt (?feed), unabhaengig vom 30-Query-loadAll.
-//  Zeigt die letzten anonymen Seitenaufrufe + Ladezeit; pollt alle 20s,
-//  pausiert im Hintergrund-Tab (spart Worker-Quota).
-// =========================================
-var _liveFeedSeen = {};       // "ts|path" -> true, um frisch reingekommene Zeilen zu markieren
+function setTimeRange(days) {
+    currentRange = days;
+    document.querySelectorAll('.range-btn').forEach(function (b) {
+        var on = parseInt(b.dataset.range, 10) === days;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    view.expanded = {};
+    loadAll();
+}
+
+// ─── Gerade eben (Live-Feed) ─────────────────────────────────
+// Eigener leichter Endpunkt (?feed), unabhaengig vom grossen Abruf. Pollt alle
+// 20 s und pausiert im Hintergrund-Tab (spart Worker-Kontingent).
+var _liveFeedSeen = {};
 var _liveFeedTimer = null;
 var _liveFeedFirstLoad = true;
 
-function fmtRelTime(unixSec, EN) {
-    var diff = Math.floor(Date.now() / 1000) - unixSec;
-    if (diff < 0) diff = 0;
-    if (diff < 10) return EN ? 'just now' : 'gerade eben';
-    if (diff < 60) return EN ? diff + 's ago' : 'vor ' + diff + ' Sek';
+function fmtRelTime(unixSec) {
+    var diff = Math.max(0, Math.floor(Date.now() / 1000) - unixSec);
+    if (diff < 10) return T('gerade eben', 'just now');
+    if (diff < 60) return EN ? diff + ' s ago' : 'vor ' + diff + ' s';
     var m = Math.floor(diff / 60);
-    if (m < 60)    return EN ? m + ' min ago' : 'vor ' + m + ' Min';
+    if (m < 60) return EN ? m + ' min ago' : 'vor ' + m + ' min';
     var h = Math.floor(m / 60);
-    if (h < 24)    return EN ? h + 'h ago' : 'vor ' + h + ' Std';
-    var d = Math.floor(h / 24);
-    return EN ? d + 'd ago' : 'vor ' + d + ' Tg';
+    if (h < 24) return EN ? h + ' h ago' : 'vor ' + h + ' h';
+    var dd = Math.floor(h / 24);
+    return EN ? dd + ' d ago' : 'vor ' + dd + (dd === 1 ? ' Tag' : ' Tagen');
 }
-
-function latencyClass(ms) {
-    if (ms < 1000) return 'fast';
-    if (ms < 2500) return 'mid';
-    return 'slow';
-}
-
-function fmtLatency(ms) {
-    return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms';
-}
+function latencyClass(ms) { return ms < 1000 ? 'fast' : ms < 2500 ? 'mid' : 'slow'; }
+function fmtLatency(ms) { return ms >= 1000 ? fmtDec(ms / 1000, 1) + ' s' : Math.round(ms) + ' ms'; }
 
 function renderLiveFeed(events) {
     var ul = document.getElementById('liveFeed');
     if (!ul) return;
-    var EN = document.documentElement.lang === 'en';
-
     if (!events || !events.length) {
-        if (_liveFeedFirstLoad) {
-            ul.innerHTML = '<li class="live-feed-empty">' + (EN ? 'Waiting for activity…' : 'Warte auf Aktivität…') + '</li>';
-        }
+        if (_liveFeedFirstLoad) ul.innerHTML = '<li class="empty">' + T('Noch keine Aufrufe.', 'No page views yet.') + '</li>';
         return;
     }
-
-    var shown = events.slice(0, 12);
-    ul.innerHTML = shown.map(function(e) {
-        var key   = e.ts + '|' + e.path;
-        var isNew = !_liveFeedFirstLoad && !_liveFeedSeen[key];
-        var flag  = e.cc ? flagEmoji(e.cc) : '🏳️';
-        var lat   = (e.latencyMs != null && e.latencyMs > 0)
-            ? '<span class="lf-latency ' + latencyClass(e.latencyMs) + '">' + esc(fmtLatency(e.latencyMs)) + '</span>'
-            : '';
-        var device = e.device ? '<span class="lf-device">' + esc(e.device) + '</span>' : '';
-        return '<li class="live-feed-row' + (isNew ? ' lf-new' : '') + '">'
-            + '<span class="lf-time">' + esc(fmtRelTime(e.ts, EN)) + '</span>'
-            + '<span class="lf-flag">' + flag + '</span>'
-            + '<span class="lf-path">' + esc(e.path) + '</span>'
-            + '<span class="lf-meta">' + device + lat + '</span>'
-            + '</li>';
+    var shown = events.slice(0, 10);
+    ul.innerHTML = shown.map(function (e) {
+        var isNew = !_liveFeedFirstLoad && !_liveFeedSeen[e.ts + '|' + e.path];
+        var dev = DEVICE_LABELS[e.device];
+        var lat = (e.latencyMs != null && e.latencyMs > 0)
+            ? '<span class="feed-lat ' + latencyClass(e.latencyMs) + '" title="' + esc(T('Ladezeit', 'Load time')) + '">' + esc(fmtLatency(e.latencyMs)) + '</span>'
+            : '<span></span>';
+        return '<li' + (isNew ? ' class="is-new"' : '') + '>' +
+            '<span class="feed-flag" aria-hidden="true">' + ccBadge(e.cc) + '</span>' +
+            '<span class="feed-path">' + esc(e.path) + '</span>' +
+            '<span class="feed-time">' + esc(fmtRelTime(e.ts)) + '</span>' +
+            '<span class="feed-meta">' + esc(e.cc ? countryName(e.cc) : '') + (e.device ? '<span>' + esc(dev ? T(dev[0], dev[1]) : e.device) + '</span>' : '') + '</span>' +
+            lat + '</li>';
     }).join('');
-
     _liveFeedSeen = {};
-    shown.forEach(function(e) { _liveFeedSeen[e.ts + '|' + e.path] = true; });
+    shown.forEach(function (e) { _liveFeedSeen[e.ts + '|' + e.path] = true; });
     _liveFeedFirstLoad = false;
 }
 
-// Der gruene Puls neben "Live-Aktivitaet" behauptet, die Liste sei von jetzt.
-// Diese Zusage muss am tatsaechlichen Abruf haengen, sonst pulsiert sie auch
-// dann noch, wenn seit Minuten nichts mehr durchkommt.
+// Der gruene Punkt behauptet, die Liste sei von jetzt. Er haengt deshalb am
+// tatsaechlichen Abruf, sonst leuchtet er auch nach Minuten ohne Antwort.
 function setLiveFeedStatus(ok) {
     var el = document.getElementById('liveFeedStatus');
     if (!el) return;
-    var EN = document.documentElement.lang === 'en';
-    var label = el.querySelector('.lf-status-text');
-    if (!label) {
-        label = document.createElement('span');
-        label.className = 'lf-status-text';
-        el.appendChild(label);
-    }
     el.classList.toggle('is-stale', !ok);
-    label.textContent = ok ? (EN ? 'Live' : 'Echtzeit')
-                           : (EN ? 'No connection' : 'Nicht erreichbar');
+    var label = el.querySelector('.lf-status-text');
+    if (label) label.textContent = ok ? T('Live', 'Live') : T('Nicht erreichbar', 'No connection');
 }
 
 async function loadLiveFeed() {
-    if (document.hidden) return;   // kein Polling im Hintergrund
-    if (!document.getElementById('liveFeed')) return;
+    if (document.hidden || !document.getElementById('liveFeed')) return;
     try {
         var res = await fetch(CF_PROXY + '?feed=1', { cache: 'no-store' });
         if (!res.ok) { setLiveFeedStatus(false); return; }
@@ -2305,54 +1348,122 @@ async function loadLiveFeed() {
             setLiveFeedStatus(true);
             renderLiveFeed(d.events);
         } else if (d && d.summary) {
-            // Der deployte Worker kennt den ?feed-Endpunkt noch nicht und liefert
-            // stattdessen die volle Range-Analyse zurück. Dann NICHT alle 20s den
-            // schweren 30-Query-Endpunkt hämmern — Ticker still abschalten.
+            // Ein Worker ohne ?feed liefert die volle Analyse zurueck. Dann NICHT
+            // alle 20 s den schweren Endpunkt haemmern — Feed still abschalten.
             if (_liveFeedTimer) { clearInterval(_liveFeedTimer); _liveFeedTimer = null; }
-            var card = document.getElementById('liveFeedCard');
-            if (card) card.style.display = 'none';
+            setLiveFeedStatus(false);
         }
     } catch (e) {
-        /* Netzfehler/Adblock: keine Meldung, keine Konsole — der Ticker ist
-           Beiwerk und darf die Seite nie stoeren. Der Puls muss aber aufhoeren
-           zu behaupten, die Liste sei aktuell. */
+        // Netzfehler/Adblock: der Feed ist Beiwerk und darf die Seite nie stoeren.
         setLiveFeedStatus(false);
     }
 }
 
 function startLiveFeed() {
-    if (!document.getElementById('liveFeed')) return;
     loadLiveFeed();
     if (_liveFeedTimer) clearInterval(_liveFeedTimer);
     _liveFeedTimer = setInterval(loadLiveFeed, 20000);
-    document.addEventListener('visibilitychange', function() {
-        if (!document.hidden) loadLiveFeed();   // beim Zurückkommen sofort auffrischen
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) loadLiveFeed(); });
+}
+
+// ─── Schwebender Hinweis fuer Heatmap-Zellen ─────────────────
+// Ein title-Attribut erscheint am Handy nie — deshalb ein eigener Hinweis,
+// der auch auf Antippen reagiert.
+function bindFloatTip() {
+    var tip = document.createElement('div');
+    tip.className = 'float-tip';
+    tip.setAttribute('role', 'tooltip');
+    document.body.appendChild(tip);
+    function show(e) {
+        var t = e.target.closest && e.target.closest('[data-tip]');
+        if (!t) { tip.classList.remove('is-on'); return; }
+        tip.textContent = t.getAttribute('data-tip');
+        var r = t.getBoundingClientRect();
+        tip.classList.add('is-on');
+        var half = tip.offsetWidth / 2;
+        tip.style.left = Math.max(8 + half, Math.min(window.innerWidth - 8 - half, r.left + r.width / 2)) + 'px';
+        tip.style.top = (r.top - 8) + 'px';
+    }
+    document.addEventListener('pointerover', show);
+    document.addEventListener('pointerdown', show);
+    document.addEventListener('scroll', function () { tip.classList.remove('is-on'); }, { passive: true });
+}
+
+// ─── Bereichsnavigation ──────────────────────────────────────
+function bindSectionNav() {
+    var links = [].slice.call(document.querySelectorAll('.section-nav a'));
+    if (!('IntersectionObserver' in window) || !links.length) return;
+    var current = null;
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+            if (!en.isIntersecting) return;
+            current = en.target.id;
+            links.forEach(function (a) {
+                var on = a.getAttribute('href') === '#' + current;
+                a.classList.toggle('is-current', on);
+                if (on) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+            });
+        });
+    }, { rootMargin: '-35% 0px -60% 0px' });
+    links.forEach(function (a) {
+        var s = document.querySelector(a.getAttribute('href'));
+        if (s) io.observe(s);
     });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadAll();
-    startLiveFeed();
+// ─── Start ───────────────────────────────────────────────────
+var RENDER_TAB = { pages: renderPages, sources: renderSources, geo: renderGeo, tech: renderTech };
 
-    // Scroll-to-top visibility
-    var scrollBtn = document.getElementById('scrollTopBtn');
-    window.addEventListener('scroll', function() {
-        if (scrollBtn) scrollBtn.classList.toggle('show', window.scrollY > 400);
-    }, { passive: true });
-
-    // Fade-in observer for sections
-    var fadeEls = document.querySelectorAll('.fade-in');
-    if (fadeEls.length > 0 && 'IntersectionObserver' in window) {
-        var obs = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) {
-                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.range-btn').forEach(function (b) {
+        b.addEventListener('click', function () { setTimeRange(parseInt(b.dataset.range, 10)); });
+    });
+    document.getElementById('refreshBtn').addEventListener('click', function () { loadAll(); });
+    document.querySelectorAll('.metric[data-metric]').forEach(function (b) {
+        b.addEventListener('click', function () { setMetric(b.dataset.metric); });
+    });
+    document.querySelectorAll('.seg[data-group]').forEach(function (seg) {
+        seg.addEventListener('click', function (e) {
+            var b = e.target.closest('button[data-tab]');
+            if (!b) return;
+            var group = seg.dataset.group;
+            view.tabs[group] = b.dataset.tab;
+            seg.querySelectorAll('button').forEach(function (x) {
+                var on = x === b;
+                x.classList.toggle('is-active', on);
+                x.setAttribute('aria-selected', on ? 'true' : 'false');
             });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-        fadeEls.forEach(function(el) { obs.observe(el); });
-    } else {
-        fadeEls.forEach(function(el) { el.classList.add('visible'); });
+            if (RENDER_TAB[group]) RENDER_TAB[group]();
+        });
+    });
+    document.addEventListener('click', function (e) {
+        var more = e.target.closest && e.target.closest('.list-more[data-expand]');
+        if (!more) return;
+        var key = more.getAttribute('data-expand');
+        view.expanded[key] = !view.expanded[key];
+        var list = more.closest('.list');
+        if (!list) return;
+        if (list.id === 'eventsList') renderEvents(view.data && view.data.customEvents);
+        else {
+            var group = { pagesList: 'pages', sourcesList: 'sources', geoList: 'geo', techList: 'tech' }[list.id];
+            if (RENDER_TAB[group]) RENDER_TAB[group]();
+        }
+    });
+
+    var chart = document.getElementById('mainChart');
+    if (chart && 'ResizeObserver' in window) {
+        var raf = 0, lastW = 0;
+        new ResizeObserver(function () {
+            if (chart.clientWidth === lastW) return;
+            lastW = chart.clientWidth;
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(renderMainChart);
+        }).observe(chart);
     }
 
-    // Auto-refresh alle 5 Minuten
-    setInterval(function() { loadAll(); }, 300000);
+    bindFloatTip();
+    bindSectionNav();
+    loadAll();
+    startLiveFeed();
+    setInterval(function () { if (!document.hidden) loadAll(); }, 300000);
 });
