@@ -226,6 +226,7 @@
         });
         renderJobManager();
         try { populateJobSelect(); } catch (e) {}
+        if (typeof mwlEvent === 'function') mwlEvent('jobs', { aktion: 'angelegt', anzahl: jobs.length });
     }
 
     function removeJob(id) {
@@ -235,6 +236,7 @@
         var affected = (data.entries || []).filter(function (e) { return getEntryJobId(e) === id; }).length;
         var doRemove = function () {
             data.settings.jobs = getJobs().filter(function (j) { return j.id !== id; });
+            if (typeof mwlEvent === 'function') mwlEvent('jobs', { aktion: 'entfernt' });
             // Betroffene Einträge zurück auf Hauptjob (Soll/Diff neu rechnen)
             (data.entries || []).forEach(function (e) {
                 if (e.jobId === id) {

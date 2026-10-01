@@ -43,7 +43,12 @@
             const s = document.createElement('script');
             s.src = path + (TN_VER ? TN_VER[0] : '');
             s.onload = () => { s.dataset.ready = '1'; resolve(); };
-            s.onerror = () => { delete _tnLoads[path]; s.remove(); reject(new Error('Laden fehlgeschlagen: ' + path)); };
+            s.onerror = () => {
+                delete _tnLoads[path]; s.remove();
+                // Offline ist ein Fehlschlag erwartbar (und der Leerlauf-Prefetch versucht es dann auch) — gezaehlt wird nur online.
+                if (navigator.onLine && typeof mwlEvent === 'function') mwlEvent('problem_ansicht_laden', { datei: path.split('/').pop() });
+                reject(new Error('Laden fehlgeschlagen: ' + path));
+            };
             document.head.appendChild(s);
         });
         return _tnLoads[path];

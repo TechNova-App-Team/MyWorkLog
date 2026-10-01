@@ -143,6 +143,7 @@ class SupabaseCloudSync {
                     this.session = session;
                     this.user = session.user;
                     this.onAuthStateChanged(true, this.user);
+                    if (typeof mwlEvent === 'function') mwlEvent('konto', { aktion: hasPKCECode ? 'oauth_anmeldung' : 'link_anmeldung' });
                     
                     // URL aufräumen — Token/Code aus der Adressleiste entfernen
                     const cleanUrl = window.location.origin + window.location.pathname;
@@ -150,6 +151,7 @@ class SupabaseCloudSync {
                 }
             } catch (err) {
                 console.error('[Auth] OAuth Callback Verarbeitung fehlgeschlagen:', err);
+                if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'rueckkehr' });
             }
         }
     }
@@ -210,9 +212,11 @@ class SupabaseCloudSync {
             }
 
             console.log('[Auth] Magic Link versendet! Bitte E-Mail überprüfen.');
+            if (typeof mwlEvent === 'function') mwlEvent('konto', { aktion: 'magic_link_angefordert' });
             return { success: true, data };
         } catch (error) {
             console.error('[Auth] signInWithOtp Fehler:', error);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'magic_link' });
             throw error;
         }
     }
@@ -255,9 +259,11 @@ class SupabaseCloudSync {
         const { data, error } = await this.client.auth.signInWithPasskey();
         if (error) {
             console.error('[Auth] Passkey-Anmeldung fehlgeschlagen:', error.message);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'passkey' });
             throw error;
         }
         console.log('[Auth] Mit Passkey angemeldet');
+        if (typeof mwlEvent === 'function') mwlEvent('konto', { aktion: 'passkey_anmeldung' });
         return data;
     }
 
@@ -273,8 +279,10 @@ class SupabaseCloudSync {
         const { data, error } = await this.client.auth.registerPasskey();
         if (error) {
             console.error('[Auth] Passkey anlegen fehlgeschlagen:', error.message);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'passkey_anlegen' });
             throw error;
         }
+        if (typeof mwlEvent === 'function') mwlEvent('konto', { aktion: 'passkey_angelegt' });
         return data;
     }
 
@@ -323,6 +331,7 @@ class SupabaseCloudSync {
             return { success: true, data };
         } catch (error) {
             console.error('[Auth] Google OAuth Fehler:', error);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'google' });
             throw error;
         }
     }
@@ -351,6 +360,7 @@ class SupabaseCloudSync {
             return { success: true, data };
         } catch (error) {
             console.error('[Auth] GitHub OAuth Fehler:', error);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'github' });
             throw error;
         }
     }
@@ -379,6 +389,7 @@ class SupabaseCloudSync {
             return { success: true, data };
         } catch (error) {
             console.error('[Auth] Discord OAuth Fehler:', error);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'discord' });
             throw error;
         }
     }
@@ -416,6 +427,7 @@ class SupabaseCloudSync {
             this.session = null;
             this.user = null;
             console.log('[Auth] User erfolgreich ausgeloggt');
+            if (typeof mwlEvent === 'function') mwlEvent('konto', { aktion: 'abgemeldet' });
             
             this.onAuthStateChanged(false, null);
         } catch (error) {
@@ -492,6 +504,9 @@ class SupabaseCloudSync {
             return { success: true, data };
         } catch (error) {
             console.error('[Cloud] uploadToCloud Fehler:', error.message || error);
+            // Nur der Fehlschlag wird gezaehlt: der AutoSync laedt alle paar Minuten hoch,
+            // ein Erfolgs-Ereignis je Upload wuerde die Funktionsliste fluten.
+            if (typeof mwlEvent === 'function') mwlEvent('problem_cloud_sync', { grund: 'hochladen' });
             throw error;
         }
     }
@@ -573,6 +588,7 @@ class SupabaseCloudSync {
                 }
 
                 console.log('[Cloud] Daten erfolgreich synchronisiert!');
+                if (typeof mwlEvent === 'function') mwlEvent('cloud_sync', { aktion: 'heruntergeladen' });
                 return { success: true, itemsLoaded: Object.keys(data.all_data).length };
             } else {
                 console.log('[Cloud] Keine Daten für diesen User gefunden (erste Nutzung?)');
@@ -580,6 +596,7 @@ class SupabaseCloudSync {
             }
         } catch (error) {
             console.error('[Cloud] downloadFromCloud Fehler:', error.message || error);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_cloud_sync', { grund: 'herunterladen' });
             throw error;
         }
     }
@@ -616,6 +633,7 @@ class SupabaseCloudSync {
                 localStorage.removeItem('mwl_last_backup_kind');
             }
         } catch (e) { /* Speicher gesperrt — kein Grund, das Löschen zu verlieren */ }
+        if (typeof mwlEvent === 'function') mwlEvent('cloud_sync', { aktion: 'cloud_geloescht' });
 
         return { success: true };
     }

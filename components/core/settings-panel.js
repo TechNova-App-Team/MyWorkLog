@@ -441,6 +441,7 @@
         const b = backups.find(x => x.ts === ts);
         if(!b) return showCustomMessage('❌ Fehler', 'Backup nicht gefunden.', 'error');
         localStorage.setItem('tg_pro_data', JSON.stringify(b.data));
+        if (typeof mwlEvent === 'function') mwlEvent('backup', { aktion: 'lokal_wiederhergestellt' });
         showCustomMessage('✅ Wiederhergestellt', 'Backup wurde auf diese Sitzung angewendet. Die Seite wird neu geladen.', 'success');
         setTimeout(() => location.reload(), 800);
     }
@@ -462,6 +463,7 @@
             data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             save();
             renderLists();
+            if (typeof mwlEvent === 'function') mwlEvent('backup', { aktion: 'lokal_zusammengefuehrt' });
             showCustomMessage('✅ Merge abgeschlossen', `${added} Einträge hinzugefügt.`, 'success');
         } else {
             showCustomMessage('ℹ️ Kein Merge nötig', 'Alle Einträge waren bereits vorhanden.', 'info');

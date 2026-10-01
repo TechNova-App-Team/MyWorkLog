@@ -701,6 +701,7 @@
                haeufigsten vorkommt. */
             if (!custom) suggestedKm = currentRoute.distance;
 
+            if (typeof mwlEvent === 'function') mwlEvent('fahrtkosten', { aktion: 'route_berechnet', eigene_strecke: custom, verkehrsmittel: activeMode });
             drawRoute(route.geometry);
             recalculate();
             renderTransportLinks();
@@ -708,6 +709,7 @@
         })
         .catch(function () {
             showLoading(false);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_route', { grund: 'routing_dienst' });
             // Rueckfall: Luftlinie entlang der Kette. Wird im Befundsatz auch so benannt.
             currentRoute = {
                 distance: chainHaversineKm(chain),
@@ -1413,6 +1415,7 @@
         saveSettings();
         renderHistory();
         flashSaved();
+        if (typeof mwlEvent === 'function') mwlEvent('fahrtkosten', { aktion: 'monat_gespeichert', verkehrsmittel: activeMode });
     }
 
     /* Rueckmeldung nur am Label-Knoten. Ein textContent auf den Knopf wuerde

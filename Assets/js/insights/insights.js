@@ -16,7 +16,7 @@ let currentRange = 7;
 var view = {
     data: null,
     metric: 'visitors',
-    tabs: { pages: 'top', sources: 'referrers', geo: 'countries', tech: 'devices' },
+    tabs: { pages: 'top', sources: 'referrers', geo: 'countries', tech: 'devices', events: 'actions' },
     expanded: {}
 };
 
@@ -189,9 +189,12 @@ var DEVICE_LABELS = { 'Mobile': ['Smartphone', 'Phone'], 'Desktop': ['Computer',
 var EVENT_LABELS = {
     'entry_created':    ['Eintrag erstellt', 'Entry created'],
     'entry_updated':    ['Eintrag bearbeitet', 'Entry edited'],
-    'timer_action':     ['Timer benutzt', 'Timer used'],
+    'eintrag_geloescht': ['Eintrag gelöscht', 'Entry deleted'],
+    'eintrag_wiederhergestellt': ['Löschen rückgängig gemacht', 'Delete undone'],
+    'timer_action':     ['Timer', 'Timer'],
     'data_exported':    ['Daten exportiert', 'Data exported'],
     'pwa_installiert':  ['App installiert', 'App installed'],
+    'installbanner':    ['Installations-Hinweis', 'Install prompt'],
     'data_imported':    ['Daten importiert', 'Data imported'],
     'woche_gewechselt': ['Woche gewechselt', 'Week switched'],
     'monat_gewechselt': ['Monat gewechselt', 'Month switched'],
@@ -207,14 +210,100 @@ var EVENT_LABELS = {
     'foto_import_opened': ['Foto-Import geöffnet', 'Photo import opened'],
     'foto_import_applied': ['Foto-Import übernommen', 'Photo import applied'],
     'import_wizard_opened': ['Import geöffnet', 'Import opened'],
+    'schnellsuche_geoeffnet': ['Schnellsuche geöffnet', 'Command palette opened'],
+    'einstellungen_gespeichert': ['Einstellungen gespeichert', 'Settings saved'],
+    'theme_gewechselt': ['Erscheinungsbild', 'Appearance'],
+    'stimmung':         ['Stimmung', 'Mood'],
+    'jobs':             ['Mehrere Jobs', 'Multiple jobs'],
+    'widget':           ['Dashboard-Widget', 'Dashboard widget'],
+    'berufsschule':     ['Berufsschule', 'Vocational school'],
+    'backup':           ['Backup', 'Backup'],
+    'konto':            ['Konto', 'Account'],
+    'cloud_sync':       ['Cloud-Sync', 'Cloud sync'],
+    'p2p_sync':         ['Geräte-Sync', 'Device sync'],
+    'berichtsheft':     ['Berichtsheft', 'Report book'],
+    'berichtsheft_ki':  ['Berichtsheft-KI', 'Report book AI'],
+    'fahrtkosten':      ['Fahrtkosten', 'Travel costs'],
+    'vertrags_manager': ['Vertrags-Manager', 'Contract manager'],
+    'rechte_checker':   ['Rechte-Checker', 'Rights checker'],
+    'deep_dive':        ['Deep Dive', 'Deep dive'],
     'b2b_freischaltung_angefragt': ['Betrieb: Freischaltung angefragt', 'Company: verification requested'],
-    'ausbilder_einladung': ['Ausbilder eingeladen', 'Trainer invited'],
+    'b2b_firma_angefragt': ['Betrieb: Firma angefragt', 'Company: requested'],
+    'b2b_betrieb_bestaetigt': ['Betrieb bestätigt', 'Company verified'],
+    'b2b_firma_entschieden': ['Betrieb: Anfrage entschieden', 'Company: request decided'],
+    'ausbilder_einladung': ['Ausbilder-Einladung', 'Trainer invitation'],
     'skill_uebung_gestartet': ['Skill-Baum: Übung gestartet', 'Skill tree: exercise started'],
     'skill_uebung_beendet': ['Skill-Baum: Übung beendet', 'Skill tree: exercise finished'],
     'skill_berichtsheft_ausgewertet': ['Skill-Baum: Berichtsheft ausgewertet', 'Skill tree: report book analysed'],
-    'ghost_mode_on':    ['Ghost Mode (seit v7.5.4 entfernt)', 'Ghost mode (removed in v7.5.4)']
+    'geburtstag_kerze': ['Geburtstag: Kerze ausgepustet', 'Birthday: candle blown out'],
+    'geburtstag_wunsch': ['Geburtstag: Wunsch geschickt', 'Birthday: wish sent'],
+    'ghost_mode_on':    ['Ghost Mode (seit v7.5.4 entfernt)', 'Ghost mode (removed in v7.5.4)'],
+    // Probleme — alles mit 'problem_' landet im eigenen Reiter.
+    'problem_js_fehler':      ['Skriptfehler', 'Script error'],
+    'problem_ansicht_laden':  ['Ansicht lädt nicht', 'View failed to load'],
+    'problem_speicher_voll':  ['Speicher voll, nicht gespeichert', 'Storage full, not saved'],
+    'problem_anmeldung':      ['Anmeldung gescheitert', 'Sign-in failed'],
+    'problem_cloud_sync':     ['Cloud-Sync gescheitert', 'Cloud sync failed'],
+    'problem_backup':         ['Backup gescheitert', 'Backup failed'],
+    'problem_p2p':            ['Geräte-Sync ohne Verbindung', 'Device sync could not connect'],
+    'problem_ki':             ['KI nicht verfügbar', 'AI unavailable'],
+    'problem_route':          ['Route nicht berechnet', 'Route not calculated'],
+    'problem_suche_ohne_treffer': ['Suche ohne Treffer', 'Search without results']
 };
-// 'feature_genutzt' liefert der Worker als 'feature_genutzt::<view>'.
+// Unterart (Property 'aktion'/'grund', vom Worker als '<event>::<unterart>' angehaengt).
+// Erst '<event>::<unterart>', dann die Unterart allein; sonst wird der Schluessel lesbar gemacht.
+var SUB_LABELS = {
+    'timer_action::start': ['gestartet', 'started'], 'timer_action::pause': ['pausiert', 'paused'],
+    'timer_action::stop': ['gestoppt', 'stopped'], 'timer_action::resume': ['fortgesetzt', 'resumed'],
+    'theme_gewechselt::light': ['hell', 'light'], 'theme_gewechselt::dark': ['dunkel', 'dark'],
+    'theme_gewechselt::system': ['automatisch', 'automatic'],
+    'ausbilder_einladung::erzeugt': ['Code erzeugt', 'code created'],
+    'ausbilder_einladung::eingeloest': ['Code eingelöst', 'code redeemed'],
+    'aufgaben::neu': ['Aufgabe angelegt', 'task created'], 'aufgaben::erledigt': ['Aufgabe erledigt', 'task completed'],
+    'aufgaben::notiz': ['Notiz angelegt', 'note created'], 'aufgaben::zur_notiz': ['zur Notiz gemacht', 'turned into note'],
+    'aufgaben::zur_aufgabe': ['zur Aufgabe gemacht', 'turned into task'],
+    'gesetzt': ['gesetzt', 'set'], 'uebersprungen': ['übersprungen', 'skipped'],
+    'angelegt': ['angelegt', 'created'], 'entfernt': ['entfernt', 'removed'], 'hinzugefuegt': ['hinzugefügt', 'added'],
+    'angezeigt': ['angezeigt', 'shown'], 'installieren_geklickt': ['„Installieren" geklickt', '"Install" clicked'],
+    'dialog_angenommen': ['Dialog angenommen', 'dialog accepted'], 'dialog_abgelehnt': ['Dialog abgelehnt', 'dialog declined'],
+    'spaeter': ['„Später"', '"Later"'], 'nie_wieder': ['„Nicht mehr anzeigen"', '"Don’t show again"'],
+    'fach_angelegt': ['Fach angelegt', 'subject created'], 'noten_gespeichert': ['Noten gespeichert', 'grades saved'],
+    'verschluesselt_exportiert': ['verschlüsselt exportiert', 'encrypted export'],
+    'verschluesselt_importiert': ['verschlüsselt eingespielt', 'encrypted restore'],
+    'lokal_wiederhergestellt': ['lokale Sicherung zurückgeholt', 'local snapshot restored'],
+    'lokal_zusammengefuehrt': ['lokale Sicherung zusammengeführt', 'local snapshot merged'],
+    'datei_importiert': ['Datei eingespielt', 'file restored'],
+    'magic_link_angefordert': ['Anmeldelink angefordert', 'sign-in link requested'],
+    'link_anmeldung': ['per Link angemeldet', 'signed in via link'], 'oauth_anmeldung': ['per Google/GitHub angemeldet', 'signed in via OAuth'],
+    'passkey_anmeldung': ['per Passkey angemeldet', 'signed in with passkey'], 'passkey_angelegt': ['Passkey angelegt', 'passkey created'],
+    'abgemeldet': ['abgemeldet', 'signed out'],
+    'heruntergeladen': ['Daten geholt', 'data downloaded'], 'cloud_geloescht': ['Cloud-Daten gelöscht', 'cloud data deleted'],
+    'verbunden': ['verbunden', 'connected'], 'synchronisiert': ['synchronisiert', 'synced'],
+    'bericht_erstellt': ['Bericht erstellt', 'report created'], 'bericht_bearbeitet': ['Bericht bearbeitet', 'report edited'],
+    'pdf_einzeln': ['PDF einer Woche', 'PDF of one week'], 'pdf_sammel': ['Sammel-PDF', 'combined PDF'],
+    'cloud_generiert': ['mit Cloud-KI geschrieben', 'written with cloud AI'], 'lokal_generiert': ['lokal geschrieben', 'written locally'],
+    'route_berechnet': ['Route berechnet', 'route calculated'], 'monat_gespeichert': ['Monat gespeichert', 'month saved'],
+    'steuerklasse_gewechselt': ['Steuerklasse gewechselt', 'tax class changed'],
+    'gehaltszettel_gedruckt': ['Gehaltszettel gedruckt', 'payslip printed'], 'vertrag_angelegt': ['Vertrag angelegt', 'contract created'],
+    'zusatzleistung_gespeichert': ['Zusatzleistung gespeichert', 'benefit saved'],
+    'gesucht': ['gesucht', 'searched'], 'fall_geoeffnet': ['Fall geöffnet', 'case opened'], 'mustermail_kopiert': ['Mustermail kopiert', 'template email copied'],
+    'zur_haelfte': ['bis zur Hälfte gelesen', 'read halfway'], 'zu_ende': ['zu Ende gelesen', 'read to the end'],
+    // Gruende der Probleme
+    'magic_link': ['Anmeldelink', 'sign-in link'], 'passkey': ['Passkey', 'passkey'], 'passkey_anlegen': ['Passkey anlegen', 'creating passkey'],
+    'google': ['Google', 'Google'], 'github': ['GitHub', 'GitHub'], 'discord': ['Discord', 'Discord'],
+    'rueckkehr': ['Rückkehr vom Anbieter', 'return from provider'],
+    'hochladen': ['Hochladen', 'upload'], 'herunterladen': ['Herunterladen', 'download'],
+    'verschluesseln': ['Verschlüsseln', 'encrypting'], 'entschluesseln': ['Entschlüsseln (Passwort?)', 'decrypting (password?)'],
+    'datei_import': ['Datei einspielen', 'file restore'],
+    'abbruch': ['Gegenstelle nicht erreicht', 'peer not reached'], 'keine_kandidaten': ['WebRTC blockiert', 'WebRTC blocked'],
+    'ice_fehlgeschlagen': ['Netzwerkweg gescheitert', 'network path failed'],
+    'tageslimit': ['Tageslimit', 'daily limit'], 'burst_limit': ['Kurzzeit-Limit', 'burst limit'],
+    'proxy_offline': ['Proxy nicht erreichbar', 'proxy unreachable'], 'generierung_fehlgeschlagen': ['Erzeugung abgebrochen', 'generation failed'],
+    'sonstiges': ['sonstiges', 'other'], 'routing_dienst': ['Routing-Dienst', 'routing service'],
+    'rechte_checker': ['Rechte-Checker', 'rights checker']
+};
+// 'feature_genutzt' liefert der Worker als 'feature_genutzt::<view>' (und mit
+// Unteraktion als 'feature_genutzt::<view>::<aktion>').
 var FEATURE_LABELS = {
     'dashboard':     ['Übersicht', 'Overview'],
     'history':       ['Historie', 'History'],
@@ -232,16 +321,32 @@ var FEATURE_LABELS = {
     'aufgaben-tab':  ['Aufgaben', 'Tasks'],
     'urlaubsplaner': ['Urlaubsplaner', 'Vacation planner']
 };
-function eventLabel(name) {
-    if (name && name.indexOf('feature_genutzt::') === 0) {
-        var v = name.slice('feature_genutzt::'.length);
-        var f = FEATURE_LABELS[v];
-        return T('Ansicht: ', 'View: ') + (f ? T(f[0], f[1]) : v);
-    }
-    var l = EVENT_LABELS[name];
-    if (l) return T(l[0], l[1]);
-    var s = String(name || '').replace(/_/g, ' ');
+function humanize(s) {
+    s = String(s || '').replace(/_/g, ' ');
     return s.charAt(0).toUpperCase() + s.slice(1);
+}
+function subLabel(base, sub) {
+    var l = SUB_LABELS[base + '::' + sub] || SUB_LABELS[sub];
+    if (l) return T(l[0], l[1]);
+    return sub.slice(-3) === '.js' ? sub : humanize(sub).toLowerCase();   // Dateinamen bleiben, wie sie sind
+}
+// Reiter einer Zeile: 'views' (reine Ansicht), 'problems' (problem_*), sonst 'actions'.
+function eventGroup(name) {
+    var p = String(name || '').split('::');
+    if (p[0].indexOf('problem_') === 0) return 'problems';
+    if (p[0] === 'feature_genutzt' && p.length === 2) return 'views';
+    return 'actions';
+}
+function eventLabel(name) {
+    var p = String(name || '').split('::');
+    if (p[0] === 'feature_genutzt') {
+        var f = FEATURE_LABELS[p[1]];
+        var view = f ? T(f[0], f[1]) : humanize(p[1]);
+        return p[2] ? view + ': ' + subLabel(p[1], p[2]) : view;
+    }
+    var l = EVENT_LABELS[p[0]];
+    var base = l ? T(l[0], l[1]) : humanize(p[0]);
+    return p[1] ? base + ': ' + subLabel(p[0], p[1]) : base;
 }
 
 // "< 10s", "1-3 Min", "10+ Min" → Sekunden, damit die Verteilung in echter Reihenfolge steht.
@@ -748,16 +853,34 @@ function renderBehaviour(d) {
 }
 
 // ─── Funktionen ──────────────────────────────────────────────
+var EVENT_EMPTY = {
+    views: ['Im Zeitraum wurde keine Ansicht geöffnet.', 'No view was opened in this period.'],
+    actions: ['Im Zeitraum wurde keine Aktion gezählt.', 'No actions were counted in this period.'],
+    problems: ['Im Zeitraum ist nichts schiefgegangen.', 'Nothing went wrong in this period.']
+};
 function renderEvents(events) {
     var meta = document.getElementById('eventsMeta');
-    var rows = (events || []).map(function (e) {
-        return { label: eventLabel(e.name), value: e.count || 0,
-                 title: fmtInt(e.visitors || 0) + ' ' + T('verschiedene Besucher', 'distinct visitors') };
+    var tab = view.tabs.events;
+    var counts = { views: 0, actions: 0, problems: 0 };
+    var rows = [];
+    (events || []).forEach(function (e) {
+        var g = eventGroup(e.name), n = e.count || 0;
+        counts[g] += n;
+        if (g !== tab) return;
+        // Bei Problemen ist "wie viele Leute" wichtiger als "wie oft" — eine Schleife
+        // bei EINEM Nutzer sieht sonst aus wie ein Flaechenbrand.
+        rows.push({ label: eventLabel(e.name), value: n,
+                    title: fmtInt(e.visitors || 0) + ' ' + T('verschiedene Besucher', 'distinct visitors') });
     });
-    var total = rows.reduce(function (s, r) { return s + r.value; }, 0);
-    if (meta) meta.textContent = total ? fmtInt(total) + ' ' + T('Aktionen', 'actions') : '';
-    renderList('eventsList', rows, { key: 'events', limit: 12, noShare: true,
-        empty: T('Im Zeitraum wurde keine Aktion gezählt.', 'No actions were counted in this period.') });
+    rows.sort(function (a, b) { return b.value - a.value; });
+    document.querySelectorAll('[data-group="events"] [data-count]').forEach(function (c) {
+        var v = counts[c.getAttribute('data-count')];
+        c.textContent = v ? fmtInt(v) : '';
+    });
+    var total = counts.views + counts.actions + counts.problems;
+    if (meta) meta.textContent = total ? fmtInt(total) + ' ' + T('Ereignisse', 'events') : '';
+    var empty = EVENT_EMPTY[tab] || EVENT_EMPTY.actions;
+    renderList('eventsList', rows, { key: 'events-' + tab, limit: 12, noShare: true, empty: T(empty[0], empty[1]) });
 }
 
 // ─── Cloudflare ──────────────────────────────────────────────
@@ -1412,7 +1535,8 @@ function bindSectionNav() {
 }
 
 // ─── Start ───────────────────────────────────────────────────
-var RENDER_TAB = { pages: renderPages, sources: renderSources, geo: renderGeo, tech: renderTech };
+var RENDER_TAB = { pages: renderPages, sources: renderSources, geo: renderGeo, tech: renderTech,
+                  events: function () { renderEvents(view.data && view.data.customEvents); } };
 
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.range-btn').forEach(function (b) {

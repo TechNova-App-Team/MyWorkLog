@@ -92,6 +92,7 @@
         a.download = fileName;
         a.click();
         
+        if (typeof mwlEvent === 'function') mwlEvent('data_exported', { format: format, quelle: 'historie' });
         showCustomMessage('✅ Export gestartet', `Export von ${filtered.length} gefilterten Einträgen als ${format.toUpperCase()} wird vorbereitet...`, 'success');
     }
 

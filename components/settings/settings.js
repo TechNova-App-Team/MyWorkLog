@@ -248,11 +248,19 @@
         if (offlineQueueEl) data.settings.team.offlineQueue = offlineQueueEl.checked;
         
         save();
+        // Welche Einstellungen ueberhaupt jemand benutzt — nur Schalterstellungen, keine Werte.
+        if (typeof mwlEvent === 'function') mwlEvent('einstellungen_gespeichert', {
+            rundung: !!(data.settings.rounding && data.settings.rounding.enabled),
+            mehrere_jobs: (typeof hasMultipleJobs === 'function') ? !!hasMultipleJobs() : false,
+            theme: data.settings.themeMode || 'dark'
+        });
         document.getElementById('settingsModal').classList.remove('active');
     }
 
     function setThemeMode(mode) {
         try {
+            // init-app.js ruft das beim Start mit dem gespeicherten Wert — nur ein echter Wechsel zaehlt.
+            if (data.settings.themeMode !== mode && typeof mwlEvent === 'function') mwlEvent('theme_gewechselt', { aktion: mode });
             data.settings.themeMode = mode;
             if (mode === 'light') {
                 document.documentElement.setAttribute('data-theme', 'light');

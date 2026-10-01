@@ -22,6 +22,39 @@ window.mwlEvent = function (name, props) {
     } catch (e) { /* Tracking darf die Seite nie kippen */ }
 };
 
+/* Unbehandelte Fehler zaehlen — Zwilling der Fassung in index.template.html, Gruende dort.
+   Kurz: keine Fehlermeldung (kann Nutzerdaten zitieren), nur Typ/Datei/Zeile, max. 5. */
+(function () {
+    var n = 0;
+    function melde(art, err, datei, zeile) {
+        if (n >= 5 || typeof window.mwlEvent !== 'function') return;
+        n++;
+        window.mwlEvent('problem_js_fehler', {
+            art: art,
+            typ: (err && err.name) || 'unbekannt',
+            datei: String(datei || '').split('?')[0].split('/').pop() || 'inline',
+            zeile: zeile || 0
+        });
+    }
+    window.addEventListener('error', function (e) {
+        if (!e || (e.target && e.target !== window && e.target.tagName)) return;   // Ladefehler von <img>/<script>, kein JS-Fehler
+        var m = String(e.message || '');
+        if (m === 'Script error.' || m.indexOf('ResizeObserver') !== -1) return;
+        melde('fehler', e.error, e.filename, e.lineno);
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+        var r = e && e.reason;
+        // Erste Stack-Zeile mit Adresse: "…(https://host/pfad.js?v=1:120:7)" → Datei + Zeile.
+        var st = r && r.stack ? String(r.stack) : '', i = st.indexOf('http'), datei = '', zeile = 0;
+        if (i !== -1) {
+            var teile = st.slice(i).split(')')[0].split(' ')[0].split(String.fromCharCode(10))[0].split(':');
+            zeile = +teile[teile.length - 2] || 0;
+            datei = teile.slice(0, -2).join(':');
+        }
+        melde('promise', r, datei, zeile);
+    });
+})();
+
 (function () {
     var h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '' || location.protocol === 'file:') return;

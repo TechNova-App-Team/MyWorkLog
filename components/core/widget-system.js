@@ -237,6 +237,7 @@
         initializeWidget(widgetId);
         
         updateDashboard(); // Refresh data
+        if (typeof mwlEvent === 'function') mwlEvent('widget', { aktion: 'hinzugefuegt', widget: widgetId });
         console.log('Widget addition complete');
     }
 
@@ -257,6 +258,7 @@
             console.log('Widget removed from DOM');
             saveDashboardLayout();
             renderWidgetManager();
+            if (typeof mwlEvent === 'function') mwlEvent('widget', { aktion: 'entfernt', widget: widgetId });
             console.log('Widget removal complete');
         } else {
             console.error('Widget element not found for removal:', widgetId);

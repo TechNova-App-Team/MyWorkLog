@@ -363,7 +363,7 @@
 
     function timerAction(act) {
         const now = Date.now();
-        if (typeof mwlEvent === 'function') mwlEvent('timer_action', { action: act });
+        if (typeof mwlEvent === 'function') mwlEvent('timer_action', { aktion: act });
         if (act === 'start') {
             if (!timer.running) { 
                 timer.start = now; 

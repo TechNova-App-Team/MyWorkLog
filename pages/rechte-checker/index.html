@@ -887,8 +887,8 @@
             clip: rect(0,0,0,0); white-space: nowrap; border: 0;
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=8.0.9"></script>
-    <script defer src="/Assets/js/version-loader.js?v=8.0.9"></script>
+    <script defer src="/Assets/js/ph-init.js?v=8.0.10"></script>
+    <script defer src="/Assets/js/version-loader.js?v=8.0.10"></script>
 </head>
 <body>
     <!-- ═══════════════ AMBIENT ═══════════════ -->
@@ -3430,13 +3430,22 @@ Mit freundlichen Grüßen
     // ═══════════════════════════════════════════
     function initSearch() {
         const input = document.getElementById('searchInput');
-        let timeout;
+        let timeout, zaehlTimeout;
         input.addEventListener('input', () => {
             clearTimeout(timeout);
             timeout = setTimeout(() => {
                 searchQuery = input.value.trim();
                 renderScenarios();
             }, 250);
+            // Gezaehlt wird erst, wenn das Tippen 1,5 s ruht — sonst ist jede Tipp-Pause
+            // eine eigene Suche. Der Suchtext selbst geht nie raus, nur ob es Treffer gab:
+            // „ohne Treffer" zeigt, welche Fragen der Katalog noch nicht beantwortet.
+            clearTimeout(zaehlTimeout);
+            zaehlTimeout = setTimeout(() => {
+                if (!searchQuery || typeof mwlEvent !== 'function') return;
+                if (document.getElementById('noResults').style.display === 'block') mwlEvent('problem_suche_ohne_treffer', { grund: 'rechte_checker' });
+                else mwlEvent('rechte_checker', { aktion: 'gesucht' });
+            }, 1500);
         });
     }
 
@@ -3460,6 +3469,8 @@ Mit freundlichen Grüßen
     function openDetail(id) {
         const s = SCENARIOS.find(x => x.id === id);
         if (!s) return;
+        // Die id ist ein fester Katalogschluessel ('ueberstunden'), kein Nutzertext.
+        if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'fall_geoeffnet', fall: s.id });
 
         const overlay = document.getElementById('detailOverlay');
         const catDiv = document.getElementById('detailCategory');
@@ -3557,6 +3568,7 @@ Mit freundlichen Grüßen
     function copyEmail(id) {
         const s = SCENARIOS.find(x => x.id === id);
         if (!s || !s.email) return;
+        if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'mustermail_kopiert', fall: s.id });
         const text = RL('Betreff: ', 'Subject: ') + s.email.subject + '\n\n' + s.email.body;
         navigator.clipboard.writeText(text).then(() => {
             const btn = document.querySelector('#emailOutput_' + id + ' .email-copy-btn');

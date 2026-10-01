@@ -2404,6 +2404,11 @@ async function generate() {
                     usedCloud = true;
                 } catch (apiErr) {
                     console.warn('[AIStudio] Cloud-KI failed, using local engine:', apiErr.message);
+                    if (typeof mwlEvent === 'function') mwlEvent('problem_ki', {
+                        grund: apiErr.message.includes('Tageslimit') ? 'tageslimit'
+                             : apiErr.message.includes('Burst-Limit') ? 'burst_limit'
+                             : apiErr.message.includes('Proxy nicht erreichbar') ? 'proxy_offline' : 'sonstiges'
+                    });
                     if (apiErr.message.includes('Tageslimit')) {
                         showToast(L('Tageslimit erreicht — es läuft die lokale Engine', 'Daily limit reached — the local engine is running'), 'warning');
                     } else if (apiErr.message.includes('Burst-Limit')) {
@@ -2438,8 +2443,10 @@ async function generate() {
             ? L(`${week.days.length} Tage mit Cloud KI generiert`, `${week.days.length} days generated with cloud AI`)
             : L(`${week.days.length} Tage lokal generiert`, `${week.days.length} days generated locally`), 'success');
         _genSuccess = true;
+        if (typeof mwlEvent === 'function') mwlEvent('berichtsheft_ki', { aktion: usedCloud ? 'cloud_generiert' : 'lokal_generiert', tage: week.days.length });
     } catch (e) {
         console.error('[AIStudio] Generation error:', e);
+        if (typeof mwlEvent === 'function') mwlEvent('problem_ki', { grund: 'generierung_fehlgeschlagen' });
         showToast(L('Fehler bei der Generierung: ', 'Error during generation: ') + e.message, 'error');
     } finally {
         state.isGenerating = false;

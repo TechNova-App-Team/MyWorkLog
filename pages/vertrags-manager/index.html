@@ -14,8 +14,8 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/vertrags-manager/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/vertrags-manager/">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=8.0.9"></script>
-    <script defer src="/Assets/js/version-loader.js?v=8.0.9"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=8.0.10"></script>
+    <script defer src="/Assets/js/version-loader.js?v=8.0.10"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1280,9 +1280,9 @@
             .payslip-payout-amount { color: #000 !important; text-shadow: none !important; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=8.0.9"></script>
+    <script defer src="/Assets/js/ph-init.js?v=8.0.10"></script>
     <!-- Rueckfragen als Dialog der Seite statt window.confirm (mwlConfirm). -->
-    <script defer src="/Assets/js/mwl-dialog.js?v=8.0.9"></script>
+    <script defer src="/Assets/js/mwl-dialog.js?v=8.0.10"></script>
 </head>
 <body>
     <!-- Background -->
@@ -2531,11 +2531,13 @@
 
         function changeTaxClass(stkl) {
             appData.taxClass = parseInt(stkl) || 1;
+            if (typeof mwlEvent === 'function') mwlEvent('vertrags_manager', { aktion: 'steuerklasse_gewechselt' });
             saveData();
             updateUI();
         }
 
         function printPayslip() {
+            if (typeof mwlEvent === 'function') mwlEvent('vertrags_manager', { aktion: 'gehaltszettel_gedruckt' });
             window.print();
         }
 
@@ -2725,6 +2727,7 @@
         }
 
         function saveBenefit(e) {
+            if (typeof mwlEvent === 'function') mwlEvent('vertrags_manager', { aktion: 'zusatzleistung_gespeichert' });
             e.preventDefault();
             const c = getActive();
             if (!c) return;
@@ -2951,6 +2954,7 @@
             };
             appData.contracts.push(c);
             appData.activeContractId = c.id;
+            if (typeof mwlEvent === 'function') mwlEvent('vertrags_manager', { aktion: 'vertrag_angelegt', anzahl: appData.contracts.length });
             saveData();
             updateUI();
             openContractModal();

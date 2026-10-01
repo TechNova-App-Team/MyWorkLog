@@ -851,6 +851,7 @@
         const grades = scGradesOf(scope);
         if (!grades[name]) grades[name] = [];
         grades[name].push(grade.toString());
+        if (typeof mwlEvent === 'function') mwlEvent('berufsschule', { aktion: 'fach_angelegt' });
         nameEl.value = '';
         gradeEl.value = '';
 
@@ -861,6 +862,7 @@
     function saveSchoolGrades() {
         scCollectInputs();
         save();
+        if (typeof mwlEvent === 'function') mwlEvent('berufsschule', { aktion: 'noten_gespeichert' });
         renderSchoolView();
         renderSchoolYearBar();
     }

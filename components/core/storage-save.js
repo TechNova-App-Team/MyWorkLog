@@ -82,6 +82,7 @@
                 localStorage.setItem('tg_pro_data', JSON.stringify(data));
             } catch (e2) {
                 console.error('❌ Speichern endgültig fehlgeschlagen:', e2);
+                if (typeof mwlEvent === 'function') mwlEvent('problem_speicher_voll', {});
                 if (typeof showCustomMessage === 'function') {
                     showCustomMessage('⚠️ Speicher voll', 'Deine Änderung konnte nicht gespeichert werden — der lokale Speicher ist voll. Bitte exportiere ein Backup und leere den Papierkorb.', 'error');
                 }

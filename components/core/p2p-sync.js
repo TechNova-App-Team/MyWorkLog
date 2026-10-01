@@ -475,6 +475,7 @@
         p2pSync.answerApplied = false; // Retry erlauben
 
         p2pLog('Abbruch: ' + reason);
+        if (typeof mwlEvent === 'function') mwlEvent('problem_p2p', { grund: 'abbruch', relay: !!diag.relay });
         showCustomMessage('Verbindung fehlgeschlagen',
             reason + '. ' + (diag.relay
                 ? 'Ein Relay war verfügbar, die Gegenstelle war aber nicht erreichbar. Sind beide Codes frisch und vom richtigen Gerät?'
@@ -674,6 +675,7 @@
             + 'Netzwerk lässt UDP nicht zu.';
         console.error('[P2P] 0 ICE-Kandidaten — Abbruch.', diag);
         p2pLog('Abbruch: keine Netzwerkwege gefunden');
+        if (typeof mwlEvent === 'function') mwlEvent('problem_p2p', { grund: 'keine_kandidaten' });
         showCustomMessage('Keine Verbindung möglich', msg, 'error');
     }
 
@@ -1036,6 +1038,7 @@
             // Update settings UI
             p2pUpdateConnectionUI(true);
             p2pRenderCryptoState();
+            if (typeof mwlEvent === 'function') mwlEvent('p2p_sync', { aktion: 'verbunden', verschluesselt: !!p2pSync.crypto.active });
 
             if (p2pSync.crypto.active) {
                 p2pLog('Ende-zu-Ende verschlüsselt · Prüfziffer ' + p2pSync.crypto.sas);
@@ -1116,6 +1119,7 @@
                         'Sobald dein Browser sein Heimnetzwerk wieder sehen darf, klappt die Verbindung sofort.';
                 }
 
+                if (typeof mwlEvent === 'function') mwlEvent('problem_p2p', { grund: 'ice_fehlgeschlagen', lan_sichtbar: diag.host > 0 });
                 showCustomMessage('Verbindung fehlgeschlagen', msgText + diagText, 'error');
                 console.error(' P2P Diagnostik:', diag);
             }
@@ -1318,6 +1322,7 @@
 
                 p2pUpdateProgress(100, 'Sync abgeschlossen!');
                 p2pLog('Synchronisation abgeschlossen');
+                if (typeof mwlEvent === 'function') mwlEvent('p2p_sync', { aktion: 'synchronisiert' });
 
                 showCustomMessage('Synchronisiert',
                     `${mergeResult.new} neue & ${mergeResult.updated} aktualisierte Einträge empfangen.`, 'success');

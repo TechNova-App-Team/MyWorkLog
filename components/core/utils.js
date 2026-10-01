@@ -142,6 +142,7 @@
                 renderHistoryView();
             }
 
+            if (typeof mwlEvent === 'function') mwlEvent('eintrag_geloescht', { entry_type: removed.type || 'work' });
             showModernUndoToast();
         };
 
@@ -268,6 +269,7 @@
             renderHistoryView();
         }
 
+        if (typeof mwlEvent === 'function') mwlEvent('eintrag_wiederhergestellt', {});
         showCustomMessage('Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
     }
     

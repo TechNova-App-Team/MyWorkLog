@@ -223,8 +223,10 @@
             
             showCustomMessage('✅ Sicher verschlüsselt', 'Backup wurde mit AES-256-GCM verschlüsselt & heruntergeladen', 'success');
             try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
+            if (typeof mwlEvent === 'function') mwlEvent('backup', { aktion: 'verschluesselt_exportiert' });
         } catch (e) {
             console.error('[ERROR] Export failed:', e);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_backup', { grund: 'verschluesseln' });
             showCustomMessage('❌ Verschlüsselung fehlgeschlagen', e.message, 'error');
         } finally {
             exportBtn.disabled = false;
@@ -287,8 +289,11 @@
                     ? `Vollständiges verschlüsseltes Backup (${parsed._keyCount || '?'} Keys) wiederhergestellt. Seite wird aktualisiert...`
                     : 'Legacy-Backup entschlüsselt & importiert. Seite wird aktualisiert...', 
                 'success');
+            if (typeof mwlEvent === 'function') mwlEvent('backup', { aktion: 'verschluesselt_importiert' });
             setTimeout(() => location.reload(), 1500);
         } catch (e) {
+            // Meist ein falsches Passwort — gezaehlt wird nur DASS es scheiterte.
+            if (typeof mwlEvent === 'function') mwlEvent('problem_backup', { grund: 'entschluesseln' });
             showCustomMessage('❌ Import fehlgeschlagen', e.message, 'error');
         } finally {
             decryptBtn.disabled = false;

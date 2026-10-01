@@ -321,7 +321,29 @@
     window.addEventListener('storage', function (e) { if (e.key === 'tg_pro_data') syncTheme(); });
     document.addEventListener('visibilitychange', function () { if (!document.hidden) syncTheme(); });
 
-    function boot() { initShell(); loadFooter(); }
+    // ── Lesetiefe ─────────────────────────────────────────────────────────────
+    // Ob ein Artikel bis zur Mitte bzw. bis zum Ende gelesen wird — der einzige
+    // Weg zu sehen, welcher Deep Dive traegt und wo Leser aussteigen. Je Marke
+    // EIN Ereignis pro Seitenaufruf; der Slug ist der feste Pfadname, kein Inhalt.
+    function trackReadDepth() {
+        var slug = location.pathname.split('/').filter(Boolean).pop() || 'start';
+        var marks = [[0.5, 'zur_haelfte'], [0.9, 'zu_ende']], ticking = false;
+        function check() {
+            ticking = false;
+            var max = document.documentElement.scrollHeight - window.innerHeight;
+            if (max <= 0) return;
+            var p = window.scrollY / max;
+            while (marks.length && p >= marks[0][0]) {
+                if (typeof window.mwlEvent === 'function') window.mwlEvent('deep_dive', { aktion: marks[0][1], artikel: slug });
+                marks.shift();
+            }
+            if (!marks.length) window.removeEventListener('scroll', onScroll);
+        }
+        function onScroll() { if (!ticking) { ticking = true; setTimeout(check, 200); } }
+        window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    function boot() { initShell(); loadFooter(); trackReadDepth(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
     else boot();
 

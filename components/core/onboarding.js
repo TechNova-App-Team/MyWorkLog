@@ -55,6 +55,7 @@ function setMood(emoji) {
         if (entry) {
             entry.mood = emoji;
             save();
+            if (typeof mwlEvent === 'function') mwlEvent('stimmung', { aktion: 'gesetzt' });
             showCustomMessage('✅ Stimmung gespeichert', `Deine Stimmung: ${emoji}`, 'success');
         }
     }
@@ -62,6 +63,7 @@ function setMood(emoji) {
 }
 
 function skipMood() {
+    if (typeof mwlEvent === 'function') mwlEvent('stimmung', { aktion: 'uebersprungen' });
     closeMoodSelector();
 }
 
@@ -523,6 +525,7 @@ function initAutoInstallPrompt() {
             }
             banner.style.display = 'block';
             requestAnimationFrame(function() { requestAnimationFrame(function() { banner.classList.add('visible'); }); });
+            if (typeof mwlEvent === 'function') mwlEvent('installbanner', { aktion: 'angezeigt', ios: !!isIOS });
             // cleanup listeners and timers
             document.removeEventListener('visibilitychange', visibilityHandler);
             window.removeEventListener('pagehide', endSession);
@@ -550,9 +553,11 @@ function initAutoInstallPrompt() {
 
 function pwaInstallBannerInstall() {
     var banner = document.getElementById('pwaInstallBanner');
+    if (typeof mwlEvent === 'function') mwlEvent('installbanner', { aktion: 'installieren_geklickt', dialog: !!deferredPrompt });
     if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(function(result) {
+            if (typeof mwlEvent === 'function') mwlEvent('installbanner', { aktion: result.outcome === 'accepted' ? 'dialog_angenommen' : 'dialog_abgelehnt' });
             if (result.outcome === 'accepted') {
                 localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
                 if (banner) { banner.classList.remove('visible'); setTimeout(function(){ banner.style.display='none'; }, 500); }
@@ -573,11 +578,13 @@ function pwaInstallBannerInstall() {
                 showCustomMessage('Installieren', 'Öffne das Browser-Menü und wähle "Zum Startbildschirm hinzufügen"', 'info');
             }
         }
-        pwaInstallBannerDismiss();
+        pwaInstallBannerDismiss(true);
     }
 }
 
-function pwaInstallBannerDismiss() {
+// still = true: Aufruf aus einem anderen Knopf, der schon selbst gezaehlt hat.
+function pwaInstallBannerDismiss(still) {
+    if (still !== true && typeof mwlEvent === 'function') mwlEvent('installbanner', { aktion: 'spaeter' });
     localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
     var banner = document.getElementById('pwaInstallBanner');
     if (banner) {
@@ -589,7 +596,8 @@ function pwaInstallBannerDismiss() {
 // Permanent opt-out: banner never shows again (guarded in initPWABanner)
 function pwaInstallBannerNever() {
     try { localStorage.setItem('pwa_banner_never', 'true'); } catch (e) {}
-    pwaInstallBannerDismiss();
+    if (typeof mwlEvent === 'function') mwlEvent('installbanner', { aktion: 'nie_wieder' });
+    pwaInstallBannerDismiss(true);
 }
 
 // ===== PWA OFFLINE-DATEN TRACKING =====

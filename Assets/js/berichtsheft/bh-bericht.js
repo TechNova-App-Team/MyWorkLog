@@ -240,6 +240,7 @@ async function saveReport(event) {
     closeReportModal();
     clearDraft();
 
+    if (typeof mwlEvent === 'function') mwlEvent('berichtsheft', { aktion: editingId ? 'bericht_bearbeitet' : 'bericht_erstellt' });
     showToast(editingId ? L('Bericht aktualisiert', 'Report updated') : L('Bericht erstellt', 'Report created'), 'success');
 
     // B2B: bei einem Azubi den Bericht in die Betriebs-Tabelle spiegeln.

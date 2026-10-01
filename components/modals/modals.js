@@ -189,6 +189,7 @@
             try { 
                 const parsed = JSON.parse(ev.target.result);
                 restoreFullBackup(parsed);
+                if (typeof mwlEvent === 'function') mwlEvent('backup', { aktion: 'datei_importiert' });
                 showCustomMessage('✅ Backup wiederhergestellt', 
                     parsed._backupVersion === 2 
                         ? `Vollständiges Backup vom ${parsed._created?.split('T')[0] || '?'} mit ${parsed._keyCount || '?'} Keys wiederhergestellt. Seite wird neu geladen...` 
@@ -196,6 +197,7 @@
                     'success');
                 setTimeout(() => location.reload(), 1500);
             } catch(x){
+                if (typeof mwlEvent === 'function') mwlEvent('problem_backup', { grund: 'datei_import' });
                 showCustomMessage('❌ Import-Fehler', 'Fehler: ' + x.message, 'error');
             } 
         };
@@ -205,6 +207,7 @@
     function openCmdPalette() {
         const overlay = document.getElementById('cmdPalette');
         const input = document.getElementById('cmdPaletteInput');
+        if (typeof mwlEvent === 'function') mwlEvent('schnellsuche_geoeffnet', {});
         overlay.classList.add('open');
         input.value = '';
         cmdSelectedIdx = 0;

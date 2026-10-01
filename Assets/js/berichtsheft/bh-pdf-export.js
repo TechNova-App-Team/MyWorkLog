@@ -33,6 +33,7 @@ function exportReportPDFCore(id) {
     }
 
     doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
+    if (typeof mwlEvent === 'function') mwlEvent('berichtsheft', { aktion: 'pdf_einzeln', vordruck: !!isForm });
     showToast(L('PDF exportiert', 'PDF exported'), 'success');
 }
 
@@ -548,6 +549,7 @@ async function exportBulkPDFCore() {
     await yieldUI();
 
     doc.save(`Ausbildungsnachweis_Komplett.pdf`);
+    if (typeof mwlEvent === 'function') mwlEvent('berichtsheft', { aktion: 'pdf_sammel', berichte: bulkReports.length });
     document.body.removeChild(overlay);
     showToast(bulkReports.length === 1
         ? L('1 Woche als Bulk-PDF exportiert', '1 week exported as a bulk PDF')
