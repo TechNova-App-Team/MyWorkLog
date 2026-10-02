@@ -379,7 +379,23 @@
           "name": "Ist MyWorkLog kostenlos?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Ja, MyWorkLog ist komplett kostenlos und Open Source (MIT Lizenz). Keine versteckten Kosten, keine Werbung. Alle Daten bleiben lokal auf deinem Gerät."
+            "text": "Ja, MyWorkLog ist komplett kostenlos und Open Source (MIT Lizenz), auch Cloud-Sync und die Ausbilder-Freigabe. Keine versteckten Kosten, keine Werbung."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Gibt es Cloud-Sync und ein Backup auf einem Server?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja, auf Wunsch. Standardmäßig liegen die Daten nur im Browser, dazu legt die App automatische lokale Sicherungen an und bietet einen verschlüsselten Export. Wer sich anmeldet, kann Cloud-Sync einschalten: dann liegt eine Kopie auf dem Server (Supabase) und die Daten lassen sich auf ein anderes Gerät holen. Ohne Konto geht das auch direkt von Gerät zu Gerät (Geräte-Sync)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Kann mein Ausbilder das Berichtsheft online abzeichnen?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja, auf zwei Wegen. Mit einem Betriebskonto verbinden die Azubis ihr Berichtsheft einmal per Einladungscode, danach sieht der Ausbilder die Wochen aller Azubis in einer Übersicht und zeichnet sie dort ab oder gibt sie mit Anmerkung zurück. Ohne Konto schickt der Azubi eine einzelne Woche per Link oder QR-Code. Die Freigabe steht danach mit Name und Datum im IHK-PDF."
           }
         },
         {
@@ -670,7 +686,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
           <div class="vi-sub-row"><span class="vi-typed" id="viTyped"></span><span class="vi-caret" aria-hidden="true">|</span></div>
           <!-- Die Positionierung steht hier als echter Text, nicht im Typewriter:
                das ist die erste Aussage der Seite, die ein Crawler zu lesen bekommt. -->
-          <p class="vi-lede">Berichtsheft, Arbeitszeit und Überstunden für Azubis — kostenlos, offline, deine Daten bleiben auf deinem Gerät. Für jeden Ausbildungsberuf; Fachinformatiker bekommen dazu den IT-Hub.</p>
+          <!-- Abzeichnen + IHK-PDF stehen hier, weil sie die erste Frage vieler Azubis
+               beantworten und das Alleinstellungsmerkmal sind. Cloud-Sync steht dabei,
+               weil "Daten bleiben auf deinem Gerät" allein von KI-Suchen als "kein
+               Sync, kein Backup" zusammengefasst wurde (Perplexity, 10/2026). -->
+          <p class="vi-lede">Berichtsheft mit Ausbilder-Freigabe und IHK-PDF, dazu Arbeitszeit und Überstunden für Azubis. Kostenlos und offline, deine Daten bleiben auf deinem Gerät, Cloud-Sync gibt es auf Wunsch. Für jeden Ausbildungsberuf; Fachinformatiker bekommen dazu den IT-Hub.</p>
           <div class="vi-hero-cta">
             <button type="button" class="vi-btn vi-btn-main" onclick="finishIntro()"><span>Direkt loslegen</span><span class="vi-btn-disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></button>
             <button type="button" class="vi-btn vi-btn-ghost" onclick="viTour()"><span>Rundgang starten</span></button>
@@ -705,7 +725,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
           <section class="vi-ch" data-phone="1">
             <span class="vi-eyebrow">Unterwegs</span>
             <h2 class="vi-h">Offline, und in deiner Hosentasche.</h2>
-            <p class="vi-p">Installierbar wie eine App, läuft ohne Netz. Kein Konto nötig: deine Daten bleiben auf deinem Gerät.</p>
+            <p class="vi-p">Installierbar wie eine App, läuft ohne Netz. Kein Konto nötig: deine Daten bleiben auf deinem Gerät, bis du selbst Cloud-Sync oder Geräte-Sync einschaltest.</p>
           </section>
           <section class="vi-ch" data-shot="4" data-f="0.267,0.39,0.465,0.31">
             <span class="vi-eyebrow">Sicherheit</span>
@@ -715,7 +735,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
           <section class="vi-ch" data-shot="5" data-f="0.056,0.51,0.263,0.47;0.056,0.252,0.449,0.104">
             <span class="vi-eyebrow">Ausbilder</span>
             <h2 class="vi-h">Und dein Ausbilder zeichnet online ab.</h2>
-            <p class="vi-p">Die offenen Wochen aller Azubis in einer Liste, die älteste zuerst, und die Prüfpflicht nach §14 BBiG immer im Blick. Ohne Papierstapel, ohne Nachlaufen.</p>
+            <p class="vi-p">Mit Betriebskonto stehen die offenen Wochen aller Azubis in einer Liste, die älteste zuerst, und die Prüfpflicht nach §14 BBiG immer im Blick. Ohne Konto geht eine Woche per Link. Die Freigabe landet im IHK-PDF.</p>
           </section>
         </div>
 
@@ -723,7 +743,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         <div class="vi-wall" id="viWall" aria-hidden="true"><div class="vi-wall-in" id="viWallIn"></div></div>
         <div class="vi-end" id="viEnd">
           <p class="vi-end-t">Bereit?</p>
-          <p class="vi-end-p">Läuft offline. Deine Daten bleiben auf deinem Gerät.</p>
+          <p class="vi-end-p">Läuft offline. Deine Daten bleiben auf deinem Gerät, Cloud-Sync nur wenn du willst.</p>
           <button type="button" class="vi-cta" onclick="finishIntro()">
             <span class="vi-cta-label">Los geht&rsquo;s</span>
             <span class="vi-btn-disc" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
