@@ -47,7 +47,7 @@
       "@type": "FAQPage",
       "mainEntity": [
         {"@type":"Question","name":"Braucht ein Ausbilder f\u00fcr MyWorkLog ein eigenes Konto?","acceptedAnswer":{"@type":"Answer","text":"F\u00fcr die \u00dcbersicht \u00fcber alle Azubis ja: Der Ausbildungsbetrieb wird mit einem Konto angelegt, die Azubis treten \u00fcber einen Einladungscode bei. F\u00fcr eine einzelne Woche nein \u2014 schickt der Azubi einen Freigabe-Link, l\u00e4sst sich die Woche ohne Konto und ohne Anmeldung ansehen und abzeichnen."}},
-        {"@type":"Question","name":"Wie kommen die Berichtsheft-Wochen zum Ausbilder?","acceptedAnswer":{"@type":"Answer","text":"\u00dcber den Betrieb: Der Ausbilder erzeugt einen Einladungscode, der Azubi tr\u00e4gt ihn in seinem Berichtsheft ein. Danach erscheint jede fertige Woche in der Ausbilder-\u00dcbersicht, ohne dass jemand etwas verschicken muss. Alternativ schickt der Azubi je Woche einen Link oder zeigt einen QR-Code."}},
+        {"@type":"Question","name":"Wie kommen die Berichtsheft-Wochen zum Ausbilder?","acceptedAnswer":{"@type":"Answer","text":"\u00dcber den Betrieb: Der Ausbilder erzeugt einen Einladungscode, der Azubi tr\u00e4gt ihn im Berichtsheft ein. Danach erscheint jede fertige Woche in der Ausbilder-\u00dcbersicht, ohne dass jemand etwas verschicken muss. Alternativ schickt der Azubi je Woche einen Link oder zeigt einen QR-Code."}},
         {"@type":"Question","name":"Sieht ein Ausbilder alle Azubis auf einen Blick?","acceptedAnswer":{"@type":"Answer","text":"Ja. Die \u00dcbersicht zeigt je Azubi das Lehrjahr, die letzte Einreichung und alle Wochen, dazu Kennzahlen: wie viele Wochen auf eine Freigabe warten, wie viele bereits abgezeichnet sind und welche \u00e4lteste Woche zu lange liegt."}},
         {"@type":"Question","name":"Werden die Berichtshefte auf einen Server hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Beim Weg mit Konto ja: Die eingereichten Wochen liegen im Bereich des Ausbildungsbetriebs, und Zugriffsregeln in der Datenbank stellen sicher, dass ein Betrieb nur seine eigenen Azubis sieht. Beim Weg \u00fcber den Link nicht: Dort steckt die Woche im Link selbst, hinter dem Rautezeichen \u2014 und dieser Teil einer Adresse wird nicht an den Server geschickt."}},
         {"@type":"Question","name":"Erf\u00fcllt die \u00dcbersicht die Pr\u00fcfpflicht nach \u00a714 BBiG?","acceptedAnswer":{"@type":"Answer","text":"Sie unterst\u00fctzt sie. Ausbildungsnachweise sind mindestens einmal im Monat zu pr\u00fcfen; die \u00dcbersicht weist auf die \u00e4lteste unbearbeitete Woche hin, sobald sie \u00fcber einen Monat alt ist. Jede Entscheidung bleibt mit Name und Zeitpunkt im Pr\u00fcfverlauf stehen."}},
@@ -173,7 +173,9 @@
             letter-spacing: -0.025em; line-height: 1.15;
         }
         .ab-range { font-size: 1rem; color: var(--text-muted); margin-top: 6px; }
-        .ab-person { font-size: 0.95rem; color: var(--text-main); margin-top: 16px; font-weight: 500; }
+        .ab-person { font-size: 0.95rem; color: var(--text-muted); margin-top: 16px; font-weight: 400; }
+        .ab-person strong { color: var(--text-main); font-weight: 600; }
+        .ab-person-s { color: var(--text-faint); }
         .ab-firm { font-size: 0.88rem; color: var(--text-muted); }
 
         .ab-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
@@ -907,6 +909,7 @@
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
         }
         .ab-hint { font-size: 0.78rem; color: var(--text-faint); margin-top: 7px; }
+        .ab-hint.is-fehler { color: var(--danger); }
 
         /* ── Dialog ──────────────────────────────────────────────── */
         .ab-sheet {
@@ -1647,7 +1650,7 @@
         <section id="abIntro">
             <p class="ab-eyebrow">Für Ausbilderinnen und Ausbilder</p>
             <h1 class="ab-title">Berichtshefte Ihrer Azubis prüfen und abzeichnen</h1>
-            <p class="ab-lead">Diese Seite hat zwei Betriebsarten. Mit einem Konto ist sie die Übersicht über alle Azubis Ihres Betriebs und deren Wochen. Ohne Konto zeigt sie eine einzelne Woche — die, deren Link Ihr Azubi Ihnen geschickt hat.</p>
+            <p class="ab-lead">Diese Seite hat zwei Betriebsarten. Mit einem Konto ist sie die Übersicht über alle Azubis Ihres Betriebs und deren Wochen. Ohne Konto zeigt sie die Woche, deren Link Sie aus einem Berichtsheft bekommen haben.</p>
 
             <!-- Aufnahmen: tools/ausbilder-screenshots.mjs (echter Code, Beispieldaten).
                  KEINE id an den neuen Huellen: der i18n-Schluessel haengt an der
@@ -1696,12 +1699,12 @@
 
             <section class="ab-way" data-reveal>
                 <h2 class="ab-way-t">Ohne Konto: eine einzelne Woche über den Link</h2>
-                <p class="ab-way-s">Für Betriebe, die kein Konto anlegen möchten. Sie brauchen nichts weiter als den Link oder den QR-Code Ihres Azubis.</p>
+                <p class="ab-way-s">Für Betriebe, die kein Konto anlegen möchten. Es genügt der Link oder der QR-Code aus dem Berichtsheft.</p>
 
                 <ol class="ab-steps">
                     <li class="ab-step">
                         <span class="ab-step-n">1</span>
-                        <span class="ab-step-t">Ihr Azubi zeigt Ihnen einen QR-Code oder schickt Ihnen einen Link.</span>
+                        <span class="ab-step-t">Sie bekommen aus dem Berichtsheft einen QR-Code gezeigt oder einen Link geschickt.</span>
                     </li>
                     <li class="ab-step">
                         <span class="ab-step-n">2</span>
@@ -1709,7 +1712,7 @@
                     </li>
                     <li class="ab-step">
                         <span class="ab-step-n">3</span>
-                        <span class="ab-step-t">Sie erhalten einen kurzen Antwort-Code, den Ihr Azubi mit der Handykamera abscannt. Danach steht Ihre Entscheidung in seinem Berichtsheft.</span>
+                        <span class="ab-step-t">Sie erhalten einen kurzen Antwort-Code, der mit der Handykamera abgescannt wird. Danach steht Ihre Entscheidung im Berichtsheft.</span>
                     </li>
                 </ol>
 
@@ -1731,7 +1734,7 @@
                 <h2 class="ab-way-t">Wer was sieht</h2>
                 <p class="ab-way-s">Drei Rollen, jede sieht nur, was sie braucht. Der Betrieb sieht nie die Zeiterfassung, das Gleitzeitkonto oder die Notizen eines Azubis — nur die Berichtsheft-Wochen, die der Azubi verbunden hat, mit dem, was im Nachweis steht.</p>
                 <ul class="ab-feats ab-roles">
-                    <li><span class="ab-role">Azubi</span> <span>führt sein Heft auf dem eigenen Gerät, verbindet es einmalig mit dem Betrieb und sieht jede Entscheidung des Ausbilders in seinem Berichtsheft. Er kann die Verbindung jederzeit lösen.</span></li>
+                    <li><span class="ab-role">Azubi</span> <span>führt das Heft auf dem eigenen Gerät, verbindet es einmalig mit dem Betrieb und sieht dort jede Entscheidung. Die Verbindung lässt sich jederzeit lösen.</span></li>
                     <li><span class="ab-role">Ausbilder</span> <span>legt den Betrieb an, erzeugt Einladungscodes, prüft die Wochen aller verbundenen Azubis, bestätigt oder gibt mit Anmerkung zurück. Jede Entscheidung trägt seinen Namen und wird auf seinem Gerät signiert.</span></li>
                     <li><span class="ab-role">Vertretung</span> <span>ist ein zweiter Ausbilder desselben Betriebs, eingeladen über einen befristeten Code — etwa für den Urlaub. Sie sieht und entscheidet wie der erste Ausbilder; wer entschieden hat, steht im Prüfverlauf.</span></li>
                 </ul>
@@ -1853,6 +1856,7 @@
             <div class="ab-field" id="abNameField">
                 <label class="ab-label" for="abName">Ihr Name</label>
                 <input class="ab-input" type="text" id="abName" autocomplete="name" placeholder="Vor- und Nachname">
+                <p class="ab-hint" id="abNameHint">Steht als prüfende Person im Berichtsheft und auf dem IHK-Nachweis.</p>
             </div>
 
             <div class="ab-field">
@@ -2098,10 +2102,18 @@
             $('abWeekRange').textContent = mehrere
                 ? fmtRange(weeks[0].df, weeks[weeks.length - 1].dt)
                 : fmtRange(weeks[0].df, weeks[0].dt);
-            // Namen nur zeigen, wenn einer da ist — ein Platzhalter neben lauter
-            // leeren Feldern liest sich wie ein Fehler.
-            $('abWeekPerson').textContent = azubi.az || '';
-            $('abWeekPerson').style.display = azubi.az ? '' : 'none';
+            // Wer ueber einen Link kalt hier landet, braucht zuerst den Satz,
+            // WER ihn worum bittet — und dass er dafuer nichts anlegen muss.
+            // Ohne Namen im Link kein Platzhalter, sondern ein Satz ohne Person.
+            var bitte = mehrere
+                ? abL('diese ' + weeks.length + ' Wochen', 'these ' + weeks.length + ' weeks')
+                : abL('diese Woche', 'this week');
+            $('abWeekPerson').innerHTML = (azubi.az
+                ? abL('<strong>' + esc(azubi.az) + '</strong> bittet Sie, ' + bitte + ' zu prüfen.',
+                      '<strong>' + esc(azubi.az) + '</strong> asks you to review ' + bitte + '.')
+                : abL('Sie wurden gebeten, ' + bitte + ' zu prüfen.', 'You have been asked to review ' + bitte + '.')) +
+                ' <span class="ab-person-s">' + abL('Dafür ist kein Konto nötig.', 'No account needed.') + '</span>';
+            $('abWeekPerson').style.display = '';
             $('abWeekFirm').textContent = azubi.bt || '';
             $('abWeekFirm').style.display = azubi.bt ? '' : 'none';
             $('abHeadNote').textContent = mehrere
@@ -2190,11 +2202,18 @@
                 ? abL('Woche bestätigen', 'Approve week')
                 : (mehrere ? abL('KW ' + kw + ' zurückgeben', 'Send week ' + kw + ' back')
                            : abL('Woche zurückgeben', 'Send week back'));
+            // Kein "Ihr Azubi": der Name aus dem Link, sonst ein Satz ohne
+            // Person — ein festes Maskulinum ist bei jeder Auszubildenden falsch.
+            var az = !!azubi.az;
             $('abSheetSub').textContent = approve
-                ? abL('Ihre Bestätigung wird in das Berichtsheft Ihres Azubis übernommen und der Eintrag dort gesperrt.',
-                      'Your approval is copied into your apprentice’s training record and locks the entry there.')
-                : abL('Ihr Azubi sieht, dass diese Woche überarbeitet werden muss.',
-                      'Your apprentice will see that this week needs revising.');
+                ? (az ? abL('Ihre Bestätigung wird in das Berichtsheft von ' + azubi.az + ' übernommen und sperrt die Woche dort. Wird sie danach noch geändert, entfällt Ihre Bestätigung.',
+                            'Your approval is copied into ' + azubi.az + '’s training record and locks the week there. If it is changed afterwards, your approval no longer applies.')
+                      : abL('Ihre Bestätigung wird in das Berichtsheft übernommen und sperrt die Woche dort. Wird sie danach noch geändert, entfällt Ihre Bestätigung.',
+                            'Your approval is copied into the training record and locks the week there. If it is changed afterwards, your approval no longer applies.'))
+                : (az ? abL(azubi.az + ' sieht dann, dass diese Woche überarbeitet werden muss, und Ihre Anmerkung dazu.',
+                            azubi.az + ' will see that this week needs revising, together with your comment.')
+                      : abL('Im Berichtsheft steht dann, dass diese Woche überarbeitet werden muss, mit Ihrer Anmerkung dazu.',
+                            'The training record will show that this week needs revising, together with your comment.'));
             $('abNoteLabel').textContent = approve
                 ? abL('Anmerkung', 'Comment')
                 : abL('Was soll geändert werden?', 'What needs changing?');
@@ -2202,9 +2221,10 @@
             $('abNote').placeholder = approve
                 ? abL('Optional', 'Optional')
                 : abL('Zum Beispiel: Dienstag fehlt die Tätigkeit', 'For example: Tuesday is missing its activity');
+            $('abNoteHint').classList.remove('is-fehler');
             $('abNoteHint').textContent = approve
                 ? abL('Optional. Wird zusammen mit Ihrem Namen übernommen.', 'Optional. Passed on together with your name.')
-                : abL('Hilft Ihrem Azubi, die Woche gezielt zu ergänzen.', 'Helps your apprentice fix the right thing.');
+                : abL('Pflichtfeld. Ohne Satz ist unklar, was geändert werden soll.', 'Required. Without a note it is unclear what to change.');
             $('abConfirmLabel').textContent = approve
                 ? abL('Bestätigen', 'Approve')
                 : abL('Zurückgeben', 'Send back');
@@ -2252,6 +2272,14 @@
         async function confirmDecision() {
             if (!pending || !weeks.length) return;
             var mehrere = weeks.length > 1;
+
+            // Eine Rueckgabe ohne Satz hilft niemandem — Pflicht, wie im Cockpit.
+            if (pending.kind === 'rejected' && !$('abNote').value.trim()) {
+                $('abNoteHint').textContent = abL('Bitte kurz schreiben, was geändert werden soll.', 'Please write briefly what needs changing.');
+                $('abNoteHint').classList.add('is-fehler');
+                $('abNote').focus();
+                return;
+            }
 
             // Pro-Woche-Entscheidung bei mehreren: nur merken und weiterlesen.
             if (mehrere && pending.kind !== 'finish') {
@@ -2348,12 +2376,14 @@
                 if (no) teile.push(no + abL(' zurückgegeben', ' sent back'));
                 $('abDoneTitle').textContent = teile.join(', ');
             }
-            $('abDoneSub').textContent = abL(
-                'Damit die Entscheidung ankommt, muss Ihr Azubi den Code abscannen oder den Link öffnen.',
-                'For the decision to arrive, your apprentice must scan the code or open the link.');
+            $('abDoneSub').textContent = azubi.az
+                ? abL('Damit die Entscheidung ankommt, muss ' + azubi.az + ' den Code abscannen oder den Link öffnen.',
+                      'For the decision to arrive, ' + azubi.az + ' has to scan the code or open the link.')
+                : abL('Damit die Entscheidung ankommt, muss der Code im Berichtsheft abgescannt oder der Link geöffnet werden.',
+                      'For the decision to arrive, the code has to be scanned in the training record or the link opened.');
             $('abQrNote').textContent = abL(
-                'Ihr Azubi scannt diesen Code mit der Kamera seines Handys.',
-                'Your apprentice scans this code with their phone camera.');
+                'Abscannen mit der Handykamera, dann steht die Entscheidung im Berichtsheft.',
+                'Scan with a phone camera, then the decision appears in the training record.');
             $('abCode').textContent = link;
 
             show('abWeek', false);
@@ -2366,7 +2396,7 @@
                 show('abQr', true);
             } catch (e) {
                 $('abQrNote').textContent = abL(
-                    'Der QR-Code lässt sich hier nicht anzeigen. Schicken Sie Ihrem Azubi stattdessen den Link darunter.',
+                    'Der QR-Code lässt sich hier nicht anzeigen. Schicken Sie stattdessen den Link darunter zurück.',
                     'The QR code cannot be shown here. Send your apprentice the link below instead.');
             }
         }
@@ -3418,7 +3448,7 @@
                 box.innerHTML = '<section class="abk-start">' +
                     '<h2 class="abk-start-t">' + abL('Noch keine Azubis verbunden', 'No apprentices connected yet') + '</h2>' +
                     '<p class="abk-start-s">' + abL(
-                        'Erzeugen Sie einen Einladungscode und geben Sie ihn Ihrem Azubi. Er trägt ihn im Berichtsheft unter „Betrieb & IHK“ ein, danach erscheinen seine Wochen hier.',
+                        'Erzeugen Sie einen Einladungscode und geben Sie ihn weiter. Im Berichtsheft wird er unter „Betrieb & IHK“ eingetragen, danach erscheinen die Wochen hier.',
                         'Create an invite code and pass it to your apprentice. They enter it in the report book under “Company & chamber”, after that their weeks show up here.') + '</p>' +
                     '<button type="button" class="ab-btn abk-cta" onclick="abkEinladen()">' +
                     '<span>' + abL('Einladungscode erzeugen', 'Create invite code') + '</span></button>' +
@@ -3656,8 +3686,8 @@
                         'Valid for 7 days, single use. Whoever redeems it can sign off the same weeks you can, so only pass it to people who are meant to stand in. They open ' + link +
                         ' and enter the code under “Company & chamber”.')
                     : abL(
-                        'Gültig 14 Tage, einmal einlösbar. Ihr Azubi öffnet ' + link +
-                        ' und trägt den Code unter „Betrieb & IHK" ein.',
+                        'Gültig 14 Tage, einmal einlösbar. Eingetragen wird er auf ' + link +
+                        ' unter „Betrieb & IHK".',
                         'Valid for 14 days, single use. Your apprentice opens ' + link +
                         ' and enters the code under “Company & chamber”.')) + '</p>' +
                 '</div>';
