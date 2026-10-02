@@ -2533,6 +2533,7 @@
             if (st === 'geaendert') return ['s-alarm', abL('Nach der Freigabe geändert', 'Changed after approval')];
             if (st === 'nachgebessert') return ['s-neu', abL('Überarbeitet', 'Revised')];
             if (st === 'arbeit') return ['s-open', abL('In Arbeit', 'In progress')];
+            if (st === 'rejected' && b.freigabe && b.freigabe.widerruft) return ['s-no', abL('Widerrufen', 'Revoked')];
             return stateLabel(st === 'open' ? '' : st);
         }
 
@@ -2541,13 +2542,23 @@
         // CSS sie aus (keine Tastatur, keine Aussage).
         function kbd(taste) { return '<kbd class="abq-kbd" aria-hidden="true">' + taste + '</kbd>'; }
 
-        function rueckgabeFeld() {
+        // Ein Text ist bei beiden Pflicht: eine Rueckgabe ohne Satz sagt dem
+        // Azubi nicht, WAS er aendern soll, ein Widerruf ohne Grund steht
+        // unerklaert im Pruefverlauf (dort verlangt ihn auch die Datenbank).
+        function rueckgabeFeld(widerruf) {
             return '<div class="abk-reject" hidden>' +
-                '<textarea class="ab-textarea abk-note" placeholder="' +
-                abL('Was soll geändert werden?', 'What needs changing?') + '"></textarea>' +
+                (widerruf ? '<p class="abk-hint">' + abL(
+                    'Die Woche geht zurück an den Azubi und kann wieder bearbeitet werden. Ihre Freigabe bleibt im Prüfverlauf stehen, mit diesem Widerruf darunter.',
+                    'The week goes back to the apprentice and can be edited again. Your approval stays in the review history, with this revocation below it.') + '</p>' : '') +
+                '<textarea class="ab-textarea abk-note" maxlength="4000" placeholder="' +
+                (widerruf ? abL('Warum widerrufen Sie die Freigabe?', 'Why are you revoking the approval?')
+                          : abL('Was soll geändert werden?', 'What needs changing?')) + '"></textarea>' +
+                '<p class="abk-hint is-fehler abk-note-fehlt" role="alert" hidden>' +
+                abL('Bitte kurz schreiben, worum es geht.', 'Please write a short note.') + '</p>' +
                 '<div class="abk-actions">' +
                 '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject-cancel">' + abL('Abbrechen', 'Cancel') + '</button>' +
-                '<button type="button" class="ab-btn ab-btn-primary" data-k="reject-do">' + abL('Zurückgeben', 'Send back') + '</button>' +
+                '<button type="button" class="ab-btn ab-btn-primary" data-k="' + (widerruf ? 'revoke-do' : 'reject-do') + '">' +
+                (widerruf ? abL('Freigabe widerrufen', 'Revoke approval') : abL('Zurückgeben', 'Send back')) + '</button>' +
                 '</div></div>';
         }
 
@@ -2578,7 +2589,20 @@
             }
             if (st === 'approved') {
                 var wann = f && f.erstellt_at ? ' ' + abL('am ', 'on ') + fmtDate(String(f.erstellt_at).slice(0, 10)) : '';
-                return '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>';
+                // Widerrufen darf nur, wer abgezeichnet hat (Trigger
+                // freigaben_widerruf). Fehlt die id (Freigabe vor diesem
+                // Stand, nicht neu geladen), gibt es keinen Knopf statt
+                // eines Knopfs, der am Server scheitert.
+                var meine = f && f.id && kontoIch.userId && f.ausbilder_id === kontoIch.userId;
+                if (!meine) {
+                    return '<p class="abk-hint">' + abL('Abgezeichnet', 'Signed off') +
+                        (f && f.ausbilder_name ? ' ' + abL('von ', 'by ') + esc(f.ausbilder_name) : '') + wann + '. ' +
+                        abL('Widerrufen kann nur, wer abgezeichnet hat.', 'Only the person who signed off can revoke it.') + '</p>';
+                }
+                return '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>' +
+                    '<div class="abk-actions">' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="revoke">' + abL('Freigabe widerrufen', 'Revoke approval') + '</button>' +
+                    '</div>' + rueckgabeFeld(true);
             }
             if (st === 'geaendert') {
                 fuss = '<p class="abk-hint is-warn">' + abL(
@@ -2608,7 +2632,9 @@
             if (!(v.length > 1 || b.ketteOk === false)) return '';
             var eintraege = v.map(function (fx) {
                 return '<li>' + esc(fmtDate(String(fx.erstellt_at).slice(0, 10))) + ': ' +
-                    (fx.entscheidung === 'approved' ? abL('bestätigt', 'approved') : abL('zurückgegeben', 'sent back')) +
+                    (fx.entscheidung === 'approved' ? abL('bestätigt', 'approved')
+                        : fx.widerruft ? abL('Freigabe widerrufen', 'approval revoked')
+                        : abL('zurückgegeben', 'sent back')) +
                     (fx.ausbilder_name ? ', ' + esc(fx.ausbilder_name) : '') +
                     (fx.anmerkung ? ' („' + esc(fx.anmerkung) + '“)' : '') + '</li>';
             }).join('');
@@ -3098,7 +3124,7 @@
         var auswahl = {};                              // bid → true (Sammel-Abzeichnen)
         var mobilDetail = false;                       // schmal: Detail statt Liste
         var sammelLaeuft = false;
-        var kontoIch = { name: '' };
+        var kontoIch = { name: '', userId: '' };
 
         var FILTER = [
             ['offen',     ['Zu prüfen', 'To review'],         function (b) { return istOffen(b); }],
@@ -4170,12 +4196,21 @@
 
         // Was nach einer erfolgreichen Freigabe am Bericht im Speicher gilt —
         // an EINER Stelle, weil Einzel- und Sammel-Freigabe sie beide brauchen.
-        function vermerkeFreigabe(bericht, entscheidung, note) {
+        // `zeile` ist die Antwort des Inserts (id, ausbilder_id, erstellt_at) —
+        // ohne die id koennte eine eben gegebene Freigabe nicht widerrufen werden.
+        function vermerkeFreigabe(bericht, entscheidung, note, zeile, widerruft) {
+            zeile = zeile || {};
             bericht.freigabe = {
+                id: zeile.id, ausbilder_id: zeile.ausbilder_id || kontoIch.userId,
+                ausbilder_name: kontoIch.name,
                 bericht_id: bericht.id, entscheidung: entscheidung,
+                widerruft: widerruft || null,
                 anmerkung: note || '', inhalt: bericht.inhalt,
-                erstellt_at: new Date().toISOString()
+                erstellt_at: zeile.erstellt_at || new Date().toISOString()
             };
+            // Der Pruefverlauf muss den neuen Eintrag sofort tragen, sonst
+            // steht nach einem Widerruf nur "Widerrufen" ohne die Freigabe davor.
+            bericht.verlauf = (bericht.verlauf || []).concat([bericht.freigabe]);
             // Die frische Freigabe deckt den jetzigen Inhalt ab — damit ist
             // auch jeder Aenderungsbefund erledigt, nicht nur `veraendert`.
             // Bliebe `diff` stehen, zeigte die Karte nach dem Bestaetigen
@@ -4187,15 +4222,15 @@
             delete auswahl[bericht.id];
         }
 
-        async function kontoEntscheiden(bid, entscheidung, note, card) {
+        async function kontoEntscheiden(bid, entscheidung, note, card, widerruft) {
             var bericht = findeBericht(bid);
             if (!bericht) return;
             var vorher = sichtbar().map(function (e) { return String(e.b.id); });
             var idx = vorher.indexOf(String(bid));
             kontoBusy(card, true);
             try {
-                await BHB2B.freigabeSchreiben(bid, entscheidung, note || '', bericht);
-                vermerkeFreigabe(bericht, entscheidung, note);
+                var zeile = await BHB2B.freigabeSchreiben(bid, entscheidung, note || '', bericht, widerruft);
+                vermerkeFreigabe(bericht, entscheidung, note, zeile, widerruft);
                 // Weiter mit der naechsten Woche, statt zurueck an den Anfang:
                 // faellt die entschiedene aus der Sicht (Zu prüfen), rueckt die
                 // naechste an ihren Platz; bleibt sie (Alle), geht es eins weiter.
@@ -4210,13 +4245,19 @@
                 renderKonto();
                 toast(entscheidung === 'approved'
                     ? abL('KW ' + bericht.kw + ' bestätigt', 'Week ' + bericht.kw + ' approved')
+                    : widerruft ? abL('Freigabe für KW ' + bericht.kw + ' widerrufen', 'Approval for week ' + bericht.kw + ' revoked')
                     : abL('KW ' + bericht.kw + ' zurückgegeben', 'Week ' + bericht.kw + ' sent back'));
             } catch (e) {
                 kontoBusy(card, false);
                 var box = document.createElement('p');
                 box.className = 'abk-hint is-fehler';
                 box.setAttribute('role', 'alert');
-                box.textContent = (e && e.message) || abL('Konnte nicht gespeichert werden.', 'Could not be saved.');
+                // Die Ablehnungsgruende des Triggers sind deutsch und ohne
+                // Umlaute — fuer den Widerruf ein eigener Satz in beiden Sprachen.
+                box.textContent = widerruft
+                    ? abL('Widerruf nicht möglich: Nach dieser Freigabe wurde schon neu entschieden, oder sie stammt nicht von Ihnen. Bitte die Seite neu laden.',
+                          'Revocation not possible: a newer decision exists, or the approval was not given by you. Please reload the page.')
+                    : (e && e.message) || abL('Konnte nicht gespeichert werden.', 'Could not be saved.');
                 (card.querySelector('.abq-dfuss') || card).appendChild(box);
             }
         }
@@ -4245,8 +4286,7 @@
                 var b = findeBericht(ids[i]);
                 if (status) status.textContent = abL((i + 1) + ' von ' + ids.length + ' …', (i + 1) + ' of ' + ids.length + ' …');
                 try {
-                    await BHB2B.freigabeSchreiben(b.id, 'approved', '', b);
-                    vermerkeFreigabe(b, 'approved', '');
+                    vermerkeFreigabe(b, 'approved', '', await BHB2B.freigabeSchreiben(b.id, 'approved', '', b));
                     ok++;
                 } catch (e) { fehler = e; break; }
             }
@@ -4362,15 +4402,24 @@
                     if (ziel) { ziel.scrollIntoView({ block: 'start', behavior: 'smooth' }); ziel.classList.add('is-hervor'); setTimeout(function () { ziel.classList.remove('is-hervor'); }, 1600); }
                     return;
                 }
-                if (k === 'reject') {
+                if (k === 'reject' || k === 'revoke') {
                     card.querySelector('.abk-reject').hidden = false;
                     var t = card.querySelector('.abk-note'); if (t) t.focus();
                     return;
                 }
                 if (k === 'reject-cancel') { card.querySelector('.abk-reject').hidden = true; return; }
-                if (k === 'reject-do') {
-                    var note = (card.querySelector('.abk-note') || {}).value || '';
-                    kontoEntscheiden(bid, 'rejected', note.trim(), card);
+                if (k === 'reject-do' || k === 'revoke-do') {
+                    var feld = card.querySelector('.abk-note');
+                    var note = ((feld || {}).value || '').trim();
+                    if (!note) {
+                        var fehlt = card.querySelector('.abk-note-fehlt');
+                        if (fehlt) fehlt.hidden = false;
+                        if (feld) feld.focus();
+                        return;
+                    }
+                    var fz = findeBericht(bid);
+                    kontoEntscheiden(bid, 'rejected', note, card,
+                        k === 'revoke-do' && fz && fz.freigabe ? fz.freigabe.id : null);
                 }
             });
 
@@ -4500,7 +4549,13 @@
             catch (e) { kontoDaten = null; }
             // Name fuer das Konto-Menue. status() ist zu diesem Zeitpunkt
             // gecacht (boot() hat es gerade geholt) — kein zweiter Netzabruf.
-            try { var stt = await BHB2B.status(); kontoIch.name = (stt && stt.anzeigeName) || ''; } catch (e) { /* ohne Namen */ }
+            // userId entscheidet, ob eine Freigabe den Widerrufen-Knopf traegt
+            // (nur wer abgezeichnet hat — der Trigger prueft dasselbe).
+            try {
+                var stt = await BHB2B.status();
+                kontoIch.name = (stt && stt.anzeigeName) || '';
+                kontoIch.userId = (stt && stt.userId) || '';
+            } catch (e) { /* ohne Namen */ }
 
             if (!kontoDaten) {
                 $('abKonto').innerHTML = '<p class="abk-load">' + abL(
@@ -4747,7 +4802,9 @@
                 // Ohne Setter laesst sich renderKonto() nicht mit gestellten Daten
                 // aufrufen — kontoDaten ist eine Modulvariable. Alle Zustaende
                 // (auch der IHK-Fall) brauchen sonst ein echtes Konto samt Server.
-                setDaten: function (d) { kontoDaten = d; renderKonto(); } };
+                setDaten: function (d) { kontoDaten = d; renderKonto(); },
+                // Wer "ich" bin, entscheidet ueber den Widerruf-Knopf.
+                setIch: function (ich) { Object.assign(kontoIch, ich); } };
         }
 
         if (document.readyState === 'loading') {

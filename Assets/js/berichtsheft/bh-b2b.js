@@ -199,6 +199,9 @@
             nachweis: f.betrieb_nachweis || null,
             at: f.erstellt_at || '',
             note: f.anmerkung || '',
+            // Eine Rueckgabe, die eine Freigabe zuruecknimmt — fuer den Azubi
+            // derselbe Zustand (Woche wieder offen), aber ein anderer Satz.
+            widerrufen: !!f.widerruft,
             pruefsumme: f.pruefsumme || '',
             sig: (f.signatur && f.signatur.g) || '',
             pub: (f.signatur && f.signatur.k) || '',
@@ -830,7 +833,7 @@
 
             const [{ data: fr, error: e1 }, { data: be, error: e2 }] = await Promise.all([
                 sb.from('freigaben')
-                    .select('bericht_id, entscheidung, ausbilder_name, ausbilder_email, betrieb_nachweis, anmerkung, pruefsumme, signatur, erstellt_at')
+                    .select('bericht_id, entscheidung, widerruft, ausbilder_name, ausbilder_email, betrieb_nachweis, anmerkung, pruefsumme, signatur, erstellt_at')
                     .order('erstellt_at', { ascending: true }),   // aeltere zuerst → neuere gewinnt
                 sb.from('berichte')
                     .select('id, client_id')
@@ -1060,7 +1063,7 @@
                     // dann vor dem September. `datum_von` ist das echte Datum.
                     // Dieselbe Falle wie in der Berichtsheft-Uebersicht (v6.9.12).
                     .order('datum_von', { ascending: true }),
-                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, ausbilder_email, betrieb_nachweis, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
+                sb.from('freigaben').select('id, bericht_id, ausbilder_id, entscheidung, widerruft, anmerkung, ausbilder_name, ausbilder_email, betrieb_nachweis, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
                     .order('erstellt_at', { ascending: true })   // aelteste zuerst
             ]);
@@ -1142,7 +1145,7 @@
                 .eq('client_id', String(clientId)).limit(1);
             if (be.error || !be.data || !be.data[0]) return null;
             const fr = await sb.from('freigaben')
-                .select('entscheidung, ausbilder_name, ausbilder_email, betrieb_nachweis, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
+                .select('entscheidung, widerruft, ausbilder_name, ausbilder_email, betrieb_nachweis, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
                 .eq('bericht_id', be.data[0].id)
                 .order('erstellt_at', { ascending: true });
             if (fr.error) return null;
@@ -1166,8 +1169,13 @@
      * TRAGBARER Beweis: er ueberlebt einen Export und laesst sich ohne Supabase
      * pruefen. Grenzen wie beim Link-Weg — Trust-on-first-use, keine
      * Identitaets-Bestaetigung (steht so in mwl-sign.js).
+     *
+     * `widerruft` = id der Freigabe, die diese Rueckgabe zuruecknimmt. Ob das
+     * Konto das darf (nur wer abgezeichnet hat, nur ohne spaetere
+     * Entscheidung, Grund Pflicht), entscheidet der Trigger
+     * `freigaben_widerruf` — der Client zeigt den Knopf nur passend an.
      */
-    async function bhb2bFreigabeSchreiben(berichtId, entscheidung, anmerkung, bericht) {
+    async function bhb2bFreigabeSchreiben(berichtId, entscheidung, anmerkung, bericht, widerruft) {
         const st = await bhb2bStatus(true);
         if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann freigeben.');
         if (entscheidung !== 'approved' && entscheidung !== 'rejected') {
@@ -1196,7 +1204,10 @@
         if (entscheidung === 'approved' && !st.nachgewiesen) {
             throw new Error(NICHT_NACHGEWIESEN);
         }
-        const { error } = await sb.from('freigaben').insert({
+        if (widerruft && (entscheidung !== 'rejected' || !String(anmerkung || '').trim())) {
+            throw new Error('Für den Widerruf fehlt der Grund.');
+        }
+        const { data: zeile, error } = await sb.from('freigaben').insert({
             bericht_id: berichtId,
             betrieb_id: st.betriebId,
             ausbilder_id: u.id,
@@ -1209,9 +1220,15 @@
             // Aenderungsvergleichs, wenn der Azubi nachbessert und erneut
             // einreicht — die Pruefsumme daneben sagt nur DASS, nicht WAS.
             inhalt: (bericht && bericht.inhalt) || null,
-            signatur: signatur
-        });
+            signatur: signatur,
+            widerruft: widerruft || null
+        // Die id braucht der Widerruf: wer sich gerade verklickt hat, soll
+        // ohne Neuladen zuruecknehmen koennen.
+        }).select('id, ausbilder_id, erstellt_at').single();
         if (error) {
+            // Der Trigger nennt den Grund selbst (nur wer abgezeichnet hat,
+            // schon neu entschieden …) — der Text steht in der Exception.
+            if (error.code === '42501' && widerruft) throw new Error(error.message);
             // Die Policy lehnt ein Abzeichnen ohne Nachweis mit 42501 ab —
             // etwa wenn der Nachweis in einem anderen Tab entzogen wurde.
             if (error.code === '42501' && entscheidung === 'approved') {
@@ -1220,7 +1237,7 @@
             }
             throw new Error(error.message);
         }
-        return true;
+        return zeile || {};
     }
 
     // ── Domain-Nachweis (Ausbilder) ─────────────────────────────────

@@ -528,8 +528,9 @@
         const zeilen = d.eintraege.map(function (f) {
             const wann = new Date(f.erstellt_at).toLocaleDateString(mwlLocaleSafe(),
                 { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const was = f.entscheidung === 'approved'
-                ? b2bL('bestätigt', 'approved') : b2bL('zurückgegeben', 'sent back');
+            const was = f.entscheidung === 'approved' ? b2bL('bestätigt', 'approved')
+                : f.widerruft ? b2bL('Freigabe widerrufen', 'approval revoked')
+                : b2bL('zurückgegeben', 'sent back');
             // Die Adresse stempelt der Server. Steht hier die eigene oder eine
             // fremde Privatadresse, sieht das jeder Pruefer.
             const wer = (f.ausbilder_name ? ' · ' + esc(f.ausbilder_name) : '') +

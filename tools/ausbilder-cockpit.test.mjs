@@ -147,6 +147,37 @@ ist(offen.includes('3 offen') && offen.includes('data-q="az-offen" data-ai="0"')
 // Gepruefte wird NICHT in der Karte: kein Bestaetigen-Knopf, keine Wochenliste.
 ist(!offen.includes('data-k="approve"'), 'die Karte selbst zeichnet nichts ab (eine Stelle zum Prüfen)');
 
+// Freigabe widerrufen (v8.0.11): der Knopf steht NUR beim Unterzeichner. Der
+// Trigger freigaben_widerruf prueft dasselbe — ein Knopf fuer alle waere ein
+// Versprechen, das am Server scheitert.
+console.log('\n▶ Widerruf: nur wer abgezeichnet hat, und nie ohne Grund');
+const fuss = new Function(
+  'function abL(de, en) { return de; }\nfunction abLocale() { return "de-DE"; }\n' +
+  'var kontoIch = { name: "Hans", userId: "u-hans" };\n' +
+  ['esc', 'fmtDate', 'kbd', 'rueckgabeFeld', 'wochenFuss', 'stateLabel', 'standLabel', 'schonUnterschrieben', 'standVon']
+    .map(hole).join('\n') +
+  '\nreturn { wochenFuss, standLabel };')();
+const meine = { id: 'f1', ausbilder_id: 'u-hans', ausbilder_name: 'Hans', entscheidung: 'approved', erstellt_at: '2026-09-30T10:00:00Z' };
+const fremde = Object.assign({}, meine, { ausbilder_id: 'u-peter', ausbilder_name: 'Peter' });
+const fussMeine = fuss.wochenFuss(w(1, '2026-01-02', { freigabe: meine }), 'approved');
+const fussFremd = fuss.wochenFuss(w(1, '2026-01-02', { freigabe: fremde }), 'approved');
+const fussAlt = fuss.wochenFuss(w(1, '2026-01-02', { freigabe: { entscheidung: 'approved', ausbilder_id: 'u-hans' } }), 'approved');
+ist(fussMeine.includes('data-k="revoke"') && fussMeine.includes('data-k="revoke-do"'), 'eigene Freigabe: Knopf + Feld zum Widerrufen');
+ist(!fussFremd.includes('data-k="revoke'), 'Freigabe der Vertretung: kein Widerruf-Knopf');
+ist(fussFremd.includes('von Peter') && fussFremd.includes('nur, wer abgezeichnet hat'), 'stattdessen steht, wer abgezeichnet hat und warum es keinen Knopf gibt');
+ist(!fussAlt.includes('data-k="revoke'), 'ohne Freigabe-id (alter Stand) kein Knopf, der am Server scheitert');
+ist(!fussMeine.includes('data-k="approve"') && !fussMeine.includes('data-k="reject"'), 'abgezeichnet: weder Bestaetigen noch einfaches Zurueckgeben');
+ist(fussMeine.includes('abk-note-fehlt'), 'Widerruf traegt den Hinweis fuer ein leeres Grund-Feld');
+ist(fuss.wochenFuss(w(1, '2026-01-02'), 'open').includes('abk-note-fehlt'), 'auch die normale Rueckgabe verlangt einen Text');
+ist(fuss.standLabel('rejected', { freigabe: { entscheidung: 'rejected', widerruft: 'f1' } })[1] === 'Widerrufen', 'widerrufene Woche heisst "Widerrufen", nicht "Zurückgegeben"');
+ist(fuss.standLabel('rejected', { freigabe: zurueck })[1] === 'Zurückgegeben', 'Gegenprobe: normale Rueckgabe heisst weiter "Zurückgegeben"');
+
+// Der Klick-Handler darf eine leere Rueckgabe nicht abschicken.
+const hStart = SRC.indexOf("if (k === 'reject-do' || k === 'revoke-do')");
+const handler = hStart === -1 ? '' : SRC.slice(hStart);
+const vorAbschicken = handler.slice(0, handler.indexOf('kontoEntscheiden('));
+ist(hStart !== -1 && vorAbschicken.includes('if (!note)') && vorAbschicken.slice(vorAbschicken.indexOf('if (!note)')).includes('return;'),'Klick auf Zurückgeben/Widerrufen mit leerem Feld schickt nichts ab');
+
 console.log(`\nausbilder-cockpit: ${ok} ok, ${fehler} fehlgeschlagen`);
 if (ok === 0) process.exit(1);
 process.exit(fehler ? 1 : 0);

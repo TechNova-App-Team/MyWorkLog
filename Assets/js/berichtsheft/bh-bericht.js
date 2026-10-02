@@ -264,14 +264,16 @@ async function editReport(id) {
     // Bestaetigte Wochen sind gesperrt.
     if (bhIsLocked(report)) {
         // Eine SERVERSEITIGE Freigabe (Betriebs-Anbindung) liegt nicht in den
-        // eigenen Daten — der Azubi kann sie hier nicht aufheben. Zurueckgeben
-        // muss der Ausbilder. Das ist der Kern der Revisionssicherheit und
-        // bewusst so: sonst waere die Sperre nur ein Vorschlag.
+        // eigenen Daten — der Azubi kann sie hier nicht aufheben. Aufheben kann
+        // nur, wer abgezeichnet hat („Freigabe widerrufen" in /ausbilder/,
+        // Trigger freigaben_widerruf). Das ist der Kern der Revisionssicherheit
+        // und bewusst so: sonst waere die Sperre nur ein Vorschlag. Der Text
+        // nennt den Weg, weil er bis v8.0.10 einen versprach, den es nicht gab.
         if (report.approval && report.approval.server) {
             await bhAlert(L('Diese Woche ist abgezeichnet', 'This week has been signed off'),
                 (report.approval.by || L('Dein Ausbilder', 'Your trainer'))
-                + L(' hat die Woche bestätigt. Zum Ändern muss dein Ausbilder sie erst zurückgeben.',
-                    ' has approved this week. To change it, your trainer has to return it first.'));
+                + L(' hat die Woche bestätigt. Zum Ändern bitte die Person, die abgezeichnet hat, die Freigabe zu widerrufen: Im Ausbilder-Bereich steht dafür bei der Woche „Freigabe widerrufen“. Danach ist die Woche hier wieder offen.',
+                    ' has approved this week. To change it, ask the person who signed off to revoke the approval: in the trainer area the week has a “Revoke approval” button. After that the week is open here again.'));
             return;
         }
         // Lokale Freigabe (Link-/QR-Weg): die liegt in den eigenen Daten, der

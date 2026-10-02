@@ -71,7 +71,7 @@ function bhApprovalBadge(report) {
     }
     if (a.state === 'rejected') {
         return '<span class="badge badge-warning">' +
-            escapeHtml(bhL('Zurückgegeben', 'Returned')) + '</span>';
+            escapeHtml(a.widerrufen ? bhL('Freigabe widerrufen', 'Approval revoked') : bhL('Zurückgegeben', 'Returned')) + '</span>';
     }
     return '';
 }
@@ -88,7 +88,9 @@ function bhApprovalNote(report) {
     return '<div style="margin-top:8px;padding:9px 12px;border-radius:8px;' +
         'background:rgba(var(--warning-rgb),0.08);border-left:2px solid var(--warning);">' +
         '<div style="font-size:0.72rem;font-weight:600;color:var(--warning);margin-bottom:3px;">' +
-        who + ' &middot; ' + escapeHtml(bhL('muss überarbeitet werden', 'needs revision')) + '</div>' +
+        who + ' &middot; ' + escapeHtml(a.widerrufen
+            ? bhL('hat die Freigabe widerrufen, die Woche ist wieder offen', 'revoked the approval, the week is open again')
+            : bhL('muss überarbeitet werden', 'needs revision')) + '</div>' +
         '<div style="font-size:0.8rem;color:var(--text-muted);">' + txt + '</div></div>';
 }
 
