@@ -1196,336 +1196,209 @@
         /* ══════════════════════════════════════════
            PRIVACY MODAL — Redesign
         ══════════════════════════════════════════ */
+        /* Datenschutz-Hinweis beim ersten Start. Nur Tokens: der alte Kasten
+           hatte feste Grautoene (#0f0f0f, #505050) und stand im Light-Theme als
+           schwarze Insel da; der Knopf war grau und sah deaktiviert aus, obwohl
+           er die einzige Aktion ist. Flaeche zweilagig, weil --bg-sidebar Alpha
+           traegt (siehe CLAUDE.md, "Token mit Alpha"). */
         .privacy-modal-box {
             width: 92%;
-            max-width: 900px;
+            max-width: 600px;
             max-height: 88vh;
             display: flex;
             flex-direction: column;
-            background: linear-gradient(160deg, #0f0f0f 0%, #050505 100%);
-            border: 1px solid rgba(80,80,80,0.3);
-            border-radius: 24px;
+            background: linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 16px;
             position: relative;
             overflow: hidden;
-            box-shadow:
-                0 0 0 1px rgba(80,80,80,0.15),
-                0 24px 64px rgba(0,0,0,0.95),
-                inset 0 1px 1px rgba(255,255,255,0.04);
-            animation: privacyModalIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+            animation: privacyModalIn 0.3s cubic-bezier(0.16,1,0.3,1) both;
         }
         @keyframes privacyModalIn {
-            from { opacity:0; transform: translateY(24px) scale(0.97); }
-            to   { opacity:1; transform: translateY(0) scale(1); }
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-
-        /* Animated top glow bar */
-        .privacy-modal-box::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(100,100,100,0.8) 30%,
-                rgba(236,72,153,0.8) 60%,
-                transparent 100%);
-            animation: privacyBarSweep 3s ease-in-out infinite;
-        }
-        @keyframes privacyBarSweep {
-            0%, 100% { opacity: 0.6; }
-            50%       { opacity: 1; }
-        }
-
-        /* Subtle grid background */
-        .privacy-modal-box::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(100,100,100,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(100,100,100,0.03) 1px, transparent 1px);
-            background-size: 32px 32px;
-            pointer-events: none;
+        @media (prefers-reduced-motion: reduce) {
+            .privacy-modal-box { animation: none; }
         }
 
         .privacy-close-btn {
             position: absolute;
             top: 14px; right: 14px;
-            z-index: 10;
+            z-index: 2;
             width: 34px; height: 34px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             color: var(--text-muted);
             cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.18s;
-            line-height: 1;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
             padding: 0;
         }
-        .privacy-close-btn svg {
-            width: 18px; height: 18px; stroke-width: 1.5;
-        }
+        .privacy-close-btn svg { width: 18px; height: 18px; }
         .privacy-close-btn:hover {
-            background: rgba(255,255,255,0.1);
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
             color: var(--text-main);
-            border-color: rgba(255,255,255,0.15);
         }
 
         .privacy-scroll {
             overflow-y: auto;
-            padding: 36px 28px 20px;
+            padding: 32px 28px 20px;
             flex: 1;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* 2-Column layout for sections */
-        .privacy-columns {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-top: 12px;
-        }
-        @media (max-width: 768px) {
-            .privacy-columns {
-                grid-template-columns: 1fr;
-                gap: 18px;
-            }
         }
         .privacy-scroll::-webkit-scrollbar { width: 4px; }
-        .privacy-scroll::-webkit-scrollbar-track { background: transparent; }
-        .privacy-scroll::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.3); border-radius: 4px; }
+        .privacy-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-        /* Header */
-        .privacy-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-        .privacy-shield-wrap {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .privacy-shield-ring {
-            position: absolute;
-            width: 72px; height: 72px;
-            border-radius: 50%;
-            border: 1px solid rgba(100,100,100,0.3);
-            animation: privacyRingPulse 2.5s ease-in-out infinite;
-        }
-        .privacy-shield-ring::before {
-            content: '';
-            position: absolute;
-            inset: 8px;
-            border-radius: 50%;
-            border: 1px solid rgba(100,100,100,0.15);
-        }
-        @keyframes privacyRingPulse {
-            0%, 100% { transform: scale(1);   opacity: 0.7; }
-            50%       { transform: scale(1.08); opacity: 1; }
-        }
+        .privacy-header { margin-bottom: 22px; padding-right: 36px; }
         .privacy-shield-icon {
-            position: relative;
-            z-index: 1;
-            filter: drop-shadow(0 0 16px rgba(100,100,100,0.5));
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            margin-bottom: 14px;
         }
-        .privacy-shield-icon svg {
-            width: 40px; height: 40px; stroke-width: 1.2; color: rgba(150,150,150,0.8);
-        }
+        .privacy-shield-icon svg { width: 22px; height: 22px; }
         .privacy-title {
             color: var(--text-main);
-            font-size: 1.55rem;
-            font-weight: 750;
-            margin: 0 0 6px;
-            letter-spacing: -0.03em;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin: 0 0 4px;
+            letter-spacing: -0.02em;
         }
         .privacy-subtitle {
             color: var(--text-muted);
             font-size: 0.88rem;
-            margin: 0 0 14px;
-        }
-        .privacy-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            background: rgba(16,185,129,0.1);
-            border: 1px solid rgba(16,185,129,0.25);
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #10b981;
-            letter-spacing: 0.02em;
-        }
-        .privacy-status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: #10b981;
-            animation: privacyDotPulse 1.8s ease-in-out infinite;
-        }
-        @keyframes privacyDotPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.6; transform: scale(0.8); }
+            margin: 0;
         }
 
-        /* Sections */
-        .privacy-section {
-            border-radius: 16px;
-            padding: 18px;
-            margin-bottom: 14px;
-        }
-        .privacy-section-green {
-            background: rgba(16,185,129,0.08);
-            border: 1px solid rgba(16,185,129,0.2);
-        }
-        .privacy-section-blue {
-            background: rgba(59,130,246,0.08);
-            border: 1px solid rgba(59,130,246,0.2);
-        }
-        .privacy-section-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 14px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-        }
-        .privacy-section-header svg {
-            width: 14px; height: 14px; stroke-width: 1.5; flex-shrink: 0;
-        }
-
-        .privacy-list {
+        /* Die drei Punkte, die jeder mitnehmen soll */
+        .privacy-key {
             list-style: none;
             padding: 0; margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+            display: flex; flex-direction: column;
+            gap: 16px;
         }
-        .privacy-list-item {
+        .privacy-key-item {
             display: flex;
             align-items: flex-start;
-            gap: 12px;
+            gap: 14px;
         }
         .privacy-item-icon {
-            width: 30px; height: 30px;
+            width: 32px; height: 32px;
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
-            margin-top: 1px;
+            color: var(--success);
+            background: color-mix(in srgb, var(--success) 12%, transparent);
         }
-        .privacy-item-icon svg {
-            width: 16px; height: 16px; stroke-width: 1.5;
-        }
-        .privacy-item-icon-green { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); }
-        .privacy-item-icon-blue  { background: rgba(59,130,246,0.12);  border: 1px solid rgba(59,130,246,0.2); }
-        .privacy-list-item div {
+        .privacy-item-icon svg { width: 17px; height: 17px; }
+        .privacy-key-item > div,
+        .privacy-list-item > div {
             display: flex;
             flex-direction: column;
-            gap: 1px;
+            gap: 2px;
+            min-width: 0;
+        }
+        .privacy-key-item strong {
+            color: var(--text-main);
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+        .privacy-key-item > div > span {
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            line-height: 1.55;
+        }
+
+        /* Der Rest, eingeklappt */
+        .privacy-more {
+            margin-top: 22px;
+            border-top: 1px solid var(--border);
+        }
+        .privacy-more-sum {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 14px 0 4px;
+            cursor: pointer;
+            list-style: none;
+            color: var(--text-muted);
+            font-size: 0.84rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        .privacy-more-sum::-webkit-details-marker { display: none; }
+        .privacy-more-sum:hover { color: var(--text-main); }
+        .privacy-more-sum:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+        .privacy-more-sum svg { width: 16px; height: 16px; transition: transform 0.2s ease; }
+        .privacy-more[open] .privacy-more-sum svg { transform: rotate(180deg); }
+
+        .privacy-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 12px;
+        }
+        @media (max-width: 600px) {
+            .privacy-columns { grid-template-columns: 1fr; gap: 16px; }
+        }
+        .privacy-section { min-width: 0; }
+        .privacy-section-header {
+            margin: 0 0 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .privacy-list {
+            list-style: none;
+            padding: 0; margin: 0;
+            display: flex; flex-direction: column;
+            gap: 10px;
         }
         .privacy-list-item strong {
             color: var(--text-main);
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 600;
         }
-        .privacy-list-item span {
+        .privacy-list-item > div > span {
             color: var(--text-muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             line-height: 1.5;
         }
         .privacy-link {
-            color: rgba(100,100,100,0.9);
-            text-decoration: none;
-            border-bottom: 1px solid rgba(100,100,100,0.3);
-            transition: all 0.15s;
-        }
-        .privacy-link:hover {
             color: var(--primary);
-            border-bottom-color: var(--primary);
+            text-decoration: underline;
+            text-decoration-color: rgba(var(--primary-rgb), 0.4);
+            text-underline-offset: 2px;
+            transition: text-decoration-color 0.2s ease;
         }
+        .privacy-link:hover { text-decoration-color: var(--primary); }
 
-        /* Open Source note */
-        .privacy-note {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(100,100,100,0.15);
-            border-left: 3px solid rgba(100,100,100,0.6);
-            border-radius: 10px;
-            padding: 14px;
-            margin-top: 4px;
-        }
-        .privacy-note > svg {
-            width: 16px; height: 16px;
-            stroke-width: 1.5;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        .privacy-note p {
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            line-height: 1.6;
-            margin: 0;
-        }
-        .privacy-note strong {
-            color: var(--text-main);
-        }
-
-        /* Footer */
         .privacy-footer {
-            position: relative;
-            z-index: 1;
-            border-top: 1px solid rgba(100,100,100,0.12);
-            padding: 16px 28px;
-            background: rgba(0,0,0,0.3);
+            border-top: 1px solid var(--border);
+            padding: 14px 28px;
             flex-shrink: 0;
         }
         .privacy-confirm-btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #505050 0%, #404040 100%);
+            padding: 13px;
+            background: var(--primary);
             border: none;
-            border-radius: 14px;
-            color: white;
+            border-radius: 8px;
+            color: #fff;
             font-size: 0.95rem;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
-            letter-spacing: 0.01em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
-            box-shadow: 0 4px 20px rgba(100,100,100,0.3);
+            transition: background-color 0.2s ease;
         }
-        .privacy-confirm-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(100,100,100,0.45);
-        }
-        .privacy-confirm-btn:active {
-            transform: scale(0.98) translateY(0);
-            transition-duration: 0.06s;
-        }
-        .privacy-confirm-icon {
-            width: 20px; height: 20px;
-            flex-shrink: 0;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .privacy-confirm-icon svg {
-            width: 12px; height: 12px; stroke-width: 2.5;
-        }
+        .privacy-confirm-btn:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
+        .privacy-confirm-btn:active { transform: scale(0.99); }
+        .privacy-confirm-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
         .modal-close-x:focus { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb),0.12); }
 
         /* ══════════════════════════════════════════════════════════════
