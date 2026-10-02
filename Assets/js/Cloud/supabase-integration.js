@@ -424,6 +424,10 @@ class SupabaseCloudSync {
                 throw error;
             }
 
+            // Schluessel der Cloud-Kopie vom Geraet nehmen (geteilte Rechner):
+            // wer sich wieder anmeldet, gibt den Wiederherstellungs-Code neu ein.
+            try { if (window.MWLE2E && this.user) await window.MWLE2E.vergessen(this.user.id); } catch (e) {}
+
             this.session = null;
             this.user = null;
             console.log('[Auth] User erfolgreich ausgeloggt');
@@ -450,30 +454,46 @@ class SupabaseCloudSync {
         }
 
         try {
+            /* 🔴 Ende-zu-Ende (seit v8.1.0, cloud-e2e.js): ohne Schluessel wird
+               NIE hochgeladen. schluesselFuerUpload() zeigt dafuer den passenden
+               Dialog (neuer Code, Code eingeben, Uebergang von Klartext) und
+               wirft bei Abbruch — der Sync ist dann "pausiert". */
+            if (!window.MWLE2E) throw new Error('Verschlüsselung nicht geladen. Bitte die Seite neu laden.');
+            const zustand = await this.cloudZustand();
+            const { schluessel, erstLaden } = await window.MWLE2E.schluesselFuerUpload(this.user.id, zustand);
+
+            // Uebergang mit "erst aus der Cloud wiederherstellen": den
+            // Klartext-Stand holen, BEVOR gesammelt wird — dann geht genau er
+            // verschluesselt wieder hoch, und danach wird neu geladen, damit
+            // kein veralteter Stand im Speicher ihn ueberschreibt.
+            if (erstLaden && zustand === 'klartext') await this.downloadFromCloud();
+
             // Sammle alle LocalStorage-Daten (Auth-Tokens ausschließen)
             const allData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key.startsWith('sb-') || key.startsWith('supabase')) continue;
+                if (key === window.MWLE2E.UMSCHLAG) continue;   /* Muell von alten Clients, s. downloadFromCloud */
                 if (!cloudKeyAllowed(key)) continue;   /* nicht freigegeben -> bleibt lokal */
                 allData[key] = localStorage.getItem(key);
             }
 
-            console.log('[Cloud] Hochladen von', Object.keys(allData).length, 'LocalStorage-Keys');
+            console.log('[Cloud] Hochladen von', Object.keys(allData).length, 'LocalStorage-Keys (verschlüsselt)');
+            const umschlag = await window.MWLE2E.verschluesseln(allData, schluessel);
 
-            // Upsert in Supabase (id = User ID, all_data = JSONB Objekt)
+            // Upsert in Supabase (id = User ID, all_data = nur der Umschlag)
             const { data, error } = await this.client
                 .from('users')
                 .upsert(
                     {
                         id: this.user.id,
                         user_id: this.user.id,
-                        all_data: allData,
+                        all_data: { [window.MWLE2E.UMSCHLAG]: umschlag },
                         updated_at: new Date().toISOString()
                     },
                     { onConflict: 'id' }
                 )
-                .select();
+                .select('id, updated_at');
 
             if (error) {
                 console.error('[Cloud] Upload Error Details:', {
@@ -501,14 +521,43 @@ class SupabaseCloudSync {
                 localStorage.setItem('mwl_last_backup_kind', 'cloud');
             } catch (e) { /* Speicher voll oder gesperrt - kein Grund, den Upload zu verlieren */ }
 
-            return { success: true, data };
+            if (erstLaden) setTimeout(() => location.reload(), 1200);
+            return { success: true, data, neuLaden: !!erstLaden };
         } catch (error) {
             console.error('[Cloud] uploadToCloud Fehler:', error.message || error);
             // Nur der Fehlschlag wird gezaehlt: der AutoSync laedt alle paar Minuten hoch,
             // ein Erfolgs-Ereignis je Upload wuerde die Funktionsliste fluten.
-            if (typeof mwlEvent === 'function') mwlEvent('problem_cloud_sync', { grund: 'hochladen' });
+            // Ein abgebrochener Code-Dialog ist kein Problem, sondern eine Entscheidung.
+            if (!error.e2eAbbruch && typeof mwlEvent === 'function') mwlEvent('problem_cloud_sync', { grund: 'hochladen' });
             throw error;
         }
+    }
+
+    /**
+     * Wie liegt die Cloud-Kopie gerade? Ohne den Geheimtext zu laden, wenn es
+     * nicht noetig ist: erst nur die Version des Umschlags abfragen.
+     * → 'leer' | 'klartext' | { salt, laden() } — laden() holt den vollen
+     *   Umschlag nur, wenn ein Code geprueft werden muss.
+     */
+    async cloudZustand() {
+        const U = window.MWLE2E.UMSCHLAG;
+        const { data, error } = await this.client
+            .from('users')
+            .select('id, encv:all_data->' + U + '->>v, encs:all_data->' + U + '->>salt')
+            .eq('id', this.user.id)
+            .maybeSingle();
+        if (error) throw new Error(`Cloud-Abfrage fehlgeschlagen (${error.code}): ${error.message}`);
+        if (!data) return 'leer';
+        if (!data.encv) return 'klartext';
+        const client = this.client, uid = this.user.id;
+        return {
+            salt: data.encs,
+            laden: async () => {
+                const voll = await client.from('users').select('all_data').eq('id', uid).maybeSingle();
+                if (voll.error) throw new Error(`Cloud-Abfrage fehlgeschlagen (${voll.error.code}): ${voll.error.message}`);
+                return voll.data.all_data[U];
+            }
+        };
     }
 
     /**
@@ -548,6 +597,17 @@ class SupabaseCloudSync {
             }
 
             if (data && data.all_data && typeof data.all_data === 'object') {
+                /* Verschluesselt (seit v8.1.0): erst entschluesseln. Ohne Code
+                   wirft schluesselFuerDownload — dann wird NICHTS geschrieben.
+                   Klartext-Zeilen von vor v8.1.0 werden unveraendert gelesen;
+                   der naechste Upload ersetzt sie durch Geheimtext. */
+                if (window.MWLE2E && window.MWLE2E.istUmschlag(data.all_data)) {
+                    const umschlag = data.all_data[window.MWLE2E.UMSCHLAG];
+                    const key = await window.MWLE2E.schluesselFuerDownload(this.user.id, umschlag);
+                    data.all_data = await window.MWLE2E.entschluesseln(umschlag, key);
+                } else if (!window.MWLE2E && data.all_data.__mwl_e2e) {
+                    throw new Error('Verschlüsselung nicht geladen. Bitte die Seite neu laden.');
+                }
                 console.log('[Cloud] Lade', Object.keys(data.all_data).length, 'Keys in LocalStorage');
                 
                 /* ZWEI Durchgaenge, und die Reihenfolge ist der ganze Punkt.
@@ -562,8 +622,10 @@ class SupabaseCloudSync {
                    die Freigabe vor oder nach dem Tresor angelegt hat.
                    Deshalb: erst alle ungeschuetzten Keys (darunter die Flags),
                    dann die freigabepflichtigen. */
+                // '__mwl_e2e' kann als Schluessel nur durch einen Client von vor
+                // v8.1.0 im localStorage landen ("[object Object]") — nie zurueckschreiben.
                 const entriesAll = Object.entries(data.all_data)
-                    .filter(([key]) => !key.startsWith('sb-') && !key.startsWith('supabase'));
+                    .filter(([key]) => !key.startsWith('sb-') && !key.startsWith('supabase') && key !== '__mwl_e2e');
                 const gated = [];
 
                 for (const [key, value] of entriesAll) {
@@ -596,7 +658,7 @@ class SupabaseCloudSync {
             }
         } catch (error) {
             console.error('[Cloud] downloadFromCloud Fehler:', error.message || error);
-            if (typeof mwlEvent === 'function') mwlEvent('problem_cloud_sync', { grund: 'herunterladen' });
+            if (!error.e2eAbbruch && typeof mwlEvent === 'function') mwlEvent('problem_cloud_sync', { grund: 'herunterladen' });
             throw error;
         }
     }

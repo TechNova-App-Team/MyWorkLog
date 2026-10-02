@@ -423,6 +423,7 @@ class SupabaseCloudSyncUI {
                 syncBtn.disabled = false;
             }, 2000);
         } catch (error) {
+            if (error && error.e2eAbbruch) { syncBtn.innerHTML = originalHTML; syncBtn.disabled = false; return; }
             console.error('Sync error:', error);
             syncBtn.innerHTML = '❌';
             setTimeout(() => {

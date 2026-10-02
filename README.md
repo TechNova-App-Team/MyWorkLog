@@ -253,7 +253,7 @@ Aktuelle Version: **v8.1.0** · 2026-10-02
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.1.0** | 2026-10-02 | Ausbilder können eine Freigabe widerrufen |
+| **8.1.0** | 2026-10-02 | Cloud-Sync ist Ende-zu-Ende verschlüsselt, Ausbilder können Freigaben widerrufen |
 | 8.0.10 | 2026-10-01 | Die Nutzungsstatistik zeigt jetzt auch, wo etwas hakt |
 | 8.0.9 | 2026-09-29 | Der Berichtsheft-Assistent kann dein Vorwissen übernehmen |
 | 8.0.8 | 2026-09-29 | Die Besucherstatistik ist neu aufgebaut |

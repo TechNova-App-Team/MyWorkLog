@@ -275,14 +275,27 @@ console.log('\nEin echter Upload vermerkt die Sicherung selbst');
         get length() { return store.size; },
         key: i => [...store.keys()][i]
     };
+    // Seit v8.1.0 verschluesselt der Upload (cloud-e2e.js). Die Attrappe
+    // liefert einen Schluessel ohne Dialog; geprueft wird hier nur der Vermerk.
+    let hochgeladen = null;
+    const e2e = {
+        UMSCHLAG: '__mwl_e2e',
+        schluesselFuerUpload: async () => ({ schluessel: { key: 'k', salt: 's' } }),
+        verschluesseln: async () => ({ v: 1, ct: 'geheim' })
+    };
     const build = new Function('localStorage', 'window', 'console',
         CLOUD + '\nreturn SupabaseCloudSync;');
-    const Cls = build(ls, {}, { log() {}, warn() {}, error() {} });
+    const Cls = build(ls, { MWLE2E: e2e }, { log() {}, warn() {}, error() {} });
+    // cloudZustand(): from('users').select().eq().maybeSingle() → keine Zeile
+    const zustandAbfrage = { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) };
 
     const o = Object.create(Cls.prototype);
     o.user = { id: 'u1' };
-    o.client = { from: () => ({ upsert: () => ({ select: async () => ({ data: [{}], error: null }) }) }) };
+    o.client = { from: () => Object.assign({}, zustandAbfrage, {
+        upsert: (zeile) => { hochgeladen = zeile; return { select: async () => ({ data: [{}], error: null }) }; } }) };
     const r = await o.uploadToCloud();
+    ok('hochgeladen wird nur der Umschlag, kein Klartext',
+       !!hochgeladen && JSON.stringify(hochgeladen.all_data) === '{"__mwl_e2e":{"v":1,"ct":"geheim"}}');
 
     ok('Upload meldet Erfolg', r && r.success === true);
     ok('… und vermerkt die Sicherung ohne Zutun eines Knopfes', !!store.get('mwl_last_export'));
@@ -293,7 +306,8 @@ console.log('\nEin echter Upload vermerkt die Sicherung selbst');
     store.delete('mwl_last_export');
     const f = Object.create(Cls.prototype);
     f.user = { id: 'u1' };
-    f.client = { from: () => ({ upsert: () => ({ select: async () => ({ data: null, error: { message: 'kaputt', code: '500' } }) }) }) };
+    f.client = { from: () => Object.assign({}, zustandAbfrage, {
+        upsert: () => ({ select: async () => ({ data: null, error: { message: 'kaputt', code: '500' } }) }) }) };
     let warf = false;
     try { await f.uploadToCloud(); } catch (e) { warf = true; }
     ok('fehlgeschlagener Upload wirft', warf);

@@ -455,6 +455,38 @@
         location.assign(v.p);
     }
 
+    // Einmal je Sitzung nach der Anmeldung: hat dieses Geraet den Schluessel
+    // der Cloud-Kopie? Wenn nicht, fragt der passende Dialog (cloud-e2e.js)
+    // VON SICH AUS — sonst saehe, wer nie auf Sync klickt, den Uebergang nie.
+    // 🔴 onAuthStateChanged feuert beim Start mehrfach (CLAUDE.md, Supabase-
+    // Fallen Nr. 2): deshalb sessionStorage-Riegel + Verzoegerung, ein Abruf.
+    //  - Klartext (vor v8.1.0): Uebergangs-Dialog ueber den normalen Upload,
+    //    inklusive der Frage "vorher aus der Cloud wiederherstellen?".
+    //  - Verschluesselt, Code fehlt: NUR entsperren, nicht hochladen — ein
+    //    Upload von hier koennte neuere Daten eines anderen Geraets ersetzen.
+    function e2eEinmalPruefen(uid) {
+        try {
+            if (sessionStorage.getItem('mwl_e2e_geprueft') === uid) return;
+            sessionStorage.setItem('mwl_e2e_geprueft', uid);
+        } catch (e) { return; }
+        setTimeout(async () => {
+            const cs = window.cloudSync;
+            if (!window.MWLE2E || !cs || !cs.isLoggedIn() || typeof cs.cloudZustand !== 'function') return;
+            try {
+                if (await window.MWLE2E.hatSchluessel(uid)) return;
+                const zustand = await cs.cloudZustand();
+                if (zustand === 'klartext') {
+                    await cs.uploadToCloud();
+                    updateCloudSyncChip();
+                } else if (zustand && typeof zustand === 'object') {
+                    await window.MWLE2E.entsperren(uid, zustand);
+                }
+            } catch (e) {
+                if (!e || !e.e2eAbbruch) console.warn('[E2E] Pruefung nach Anmeldung:', e && e.message);
+            }
+        }, 2500);
+    }
+
     function setupCloudSyncIntegration() {
         // Registriere Auth-State Callbacks
         if (window.cloudSync && window.cloudSync.onAuthStateChanged) {
@@ -464,14 +496,16 @@
                     originalCallback.call(this, isLoggedIn, user);
                 }
                 updateCloudSyncUI(isLoggedIn, user);
+                if (isLoggedIn && user) e2eEinmalPruefen(user.id);
             };
         }
-        
+
         // Initialisiere UI sofort mit aktuellem Status
         if (window.cloudSync) {
             const isLoggedIn = window.cloudSync.isLoggedIn ? window.cloudSync.isLoggedIn() : false;
             const user = window.cloudSync.getCurrentUser ? window.cloudSync.getCurrentUser() : null;
             updateCloudSyncUI(isLoggedIn, user);
+            if (isLoggedIn && user) e2eEinmalPruefen(user.id);
         }
         
         // Auto-Sync beim Speichern aktivieren
@@ -765,6 +799,15 @@
         }, 2200);
     }
 
+    // Ein abgebrochener Code-Dialog (cloud-e2e.js) ist kein Fehler, sondern
+    // eine Entscheidung: kein rotes "Fehler" am Knopf, sondern ein Satz, warum
+    // gerade nichts synchronisiert.
+    function e2ePausiert(error) {
+        if (!error || !error.e2eAbbruch) return false;
+        if (typeof showToast === 'function') showToast('Cloud-Sync pausiert', error.message, 'info');
+        return true;
+    }
+
     async function handleCloudUpload() {
         const uploadBtn = document.getElementById('cloudSyncUploadBtn');
         if (!uploadBtn || !window.cloudSync) {
@@ -782,6 +825,7 @@
             await window.cloudSync.uploadToCloud();
             cloudBtnSuccess(uploadBtn, originalHTML);
         } catch (error) {
+            if (e2ePausiert(error)) { uploadBtn.innerHTML = originalHTML; uploadBtn.disabled = false; return; }
             console.error('[Upload] Fehler:', error);
             cloudBtnError(uploadBtn, originalHTML);
         } finally {
@@ -808,6 +852,7 @@
             // Lock bleibt bis Reload — sonst kann User in den 2.4s schließen + saveSettings() würde frischen Cloud-State überschreiben
             setTimeout(() => location.reload(), 2400);
         } catch (error) {
+            if (e2ePausiert(error)) { downloadBtn.innerHTML = originalHTML; downloadBtn.disabled = false; lockSettingsClose(false); return; }
             console.error('[Download] Fehler:', error);
             cloudBtnError(downloadBtn, originalHTML);
             lockSettingsClose(false);
@@ -944,6 +989,7 @@
                 updateCloudSyncChip();
             }, 2200);
         } catch (error) {
+            if (e2ePausiert(error)) { if (chip) chip.classList.remove('is-syncing'); updateCloudSyncChip(); return; }
             console.error('[QuickCloudSync] Fehler:', error);
             if (chip) {
                 chip.classList.remove('is-syncing');
@@ -1236,6 +1282,7 @@
             // Voller Reload damit alle Komponenten neu rendern (gleiche Strategie wie Settings-Download)
             setTimeout(() => location.reload(), 1200);
         } catch (error) {
+            if (e2ePausiert(error)) { if (chip) chip.classList.remove('is-syncing'); updateCloudSyncChip(); return; }
             console.error('[QuickCloudDownload] Fehler:', error);
             if (chip) {
                 chip.classList.remove('is-syncing');
