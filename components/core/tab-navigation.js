@@ -111,7 +111,7 @@
         const titles = {
             'dashboard': 'Dashboard',
             'history': 'Daten-Analyse & Historie',
-            'performance': 'Performance Analyse',
+            'performance': 'Bilanz',
             'ihk': 'IHK / Karriere',
             'school': 'Berufsschule & Noten',
             'goals': 'Ziele & Fokus',
@@ -120,7 +120,7 @@
             'weekview': 'Wochenansicht',
             'urlaubsplaner': 'Urlaubsplaner',
             'aibot': 'AI-Bot Assistent',
-            'analytics-pro': 'Analysen',
+            'analytics-pro': 'Diagramme',
             'aufgaben': 'Aufgaben',
             'aufgaben-tab': 'Aufgaben',
         };

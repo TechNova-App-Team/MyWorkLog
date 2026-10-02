@@ -184,7 +184,10 @@
     // in den NUTZERDATEN und nicht im HTML — die statische Pipeline kann sie
     // gar nicht sehen. Deshalb hier.
     'Verlauf': 'History',
-    'Analysen': 'Analytics',
+    // Zwei Auswertungs-Ansichten, zwei eindeutige Namen (v8.1.0): was in einem
+    // Zeitraum herauskam vs. die Diagramm-Sammlung.
+    'Bilanz': 'Summary',
+    'Diagramme': 'Charts',
     'Fahrtkosten': 'Commuting costs',
     'Jahresansicht': 'Year view',
     'Monatsansicht': 'Month view',
@@ -282,7 +285,6 @@
     // ─── View-Titel (tab-navigation.js `titles` → .page-title + document.title) ───
     'Übersicht': 'Overview',
     'Daten-Analyse & Historie': 'Data analysis & history',
-    'Performance Analyse': 'Performance analysis',
     'IHK / Karriere': 'IHK / career',
     'Berufsschule & Noten': 'Vocational school & grades',
     'Ziele & Fokus': 'Goals & focus',
@@ -580,7 +582,6 @@
     [/Daten-Analyse & Historie/g, 'Data analysis & history'],
     [/Monats-Vergleich & Detailanalyse/g, 'Month comparison & detail analysis'],
     [/Jahresübersicht & Insights/g, 'Year overview & insights'],
-    [/Performance Analyse/g, 'Performance analysis'],
     [/Berufsschule & Noten/g, 'Vocational school & grades'],
     [/Ziele & Fokus/g, 'Goals & focus'],
     [/AI-Bot Assistent/g, 'AI bot assistant'],

@@ -211,7 +211,7 @@
         // Default nav items - RICHTIG SORTIERT nach Benutzervorgabe
         const defaultNavItems = [
             {id:'dashboard', label:'Dashboard', icon:getIconSvgById('dashboard'), visible:true},
-            {id:'performance', label:'Performance', icon:getIconSvgById('performance'), visible:true},
+            {id:'performance', label:'Bilanz', icon:getIconSvgById('performance'), visible:true},
             {id:'history', label:'Verlauf', icon:getIconSvgById('history'), visible:true},
             {id:'yearview', label:'Jahresansicht', icon:getIconSvgById('yearview'), visible:true},
             {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
@@ -220,7 +220,7 @@
             {id:'school', label:'Berufsschule', icon:getIconSvgById('school'), visible:true},
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
-            {id:'analytics-pro', label:'Analysen', icon:getIconSvgById('analytics-pro'), visible:true},
+            {id:'analytics-pro', label:'Diagramme', icon:getIconSvgById('analytics-pro'), visible:true},
             {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'/aufgaben/'},
         ];
 
@@ -283,7 +283,7 @@
             el.dataset.navId = item.id;
             const sidebarIconHtml = item.icon && item.icon.trim().startsWith('<svg') ? item.icon : getIconSvgById(item.id) || item.icon;
             // Beschriftung immer aus der Vorgabeliste: data.settings.nav speichert
-            // das Label mit, ein Umbenennen ("Analytics Pro" -> "Analysen") kaeme sonst
+            // das Label mit, ein Umbenennen ("Performance" -> "Bilanz") kaeme sonst
             // nur bei neuen Nutzern an — und ein NAV_VERSION-Bump dafuer wuerde jedem
             // die selbst sortierte Reihenfolge zerlegen.
             const navDefault = defaultNavItems.find(d => d.id === item.id);
@@ -479,7 +479,7 @@
     const CMD_PALETTE_ITEMS = [
         // Navigation
         { id: 'dashboard',    label: 'Dashboard',         icon: getIconSvgById('dashboard'), group: 'Navigation', action: () => switchTab('dashboard') },
-        { id: 'performance',  label: 'Performance',       icon: getIconSvgById('performance'), group: 'Navigation', action: () => switchTab('performance') },
+        { id: 'performance',  label: 'Bilanz',            icon: getIconSvgById('performance'), group: 'Navigation', action: () => switchTab('performance') },
         { id: 'history',      label: 'Verlauf',           icon: getIconSvgById('history'), group: 'Navigation', action: () => switchTab('history') },
         { id: 'yearview',     label: 'Jahresansicht',     icon: getIconSvgById('yearview'), group: 'Navigation', action: () => switchTab('yearview') },
         { id: 'monthcompare', label: 'Monatsansicht',     icon: getIconSvgById('monthcompare'), group: 'Navigation', action: () => switchTab('monthcompare') },
@@ -488,7 +488,7 @@
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
         { id: 'ihk',          label: 'IHK',               icon: getIconSvgById('ihk'), group: 'Navigation', action: () => switchTab('ihk') },
         { id: 'goals',        label: 'Ziele',             icon: getIconSvgById('goals'), group: 'Navigation', action: () => switchTab('goals') },
-        { id: 'analytics-pro', label: 'Analysen',          icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
+        { id: 'analytics-pro', label: 'Diagramme',         icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
         { id: 'alerts',       label: 'Alerts',            icon: getIconSvgById('alerts'), group: 'Tools',      action: () => toggleAlertsPanel() },

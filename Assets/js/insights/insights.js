@@ -307,7 +307,7 @@ var SUB_LABELS = {
 var FEATURE_LABELS = {
     'dashboard':     ['Übersicht', 'Overview'],
     'history':       ['Historie', 'History'],
-    'performance':   ['Performance', 'Performance'],
+    'performance':   ['Bilanz', 'Summary'],
     'ihk':           ['IHK / Karriere', 'IHK / career'],
     'school':        ['Berufsschule', 'Vocational school'],
     'goals':         ['Ziele', 'Goals'],
@@ -316,7 +316,7 @@ var FEATURE_LABELS = {
     'weekview':      ['Wochenansicht', 'Week view'],
     'aibot':         ['AI-Bot', 'AI bot'],
     'support':       ['Support', 'Support'],
-    'analytics-pro': ['Analysen', 'Analytics'],
+    'analytics-pro': ['Diagramme', 'Charts'],
     'aufgaben':      ['Aufgaben', 'Tasks'],
     'aufgaben-tab':  ['Aufgaben', 'Tasks'],
     'urlaubsplaner': ['Urlaubsplaner', 'Vacation planner']

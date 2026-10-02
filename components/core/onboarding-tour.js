@@ -52,8 +52,8 @@
         },
         {
             icon: 'gauge',
-            title: 'Performance Analyse',
-            text: 'Hier findest du detaillierte Auswertungen: Soll-Ist-Vergleich, Projektverteilung, Wochentag-Analyse und Produktivitäts-Heatmap.',
+            title: 'Bilanz',
+            text: 'Was in einem Zeitraum herauskam: Saldo, Soll und Ist, dein Arbeitsrhythmus, Urlaub und die Prüfung nach Arbeitszeitgesetz. Heatmaps und Projekte stehen unter „Diagramme“.',
             target: '#view-performance',
             tab: 'performance',
             position: 'bottom'
@@ -136,8 +136,8 @@
         },
         {
             icon: 'gauge',
-            title: 'Analyse',
-            text: 'Tippe in der unteren Leiste auf „Analyse" für Soll-Ist-Vergleiche, Projektverteilung und Produktivitäts-Heatmap.',
+            title: 'Bilanz',
+            text: 'Tippe in der unteren Leiste auf „Bilanz": Saldo, Soll und Ist, Urlaub und die Prüfung nach Arbeitszeitgesetz für einen Zeitraum.',
             target: '#mobNav-performance',
             tab: 'performance',
             position: 'above-nav'

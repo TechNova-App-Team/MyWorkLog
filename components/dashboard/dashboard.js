@@ -1722,12 +1722,12 @@
                         { lead: qhL('Schnellaktionen', 'Quick actions'), text: qhL('Timer starten oder direkt einen Eintrag anlegen.', 'Start the timer or add an entry directly.') }
                     ]}]};
             case 'view-performance':
-                return { icon: 'performance', title: qhL('Performance', 'Performance'),
-                    sub: qhL('Trends und Muster in deinen Zeiten', 'Trends and patterns in your hours'),
-                    groups: [{ kind: 'list', label: qhL('Analysen', 'Analytics'), items: [
-                        { text: qhL('Trendlinien, Heatmaps und Projektverteilungen.', 'Trend lines, heatmaps and project splits.') },
-                        { text: qhL('Zeiträume oder Projekte über Filter eingrenzen.', 'Narrow by time range or project using filters.') },
-                        { text: qhL('Diagramme antippen für Detailinfos.', 'Tap charts for detailed info.') }
+                return { icon: 'performance', title: qhL('Bilanz', 'Summary'),
+                    sub: qhL('Was in einem Zeitraum herauskam', 'What a period added up to'),
+                    groups: [{ kind: 'list', label: qhL('Inhalt', 'Contents'), items: [
+                        { text: qhL('Saldo, Soll und Ist, Rhythmus und Aufteilung der Stunden.', 'Balance, target vs. actual, rhythm and how the hours split.') },
+                        { text: qhL('Urlaub gegen das Kalenderjahr und die Prüfung nach Arbeitszeitgesetz.', 'Vacation against the calendar year and the Working Hours Act check.') },
+                        { text: qhL('Heatmaps, Histogramme und Projekte stehen unter „Diagramme“.', 'Heatmaps, histograms and projects live under “Charts”.') }
                     ]}]};
             case 'view-ihk':
                 return { icon: 'ihk', title: qhL('IHK & Ausbildung', 'IHK & training'),
