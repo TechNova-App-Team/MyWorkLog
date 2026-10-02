@@ -534,6 +534,10 @@
            nicht die Zahl daneben. */
         .kpi-v2__streak-icon.streak-active { color: var(--role-pos); opacity: 1; }
         .kpi-v2__streak-best { opacity: 0.55; }
+        .kpi-v2__streak-lbl { color: var(--text-muted); }
+        /* inline-flex oben schlaegt das hidden-Attribut — ohne diese Zeile
+           stuende "0 in Folge · Rekord 0" auch ohne jede Serie da. */
+        .kpi-v2__streak[hidden] { display: none; }
 
         /* Wochenpunkte sitzen als vierte Zeile unter der Fusszeile und
            duerfen die Grundlinien der anderen Karten nicht verschieben. */
@@ -1441,100 +1445,143 @@
         }
 
 
-        /* ─── SETUP HINT BANNER ─────────────────────────────────────── */
-        .setup-hint-banner {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 13px 14px;
-            background: linear-gradient(135deg, rgba(168,85,247,0.13) 0%, rgba(99,102,241,0.1) 100%);
-            border: 1px solid rgba(168,85,247,0.32);
-            border-radius: 14px;
+        /* ─── EINRICHTUNG (erster Start) ───────────────────────────────
+           Karte oberhalb des Rasters, nicht im Eintrags-Formular. Der Akzent
+           sitzt auf dem einen Knopf, der zaehlt (Einrichten) — die Flaeche
+           bleibt eine normale Karte, damit sie nicht wie Werbung aussieht. */
+        .setup-card {
             position: relative;
-            animation: setupHintIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+            margin-bottom: 1.25rem;
+            padding: 1.25rem 1.5rem;
+            background: linear-gradient(var(--bg-glass), var(--bg-glass)), var(--bg-deep);
+            border: 1px solid rgba(var(--primary-rgb), 0.35);
+            border-radius: 16px;
         }
-        @keyframes setupHintIn {
-            from { opacity: 0; transform: translateY(-6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes setupHintOut {
-            to { opacity: 0; transform: translateY(-6px); max-height: 0; padding: 0; margin: 0; }
-        }
-        .setup-hint-banner.dismissing {
-            animation: setupHintOut 0.28s ease forwards;
-            overflow: hidden;
-        }
-        .setup-hint-icon {
-            flex-shrink: 0;
-            margin-top: 1px;
-            display: grid;
-            place-items: center;
-            color: var(--primary);
-            filter: drop-shadow(0 0 6px rgba(var(--primary-rgb), 0.5));
-        }
-        .setup-hint-content {
-            flex: 1;
-            min-width: 0;
-        }
-        .setup-hint-title {
-            font-size: 0.82rem;
+        .setup-card[hidden] { display: none; }
+        .setup-card__head { padding-right: 2.25rem; margin-bottom: 1rem; }
+        .setup-card__title {
+            margin: 0 0 4px;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 4px;
             letter-spacing: -0.01em;
         }
-        .setup-hint-text {
-            font-size: 0.76rem;
-            color: var(--text-muted, #94a3b8);
-            line-height: 1.55;
-            margin-bottom: 10px;
+        .setup-card__lead,
+        .setup-card__std {
+            margin: 0;
+            font-size: 0.84rem;
+            line-height: 1.5;
+            color: var(--text-muted);
         }
-        .setup-hint-text strong {
-            color: var(--primary);
-            font-weight: 600;
+        .setup-card__std:empty { display: none; }
+        .setup-card__std { margin-top: 2px; color: var(--text-main); }
+
+        .setup-steps {
+            list-style: none;
+            margin: 0; padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
-        .setup-hint-btn {
-            display: inline-flex;
+        @media (max-width: 767px) {
+            .setup-steps { grid-template-columns: 1fr; }
+            .setup-card { padding: 1rem 1.1rem; }
+        }
+        .setup-step {
+            display: flex;
             align-items: center;
-            gap: 5px;
-            padding: 5px 13px;
-            /* Hier standen vier feste #a855f7-Werte — die alte Akzentfarbe.
-               Wer sein Theme umstellt, bekam einen violetten Knopf in einer
-               blauen App. Farbe kommt aus --primary, nie aus einem Hex. */
-            background: var(--hover-fill-strong);
-            border: 1px solid var(--hover-border);
+            gap: 12px;
+            min-width: 0;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+        .setup-step__mark {
+            flex-shrink: 0;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            display: grid; place-items: center;
+            color: transparent;
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        .setup-step__mark svg { width: 12px; height: 12px; }
+        .setup-step.is-done .setup-step__mark {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+        .setup-step__body {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .setup-step__t {
+            font-size: 0.86rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .setup-step__s {
+            font-size: 0.76rem;
+            line-height: 1.45;
+            color: var(--text-muted);
+        }
+        .setup-step.is-done .setup-step__t { color: var(--text-muted); }
+        .setup-step__row { display: flex; gap: 8px; min-width: 0; }
+        .setup-step__input {
+            flex: 1;
+            min-width: 0;
+            padding: 7px 10px;
             border-radius: 8px;
-            color: var(--primary);
-            font-size: 0.75rem;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-main);
+            font-size: 16px; /* unter 16 px zoomt iOS beim Fokus in die Seite */
+        }
+        .setup-step__input:focus { outline: none; border-color: rgba(var(--primary-rgb), 0.6); }
+        .setup-step__btn {
+            flex-shrink: 0;
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-main);
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.18s var(--ease-out),
-                        border-color 0.18s var(--ease-out);
-            letter-spacing: 0.01em;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
         }
-        .setup-hint-btn:hover {
-            background: rgba(var(--primary-rgb), 0.2);
-            border-color: rgba(var(--primary-rgb), 0.45);
+        .setup-step__btn:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+        .setup-step__btn--main {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
         }
-        .setup-hint-close {
+        .setup-step__btn--main:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); border-color: transparent; }
+        .setup-step.is-done .setup-step__btn--main {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text-muted);
+        }
+        .setup-step__btn:focus-visible,
+        .setup-card__close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+        .setup-card__close {
             position: absolute;
-            top: 7px;
-            right: 9px;
-            background: none;
+            top: 12px; right: 12px;
+            width: 30px; height: 30px;
+            display: grid; place-items: center;
             border: none;
-            color: var(--text-muted, #64748b);
-            font-size: 1rem;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-muted);
             cursor: pointer;
-            padding: 3px 6px;
-            border-radius: 5px;
-            transition: color 0.15s, background 0.15s;
-            line-height: 1;
-            font-weight: 400;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
-        .setup-hint-close:hover {
-            color: var(--text-main);
-            background: var(--hover-fill);
-        }
+        .setup-card__close svg { width: 15px; height: 15px; }
+        .setup-card__close:hover { background: var(--hover-fill); color: var(--text-main); }
 
         /* ─── ENTRY FORM ─────────────────────────────────────────────── */
         /* Die Karte lief bis hierher auf `padding: 1rem` aus .card, waehrend

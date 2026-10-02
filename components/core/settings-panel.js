@@ -224,6 +224,9 @@
     
     
     function switchSettingsTab(tabName) {
+        // Fuer die Einrichtungs-Karte: erst wer den Reiter gesehen hat, hat
+        // seine Zeiten eingerichtet (saveSettings setzt daraus den Merker).
+        if (tabName === 'work') window._mwlArbeitszeitGesehen = true;
         // Alle Tab-Contents verstecken
         document.querySelectorAll('.settings-tab-content').forEach(el => el.style.display = 'none');
         // Alle Tab-Buttons deaktivieren

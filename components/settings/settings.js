@@ -141,10 +141,12 @@
         saveSettings();
         // Starte den Live-Earnings-Ticker wieder wenn die Settings geschlossen werden
         if (typeof updateLiveEarnings === 'function') updateLiveEarnings();
+        if (typeof checkSetupHint === 'function') checkSetupHint();
     }
 
     function saveSettings() {
         data.settings.name = document.getElementById('confName').value;
+        if (window._mwlArbeitszeitGesehen) data.settings.eingerichtet = true;
         const confAvatarInitialsSaveEl = document.getElementById('confAvatarInitials');
         if (confAvatarInitialsSaveEl) data.settings.avatarInitials = confAvatarInitialsSaveEl.value.trim().toUpperCase().substring(0, 2);
         // Job

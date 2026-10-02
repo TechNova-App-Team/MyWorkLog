@@ -247,21 +247,71 @@
         }, 200);
     }
 
+    // Der Name, mit dem die App jemanden anspricht — oder '' fuer "keiner".
+    // 'User' war bis v8.0.10 die Vorgabe in state-config.js und steht so in
+    // Bestandsdaten; ein "Guten Vormittag, User" ist schlechter als gar keiner.
+    function mwlAnzeigeName() {
+        const n = (typeof data !== 'undefined' && data && data.settings && data.settings.name)
+            ? String(data.settings.name).trim() : '';
+        return (n === 'User' || n === 'Benutzer') ? '' : n;
+    }
+
+    // Eingerichtet = die Einstellungen wurden mit offenem Reiter "Arbeitszeiten"
+    // gespeichert (Merker in switchSettingsTab/saveSettings). Ein blosses
+    // Oeffnen und Schliessen der Einstellungen zaehlt nicht: closeSettings()
+    // speichert immer, auch ohne dass jemand die Zeiten angesehen hat.
     function checkSetupHint() {
         const banner = document.getElementById('setupHintBanner');
-        if (!banner) return;
-        if (localStorage.getItem('mwl_setup_hint_dismissed')) return;
-        if (!data || data.entries.length > 0) return;
-        banner.style.display = 'flex';
+        if (!banner || typeof data === 'undefined' || !data) return;
+        const nameOk = !!mwlAnzeigeName();
+        const workOk = !!(data.settings && data.settings.eingerichtet);
+        const zeigen = !localStorage.getItem('mwl_setup_hint_dismissed')
+            && data.entries.length === 0
+            && !(nameOk && workOk);
+        banner.hidden = !zeigen;
+        if (!zeigen) return;
+
+        const sName = document.getElementById('setupStepName');
+        const sWork = document.getElementById('setupStepWork');
+        if (sName) sName.classList.toggle('is-done', nameOk);
+        if (sWork) sWork.classList.toggle('is-done', workOk);
+        const inp = document.getElementById('setupName');
+        if (inp && document.activeElement !== inp) inp.value = mwlAnzeigeName();
+
+        // Welche Standardwerte gerade gelten — aus den Settings gelesen, nie
+        // fest eingetragen, sonst stimmt der Satz nach dem ersten Speichern nicht.
+        const lead = document.getElementById('setupLead');
+        if (lead) lead.hidden = workOk;
+        const std = document.getElementById('setupStd');
+        if (std) {
+            if (workOk) { std.textContent = ''; return; }
+            const hrs = (data.settings.hours || []).reduce((s, h) => s + (parseFloat(h) || 0), 0);
+            const vac = data.settings.vacation || {};
+            const hoursMode = (typeof getVacationMode === 'function') && getVacationMode() === 'hours';
+            const nf = new Intl.NumberFormat(typeof mwlLocale === 'function' ? mwlLocale() : 'de-DE', { maximumFractionDigits: 1 });
+            std.textContent = 'Gerade gilt: ' + nf.format(hrs) + ' h pro Woche, '
+                + nf.format(parseFloat(vac.total) || 0) + (hoursMode ? ' h Urlaub.' : ' Urlaubstage.');
+        }
+    }
+
+    function setupNameSpeichern() {
+        const inp = document.getElementById('setupName');
+        const name = inp ? inp.value.trim() : '';
+        if (!name) { if (inp) inp.focus(); return; }
+        data.settings.name = name;
+        save();
+        try { if (typeof updateSidebarAvatar === 'function') updateSidebarAvatar(); } catch (e) {}
+        try { if (typeof updateGreetingWeather === 'function') updateGreetingWeather(); } catch (e) {}
+        checkSetupHint();
     }
 
     function dismissSetupHint() {
         localStorage.setItem('mwl_setup_hint_dismissed', '1');
         const banner = document.getElementById('setupHintBanner');
-        if (!banner) return;
-        banner.classList.add('dismissing');
-        setTimeout(() => { banner.style.display = 'none'; banner.classList.remove('dismissing'); }, 290);
+        if (banner) banner.hidden = true;
     }
 
+    window.mwlAnzeigeName = mwlAnzeigeName;
     window.checkSetupHint = checkSetupHint;
+    window.setupNameSpeichern = setupNameSpeichern;
     window.dismissSetupHint = dismissSetupHint;

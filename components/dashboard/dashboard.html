@@ -89,6 +89,41 @@
                 </button>
             </section>
 
+            <!-- ═══ EINRICHTUNG (erster Start) ═══
+                 Steht OBEN und ausserhalb von #dashboardContainer: vorher lag der
+                 Hinweis im Eintrags-Formular fast am Seitenende und las sich wie ein
+                 Tipp, obwohl die App ohne Arbeitszeiten falsch rechnet. Ausserhalb
+                 des Widget-Rasters, weil der Editor das Raster speichert und sortiert
+                 (wie #gbCard). Sichtbarkeit und Haken: checkSetupHint() in
+                 app-startup.js. Die Schritte SIND eine Reihenfolge, daher <ol>. -->
+            <section id="setupHintBanner" class="setup-card" aria-labelledby="setupTitle" hidden>
+                <div class="setup-card__head">
+                    <h2 class="setup-card__title" id="setupTitle">Richte MyWorkLog in zwei Minuten ein</h2>
+                    <p class="setup-card__lead" id="setupLead">Bis dahin rechnet die App mit Standardwerten, Saldo und Urlaub stimmen dann noch nicht.</p>
+                    <p class="setup-card__std" id="setupStd"></p>
+                </div>
+                <ol class="setup-steps">
+                    <li class="setup-step" id="setupStepName">
+                        <span class="setup-step__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                        <div class="setup-step__body">
+                            <label class="setup-step__t" for="setupName">Wie heißt du?</label>
+                            <form class="setup-step__row" onsubmit="event.preventDefault(); setupNameSpeichern();">
+                                <input class="setup-step__input" id="setupName" type="text" maxlength="40" autocomplete="given-name" placeholder="Vorname">
+                                <button type="submit" class="setup-step__btn">Speichern</button>
+                            </form>
+                        </div>
+                    </li>
+                    <li class="setup-step" id="setupStepWork">
+                        <span class="setup-step__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                        <div class="setup-step__body">
+                            <span class="setup-step__t">Arbeitszeiten und Schultage</span>
+                            <span class="setup-step__s">Soll je Wochentag, Pause, Berufsschule und Urlaubsanspruch.</span>
+                        </div>
+                        <button type="button" class="setup-step__btn setup-step__btn--main" onclick="openSettings(); switchSettingsTab('work');">Einrichten</button>
+                    </li>
+                </ol>
+                <button type="button" class="setup-card__close" onclick="dismissSetupHint()" aria-label="Später einrichten" title="Später einrichten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+            </section>
             <div id="dashboardContainer" class="dashboard-grid">
 
                 <!-- ═══ KPI OVERVIEW ═══
@@ -172,11 +207,18 @@
                                 </div>
                             </div>
                             <div class="kpi-v2__foot">
-                                <span>In 6 Wochen <span class="kpi-v2__foot-num" id="valProjected">—</span></span>
-                                <span class="kpi-v2__streak" title="Aktuelle Serie erfasster Tage / persönliche Bestmarke">
+                                <!-- Label und Zahl als eigene Knoten: der Text des Labels
+                                     wechselt (unter 20 Tagen gibt es keine Prognose), und
+                                     ein Text neben einem Element faellt aus der i18n. -->
+                                <span><span id="valProjectedLabel">In 6 Wochen</span> <span class="kpi-v2__foot-num" id="valProjected">—</span></span>
+                                <!-- "0 / 0" ohne Worte war die Rueckmeldung: Serie und
+                                     Rekord stehen jetzt dabei, ganz ohne Serie bleibt
+                                     der Block weg (updateStreakCounter). -->
+                                <span class="kpi-v2__streak" id="streakBox" title="Tage in Folge mit Eintrag / persönlicher Rekord" hidden>
                                     <span id="streakEmoji" class="kpi-v2__streak-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
                                     <span class="kpi-v2__foot-num" id="streakCount">0</span>
-                                    <span class="kpi-v2__streak-best">/ <span id="streakBest">0</span></span>
+                                    <span class="kpi-v2__streak-lbl">in Folge</span>
+                                    <span class="kpi-v2__streak-best"><span>Rekord</span> <span id="streakBest">0</span></span>
                                 </span>
                             </div>
                         </div>
@@ -227,20 +269,16 @@
                             </span>
                             <span class="cmd-label">NFC</span>
                         </button>
-                        <button onclick="window.location.href='/berichtsheft/'">
-                            <span class="cmd-icon">
-                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                            </span>
-                            <span class="cmd-label">Berichtsheft</span>
-                        </button>
                         <div class="cmd-sep"></div>
                         <!-- Sprachwechsel als ECHTER Link, nicht als Knopf mit location.href:
                              mittelklickbar, im Markup als Verweis auf /en/ sichtbar.
-                             Bewusst VOR "Settings": die Leiste scrollt auf jedem Handy
+                             Bewusst VOR "Einstellungen": die Leiste scrollt auf jedem Handy
                              (gemessen 476 px Inhalt gegen 360-430 px Platz), der letzte
                              Knopf liegt dort also ausserhalb des Bildes. Settings ist
                              zusaetzlich ueber Seitenleiste, Profil-Menue und Ctrl+, zu
                              erreichen - der Sprachwechsel hat weniger Wege.
+                             "Berichtsheft" stand hier bis v8.0.10 doppelt zur Seitenleiste
+                             und ist deshalb raus (Rueckmeldung "doppelte Eintraege").
                              cmdRender() in tools/i18n/i18n-build.js dreht Ziel und
                              Beschriftung fuer die /en/-Fassung um. -->
                         <a id="cmdLangSwitch" href="/en/" hreflang="en" translate="no">
@@ -253,7 +291,7 @@
                             <span class="cmd-icon">
                                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                             </span>
-                            <span class="cmd-label">Settings</span>
+                            <span class="cmd-label">Einstellungen</span>
                         </button>
                     </div>
                 </div>
@@ -388,19 +426,6 @@
                 <div class="dashboard-item" data-item-id="entry-form">
                     <div class="card input-wrapper">
                         <div class="entry-form">
-
-                            <!-- Setup hint for new users (hidden by default, shown via JS) -->
-                            <div id="setupHintBanner" class="setup-hint-banner" style="display:none;">
-                                <div class="setup-hint-icon" aria-hidden="true">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                                </div>
-                                <div class="setup-hint-content">
-                                    <div class="setup-hint-title">Einrichtung empfohlen</div>
-                                    <div class="setup-hint-text">Damit die App deine Stunden korrekt berechnet, richte bitte deine <strong>Arbeitszeiten</strong> und <strong>Schultage</strong> in den Einstellungen ein.</div>
-                                    <button class="setup-hint-btn" onclick="openSettings(); switchSettingsTab('work');">Jetzt einrichten →</button>
-                                </div>
-                                <button class="setup-hint-close" onclick="dismissSetupHint()" title="Schließen" aria-label="Schließen"><svg class="mwl-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-                            </div>
 
                             <!-- Umfrage-Banner (Sichtbarkeit: umfApplyBanner() in umfrage.js) -->
                             <div id="umfrageBanner" class="umf-banner" style="display:none;">

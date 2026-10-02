@@ -129,6 +129,18 @@
   }catch(e){}
   // 3. Nav section collapsed pre-apply
   try{
+    // Neue Nutzer (keine Eintraege, nie eine Gruppe angefasst) starten mit
+    // eingeklapptem "Hilfe & Rechtliches" (Graphify, Repo-Analyse, Impressum …):
+    // 1638 px Seitenleiste auf 980 px Platz (gemessen bei 1270 px Fensterhoehe).
+    // "Tools" bleibt bewusst offen — dort stehen Einstellungen, Tour und Backup,
+    // genau das, was man am Anfang braucht. Einmal geschrieben, gilt danach nur
+    // noch, was der Nutzer selbst klickt.
+    if(localStorage.getItem('sidebar_sections')===null){
+      var td=null;try{td=JSON.parse(localStorage.getItem('tg_pro_data')||'null');}catch(e){}
+      if(!(td&&Array.isArray(td.entries)&&td.entries.length)){
+        localStorage.setItem('sidebar_sections',JSON.stringify({legal:false}));
+      }
+    }
     var ss=JSON.parse(localStorage.getItem('sidebar_sections')||'{}');
     var cg=Object.keys(ss).filter(function(k){return ss[k]===false;});
     if(cg.length){

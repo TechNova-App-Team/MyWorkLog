@@ -1578,6 +1578,9 @@
         else if (greetHour < 21) { greetText = 'Guten Abend'; }
         else { greetText = 'Gute Nacht'; }
 
+        // Ohne eingetragenen Namen kein "…, User" (mwlAnzeigeName, app-startup.js)
+        const greetName = (typeof mwlAnzeigeName === 'function') ? mwlAnzeigeName() : (data.settings.name || '');
+
         let weatherIcon = '🌡️';
         let weatherTemp = '';
         
@@ -1602,7 +1605,7 @@
                     <span class="weather-icon">${mwlIconFromEmoji(weatherIcon, 26)}</span>
                     ${weatherTemp ? `<span class="weather-temp">${weatherTemp}</span>` : ''}
                 </span>
-                ${greetText}, ${esc(data.settings.name)}
+                ${greetText}${greetName ? ', ' + esc(greetName) : ''}
             </span>
         `;
     }

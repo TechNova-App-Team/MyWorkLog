@@ -316,7 +316,7 @@ var FEATURE_LABELS = {
     'weekview':      ['Wochenansicht', 'Week view'],
     'aibot':         ['AI-Bot', 'AI bot'],
     'support':       ['Support', 'Support'],
-    'analytics-pro': ['Analytics Pro', 'Analytics Pro'],
+    'analytics-pro': ['Analysen', 'Analytics'],
     'aufgaben':      ['Aufgaben', 'Tasks'],
     'aufgaben-tab':  ['Aufgaben', 'Tasks'],
     'urlaubsplaner': ['Urlaubsplaner', 'Vacation planner']

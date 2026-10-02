@@ -193,6 +193,8 @@
         const elCount = document.getElementById('streakCount');
         const elBest = document.getElementById('streakBest');
         const elEmoji = document.getElementById('streakEmoji');
+        const box = document.getElementById('streakBox');
+        if (box) box.hidden = !(streak.current > 0 || streak.best > 0);
 
         if (elCount) {
             try { elCount.innerText = streak.current; } catch (e) { console.warn('updateStreakCounter: failed to set streakCount', e); }

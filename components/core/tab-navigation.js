@@ -120,7 +120,7 @@
             'weekview': 'Wochenansicht',
             'urlaubsplaner': 'Urlaubsplaner',
             'aibot': 'AI-Bot Assistent',
-            'analytics-pro': 'Analytics Pro',
+            'analytics-pro': 'Analysen',
             'aufgaben': 'Aufgaben',
             'aufgaben-tab': 'Aufgaben',
         };

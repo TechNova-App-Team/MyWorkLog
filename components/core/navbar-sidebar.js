@@ -220,7 +220,7 @@
             {id:'school', label:'Berufsschule', icon:getIconSvgById('school'), visible:true},
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
-            {id:'analytics-pro', label:'Analytics Pro', icon:getIconSvgById('analytics-pro'), visible:true},
+            {id:'analytics-pro', label:'Analysen', icon:getIconSvgById('analytics-pro'), visible:true},
             {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'/aufgaben/'},
         ];
 
@@ -282,7 +282,13 @@
             el.draggable = true;
             el.dataset.navId = item.id;
             const sidebarIconHtml = item.icon && item.icon.trim().startsWith('<svg') ? item.icon : getIconSvgById(item.id) || item.icon;
-            el.innerHTML = `<span class="nav-icon">${sidebarIconHtml}</span> <span class="nav-label">${item.label}</span>`;
+            // Beschriftung immer aus der Vorgabeliste: data.settings.nav speichert
+            // das Label mit, ein Umbenennen ("Analytics Pro" -> "Analysen") kaeme sonst
+            // nur bei neuen Nutzern an — und ein NAV_VERSION-Bump dafuer wuerde jedem
+            // die selbst sortierte Reihenfolge zerlegen.
+            const navDefault = defaultNavItems.find(d => d.id === item.id);
+            const navLabel = navDefault ? navDefault.label : item.label;
+            el.innerHTML = `<span class="nav-icon">${sidebarIconHtml}</span> <span class="nav-label">${navLabel}</span>`;
             if (!item.visible) el.style.opacity = '0.4';
 
             el.addEventListener('click', () => {
@@ -482,7 +488,7 @@
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
         { id: 'ihk',          label: 'IHK',               icon: getIconSvgById('ihk'), group: 'Navigation', action: () => switchTab('ihk') },
         { id: 'goals',        label: 'Ziele',             icon: getIconSvgById('goals'), group: 'Navigation', action: () => switchTab('goals') },
-        { id: 'analytics-pro', label: 'Analytics Pro',     icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
+        { id: 'analytics-pro', label: 'Analysen',          icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
         { id: 'alerts',       label: 'Alerts',            icon: getIconSvgById('alerts'), group: 'Tools',      action: () => toggleAlertsPanel() },

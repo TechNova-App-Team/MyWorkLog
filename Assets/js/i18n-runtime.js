@@ -88,6 +88,8 @@
     'Normale Arbeitszeit': 'Regular working time',
     'Berufsschule / Noten': 'Vocational school / grades',
     'Urlaubstage': 'Vacation days',
+    // dashboard-ui.js schreibt das Prognose-Label zurueck, sobald genug Tage da sind
+    'In 6 Wochen': 'In 6 weeks',
     'Gleittag (Überstundenabbau)': 'Flex day (overtime reduction)',
     'Krankheitstage': 'Sick days',
     'Offizielle Feiertage': 'Official public holidays',
@@ -182,6 +184,7 @@
     // in den NUTZERDATEN und nicht im HTML — die statische Pipeline kann sie
     // gar nicht sehen. Deshalb hier.
     'Verlauf': 'History',
+    'Analysen': 'Analytics',
     'Fahrtkosten': 'Commuting costs',
     'Jahresansicht': 'Year view',
     'Monatsansicht': 'Month view',
@@ -432,6 +435,13 @@
   // ("vor 2d", "Ø Saldo: +1.5h"), braucht ein Muster. Reihenfolge zählt:
   // spezifische Regeln vor allgemeinen, sonst frisst die allgemeine zuerst.
   var RULES = [
+    // ── Dashboard-Kacheln (dashboard-ui.js): Urlaub und Prognose ──
+    [/^([\d.,]+) genommen$/g, '$1 taken'],
+    [/^([\d.,]+) h genommen$/g, '$1 h taken'],
+    [/^Prognose ab (\d+) Tagen:$/g, 'Forecast from $1 days:'],
+    // Einrichtungs-Karte (app-startup.js, checkSetupHint)
+    [/^Gerade gilt: ([\d.,]+) h pro Woche, ([\d.,]+) Urlaubstage\.$/g, 'Currently: $1 h per week, $2 vacation days.'],
+    [/^Gerade gilt: ([\d.,]+) h pro Woche, ([\d.,]+) h Urlaub\.$/g, 'Currently: $1 h per week, $2 h vacation.'],
     // ── Geburtstag: Restzeit der Kerze und Server-Status tragen Zahlen ──
     [/^Die Kerze brennt herunter, noch (\d+) h (\d+) min\.$/g, 'The candle burns down, $1 h $2 min left.'],
     [/^Server antwortete mit (\d+)$/g, 'Server answered with $1'],

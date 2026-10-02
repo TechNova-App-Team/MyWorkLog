@@ -6,6 +6,8 @@
 
         // Weather-based greeting (calls updateGreetingWeather)
         updateGreetingWeather();
+        // Einrichtungs-Karte: verschwindet mit dem ersten Eintrag, nicht erst beim Neuladen
+        if (typeof checkSetupHint === 'function') checkSetupHint();
 
         const trashBadge = document.getElementById('trashCountBadge');
         if (trashBadge) trashBadge.textContent = (Array.isArray(data.trash) ? data.trash.length : 0);
@@ -102,10 +104,15 @@
         );
         const totalWorkDays = allWorkEntries.length;
         const projEl = document.getElementById('valProjected');
+        const projLabelEl = document.getElementById('valProjectedLabel');
+        const MIN_PROG_TAGE = 20;
 
-        // Mindestens 20 Arbeitstage (~1 Monat) für eine sinnvolle Prognose
-        if (totalWorkDays < 20) {
-            projEl.innerText = '—';
+        // Mindestens 20 Arbeitstage (~1 Monat) für eine sinnvolle Prognose.
+        // Bis dahin sagt das Label, worauf die Zahl wartet — ein nacktes "—"
+        // hinter "In 6 Wochen" wurde nicht verstanden.
+        if (totalWorkDays < MIN_PROG_TAGE) {
+            if (projLabelEl) projLabelEl.textContent = 'Prognose ab ' + MIN_PROG_TAGE + ' Tagen:';
+            projEl.innerText = totalWorkDays + ' / ' + MIN_PROG_TAGE;
             // classList statt className: ein Vollzuweisen wuerde die
             // Layout-Klasse der Fusszeile (kpi-v2__foot-num) mit
             // wegloeschen, und die Zahl faellt aus der Zahlenskala.
@@ -133,6 +140,7 @@
                     d.setDate(d.getDate() + 1);
                 }
             }
+            if (projLabelEl) projLabelEl.textContent = 'In 6 Wochen';
             const projected = total + (avgDiffPerWorkDay * 30);
             const projRounded = (typeof roundHours === 'function') ? roundHours(projected, 1) : projected;
             projEl.innerText = (projRounded>=0?'+':'−') + nf1.format(Math.abs(projRounded)) + ' h';
@@ -159,12 +167,15 @@
             const refH  = (typeof getVacationRefHours === 'function') ? getVacationRefHours() : 8;
             const eqDays = refH > 0 ? (usedVacation / refH).toFixed(1) : '—';
             const eqTotalDays = refH > 0 ? Math.round(totalVacation / refH) : '—';
-            vacEl.innerText = `${usedH}h / ${totH}h`;
-            vacEl.title = `≈ ${eqDays} / ${eqTotalDays} Tage (Referenz ${Math.round(refH * 100) / 100}h/Tag)`;
+            // "genommen" steht dabei: "0 / 30" neben "30 Tage" las sich, als
+            // waeren 30 schon weg. Die Gesamtzahl nur im title — "0 von 30
+            // genommen" passte bei 1366 px nicht in die Kachel (abgeschnitten).
+            vacEl.innerText = `${usedH} h genommen`;
+            vacEl.title = `${usedH} h von ${totH} h genommen, ≈ ${eqDays} / ${eqTotalDays} Tage (Referenz ${Math.round(refH * 100) / 100}h/Tag)`;
             vacLabelEls.forEach(el => { el.textContent = 'Urlaubsstunden'; });
         } else {
-            vacEl.innerText = `${usedVacation} / ${totalVacation}`;
-            vacEl.title = carriedOver > 0 ? `inkl. ${carriedOver} Übertrag aus Vorjahr` : '';
+            vacEl.innerText = `${usedVacation} genommen`;
+            vacEl.title = `${usedVacation} von ${totalVacation} Tagen genommen` + (carriedOver > 0 ? `, inkl. ${carriedOver} Übertrag aus Vorjahr` : '');
             vacLabelEls.forEach(el => { el.textContent = 'Urlaubstage'; });
         }
         const vacPct = totalVacation > 0 ? (usedVacation / totalVacation) * 100 : 0;
