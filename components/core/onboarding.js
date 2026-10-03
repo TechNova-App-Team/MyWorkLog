@@ -316,10 +316,9 @@ if ('serviceWorker' in navigator) {
         }
     });
 
-    // BEWUSST KEIN controllerchange→notifyUpdate-Listener mehr:
-    // Der hat in Kombi mit SW-skipWaiting() einen Banner-Loop verursacht
-    // (jeder install→activate triggerte ihn, auch nach User-Apply). Die kanonische
-    // Update-Detection läuft jetzt nur noch über updatefound+statechange.
+    // BEWUSST KEIN controllerchange→notifyUpdate-Listener: das stille SKIP_WAITING
+    // in notifyUpdate löst selbst ein controllerchange aus — der Listener würde auf
+    // das eigene Update reagieren (bis v3.9.2 war das ein Banner-Loop).
 }
 
 // ===== INSTALL PROMPT HANDLER (Add to Home Screen) =====
@@ -893,11 +892,30 @@ const networkMonitor = (() => {
 })();
 
 // ===== ADVANCED UPDATE MANAGER =====
+// 🔴 Kein „Update verfügbar"-Banner mehr (bis v8.1.0 kam er nach JEDEM Release).
+// Er war fast immer überflüssig: Navigationen laufen im SW Network-First, die Seite
+// bringt also schon beim Öffnen das neue HTML mit neuen ?v=-Adressen mit — und genau
+// dieses Öffnen registriert den neuen Worker (URL trägt die Version) und löste den
+// Banner aus. Der Klick hat dann eine Seite neu geladen, die längst aktuell war.
+// Regel jetzt:
+// - Seite == Version des wartenden Workers → still SKIP_WAITING, KEIN Reload.
+// - Seite älter (Tab lief über einen Deploy hinweg) → NICHT still aktivieren: der
+//   neue Worker räumt im activate den alten Cache weg, nachgeladene Ansichten
+//   (VIEW_SCRIPTS) kämen dann mit neuem Code in eine alte Seite. Stattdessen nur ein
+//   „Neu"-Abzeichen am Menüpunkt „App aktualisieren"; der nächste Start holt sie ohnehin.
 const updateManager = (() => {
-    let newWorker = null;
-    let dismissed = false;
+    // Version des laufenden Codes = ?v= dieser Datei (stamp-assets stempelt sie).
+    const SEITEN_VERSION = (() => {
+        try { return new URL(document.currentScript.src).searchParams.get('v'); } catch (e) { return null; }
+    })();
+
+    function workerVersion(worker) {
+        try { return new URL(worker.scriptURL).searchParams.get('v'); } catch (e) { return null; }
+    }
 
     function init() {
+        // Banner-Zustand bis v8.1.0 — wird nicht mehr geschrieben.
+        try { localStorage.removeItem('mwl_upd_applying'); localStorage.removeItem('mwl_upd_dismissed'); } catch(e) {}
         // Check for already-waiting service worker on page load
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.ready.then(reg => {
@@ -907,62 +925,20 @@ const updateManager = (() => {
     }
 
     function notifyUpdate(worker) {
-        newWorker = worker;
-        dismissed = false;
-        // Skip banner if we just applied an update (prevent spam after reload)
-        if (localStorage.getItem('mwl_upd_applying')) {
-            localStorage.removeItem('mwl_upd_applying');
+        if (!worker) return;
+        const neu = workerVersion(worker);
+        if (SEITEN_VERSION && neu && neu === SEITEN_VERSION) {
+            try { worker.postMessage({ type: 'SKIP_WAITING' }); } catch (e) {}
             return;
         }
-        const last = localStorage.getItem('mwl_upd_dismissed');
-        if (last && (Date.now() - parseInt(last)) < 600000) return; // 10 min instead of 5
-        const b = document.getElementById('updateBanner');
-        if (b) b.classList.add('visible');
-    }
-
-    function dismiss() {
-        const b = document.getElementById('updateBanner');
-        if (b) b.classList.remove('visible');
-        dismissed = true;
-        localStorage.setItem('mwl_upd_dismissed', Date.now().toString());
-    }
-
-    function apply() {
-        try { localStorage.setItem('mwl_upd_applying', 'true'); } catch(e) {}
-        // SW wartet jetzt im install-Event (kein auto-skipWaiting mehr) → SKIP_WAITING
-        // postMessage triggert wirklich erst hier die Activation. Wir warten auf
-        // controllerchange (= neuer SW hat übernommen) BEVOR wir reloaden, sonst
-        // läuft der Reload unter dem alten Controller mit halb-gelöschtem Cache → CSS-Glitch.
-        // Fallback-Timeout für den Fall, dass controllerchange nie kommt (z.B. erster SW).
-        let reloaded = false;
-        const doReload = () => { if (reloaded) return; reloaded = true; location.reload(); };
-        navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true });
-        if (newWorker && typeof newWorker.postMessage === 'function') {
-            try { newWorker.postMessage({ type: 'SKIP_WAITING' }); } catch(e) {}
-        } else if (navigator.serviceWorker.controller) {
-            // Kein bekannter waiting-Worker (z.B. Banner kam via init() für altes reg.waiting,
-            // das schon weg ist) → schick's an den Controller als Fallback.
-            try { navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' }); } catch(e) {}
-        }
-        // Safety-Net: nach 1.5s reloaden falls controllerchange ausbleibt.
-        setTimeout(doReload, 1500);
-    }
-
-    function test() {
-        dismissed = false;
-        localStorage.removeItem('mwl_upd_dismissed');
-        const b = document.getElementById('updateBanner');
-        if (b) { b.classList.add('visible'); console.log('✅ Update-Banner Test angezeigt'); }
+        const badge = document.getElementById('ppUpdateBadge');
+        if (badge) badge.hidden = false;
     }
 
     // Manuelles Hard-Update: vom User aus dem Profil-Menü ausgelöst (Ersatz für Strg+R).
     // Zwingt den SW nach einer neuen Version zu suchen, aktiviert sie (SKIP_WAITING)
     // und lädt frisch neu. Findet sich keine neue Version → trotzdem sauberer Reload.
     function forceUpdate() {
-        try { localStorage.setItem('mwl_upd_applying', 'true'); } catch(e) {}
-        // Banner wegräumen falls sichtbar
-        try { dismiss(); } catch(e) {}
-
         // Self-contained Spin-Keyframe (unabhängig von dashboard.css) — einmal injizieren.
         if (!document.getElementById('mwl-upd-spin-style')) {
             const st = document.createElement('style');
@@ -1005,7 +981,7 @@ const updateManager = (() => {
         setTimeout(doReload, 2000);
     }
 
-    return { init, notifyUpdate, dismiss, apply, test, forceUpdate };
+    return { init, notifyUpdate, forceUpdate };
 })();
 
 // Initialize monitors with retry logic

@@ -214,16 +214,14 @@ window.addEventListener('load', () => {
     if (APP_CONFIG.status === 'loading...') loadAppVersion();
 });
 
-// Handle version changes: nur lastSeenVersion tracken — KEIN Auto-SKIP_WAITING mehr.
-// Begründung: Der Banner-Flow in onboarding.js (updateManager) ist die einzige Source-of-Truth
-// für SW-Updates. Wenn hier parallel SKIP_WAITING + reload getriggert wird, gibt's einen
-// Race mit dem Banner (Doppelt-Reload, halb-gecachte Assets, CSS-Glitch). Der SW selbst
-// triggert updatefound → Banner zeigt sich → User klickt Apply → sauberer Reload.
+// Nur lastSeenVersion tracken — KEIN SKIP_WAITING/Reload von hier aus.
+// updateManager in onboarding.js entscheidet allein über SW-Wechsel; ein zweiter
+// Auslöser hier gäbe Doppel-Reloads und halb gecachte Assets.
 function handleVersionChange(newVersion) {
     try {
         const last = localStorage.getItem('lastSeenVersion');
         if (!last || last !== newVersion) {
-            if (last) console.log(`[update] version changed: ${last} → ${newVersion} (Banner uebernimmt)`);
+            if (last) console.log(`[update] version changed: ${last} → ${newVersion} (updateManager uebernimmt)`);
             localStorage.setItem('lastSeenVersion', newVersion);
         }
     } catch (err) {

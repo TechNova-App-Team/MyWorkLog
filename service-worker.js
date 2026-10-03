@@ -175,12 +175,11 @@ function frischeNach(cache, schluessel, request) {
 
 self.addEventListener('install', event => {
   log('Install', SW_VERSION);
-  // KEIN skipWaiting() hier — würde sonst jeden neuen SW automatisch aktivieren,
-  // controllerchange feuert, der Update-Banner erkennt das fälschlich als "neues Update"
-  // und zeigt sich nach jedem Apply wieder an (Endlosloop). Ein Version-Mismatch droht
-  // dadurch nicht: der alte SW bedient weiter seinen alten CACHE_NAME, und die
-  // Asset-Adressen darin tragen die alten ?v=-Nummern — alt zu alt, neu zu neu.
-  // skipWaiting wird vom Banner-Apply-Flow via postMessage SKIP_WAITING getriggert.
+  // KEIN skipWaiting() hier: ob der neue Worker sofort übernehmen darf, weiß nur die
+  // Seite — er darf es nur, wenn ihr Code schon dieselbe Version ist (updateManager in
+  // onboarding.js schickt dann SKIP_WAITING). Eine ältere, noch offene Seite würde
+  // sonst ihren Cache verlieren und nachgeladene Ansichten mit neuem Code bekommen.
+  // Ohne Auslöser aktiviert der Browser ihn, sobald alle Tabs der App zu sind.
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.add(OFFLINE_URL).catch(() => {}))
