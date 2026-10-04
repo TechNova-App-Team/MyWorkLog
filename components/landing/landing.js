@@ -1,13 +1,12 @@
 // ═══ LANDING / INTRO MODULE ═══
-// Rundgang fuer Erstbesucher (seit v8.1.3): eine Kamerafahrt von Tag in Nacht.
-// Gebaut nach der Machart von noomoagency.com (Pastell-Himmel, Riesentypo HINTER
-// den Objekten, 3D-Objekte auf Wuerfelsockeln, Scroll faehrt die Kamera einen
-// Turm hinab) und jesperlandberg.com (schwarzer Raum, Gitterboden, gebogenes
-// Karussell aus Bildern, das sich mit der Scroll-Geschwindigkeit biegt).
-// Die Objekte zeigen ECHTE Aufnahmen der App: ein Handy mit Film vom
-// Dashboard, ein Laptop mit Film vom PDF-Dialog, ein Stapel echter Blaetter,
-// im Karussell Screenshots (alles aus tools/intro-aufnahmen.mjs bzw. den
-// Aufnahme-Skripten der Unterseiten). Notizen + Fallen: .claude/notes/intro-video.md.
+// Rundgang fuer Erstbesucher (seit v8.1.3): eine Kamerafahrt einen Turm aus
+// sieben Stationen hinab, gebaut nach der Machart von noomoagency.com:
+// Pastell-Himmel, Riesentypo HINTER den Objekten, 3D-Objekte auf
+// Wuerfelsockeln, lose Wuerfeltrauben, die Scrollposition faehrt die Kamera.
+// Die Objekte zeigen ECHTE Aufnahmen der App — ein Handy mit Film vom
+// Dashboard, ein Laptop mit Film vom PDF-Dialog, Blaetter der drei Vorlagen,
+// Tablet und Monitor mit Screenshots (tools/intro-aufnahmen.mjs und die
+// Aufnahme-Skripte der Unterseiten). Notizen + Fallen: .claude/notes/intro-video.md.
 //
 // Three.js liegt als Vendor-Datei unter /Assets/js/vendor/three-0.186.1/ und
 // wird NUR hier per import() geladen — Wiederkehrer laden nichts davon. Ohne
@@ -43,8 +42,8 @@
 
     var $=function(id){return document.getElementById(id);};
     var heroLogo=$('viLogo'), lines=intro.querySelectorAll('.vi-line'), heroFuss=$('viHeroFoot');
-    var end=$('viEnd'), rail=$('viRail'), hint=$('viHint'), night=$('viNight');
-    var bigWrap=$('viBig'), corner=$('viCorner'), cv=$('viGl'), loader=$('viLoad');
+    var end=$('viEnd'), rail=$('viRail'), hint=$('viHint');
+    var bigWrap=$('viBig'), corner=$('viCorner'), cv=$('viGl');
     var chEls=intro.querySelectorAll('.vi-ch');
 
     function clamp(v,a,b){return v<a?a:v>b?b:v;}
@@ -55,24 +54,16 @@
     function mix(a,b,t){return a+(b-a)*t;}
 
     /* ═══ ZEITACHSE ═══
-       Abschnitte mit Gewicht (≈ Bildschirmhoehen Scrollweg): Hero, drei
-       Tag-Stationen (je ein Objekt), Daemmerung (Abstieg in die Nacht), vier
-       Karten im Karussell, Abschluss. Alles Weitere rechnet mit diesen Grenzen. */
+       Abschnitte mit Gewicht (≈ Bildschirmhoehen Scrollweg): Hero, je Kapitel
+       eine Station, Abschluss. Die Scrollhoehe ergibt sich daraus. */
     var N=chEls.length;
     var chapters=[];
     for(var i=0;i<N;i++) chapters.push({el:chEls[i], station:chEls[i].dataset.station, bild:chEls[i].dataset.src||''});
-    var TAG=chapters.filter(function(c){return c.station!=='karte';}).length;   // 3
-    var KARTEN=N-TAG;                                                          // 4
-    var GEW={hero:1.3, tag:1.9, daemmerung:0.8, karte:1.15, ende:1.4};
-    var SUMME=GEW.hero+TAG*GEW.tag+GEW.daemmerung+KARTEN*GEW.karte+GEW.ende;
-    var P=0, B={};
-    function ab(name,g){ B[name]=[P/SUMME,(P+g)/SUMME]; P+=g; }
-    ab('hero',GEW.hero);
-    for(i=0;i<TAG;i++){ ab('tag'+i,GEW.tag); chapters[i].s=B['tag'+i][0]; chapters[i].e=B['tag'+i][1]; }
-    ab('daemmerung',GEW.daemmerung);
-    ab('galerie',KARTEN*GEW.karte);
-    for(i=0;i<KARTEN;i++){ var g0=B.galerie[0], gl0=(B.galerie[1]-g0)/KARTEN; chapters[TAG+i].s=g0+i*gl0; chapters[TAG+i].e=g0+(i+1)*gl0; }
-    ab('ende',GEW.ende);
+    var GEW={hero:1.3, station:1.75, ende:1.5};
+    var SUMME=GEW.hero+N*GEW.station+GEW.ende;
+    var B={hero:[0,GEW.hero/SUMME]};
+    for(i=0;i<N;i++){ chapters[i].s=(GEW.hero+i*GEW.station)/SUMME; chapters[i].e=(GEW.hero+(i+1)*GEW.station)/SUMME; }
+    B.ende=[(SUMME-GEW.ende)/SUMME,1];
     intro.querySelector('.vi-scroll').style.height=Math.round((SUMME+1)*100)+'vh';
 
     /* — Titel: Buchstaben einzeln (Aufsteigen macht die CSS). Das h1 behaelt
@@ -100,23 +91,20 @@
     var cNum=document.createElement('span'); cNum.className='vi-corner-n';
     corner.appendChild(cMarke); corner.appendChild(cNum);
 
-    /* — Riesenworte (nur Tag-Stationen) + Kapitel-Leiste aus den Eyebrows,
-       auf /en/ also schon uebersetzt — */
+    /* — Riesenworte + Kapitel-Leiste aus den Eyebrows (auf /en/ uebersetzt) — */
     chapters.forEach(function(ch,idx){
       var eb=ch.el.querySelector('.vi-eyebrow'); if(!eb) return;
       ch.name=eb.textContent.trim();
       eb.setAttribute('data-n', String(idx+1));
-      if(idx<TAG){
-        var w=document.createElement('span'); w.className='vi-big-w'; w.textContent=ch.name;
-        bigWrap.appendChild(w); ch.big=w;
-      }
+      var w=document.createElement('span'); w.className='vi-big-w'; w.textContent=ch.name;
+      bigWrap.appendChild(w); ch.big=w;
       var b=document.createElement('button');
       b.type='button'; b.className='vi-rail-btn'; b.setAttribute('aria-label',ch.name);
       var t=document.createElement('span'); t.textContent=ch.name;
       var bar=document.createElement('span'); bar.className='vi-rail-bar';
       var fill=document.createElement('span'); fill.className='vi-rail-fill';
       bar.appendChild(fill); b.appendChild(t); b.appendChild(bar);
-      b.addEventListener('click',function(){ springeZu((ch.s+ch.e)/2); });
+      b.addEventListener('click',function(){ springeZu(mix(ch.s,ch.e,0.55)); });
       rail.appendChild(b);
       ch.btn=b; ch.fill=fill;
     });
@@ -127,7 +115,6 @@
       W=intro.clientWidth; H=intro.clientHeight; SCHMAL=W<=900;
       scrollMax=Math.max(1,intro.querySelector('.vi-scroll').offsetHeight-H);
       chapters.forEach(function(ch){ if(ch.big) ch.bigW=ch.big.offsetWidth; });
-      lines.forEach(function(l){ l._w=l.offsetWidth; });
       if(G) G.groesse();
     }
 
@@ -154,7 +141,6 @@
     }
 
     /* ═══ DOM je Bild ═══ */
-    var nachtWert=0;
     function dom(){
       var k=eIO(seg(ps,B.hero[0]+0.004,B.hero[1]));
       // Hero: Titel weicht nach oben, die Zeilen laufen gegeneinander (noomo)
@@ -170,15 +156,6 @@
       heroFuss.style.visibility=k>0.5?'hidden':'';
       heroFuss.style.transform='translate3d(0,'+(-k*H*0.1).toFixed(1)+'px,0)';
 
-      // Nacht: mit der Daemmerung auf, ab dann helle Schrift
-      // Die Nacht muss VOR dem Gitterboden da sein: ein Gitter ueber Pastell
-      // sah aus wie ein Fehler (gemessen in der Mitte der Daemmerung).
-      var nacht=sm(seg(ps,B.daemmerung[0],mix(B.daemmerung[0],B.daemmerung[1],0.55)));
-      night.style.opacity=nacht.toFixed(3);
-      var dunkel=nacht>0.5;
-      if(dunkel!==(nachtWert>0.5)) intro.classList.toggle('vi-dunkel',dunkel);
-      nachtWert=nacht;
-
       var amEnde=ps>=B.ende[0];
       var ci=-1, t=0;
       for(var n=0;n<N;n++){
@@ -188,20 +165,18 @@
       for(n=0;n<N;n++){
         C=chapters[n];
         var tn=seg(ps,C.s,C.e);
-        var on=(n===ci && (n<TAG ? (t>0.22 && t<0.9) : (t>0.15 && t<0.88)));
+        var on=(n===ci && t>0.22 && t<0.9);
         C.el.classList.toggle('on',on);
         C.el.classList.toggle('up',!on && ps>=(C.s+C.e)/2);
         C.fill.style.setProperty('--f', tn.toFixed(3));
         C.btn.classList.toggle('on', n===ci);
         C.btn.classList.toggle('done', ps>=C.e);
-        if(C.big){
-          var op=(n===ci)?Math.min(eOut(seg(tn,0.06,0.3)),1-seg(tn,0.82,0.98)):0;
-          C.big.style.opacity=op.toFixed(3);
-          if(op>0){
-            var x0=W*0.08, x1=W*0.92-C.bigW;
-            if(x1>x0){ var m=(W-C.bigW)/2; x0=m+W*0.08; x1=m-W*0.08; }
-            C.big.style.transform='translate3d('+mix(x0,x1,tn).toFixed(1)+'px,-50%,0) skewX('+clamp(-vel*30,-10,10).toFixed(2)+'deg)';
-          }
+        var op=(n===ci)?Math.min(eOut(seg(tn,0.06,0.3)),1-seg(tn,0.82,0.98)):0;
+        C.big.style.opacity=op.toFixed(3);
+        if(op>0){
+          var x0=W*0.08, x1=W*0.92-C.bigW;
+          if(x1>x0){ var m=(W-C.bigW)/2; x0=m+W*0.08; x1=m-W*0.08; }
+          C.big.style.transform='translate3d('+mix(x0,x1,tn).toFixed(1)+'px,-50%,0) skewX('+clamp(-vel*30,-10,10).toFixed(2)+'deg)';
         }
       }
       var imRundgang=ps>=B.hero[1]-0.004 && !amEnde;
@@ -210,7 +185,6 @@
       if(ci>=0) cNum.textContent=(ci+1<10?'0':'')+(ci+1)+' / '+(N<10?'0':'')+N+'   '+chapters[ci].name;
       hint.classList.toggle('on', lies()<0.006);
       end.classList.toggle('on', ps>=mix(B.ende[0],B.ende[1],0.3));
-      return {ci:ci, t:t};
     }
 
     /* ═══ 3D ═══ */
@@ -224,17 +198,17 @@
       renderer.toneMapping=THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure=1.05;
       renderer.outputColorSpace=THREE.SRGBColorSpace;
+      var ANISO=Math.min(8,renderer.capabilities.getMaxAnisotropy());
 
       var scene=new THREE.Scene();
-      var cam=new THREE.PerspectiveCamera(34,1,0.5,420);
+      var cam=new THREE.PerspectiveCamera(34,1,0.5,300);
 
       // Umgebung fuer die Spiegelungen: ein Raum aus Leuchtflaechen, einmal
       // vorgerechnet (statt RoomEnvironment aus den Addons, das 'three' als
       // nackten Modulnamen importiert und ohne Import-Map nicht laedt).
       (function(){
         var raum=new THREE.Scene();
-        var wand=new THREE.Mesh(new THREE.BoxGeometry(40,24,40), new THREE.MeshBasicMaterial({color:0x6b6880, side:THREE.BackSide}));
-        raum.add(wand);
+        raum.add(new THREE.Mesh(new THREE.BoxGeometry(40,24,40), new THREE.MeshBasicMaterial({color:0x6b6880, side:THREE.BackSide})));
         function licht(w,h,x,y,z,ry,rx,staerke,farbe){
           var m=new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({color:new THREE.Color(farbe).multiplyScalar(staerke), side:THREE.DoubleSide}));
           m.position.set(x,y,z); m.rotation.set(rx||0,ry||0,0); raum.add(m);
@@ -247,20 +221,29 @@
         scene.environment=pm.fromScene(raum,0.035).texture;
         pm.dispose();
       })();
-      var hemi=new THREE.HemisphereLight(0xffffff,0xb9b4dc,0.7); scene.add(hemi);
+      scene.add(new THREE.HemisphereLight(0xffffff,0xb9b4dc,0.7));
       var sonne=new THREE.DirectionalLight(0xffffff,1.6); sonne.position.set(-8,14,12); scene.add(sonne);
 
-      var prim=new THREE.Color(0xa855f7);
+      // Akzent GEDAEMPFT: die Theme-Farbe mit stark reduzierter Saettigung,
+      // aufgehellt — wie Keramik. Der Nutzer fand die volle Theme-Farbe an
+      // Stoppuhr und Stempel zu laut ("nicht grau, aber schlichter").
+      var akzent=new THREE.Color(0xa855f7);
       (function(){
         var rgb=getComputedStyle(document.documentElement).getPropertyValue('--primary-rgb').split(',').map(parseFloat);
-        if(rgb.length===3 && !rgb.some(isNaN)) prim.setRGB(rgb[0]/255,rgb[1]/255,rgb[2]/255,THREE.SRGBColorSpace);
+        if(rgb.length===3 && !rgb.some(isNaN)) akzent.setRGB(rgb[0]/255,rgb[1]/255,rgb[2]/255,THREE.SRGBColorSpace);
+        var hsl={}; akzent.getHSL(hsl); akzent.setHSL(hsl.h, Math.min(hsl.s,1)*0.55, 0.5);   // heller als 0,5 macht das Tone-Mapping es fast weiss (gemessen: Schloss und Uhr grau)
       })();
+      var gruen=new THREE.Color().setHSL(0.43,0.32,0.56);
       var M={
         weiss:new THREE.MeshPhysicalMaterial({color:0xf3f2f8, roughness:0.5, clearcoat:0.35, clearcoatRoughness:0.4}),
-        prim:new THREE.MeshPhysicalMaterial({color:prim, roughness:0.22, clearcoat:1, clearcoatRoughness:0.08, metalness:0.05}),
-        graphit:new THREE.MeshPhysicalMaterial({color:0x22212b, roughness:0.32, metalness:0.55, clearcoat:0.6}),
-        alu:new THREE.MeshPhysicalMaterial({color:0xd9d9e2, roughness:0.28, metalness:0.85}),
-        schwarz:new THREE.MeshStandardMaterial({color:0x0b0b10, roughness:0.4})
+        akzent:new THREE.MeshPhysicalMaterial({color:akzent, roughness:0.32, clearcoat:1, clearcoatRoughness:0.12}),
+        gruen:new THREE.MeshPhysicalMaterial({color:gruen, roughness:0.32, clearcoat:1, clearcoatRoughness:0.12}),
+        rahmen:new THREE.MeshPhysicalMaterial({color:0x4a4a55, roughness:0.28, metalness:0.85, clearcoat:0.5}),
+        alu:new THREE.MeshPhysicalMaterial({color:0xdcdce4, roughness:0.3, metalness:0.85}),
+        glas:new THREE.MeshPhysicalMaterial({color:0x0a0a0e, roughness:0.08, metalness:0.2, clearcoat:1, clearcoatRoughness:0.03}),
+        schwarz:new THREE.MeshStandardMaterial({color:0x0b0b10, roughness:0.4}),
+        holz:new THREE.MeshPhysicalMaterial({color:0xb88a5c, roughness:0.48, clearcoat:0.55, clearcoatRoughness:0.25}),
+        gummi:new THREE.MeshStandardMaterial({color:0x2c2833, roughness:0.85})
       };
 
       // Abgerundeter Quader: jeder Punkt eines unterteilten Wuerfels auf den
@@ -278,37 +261,59 @@
         return g;
       }
       var wuerfelGeo=rundQuader(1,1,1,0.17,3);
-
-      // Wuerfelgruppe als ein InstancedMesh: Liste [x,y,z,groesse]
       function wuerfel(liste,mat){
         var im=new THREE.InstancedMesh(wuerfelGeo,mat||M.weiss,liste.length), o=new THREE.Object3D();
-        liste.forEach(function(q,i){ o.position.set(q[0],q[1],q[2]); o.rotation.set(0,0,0); o.scale.setScalar(q[3]||0.96); o.updateMatrix(); im.setMatrixAt(i,o.matrix); });
+        liste.forEach(function(q,i){ o.position.set(q[0],q[1],q[2]); o.scale.setScalar(q[3]||0.96); o.updateMatrix(); im.setMatrixAt(i,o.matrix); });
         return im;
       }
       // Sockel wie bei noomo: ein Plus aus Wuerfeln, die Mitte eine Stufe hoeher
       function sockel(){
         var l=[];
         for(var x=-3;x<=3;x++) for(var z=-3;z<=3;z++){
-          var rand=Math.abs(x)===3&&Math.abs(z)>1 || Math.abs(z)===3&&Math.abs(x)>1;
-          if(rand) continue;
+          if(Math.abs(x)===3&&Math.abs(z)>1 || Math.abs(z)===3&&Math.abs(x)>1) continue;
           l.push([x,0,z,0.98]);
           if(Math.abs(x)<=1&&Math.abs(z)<=1) l.push([x,1,z,0.98]);
         }
         var g=wuerfel(l); g.scale.setScalar(0.95); return g;
       }
-      // Lose Wuerfeltrauben, die um die Stationen schweben (noomos Pixelwolken)
+      // Lose Wuerfeltrauben (noomos Pixelwolken)
       var trauben=[];
       function traube(x,y,z,seed){
         var r=function(){ seed=(seed*16807)%2147483647; return (seed-1)/2147483646; };
         var l=[[0,0,0]], n=3+Math.floor(r()*5);
-        for(var i=1;i<n;i++){ var b=l[Math.floor(r()*l.length)], a=Math.floor(r()*6), d=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]][a]; l.push([b[0]+d[0],b[1]+d[1],b[2]+d[2]]); }
-        var g=wuerfel(l.map(function(q){return [q[0],q[1],q[2],0.96];}), r()>0.86?M.prim:M.weiss);
+        for(var i=1;i<n;i++){ var b=l[Math.floor(r()*l.length)], d=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]][Math.floor(r()*6)]; l.push([b[0]+d[0],b[1]+d[1],b[2]+d[2]]); }
+        var g=wuerfel(l.map(function(q){return [q[0],q[1],q[2],0.96];}), r()>0.86?M.akzent:M.weiss);
         g.position.set(x,y,z); g.rotation.set(r()*6,r()*6,r()*6); g.scale.setScalar(0.7+r()*0.8);
         g.userData={rx:(r()-0.5)*0.4, ry:(r()-0.5)*0.4, y0:y, ph:r()*6};
         scene.add(g); trauben.push(g);
       }
 
-      // Film als Textur: stumm, Schleife, spielt nur, wenn die Station nah ist
+      // Bildschirm-Material: Bild oder Film, runde Ecken per Abstandsfeld im
+      // Shader (schaerfer als eine Alpha-Maske), Farbraum korrekt zurueck nach sRGB.
+      function schirm(tex,w,h,radius,statusbar){
+        var mat=new THREE.ShaderMaterial({
+          uniforms:{map:{value:tex}, bar:{value:statusbar||null}, uGroesse:{value:new THREE.Vector2(w,h)}, uR:{value:radius},
+            uBarH:{value:statusbar?0.62:0}, uCover:{value:new THREE.Vector2(1,1)}},
+          vertexShader:'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+          fragmentShader:'uniform sampler2D map; uniform sampler2D bar; uniform vec2 uGroesse; uniform float uR; uniform float uBarH; uniform vec2 uCover; varying vec2 vUv;\n'+
+            'float box(vec2 p, vec2 b, float r){ vec2 q=abs(p)-b+r; return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r; }\n'+
+            'void main(){ vec2 px=(vUv-0.5)*uGroesse; float d=box(px,uGroesse*0.5,uR); float aa=fwidth(d);\n'+
+            '  float a=1.0-smoothstep(-aa,aa,d); if(a<=0.0) discard;\n'+
+            '  float yb=1.0-uBarH/uGroesse.y; vec4 c;\n'+
+            '  if(uBarH>0.0 && vUv.y>yb){ c=texture2D(bar, vec2(vUv.x,(vUv.y-yb)/(1.0-yb))); }\n'+
+            '  else { vec2 u=vec2(vUv.x, uBarH>0.0 ? vUv.y/yb : vUv.y); u=(u-0.5)*uCover+0.5; u.y+= (1.0-uCover.y)*0.5; c=texture2D(map,u); }\n'+
+            '  gl_FragColor=vec4(c.rgb,1.0)*a;\n'+
+            '  #include <colorspace_fragment>\n}',
+          transparent:true
+        });
+        return new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
+      }
+      // Glas ueber jedem Bildschirm: spiegelt die Umgebung schwach
+      function glas(w,h,r){
+        var m=new THREE.Mesh(rundQuader(w,h,0.02,r,4), new THREE.MeshPhysicalMaterial({color:0x000000, roughness:0.05, metalness:0.9, transparent:true, opacity:0.16}));
+        return m;
+      }
+
       var filme=[];
       function film(src){
         var v=document.createElement('video');
@@ -316,167 +321,237 @@
         var t=new THREE.VideoTexture(v); t.colorSpace=THREE.SRGBColorSpace;
         filme.push(v); return {video:v, tex:t};
       }
-      var loader=new THREE.TextureLoader();
-      function bild(src,cb){
-        return loader.load(src+(src.indexOf('?')<0?Q:''), function(t){ t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy()); if(cb) cb(t); });
+      var ladeBild=new THREE.TextureLoader();
+      function bild(src){
+        var t=ladeBild.load(src+(src.indexOf('?')<0?Q:'')); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=ANISO; return t;
       }
 
-      /* — Hero: Stoppuhr in der Akzentfarbe, um sie Wuerfeltrauben — */
+      /* ═══ HERO: Stoppuhr in gedaempftem Akzent, um sie Wuerfeltrauben ═══ */
       var Y_HERO=0;
       var uhr=new THREE.Group();
       (function(){
-        var koerper=new THREE.Mesh(new THREE.CylinderGeometry(4,4,1.5,96,1), M.prim); koerper.rotation.x=Math.PI/2; uhr.add(koerper);
-        var ring=new THREE.Mesh(new THREE.TorusGeometry(4,0.5,32,128), M.prim); uhr.add(ring);
+        var koerper=new THREE.Mesh(new THREE.CylinderGeometry(4,4,1.5,96,1), M.akzent); koerper.rotation.x=Math.PI/2; uhr.add(koerper);
+        uhr.add(new THREE.Mesh(new THREE.TorusGeometry(4,0.5,32,128), M.akzent));
         var blatt=new THREE.Mesh(new THREE.CircleGeometry(3.55,96), new THREE.MeshPhysicalMaterial({color:0xfbfaff, roughness:0.35, clearcoat:1})); blatt.position.z=0.77; uhr.add(blatt);
         for(var i=0;i<12;i++){
-          var s=new THREE.Mesh(new THREE.BoxGeometry(i%3?0.12:0.22, i%3?0.42:0.7, 0.06), M.graphit);
+          var s=new THREE.Mesh(new THREE.BoxGeometry(i%3?0.12:0.22, i%3?0.42:0.7, 0.06), M.rahmen);
           var a=i/12*Math.PI*2; s.position.set(Math.sin(a)*3.0,Math.cos(a)*3.0,0.81); s.rotation.z=-a; uhr.add(s);
         }
-        var zeiger=new THREE.Group(); var zg=new THREE.Mesh(new THREE.BoxGeometry(0.16,3.1,0.08), M.prim); zg.position.y=1.2; zeiger.add(zg); zeiger.position.z=0.86; uhr.add(zeiger);
-        var kurz=new THREE.Group(); var kg=new THREE.Mesh(new THREE.BoxGeometry(0.24,1.9,0.08), M.graphit); kg.position.y=0.75; kurz.add(kg); kurz.position.z=0.84; uhr.add(kurz);
-        var nabe=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.2,32), M.graphit); nabe.rotation.x=Math.PI/2; nabe.position.z=0.9; uhr.add(nabe);
-        var krone=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,0.9,32), M.prim); krone.position.y=4.85; uhr.add(krone);
-        var knopf=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.85,0.4,32), M.prim); knopf.position.y=5.4; uhr.add(knopf);
-        var ohr=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.16,16,48), M.prim); ohr.position.set(3.3,3.3,0); ohr.rotation.z=-Math.PI/4; uhr.add(ohr);
+        var zeiger=new THREE.Group(); var zg=new THREE.Mesh(new THREE.BoxGeometry(0.14,3.1,0.08), M.akzent); zg.position.y=1.2; zeiger.add(zg); zeiger.position.z=0.86; uhr.add(zeiger);
+        var kurz=new THREE.Group(); var kg=new THREE.Mesh(new THREE.BoxGeometry(0.24,1.9,0.08), M.rahmen); kg.position.y=0.75; kurz.add(kg); kurz.position.z=0.84; uhr.add(kurz);
+        var nabe=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,0.2,32), M.rahmen); nabe.rotation.x=Math.PI/2; nabe.position.z=0.9; uhr.add(nabe);
+        var krone=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,0.9,32), M.alu); krone.position.y=4.85; uhr.add(krone);
+        var knopf=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.85,0.4,32), M.alu); knopf.position.y=5.4; uhr.add(knopf);
+        var ohr=new THREE.Mesh(new THREE.TorusGeometry(0.5,0.16,16,48), M.alu); ohr.position.set(3.3,3.3,0); ohr.rotation.z=-Math.PI/4; uhr.add(ohr);
         uhr.userData={zeiger:zeiger, kurz:kurz};
       })();
-      uhr.position.set(8.5,Y_HERO+3.4,1); uhr.scale.setScalar(0.74); scene.add(uhr);
+      scene.add(uhr);
       [[-15,7,-6],[-11,-6,-2],[15,8,-8],[17,-5,-4],[-4,10,-10],[3,-8,-6],[-19,1,-12],[11,11,-14],[22,2,-16],[-8,-10,-12]].forEach(function(q,i){ traube(q[0],Y_HERO+q[1],q[2],11+i*97); });
 
-      /* — Tag-Stationen: je ein Objekt auf einem Sockel — */
-      var STATION_ABST=40;
-      var stationen=[];
-      function station(i){ return {y:-(i+1)*STATION_ABST, gruppe:new THREE.Group()}; }
-
-      // 1 Handy: Film vom Dashboard am Handy
-      var stH=station(0), fH=film('/Grafiken/intro/handy.mp4');
-      (function(){
-        var g=stH.gruppe;
-        var gehaeuse=new THREE.Mesh(rundQuader(7.6,15.8,0.9,1.15,6), M.graphit); g.add(gehaeuse);
-        var rahmen=new THREE.Mesh(rundQuader(7.75,15.95,0.6,1.2,6), M.alu); g.add(rahmen);
-        var schirm=new THREE.Mesh(new THREE.PlaneGeometry(7.0,15.15), new THREE.MeshBasicMaterial({map:fH.tex, toneMapped:false}));
-        schirm.position.z=0.46; g.add(schirm);
-        // Bildschirm mit runden Ecken: Maske als Alpha aus einer Leinwand
-        var mc=document.createElement('canvas'); mc.width=140; mc.height=303; var cx=mc.getContext('2d');
-        cx.fillStyle='#000'; cx.fillRect(0,0,140,303); cx.fillStyle='#fff'; cx.beginPath(); if(cx.roundRect) cx.roundRect(0,0,140,303,18); else cx.rect(0,0,140,303); cx.fill();
-        schirm.material.alphaMap=new THREE.CanvasTexture(mc); schirm.material.transparent=true;
-        var insel=new THREE.Mesh(rundQuader(2.2,0.55,0.05,0.27,3), M.schwarz); insel.position.set(0,7.0,0.48); g.add(insel);
-        g.position.y=8.5;
-      })();
-      // 2 Laptop: Film vom PDF-Dialog, der Deckel klappt beim Scrollen auf
-      var stL=station(1), fL=film('/Grafiken/intro/vorlagen.mp4');
-      (function(){
-        var g=stL.gruppe;
-        var unten=new THREE.Mesh(rundQuader(17,0.6,11.2,0.3,4), M.alu); unten.position.set(0,0,0); g.add(unten);
-        var tasten=new THREE.Mesh(new THREE.PlaneGeometry(14.6,5.2), new THREE.MeshStandardMaterial({color:0x2a2a33, roughness:0.7}));
-        tasten.rotation.x=-Math.PI/2; tasten.position.set(0,0.31,-1.4); g.add(tasten);
-        var pad=new THREE.Mesh(new THREE.PlaneGeometry(5.6,3.4), new THREE.MeshStandardMaterial({color:0xbfbfc9, roughness:0.35, metalness:0.5}));
-        pad.rotation.x=-Math.PI/2; pad.position.set(0,0.31,3.3); g.add(pad);
-        var scharnier=new THREE.Group(); scharnier.position.set(0,0.3,-5.5); g.add(scharnier);
-        var deckel=new THREE.Mesh(rundQuader(17,11,0.4,0.3,4), M.alu); deckel.position.set(0,5.5,0); scharnier.add(deckel);
-        var rand=new THREE.Mesh(new THREE.PlaneGeometry(16.4,10.4), M.schwarz); rand.position.set(0,5.5,0.21); scharnier.add(rand);
-        var schirm=new THREE.Mesh(new THREE.PlaneGeometry(15.6,9.75), new THREE.MeshBasicMaterial({map:fL.tex, toneMapped:false}));
-        schirm.position.set(0,5.55,0.22); scharnier.add(schirm);
-        g.userData.scharnier=scharnier; g.position.y=2.2;
-      })();
-      // 3 Papier: drei echte Blaetter (IHK-Vordruck, Klassisch, Klar) faechern auf
-      var stP=station(2);
-      (function(){
-        var g=stP.gruppe, blaetter=[];
-        ['form','klassisch','klar'].forEach(function(n,i){
-          var geo=new THREE.PlaneGeometry(9.4,13.3,1,24);
-          var mat=new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.9, side:THREE.DoubleSide});
-          bild('/Grafiken/intro/blatt-'+n+'.webp',function(t){ mat.map=t; mat.needsUpdate=true; });
-          var m=new THREE.Mesh(geo,mat);
-          // Blatt leicht gewoelbt, wie Papier, das liegt
-          var p=geo.attributes.position; for(var k=0;k<p.count;k++){ var y=p.getY(k); p.setZ(k,Math.pow(y/6.65,2)*0.35); } geo.computeVertexNormals();
-          var halter=new THREE.Group(); halter.add(m); m.position.set(4.7,6.65,0);
-          g.add(halter); blaetter.push(halter);
-        });
-        // ein Stempel in der Akzentfarbe: "abgezeichnet"
-        var stempel=new THREE.Group();
-        var griff=new THREE.Mesh(new THREE.CylinderGeometry(0.9,1.2,2.6,48), M.prim); griff.position.y=1.8; stempel.add(griff);
-        var kugel=new THREE.Mesh(new THREE.SphereGeometry(1.15,48,24), M.prim); kugel.position.y=3.5; stempel.add(kugel);
-        var fuss=new THREE.Mesh(rundQuader(3.4,0.7,2.2,0.25,3), M.graphit); fuss.position.y=0.35; stempel.add(fuss);
-        g.add(stempel);
-        g.userData.blaetter=blaetter; g.userData.stempel=stempel; g.position.y=8.6;
-      })();
-
-      [stH,stL,stP].forEach(function(st,i){
-        var s=sockel(); s.position.set(0,st.y-6.4,0); scene.add(s); st.sockel=s;
-        // Groesse je Objekt: gemessen an 1288x952 — Laptop und Papier fuellten
-        // sonst den halben Bildschirm und liefen unten aus dem Bild.
-        st.gruppe.scale.setScalar([1,0.72,0.8][i]);
-        st.gruppe.position.y+=st.y-6; st.basisY=st.gruppe.position.y;
-        scene.add(st.gruppe); stationen.push(st);
-        [[-15,6],[14,-3],[-12,-8],[17,9]].forEach(function(q,k){ traube(q[0],st.y+q[1],-6-k*3,200+i*40+k*7); });
-      });
-
-      // Beim Abstieg in die Nacht ziehen Wuerfeltrauben dicht an der Kamera
-      // vorbei — ohne sie war die Daemmerung eine leere graue Flaeche.
-      [[-9,-138,22],[11,-146,16],[-14,-156,10],[8,-163,26],[-6,-171,6],[15,-178,12],[-12,-186,18],[6,-193,4],[-17,-198,-6],[13,-202,-10]].forEach(function(q,i){ traube(q[0],q[1],q[2],900+i*31); });
-
-      /* — Nacht: Karussell (Jesper) — gebogene Karten auf einem Ring um die
-         Kamera, Gitterboden, schwarzer Nebel. — */
-      var Y_NACHT=-210, RING=34, KARTE_B=15, KARTE_H=9.4, SCHRITT=0.56;
-      var nacht=new THREE.Group(); nacht.position.y=Y_NACHT; scene.add(nacht);
-      var gitter=new THREE.GridHelper(420,84,0x3a3a46,0x24242e); gitter.position.y=-8.5;
-      gitter.material.transparent=true; gitter.material.opacity=0.9; gitter.material.fog=true;
-      nacht.add(gitter);
-      scene.fog=new THREE.Fog(0x050507,1e5,1e5+1);   // aus, bis die Nacht kommt
-      var kartenRing=new THREE.Group(); nacht.add(kartenRing);
-      var kartenShader={
-        uniforms:{uVel:{value:0}},
-        vertexShader:'uniform float uVel; varying vec2 vUv; varying float vSh;\n'+
-          'void main(){ vUv=uv; vec3 p=position;\n'+
-          // auf den Ring gebogen (Karte liegt auf der Innenseite), dazu die
-          // Durchbiegung mit der Geschwindigkeit wie bei Jesper
-          '  float a=p.x/'+RING.toFixed(1)+'; float arc=sin(uv.x*3.14159);\n'+
-          '  vec3 q=vec3(sin(a)*'+RING.toFixed(1)+', p.y+uVel*arc*2.2, -cos(a)*'+RING.toFixed(1)+');\n'+
-          '  q.z+=abs(uVel)*arc*1.6; vSh=arc*abs(uVel);\n'+
-          '  gl_Position=projectionMatrix*modelViewMatrix*vec4(q,1.0); }',
-        fragmentShader:'uniform sampler2D map; uniform float uOp; varying vec2 vUv; varying float vSh;\n'+
-          'float box(vec2 p, vec2 b, float r){ vec2 q=abs(p)-b+r; return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r; }\n'+
-          'void main(){ vec2 s=vec2('+(KARTE_B*40).toFixed(1)+','+(KARTE_H*40).toFixed(1)+');\n'+
-          '  float d=box((vUv-0.5)*s, s*0.5, 22.0); if(d>0.0) discard;\n'+
-          '  vec3 c=texture2D(map,vUv).rgb; c*=1.0-0.25*vSh;\n'+
-          // feine helle Kante: die App ist dunkel, ohne Rand verschwand die Karte im Schwarz
-          '  c=mix(c,vec3(1.0),0.28*smoothstep(-3.0,-1.0,d));\n'+
-          '  float a=uOp*(1.0-smoothstep(-1.5,0.0,d));\n'+
-          '  gl_FragColor=vec4(c,1.0)*a; }'
+      /* ═══ STATIONEN ═══ Jede liefert {gruppe, dazu(t,T)}. t = Lage in der
+         Station (0…1), dazu() treibt Drehung und Mechanik. Die Gruppe sitzt
+         mit ihrem Ursprung in der Bildmitte der Station. */
+      var BAU={
+        // Handy: duenner schwarzer Rand, Statusleiste mit Insel, Seitentasten,
+        // Glas. Erste Fassung (dicker Silberrahmen, Insel mitten im App-Kopf)
+        // fand der Nutzer "naja".
+        handy:function(ch){
+          var g=new THREE.Group(), f=film('/Grafiken/intro/handy.mp4');
+          var W2=7.6, H2=15.8, R2=1.25;
+          g.add(new THREE.Mesh(rundQuader(W2,H2,0.78,R2,6), M.rahmen));
+          var front=new THREE.Mesh(rundQuader(W2-0.12,H2-0.12,0.8,R2-0.06,6), M.glas); g.add(front);
+          // Statusleiste: Uhrzeit links, Empfang + Akku rechts, App-Hintergrund
+          var sc=document.createElement('canvas'); sc.width=700; sc.height=62; var x=sc.getContext('2d');
+          x.fillStyle='#0b0a10'; x.fillRect(0,0,700,62); x.fillStyle='#fff'; x.font='600 30px Geist, system-ui, sans-serif'; x.fillText('9:41',70,43);
+          for(var b=0;b<4;b++) x.fillRect(538+b*11,40-b*6,7,8+b*6);
+          x.strokeStyle='#fff'; x.lineWidth=2.5; x.strokeRect(592,24,42,20); x.fillRect(596,28,30,12); x.fillRect(636,30,3,8);
+          var barTex=new THREE.CanvasTexture(sc); barTex.colorSpace=THREE.SRGBColorSpace;
+          var SW=W2-0.62, SH=H2-0.62;
+          var s=schirm(f.tex,SW,SH,R2-0.31,barTex); s.position.z=0.405; g.add(s);
+          // Film (390x844) fuellt die Flaeche unter der Leiste: oben/unten minimal beschnitten
+          var flH=SH-0.62, soll=(844/390), ist=flH/SW;
+          s.material.uniforms.uCover.value.set(1, Math.min(1,ist/soll));
+          var insel=new THREE.Mesh(rundQuader(2.0,0.52,0.04,0.26,3), M.schwarz); insel.position.set(0,SH/2-0.36,0.43); g.add(insel);
+          var gl1=glas(SW,SH,R2-0.31); gl1.position.z=0.43; g.add(gl1);
+          [[-1,2.6,0.9],[-1,1.2,1.6],[-1,-0.6,1.6],[1,1.6,2.6]].forEach(function(q){
+            var t=new THREE.Mesh(rundQuader(0.14,q[2],0.32,0.07,2), M.rahmen); t.position.set(q[0]*(W2/2+0.03),q[1]+3,0); g.add(t);
+          });
+          g.scale.setScalar(0.9); g.position.y=3.2;
+          return {gruppe:g, film:f.video, dazu:function(t,T){ g.rotation.set(0.05, mix(-0.55,0.55,t)+mx*0.15, mix(-0.1,0.05,t)); }};
+        },
+        // Laptop: Film vom PDF-Dialog, der Deckel klappt beim Scrollen auf
+        laptop:function(){
+          var g=new THREE.Group(), f=film('/Grafiken/intro/vorlagen.mp4');
+          g.add(new THREE.Mesh(rundQuader(17,0.6,11.2,0.3,4), M.alu));
+          var tasten=new THREE.Mesh(rundQuader(14.6,0.05,5.2,0.2,2), new THREE.MeshStandardMaterial({color:0x26262e, roughness:0.75}));
+          tasten.position.set(0,0.31,-1.4); g.add(tasten);
+          var pad=new THREE.Mesh(rundQuader(5.6,0.03,3.4,0.25,2), new THREE.MeshPhysicalMaterial({color:0xc9c9d2, roughness:0.3, metalness:0.6}));
+          pad.position.set(0,0.31,3.3); g.add(pad);
+          var scharnier=new THREE.Group(); scharnier.position.set(0,0.3,-5.5); g.add(scharnier);
+          var deckel=new THREE.Mesh(rundQuader(17,11,0.4,0.3,4), M.alu); deckel.position.set(0,5.5,0); scharnier.add(deckel);
+          var rand=new THREE.Mesh(rundQuader(16.6,10.6,0.02,0.22,3), M.glas); rand.position.set(0,5.5,0.21); scharnier.add(rand);
+          var s=schirm(f.tex,15.6,9.75,0.12); s.position.set(0,5.55,0.23); scharnier.add(s);
+          g.scale.setScalar(0.66); g.position.y=-2.6;
+          return {gruppe:g, film:f.video, dazu:function(t){
+            g.rotation.set(0.32+my*0.05, mix(-0.45,0.45,t)+mx*0.1, 0);
+            // zu = Deckel flach auf der Tastatur (+90 Grad), offen leicht nach hinten
+            scharnier.rotation.x=mix(Math.PI*0.5,-0.18,eOut(seg(t,0.06,0.4)));
+          }};
+        },
+        // Papier: drei echte Blaetter (IHK-Vordruck, Klassisch, Klar) faechern
+        // auf, ein Holzstempel landet und hinterlaesst einen Abdruck.
+        papier:function(){
+          var g=new THREE.Group(), blaetter=[];
+          ['form','klassisch','klar'].forEach(function(n){
+            var geo=new THREE.PlaneGeometry(9.4,13.3,1,24);
+            var p=geo.attributes.position; for(var k=0;k<p.count;k++){ var y=p.getY(k); p.setZ(k,Math.pow(y/6.65,2)*0.35); } geo.computeVertexNormals();
+            var m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.9, side:THREE.DoubleSide, map:bild('/Grafiken/intro/blatt-'+n+'.webp')}));
+            var halter=new THREE.Group(); halter.add(m); m.position.set(4.7,6.65,0);
+            g.add(halter); blaetter.push(halter);
+          });
+          // Abdruck: Ring mit Haken in gedaempftem Akzent, liegt auf dem obersten Blatt
+          var ac=document.createElement('canvas'); ac.width=256; ac.height=256; var x=ac.getContext('2d');
+          x.strokeStyle='#'+akzent.clone().multiplyScalar(0.72).getHexString(); x.lineWidth=14; x.lineCap='round'; x.lineJoin='round';
+          x.globalAlpha=0.85; x.beginPath(); x.arc(128,128,104,0,Math.PI*2); x.stroke(); x.lineWidth=5; x.beginPath(); x.arc(128,128,84,0,Math.PI*2); x.stroke();
+          x.lineWidth=18; x.beginPath(); x.moveTo(84,132); x.lineTo(116,164); x.lineTo(176,94); x.stroke();
+          var aTex=new THREE.CanvasTexture(ac); aTex.colorSpace=THREE.SRGBColorSpace;
+          var abdruck=new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2), new THREE.MeshBasicMaterial({map:aTex, transparent:true, opacity:0, depthWrite:false, toneMapped:false}));
+          abdruck.position.set(2.3,-3.6,0.14); blaetter[2].children[0].add(abdruck);
+          // Stempel: gedrechselter Holzgriff, Metallring, Platte, Gummi
+          var stempel=new THREE.Group();
+          var profil=[[0,0],[0.62,0],[0.66,0.12],[0.5,0.42],[0.4,1.25],[0.44,1.75],[0.78,2.15],[1.0,2.62],[0.95,3.08],[0.66,3.38],[0.3,3.5],[0,3.52]].map(function(q){return new THREE.Vector2(q[0],q[1]);});
+          var griff=new THREE.Mesh(new THREE.LatheGeometry(profil,64), M.holz); griff.position.y=0.95; stempel.add(griff);
+          var ring=new THREE.Mesh(new THREE.CylinderGeometry(0.72,0.72,0.22,48), M.alu); ring.position.y=0.95; stempel.add(ring);
+          var platte=new THREE.Mesh(rundQuader(3.4,0.55,2.2,0.18,3), M.rahmen); platte.position.y=0.55; stempel.add(platte);
+          var gummi=new THREE.Mesh(rundQuader(3.2,0.2,2.0,0.06,2), M.gummi); gummi.position.y=0.18; stempel.add(gummi);
+          g.add(stempel);
+          g.scale.setScalar(0.8); g.position.y=3.6;
+          return {gruppe:g, dazu:function(t){
+            // Vor dem Stempeln legt sich der Stapel nach hinten wie auf einen Tisch:
+            // stehen die Blaetter zur Kamera, zeigt der Stempel genau auf sie und ist
+            // nur eine Kugel auf einem Kasten (so im ersten Entwurf gemessen).
+            var lege=eIO(seg(t,0.26,0.42));
+            g.rotation.set(mix(-0.15,-1.0,lege), mix(-0.35,0.35,t)*(1-lege*0.6)+mx*0.1, 0);
+            g.position.y+=-4.2*lege; g.scale.setScalar(mix(0.8,0.92,lege));
+            var f=eOut(seg(t,0.06,0.42));
+            blaetter.forEach(function(h,k){
+              h.position.set(-4.7+(k-1)*mix(0.1,3.6,f), -6.65, (k-1)*mix(0.04,0.9,f));
+              h.rotation.set(0,0,(k-1)*mix(0.02,-0.2,f));
+            });
+            // Die Blaetter stehen zur Kamera, also kommt der Stempel von vorn: Achse
+            // um +90 Grad um x gekippt (Gummi zeigt nach -z), etwas zum Betrachter
+            // geneigt. Kontaktstelle = Lage des Abdrucks auf dem obersten Blatt,
+            // aus Faecherung (x -1,1 / z 0,9 / Drehung -0,2) nachgerechnet.
+            // Runter, kurz halten, wieder hoch und zur Seite — der Abdruck bleibt.
+            var runter=eIO(seg(t,0.4,0.56)), hoch=eIO(seg(t,0.64,0.82));
+            stempel.position.set(mix(mix(9,5.4,runter),8.6,hoch), mix(mix(2,-5.0,runter),-1.5,hoch), mix(mix(8,1.05,runter),5.5,hoch));
+            stempel.rotation.set(Math.PI/2-mix(mix(0.7,0.12,runter),0.55,hoch), 0, mix(mix(-0.4,-0.2,runter),-0.45,hoch));
+            abdruck.material.opacity=seg(t,0.55,0.6)*0.95;
+          }};
+        },
+        // Umzug: Tablet mit der echten Import-Vorschau, Tabellenzeilen fliegen hinein
+        tablet:function(ch){
+          var g=new THREE.Group();
+          g.add(new THREE.Mesh(rundQuader(15.6,10.4,0.55,0.9,5), M.rahmen));
+          g.add(new THREE.Mesh(rundQuader(15.48,10.28,0.57,0.84,5), M.glas));
+          var s=schirm(bild(ch.bild),14.6,9.125,0.5); s.position.z=0.295; g.add(s);
+          var gl1=glas(14.6,9.125,0.5); gl1.position.z=0.31; g.add(gl1);
+          // die alte Tabelle links: ein Gitter weisser Zellen, Kopfzeile gruen
+          var tab=new THREE.Group(), zellen=[];
+          for(var r=0;r<6;r++) for(var c=0;c<3;c++) zellen.push([c*1.25,-r*0.62,0,1]);
+          var zm=new THREE.InstancedMesh(rundQuader(1.15,0.5,0.25,0.1,2),M.weiss,zellen.length), o=new THREE.Object3D();
+          zellen.forEach(function(q,i){ o.position.set(q[0],q[1],q[2]); o.updateMatrix(); zm.setMatrixAt(i,o.matrix); });
+          tab.add(zm);
+          var kopf=new THREE.Mesh(rundQuader(3.65,0.5,0.3,0.1,2), M.gruen); kopf.position.set(1.25,0.65,0); tab.add(kopf);
+          tab.position.set(-13.5,2.2,2); tab.rotation.y=0.45; g.add(tab);
+          var zeilen=[];
+          for(var z=0;z<5;z++){ var m=new THREE.Mesh(rundQuader(3.6,0.5,0.25,0.1,2), M.weiss); g.add(m); zeilen.push(m); }
+          g.position.y=1.6;
+          return {gruppe:g, dazu:function(t,T){
+            g.rotation.set(0.08, mix(-0.4,0.25,t)+mx*0.1, 0);
+            zeilen.forEach(function(m,k){
+              var u=seg(t,0.15+k*0.08,0.4+k*0.08), b=Math.sin(u*Math.PI);
+              m.visible=u>0&&u<1;
+              m.position.set(mix(-11.5,-2+k*0.4,eIO(u)), mix(1.2-k*0.62,2.5-k*1.2,u)+b*3, mix(2.4,1.2,u)+b*2.5);
+              m.rotation.set(b*0.6,b*0.8,0);
+            });
+          }};
+        },
+        // Unterwegs: das App-Icon als Objekt — "installierbar wie eine App"
+        icon:function(ch){
+          var g=new THREE.Group();
+          var kachel=new THREE.Mesh(rundQuader(8,8,1.4,1.9,6), M.glas); g.add(kachel);
+          var s=schirm(bild(ch.bild),7.7,7.7,1.75); s.position.z=0.71; g.add(s);
+          var gl1=glas(7.7,7.7,1.75); gl1.position.z=0.72; g.add(gl1);
+          // drei kleine Wuerfel kreisen darum: offline, Handy, Rechner — ohne Worte
+          var satelliten=[M.weiss,M.akzent,M.weiss].map(function(mat){ var m=new THREE.Mesh(wuerfelGeo,mat); m.scale.setScalar(1.1); g.add(m); return m; });
+          g.position.y=1.5;
+          return {gruppe:g, dazu:function(t,T){
+            var dreh=REDUCE?0:(1-eOut(seg(t,0.02,0.38)))*Math.PI*2;
+            g.rotation.set(0.12+my*0.05, mix(-0.35,0.35,t)+mx*0.12-dreh, 0);
+            satelliten.forEach(function(m,k){
+              var a=T*0.6+k*2.1;
+              m.position.set(Math.cos(a)*7.2, Math.sin(a*1.3)*2.5, Math.sin(a)*3);
+              m.rotation.set(T*0.7+k,T*0.5,0);
+            });
+          }};
+        },
+        // Sicherheit: Vorhaengeschloss auf gestapelten Sicherungen, der Buegel rastet ein
+        schloss:function(){
+          var g=new THREE.Group();
+          for(var k=0;k<3;k++){ var p=new THREE.Mesh(rundQuader(9,0.55,6.4,0.25,3), k===2?M.weiss:M.weiss); p.position.set(-k*0.9+0.9,-4.6+k*0.8,-k*0.9+0.9); g.add(p); }
+          var koerper=new THREE.Mesh(rundQuader(6,4.8,2.2,0.7,5), M.akzent); koerper.position.y=-1.2; g.add(koerper);
+          var buegel=new THREE.Group();
+          var bogen=new THREE.Mesh(new THREE.TorusGeometry(1.8,0.42,24,64,Math.PI), M.alu); bogen.position.y=2.2; buegel.add(bogen);
+          [-1.8,1.8].forEach(function(x){ var b=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,2.2,32), M.alu); b.position.set(x,1.1,0); buegel.add(b); });
+          buegel.position.y=0.4; g.add(buegel);
+          var loch=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.42,0.1,32), M.schwarz); loch.rotation.x=Math.PI/2; loch.position.set(0,-0.8,1.12); g.add(loch);
+          var schlitz=new THREE.Mesh(new THREE.BoxGeometry(0.28,1.0,0.1), M.schwarz); schlitz.position.set(0,-1.35,1.12); g.add(schlitz);
+          g.position.y=1.6;
+          return {gruppe:g, dazu:function(t){
+            g.rotation.set(0.1+my*0.05, mix(-0.5,0.5,t)+mx*0.12, 0);
+            var zu=eIO(seg(t,0.2,0.42));
+            buegel.position.y=mix(2.0,0.4,zu);
+            buegel.rotation.y=mix(Math.PI*0.6,0,eIO(seg(t,0.08,0.24)));
+          }};
+        },
+        // Ausbilder: Monitor mit dem echten Cockpit, ein Freigabe-Haken springt heraus
+        monitor:function(ch){
+          var g=new THREE.Group();
+          g.add(new THREE.Mesh(rundQuader(17,10.8,0.55,0.45,4), M.alu));
+          g.add(new THREE.Mesh(rundQuader(16.9,10.7,0.57,0.4,4), M.glas));
+          var s=schirm(bild(ch.bild),16.2,10.125,0.12); s.position.z=0.3; g.add(s);
+          var hals=new THREE.Mesh(rundQuader(2.4,4.4,0.5,0.2,3), M.alu); hals.position.set(0,-6.6,-0.9); hals.rotation.x=-0.12; g.add(hals);
+          var fuss=new THREE.Mesh(rundQuader(6.5,0.35,4.2,0.17,3), M.alu); fuss.position.set(0,-8.7,-0.4); g.add(fuss);
+          var abzeichen=new THREE.Group();
+          var scheibe=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,0.6,64), M.gruen); scheibe.rotation.x=Math.PI/2; abzeichen.add(scheibe);
+          var h1=new THREE.Mesh(rundQuader(0.42,1.1,0.25,0.2,2), M.weiss); h1.position.set(-0.42,-0.15,0.38); h1.rotation.z=0.75; abzeichen.add(h1);
+          var h2=new THREE.Mesh(rundQuader(0.42,2.0,0.25,0.2,2), M.weiss); h2.position.set(0.32,0.2,0.38); h2.rotation.z=-0.62; abzeichen.add(h2);
+          abzeichen.position.set(7.6,4.6,1.6); g.add(abzeichen);
+          g.scale.setScalar(0.78); g.position.y=3.6;
+          return {gruppe:g, dazu:function(t,T){
+            g.rotation.set(0.05+my*0.04, mix(-0.4,0.4,t)+mx*0.1, 0);
+            var pop=seg(t,0.3,0.5), w=pop<1?eOut(pop)*(1+Math.sin(pop*Math.PI)*0.25):1;
+            abzeichen.scale.setScalar(Math.max(0.001,w));
+            abzeichen.rotation.y=REDUCE?0:Math.sin(T*1.2)*0.25;
+          }};
+        }
       };
-      // Karten: die vier Kapitelbilder, dazwischen weitere echte Aufnahmen
-      var extra=['/Grafiken/about/berichtsheft.webp','/Grafiken/ihk/import-wochen.webp','/Grafiken/ausbilder/woche.webp','/Grafiken/wechseln/einfuegen.webp','/Grafiken/wechseln/spalten.webp'];
-      var karten=[], kapitelKarte={};
-      for(var ki=0;ki<9;ki++){
-        var ist=ki%2===1, kap=ist?TAG+(ki-1)/2:-1;
-        var src=ist?chapters[kap].bild:extra[(ki/2)|0];
-        var titel=ist?chapters[kap].name:'';
-        var mat=new THREE.ShaderMaterial({uniforms:{map:{value:null}, uVel:kartenShader.uniforms.uVel, uOp:{value:1}}, vertexShader:kartenShader.vertexShader, fragmentShader:kartenShader.fragmentShader, transparent:true, side:THREE.DoubleSide, depthWrite:false});
-        (function(mat,src,titel){
-          var im=new Image(); im.decoding='async';
-          im.onload=function(){
-            // auf 1440 px herunter (neun 2880er-Texturen waeren ~180 MB) und
-            // die Beschriftung unten links ins Bild, wie bei Jesper
-            var c=document.createElement('canvas'); c.width=1440; c.height=900; var x=c.getContext('2d');
-            x.drawImage(im,0,0,1440,900);
-            if(titel){
-              var gr=x.createLinearGradient(0,640,0,900); gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(0,0,0,.72)'); x.fillStyle=gr; x.fillRect(0,600,1440,300);
-              x.fillStyle='#fff'; x.font='600 54px Geist, system-ui, sans-serif'; x.fillText(titel,64,836);
-              x.beginPath(); x.arc(1350,818,34,0,Math.PI*2); x.fillStyle='rgba(255,255,255,.95)'; x.fill();
-              x.strokeStyle='#111'; x.lineWidth=5; x.beginPath(); x.moveTo(1336,818); x.lineTo(1366,818); x.moveTo(1354,805); x.lineTo(1367,818); x.lineTo(1354,831); x.stroke();
-            }
-            var t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
-            mat.uniforms.map.value=t;
-          };
-          im.src=src+(src.indexOf('?')<0?Q:'');
-        })(mat,src,titel);
-        var kg=new THREE.PlaneGeometry(KARTE_B,KARTE_H,48,1);
-        var karte=new THREE.Mesh(kg,mat); karte.frustumCulled=false;
-        var halter=new THREE.Group(); halter.add(karte); halter.rotation.y=-ki*SCHRITT;
-        kartenRing.add(halter); karten.push({halter:halter, mat:mat});
-        if(ist) kapitelKarte[kap]=ki;
-      }
+
+      var ABST=40, stationen=[];
+      chapters.forEach(function(ch,i){
+        var y=-(i+1)*ABST;
+        var st=(BAU[ch.station]||BAU.icon)(ch);
+        st.y=y;
+        var s=sockel(); s.position.set(0,y-6.4,0); scene.add(s);
+        st.basisY=st.gruppe.position.y+y-1;
+        st.gruppe.position.y=st.basisY;
+        scene.add(st.gruppe); stationen.push(st);
+        [[-15,6],[14,-3],[-12,-8],[17,9]].forEach(function(q,k){ traube(q[0],y+q[1],-6-k*3,200+i*40+k*7); });
+      });
+      var Y_ENDE=-(N+1)*ABST;
+      // Abschluss: eine dichte Wolke Wuerfeltrauben um "Bereit?"
+      [[-16,6,-4],[-11,-7,-1],[14,7,-6],[18,-4,-3],[-5,11,-9],[4,-11,-5],[-21,0,-10],[9,12,-12],[22,1,-14],[-9,-12,-8],[0,13,-14],[-17,12,-12]].forEach(function(q,i){ traube(q[0],Y_ENDE+q[1],q[2],5000+i*53); });
 
       function groesse(){
         renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, SCHMAL?1.6:2));
@@ -485,84 +560,50 @@
       }
 
       var blick=new THREE.Vector3();
-      function zeichnen(T,lage){
-        /* — Kamera: haelt an jeder Station, faehrt dazwischen; in der
-           Daemmerung hinab in den Ring. — */
+      function zeichnen(T){
+        /* — Kamera: haelt an jeder Station, faehrt dazwischen — */
         var stopps=[[0,Y_HERO+1],[B.hero[1]-0.03,Y_HERO+1]];
-        stationen.forEach(function(st,i){ var b=B['tag'+i], w=b[1]-b[0]; stopps.push([b[0]+w*0.28, st.y], [b[1]-w*0.22, st.y]); });
+        chapters.forEach(function(ch,i){ var w=ch.e-ch.s; stopps.push([ch.s+w*0.28, stationen[i].y],[ch.e-w*0.22, stationen[i].y]); });
+        stopps.push([B.ende[0]+(B.ende[1]-B.ende[0])*0.35, Y_ENDE]);
         var y=stopps[stopps.length-1][1];
         for(var i=0;i<stopps.length-1;i++){
           if(ps<=stopps[i+1][0]){ var a=stopps[i], b=stopps[i+1]; y=mix(a[1],b[1],sm(seg(ps,a[0],b[0]))); break; }
         }
         var tief=SCHMAL?(W<H?1.9:1.25):1;
-        var abst=36*tief, cx=0, cy=y, cz=abst, ly=y;
-        // Daemmerung: von der letzten Station hinab in den Ring
-        var d=sm(seg(ps,B.daemmerung[0],B.galerie[0]+0.012));
-        if(d>0){
-          cy=mix(stationen[stationen.length-1].y, Y_NACHT+1.5, d);
-          cz=mix(abst, 0, d);
-          ly=mix(cy, Y_NACHT+0.8, d);
-        }
-        if(!REDUCE){ cx+=mx*1.8*(1-d*0.6); cy+=-my*1.2; }
-        cam.position.set(cx,cy,cz);
-        blick.set(cx*0.3, ly, d>0?mix(0,-20,d):0);
+        // Breit ruecken die Objekte etwas nach links, weg vom Kapiteltext rechts unten
+        var amRand=SCHMAL?0:seg(ps,B.hero[1]-0.03,B.hero[1])*(1-seg(ps,B.ende[0],B.ende[0]+0.03));
+        var cx=(REDUCE?0:mx*1.8)+amRand*3.2, cy=y+(REDUCE?0:-my*1.2);
+        cam.position.set(cx,cy,36*tief);
+        blick.set(amRand*3.2+(cx-amRand*3.2)*0.3,y,0);
         cam.lookAt(blick);
         cam.rotation.z=REDUCE?0:clamp(-vel*0.6,-0.04,0.04);
-        cam.fov=mix(34, SCHMAL?(W<H?70:52):46, d); cam.updateProjectionMatrix();
-
-        // Nebel erst in der Nacht (Tagmaterialien wuerden sonst ins Schwarz blassen)
-        scene.fog.near=mix(1e5,24,d); scene.fog.far=mix(1e5+1,95,d);
-        gitter.material.opacity=0.9*seg(ps,mix(B.daemmerung[0],B.daemmerung[1],0.5),B.galerie[0]);
-        hemi.intensity=mix(0.7,0.15,d);
 
         /* — Hero — */
-        uhr.rotation.y=-0.45+mx*0.25+Math.sin(T*0.5)*0.08;
-        uhr.rotation.x=0.12+my*0.15;
-        // Schmal steht die Uhr zwischen Zeilen und Fuss, breit rechts neben den Zeilen
-        uhr.position.set(SCHMAL?3:8.5, Y_HERO+(SCHMAL?3.2:3.4)+Math.sin(T*0.9)*0.35, 1);
+        uhr.position.set(SCHMAL?3:8.5, Y_HERO+(SCHMAL?3.2:3.4)+(REDUCE?0:Math.sin(T*0.9)*0.35), 1);
         uhr.scale.setScalar(SCHMAL?0.9:0.74);
-        uhr.userData.zeiger.rotation.z=-T*1.2;
-        uhr.userData.kurz.rotation.z=-T*0.1;
-        trauben.forEach(function(g){ var u=g.userData; if(REDUCE) return; g.rotation.x+=u.rx*0.01; g.rotation.y+=u.ry*0.01; g.position.y=u.y0+Math.sin(T*0.7+u.ph)*0.4; });
+        uhr.rotation.y=-0.45+mx*0.25+(REDUCE?0:Math.sin(T*0.5)*0.08);
+        uhr.rotation.x=0.12+my*0.15;
+        uhr.userData.zeiger.rotation.z=REDUCE?0:-T*1.2;
+        uhr.userData.kurz.rotation.z=REDUCE?0:-T*0.1;
+        if(!REDUCE) trauben.forEach(function(g){ var u=g.userData; g.rotation.x+=u.rx*0.01; g.rotation.y+=u.ry*0.01; g.position.y=u.y0+Math.sin(T*0.7+u.ph)*0.4; });
 
-        /* — Stationen: Lage in der Station (0…1) treibt Drehung und Mechanik — */
+        /* — Stationen — nur die nahen rechnen, Filme nur dort abspielen — */
         stationen.forEach(function(st,i){
-          var b=B['tag'+i], t=seg(ps,b[0]-0.03,b[1]+0.02);
-          var g=st.gruppe, schwebe=REDUCE?0:Math.sin(T*0.8+i)*0.3;
-          g.position.y=st.basisY+schwebe;
-          var dreh=mix(-0.6,0.6,t)+(REDUCE?0:mx*0.15);
-          if(i===0){ g.rotation.set(0.05,dreh,mix(-0.12,0.06,t)); }
-          // Laptop: zu = Deckel flach auf der Tastatur (+90 Grad), offen leicht nach hinten
-          if(i===1){ g.rotation.set(0.32+my*0.05,dreh*0.7,0); g.userData.scharnier.rotation.x=mix(Math.PI*0.5, -0.18, eOut(seg(t,0.08,0.42))); }
-          if(i===2){
-            g.rotation.set(-0.15,dreh*0.6,0);
-            var f=eOut(seg(t,0.1,0.5));
-            g.userData.blaetter.forEach(function(h,k){
-              h.position.set(-4.7+(k-1)*mix(0.1,3.6,f), -6.65, (k-1)*mix(0.04,0.9,f));
-              h.rotation.set(0,0,(k-1)*mix(0.02,-0.2,f));
-            });
-            var s=g.userData.stempel, auf=eOut(seg(t,0.45,0.7));
-            s.position.set(mix(10,5.2,auf), mix(9,-5.6,auf), mix(4,1.6,auf)); s.rotation.set(0,0.4,mix(-0.6,-0.15,auf));
+          var ch=chapters[i], nah=Math.abs(cam.position.y-st.y)<ABST*0.9;
+          st.gruppe.visible=nah;
+          if(nah){
+            var t=seg(ps,ch.s-0.02,ch.e+0.02);
+            st.gruppe.position.y=st.basisY+(REDUCE?0:Math.sin(T*0.8+i)*0.3);
+            st.dazu(t,T);
+            if(!REDUCE) st.gruppe.rotation.x+=clamp(vel*4,-0.15,0.15);
           }
-          // Film nur abspielen, wenn die Station zu sehen ist
-          var v=i===0?fH.video:i===1?fL.video:null;
-          if(v){ var nah=Math.abs(cam.position.y-st.y)<STATION_ABST*0.8 && !REDUCE; if(nah&&v.paused) v.play().catch(function(){}); else if(!nah&&!v.paused) v.pause(); }
+          if(st.film){ var spielen=nah&&!REDUCE; if(spielen&&st.film.paused) st.film.play().catch(function(){}); else if(!spielen&&!st.film.paused) st.film.pause(); }
         });
-
-        /* — Karussell: Scrollweg dreht den Ring, Kapitelkarte vorn, wenn ihr
-           Kapitel dran ist — */
-        var gB=B.galerie, gp=seg(ps,gB[0],gB[1]);
-        var idx=mix(0.2,8-0.2,gp)+(ps>=B.ende[0]?seg(ps,B.ende[0],B.ende[1])*1.4:0);
-        kartenRing.rotation.y=idx*SCHRITT+(REDUCE?0:mx*0.05);
-        kartenShader.uniforms.uVel.value=REDUCE?0:clamp(vel*40,-1.4,1.4);
-        var fern=seg(ps,mix(B.ende[0],B.ende[1],0.15),mix(B.ende[0],B.ende[1],0.5));
-        karten.forEach(function(k){ k.mat.uniforms.uOp.value=1-fern*0.75; });
-        kartenRing.position.y=mix(0,-2.5,fern);
 
         renderer.render(scene,cam);
       }
 
-      return {groesse:groesse, zeichnen:zeichnen, filme:filme, karten:karten};
+      return {groesse:groesse, zeichnen:zeichnen, filme:filme};
     }
 
     /* ═══ SCHLEIFE ═══ */
@@ -573,8 +614,8 @@
       if(!t0) t0=now;
       rest+=Math.min(100, last?now-last:16); last=now;
       for(var n=0; rest>=16 && n<6; n++){ rest-=16; schritt(); }
-      var lage=dom();
-      if(G) G.zeichnen((now-t0)/1000, lage);
+      dom();
+      if(G) G.zeichnen((now-t0)/1000);
       rafId=requestAnimationFrame(tick);
     }
     function wecken(){ if(!rafId && laeuft) rafId=requestAnimationFrame(tick); }
