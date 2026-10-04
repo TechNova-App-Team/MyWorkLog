@@ -365,7 +365,7 @@
         uhr.userData={zeiger:zeiger, kurz:kurz};
       })();
       scene.add(uhr);
-      [[-15,7,-6],[-11,-6,-2],[15,8,-8],[17,-5,-4],[-4,10,-10],[3,-8,-6],[-19,1,-12],[11,11,-14],[22,2,-16],[-8,-10,-12]].forEach(function(q,i){ traube(q[0],Y_HERO+q[1],q[2],11+i*97); });
+      [[-15,7,-6],[15,8,-8],[-4,-9,-9],[-19,1,-12],[22,2,-16],[3,-9,-6],[11,11,-14],[-8,-11,-12]].forEach(function(q,i){ traube(q[0],Y_HERO+q[1],q[2],11+i*97); });
 
       /* ═══ STATIONEN ═══ Jede liefert {gruppe, dazu(t,T)}. t = Lage in der
          Station (0…1), dazu() treibt Drehung und Mechanik. Die Gruppe sitzt
@@ -458,7 +458,9 @@
           ['form','klassisch','klar'].forEach(function(n){
             var geo=new THREE.PlaneGeometry(9.4,13.3,1,24);
             var p=geo.attributes.position; for(var k=0;k<p.count;k++){ var y=p.getY(k); p.setZ(k,Math.pow(y/6.65,2)*0.35); } geo.computeVertexNormals();
-            var m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.9, side:THREE.DoubleSide, map:bild('/Grafiken/intro/blatt-'+n+'.webp')}));
+            // Lambert ohne Tone-Mapping: ACES + Sonne trieben das Papier in die
+            // Saettigung und frassen den grauen Vordruck-Text (gemeldet 04.10.2026)
+            var m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:0xd9d8e0, side:THREE.DoubleSide, toneMapped:false, map:bild('/Grafiken/intro/blatt-'+n+'.webp')}));
             var halter=new THREE.Group(); halter.add(m); m.position.set(4.7,6.65,0);
             g.add(halter); blaetter.push(halter);
           });
@@ -468,8 +470,13 @@
           x.globalAlpha=0.85; x.beginPath(); x.arc(128,128,104,0,Math.PI*2); x.stroke(); x.lineWidth=5; x.beginPath(); x.arc(128,128,84,0,Math.PI*2); x.stroke();
           x.lineWidth=18; x.beginPath(); x.moveTo(84,132); x.lineTo(116,164); x.lineTo(176,94); x.stroke();
           var aTex=new THREE.CanvasTexture(ac); aTex.colorSpace=THREE.SRGBColorSpace;
-          var abdruck=new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2), new THREE.MeshBasicMaterial({map:aTex, transparent:true, opacity:0, depthWrite:false, toneMapped:false}));
-          abdruck.position.set(2.3,-3.6,0.14); blaetter[2].children[0].add(abdruck);
+          // Das Blatt ist gewoelbt (z = (y/6,65)^2 * 0,35). Eine flache Ebene
+          // tauchte mit der unteren Haelfte ins Papier, der Haken war
+          // abgeschnitten (gemeldet 04.10.2026) — also dieselbe Woelbung + 0,03.
+          var aGeo=new THREE.PlaneGeometry(3.2,3.2,1,16), ap=aGeo.attributes.position;
+          for(var k=0;k<ap.count;k++){ var yy=ap.getY(k)-3.6; ap.setZ(k,Math.pow(yy/6.65,2)*0.35+0.03); }
+          var abdruck=new THREE.Mesh(aGeo, new THREE.MeshBasicMaterial({map:aTex, transparent:true, opacity:0, depthWrite:false, toneMapped:false, side:THREE.DoubleSide}));
+          abdruck.position.set(2.3,-3.6,0); abdruck.renderOrder=2; blaetter[2].children[0].add(abdruck);
           // Stempel: gedrechselter Holzgriff, Metallring, Platte, Gummi
           var stempel=new THREE.Group();
           var profil=[[0,0],[0.62,0],[0.66,0.12],[0.5,0.42],[0.4,1.25],[0.44,1.75],[0.78,2.15],[1.0,2.62],[0.95,3.08],[0.66,3.38],[0.3,3.5],[0,3.52]].map(function(q){return new THREE.Vector2(q[0],q[1]);});
@@ -574,12 +581,24 @@
           g.add(new THREE.Mesh(platte(17,10.8,0.55,0.45,0.12), M.alu));
           var fm=new THREE.Mesh(flaeche(16.9,10.7,0.4), M.glas); fm.position.z=0.277; g.add(fm);
           var s=schirm(bild(ch.bild),16.2,10.125,0.12); s.position.z=0.3; g.add(s);
-          var hals=new THREE.Mesh(rundQuader(2.4,4.4,0.5,0.2,3), M.alu); hals.position.set(0,-6.6,-0.9); hals.rotation.x=-0.12; g.add(hals);
-          var fuss=new THREE.Mesh(rundQuader(6.5,0.35,4.2,0.17,3), M.alu); fuss.position.set(0,-8.7,-0.4); g.add(fuss);
+          // Fuss aus EINEM Stueck wie beim Studio Display: schraeges Blech von
+          // der Rueckseite nach hinten unten auf einen flachen Teller.
+          // Vorher Klotz + Platte ohne Verbindung (gemeldet 04.10.2026).
+          var arm=new THREE.Mesh(platte(4.6,8.4,0.34,0.3,0.1), M.alu);
+          arm.position.set(0,-4.75,-2.0); arm.rotation.x=0.33; g.add(arm);
+          var teller=new THREE.Mesh(platte(4.6,5.2,0.3,0.3,0.1).rotateX(-Math.PI/2), M.alu);
+          teller.position.set(0,-8.9,-0.9); g.add(teller);
+          var gelenk=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.34,4.2,32), M.rahmen);
+          gelenk.rotation.z=Math.PI/2; gelenk.position.set(0,-0.95,-0.62); g.add(gelenk);
+          // Freigabe-Abzeichen: Scheibe mit einem Haken als EIN Rohr (zwei
+          // Quader stiessen sichtbar mit Kante aneinander)
           var abzeichen=new THREE.Group();
-          var scheibe=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,0.6,64), M.gruen); scheibe.rotation.x=Math.PI/2; abzeichen.add(scheibe);
-          var h1=new THREE.Mesh(rundQuader(0.42,1.1,0.25,0.2,2), M.weiss); h1.position.set(-0.42,-0.15,0.38); h1.rotation.z=0.75; abzeichen.add(h1);
-          var h2=new THREE.Mesh(rundQuader(0.42,2.0,0.25,0.2,2), M.weiss); h2.position.set(0.32,0.2,0.38); h2.rotation.z=-0.62; abzeichen.add(h2);
+          var scheibe=new THREE.Mesh(new THREE.CylinderGeometry(1.7,1.7,0.5,64), M.gruen); scheibe.rotation.x=Math.PI/2; abzeichen.add(scheibe);
+          var hakenPfad=new THREE.CurvePath();
+          hakenPfad.add(new THREE.LineCurve3(new THREE.Vector3(-0.78,0.05,0.34), new THREE.Vector3(-0.2,-0.55,0.34)));
+          hakenPfad.add(new THREE.LineCurve3(new THREE.Vector3(-0.2,-0.55,0.34), new THREE.Vector3(0.82,0.62,0.34)));
+          abzeichen.add(new THREE.Mesh(new THREE.TubeGeometry(hakenPfad,48,0.2,16,false), M.weiss));
+          [[-0.78,0.05],[-0.2,-0.55],[0.82,0.62]].forEach(function(q){ var k=new THREE.Mesh(new THREE.SphereGeometry(0.2,16,12), M.weiss); k.position.set(q[0],q[1],0.34); abzeichen.add(k); });
           abzeichen.position.set(7.6,4.6,1.6); g.add(abzeichen);
           g.scale.setScalar(0.78); g.position.y=3.6;
           return {gruppe:g, dazu:function(t,T){
@@ -591,20 +610,31 @@
         }
       };
 
+      // Weicher Schatten oben auf dem Sockel: ohne ihn schwebt jedes Objekt
+      // beziehungslos ueber seinen Wuerfeln (gemeldet 04.10.2026, "naja").
+      var schattenGeo=(function(){
+        var c=document.createElement('canvas'); c.width=c.height=128; var x=c.getContext('2d');
+        var gr=x.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(40,30,80,0.55)'); gr.addColorStop(0.55,'rgba(40,30,80,0.18)'); gr.addColorStop(1,'rgba(40,30,80,0)');
+        x.fillStyle=gr; x.fillRect(0,0,128,128);
+        var t=new THREE.CanvasTexture(c); t.colorSpace=THREE.SRGBColorSpace;
+        schattenMat=new THREE.MeshBasicMaterial({map:t, transparent:true, depthWrite:false, toneMapped:false});
+        return new THREE.PlaneGeometry(4.6,4.6).rotateX(-Math.PI/2);
+      })(), schattenMat;
       var ABST=40, stationen=[];
       chapters.forEach(function(ch,i){
         var y=-(i+1)*ABST;
         var st=(BAU[ch.station]||BAU.icon)(ch);
         st.y=y;
         var s=sockel(); s.position.set(0,y-6.4,0); scene.add(s);
+        var sch=new THREE.Mesh(schattenGeo,schattenMat); sch.position.set(0,y-6.4+1.43,0); scene.add(sch);
         st.basisY=st.gruppe.position.y+y-1;
         st.gruppe.position.y=st.basisY;
         scene.add(st.gruppe); stationen.push(st);
-        [[-15,6],[14,-3],[-12,-8],[17,9]].forEach(function(q,k){ traube(q[0],y+q[1],-6-k*3,200+i*40+k*7); });
+        [[-15,6],[17,-4],[-12,-8]].forEach(function(q,k){ traube(q[0],y+q[1],-6-k*3,200+i*40+k*7); });
       });
       var Y_ENDE=-(N+1)*ABST;
       // Abschluss: eine dichte Wolke Wuerfeltrauben um "Bereit?"
-      [[-16,6,-4],[-11,-7,-1],[14,7,-6],[18,-4,-3],[-5,11,-9],[4,-11,-5],[-21,0,-10],[9,12,-12],[22,1,-14],[-9,-12,-8],[0,13,-14],[-17,12,-12]].forEach(function(q,i){ traube(q[0],Y_ENDE+q[1],q[2],5000+i*53); });
+      [[-16,6,-4],[-11,-7,-1],[14,7,-6],[18,-4,-3],[-21,0,-10],[9,12,-12],[22,1,-14],[-9,-12,-8],[0,13,-14],[4,-11,-5]].forEach(function(q,i){ traube(q[0],Y_ENDE+q[1],q[2],5000+i*53); });
 
       function groesse(){
         renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, SCHMAL?1.6:2));
