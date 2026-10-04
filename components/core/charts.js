@@ -446,7 +446,7 @@
         animation: true,
         animSpeed: 2000,      // ms – Dauer der Line-Draw/Bar-Grow-Animation
         gradient: true,       // Flächen-Füllung bei area-Typen
-        glow: true,
+        glow: false,          // seit v8.1.8 aus: matt wie das Intro; per Zahnrad wieder einschaltbar
         glowIntensity: 6,     // px – Stärke des Glow/Neon-Scheins
         rainbow: false,       // animierter Regenbogen-Verlauf auf der Linie
         blur: false,          // weichgezeichnete („dreamy") Flächenfüllung

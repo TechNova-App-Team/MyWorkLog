@@ -46,7 +46,7 @@
             pink: '#ec4899',
             indigo: '#6366f1',
             fontFamily: "'Inter', sans-serif",
-            monoFamily: "'JetBrains Mono', monospace",
+            monoFamily: "'Geist Mono', monospace",
             isLight
         };
     }
@@ -2602,7 +2602,7 @@
             lCtx.fill();
 
             lCtx.fillStyle = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)';
-            lCtx.font = '600 22px "JetBrains Mono", monospace';
+            lCtx.font = '600 22px "Geist Mono", monospace';
             lCtx.textAlign = 'center';
             lCtx.fillText(label, 128, 38);
             var lTex = new THREE.CanvasTexture(lCanvas);

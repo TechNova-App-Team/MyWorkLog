@@ -280,8 +280,17 @@
     @keyframes viLoad{0%,100%{opacity:.25}50%{opacity:1}}
     #pro-intro.vi-bereit .vi-load{opacity:0;pointer-events:none}
 
-    /* Ausgang in die App: das Intro waechst leicht und verschwimmt */
-    @keyframes viExit{to{opacity:0;transform:scale(1.05);filter:blur(10px)}}
+    /* Ausgang in die App: eine dunkle Ebene legt sich ueber das Intro
+       (Pastell -> Nacht), dann blendet das Ganze aus und das Dashboard
+       staffelt sich darunter ein (body.mwl-navigated, finishIntro).
+       🔴 KEIN filter (blur/brightness) auf #pro-intro: das filtert bei jedem
+       Bild den ganzen Bildschirm samt WebGL-Flaeche und ruckelte (gemeldet
+       04.10.2026). Nur opacity + transform, beides laeuft im Compositor. */
+    #pro-intro::after{content:"";position:fixed;inset:0;z-index:100;pointer-events:none;
+      background:#07070b;opacity:0;transition:opacity .42s cubic-bezier(.32,.72,0,1)}
+    #pro-intro.vi-geht::after{opacity:.92}
+    #pro-intro.vi-geht{will-change:opacity}
+    @keyframes viExit{to{opacity:0}}
 
     /* ═══ SCHMAL: Objekt oben, Text unten ═══ 900 px wie SCHMAL in landing.js */
     @media(max-width:900px){

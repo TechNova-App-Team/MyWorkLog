@@ -449,7 +449,7 @@
 .mwl-err-divider{height:1px;background:rgba(255,255,255,0.06);margin:1.25rem 0}
 .mwl-err-toggle{background:none;border:none;color:#475569;font-family:'Inter',-apple-system,sans-serif;font-size:0.73rem;cursor:pointer;padding:0;display:flex;align-items:center;gap:0.35rem;transition:color 0.2s}
 .mwl-err-toggle:hover{color:#94a3b8}
-.mwl-err-code{margin-top:0.7rem;padding:0.75rem 0.9rem;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.05);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#ef4444;line-height:1.55;word-break:break-all;display:none;white-space:pre-wrap}
+.mwl-err-code{margin-top:0.7rem;padding:0.75rem 0.9rem;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.05);border-radius:8px;font-family:'Geist Mono',monospace;font-size:0.68rem;color:#ef4444;line-height:1.55;word-break:break-all;display:none;white-space:pre-wrap}
 </style>
 <div class="mwl-err-atmos"></div>
 <div class="mwl-err-card">

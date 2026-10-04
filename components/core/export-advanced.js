@@ -206,7 +206,7 @@
         + '  .subtitle{color:#888;font-size:0.85rem;margin-bottom:32px;}\n'
         + '  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:32px;}\n'
         + '  .kpi{padding:18px;border-radius:14px;background:#1a1a1a;border:1px solid #2a2a2a;text-align:center;}\n'
-        + '  .kpi-val{font-size:1.6rem;font-weight:800;font-family:\'JetBrains Mono\',monospace;}\n'
+        + '  .kpi-val{font-size:1.6rem;font-weight:800;font-family:\'Geist Mono\',monospace;}\n'
         + '  .kpi-label{font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:600;}\n'
         + '  .card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:20px;margin-bottom:20px;overflow-x:auto;}\n'
         + '  table{width:100%;border-collapse:collapse;font-size:14px;}\n'

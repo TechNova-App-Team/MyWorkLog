@@ -678,7 +678,7 @@ function detectLocalhostAndWarn() {
             banner.id = 'localhostWarningBanner';
             banner.style.cssText = 'position:fixed; top:12px; left:12px; right:12px; z-index:9999; background:linear-gradient(90deg,#f59e0b,var(--primary)); color:#fff; padding:12px 14px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.35); font-weight:700; display:flex; align-items:center; gap:12px;';
             banner.innerHTML = `
-                <div style="flex:1; font-size:0.95rem;">⚠️ Hinweis: Du greifst diese Seite über <code>${host}</code> auf. Für die Installation auf Mobilgeräten verwende die LAN‑IP deines Rechners (z.B. <code>http://192.168.1.25:5500</code>), sonst kann die App nach der Installation 404 anzeigen.</div>
+                <div style="flex:1; font-size:0.95rem;">Hinweis: Du greifst diese Seite über <code>${host}</code> auf. Für die Installation auf Mobilgeräten verwende die LAN‑IP deines Rechners (z.B. <code>http://192.168.1.25:5500</code>), sonst kann die App nach der Installation 404 anzeigen.</div>
                 <div style="display:flex; gap:8px;">
                     <button id="dismissLocalhostWarning" class="btn" style="padding:8px 12px; background:rgba(0,0,0,0.06); border-radius:8px;">Verstanden</button>
                 </div>

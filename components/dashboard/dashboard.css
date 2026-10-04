@@ -12,6 +12,9 @@
                aufgemalt statt geschichtet. Jetzt heben sie sich sichtbar ab
                und tragen eine Innenkante (siehe --edge-top weiter unten). */
             --bg-surface:          rgba(23, 24, 29, 0.92);
+            --bg-surface-grad:     linear-gradient(180deg, rgba(30, 31, 38, 0.86), rgba(19, 20, 25, 0.9));
+            --card-rand:           transparent;
+            --shadow-schwebe:      0 24px 48px -24px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.25);
             --bg-surface-hover:    rgba(31, 33, 39, 0.96);
             --bg-elevated:         rgba(28, 30, 36, 0.94);
             --bg-inset:            rgba(0, 0, 0, 0.24);
@@ -58,13 +61,13 @@
                Drei Groessen statt der bisherigen fuenf. Zahlen sind hier
                Messwerte, keine Headlines: tabellarische Ziffern, damit
                beim Hochzaehlen nichts springt.                          */
-            --num-hero:            clamp(1.75rem, 1.3rem + 1.6vw, 2.25rem);
+            --num-hero:            clamp(2.1rem, 1.5rem + 1.9vw, 2.75rem);
             --num-md:              1.0625rem;
             --num-sm:              0.8125rem;
 
             /* Eyebrow — genau ein Stil fuer alle Kartenlabels */
-            --eyebrow-size:        0.6875rem;
-            --eyebrow-tracking:    0.09em;
+            --eyebrow-size:        0.75rem;
+            --eyebrow-tracking:    0;
         }
         /* (Die Light-Tokens stehen gesammelt im Block weiter unten —
            hier KEINEN zweiten [data-theme="light"] aufmachen.) */
@@ -91,6 +94,9 @@
             --role-neutral:        rgba(7, 16, 35, 0.20);
             --role-track:          rgba(7, 16, 35, 0.07);
             --bg-surface:          #ffffff;
+            --bg-surface-grad:     #ffffff;
+            --card-rand:           rgba(7, 16, 35, 0.05);
+            --shadow-schwebe:      0 24px 48px -28px rgba(40, 30, 80, 0.28), 0 1px 3px rgba(7, 16, 35, 0.05);
             --bg-surface-hover:    #ffffff;
             --bg-elevated:         rgba(248, 250, 252, 0.96);
             --bg-inset:            rgba(7, 16, 35, 0.04);
@@ -182,15 +188,19 @@
         .activities-card,
         .activities-card-new,
         .input-wrapper {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-default);
-            border-radius: 18px;
+            /* Seit v8.1.8 wie die Objekte im Intro: keine aufgemalte Rahmen-
+               linie, sondern eine Flaeche mit Lichtkante oben, leichtem
+               Verlauf und weichem, tiefem Schatten. Mit Rahmen + 18 px
+               wirkte das Dashboard nach dem Intro "wie eine andere App". */
+            background: var(--bg-surface-grad, var(--bg-surface));
+            border: 1px solid var(--card-rand, var(--border-default));
+            border-radius: 24px;
             position: relative;
             overflow: hidden;
             /* Lichtkante + getoenter Schatten: erst beides zusammen liest
                sich als erhobene Flaeche. Ein blosser 1-px-Rahmen ergibt ein
                aufgemaltes Rechteck. */
-            box-shadow: var(--edge-top), var(--shadow-sm);
+            box-shadow: var(--edge-top), var(--shadow-schwebe, var(--shadow-sm));
             /* 🔴 Kein backdrop-filter. Die Karten sind mit 0.92 Alpha fast
                deckend — man saehe vom Blur nichts, die GPU rechnet ihn aber
                bei jeder Invalidierung im Viewport neu. */
@@ -262,7 +272,11 @@
             display: grid;
             grid-template-rows: auto 1fr auto auto;
             gap: 0.625rem;
-            padding: 1.125rem 1.25rem 1.25rem;
+            /* 1rem seitlich: so sahen es die Nutzer bis v8.1.8 (eine verrutschte
+               Media-Query in mobile-nav.css setzte .card global auf 1rem).
+               Mit 1,25 rem bricht "Abweichung vom Monatssoll" bei 1440 px um
+               und die Zahlen der vier Karten stehen nicht mehr auf einer Linie. */
+            padding: 1.125rem 1rem 1.125rem;
             min-height: 172px;
         }
 
@@ -280,7 +294,6 @@
             font-size: var(--eyebrow-size);
             font-weight: 600;
             letter-spacing: var(--eyebrow-tracking);
-            text-transform: uppercase;
             color: var(--text-muted);
             white-space: nowrap;
         }
@@ -299,8 +312,10 @@
         .kpi-v2__meta.is-neg { color: var(--role-neg); }
 
         .kpi-v2__value {
+            font-family: var(--font-display);
             font-size: var(--num-hero);
-            font-weight: 700;
+            font-weight: 600;
+            letter-spacing: -0.03em;
             line-height: 1;
             color: var(--text-main);
             align-self: end;
@@ -337,7 +352,16 @@
             gap: 0.5rem;
             min-height: 17px;
         }
+        /* Die Zahl bricht nie um ("39,5" / "h" bei 1280 px); umbrechen darf
+           nur die Beschriftung davor. Kein Kuerzen mit Ellipse: in der
+           Gleitzeit-Karte steckt die Zahl IM ersten Element ("+4,5…").
+           min-width:0, weil Grid-Kinder sonst nie schmaler als ihr Inhalt
+           werden und die Zeile aus der Karte ragt. */
+        .kpi-v2 > * { min-width: 0; }
+        .kpi-v2__foot > span:first-child { min-width: 0; }
         .kpi-v2__foot-num {
+            white-space: nowrap;
+            flex-shrink: 0;
             font-size: var(--num-sm);
             color: var(--text-main);
             font-weight: 600;
@@ -598,7 +622,6 @@
             font-size: var(--eyebrow-size);
             font-weight: 600;
             letter-spacing: var(--eyebrow-tracking);
-            text-transform: uppercase;
             color: var(--text-muted);
             margin-top: 0.3rem;
         }
@@ -1038,10 +1061,11 @@
             margin: 0;
         }
         .chart-title {
-            font-size: 0.88rem;
+            font-family: var(--font-display);
+            font-size: 0.95rem;
             font-weight: 600;
             color: var(--text-main);
-            letter-spacing: -0.02em;
+            letter-spacing: -0.01em;
         }
         .chart-sub {
             font-size: 0.7rem;
@@ -1134,9 +1158,8 @@
             transition: all 200ms cubic-bezier(0.2, 0.6, 0.2, 1);
             font-weight: 600;
             font-family: var(--font-mono);
-            letter-spacing: 0.02em;
+            letter-spacing: 0;
             position: relative;
-            text-transform: uppercase;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -1197,10 +1220,9 @@
             gap: 3px;
         }
         .trend-stat-label {
-            font-size: 0.55rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0;
             font-weight: 600;
         }
         .trend-stat-value {
@@ -1638,7 +1660,8 @@
             min-width: 0;
         }
         .entry-form__title {
-            font-size: 0.88rem;
+            font-family: var(--font-display);
+            font-size: 0.95rem;
             font-weight: 600;
             margin: 0;
             letter-spacing: -0.02em;
@@ -1673,10 +1696,9 @@
             gap: 6px;
         }
         .entry-form__label {
-            font-size: 0.68rem;
+            font-size: 0.7rem;
             font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+            letter-spacing: 0;
             color: var(--text-muted);
             padding-left: 2px;
         }
@@ -1688,7 +1710,7 @@
         }
         /* ── Live-Netto-Dauer (Signature) ── */
         .entry-form__duration {
-            font-family: var(--font-mono, 'JetBrains Mono', monospace);
+            font-family: var(--font-mono);
             font-size: 0.74rem;
             font-weight: 600;
             font-variant-numeric: tabular-nums;
@@ -1736,7 +1758,7 @@
             color: var(--text-muted);
         }
         .entry-form__earnings-value {
-            font-family: var(--font-mono, 'JetBrains Mono', monospace);
+            font-family: var(--font-mono);
             font-size: 0.82rem;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
@@ -1837,7 +1859,6 @@
             font-size: 0.68rem !important;
             font-weight: 600 !important;
             letter-spacing: 0.02em !important;
-            text-transform: uppercase;
             flex-shrink: 0;
             color: var(--text-muted) !important;
             background: transparent !important;
@@ -2119,15 +2140,13 @@
         .timer-box__label {
             color: var(--text-muted);
             font-size: var(--eyebrow-size);
-            text-transform: uppercase;
             letter-spacing: var(--eyebrow-tracking);
             font-weight: 600;
             white-space: nowrap;
         }
         .timer-log-status {
-            font-size: 0.625rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            font-size: 0.7rem;
+            letter-spacing: 0;
             color: var(--text-muted);
             font-weight: 600;
             opacity: 0.7;
@@ -2317,7 +2336,6 @@
         }
         .activities-sum__label {
             font-size: var(--eyebrow-size);
-            text-transform: uppercase;
             letter-spacing: var(--eyebrow-tracking);
             font-weight: 600;
             color: var(--text-muted);
@@ -2400,11 +2418,10 @@
             outline-offset: 2px;
         }
         .day-tab-label {
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             font-weight: 600;
             margin-bottom: 2px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0;
             opacity: 0.75;
         }
         .day-tab-date {

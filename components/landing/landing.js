@@ -737,13 +737,21 @@
     /* — Ausgang — */
     window.finishIntro=function(){
       localStorage.setItem('pro_intro_seen','true');
-      intro.style.animation=REDUCE?'viFade .3s ease reverse forwards':'viExit .55s cubic-bezier(.32,.72,0,1) forwards';
+      // 3D sofort anhalten: die GPU gehoert ab jetzt der Blende
+      laeuft=false;
+      if(G) G.filme.forEach(function(v){ v.pause(); });
+      if(REDUCE){ intro.style.animation='viFade .3s ease reverse forwards'; }
+      else {
+        intro.classList.add('vi-geht');
+        intro.style.animation='viExit .45s cubic-bezier(.4,0,.2,1) .38s forwards';
+        // Dashboard-Karten staffeln sich ein, waehrend das Intro verblasst
+        setTimeout(function(){ document.body.classList.add('mwl-navigated'); },420);
+      }
       setTimeout(function(){
-        laeuft=false;
-        if(G) G.filme.forEach(function(v){ v.pause(); v.removeAttribute('src'); v.load(); });
+        if(G) G.filme.forEach(function(v){ v.removeAttribute('src'); v.load(); });
         intro.style.display='none';
         document.body.style.overflow='';
-      },REDUCE?300:520);
+      },REDUCE?300:860);
     };
 
     document.addEventListener('keydown',function(e){
