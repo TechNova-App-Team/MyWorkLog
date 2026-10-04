@@ -401,18 +401,49 @@
           g.scale.setScalar(0.9); g.position.y=3.2;
           return {gruppe:g, film:f.video, dazu:function(t,T){ g.rotation.set(0.05, mix(-0.55,0.55,t)+mx*0.15, mix(-0.1,0.05,t)); }};
         },
-        // Laptop: Film vom PDF-Dialog, der Deckel klappt beim Scrollen auf
+        // Laptop: Film vom PDF-Dialog, der Deckel klappt beim Scrollen auf.
+        // Gehaeuse als platte() (rundQuader kappte die Ecken, wie beim Handy),
+        // echte Einzeltasten in einer Mulde, Trackpad, Notch, Scharnierrolle.
         laptop:function(){
           var g=new THREE.Group(), f=film('/Grafiken/intro/vorlagen.mp4');
-          g.add(new THREE.Mesh(rundQuader(17,0.6,11.2,0.3,4), M.alu));
-          var tasten=new THREE.Mesh(rundQuader(14.6,0.05,5.2,0.2,2), new THREE.MeshStandardMaterial({color:0x26262e, roughness:0.75}));
-          tasten.position.set(0,0.31,-1.4); g.add(tasten);
-          var pad=new THREE.Mesh(rundQuader(5.6,0.03,3.4,0.25,2), new THREE.MeshPhysicalMaterial({color:0xc9c9d2, roughness:0.3, metalness:0.6}));
-          pad.position.set(0,0.31,3.3); g.add(pad);
-          var scharnier=new THREE.Group(); scharnier.position.set(0,0.3,-5.5); g.add(scharnier);
-          var deckel=new THREE.Mesh(rundQuader(17,11,0.4,0.3,4), M.alu); deckel.position.set(0,5.5,0); scharnier.add(deckel);
-          var rand=new THREE.Mesh(rundQuader(16.6,10.6,0.02,0.22,3), M.glas); rand.position.set(0,5.5,0.21); scharnier.add(rand);
-          var s=schirm(f.tex,15.6,9.75,0.12); s.position.set(0,5.55,0.23); scharnier.add(s);
+          var B=17, T=11.4, D=0.55, OBEN=D/2;
+          var unten=new THREE.Mesh(platte(B,T,D,0.85,0.18).rotateX(-Math.PI/2), M.alu); g.add(unten);
+          function liegend(geo){ return geo.rotateX(-Math.PI/2); }
+          // Tastenmulde + Tasten (Reihen in Tastenbreiten, auf 14,6 Einheiten verteilt)
+          var mulde=new THREE.Mesh(liegend(flaeche(15.3,6.35,0.35)), new THREE.MeshStandardMaterial({color:0x1d1d24, roughness:0.8}));
+          mulde.position.set(0,OBEN+0.004,-1.7); g.add(mulde);
+          var reihen=[
+            {h:0.5, b:[1,1,1,1,1,1,1,1,1,1,1,1,1,1]},
+            {h:0.92,b:[1,1,1,1,1,1,1,1,1,1,1,1,1,1.5]},
+            {h:0.92,b:[1.5,1,1,1,1,1,1,1,1,1,1,1,1,1]},
+            {h:0.92,b:[1.8,1,1,1,1,1,1,1,1,1,1,1,1.75]},
+            {h:0.92,b:[2.3,1,1,1,1,1,1,1,1,1,1,2.3]},
+            {h:0.92,b:[1,1,1,1.3,5.6,1.3,1,1,1]}
+          ];
+          var tastenGeo=rundQuader(1,0.16,1,0.07,2), liste=[], LUECKE=0.13, BREITE=14.6;
+          var zPos=-1.7-6.35/2+0.42;
+          reihen.forEach(function(r){
+            var summe=r.b.reduce(function(a,x){return a+x;},0), einheit=(BREITE-LUECKE*(r.b.length-1))/summe, x=-BREITE/2;
+            r.b.forEach(function(w){ var bw=w*einheit; liste.push([x+bw/2, zPos+r.h/2, bw, r.h]); x+=bw+LUECKE; });
+            zPos+=r.h+LUECKE;
+          });
+          var tasten=new THREE.InstancedMesh(tastenGeo, new THREE.MeshPhysicalMaterial({color:0x26252d, roughness:0.55, clearcoat:0.2}), liste.length), o=new THREE.Object3D();
+          liste.forEach(function(q,i){ o.position.set(q[0],OBEN+0.09,q[1]); o.scale.set(q[2],1,q[3]); o.updateMatrix(); tasten.setMatrixAt(i,o.matrix); });
+          g.add(tasten);
+          var pad=new THREE.Mesh(liegend(flaeche(6.4,3.9,0.38)), new THREE.MeshPhysicalMaterial({color:0xcfd0d8, roughness:0.32, metalness:0.55, clearcoat:0.4}));
+          pad.position.set(0,OBEN+0.004,3.55); g.add(pad);
+          // Deckel: Drehpunkt an der Hinterkante, knapp ueber den Tasten, damit
+          // der zugeklappte Deckel nicht durch die Tastatur schneidet
+          var scharnier=new THREE.Group(); scharnier.position.set(0,OBEN+0.32,-T/2+0.32); g.add(scharnier);
+          var rolle=new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.24,14.6,24), M.rahmen); rolle.rotation.z=Math.PI/2; scharnier.add(rolle);
+          var DH=11.2, DD=0.3;
+          var deckel=new THREE.Mesh(platte(B,DH,DD,0.85,0.1), M.alu); deckel.position.set(0,DH/2,0); scharnier.add(deckel);
+          var front=new THREE.Mesh(flaeche(B-0.16,DH-0.16,0.78), M.glas); front.position.set(0,DH/2,DD/2+0.003); scharnier.add(front);
+          // Bildschirm 16:10 mit duennem Rand, unten etwas breiter wie beim Vorbild
+          var SB=16.3, SH=SB/1.6, sy=DH/2+0.22;
+          var s=schirm(f.tex,SB,SH,0.42); s.position.set(0,sy,DD/2+0.008); scharnier.add(s);
+          var notch=new THREE.Mesh(flaeche(1.7,0.36,0.14), M.schwarz); notch.position.set(0,sy+SH/2-0.16,DD/2+0.012); scharnier.add(notch);
+          var gl1=glas(SB,SH,0.42); gl1.position.set(0,sy,DD/2+0.016); scharnier.add(gl1);
           g.scale.setScalar(0.66); g.position.y=-2.6;
           return {gruppe:g, film:f.video, dazu:function(t){
             g.rotation.set(0.32+my*0.05, mix(-0.45,0.45,t)+mx*0.1, 0);
