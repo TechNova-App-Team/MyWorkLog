@@ -19,7 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Martian+Mono:wdth,wght@112.5,300..500&family=Caveat:wght@500;600&display=swap"
         rel="stylesheet">
     <title>Kostenlose Berichtsheft KI – IHK-konform in Sekunden</title>
     <link rel="canonical" href="https://myworklog.de/berichtsheft/">
@@ -29,12 +29,12 @@
     <!-- Seitenstile. Die Reihenfolge ist Teil der Gestaltung: bei gleichem
          Selektor gewinnt die spaetere Datei, und druck-responsive.css muss
          alle Regeln davor schlagen koennen. Nicht umsortieren. -->
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/basis.css?v=b3e054c2e2">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=66b58dda13">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=83313aad03">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/basis.css?v=1819356afa">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=10b8cd00c8">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=265387b76a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=1deef4653e">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-panel.css?v=91a6ac071d">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-vorschau.css?v=8e24a112cd">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-vorschau.css?v=19dd5382bb">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/foto-import.css?v=6d593ff0f0">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/pdf-studio.css?v=69cfd1339a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/pdf-stile.css?v=d0d3a39657">
@@ -42,9 +42,9 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-quellen.css?v=2369ef12fd">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-generieren.css?v=2af30b5baf">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-chat.css?v=1622dbaae2">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/b2b.css?v=5ba404e479">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/b2b.css?v=aaa18a26b9">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ihk-import.css?v=c026ac1991">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/druck-responsive.css?v=edcc29ab78">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/druck-responsive.css?v=7d71f9b3b8">
     <script defer src="/Assets/js/ph-init.js?v=58fa141e89"></script>
     <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=cc131a6705">
     <script defer src="/Assets/js/version-loader.js?v=0a687fa2b5"></script>
@@ -406,8 +406,8 @@
     </svg>
 
     <!-- ===== BACKGROUND ===== -->
-    <div class="bg-mesh">
-        <div class="bg-grad"></div>
+    <div class="bg-mesh" aria-hidden="true">
+        <i class="hf-fleck hf-fleck-a"></i><i class="hf-fleck hf-fleck-b"></i><i class="hf-fleck hf-fleck-c"></i>
     </div>
 
     <!-- ===== PAGE WRAPPER ===== -->
@@ -416,27 +416,11 @@
         <!-- ===== HEADER ===== -->
         <header class="header">
             <div class="header-left">
-                <div class="brand">
-                    <span class="brand-dot"></span>
-                    <span>MyWorkLog</span>
-                </div>
                 <div class="page-title-wrap">
-                    <h1 class="page-title" id="berichtsheftTitle">
-                        <svg class="icon icon-lg">
-                            <use href="#i-clipboard" />
-                        </svg>
-                        <!-- Der Text MUSS in einem eigenen Element stehen: neben dem
-                             <svg> waere er ein gemischter Knoten, den der i18n-Walk
-                             still ueberspringt — die Ueberschrift bliebe auf /en/
-                             deutsch, und der Build meldete trotzdem "0 fehlend".
-                             Vorher hing sie deshalb an einem Eintrag in
-                             berichtsheft.phrases.en.json; als eigener Schluessel
-                             braucht sie den nicht mehr. -->
-                        <span>Berichtsheft</span>
-                    </h1>
+                    <h1 class="page-title" id="berichtsheftTitle"><i class="hf-marke" aria-hidden="true"></i><span>Berichtsheft</span></h1>
                     <span class="secret-hint">&larr; 5x</span>
                 </div>
-                <p class="page-subtitle">IHK-konforme Ausbildungsnachweise erstellen &amp; verwalten</p>
+                <p class="page-subtitle">Dein Ausbildungsnachweis, Woche für Woche.</p>
             </div>
             <div class="header-right">
                 <a href="/schatten-berichtsheft/" class="btn-vault" aria-label="Schatten-Berichtsheft öffnen"
@@ -484,118 +468,57 @@
                 </div>
             </div>
 
-            <!-- ===== MODE TOGGLE ===== -->
-            <div class="mode-toggle-wrap">
-                <span class="mode-toggle-label">Berichtsformat:</span>
-                <div class="mode-toggle" id="modeToggle">
-                    <div class="mode-toggle-slider" id="modeSlider"></div>
-                    <button class="mode-toggle-btn active" id="btnWeekly" onclick="setMode('weekly')">
-                        <svg class="icon icon-sm">
-                            <use href="#i-calendar" />
-                        </svg> <span>Wöchentlich</span>
-                    </button>
-                    <button class="mode-toggle-btn" id="btnDaily" onclick="setMode('daily')">
-                        <svg class="icon icon-sm">
-                            <use href="#i-list" />
-                        </svg> <span>Täglich</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ===== STREAK + PROGRESS ===== -->
-            <div class="top-bar">
-                <div class="streak-card" id="streakCard">
-                    <span class="streak-fire">
-                        <svg class="icon">
-                            <use href="#i-flame" />
-                        </svg>
-                    </span>
-                    <div>
-                        <div class="streak-num" id="streakNum">0</div>
-                        <div class="streak-label">Wochen-Streak</div>
-                    </div>
-                </div>
-                <div class="progress-card">
-                    <div class="progress-ring-wrap">
-                        <svg width="52" height="52">
-                            <circle class="progress-ring-bg" cx="26" cy="26" r="22"></circle>
-                            <circle class="progress-ring-val" id="progressRing" cx="26" cy="26" r="22"
-                                stroke-dasharray="138.23" stroke-dashoffset="138.23"></circle>
-                        </svg>
-                        <span class="progress-ring-text" id="progressPercent">0%</span>
-                    </div>
-                    <div class="progress-info">
-                        <div class="progress-label">Ausbildungsfortschritt</div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+            <!-- ===== BUEHNE: DIESE WOCHE (v8.1.12) =====
+                 Entwurf vom Nutzer abgenommen (04.10.2026): Intro-Buehne + "das Heft".
+                 Links der Satz zur Woche und die Formularkaestchen, rechts ein Stapel
+                 echter Vordruck-Blaetter (oben die Woche, um die es geht), dahinter
+                 die KW als Riesentypo wie die Hero-Schrift im Intro.
+                 Bewusst NICHT die SaaS-Kacheln der ersten Fassung: die waren dem
+                 Nutzer "zu generisch nach KI".
+                 #hfNow, #hfStapel und #hfRiesen schreibt renderNow() (bh-uebersicht.js). -->
+            <section class="hf-buehne">
+                <div class="hf-riesen" id="hfRiesen" aria-hidden="true"></div>
+                <div class="hf-links">
+                    <div class="hf-now" id="hfNow" aria-live="polite"></div>
+                    <div class="hf-kaestchen" role="group" aria-label="Stand">
+                        <div class="hf-kf">
+                            <small id="streakTxt">Wochen am Stück</small>
+                            <b id="streakNum">0</b>
                         </div>
-                        <div class="progress-sub" id="progressSub">0 von 0 Wochen dokumentiert</div>
+                        <div class="hf-kf">
+                            <small id="progressSub">von 0 Wochen</small>
+                            <b id="progressNum">0</b>
+                            <span class="hf-kf-bar" aria-hidden="true"><span id="progressBarFill"></span></span>
+                        </div>
+                        <button type="button" class="hf-kf hf-kf--knopf" id="hfLuecke" onclick="hfLueckeOeffnen()">
+                            <small id="hfLueckeTxt">Lücken</small>
+                            <b id="hfLueckeNum">0</b>
+                        </button>
+                        <div class="hf-kf">
+                            <small id="hfSignTxt">warten auf Unterschrift</small>
+                            <b id="hfSignNum">0</b>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <div class="hf-stapel" id="hfStapel"></div>
+            </section>
 
-            <!-- ===== STATS GRID ===== -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-icon"><svg class="icon">
-                            <use href="#i-pen" />
-                        </svg></span>
-                    <div class="stat-value" id="signedReports" data-target="0">0</div>
-                    <div class="stat-label">Unterschrieben</div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-icon"><svg class="icon">
-                            <use href="#i-calendar" />
-                        </svg></span>
-                    <div class="stat-value" id="totalWeeks" data-target="0">0</div>
-                    <div class="stat-label">Wochen erfasst</div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-icon"><svg class="icon">
-                            <use href="#i-check" />
-                        </svg></span>
-                    <div class="stat-value" id="completionRate" data-target="0">0%</div>
-                    <div class="stat-label">Vollständigkeit</div>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-icon"><svg class="icon">
-                            <use href="#i-file" />
-                        </svg></span>
-                    <div class="stat-value" id="avgWordsPerWeek" data-target="0">0</div>
-                    <div class="stat-label">&Oslash; Wörter/Woche</div>
-                </div>
-            </div>
-
-            <!-- ===== CALENDAR HEATMAP ===== -->
-            <div class="calendar-section">
-                <div class="calendar-card">
-                    <div class="calendar-title">
-                        <svg class="icon">
-                            <use href="#i-calendar" />
-                        </svg>
-                        <span>Wochen-Übersicht</span>
-                        <span id="calendarYear"
-                            style="color:var(--text-muted);font-weight:400;font-size:0.82rem;"></span>
-                    </div>
-                    <div class="calendar-grid" id="calendarGrid"></div>
-                    <!-- Die Farbwerte müssen mit .cal-cell / .draft / .complete / .signed
-                         übereinstimmen — vorher stand hier 0.04/0.25/0.35 gegen 0.03/0.2/0.3
-                         in den Zellen, die Legende zeigte also andere Töne als der Streifen. -->
-                    <div class="cal-legend">
-                        <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: rgba(var(--primary-rgb), 0.03); border: 1px solid var(--border);"></span>
-                            <span>Kein Bericht</span></span>
-                        <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: rgba(var(--primary-rgb), 0.2); box-shadow: 0 0 0 1px var(--primary-light);"></span>
-                            <span>Entwurf</span></span>
-                        <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: rgba(var(--success-rgb), 0.3);"></span>
-                            <span>Vollständig</span></span>
-                        <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: var(--success);"></span> <span>Unterschrieben</span></span>
+            <!-- ===== DEIN JAHR: Registerreiter =====
+                 Ein Reiter je Monat, ein Strich je Woche (ISO-Regel: die Woche gehoert
+                 zum Monat ihres Donnerstags). Der laufende Monat ist als Blatt
+                 herausgezogen. Inhalt schreibt renderCalendarHeatmap(). -->
+            <section class="hf-jahr" aria-labelledby="hfJahrTitle">
+                <div class="hf-kopf">
+                    <h2 class="hf-h2" id="hfJahrTitle"><span>Dein Jahr</span> <span class="hf-h2-zahl" id="calendarYear"></span></h2>
+                    <div class="hf-legende" aria-hidden="true">
+                        <span class="hf-leg"><i class="hf-leg-k signed"></i><span>Unterschrieben</span></span>
+                        <span class="hf-leg"><i class="hf-leg-k complete"></i><span>Vollständig</span></span>
+                        <span class="hf-leg"><i class="hf-leg-k draft"></i><span>Entwurf</span></span>
+                        <span class="hf-leg"><i class="hf-leg-k fehlt"></i><span>Fehlt</span></span>
                     </div>
                 </div>
-            </div>
+                <div class="hf-register" id="calendarGrid"></div>
+            </section>
 
             <!-- ===== BETRIEB / IHK (B2B) ===== -->
             <!-- Inhalt kommt komplett aus bh-b2b-ui.js (b2bUiInit im
@@ -604,157 +527,135 @@
                  Hauptweg — die Server-Anbindung ist ein Zusatz, kein Ersatz. -->
             <div id="b2bCard" hidden></div>
 
-            <!-- ===== QUICK ACTIONS ===== -->
-            <div class="actions-row">
-                <button class="btn btn-primary" onclick="openNewReportModal()">
-                    <svg class="icon">
-                        <use href="#i-plus" />
-                    </svg>
-                    <span>Neuen Bericht</span>
-                    <span class="kbd-hint"><span class="kbd">N</span></span>
-                </button>
-                <button class="btn btn-secondary" onclick="autoFillFromTimeTracker()">
-                    <svg class="icon">
-                        <use href="#i-refresh" />
-                    </svg>
-                    <span>MyWorkLog Import</span>
-                </button>
-                <button class="btn btn-secondary" onclick="mwlFotoOpen()">
-                    <svg class="icon">
-                        <use href="#i-camera" />
-                    </svg>
-                    <span>Foto vom Papier</span>
-                </button>
-                <button class="btn btn-secondary" onclick="openIhkImport()">
-                    <svg class="icon">
-                        <use href="#i-file-up" />
-                    </svg>
-                    <span>IHK-PDF Import</span>
-                </button>
-                <button class="btn btn-secondary" onclick="openPDFModal(null)">
-                    <svg class="icon">
-                        <use href="#i-file" />
-                    </svg>
-                    <span>PDF Exportieren</span>
-                    <span class="kbd-hint"><span class="kbd">E</span></span>
-                </button>
-                <button class="btn btn-secondary" onclick="showTemplates()">
-                    <svg class="icon">
-                        <use href="#i-edit" />
-                    </svg>
-                    <span>Vorlagen</span>
-                    <span class="kbd-hint"><span class="kbd">T</span></span>
-                </button>
-            </div>
-
-            <!-- ===== SEARCH & FILTER ===== -->
-            <div class="search-filter-bar">
-                <input type="text" class="search-input" id="searchInput" placeholder="Berichte durchsuchen... (Strg+F)"
-                    oninput="filterReports()">
-                <select class="filter-select" id="yearFilter" onchange="filterReports()">
-                    <option value="">Alle Jahre</option>
-                </select>
-                <select class="filter-select" id="statusFilter" onchange="filterReports()">
-                    <option value="">Alle Status</option>
-                    <option value="complete">Vollständig</option>
-                    <option value="incomplete">Unvollständig</option>
-                    <option value="signed">Unterschrieben</option>
-                </select>
-                <select class="filter-select" id="sortOrder" onchange="filterReports()">
-                    <option value="newest">Neueste zuerst</option>
-                    <option value="oldest">Älteste zuerst</option>
-                    <option value="week-asc">KW aufsteigend</option>
-                    <option value="week-desc">KW absteigend</option>
-                </select>
-            </div>
-
-            <!-- ===== REPORTS LIST ===== -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <svg class="icon">
-                            <use href="#i-book" />
-                        </svg>
-                        <span>Meine Berichtshefte</span>
+            <!-- ===== DEINE WOCHEN ===== -->
+            <section class="hf-wochen" aria-labelledby="hfWochenTitle">
+                <div class="hf-kopf">
+                    <h2 class="hf-h2" id="hfWochenTitle"><span>Deine Wochen</span> <span class="hf-h2-zahl" id="reportCount"></span></h2>
+                    <div class="hf-werkzeuge">
+                        <button type="button" class="hf-chip" onclick="openNewReportModal()">
+                            <svg class="icon icon-sm"><use href="#i-plus" /></svg>
+                            <span>Neue Woche</span>
+                            <kbd class="hf-kbd">N</kbd>
+                        </button>
+                        <!-- Drei Importwege, die man einmal braucht: unter EINEM Menue
+                             statt drei gleich lauter Knoepfe. -->
+                        <details class="hf-menue" id="hfImport">
+                            <summary class="hf-chip">
+                                <svg class="icon icon-sm"><use href="#i-download" /></svg>
+                                <span>Importieren</span>
+                            </summary>
+                            <div class="hf-menue-liste">
+                                <button type="button" class="hf-menue-punkt" onclick="hfMenueZu();autoFillFromTimeTracker()">
+                                    <svg class="icon"><use href="#i-refresh" /></svg>
+                                    <span class="hf-menue-text"><span>Aus der Zeiterfassung</span><small>Zeiten und Notizen dieser App</small></span>
+                                </button>
+                                <button type="button" class="hf-menue-punkt" onclick="hfMenueZu();mwlFotoOpen()">
+                                    <svg class="icon"><use href="#i-camera" /></svg>
+                                    <span class="hf-menue-text"><span>Foto vom Papier</span><small>Texterkennung auf deinem Gerät</small></span>
+                                </button>
+                                <button type="button" class="hf-menue-punkt" onclick="hfMenueZu();openIhkImport()">
+                                    <svg class="icon"><use href="#i-file-up" /></svg>
+                                    <span class="hf-menue-text"><span>IHK-PDF</span><small>Export aus dem Online-Berichtsheft der Kammer</small></span>
+                                </button>
+                            </div>
+                        </details>
+                        <button type="button" class="hf-chip" onclick="openPDFModal(null)">
+                            <svg class="icon icon-sm"><use href="#i-file" /></svg>
+                            <span>PDF</span>
+                            <kbd class="hf-kbd">E</kbd>
+                        </button>
+                        <button type="button" class="hf-chip" onclick="showTemplates()">
+                            <svg class="icon icon-sm"><use href="#i-edit" /></svg>
+                            <span>Vorlagen</span>
+                            <kbd class="hf-kbd">T</kbd>
+                        </button>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="color: var(--text-muted); font-size: 0.82rem;" id="reportCount">0 Berichte</div>
-                        <button class="btn-ghost" id="trashToggle" onclick="typeof openTrashModal === 'function' ? openTrashModal() : (window.mwlAlert ? mwlAlert('Der Browser nutzt noch ein älteres Skript aus dem Cache. Bitte lade die Seite einmal mit Strg + F5 (Hard-Reload) neu.', 'Cache aktualisieren') : alert('Bitte mit Strg+F5 neu laden.'))" title="Papierkorb anzeigen" style="display:inline-flex; align-items:center; gap:6px;">
-                            <svg class="icon icon-sm">
-                                <use href="#i-trash" />
-                            </svg> <span>Papierkorb</span>
+                </div>
+
+                <div class="hf-filter">
+                    <label class="hf-suche">
+                        <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search" /></svg>
+                        <input type="text" class="search-input" id="searchInput" placeholder="Suchen (Strg+F)"
+                            aria-label="Berichte durchsuchen" oninput="filterReports()">
+                    </label>
+                    <select class="filter-select" id="yearFilter" onchange="filterReports()" aria-label="Ausbildungsjahr">
+                        <option value="">Alle Jahre</option>
+                    </select>
+                    <select class="filter-select" id="statusFilter" onchange="filterReports()" aria-label="Status">
+                        <option value="">Alle Status</option>
+                        <option value="complete">Vollständig</option>
+                        <option value="incomplete">Unvollständig</option>
+                        <option value="signed">Unterschrieben</option>
+                    </select>
+                    <select class="filter-select" id="sortOrder" onchange="filterReports()" aria-label="Sortierung">
+                        <option value="newest">Neueste zuerst</option>
+                        <option value="oldest">Älteste zuerst</option>
+                        <option value="week-asc">KW aufsteigend</option>
+                        <option value="week-desc">KW absteigend</option>
+                    </select>
+                    <!-- Format fuer NEUE Berichte. Die ids (modeToggle, modeSlider,
+                         btnWeekly, btnDaily) braucht syncModeSliders() in bh-tagesmodus.js. -->
+                    <div class="hf-format">
+                        <span class="hf-format-label">Format</span>
+                        <div class="mode-toggle" id="modeToggle">
+                            <div class="mode-toggle-slider" id="modeSlider"></div>
+                            <button class="mode-toggle-btn active" id="btnWeekly" onclick="setMode('weekly')">
+                                <span>Wöchentlich</span>
+                            </button>
+                            <button class="mode-toggle-btn" id="btnDaily" onclick="setMode('daily')">
+                                <span>Täglich</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hf-filter-rechts">
+                        <button class="hf-chip hf-chip--leise" id="bulkToggle" onclick="toggleBulkMode()" style="display:none;">
+                            <svg class="icon icon-sm"><use href="#i-checksq" /></svg> <span>Auswählen</span>
+                        </button>
+                        <button class="hf-chip hf-chip--leise" id="trashToggle" onclick="typeof openTrashModal === 'function' ? openTrashModal() : (window.mwlAlert ? mwlAlert('Der Browser nutzt noch ein älteres Skript aus dem Cache. Bitte lade die Seite einmal mit Strg + F5 (Hard-Reload) neu.', 'Cache aktualisieren') : alert('Bitte mit Strg+F5 neu laden.'))" title="Papierkorb anzeigen">
+                            <svg class="icon icon-sm"><use href="#i-trash" /></svg> <span>Papierkorb</span>
                             <span class="trash-badge" id="trashBadge" style="display:none;">0</span>
                         </button>
-                        <button class="btn-ghost" id="bulkToggle" onclick="toggleBulkMode()" style="display:none;">
-                            <svg class="icon icon-sm">
-                                <use href="#i-checksq" />
-                            </svg> <span>Mehrfachauswahl</span>
-                        </button>
                     </div>
                 </div>
-                <div id="bulkBar"
-                    style="display:none; padding: 0.75rem 1rem; margin-bottom: 1rem; background: rgba(var(--primary-rgb),0.06); border: 1px solid rgba(var(--primary-rgb),0.15); border-radius: var(--radius-sm); align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <span style="font-size: 0.82rem; font-weight: 600;"><span id="bulkCount">0</span>
-                        <span>ausgewählt</span></span>
-                    <div id="bulkActionsNormal" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                        <button class="btn btn-ghost" onclick="toggleSelectAll()"
-                            style="padding: 5px 12px; font-size: 0.78rem;">
-                            <svg class="icon icon-sm">
-                                <use href="#i-checksq" />
-                            </svg> <span>Alle</span>
-                        </button>
-                        <button class="btn btn-danger" onclick="showBulkDeleteConfirm()"
-                            style="padding: 5px 12px; font-size: 0.78rem;">
-                            <svg class="icon icon-sm">
-                                <use href="#i-trash" />
-                            </svg> <span>Löschen</span>
-                        </button>
-                        <button class="btn btn-success" onclick="bulkExportPDF()"
-                            style="padding: 5px 12px; font-size: 0.78rem;">
-                            <svg class="icon icon-sm">
-                                <use href="#i-file" />
-                            </svg> <span>PDF Export</span>
-                        </button>
-                        <button class="btn btn-ghost" onclick="toggleBulkMode()">Abbrechen</button>
-                    </div>
 
-                    <div id="bulkDeleteConfirmUi"
-                        style="display: none; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                        <span style="font-size: 0.82rem; font-weight: 600; color: var(--danger);">Wirklich
-                            löschen?</span>
-                        <button class="btn btn-ghost" onclick="hideBulkDeleteConfirm()"
-                            style="padding: 5px 12px; font-size: 0.78rem;">Nein</button>
-                        <button class="btn btn-danger" onclick="confirmBulkDelete()"
-                            style="padding: 5px 12px; font-size: 0.78rem;">Ja, löschen</button>
+                <div id="bulkBar" class="hf-bulk" style="display:none;">
+                    <span class="hf-bulk-zahl"><span id="bulkCount">0</span> <span>ausgewählt</span></span>
+                    <div id="bulkActionsNormal" class="hf-bulk-aktionen">
+                        <button class="hf-chip" onclick="toggleSelectAll()">
+                            <svg class="icon icon-sm"><use href="#i-checksq" /></svg> <span>Alle</span>
+                        </button>
+                        <button class="hf-chip" onclick="bulkExportPDF()">
+                            <svg class="icon icon-sm"><use href="#i-file" /></svg> <span>PDF Export</span>
+                        </button>
+                        <button class="hf-chip hf-chip--gefahr" onclick="showBulkDeleteConfirm()">
+                            <svg class="icon icon-sm"><use href="#i-trash" /></svg> <span>Löschen</span>
+                        </button>
+                        <button class="hf-chip hf-chip--leise" onclick="toggleBulkMode()">Abbrechen</button>
+                    </div>
+                    <div id="bulkDeleteConfirmUi" class="hf-bulk-aktionen" style="display: none;">
+                        <span class="hf-bulk-frage">Wirklich löschen?</span>
+                        <button class="hf-chip hf-chip--leise" onclick="hideBulkDeleteConfirm()">Nein</button>
+                        <button class="hf-chip hf-chip--gefahr" onclick="confirmBulkDelete()">Ja, löschen</button>
                     </div>
                 </div>
-                <div class="report-list" id="reportList"></div>
-                <div class="empty-state" id="emptyState" style="display: none;">
-                    <div class="empty-icon">
-                        <svg class="icon icon-xl">
-                            <use href="#i-clipboard" />
-                        </svg>
-                    </div>
-                    <div class="empty-title">Noch keine Berichte</div>
-                    <div class="empty-text">Schreib deine erste Woche selbst — oder lass den Assistenten aus
-                        Beruf, Lehrjahr und ein paar Stichworten einen Entwurf machen.</div>
+
+                <div class="report-list hf-liste" id="reportList"></div>
+                <div class="empty-state hf-leer" id="emptyState" style="display: none;">
+                    <div class="empty-title">Hier stehen gleich deine Wochen</div>
+                    <div class="empty-text">Lass den Assistenten aus ein paar Stichworten die erste Woche entwerfen oder schreib sie selbst.</div>
                     <!-- Zwei Wege, weil die Seite mit „Berichtsheft KI" wirbt, der Assistent
                          aber nur hinter dem schwebenden Knopf unten rechts lag — ein neuer
                          Nutzer fand ihn im Leerzustand nicht. -->
                     <div class="empty-actions">
-                        <button class="btn btn-primary" onclick="openNewReportModal()">
-                            <svg class="icon">
-                                <use href="#i-plus" />
-                            </svg> <span>Ersten Bericht erstellen</span>
+                        <button class="hf-chip" onclick="AISChat.oeffnen()">
+                            <svg class="icon icon-sm"><use href="#i-sparkles" /></svg> <span>Mit dem Assistenten</span>
                         </button>
-                        <button class="btn btn-secondary" onclick="AISChat.oeffnen()">
-                            <svg class="icon">
-                                <use href="#i-sparkles" />
-                            </svg> <span>Woche vom Assistenten entwerfen lassen</span>
+                        <button class="hf-chip" onclick="openNewReportModal()">
+                            <svg class="icon icon-sm"><use href="#i-plus" /></svg> <span>Selbst schreiben</span>
                         </button>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- ===== SCHATTEN-BERICHTSHEFT: EINSTIEG ===== -->
             <!-- Bis v4.1.21 nur per 5x-Klick auf den Seitentitel erreichbar — praktisch
@@ -2210,14 +2111,14 @@ Beispiel:
          Vor bh-ui-helfer.js, das die zwei Namen nur durchreicht. -->
     <script src="/Assets/js/mwl-dialog.js?v=bf6a68ada1"></script>
     <script src="/Assets/js/berichtsheft/bh-basis.js?v=9406750cd5"></script>
-    <script src="/Assets/js/berichtsheft/bh-uebersicht.js?v=d549e9caaf"></script>
-    <script src="/Assets/js/berichtsheft/bh-freigabe.js?v=6127be2c28"></script>
+    <script src="/Assets/js/berichtsheft/bh-uebersicht.js?v=eb1bee16b7"></script>
+    <script src="/Assets/js/berichtsheft/bh-freigabe.js?v=3b2bc43e33"></script>
     <!-- B2B: Betriebs-Anbindung. supabase-config.js OHNE ?v= laden (eine der
          vier Dateien, die per Stale-While-Revalidate laufen). bh-b2b.js laedt
          die Supabase-Bibliothek nur, wenn wirklich eine Sitzung vorliegt. -->
     <script src="/config/supabase-config.js"></script>
     <script src="/Assets/js/berichtsheft/bh-b2b.js?v=3c85982477"></script>
-    <script src="/Assets/js/berichtsheft/bh-b2b-ui.js?v=88f259ecd1"></script>
+    <script src="/Assets/js/berichtsheft/bh-b2b-ui.js?v=99e830ba24"></script>
     <script src="/Assets/js/berichtsheft/bh-bericht.js?v=394068e431"></script>
     <script src="/Assets/js/berichtsheft/bh-pdf-modal.js?v=5bbdb5b026"></script>
     <script src="/Assets/js/berichtsheft/bh-pdf-export.js?v=1ee26d6e9d"></script>

@@ -4,34 +4,53 @@
    Herausgeloest aus pages/berichtsheft/index.html. */
 
 /* ══════════════════════════════════════════════════════════════
-   BERICHTSHEFT — "SLATE" DESIGN SYSTEM
-   Obsidian enterprise aesthetic. Zero decoration.
+   BERICHTSHEFT — Intro-Buehne + "das Heft" (seit v8.1.12)
+   Vom Nutzer am Entwurf abgenommen (04.10.2026), Wunsch "eher dunkel".
+   - Buehne: der Pastellverlauf des Intros, im Dunkeln (Standard) als Nacht.
+   - Papier bleibt in BEIDEN Themen hell — Papier ist Papier. Auf Papier
+     steht immer --papier-tinte, nie --text-main (das ist im Dunkeln hell).
+   - Kuli-Blau = was der Azubi schreibt, Rotstift = was der Ausbilder
+     anmerkt, Stempel = freigegeben. Diese drei Rollen nicht vermischen.
+   - Schriften wie Intro und App: Bricolage (Titel/Riesentypo), Geist (Text),
+     Martian Mono (Vordruck-Beschriftung), Caveat NUR fuer Unterschrift und
+     Rotstift — nie fuer Berichtstext.
+   Formregel: Bedienelemente rund (999px), Behaelter 16px, Eingaben 10px,
+   Papier 4-6px (Blaetter haben fast keine Rundung).
    ══════════════════════════════════════════════════════════════ */
 
 /* --- DESIGN TOKENS --- */
 :root {
-    --bg-deep: #09090b;
-    --bg-surface: #0f0f13;
-    --bg-card: #131318;
-    --bg-glass: rgba(15, 15, 21, 0.82);
-    --bg-glass-heavy: rgba(9, 9, 11, 0.95);
-    --bg-sidebar: rgba(13, 13, 17, 0.98);
-    --bg-elevated: rgba(22, 22, 30, 0.55);
-    --bg-hover: rgba(255, 255, 255, 0.03);
-    --bg-input: rgba(255, 255, 255, 0.025);
-    --primary: #8b5cf6;
-    --primary-rgb: 139, 92, 246;
-    --primary-dim: rgba(139, 92, 246, 0.07);
-    --primary-light: #a78bfa;
-    --primary-glow: rgba(139, 92, 246, 0.12);
-    --secondary: #c084fc;
-    --secondary-rgb: 192, 132, 252;
+    /* Buehne bei Nacht (Standard) */
+    --buehne-1: #131428;
+    --buehne-2: #1a1830;
+    --buehne-3: #23182b;
+    --bg-deep: #141429;
+    --bg-surface: #1b1a31;
+    --bg-card: #1e1c35;
+    --bg-glass: rgba(30, 28, 53, 0.72);
+    --bg-glass-heavy: rgba(20, 20, 41, 0.95);
+    --bg-sidebar: rgba(27, 26, 49, 0.98);
+    --bg-elevated: rgba(40, 37, 66, 0.6);
+    --bg-hover: rgba(255, 255, 255, 0.05);
+    --bg-input: rgba(255, 255, 255, 0.04);
+    /* Vorgabe = das Theme-Blau des Nutzers. Bis v8.1.11 stand hier Lila (#8b5cf6),
+       das der Nutzer ausdruecklich abgelehnt hat; wer ohne App-Daten kam, sah es.
+       Der Theme-Sync am Seitenende setzt NUR --primary, --primary-rgb und
+       --primary-dim — alles andere Akzentige muss sich deshalb daraus ableiten
+       (color-mix / rgba(var(--primary-rgb))), sonst steht Blau neben Lila. */
+    --primary: #5578a8;
+    --primary-rgb: 85, 120, 168;
+    --primary-dim: rgba(var(--primary-rgb), 0.08);
+    --primary-light: color-mix(in srgb, var(--primary) 58%, #ffffff);
+    --primary-glow: rgba(var(--primary-rgb), 0.14);
+    --secondary: color-mix(in srgb, var(--primary) 70%, #b9c7e6);
+    --secondary-rgb: 155, 180, 214;
     --accent: #7dd3fc;
     --accent-rgb: 125, 211, 252;
-    --text-main: #e4e4e7;
-    --text-secondary: #a1a1aa;
-    --text-muted: #71717a;
-    --text-dim: #52525b;
+    --text-main: #eeedf5;
+    --text-secondary: #b6b3c9;
+    --text-muted: #8f8ca6;
+    --text-dim: #66637e;
     --success: #34d399;
     --success-rgb: 52, 211, 153;
     --danger: #f87171;
@@ -42,49 +61,80 @@
     --info-rgb: 96, 165, 250;
     --cyan: #67e8f9;
     --cyan-rgb: 103, 232, 249;
-    --border: rgba(255, 255, 255, 0.06);
-    --border-light: rgba(255, 255, 255, 0.09);
-    --border-hover: rgba(255, 255, 255, 0.1);
-    --border-active: rgba(139, 92, 246, 0.3);
-    --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-display: 'Sora', 'DM Sans', sans-serif;
-    --font-mono: 'IBM Plex Mono', 'Menlo', monospace;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --radius-xs: 5px;
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-light: rgba(255, 255, 255, 0.11);
+    --border-hover: rgba(255, 255, 255, 0.17);
+    --border-active: rgba(var(--primary-rgb), 0.4);
+
+    /* Papier — in beiden Themen hell */
+    --papier: #ecebf4;
+    --papier-2: #dedcea;
+    --papier-tinte: #15131d;
+    --papier-tinte-2: rgba(21, 19, 29, 0.55);
+    --papier-linie: rgba(var(--primary-rgb), 0.24);
+    --papier-rand: rgba(214, 86, 86, 0.5);
+    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
+    --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
+    --rotstift: #c8463c;
+    /* Rotstift-Rot auf der dunklen Buehne (Zahl "fehlen noch") — auf Papier --rotstift. */
+    --rot-hell: #f0857a;
+
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'Menlo', monospace;
+    --font-vordruck: 'Martian Mono', 'Geist Mono', ui-monospace, monospace;
+    --font-hand: 'Caveat', 'Segoe Script', cursive;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --shadow-sm: 0 1px 2px rgba(5, 4, 10, 0.3);
+    --shadow-md: 0 6px 16px -4px rgba(5, 4, 10, 0.45);
+    --shadow-lg: 0 18px 40px -12px rgba(5, 4, 10, 0.6);
     --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.06);
     --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.32, 0.72, 0, 1);
     --transition-bounce: cubic-bezier(0.34, 1.2, 0.64, 1);
     --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* Hauptknopf wie .vi-btn-main im Intro: Tinte auf Grund — im Dunkeln hell. */
+    --ink: #eeedf5;
+    --on-ink: #15131d;
 }
 
+/* Hell = die Buehne des Intros, Werte aus landing.css (.vi-bg, --vi-ink). */
 [data-theme="light"] {
-    --bg-deep: #f8f8fa;
+    --buehne-1: #c6cdee;
+    --buehne-2: #d9d6f1;
+    --buehne-3: #ecdfee;
+    --bg-deep: #e6e6f4;
     --bg-surface: #ffffff;
     --bg-card: #ffffff;
-    --bg-glass: rgba(255, 255, 255, 0.9);
+    --bg-glass: rgba(255, 255, 255, 0.55);
     --bg-glass-heavy: rgba(255, 255, 255, 0.96);
     --bg-sidebar: rgba(255, 255, 255, 0.98);
-    --bg-elevated: rgba(255, 255, 255, 0.7);
-    --bg-hover: rgba(0, 0, 0, 0.025);
-    --bg-input: rgba(0, 0, 0, 0.025);
-    --text-main: #18181b;
-    --text-secondary: #52525b;
-    --text-muted: #71717a;
-    --text-dim: #a1a1aa;
-    --border: rgba(0, 0, 0, 0.06);
-    --border-light: rgba(0, 0, 0, 0.09);
-    --border-hover: rgba(0, 0, 0, 0.1);
-    --border-active: rgba(139, 92, 246, 0.25);
-    --primary-dim: rgba(139, 92, 246, 0.05);
-    --primary-glow: rgba(139, 92, 246, 0.06);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+    --bg-elevated: rgba(255, 255, 255, 0.72);
+    --bg-hover: rgba(21, 19, 29, 0.05);
+    --bg-input: rgba(255, 255, 255, 0.45);
+    --text-main: #15131d;
+    --text-secondary: rgba(21, 19, 29, 0.72);
+    --text-muted: rgba(21, 19, 29, 0.6);
+    --text-dim: rgba(21, 19, 29, 0.4);
+    --border: rgba(21, 19, 29, 0.1);
+    --border-light: rgba(21, 19, 29, 0.14);
+    --border-hover: rgba(21, 19, 29, 0.22);
+    --border-active: rgba(var(--primary-rgb), 0.35);
+    --primary-light: color-mix(in srgb, var(--primary) 80%, #15131d);
+    --primary-dim: rgba(var(--primary-rgb), 0.08);
+    --primary-glow: rgba(var(--primary-rgb), 0.1);
+    --papier: #fbfbfd;
+    --papier-2: #f0f0f6;
+    --papier-schatten: 0 1px 0 rgba(21, 19, 29, 0.04), 0 26px 50px -24px rgba(21, 19, 29, 0.4);
+    --rot-hell: #c8463c;
+    --shadow-sm: 0 1px 2px rgba(21, 19, 29, 0.06);
+    --shadow-md: 0 6px 16px -6px rgba(21, 19, 29, 0.14);
+    --shadow-lg: 0 18px 40px -16px rgba(21, 19, 29, 0.25);
+    --ink: #15131d;
+    --on-ink: #ffffff;
 }
 
 /* --- RESET --- */
@@ -110,7 +160,7 @@ optgroup {
 
 body {
     font-family: var(--font-main);
-    background: var(--bg-deep);
+    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
     color: var(--text-main);
     min-height: 100vh;
     overflow-x: hidden;
@@ -161,25 +211,33 @@ body {
     overflow: hidden;
 }
 
-.bg-grad {
+/* Die drei Lichtflecken des Intros (.vi-blob-a/b/c in landing.css): Akzent,
+   Pfirsich, Mint. Im Dunkeln nur ein Hauch, im Hellen sichtbar wie im Intro.
+   Fest positioniert und ohne Zeigerereignisse (CLAUDE.md: Filter nie auf
+   scrollende Container). Bewegung bewusst keine — die Seite ist ein Werkzeug. */
+.hf-fleck {
     position: absolute;
-    inset: 0;
-    background:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--primary-rgb), 0.04) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(var(--accent-rgb), 0.02) 0%, transparent 50%);
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.09;
 }
-
-[data-theme="light"] .bg-mesh {
-    display: none;
-}
+.hf-fleck-a { width: 46vmax; height: 46vmax; left: -14vmax; top: -18vmax; background: rgb(var(--primary-rgb)); opacity: 0.34; }
+.hf-fleck-b { width: 38vmax; height: 38vmax; right: -14vmax; top: 18vh; background: #ffd8c8; 
+    opacity: 0.11;}
+.hf-fleck-c { width: 34vmax; height: 34vmax; left: 30vw; bottom: -20vmax; background: #c4f0e6; opacity: 0.09; }
+[data-theme="light"] .hf-fleck-a { opacity: 0.32; }
+[data-theme="light"] .hf-fleck-b { opacity: 0.9; }
+[data-theme="light"] .hf-fleck-c { opacity: 0.5; }
 
 /* --- LAYOUT --- */
+/* 1180 statt 1080 px: auf einem breiten Monitor stand die Seite als schmale
+   Handy-Spalte in viel Schwarz (Screenshot des Nutzers, 04.10.2026). */
 .page-wrap {
     position: relative;
     z-index: 1;
-    max-width: 1080px;
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 24px;
     width: 100%;
     overflow-x: hidden;
 }
@@ -187,8 +245,8 @@ body {
 .container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding-bottom: 80px;
+    gap: 40px;
+    padding-bottom: 96px;
     width: 100%;
 }
 
@@ -196,10 +254,8 @@ body {
 .header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    padding: 24px 0 20px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
+    align-items: center;
+    padding: 26px 0 10px;
     gap: 16px;
     flex-wrap: wrap;
 }
@@ -207,35 +263,17 @@ body {
 .header-left {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
     flex: 1;
     min-width: 0;
 }
 
-.brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-}
-
-.brand-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--primary);
-}
-
 .page-title {
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 1.6rem;
-    letter-spacing: -0.03em;
+    font-family: var(--font-main);
+    font-variation-settings: normal;
+    font-weight: 600;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
     color: var(--text-main);
     line-height: 1.2;
     display: flex;
@@ -244,9 +282,27 @@ body {
     flex-wrap: wrap;
 }
 
-.page-title .icon {
-    color: var(--primary);
+/* Marke: das Zifferblatt des App-Symbols (Memory "Markenbild": zu drei
+   Vierteln geschlossener Ring, Punkt im Spalt) — als CSS, kein Bild. */
+.hf-marke {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2.5px solid currentColor;
+    border-right-color: transparent;
+    transform: rotate(45deg);
     flex-shrink: 0;
+}
+.hf-marke::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: 5.5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgb(var(--primary-rgb));
 }
 
 .page-title-wrap {
@@ -269,11 +325,13 @@ body {
 }
 
 .page-subtitle {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
     font-weight: 400;
     word-wrap: break-word;
-}
+    text-wrap: pretty;
+
+    display: block;}
 
 .header-right {
     display: flex;
@@ -284,9 +342,9 @@ body {
 }
 
 .theme-toggle {
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-sm);
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-muted);
@@ -310,9 +368,9 @@ body {
 }
 
 .btn-vault {
-    width: 38px;
-    height: 38px;
-    border-radius: var(--radius-sm);
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-muted);
@@ -339,8 +397,8 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
+    padding: 9px 16px;
+    border-radius: 999px;
     font-size: 0.82rem;
     font-weight: 500;
     color: var(--text-muted);
@@ -360,27 +418,13 @@ body {
     height: 14px;
 }
 
-/* --- MODE TOGGLE --- */
-.mode-toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.mode-toggle-label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
+/* --- MODE TOGGLE (Uebersicht "Format" und Berichtsdialog) --- */
 .mode-toggle {
     position: relative;
     display: inline-flex;
-    background: var(--bg-card);
+    background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     padding: 3px;
     gap: 2px;
 }
@@ -395,23 +439,23 @@ body {
     width: 0;
     height: calc(100% - 6px);
     background: var(--primary);
-    border-radius: 6px;
+    border-radius: 999px;
     transition: transform 0.25s var(--ease-out), width 0.25s var(--ease-out);
-    opacity: 0.12;
+    opacity: 0.22;
     pointer-events: none;
 }
 
 .mode-toggle-btn {
     position: relative;
     z-index: 1;
-    padding: 7px 16px;
+    padding: 6px 14px;
     border: none;
     background: none;
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 0.8rem;
+    font-weight: 500;
     color: var(--text-muted);
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 999px;
     transition: color 0.15s var(--ease);
     display: flex;
     align-items: center;
@@ -422,6 +466,6 @@ body {
 }
 
 .mode-toggle-btn.active {
-    color: var(--primary-light);
+    color: var(--text-main);
 }
 

@@ -101,16 +101,20 @@ function saveToStorage() {
 }
 
 function updateUI() {
+    const wurzel = document.querySelector('.container');
+    if (wurzel) wurzel.classList.toggle('is-neu', reports.length === 0);
+    renderNow();
     updateStats();
     renderReports();
     populateYearFilter();
     updateStreak();
     updateProgress();
+    updateLuecken();
     renderCalendarHeatmap();
     updateDepartmentSuggestions();
-    // Show bulk toggle if there are reports
+    // Auswahl erst ab zwei Berichten — mit einem gibt es nichts mehrfach zu waehlen.
     const bulkToggle = document.getElementById('bulkToggle');
-    if (bulkToggle) bulkToggle.style.display = reports.length > 1 ? 'block' : 'none';
+    if (bulkToggle) bulkToggle.style.display = reports.length > 1 ? 'inline-flex' : 'none';
     if (typeof updateTrashBadge === 'function') updateTrashBadge();
 }
 
@@ -119,6 +123,7 @@ function updateUI() {
 // ═══════════════════════════════════════
 
 function animateCounter(el, target, suffix = '') {
+    if (!el) return;
     const start = parseInt(el.textContent) || 0;
     const duration = 600;
     const startTime = performance.now();
@@ -136,32 +141,304 @@ function animateCounter(el, target, suffix = '') {
 }
 
 // ═══════════════════════════════════════
-// STATISTICS
+// WOCHEN-HELFER (Startseite seit v8.1.12)
 // ═══════════════════════════════════════
 
+// Lokales Datum, nie toISOString(): das rechnet in UTC und verschiebt jedes
+// Datum oestlich von Greenwich um einen Tag (CLAUDE.md).
+function hfYMD(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function hfMontag(d) {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12);
+    x.setDate(x.getDate() - ((x.getDay() || 7) - 1));
+    return x;
+}
+function hfAusDatum(ymd) { return new Date(String(ymd).slice(0, 10) + 'T12:00:00'); }
+
+// Der Bericht einer Woche: primaer ueber den Montag, alte Eintraege ohne Datum
+// ueber die KW (wie updateStreak). Bei zwei Berichten zaehlt der weiteste Stand.
+function hfBerichtFuer(montag) {
+    const ymd = hfYMD(montag);
+    const kw = getWeekNumber(montag);
+    return reports
+        .filter(r => (r.dateFrom && hfYMD(hfMontag(hfAusDatum(r.dateFrom))) === ymd) || (!r.dateFrom && r.week === kw))
+        .sort((a, b) => statusPriority(b.status) - statusPriority(a.status))[0] || null;
+}
+
+// Wochen ohne Bericht zwischen der ERSTEN berichteten Woche und der Vorwoche
+// (die laufende Woche ist noch offen, keine Luecke). Ab der ersten Woche, nicht
+// ab Ausbildungsbeginn: wer erst im zweiten Jahr anfaengt, digital zu fuehren,
+// bekaeme sonst 50 "fehlende" Wochen, die auf Papier laengst existieren.
+function hfLuecken() {
+    const montage = new Set(reports.filter(r => r.dateFrom).map(r => hfYMD(hfMontag(hfAusDatum(r.dateFrom)))));
+    if (!montage.size) return [];
+    const erste = hfAusDatum([...montage].sort()[0]);
+    let bis = hfMontag(new Date());
+    bis.setDate(bis.getDate() - 7);
+    const { ende } = bhAusbildungsZeitraum();
+    if (ende && ende < bis) bis = hfMontag(ende);
+    const out = [];
+    const d = new Date(erste);
+    for (let i = 0; d <= bis && i < 520; i++) {
+        if (!montage.has(hfYMD(d))) out.push(new Date(d));
+        d.setDate(d.getDate() + 7);
+    }
+    return out;
+}
+
+function hfZeitraumText(montag) {
+    const fr = new Date(montag);
+    fr.setDate(fr.getDate() + 4);
+    const loc = window.mwlLocale ? window.mwlLocale() : (document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
+    const tm = { day: 'numeric', month: 'long' };
+    const a = montag.toLocaleDateString(loc, montag.getMonth() === fr.getMonth() ? { day: 'numeric' } : tm);
+    const b = fr.toLocaleDateString(loc, tm);
+    // de: "5." bzw. "29. September" — der Punkt kommt aus toLocaleDateString.
+    return L(`${a} bis ${b}`, `${a} to ${b}`);
+}
+
+// Tage mit Text in einer Woche im Tagesmodus (fuer "3 von 5 Tagen").
+function hfTageMitText(r) {
+    if (!r || !r.dailyActivities) return null;
+    return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map(k => !!String(r.dailyActivities[k] || '').trim());
+}
+
+function hfMenueZu() {
+    const m = document.getElementById('hfImport');
+    if (m) m.open = false;
+}
+document.addEventListener('click', (e) => {
+    const m = document.getElementById('hfImport');
+    if (m && m.open && !m.contains(e.target)) m.open = false;
+});
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') hfMenueZu();
+});
+
+// ═══════════════════════════════════════
+// DIESE WOCHE
+// ═══════════════════════════════════════
+// Beantwortet "was ist jetzt dran?" mit EINER Hauptaktion. Reihenfolge nach
+// Dringlichkeit: Rueckgabe des Ausbilders > laufende Woche leer/angefangen >
+// fehlende Woche > alles fertig.
+
+function renderNow() {
+    const box = document.getElementById('hfNow');
+    if (!box) return;
+    const heute = new Date();
+    const mo = hfMontag(heute);
+    const kw = getWeekNumber(mo);
+    const jahr = isoWeekYear(mo);
+    const r = hfBerichtFuer(mo);
+    const luecken = hfLuecken();
+    const zurueck = reports
+        .filter(x => x.approval && x.approval.state === 'rejected')
+        .sort((a, b) => String(b.dateFrom || '').localeCompare(String(a.dateFrom || '')))[0];
+
+    const ico = (n) => `<svg class="icon" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+    const cta = (text, onclick, icon) =>
+        `<button type="button" class="hf-cta" onclick="${onclick}"><span>${escapeHtml(text)}</span><span class="hf-cta-kreis">${ico(icon)}</span></button>`;
+    const chip = (text, onclick, icon) =>
+        `<button type="button" class="hf-chip hf-chip--gross" onclick="${onclick}">${icon ? ico(icon).replace('class="icon"', 'class="icon icon-sm"') : ''}<span>${escapeHtml(text)}</span></button>`;
+    const assistent = "AISChat.oeffnen()";
+    // Titel mit EINEM hervorgehobenen Wort (em). Nur feste Texte — nichts vom Nutzer.
+    const t = (vor, wort, nach) => escapeHtml(vor) + '<em>' + escapeHtml(wort) + '</em>' + escapeHtml(nach || '.');
+
+    // fokus = die Woche, um die es im Satz geht; sie liegt oben auf dem Stapel.
+    let fokusMo = mo, fokusR = r;
+    let titel, text, aktionen, extra = '';
+
+    if (zurueck) {
+        fokusMo = zurueck.dateFrom ? hfMontag(hfAusDatum(zurueck.dateFrom)) : mo;
+        fokusR = zurueck;
+        const wer = zurueck.approval.by || L('Dein Ausbilder', 'Your trainer');
+        titel = L(t(`KW ${zurueck.week} wurde `, 'zurückgegeben'), t(`Week ${zurueck.week} was `, 'returned'));
+        text = zurueck.approval.note
+            ? L(`${wer} möchte, dass du nachbesserst. Die Anmerkung steht auf dem Blatt.`, `${wer} would like you to revise it. The note is on the sheet.`)
+            : L(`${wer} möchte, dass du die Woche überarbeitest.`, `${wer} would like you to revise this week.`);
+        aktionen = cta(L('Überarbeiten', 'Revise'), `editReport('${zurueck.id}')`, 'pen') +
+            chip(L('Mit dem Assistenten', 'With the assistant'), assistent, 'sparkles');
+    } else if (!reports.length) {
+        titel = L(t('Dein erstes ', 'Berichtsheft'), t('Your first ', 'report book'));
+        text = L('Erzähl dem Assistenten in ein paar Sätzen, was diese Woche los war. Er schreibt daraus den Bericht, du prüfst ihn nur noch.',
+            'Tell the assistant in a few sentences what happened this week. It writes the report, you just check it.');
+        aktionen = cta(L('Mit dem Assistenten schreiben', 'Write with the assistant'), assistent, 'sparkles') +
+            chip(L('Selbst schreiben', 'Write it myself'), `openWeek(${kw}, ${jahr})`, 'pen');
+    } else if (!r) {
+        titel = L(t('Diese Woche ist noch ', 'leer'), t('This week is still ', 'empty'));
+        text = L('Ein paar Stichworte reichen. Der Assistent macht daraus den Bericht in deinem Stil, du prüfst ihn nur noch.',
+            'A few keywords are enough. The assistant turns them into a report in your style, you just check it.');
+        aktionen = cta(L('Mit dem Assistenten schreiben', 'Write with the assistant'), assistent, 'sparkles') +
+            chip(L('Selbst schreiben', 'Write it myself'), `openWeek(${kw}, ${jahr})`, 'pen');
+    } else if (r.status === 'incomplete') {
+        const tage = hfTageMitText(r);
+        const n = tage ? tage.filter(Boolean).length : null;
+        titel = L(t('Diese Woche ist ', 'angefangen'), t('This week is ', 'started'));
+        text = n === null
+            ? L('Der Bericht ist noch ein Entwurf. Wenn alles drinsteht, setz ihn auf vollständig.',
+                'The report is still a draft. Once everything is in, mark it as complete.')
+            : L('Der Bericht ist noch ein Entwurf. Ergänz die fehlenden Tage selbst oder mit dem Assistenten.',
+                'The report is still a draft. Fill in the missing days yourself or with the assistant.');
+        if (tage) {
+            extra = `<div class="hf-tage" role="img" aria-label="${escapeHtml(L(`${n} von 5 Tagen mit Text`, `${n} of 5 days with text`))}">` +
+                tage.map(v => `<span class="hf-tag-strich${v ? ' is-voll' : ''}"></span>`).join('') +
+                `<span class="hf-tage-text" aria-hidden="true">${escapeHtml(L(`${n} von 5 Tagen`, `${n} of 5 days`))}</span></div>`;
+        }
+        aktionen = cta(L('Weiterschreiben', 'Continue'), `editReport('${r.id}')`, 'pen') +
+            chip(L('Mit dem Assistenten ergänzen', 'Fill in with the assistant'), assistent, 'sparkles');
+    } else if (luecken.length) {
+        const g = luecken[0];
+        const gkw = getWeekNumber(g);
+        fokusMo = g;
+        fokusR = null;
+        titel = L(t(`KW ${gkw} `, 'fehlt', ' noch.'), t(`Week ${gkw} is still `, 'missing'));
+        text = luecken.length === 1
+            ? L(`Diese Woche ist fertig. Nur KW ${gkw} (${hfZeitraumText(g)}) ist noch leer.`, `This week is done. Only week ${gkw} (${hfZeitraumText(g)}) is still empty.`)
+            : L(`Diese Woche ist fertig. Insgesamt fehlen noch ${luecken.length} Wochen, das ist die älteste.`,
+                `This week is done. ${luecken.length} weeks are still missing in total, this is the oldest.`);
+        aktionen = cta(L(`KW ${gkw} nachtragen`, `Add week ${gkw}`), 'hfLueckeOeffnen()', 'plus') +
+            chip(L('Diese Woche ansehen', 'View this week'), `viewReport('${r.id}')`, 'eye');
+    } else {
+        const frei = r.approval && r.approval.state === 'approved' && !r.approval.stale;
+        titel = frei ? L(t('Diese Woche ist ', 'freigegeben'), t('This week is ', 'approved'))
+            : r.status === 'signed' ? L(t('Diese Woche ist ', 'unterschrieben'), t('This week is ', 'signed'))
+            : L(t('Diese Woche ist ', 'fertig'), t('This week is ', 'done'));
+        text = frei
+            ? L(`${r.approval.by || 'Dein Ausbilder'} hat die Woche abgezeichnet. Keine Lücken, nichts offen.`,
+                `${r.approval.by || 'Your trainer'} has signed off this week. No gaps, nothing open.`)
+            : L('Keine Lücken, nichts offen. Bis nächste Woche.', 'No gaps, nothing open. See you next week.');
+        aktionen = cta(L('Ansehen', 'View'), `viewReport('${r.id}')`, 'eye') +
+            chip(L('Als PDF', 'As PDF'), `exportReportPDF('${r.id}')`, 'file');
+    }
+
+    const fokusKw = getWeekNumber(fokusMo);
+    box.innerHTML =
+        `<div class="hf-now-kopf"><span class="hf-now-kw">${escapeHtml(L(`KW ${fokusKw}`, `CW ${fokusKw}`))}</span>` +
+        `<span>${escapeHtml(hfZeitraumText(fokusMo))}</span></div>` +
+        `<h2 class="hf-now-titel">${titel}</h2>` +
+        `<p class="hf-now-text">${escapeHtml(text)}</p>` + extra +
+        `<div class="hf-now-aktionen">${aktionen}</div>`;
+    const riesen = document.getElementById('hfRiesen');
+    if (riesen) riesen.textContent = L(`KW ${fokusKw}`, `CW ${fokusKw}`);
+    renderStapel(fokusMo, fokusR);
+}
+
+// ═══════════════════════════════════════
+// BLATTSTAPEL
+// ═══════════════════════════════════════
+// b1 = die Woche aus dem Satz, b2 = die Woche davor, b3 = der Rest. Gezeigt wird
+// nur, was wirklich im Bericht steht: Stempel nur bei echter Freigabe bzw.
+// Unterschrift, Rotstift nur mit echter Anmerkung des Ausbilders, Handschrift
+// nur bei unterschriebenen Wochen. Nichts wird fuer die Optik erfunden.
+
+const HF_TAGE = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+function hfTagZeile(r, i) {
+    if (!r) return '';
+    const roh = r.dailyActivities ? String(r.dailyActivities[HF_TAGE[i]] || '') : '';
+    for (const z of roh.split('\n')) {
+        const s = z.replace(/^\s*[•\-*–·]\s*/, '').trim();
+        if (s) return s;
+    }
+    return '';
+}
+
+function hfPdfCfg() {
+    try { return JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}') || {}; } catch (e) { return {}; }
+}
+
+function hfStempel(r) {
+    if (!r) return '';
+    const a = r.approval;
+    // Zurueckgegeben schlaegt einen alten Status "signed": kein Stempel auf
+    // einem Blatt, das der Ausbilder gerade abgelehnt hat.
+    if (a && a.state === 'rejected') return '';
+    if (a && a.state === 'approved' && !a.stale) {
+        const d = a.at ? new Date(a.at) : null;
+        const datum = d && !isNaN(d) ? d.toLocaleDateString(window.mwlLocale ? window.mwlLocale() : 'de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+        return `<div class="hf-stempel">${escapeHtml(L('FREIGEGEBEN', 'APPROVED'))}${datum ? `<small>${escapeHtml(datum)}</small>` : ''}</div>`;
+    }
+    if (r.status === 'signed') return `<div class="hf-stempel">${escapeHtml(L('UNTERSCHRIEBEN', 'SIGNED'))}</div>`;
+    return '';
+}
+
+function hfRotstift(r) {
+    const n = r && r.approval && r.approval.state === 'rejected' && String(r.approval.note || '').trim();
+    if (!n) return '';
+    return `<div class="hf-rotstift">${escapeHtml(n.length > 70 ? n.slice(0, 68) + '…' : n)}</div>`;
+}
+
+function renderStapel(fokusMo, r) {
+    const box = document.getElementById('hfStapel');
+    if (!box) return;
+    const kw = getWeekNumber(fokusMo);
+    const jahr = isoWeekYear(fokusMo);
+    const fr = new Date(fokusMo); fr.setDate(fr.getDate() + 4);
+    const kurz = (d) => `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.`;
+    const tageNamen = L('Mo Di Mi Do Fr', 'Mo Tu We Th Fr').split(' ');
+
+    const zeilen = tageNamen.map((name, i) => {
+        const schule = !!(r && r.dailySchool && r.dailySchool[HF_TAGE[i]]);
+        let txt = hfTagZeile(r, i);
+        // Wochenmodus: die Zeilen des Wochentextes der Reihe nach auf die Linien.
+        if (r && !r.dailyActivities && r.activities) {
+            const alle = String(r.activities).split('\n').map(z => z.replace(/^\s*[•\-*–·]\s*/, '').trim())
+                .filter(z => z && !HF_TAGKOPF.test(z));
+            txt = alle[i] || '';
+        }
+        const status = /keine Tätigkeiten|no activities/i.test(txt);
+        const leerText = !r && i === 0 ? L('Was war los?', 'What happened?') : '';
+        const p = txt
+            ? `<p class="${status ? 'is-status' : ''}">${escapeHtml(txt)}</p>`
+            : `<p class="is-leer">${escapeHtml(leerText)}</p>`;
+        return `<div class="hf-blatt-tag${schule ? ' is-schule' : ''}"><span>${name}</span>${p}</div>`;
+    }).join('');
+
+    const cfg = hfPdfCfg();
+    const azubiUnterschrieben = r && (r.status === 'complete' || r.status === 'signed');
+    const ausbilderUnterschrieben = r && (r.status === 'signed' || (r.approval && r.approval.state === 'approved' && !r.approval.stale));
+    const nameAzubi = azubiUnterschrieben && cfg.name ? `<span class="hf-hand">${escapeHtml(String(cfg.name).trim())}</span>` : '';
+    const nameAusb = ausbilderUnterschrieben && ((r.approval && r.approval.by) || cfg.ausbilder)
+        ? `<span class="hf-hand">${escapeHtml(String((r.approval && r.approval.by) || cfg.ausbilder).trim())}</span>` : '';
+
+    const klick = r ? (r.status === 'incomplete' || (r.approval && r.approval.state === 'rejected') ? `editReport('${r.id}')` : `viewReport('${r.id}')`)
+        : `openWeek(${kw}, ${jahr})`;
+    const label = r ? L(`KW ${kw} öffnen`, `Open week ${kw}`) : L(`KW ${kw} schreiben`, `Write week ${kw}`);
+
+    const vorMo = new Date(fokusMo); vorMo.setDate(vorMo.getDate() - 7);
+    const vor = hfBerichtFuer(vorMo);
+
+    box.innerHTML =
+        `<div class="hf-blatt b3" aria-hidden="true"></div>` +
+        `<div class="hf-blatt b2" aria-hidden="true">${hfStempel(vor)}${hfRotstift(vor)}</div>` +
+        `<div class="hf-blatt b1" role="button" tabindex="0" onclick="${klick}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" aria-label="${escapeHtml(label)}">` +
+        `<div class="hf-vk"><span>${escapeHtml(L('Ausbildungsnachweis', 'Training record'))}</span><b>${escapeHtml(L(`KW ${kw}`, `CW ${kw}`))}</b>` +
+        `<span>${kurz(fokusMo)} ${escapeHtml(L('bis', 'to'))} ${kurz(fr)}${fr.getFullYear()}</span></div>` +
+        `<div>${zeilen}</div>` + hfRotstift(r) +
+        `<div class="hf-unterschrift"><div class="hf-us">${nameAzubi}${escapeHtml(L('Unterschrift Azubi', 'Trainee signature'))}</div>` +
+        `<div class="hf-us">${nameAusb}${escapeHtml(L('Unterschrift Ausbilder', 'Trainer signature'))}</div></div>` +
+        hfStempel(r) +
+        `</div>`;
+}
+
+// ═══════════════════════════════════════
+// STAND: vier verschiedene Aussagen
+// ═══════════════════════════════════════
+
+// "Wartet auf Unterschrift" statt einer vierten Variante derselben Wochenzahl.
+// Sind alle unterschrieben, steht dort die Zahl der unterschriebenen.
 function updateStats() {
-    const totalReports = reports.length;
-    const uniqueWeeks = new Set(reports.map(r => `${r.year}-${r.week}`)).size;
-    const completeReports = reports.filter(r => r.status === 'complete' || r.status === 'signed').length;
-    const completionRate = totalReports > 0 ? Math.round((completeReports / totalReports) * 100) : 0;
-
-    const totalWords = reports.reduce((sum, r) => {
-        let textForStats = r.mode === 'daily' 
-            ? Object.values(r.dailyActivities || {}).join(' ') 
-            : (r.activities || '');
-        const words = (textForStats + ' ' + (r.school || '')).split(/\s+/).filter(w => w.length > 0).length;
-        return sum + words;
-    }, 0);
-    // Die Karte heißt "Ø Wörter/Woche" — also durch Wochen teilen, nicht durch
-    // Berichte. Bei zwei Berichten für dieselbe Woche wich das vorher ab.
-    const avgWords = uniqueWeeks > 0 ? Math.round(totalWords / uniqueWeeks) : 0;
-    const signedReports = reports.filter(r => r.status === 'signed').length;
-
-    // Animate counters
-    animateCounter(document.getElementById('signedReports'), signedReports);
-    animateCounter(document.getElementById('totalWeeks'), uniqueWeeks);
-    animateCounter(document.getElementById('completionRate'), completionRate, '%');
-    animateCounter(document.getElementById('avgWordsPerWeek'), avgWords);
+    const offen = reports.filter(r => r.status === 'complete' && !(r.approval && r.approval.state === 'approved')).length;
+    const signiert = reports.filter(r => r.status === 'signed' || (r.approval && r.approval.state === 'approved')).length;
+    const num = document.getElementById('hfSignNum'), txt = document.getElementById('hfSignTxt');
+    if (!num || !txt) return;
+    if (offen > 0) {
+        animateCounter(num, offen);
+        txt.textContent = offen === 1 ? L('wartet auf Unterschrift', 'awaiting signature') : L('warten auf Unterschrift', 'awaiting signature');
+    } else {
+        animateCounter(num, signiert);
+        txt.textContent = L('unterschrieben', 'signed');
+    }
 }
 
 // ═══════════════════════════════════════
@@ -169,63 +446,28 @@ function updateStats() {
 // ═══════════════════════════════════════
 
 function updateStreak() {
-    if (reports.length === 0) {
-        document.getElementById('streakNum').textContent = '0';
-        return;
-    }
-
-    const getMonday = (date) => {
-        const d = new Date(date);
-        const day = d.getDay() || 7;
-        d.setDate(d.getDate() - day + 1);
-        return d;
-    };
-
-    const formatYMD = (d) => {
-        return d.getFullYear() + '-' + 
-               String(d.getMonth() + 1).padStart(2, '0') + '-' + 
-               String(d.getDate()).padStart(2, '0');
-    };
-
-    let checkDate = getMonday(new Date());
-    let streak = 0;
-    
-    // Zuerst checken wir die aktuelle Woche
-    let foundThisWeek = reports.some(r => r.dateFrom === formatYMD(checkDate) || (!r.dateFrom && r.week === getWeekNumber(checkDate)));
-    
-    // Grace-Period: Wenn diese Woche noch leer ist, schauen wir, ob letzte Woche was da ist
-    if (!foundThisWeek) {
-        checkDate.setDate(checkDate.getDate() - 7);
-        let foundLastWeek = reports.some(r => r.dateFrom === formatYMD(checkDate) || (!r.dateFrom && r.week === getWeekNumber(checkDate)));
-        if (!foundLastWeek) {
-            document.getElementById('streakNum').textContent = '0';
-            return;
-        }
-    }
-
-    // Ab hier zählen wir exakt chronologisch rückwärts
-    for (let i = 0; i < 200; i++) {
-        const dateStr = formatYMD(checkDate);
-        const w = getWeekNumber(checkDate);
-        
-        // Matcht primär über das exakte Datum, Fallback für alte Einträge über die Kalenderwoche
-        const found = reports.some(r => r.dateFrom === dateStr || (!r.dateFrom && r.week === w));
-        
-        if (found) {
-            streak++;
-            checkDate.setDate(checkDate.getDate() - 7);
-        } else {
-            break;
-        }
-    }
-
     const el = document.getElementById('streakNum');
-    animateCounter(el, streak);
+    const txt = document.getElementById('streakTxt');
+    const setzen = (n) => {
+        animateCounter(el, n);
+        if (txt) txt.textContent = n === 1 ? L('Woche am Stück', 'week in a row') : L('Wochen am Stück', 'weeks in a row');
+    };
+    if (reports.length === 0) { setzen(0); return; }
 
-    // Fire animation intensity based on streak
-    const fire = document.querySelector('.streak-fire');
-    if (streak >= 10) fire.style.fontSize = '2.5rem';
-    else if (streak >= 5) fire.style.fontSize = '2.2rem';
+    let checkDate = hfMontag(new Date());
+    let streak = 0;
+
+    // Grace-Period: ist diese Woche noch leer, zaehlt die Serie ab letzter Woche.
+    if (!hfBerichtFuer(checkDate)) {
+        checkDate.setDate(checkDate.getDate() - 7);
+        if (!hfBerichtFuer(checkDate)) { setzen(0); return; }
+    }
+    for (let i = 0; i < 200; i++) {
+        if (!hfBerichtFuer(checkDate)) break;
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 7);
+    }
+    setzen(streak);
 }
 
 // ═══════════════════════════════════════
@@ -243,27 +485,39 @@ function updateProgress() {
     const documentedWeeks = new Set(reports.map(r => `${r.year}-${r.week}`)).size;
     const percent = Math.min(Math.round((documentedWeeks / maxWeeks) * 100), 100);
 
-    // Progress ring
-    const ring = document.getElementById('progressRing');
-    const circumference = 2 * Math.PI * 22; // r=22
-    const offset = circumference - (percent / 100) * circumference;
-    ring.style.strokeDasharray = circumference;
-    ring.style.strokeDashoffset = offset;
-
-    // Progress text
-    document.getElementById('progressPercent').textContent = percent + '%';
-
-    // Progress bar
-    document.getElementById('progressBarFill').style.width = percent + '%';
-
-    // Sub text
-    document.getElementById('progressSub').textContent = L(
-        `${documentedWeeks} von ${maxWeeks} Wochen dokumentiert`,
-        `${documentedWeeks} of ${maxWeeks} weeks documented`);
+    animateCounter(document.getElementById('progressNum'), documentedWeeks);
+    const fill = document.getElementById('progressBarFill');
+    if (fill) fill.style.width = percent + '%';
+    const sub = document.getElementById('progressSub');
+    if (sub) sub.textContent = L(`von ${maxWeeks} Wochen der Ausbildung`, `of ${maxWeeks} training weeks`);
+    const bar = fill && fill.parentElement;
+    if (bar) bar.title = percent + ' %';
 }
 
 // ═══════════════════════════════════════
-// CALENDAR HEATMAP
+// LUECKEN
+// ═══════════════════════════════════════
+
+function updateLuecken() {
+    const n = hfLuecken().length;
+    const knopf = document.getElementById('hfLuecke');
+    const txt = document.getElementById('hfLueckeTxt');
+    animateCounter(document.getElementById('hfLueckeNum'), n);
+    if (txt) txt.textContent = n === 0 ? L('Lücken', 'gaps') : n === 1 ? L('Woche fehlt', 'week missing') : L('Wochen fehlen', 'weeks missing');
+    if (knopf) {
+        knopf.disabled = n === 0;
+        knopf.classList.toggle('is-offen', n > 0);
+        knopf.title = n ? L('Zur ältesten fehlenden Woche', 'Go to the oldest missing week') : '';
+    }
+}
+
+function hfLueckeOeffnen() {
+    const g = hfLuecken()[0];
+    if (g) openWeek(getWeekNumber(g), isoWeekYear(g));
+}
+
+// ═══════════════════════════════════════
+// DEIN JAHR (Wochenstreifen)
 // ═══════════════════════════════════════
 
 // Ein Jahr hat 52 ODER 53 ISO-Wochen: 53, wenn der 1. Januar ein Donnerstag ist
@@ -285,6 +539,7 @@ function reportCalendarYear(r) {
 
 function renderCalendarHeatmap() {
     const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
     const nowYear = new Date().getFullYear();
 
     // Standard ist das laufende Jahr. Liegt darin nichts, aber in einem früheren,
@@ -302,22 +557,23 @@ function renderCalendarHeatmap() {
             weekMap[r.week] = r.status;
         }
     });
+    // Fehlende Wochen kommen aus derselben Rechnung wie das Kaestchen "fehlen noch".
+    const fehlt = new Set(hfLuecken().filter(d => isoWeekYear(d) === year).map(d => getWeekNumber(d)));
 
     const STATUS_TEXT = {
-        signed: L('Unterschrieben', 'Signed'),
-        complete: L('Vollständig', 'Complete'),
-        incomplete: L('Entwurf', 'Draft')
+        signed: L('unterschrieben', 'signed'),
+        complete: L('vollständig', 'complete'),
+        incomplete: L('Entwurf', 'draft')
     };
     const STATUS_CLASS = { signed: 'signed', complete: 'complete', incomplete: 'draft' };
     const MONTHS = L('Jan Feb Mär Apr Mai Jun Jul Aug Sep Okt Nov Dez',
         'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec').split(' ');
     const totalWeeks = isoWeeksInYear(year);
-    const currentWeek = year === nowYear ? getWeekNumber(new Date()) : -1;
+    const currentWeek = year === nowYear ? getWeekNumber(new Date()) : (year < nowYear ? totalWeeks + 1 : 0);
 
     // Jede Woche gehört zu dem Monat, in dem ihr Donnerstag liegt (ISO-Regel).
     // isoWeekMonday() (bh-bericht.js) liefert UTC-Mitternacht, also wird hier auch
-    // in UTC gerechnet. Mit getDate()/getMonth() stimmte es nur östlich von
-    // Greenwich zufällig; westlich davon wäre jede Woche einen Tag zu früh.
+    // in UTC gerechnet.
     const buckets = MONTHS.map(() => []);
     for (let w = 1; w <= totalWeeks; w++) {
         const thursday = isoWeekMonday(year, w);
@@ -326,22 +582,27 @@ function renderCalendarHeatmap() {
     }
 
     grid.innerHTML = buckets.map((weeks, m) => {
-        if (!weeks.length) return '';
-        const cells = weeks.map(w => {
+        const jetzt = weeks.includes(currentWeek);
+        const zukunft = weeks.length && weeks[0] > currentWeek;
+        const striche = weeks.map(w => {
             const status = weekMap[w] || null;
+            const istFehlt = !status && fehlt.has(w);
             const mon = isoWeekMonday(year, w);
             const dm = `${mon.getUTCDate()}.${mon.getUTCMonth() + 1}.`;
-            const statusLabel = status ? STATUS_TEXT[status] : L('kein Bericht', 'no report');
-            const label = L(`KW ${w} (ab ${dm}) — ${statusLabel}`, `CW ${w} (from ${dm}) — ${statusLabel}`);
-            return `<button type="button" class="cal-cell${status ? ' ' + STATUS_CLASS[status] : ''}${w === currentWeek ? ' is-now' : ''}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w}, ${year})"><span class="cal-cell-tooltip">${label}</span></button>`;
+            const statusLabel = status ? STATUS_TEXT[status]
+                : istFehlt ? L('fehlt', 'missing')
+                : (w > currentWeek ? L('noch nicht dran', 'not yet') : L('kein Bericht', 'no report'));
+            const label = L(`KW ${w}, ab ${dm}: ${statusLabel}`, `Week ${w}, from ${dm}: ${statusLabel}`);
+            const cls = 'hf-strich' + (status ? ' ' + STATUS_CLASS[status] : '') + (istFehlt ? ' fehlt' : '') + (w === currentWeek ? ' is-now' : '');
+            return `<button type="button" class="${cls}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w}, ${year})"><span class="hf-tip" aria-hidden="true">${label}</span></button>`;
         }).join('');
-        return `<div class="cal-month" style="flex-grow:${weeks.length}"><span class="cal-month-label">${MONTHS[m]}</span><div class="cal-month-weeks">${cells}</div></div>`;
+        return `<div class="hf-reiter${jetzt ? ' is-jetzt' : ''}${zukunft ? ' is-zukunft' : ''}"><b>${MONTHS[m]}</b><div class="hf-striche">${striche}</div></div>`;
     }).join('');
 
-    // Rollender Fokus: nur EINE Zelle liegt in der Tab-Reihenfolge, innerhalb wird
+    // Rollender Fokus: nur EINE Woche liegt in der Tab-Reihenfolge, innerhalb wird
     // mit den Pfeiltasten gewandert. 53 Tabstopps vor dem ersten Knopf wären
     // sonst für Tastaturnutzer eine Zumutung.
-    const cells = [...grid.querySelectorAll('.cal-cell')];
+    const cells = [...grid.querySelectorAll('.hf-strich')];
     const start = cells.find(c => c.classList.contains('is-now')) || cells[0];
     if (start) start.tabIndex = 0;
     grid.onkeydown = (e) => {
@@ -389,6 +650,21 @@ function openWeek(week, year) {
 // RENDER REPORTS
 // ═══════════════════════════════════════
 
+// Erste inhaltliche Zeile einer Woche — ohne Aufzaehlungszeichen, ohne die
+// Tagesueberschriften aus combineDailyToWeeklyText() ("Montag:") und ohne das
+// Status-Etikett der Engine ("Krank — keine Tätigkeiten").
+const HF_TAGKOPF = /^(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Monday|Tuesday|Wednesday|Thursday|Friday):?$/i;
+function hfVorschau(r) {
+    const quelle = r.dailyActivities
+        ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map(k => r.dailyActivities[k] || '').join('\n')
+        : (r.activities || '');
+    for (const roh of String(quelle).split('\n')) {
+        const z = roh.replace(/^\s*[•\-*–·]\s*/, '').trim();
+        if (z && !HF_TAGKOPF.test(z) && !/keine Tätigkeiten|no activities/i.test(z)) return z;
+    }
+    return '';
+}
+
 function renderReports() {
     const list = document.getElementById('reportList');
     const emptyState = document.getElementById('emptyState');
@@ -435,17 +711,17 @@ function renderReports() {
             break;
     }
 
+    // Die Zahl neben "Deine Wochen": gefiltert als "12 von 57", sonst nur die Zahl.
+    reportCount.textContent = filtered.length === reports.length
+        ? String(reports.length)
+        : L(`${filtered.length} von ${reports.length}`, `${filtered.length} of ${reports.length}`);
+
     if (filtered.length === 0) {
         list.innerHTML = '';
         emptyState.style.display = 'block';
-        reportCount.textContent = L('0 Berichte', '0 reports');
         return;
     }
-
     emptyState.style.display = 'none';
-    reportCount.textContent = filtered.length === 1
-        ? L('1 Bericht', '1 report')
-        : L(`${filtered.length} Berichte`, `${filtered.length} reports`);
 
     let isB2BMitglied = false;
     try {
@@ -460,52 +736,63 @@ function renderReports() {
         }
     } catch(e) {}
 
-    list.innerHTML = filtered.map((report, index) => {
-        const statusBadge = {
-            'incomplete': `<span class="badge badge-warning">${L('In Bearbeitung', 'In progress')}</span>`,
-            'complete': `<span class="badge badge-success">${L('Vollständig', 'Complete')}</span>`,
-            'signed': `<span class="badge badge-signed">&#10003; ${L('Unterschrieben', 'Signed')}</span>`
-        }[report.status];
+    list.innerHTML = filtered.map((report) => {
+        // Zustand wie auf echtem Papier: Rotstift (zurueckgegeben) > Stempel
+        // (freigegeben/unterschrieben) > Vermerk (fertig/Entwurf). Eine veraltete
+        // oder ungueltige Freigabe zeigt weiter die Warnung aus bh-freigabe.js —
+        // die ist eine Sicherheitsaussage und gehoert nicht in Handschrift.
+        const a = report.approval;
+        const warnung = a && a.state === 'approved' && (a.stale || a.sigStatus === 'ungueltig');
+        let zustand;
+        if (a && a.state === 'rejected') {
+            const ohne = a.widerrufen ? L('Freigabe widerrufen', 'Approval revoked') : L('zurückgegeben', 'returned');
+            const voll = (a.by ? a.by + ': ' : '') + (a.note || ohne);
+            zustand = `<span class="hf-rot" title="${escapeHtml(voll)}">${escapeHtml(a.note ? (a.note.length > 48 ? a.note.slice(0, 46) + '…' : a.note) : ohne)}</span>`;
+        } else if (warnung) {
+            zustand = bhApprovalBadge(report);
+        } else if (a && a.state === 'approved') {
+            zustand = `<span class="hf-mini-stempel">${L('FREIGEGEBEN', 'APPROVED')}</span>`;
+        } else if (report.status === 'signed') {
+            zustand = `<span class="hf-mini-stempel">${L('UNTERSCHRIEBEN', 'SIGNED')}</span>`;
+        } else if (report.status === 'complete') {
+            zustand = `<span class="hf-vermerk">${L('fertig, wartet auf Unterschrift', 'done, awaiting signature')}</span>`;
+        } else {
+            zustand = `<span class="hf-vermerk is-entwurf">${L('Entwurf', 'Draft')}</span>`;
+        }
 
-        let textForWords = report.mode === 'daily' 
-            ? Object.values(report.dailyActivities || {}).join(' ') 
+        const textForWords = report.mode === 'daily'
+            ? Object.values(report.dailyActivities || {}).join(' ')
             : (report.activities || '');
         const wordCount = (textForWords + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
         const isSelected = selectedIds.has(report.id);
-        const modeBadge = report.mode === 'daily'
-            ? `<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:4px;font-weight:700;">${L('TÄGLICH', 'DAILY')}</span>`
-            : `<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:4px;font-weight:700;">${L('WÖCHENTL.', 'WEEKLY')}</span>`;
+        const vorschau = hfVorschau(report);
+        const meta = `${bhStunden(report.hours)} ${L('Std.', 'hrs')}, ${wordCount} ${wordCount === 1 ? L('Wort', 'word') : L('Wörter', 'words')}`;
+        const klick = bulkMode ? `toggleSelect('${report.id}')` : `viewReport('${report.id}')`;
 
         return `
-                    <div class="report-item visible${bhApprovalKlasse(report)}" data-id="${report.id}"
-                         onclick="${bulkMode ? `toggleSelect('${report.id}')` : `viewReport('${report.id}')`}"
-                         ${isSelected ? 'style="border-color: var(--primary); background: rgba(var(--primary-rgb), 0.08);"' : ''}>
-                        ${bulkMode ? `<div style="display:flex;align-items:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;"></div>` : ''}
-                        <div class="report-week">
-                            ${L('KW', 'CW')} ${report.week}<br>
-                            <small style="font-size: 0.65rem; opacity: 0.8;">${L(`${report.year}. Jahr`, `Year ${report.year}`)}</small>
+                    <div class="report-item${bhApprovalKlasse(report)}${bulkMode ? ' hat-auswahl' : ''}${isSelected ? ' is-gewaehlt' : ''}" data-id="${report.id}"
+                         tabindex="0" onclick="${klick}" onkeydown="if(event.key==='Enter'&&event.target===this)this.click()">
+                        ${bulkMode ? `<input type="checkbox" ${isSelected ? 'checked' : ''} aria-label="${L('Auswählen', 'Select')}" onclick="event.stopPropagation();toggleSelect('${report.id}')">` : ''}
+                        <div class="hf-zeile-kw">
+                            <b>${report.week}</b>
+                            <small>${L(`${report.year}. Jahr`, `Year ${report.year}`)}</small>
                         </div>
-                        <div class="report-content">
-                            <div class="report-title">
-                                ${escapeHtml(report.department || L('Ausbildungsnachweis', 'Training record'))}
+                        <div class="hf-zeile-mitte">
+                            <div class="hf-zeile-kopf">
+                                <span class="hf-zeile-datum">${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</span>
+                                ${report.department ? `<span class="hf-zeile-abt">${escapeHtml(report.department)}</span>` : ''}
                             </div>
-                            <div class="report-meta">
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-calendar"/></svg> ${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</span>
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-clock"/></svg> ${bhStunden(report.hours)} ${L('Std.', 'hrs')}</span>
-                                <span><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> ${wordCount} ${wordCount === 1 ? L('Wort', 'word') : L('Wörter', 'words')}</span>
-                                ${modeBadge}
-                                ${statusBadge}
-                                ${bhApprovalBadge(report)}
-                            </div>
-                            ${bhApprovalNote(report)}
+                            <p class="hf-zeile-vorschau${vorschau ? '' : ' is-leer'}">${vorschau ? escapeHtml(vorschau) : L('Noch kein Text', 'No text yet')}</p>
+                            <span class="hf-zeile-meta">${meta}</span>
                         </div>
+                        <div class="hf-zeile-status">${zustand}</div>
                         ${!bulkMode ? `
                         <div class="report-actions" onclick="event.stopPropagation()">
-                            ${!isB2BMitglied ? `<button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="${L('Freigabe durch Ausbilder', 'Trainer sign-off')}"><svg class="icon"><use href="#i-tie"/></svg></button>` : ''}
-                            <button class="btn-icon" onclick="editReport('${report.id}')" title="${L('Bearbeiten', 'Edit')}"><svg class="icon"><use href="#i-edit"/></svg></button>
-                            <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="${L('Duplizieren', 'Duplicate')}"><svg class="icon"><use href="#i-copy"/></svg></button>
-                            <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="${L('Als PDF exportieren', 'Export as PDF')}"><svg class="icon"><use href="#i-file"/></svg></button>
-                            <button class="btn-icon danger" onclick="deleteReport('${report.id}')" title="${L('Löschen', 'Delete')}"><svg class="icon"><use href="#i-trash"/></svg></button>
+                            ${!isB2BMitglied ? `<button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="${L('Freigabe durch Ausbilder', 'Trainer sign-off')}" aria-label="${L('Freigabe durch Ausbilder', 'Trainer sign-off')}"><svg class="icon"><use href="#i-tie"/></svg></button>` : ''}
+                            <button class="btn-icon" onclick="editReport('${report.id}')" title="${L('Bearbeiten', 'Edit')}" aria-label="${L('Bearbeiten', 'Edit')}"><svg class="icon"><use href="#i-edit"/></svg></button>
+                            <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="${L('Duplizieren', 'Duplicate')}" aria-label="${L('Duplizieren', 'Duplicate')}"><svg class="icon"><use href="#i-copy"/></svg></button>
+                            <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="${L('Als PDF exportieren', 'Export as PDF')}" aria-label="${L('Als PDF exportieren', 'Export as PDF')}"><svg class="icon"><use href="#i-file"/></svg></button>
+                            <button class="btn-icon danger" onclick="deleteReport('${report.id}')" title="${L('Löschen', 'Delete')}" aria-label="${L('Löschen', 'Delete')}"><svg class="icon"><use href="#i-trash"/></svg></button>
                         </div>
                         <div class="ais-del-confirm-strip" onclick="event.stopPropagation()">
                             <span class="ais-del-confirm-label">${L('Löschen?', 'Delete?')}</span>
@@ -517,4 +804,3 @@ function renderReports() {
     }).join('');
 
 }
-

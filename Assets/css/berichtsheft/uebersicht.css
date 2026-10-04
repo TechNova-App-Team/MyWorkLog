@@ -1,442 +1,78 @@
 /* uebersicht.css — Teil von /berichtsheft/
-   Streak-Leiste, Fortschrittsring, Kennzahlen, Kalender-Heatmap, Knoepfe, Suche und Filter.
-   Herausgeloest aus pages/berichtsheft/index.html. */
+   Startseite seit v8.1.12: "Diese Woche", "Stand", "Dein Jahr", Werkzeugleiste,
+   Suche/Filter — dazu die seitenweiten Knoepfe (.btn*, auch in den Dialogen).
+   Die Bausteine heissen hf-* ("Heft"), damit keine alte Regel aus
+   druck-responsive.css auf sie trifft. Ihre Media Queries stehen bewusst HIER
+   am Dateiende und nicht in druck-responsive.css: ein Baustein, eine Datei.
+   Formregel (basis.css): Bedienelemente rund, Behaelter 16px, Eingaben 10px.
+   Der Wochen-Block traegt als einziger 22px — er ist die eine laute Stelle. */
 
-/* --- TOP BAR (Streak + Progress) --- */
-.top-bar {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 16px;
-    align-items: stretch;
-}
-
-.streak-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 22px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-}
-
-.streak-fire {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: rgba(var(--warning-rgb), 0.08);
-    color: var(--warning);
-}
-
-.streak-fire .icon {
-    width: 20px;
-    height: 20px;
-}
-
-.streak-num {
-    font-family: var(--font-mono);
-    font-size: 1.6rem;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.03em;
-}
-
-.streak-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-top: 2px;
-}
-
-.progress-card {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: 18px 22px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-}
-
-.progress-ring-wrap {
-    position: relative;
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-}
-
-.progress-ring-bg {
-    fill: none;
-    stroke: var(--border);
-    stroke-width: 4;
-}
-
-.progress-ring-val {
-    fill: none;
-    stroke: var(--primary);
-    stroke-width: 4;
-    stroke-linecap: round;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-    transition: stroke-dashoffset 0.8s var(--ease-out);
-}
-
-.progress-ring-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-}
-
-.progress-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.progress-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text-main);
-    margin-bottom: 8px;
-}
-
-.progress-bar-bg {
-    width: 100%;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--border);
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    border-radius: 2px;
-    background: var(--primary);
-    transition: width 0.8s var(--ease-out);
-}
-
-.progress-sub {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    margin-top: 6px;
-    font-family: var(--font-mono);
-}
-
-/* --- STATS GRID --- */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-}
-
-.stat-card {
-    padding: 18px 20px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.stat-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-sm);
-    background: var(--primary-dim);
-    color: var(--primary);
-    margin-bottom: 8px;
-}
-
-.stat-icon .icon {
-    width: 16px;
-    height: 16px;
-}
-
-.stat-value {
-    font-family: var(--font-mono);
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-}
-
-.stat-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-/* --- CALENDAR HEATMAP --- */
-.calendar-section {
-    /* wrapper */
-}
-
-.calendar-card {
-    padding: 22px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-}
-
-.calendar-title {
-    font-size: 0.88rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-main);
-}
-
-.calendar-title .icon {
-    width: 16px;
-    height: 16px;
-    color: var(--primary);
-}
-
-/* Monatsblöcke statt eines durchlaufenden Rasters: die Beschriftung steht im
-   SELBEN Container wie die Zellen, die sie beschriftet — damit kann sie bei keiner
-   Breite gegen die Daten verrutschen. Bewusst ohne Scroll-Container, der würde
-   die Sprechblasen der Zellen kappen. */
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(6, max-content);
-    justify-content: space-between;
-    gap: 16px 12px;
-    margin-bottom: 16px;
-}
-
-/* Eigene Grenzen statt der allgemeinen Breakpoints: die Spaltenzahl haengt
-   allein daran, wie viele Monatsbloecke nebeneinander passen. */
-@media (max-width: 900px) {
-    .calendar-grid {
-        grid-template-columns: repeat(4, max-content);
-    }
-}
-
-@media (max-width: 620px) {
-    .calendar-grid {
-        grid-template-columns: repeat(3, max-content);
-        gap: 14px 10px;
-    }
-}
-
-/* Gemessen: bei 360 px ragen drei Monatsspalten 27 px aus der Karte, bei
-   320 px sind es 39 px. Ab hier also zwei. */
-@media (max-width: 400px) {
-    .calendar-grid {
-        grid-template-columns: repeat(2, max-content);
-    }
-}
-
-/* Feste Zellengröße statt flex-grow: bricht der Streifen um, bekäme der letzte
-   Monat sonst die ganze Restbreite und seine Zellen würden (aspect-ratio: 1)
-   riesig. So sind alle Zellen in jeder Zeile gleich groß. */
-.cal-month {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex: 0 0 auto;
-}
-
-.cal-month-label {
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    line-height: 1;
-}
-
-.cal-month-weeks {
-    display: flex;
-    gap: 3px;
-}
-
-.cal-cell {
-    flex: 0 0 auto;
-    width: 18px;
-    height: 18px;
-    padding: 0;
-    border-radius: 4px;
-    background: rgba(var(--primary-rgb), 0.03);
-    border: 1px solid var(--border);
-    cursor: pointer;
-    position: relative;
-    transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
-}
-
-.cal-cell:hover {
-    border-color: var(--border-hover);
-    transform: scale(1.15);
-}
-
-.cal-cell:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    transform: scale(1.15);
-}
-
-/* Laufende Woche: Ring, damit man im Streifen sieht, wo man steht. */
-.cal-cell.is-now {
-    box-shadow: 0 0 0 1px var(--primary-light);
-}
-
-.cal-cell.draft {
-    background: rgba(var(--primary-rgb), 0.2);
-}
-
-.cal-cell.complete {
-    background: rgba(var(--success-rgb), 0.3);
-}
-
-.cal-cell.signed {
-    background: var(--success);
-}
-
-.cal-cell-tooltip {
-    display: none;
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 6px 10px;
-    background: var(--bg-glass-heavy);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 0.7rem;
-    white-space: nowrap;
-    color: var(--text-secondary);
-    z-index: 10;
-    backdrop-filter: blur(12px);
-}
-
-.cal-cell:hover .cal-cell-tooltip,
-.cal-cell:focus-visible .cal-cell-tooltip {
-    display: block;
-}
-
-.cal-legend {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.cal-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-}
-
-.cal-legend-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
-    flex-shrink: 0;
-}
-
-/* --- BUTTONS --- */
+/* ══════════ KNOEPFE (seitenweit) ══════════ */
 .btn {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 9px 16px;
-    border-radius: var(--radius-sm);
-    font-size: 0.82rem;
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 0.84rem;
     font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: all 0.15s var(--ease);
+    transition: background-color 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.15s var(--ease);
     font-family: var(--font-main);
     white-space: nowrap;
     line-height: 1.4;
 }
+.btn:active { transform: scale(0.98); }
+.btn .icon { width: 15px; height: 15px; }
 
-.btn .icon {
-    width: 15px;
-    height: 15px;
-}
-
-.btn-primary {
-    background: var(--primary);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background: #7c3aed;
-}
+/* Hauptknopf wie im Intro: Tinte, nicht Akzentfarbe. Der Akzent bleibt fuer
+   Daten (Wochenstreifen, Fortschritt) — zwei Rollen, eine Farbe waere eine zu viel. */
+.btn-primary { background: var(--ink); color: var(--on-ink); }
+.btn-primary:hover { background: color-mix(in srgb, var(--ink) 86%, var(--bg-deep)); }
 
 .btn-secondary {
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-}
-
-.btn-secondary:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-hover);
+    background: var(--bg-input);
     color: var(--text-main);
+    border: 1px solid var(--border-light);
 }
+.btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-hover); }
 
 .btn-success {
     background: rgba(var(--success-rgb), 0.12);
     color: var(--success);
     border: 1px solid rgba(var(--success-rgb), 0.2);
 }
-
-.btn-success:hover {
-    background: rgba(var(--success-rgb), 0.18);
-}
+.btn-success:hover { background: rgba(var(--success-rgb), 0.18); }
 
 .btn-danger {
     background: rgba(var(--danger-rgb), 0.1);
     color: var(--danger);
     border: 1px solid rgba(var(--danger-rgb), 0.18);
 }
-
-.btn-danger:hover {
-    background: rgba(var(--danger-rgb), 0.16);
-}
+.btn-danger:hover { background: rgba(var(--danger-rgb), 0.16); }
 
 .btn-ghost {
     background: none;
     border: none;
     color: var(--text-muted);
     padding: 6px 12px;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
-    border-radius: var(--radius-xs);
-    transition: color 0.15s;
+    border-radius: 999px;
+    transition: color 0.15s, background-color 0.15s;
     font-family: var(--font-main);
     display: inline-flex;
     align-items: center;
     gap: 6px;
 }
-
-.btn-ghost:hover {
-    color: var(--text-main);
-}
+.btn-ghost:hover { color: var(--text-main); background: var(--bg-hover); }
 
 .btn-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--radius-xs);
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
@@ -445,102 +81,599 @@
     align-items: center;
     justify-content: center;
     font-size: 0;
-    transition: all 0.15s var(--ease);
+    transition: background-color 0.15s var(--ease), color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+.btn-icon .icon { width: 15px; height: 15px; }
+.btn-icon:hover { background: var(--bg-hover); border-color: var(--border); color: var(--text-main); }
+.btn-icon.success:hover { color: var(--success); }
+.btn-icon.danger:hover { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.2); }
+
+.btn:focus-visible, .btn-ghost:focus-visible, .btn-icon:focus-visible,
+.hf-chip:focus-visible, .hf-cta:focus-visible, .hf-kf--knopf:focus-visible, .hf-menue-punkt:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb), 0.7);
+    outline-offset: 2px;
 }
 
-.btn-icon .icon {
-    width: 15px;
-    height: 15px;
+/* Tastenkuerzel: kbd-hint/kbd stehen noch in Dialogen und Vorlagen. */
+.kbd-hint { display: inline-flex; gap: 3px; margin-left: 6px; opacity: 0.45; }
+.kbd, .hf-kbd {
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 0.66rem;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+    line-height: 1.5;
 }
 
-.btn-icon:hover {
-    background: var(--bg-hover);
-    border-color: var(--border);
+/* ══════════ UEBERSCHRIFTEN DER ABSCHNITTE ══════════ */
+.hf-kopf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.hf-h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 48;
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     color: var(--text-main);
 }
-
-.btn-icon.success:hover {
-    color: var(--success);
-}
-
-.btn-icon.danger:hover {
-    color: var(--danger);
-    border-color: rgba(var(--danger-rgb), 0.2);
-}
-
-.kbd-hint {
-    display: inline-flex;
-    gap: 3px;
-    margin-left: 6px;
-    opacity: 0.45;
-}
-
-.kbd {
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 0.65rem;
+.hf-h2-zahl {
     font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ══════════ BUEHNE: DIESE WOCHE ══════════
+   Zwei gleich breite Spalten auf EINER Achse mit Kopf und Abschnitten
+   (Nutzer zum Entwurf: "vieles off-center"). Links Satz + Kaestchen,
+   rechts der Blattstapel, dahinter die KW als Riesentypo. */
+.hf-buehne {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 56px;
+    padding: 36px 0 64px;
+    isolation: isolate;
+}
+.hf-buehne > * { min-width: 0; }
+.hf-riesen {
+    position: absolute;
+    right: -0.04em;
+    bottom: -0.02em;
+    z-index: -1;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 96;
+    font-weight: 800;
+    font-size: clamp(9rem, 5rem + 13vw, 19rem);
+    line-height: 0.8;
+    letter-spacing: -0.06em;
+    color: var(--text-main);
+    opacity: 0.06;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+}
+[data-theme="light"] .hf-riesen { opacity: 0.075; }
+
+.hf-links { display: flex; flex-direction: column; gap: 40px; }
+.hf-now { display: flex; flex-direction: column; gap: 0; }
+.hf-now-kopf {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 400;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.hf-now-kw {
+    padding: 4px 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-input);
+    color: var(--text-main);
+    font-weight: 500;
+}
+.hf-now-titel {
+    margin: 0;
+    max-width: 13ch;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 96;
+    font-weight: 700;
+    font-size: clamp(2.5rem, 1.5rem + 3vw, 4.3rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    color: var(--text-main);
+    text-wrap: balance;
+}
+/* Das eine Wort, auf das es ankommt (leer, angefangen, zurueckgegeben …) —
+   in der Farbe der Tinte, die gleich auf dem Blatt steht. */
+.hf-now-titel em { font-style: normal; color: var(--primary-light); }
+.hf-now-text {
+    margin: 18px 0 0;
+    max-width: 42ch;
+    font-size: 1.04rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+}
+.hf-now-aktionen { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 30px; }
+
+/* Hauptaktion wie .vi-btn-main im Intro: Tinte, Kreis mit Symbol rechts. */
+.hf-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 6px 6px 22px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--on-ink);
+    font-family: var(--font-main);
+    font-size: 0.95rem;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.06);
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 14px 34px -14px rgba(5, 4, 10, 0.7);
+    transition: transform 0.2s var(--spring), background-color 0.2s var(--ease);
+}
+.hf-cta-kreis {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgb(var(--primary-rgb));
+    color: #fff;
+    transition: transform 0.35s var(--spring);
+}
+.hf-cta-kreis .icon { width: 17px; height: 17px; }
+.hf-cta:hover .hf-cta-kreis { transform: rotate(-12deg) scale(1.06); }
+.hf-cta:active { transform: scale(0.98); }
+
+.hf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 0.84rem;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), color 0.18s var(--ease);
+}
+.hf-chip::-webkit-details-marker { display: none; }
+.hf-chip:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+.hf-chip:active { transform: scale(0.98); }
+.hf-chip .icon { color: var(--text-muted); }
+.hf-chip--leise { background: none; border-color: transparent; color: var(--text-muted); }
+.hf-chip--leise:hover { color: var(--text-main); }
+.hf-chip--gefahr { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.3); background: rgba(var(--danger-rgb), 0.06); }
+.hf-chip--gefahr .icon { color: var(--danger); }
+.hf-chip--gross { padding: 12px 20px; font-size: 0.92rem; font-weight: 600; }
+
+/* Tagesfortschritt einer angefangenen Woche: fuenf Striche, einer je Tag. */
+.hf-tage { display: flex; gap: 6px; align-items: center; margin-top: 16px; }
+.hf-tag-strich { width: 28px; height: 4px; border-radius: 2px; background: var(--border-light); }
+.hf-tag-strich.is-voll { background: rgb(var(--primary-rgb)); }
+.hf-tage-text { margin-left: 6px; font-size: 0.8rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* --- Formularkaestchen statt Kennzahl-Kacheln --- */
+.hf-kaestchen {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 34rem;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--bg-glass);
+    overflow: hidden;
+}
+.hf-kf {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 11px 14px 13px;
+    border: 0;
+    border-right: 1px solid var(--border-light);
+    background: none;
     color: inherit;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    font: inherit;
+    text-align: left;
 }
+.hf-kf:last-child { border-right: 0; }
+.hf-kf small {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.6rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+    min-height: 2.7em;
+}
+.hf-kf b {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+}
+.hf-kf-bar { display: block; height: 3px; margin-top: 2px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.hf-kf-bar > span { display: block; height: 100%; width: 0; background: rgb(var(--primary-rgb)); border-radius: 2px; transition: width 0.8s var(--ease-out); }
+.hf-kf--knopf { cursor: pointer; transition: background-color 0.15s var(--ease); }
+.hf-kf--knopf:hover { background: var(--bg-hover); }
+.hf-kf--knopf:disabled { cursor: default; }
+.hf-kf--knopf:disabled:hover { background: none; }
+/* Fehlende Wochen in Rotstift-Rot — es ist eine Anmerkung, kein Alarm. */
+.hf-kf--knopf.is-offen b { color: var(--rot-hell); }
 
-/* --- QUICK ACTIONS --- */
-.actions-row {
+/* ══════════ BLATTSTAPEL ══════════
+   b1 = die Woche, um die es geht (liegt oben, im Fluss, bestimmt die Hoehe),
+   b2 = Vorwoche, schaut unten rechts mit Stempel/Rotstift hervor,
+   b3 = Rest des Stapels. Papier ist in beiden Themen hell. */
+.hf-stapel {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    justify-self: center;
+    margin-bottom: 52px;
+}
+.hf-blatt {
+    border-radius: 5px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+}
+.hf-blatt.b3, .hf-blatt.b2 { position: absolute; inset: 0; }
+.hf-blatt.b3 { transform: rotate(-5deg) translate(-16px, 14px); background: var(--papier-2); }
+.hf-blatt.b2 { transform: rotate(4.5deg) translate(34px, 44px); }
+.hf-blatt.b1 {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    padding: 28px 28px 26px 62px;
+    border: 0;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transform: rotate(-1.3deg);
+    transition: transform 0.35s var(--spring), box-shadow 0.35s var(--ease);
+}
+.hf-blatt.b1:hover { transform: rotate(-0.6deg) translateY(-4px); }
+.hf-blatt.b1:focus-visible { outline: 3px solid rgba(var(--primary-rgb), 0.7); outline-offset: 4px; }
+/* roter Randstrich wie auf jedem Heftpapier */
+.hf-blatt.b1::before, .hf-blatt.b2::before {
+    content: '';
+    position: absolute;
+    left: 46px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--papier-rand);
+}
+.hf-vk {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(21, 19, 29, 0.2);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.58rem;
+    color: var(--papier-tinte-2);
 }
-
-/* --- SEARCH & FILTER --- */
-.search-filter-bar {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+.hf-vk b {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--papier-tinte);
 }
+.hf-blatt-tag {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr);
+    align-items: baseline;
+    min-height: 46px;
+    padding-top: 13px;
+    border-bottom: 1px solid var(--papier-linie);
+}
+.hf-blatt-tag > span {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.62rem;
+    color: var(--papier-tinte-2);
+}
+.hf-blatt-tag.is-schule > span { color: var(--kuli); }
+.hf-blatt-tag p {
+    margin: 0;
+    font-size: 0.93rem;
+    line-height: 1.35;
+    color: var(--kuli);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.hf-blatt-tag p.is-leer { color: rgba(21, 19, 29, 0.3); font-style: italic; }
+.hf-blatt-tag p.is-status { color: var(--papier-tinte-2); }
+.hf-unterschrift { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; margin-top: 34px; }
+.hf-us {
+    position: relative;
+    padding-top: 6px;
+    border-top: 1px solid rgba(21, 19, 29, 0.42);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.56rem;
+    color: var(--papier-tinte-2);
+}
+.hf-hand {
+    position: absolute;
+    left: 4px;
+    bottom: calc(100% + 2px);
+    font-family: var(--font-hand);
+    font-size: 1.65rem;
+    line-height: 1;
+    color: var(--kuli);
+    transform: rotate(-3deg);
+    white-space: nowrap;
+}
+/* Stempel: Doppelrand, schraeg, leicht ins Papier gezogen (multiply). */
+.hf-stempel {
+    position: absolute;
+    z-index: 3;
+    right: 34px;
+    bottom: 22px;
+    padding: 7px 13px;
+    border: 3px double var(--kuli);
+    border-radius: 8px;
+    color: var(--kuli);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 500;
+    font-size: 0.74rem;
+    line-height: 1.3;
+    text-align: center;
+    transform: rotate(-9deg);
+    opacity: 0.8;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+}
+.hf-stempel small { display: block; font-weight: 300; font-size: 0.55rem; }
+.hf-blatt.b1 .hf-stempel { bottom: 70px; }
+.hf-rotstift {
+    position: absolute;
+    z-index: 3;
+    max-width: 220px;
+    font-family: var(--font-hand);
+    font-size: 1.35rem;
+    line-height: 1.05;
+    color: var(--rotstift);
+    transform: rotate(-3deg);
+    pointer-events: none;
+}
+.hf-blatt.b2 .hf-rotstift { right: 190px; bottom: 12px; }
+/* Auf dem obersten Blatt steht die Anmerkung im Fluss unter den Tageszeilen —
+   absolut lag sie ueber Kopfzeile und Datum. */
+.hf-blatt.b1 .hf-rotstift { position: relative; max-width: none; margin: 16px 6px -10px 0; text-align: right; transform: rotate(-2deg); }
 
-.search-input {
-    flex: 1;
-    min-width: 200px;
-    padding: 9px 14px;
-    background: var(--bg-card);
+/* ══════════ DEIN JAHR: Registerreiter ══════════ */
+.hf-legende { display: flex; gap: 14px; flex-wrap: wrap; }
+.hf-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--text-muted); }
+.hf-leg-k { display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--border-light); }
+.hf-leg-k.signed { background: rgb(var(--primary-rgb)); border-color: transparent; }
+.hf-leg-k.complete { background: rgba(var(--primary-rgb), 0.52); border-color: transparent; }
+.hf-leg-k.draft { background: rgba(var(--primary-rgb), 0.22); border-color: transparent; }
+.hf-leg-k.fehlt { border: 1.5px dashed var(--rot-hell); }
+
+.hf-register {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 6px;
+    align-items: end;
+    padding-top: 10px;
+}
+.hf-reiter {
+    min-width: 0;
+    padding: 10px 9px 12px;
     border: 1px solid var(--border);
+    border-bottom-width: 3px;
+    border-radius: 10px 10px 4px 4px;
+    background: var(--bg-glass);
+    transition: transform 0.25s var(--spring);
+}
+.hf-reiter > b { display: block; margin-bottom: 10px; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
+/* Der laufende Monat ist als Blatt herausgezogen. */
+.hf-reiter.is-jetzt {
+    background: var(--papier);
+    border-color: var(--papier);
+    transform: translateY(-8px);
+    box-shadow: var(--papier-schatten);
+}
+.hf-reiter.is-jetzt > b { color: var(--papier-tinte); }
+.hf-reiter.is-zukunft { opacity: 0.45; }
+.hf-striche { display: flex; gap: 3px; }
+.hf-strich {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 18px;
+    padding: 0;
+    border: 1px solid var(--border-light);
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease);
+}
+.hf-strich:hover { transform: translateY(-2px); }
+.hf-strich:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: 2px; }
+.hf-strich.signed { background: rgb(var(--primary-rgb)); border-color: transparent; }
+.hf-strich.complete { background: rgba(var(--primary-rgb), 0.52); border-color: transparent; }
+.hf-strich.draft { background: rgba(var(--primary-rgb), 0.22); border-color: transparent; }
+.hf-strich.fehlt { border: 1.5px dashed var(--rot-hell); }
+.is-jetzt .hf-strich { border-color: var(--papier-linie); }
+.is-jetzt .hf-strich.signed { background: var(--kuli); }
+.is-jetzt .hf-strich.fehlt { border-color: var(--rotstift); }
+.hf-strich.is-now { box-shadow: 0 0 0 2px var(--papier), 0 0 0 3.5px var(--papier-tinte); }
+.hf-tip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 5px 9px;
+    border-radius: 8px;
+    background: var(--ink);
+    color: var(--on-ink);
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    z-index: 5;
+}
+.hf-strich:hover .hf-tip, .hf-strich:focus-visible .hf-tip { opacity: 1; }
+
+/* Noch kein Bericht (.container.is-neu, setzt updateUI): Kaestchen mit viermal 0
+   und leere Reiter sagen nichts. Der Stapel bleibt — das leere Blatt IST die
+   Einladung. Die Knoepfe des Leerzustands entfallen, die Buehne hat sie schon. */
+.is-neu .hf-kaestchen,
+.is-neu .hf-jahr,
+.is-neu .hf-leer .empty-actions { display: none; }
+
+/* ══════════ DEINE WOCHEN: WERKZEUGE + FILTER ══════════ */
+.hf-werkzeuge { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.hf-menue { position: relative; }
+.hf-menue[open] > .hf-chip { background: var(--bg-hover); border-color: var(--border-hover); }
+.hf-menue-liste {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    width: 290px;
+    padding: 6px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    /* Deckend in zwei Ebenen: --bg-glass traegt Alpha (CLAUDE.md, Alpha-Token
+       ohne backdrop-filter). */
+    background: linear-gradient(var(--bg-glass), var(--bg-glass)), var(--bg-deep);
+    box-shadow: var(--shadow-lg);
+}
+.hf-menue-punkt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.hf-menue-punkt:hover { background: var(--bg-hover); }
+.hf-menue-punkt > .icon { margin-top: 2px; color: var(--text-muted); }
+.hf-menue-text { display: flex; flex-direction: column; gap: 2px; font-size: 0.88rem; font-weight: 500; }
+.hf-menue-text small { font-size: 0.76rem; font-weight: 400; color: var(--text-muted); }
+
+.hf-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.hf-suche {
+    position: relative;
+    flex: 1 1 220px;
+    display: flex;
+    align-items: center;
+}
+.hf-suche > .icon {
+    position: absolute;
+    left: 13px;
+    color: var(--text-dim);
+    pointer-events: none;
+}
+.search-input {
+    width: 100%;
+    padding: 9px 14px 9px 36px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     color: var(--text-main);
-    font-size: 0.85rem;
+    font-size: 0.86rem;
     font-family: var(--font-main);
-    transition: border-color 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s;
 }
-
-.search-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.08);
-}
-
-.search-input::placeholder {
-    color: var(--text-dim);
-}
-
+.search-input:focus { outline: none; border-color: rgba(var(--primary-rgb), 0.6); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14); }
+.search-input::placeholder { color: var(--text-dim); }
 .filter-select {
     padding: 9px 12px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-sm);
     color: var(--text-secondary);
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     font-family: var(--font-main);
     cursor: pointer;
     transition: border-color 0.15s;
 }
+.filter-select:focus { outline: none; border-color: rgba(var(--primary-rgb), 0.6); }
+.filter-select option { background: var(--bg-card); color: var(--text-main); }
+.hf-format { display: inline-flex; align-items: center; gap: 8px; }
+.hf-format-label { font-size: 0.8rem; color: var(--text-muted); }
+.hf-filter-rechts { display: inline-flex; gap: 4px; margin-left: auto; }
 
-.filter-select:focus {
-    outline: none;
-    border-color: var(--primary);
+.hf-bulk {
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(var(--primary-rgb), 0.25);
+    border-radius: var(--radius-sm);
+    background: rgba(var(--primary-rgb), 0.06);
 }
+.hf-bulk-zahl { font-size: 0.84rem; font-weight: 600; }
+.hf-bulk-aktionen { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.hf-bulk-frage { font-size: 0.84rem; font-weight: 600; color: var(--danger); }
 
-/* --- PAPIERKORB / TRASH --- */
+/* ══════════ PAPIERKORB ══════════ */
 .trash-badge {
     display: inline-flex;
     align-items: center;
@@ -550,21 +683,50 @@
     padding: 0 5px;
     border-radius: 9px;
     font-size: 0.7rem;
-    font-weight: 700;
+    font-weight: 600;
     font-family: var(--font-mono);
-    background: rgba(239, 68, 68, 0.16);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(var(--danger-rgb), 0.14);
+    color: var(--danger);
     line-height: 1;
 }
-
-.trash-card {
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-}
-
+.trash-card { transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease; }
 .trash-card:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
+    background: var(--bg-hover) !important;
     border-color: rgba(var(--primary-rgb), 0.3) !important;
 }
 
+/* ══════════ SCHMAL ══════════ */
+@media (max-width: 960px) {
+    .hf-buehne { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-top: 20px; }
+    .hf-stapel { max-width: 480px; }
+    .hf-kaestchen { max-width: none; }
+    .hf-register { grid-template-columns: repeat(6, minmax(0, 1fr)); row-gap: 14px; }
+}
+@media (max-width: 640px) {
+    .hf-now-aktionen { flex-direction: column; align-items: stretch; }
+    .hf-cta { justify-content: space-between; }
+    .hf-chip--gross { justify-content: center; }
+    .hf-kaestchen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hf-kf:nth-child(2) { border-right: 0; }
+    .hf-kf:nth-child(-n+2) { border-bottom: 1px solid var(--border-light); }
+    .hf-blatt.b1 { padding: 22px 18px 22px 48px; }
+    .hf-blatt.b1::before, .hf-blatt.b2::before { left: 36px; }
+    .hf-blatt.b2 { transform: rotate(3deg) translate(14px, 40px); }
+    .hf-blatt.b2 .hf-rotstift { right: 150px; font-size: 1.15rem; max-width: 150px; }
+    .hf-blatt.b1 .hf-rotstift { display: none; }
+    .hf-vk { flex-wrap: wrap; }
+    .hf-register { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .hf-werkzeuge { width: 100%; }
+    .hf-werkzeuge .hf-kbd { display: none; }
+    .hf-menue-liste { left: 0; right: auto; width: min(290px, calc(100vw - 48px)); }
+    .hf-filter-rechts { margin-left: 0; }
+    /* 16 px, sonst zoomt iOS beim Fokus in die Seite. */
+    .search-input, .filter-select { font-size: 16px; }
+    .hf-format { width: 100%; justify-content: space-between; }
+}
 
+@media (prefers-reduced-motion: reduce) {
+    .hf-cta, .hf-cta-kreis, .hf-strich, .hf-reiter, .hf-blatt.b1, .hf-kf-bar > span, .btn { transition: none; }
+    .hf-strich:hover, .hf-blatt.b1:hover { transform: none; }
+    .hf-blatt.b1:hover { transform: rotate(-1.3deg); }
+}

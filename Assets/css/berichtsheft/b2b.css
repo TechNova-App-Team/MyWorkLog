@@ -8,8 +8,9 @@
 /* #b2bCard traegt selbst KEINE Optik — je nach Zustand rendert bh-b2b-ui.js
    eine Klasse: .b2b-panel (voller Kasten, Mitglied/aufgeklappt),
    .is-teaser (eine Zeile), .is-mini (Haarlinie nach dem Ausblenden). */
+/* Kein eigener Abstand: .container setzt den Abstand zwischen den Abschnitten. */
 #b2bCard {
-    margin-bottom: 20px;
+    margin: 0;
 }
 
 .b2b-panel {
@@ -18,6 +19,26 @@
     border-radius: var(--radius);
     padding: 20px 22px;
 }
+
+/* Verbunden als Azubi: eine Statuszeile, Details zum Aufklappen (zeigeAzubi). */
+.b2b-panel.is-zeile { padding: 0; background: var(--bg-glass); }
+.b2b-zeile-kopf {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    list-style: none;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.b2b-zeile-kopf::-webkit-details-marker { display: none; }
+.b2b-zeile-kopf > .icon { color: var(--text-muted); }
+.b2b-zeile-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.b2b-zeile-text strong { color: var(--text-main); font-weight: 600; }
+.b2b-zeile .b2b-chev { transition: transform 0.2s var(--ease); }
+.b2b-zeile[open] .b2b-chev { transform: rotate(90deg); }
+.b2b-zeile .b2b-body { padding: 0 18px 16px 48px; }
 
 /* Teaser: eine ruhige Zeile, klickbar, mit Wegklick-Kreuz daneben. */
 #b2bCard.is-teaser {
@@ -179,10 +200,10 @@
     border-radius: var(--radius-xs);
     background: rgba(var(--warning-rgb), 0.12);
     color: var(--warning);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
     white-space: nowrap;
 }
 
@@ -438,3 +459,6 @@
         flex-wrap: wrap;
     }
 }
+
+/* Gelb auf Hell traegt nicht: dunklerer Ton fuer das helle Thema. */
+[data-theme="light"] .b2b-exp { color: color-mix(in srgb, var(--warning) 55%, var(--text-main)); background: rgba(var(--warning-rgb), 0.18); }

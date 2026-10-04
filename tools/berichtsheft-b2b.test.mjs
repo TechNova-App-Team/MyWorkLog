@@ -131,7 +131,7 @@ const f = {
 const a = I.zeileZuApproval(f);
 
 // bh-freigabe.js: bhIsLocked liest a.state; bhApprovalBadge liest a.state + a.by;
-// bhApprovalNote liest a.state + a.by + a.note; der PDF-Pfad reicht approval
+// renderReports/renderStapel (Rotstift) lesen a.state + a.by + a.note; der PDF-Pfad reicht approval
 // durch buildIhkFormModel -> drawSignatures.
 ok(a.state === 'approved', 'state (bhIsLocked / Badge)');
 ok(a.by === 'Frau Schneider', 'by  (Badge / Note)');

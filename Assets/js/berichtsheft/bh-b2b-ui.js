@@ -243,9 +243,21 @@
         el().hidden = false;
     }
 
+    // Verbunden ist ein Zustand, den man einmal einrichtet: als Statuszeile, die
+    // Erklaerung und "Verbindung loesen" dahinter (v8.1.12). Vorher belegte der volle
+    // Kasten samt Erklaertext dauerhaft die Mitte der Startseite.
     function zeigeAzubi(st, offline) {
-        el().className = 'b2b-panel';
-        el().innerHTML = schale(true, b2bL('Verbunden', 'Connected'),
+        el().className = 'b2b-panel is-zeile';
+        el().innerHTML =
+            '<details class="b2b-zeile">' +
+            '<summary class="b2b-zeile-kopf">' +
+            '<svg class="icon" aria-hidden="true"><use href="#i-tie"/></svg>' +
+            '<span class="b2b-zeile-text">' + b2bL('Verbunden mit ', 'Connected to ') +
+            '<strong>' + esc(st.name || b2bL('deinem Betrieb', 'your company')) + '</strong></span>' +
+            '<span class="b2b-pill is-on">' + esc(offline ? b2bL('Offline', 'Offline') : b2bL('Abgleich aktiv', 'Syncing')) + '</span>' +
+            '<svg class="b2b-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>' +
+            '</summary>' +
             '<div class="b2b-body">' +
             b2bL('Deine Berichte werden mit ', 'Your reports are shared with ') +
             '<strong>' + esc(st.name || b2bL('deinem Betrieb', 'your company')) + '</strong>' +
@@ -259,7 +271,7 @@
             '<div class="b2b-actions" style="margin-top:12px;">' +
             '<button class="btn btn-ghost" onclick="b2bVerbindungLoesen()">' +
             b2bL('Verbindung lösen', 'Disconnect') + '</button>' +
-            '</div></div>');
+            '</div></div></details>';
         el().hidden = false;
     }
 

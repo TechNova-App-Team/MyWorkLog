@@ -1,193 +1,227 @@
 /* berichte.css — Teil von /berichtsheft/
-   Karten-Grundform, Berichtsliste, Leerzustand, Einstiegskarte Schatten-Berichtsheft.
-   Herausgeloest aus pages/berichtsheft/index.html. */
+   Berichtsliste ("Deine Wochen"), Status-Marken, Leerzustand, Einstiegskarte
+   Schatten-Berichtsheft. Herausgeloest aus pages/berichtsheft/index.html.
+   Seit v8.1.12 ist die Liste EIN Behaelter mit Trennlinien statt einer Karte je
+   Zeile — 57 umrandete Kaesten untereinander waren reines Rauschen. */
 
-/* --- CARD --- */
-.card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 22px;
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.card-title {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-main);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-display);
-}
-
-.card-title .icon {
-    color: var(--primary);
-    width: 18px;
-    height: 18px;
-}
-
-/* --- REPORT LIST & ITEMS --- */
+/* --- LISTE: Blattkanten ---
+   Jede Woche ein Papierstreifen mit rotem Randstrich, die KW davor, der Text
+   in Kuli-Blau — wie die Blaetter im Stapel auf der Buehne. Papier ist in
+   beiden Themen hell; darauf steht immer --papier-tinte. */
 .report-list {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
 }
+.report-list:empty { display: none; }
 
+/* .report-item + data-id + .ais-confirming + .report-actions sind Haken fuer
+   bh-bericht.js (Loeschen, Mehrfachauswahl) — Namen nicht aendern. */
 .report-item {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.15s var(--ease);
-    opacity: 0;
-    transform: translateY(6px);
     position: relative;
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 22px;
+    padding: 14px 16px 14px 0;
+    border-radius: 4px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: 0 12px 26px -22px rgba(5, 4, 10, 0.8);
+    cursor: pointer;
     overflow: hidden;
+    transition: transform 0.25s var(--spring), box-shadow 0.25s var(--ease);
 }
-
-.report-item.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.report-item:hover {
-    background: var(--bg-hover);
-    border-color: var(--border);
-}
-
-/* Freigabe-Zustand auf der Listenkarte (Klasse aus bhApprovalKlasse()).
-   Gruen = abgezeichnet, gelb = zurueckgegeben, rot = die Freigabe traegt
-   nicht mehr — dieselben Rollen wie in /ausbilder/.
-
-   🔴 Steht bewusst NACH `.report-item:hover`: gleiche Spezifitaet (0,2,0),
-   also entscheidet die Reihenfolge. Weiter oben eingefuegt bliebe der Rand
-   beim Ueberfahren wirkungslos.
-   Und bewusst nur `border-color` + Randstreifen, KEIN `background`: sonst
-   schluckt der Zustand die Hover-Rueckmeldung, und eine zurueckgegebene
-   Woche fuehlt sich als einzige nicht mehr anklickbar an. */
-.report-item.fb-zurueck { border-color: rgba(var(--warning-rgb), 0.45); }
-.report-item.fb-alarm   { border-color: rgba(var(--danger-rgb), 0.45); }
-.report-item.fb-ok      { border-color: rgba(var(--success-rgb), 0.32); }
-
-/* Der Streifen liegt im Kasten (`.report-item` hat `overflow: hidden`), also
-   ohne negative Ausrichtung. `border-radius` braucht er keinen — die Ecken
-   beschneidet der Elternteil. */
-.report-item.fb-zurueck::before,
-.report-item.fb-alarm::before,
-.report-item.fb-ok::before {
+/* roter Randstrich */
+.report-item::after {
     content: '';
     position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
+    left: 70px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--papier-rand);
+    pointer-events: none;
 }
-.report-item.fb-zurueck::before { background: var(--warning); }
-.report-item.fb-alarm::before   { background: var(--danger); }
-.report-item.fb-ok::before      { background: var(--success); }
-/* Kein zusaetzliches padding-left: die Zeile hat schon 16px, der Streifen ist
-   3px breit und liegt darin. Ein Aufschlag wuerde markierte Karten gegen
-   unmarkierte verschieben — in einer Liste faellt genau das auf. */
+.report-item:hover { transform: translateY(-2px); box-shadow: 0 18px 34px -22px rgba(5, 4, 10, 0.85); }
+.report-item:focus-visible { outline: 3px solid rgba(var(--primary-rgb), 0.7); outline-offset: 2px; }
+.report-item.is-gewaehlt { box-shadow: 0 0 0 2px rgb(var(--primary-rgb)); }
+.report-item.hat-auswahl { grid-template-columns: 70px minmax(0, 1fr) auto; }
+.report-item.hat-auswahl > input {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    accent-color: var(--kuli);
+    cursor: pointer;
+    z-index: 2;
+}
+.report-item.hat-auswahl .hf-zeile-kw { visibility: hidden; }
 
-.report-week {
-    font-family: var(--font-mono);
+/* Freigabe-Zustand als Strich am linken Papierrand (bhApprovalKlasse,
+   bh-freigabe.js): gruen abgezeichnet, gelb zurueckgegeben, rot traegt nicht mehr. */
+.report-item.fb-ok::before,
+.report-item.fb-zurueck::before,
+.report-item.fb-alarm::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+.report-item.fb-ok::before { background: color-mix(in srgb, var(--success) 70%, var(--papier-tinte)); }
+.report-item.fb-zurueck::before { background: var(--rotstift); }
+.report-item.fb-alarm::before { background: var(--danger); }
+
+.hf-zeile-kw { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; padding-right: 12px; }
+.hf-zeile-kw b {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
     font-weight: 700;
-    font-size: 0.88rem;
-    color: var(--primary);
-    text-align: center;
-    min-width: 56px;
-    padding: 8px 10px;
-    background: var(--primary-dim);
-    border-radius: var(--radius-sm);
-    line-height: 1.3;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--papier-tinte);
+    font-variant-numeric: tabular-nums;
 }
-
-.report-content {
-    flex: 1;
-    min-width: 0;
-}
-
-.report-title {
-    font-weight: 600;
-    font-size: 0.88rem;
-    color: var(--text-main);
-    margin-bottom: 4px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.hf-zeile-kw small {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.52rem;
+    color: var(--papier-tinte-2);
     white-space: nowrap;
 }
 
-.report-meta {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    align-items: center;
-    font-size: 0.75rem;
-    color: var(--text-muted);
+.hf-zeile-mitte { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hf-zeile-kopf { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.hf-zeile-datum {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.6rem;
+    color: var(--papier-tinte-2);
+    white-space: nowrap;
 }
-
-.report-meta span {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+.hf-zeile-abt { font-size: 0.76rem; color: var(--papier-tinte-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Was in der Woche passiert ist — die eigentliche Information der Zeile, in
+   Kuli-Blau wie auf dem Blatt. Bis v8.1.11 stand hier "Ausbildungsnachweis". */
+.hf-zeile-vorschau {
+    margin: 0;
+    font-size: 0.96rem;
+    line-height: 1.4;
+    color: var(--kuli);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+.hf-zeile-vorschau.is-leer { color: rgba(21, 19, 29, 0.32); font-style: italic; }
+.hf-zeile-meta { font-size: 0.74rem; color: var(--papier-tinte-2); font-variant-numeric: tabular-nums; }
 
-.report-meta .icon {
-    width: 12px;
-    height: 12px;
+.hf-zeile-status { display: flex; justify-content: flex-end; min-width: 0; max-width: 260px; }
+.hf-mini-stempel {
+    padding: 3px 9px;
+    border: 2.5px double var(--kuli);
+    border-radius: 6px;
+    color: var(--kuli);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 500;
+    font-size: 0.6rem;
+    white-space: nowrap;
+    transform: rotate(-6deg);
+    opacity: 0.85;
+}
+.hf-vermerk {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.6rem;
+    color: var(--papier-tinte-2);
+    white-space: nowrap;
+}
+.hf-vermerk.is-entwurf { padding: 2px 8px; border: 1.5px dashed rgba(21, 19, 29, 0.3); border-radius: 6px; }
+.hf-rot {
+    font-family: var(--font-hand);
+    font-size: 1.2rem;
+    line-height: 1.05;
+    color: var(--rotstift);
+    text-align: right;
+    transform: rotate(-2deg);
 }
 
 .report-actions {
     display: flex;
     gap: 2px;
     flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s var(--ease);
 }
+.report-item:hover .report-actions,
+.report-item:focus-within .report-actions { opacity: 1; }
+/* Mit Maus liegen die Knoepfe beim Ueberfahren UEBER dem rechten Rand — sonst
+   belegten sie unsichtbar Platz und der Zustand schwebte mitten in der Zeile.
+   Touch hat kein :hover: dort stehen sie im Raster und immer da (CLAUDE.md). */
+@media (hover: hover) {
+    .report-actions {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        padding-left: 18px;
+        background: linear-gradient(90deg, transparent, var(--papier) 18px);
+    }
+    .report-item { grid-template-columns: 70px minmax(0, 1fr) auto; }
+}
+@media (hover: none) { .report-actions { opacity: 1; } }
+/* Auf Papier: Knoepfe in Papiertinte, nicht in den hellen Buehnenfarben. */
+.report-item .btn-icon { color: var(--papier-tinte-2); }
+.report-item .btn-icon:hover { color: var(--papier-tinte); background: rgba(21, 19, 29, 0.06); border-color: transparent; }
+.report-item .btn-icon.danger:hover { color: var(--rotstift); }
+.report-item .ais-del-confirm-strip { background: linear-gradient(90deg, transparent 0%, var(--papier) 28%); }
+.report-item .ais-del-confirm-label { color: var(--papier-tinte-2); }
+.report-item .ais-del-btn-nein { color: var(--papier-tinte); background: rgba(21, 19, 29, 0.05); border-color: rgba(21, 19, 29, 0.15); }
 
+/* --- STATUS-MARKEN (auch in der Detailansicht) --- */
 .badge {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 8px;
-    border-radius: var(--radius-xs);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.01em;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid transparent;
 }
+.badge-warning { background: rgba(var(--warning-rgb), 0.1); color: var(--warning); }
+.badge-success { background: var(--bg-input); color: var(--text-secondary); border-color: var(--border-light); }
+.badge-signed { background: rgba(var(--success-rgb), 0.12); color: var(--success); }
+.badge-danger { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); }
 
-.badge-warning {
-    background: rgba(var(--warning-rgb), 0.1);
-    color: var(--warning);
-}
-
-.badge-success {
-    background: rgba(var(--success-rgb), 0.1);
-    color: var(--success);
-}
-
-.badge-signed {
-    background: rgba(var(--success-rgb), 0.15);
-    color: var(--success);
-}
-
-.badge-danger {
-    background: rgba(var(--danger-rgb), 0.12);
-    color: var(--danger);
+/* Schmal: KW links, Text rechts daneben, Status und Knoepfe in eine zweite
+   Zeile unter den Text. Vier Spalten in 340 px liessen der Vorschau ~90 px. */
+@media (max-width: 640px) {
+    .report-item, .report-item.hat-auswahl {
+        grid-template-columns: 52px minmax(0, 1fr);
+        gap: 6px 14px;
+        padding: 14px 12px 12px 0;
+    }
+    .report-item::after { left: 52px; }
+    .hf-zeile-kw { padding-right: 8px; align-self: start; }
+    .hf-zeile-kw small { display: none; }
+    .hf-zeile-status { grid-column: 2; justify-content: flex-start; max-width: none; }
+    .report-actions { grid-column: 2; justify-content: flex-start; margin-left: -8px; }
 }
 
 /* --- EMPTY STATE --- */
 .empty-state {
     text-align: center;
-    padding: 48px 24px;
+    padding: 40px 24px;
+    border: 1px dashed var(--border-light);
+    border-radius: var(--radius);
 }
 
 .empty-icon {
@@ -204,13 +238,14 @@
 .empty-title {
     font-family: var(--font-display);
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 600;
     margin-bottom: 8px;
+    letter-spacing: -0.02em;
 }
 
 .empty-text {
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
     max-width: 380px;
     margin: 0 auto 20px;
     line-height: 1.6;

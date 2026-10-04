@@ -76,23 +76,9 @@ function bhApprovalBadge(report) {
     return '';
 }
 
-// Die Begruendung einer Rueckgabe gehoert sichtbar an die Karte — sie ist
-// die einzige Information, die dem Azubi sagt, WAS er aendern soll.
-function bhApprovalNote(report) {
-    const a = report && report.approval;
-    if (!a || a.state !== 'rejected') return '';
-    const who = a.by ? escapeHtml(a.by) : bhL('Der Ausbilder', 'The trainer');
-    const txt = a.note
-        ? escapeHtml(a.note)
-        : bhL('Ohne Anmerkung zurückgegeben.', 'Returned without a comment.');
-    return '<div style="margin-top:8px;padding:9px 12px;border-radius:8px;' +
-        'background:rgba(var(--warning-rgb),0.08);border-left:2px solid var(--warning);">' +
-        '<div style="font-size:0.72rem;font-weight:600;color:var(--warning);margin-bottom:3px;">' +
-        who + ' &middot; ' + escapeHtml(a.widerrufen
-            ? bhL('hat die Freigabe widerrufen, die Woche ist wieder offen', 'revoked the approval, the week is open again')
-            : bhL('muss überarbeitet werden', 'needs revision')) + '</div>' +
-        '<div style="font-size:0.8rem;color:var(--text-muted);">' + txt + '</div></div>';
-}
+// Die Begruendung einer Rueckgabe steht seit v8.1.12 als Rotstift an der Zeile
+// (renderReports) und auf dem obersten Blatt der Startseite (renderStapel) —
+// sie ist die einzige Information, die dem Azubi sagt, WAS er aendern soll.
 
 // ── Hinweg ───────────────────────────────────────────────────
 function bhBuildWeekPayload(report) {
