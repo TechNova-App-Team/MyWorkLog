@@ -79,7 +79,9 @@ async function browser(w, h, dpr, url, nachLaden) {
 }
 
 // Weg mit allem, was beim ersten Besuch ueber der Seite liegt
-const AUFRAEUMEN = "var b=document.getElementById('localhostWarningBanner');if(b)b.remove();document.querySelectorAll('.toast,.smart-notification').forEach(e=>e.remove());";
+// Der schwebende Menueknopf liegt am Handy ueber dem Seitenkopf — im Film
+// verdeckte er die Ueberschrift der obersten Karte ("URL" von "Urlaub uebrig").
+const AUFRAEUMEN = "var b=document.getElementById('localhostWarningBanner');if(b)b.remove();var mt=document.getElementById('mobileMenuToggle');if(mt)mt.style.display='none';document.querySelectorAll('.toast,.smart-notification').forEach(e=>e.remove());";
 
 async function film(name, w, h, dpr, url, vorbereiten, sekunden) {
   const b = await browser(w, h, dpr, url, vorbereiten);

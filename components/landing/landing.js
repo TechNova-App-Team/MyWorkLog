@@ -261,6 +261,26 @@
         return g;
       }
       var wuerfelGeo=rundQuader(1,1,1,0.17,3);
+      // Flache Gehaeuse (Handy, Tablet, Monitor, Icon): rundQuader taugt dafuer
+      // NICHT — er kappt den Eckradius auf die halbe Dicke, ein 0,78 dickes
+      // Handy bekam 0,35 statt 1,25 Radius, und Gehaeuse und Bildschirm hatten
+      // verschiedene Ecken (graue Kloetze, gemeldet 04.10.2026). Deshalb hier
+      // eine gerundete Rechteckform, extrudiert, mit feiner Fase an der Kante.
+      function rundRechteck(w,h,r){
+        var s=new THREE.Shape(), x=-w/2, y=-h/2; r=Math.min(r,w/2,h/2);
+        s.moveTo(x+r,y); s.lineTo(x+w-r,y); s.absarc(x+w-r,y+r,r,-Math.PI/2,0,false);
+        s.lineTo(x+w,y+h-r); s.absarc(x+w-r,y+h-r,r,0,Math.PI/2,false);
+        s.lineTo(x+r,y+h); s.absarc(x+r,y+h-r,r,Math.PI/2,Math.PI,false);
+        s.lineTo(x,y+r); s.absarc(x+r,y+r,r,Math.PI,Math.PI*1.5,false);
+        return s;
+      }
+      function platte(w,h,d,r,b){
+        var g=new THREE.ExtrudeGeometry(rundRechteck(w-2*b,h-2*b,Math.max(0.02,r-b)),
+          {depth:d-2*b, bevelEnabled:true, bevelThickness:b, bevelSize:b, bevelSegments:6, curveSegments:32});
+        g.translate(0,0,-(d-2*b)/2);
+        return g;
+      }
+      function flaeche(w,h,r){ return new THREE.ShapeGeometry(rundRechteck(w,h,r),32); }
       function wuerfel(liste,mat){
         var im=new THREE.InstancedMesh(wuerfelGeo,mat||M.weiss,liste.length), o=new THREE.Object3D();
         liste.forEach(function(q,i){ o.position.set(q[0],q[1],q[2]); o.scale.setScalar(q[3]||0.96); o.updateMatrix(); im.setMatrixAt(i,o.matrix); });
@@ -310,8 +330,7 @@
       }
       // Glas ueber jedem Bildschirm: spiegelt die Umgebung schwach
       function glas(w,h,r){
-        var m=new THREE.Mesh(rundQuader(w,h,0.02,r,4), new THREE.MeshPhysicalMaterial({color:0x000000, roughness:0.05, metalness:0.9, transparent:true, opacity:0.16}));
-        return m;
+        return new THREE.Mesh(flaeche(w,h,r), new THREE.MeshPhysicalMaterial({color:0x000000, roughness:0.05, metalness:0.9, transparent:true, opacity:0.16, depthWrite:false}));
       }
 
       var filme=[];
@@ -357,24 +376,27 @@
         // fand der Nutzer "naja".
         handy:function(ch){
           var g=new THREE.Group(), f=film('/Grafiken/intro/handy.mp4');
-          var W2=7.6, H2=15.8, R2=1.25;
-          g.add(new THREE.Mesh(rundQuader(W2,H2,0.78,R2,6), M.rahmen));
-          var front=new THREE.Mesh(rundQuader(W2-0.12,H2-0.12,0.8,R2-0.06,6), M.glas); g.add(front);
+          // Masse eines heutigen Handys: 0,26 Rand rundum, Bildschirmecken =
+          // Gehaeuseecken minus Rand, damit die Linien parallel laufen.
+          var W2=7.5, H2=15.6, D2=0.66, R2=1.3, RAND=0.26, Z=D2/2;
+          g.add(new THREE.Mesh(platte(W2,H2,D2,R2,0.16), M.rahmen));
+          var front=new THREE.Mesh(flaeche(W2-0.12,H2-0.12,R2-0.06), M.glas); front.position.z=Z+0.002; g.add(front);
           // Statusleiste: Uhrzeit links, Empfang + Akku rechts, App-Hintergrund
           var sc=document.createElement('canvas'); sc.width=700; sc.height=62; var x=sc.getContext('2d');
           x.fillStyle='#0b0a10'; x.fillRect(0,0,700,62); x.fillStyle='#fff'; x.font='600 30px Geist, system-ui, sans-serif'; x.fillText('9:41',70,43);
           for(var b=0;b<4;b++) x.fillRect(538+b*11,40-b*6,7,8+b*6);
           x.strokeStyle='#fff'; x.lineWidth=2.5; x.strokeRect(592,24,42,20); x.fillRect(596,28,30,12); x.fillRect(636,30,3,8);
           var barTex=new THREE.CanvasTexture(sc); barTex.colorSpace=THREE.SRGBColorSpace;
-          var SW=W2-0.62, SH=H2-0.62;
-          var s=schirm(f.tex,SW,SH,R2-0.31,barTex); s.position.z=0.405; g.add(s);
+          var SW=W2-2*RAND, SH=H2-2*RAND;
+          var s=schirm(f.tex,SW,SH,R2-RAND,barTex); s.position.z=Z+0.006; g.add(s);
           // Film (390x844) fuellt die Flaeche unter der Leiste: oben/unten minimal beschnitten
           var flH=SH-0.62, soll=(844/390), ist=flH/SW;
           s.material.uniforms.uCover.value.set(1, Math.min(1,ist/soll));
-          var insel=new THREE.Mesh(rundQuader(2.0,0.52,0.04,0.26,3), M.schwarz); insel.position.set(0,SH/2-0.36,0.43); g.add(insel);
-          var gl1=glas(SW,SH,R2-0.31); gl1.position.z=0.43; g.add(gl1);
-          [[-1,2.6,0.9],[-1,1.2,1.6],[-1,-0.6,1.6],[1,1.6,2.6]].forEach(function(q){
-            var t=new THREE.Mesh(rundQuader(0.14,q[2],0.32,0.07,2), M.rahmen); t.position.set(q[0]*(W2/2+0.03),q[1]+3,0); g.add(t);
+          var insel=new THREE.Mesh(flaeche(2.0,0.52,0.26), M.schwarz); insel.position.set(0,SH/2-0.34,Z+0.01); g.add(insel);
+          var gl1=glas(SW,SH,R2-RAND); gl1.position.z=Z+0.014; g.add(gl1);
+          // Tasten: links Aktion + Lautstaerke, rechts Seitentaste — flach anliegend
+          [[-1,5.0,0.8],[-1,3.6,1.5],[-1,1.8,1.5],[1,3.9,2.4]].forEach(function(q){
+            var t=new THREE.Mesh(rundQuader(0.12,q[2],0.3,0.06,2), M.rahmen); t.position.set(q[0]*(W2/2+0.02),q[1],0); g.add(t);
           });
           g.scale.setScalar(0.9); g.position.y=3.2;
           return {gruppe:g, film:f.video, dazu:function(t,T){ g.rotation.set(0.05, mix(-0.55,0.55,t)+mx*0.15, mix(-0.1,0.05,t)); }};
@@ -452,8 +474,8 @@
         // Umzug: Tablet mit der echten Import-Vorschau, Tabellenzeilen fliegen hinein
         tablet:function(ch){
           var g=new THREE.Group();
-          g.add(new THREE.Mesh(rundQuader(15.6,10.4,0.55,0.9,5), M.rahmen));
-          g.add(new THREE.Mesh(rundQuader(15.48,10.28,0.57,0.84,5), M.glas));
+          g.add(new THREE.Mesh(platte(15.6,10.4,0.55,0.9,0.12), M.rahmen));
+          var fr=new THREE.Mesh(flaeche(15.48,10.28,0.84), M.glas); fr.position.z=0.277; g.add(fr);
           var s=schirm(bild(ch.bild),14.6,9.125,0.5); s.position.z=0.295; g.add(s);
           var gl1=glas(14.6,9.125,0.5); gl1.position.z=0.31; g.add(gl1);
           // die alte Tabelle links: ein Gitter weisser Zellen, Kopfzeile gruen
@@ -480,7 +502,7 @@
         // Unterwegs: das App-Icon als Objekt — "installierbar wie eine App"
         icon:function(ch){
           var g=new THREE.Group();
-          var kachel=new THREE.Mesh(rundQuader(8,8,1.4,1.9,6), M.glas); g.add(kachel);
+          var kachel=new THREE.Mesh(platte(8,8,1.4,1.9,0.3), M.glas); g.add(kachel);
           var s=schirm(bild(ch.bild),7.7,7.7,1.75); s.position.z=0.71; g.add(s);
           var gl1=glas(7.7,7.7,1.75); gl1.position.z=0.72; g.add(gl1);
           // drei kleine Wuerfel kreisen darum: offline, Handy, Rechner — ohne Worte
@@ -518,8 +540,8 @@
         // Ausbilder: Monitor mit dem echten Cockpit, ein Freigabe-Haken springt heraus
         monitor:function(ch){
           var g=new THREE.Group();
-          g.add(new THREE.Mesh(rundQuader(17,10.8,0.55,0.45,4), M.alu));
-          g.add(new THREE.Mesh(rundQuader(16.9,10.7,0.57,0.4,4), M.glas));
+          g.add(new THREE.Mesh(platte(17,10.8,0.55,0.45,0.12), M.alu));
+          var fm=new THREE.Mesh(flaeche(16.9,10.7,0.4), M.glas); fm.position.z=0.277; g.add(fm);
           var s=schirm(bild(ch.bild),16.2,10.125,0.12); s.position.z=0.3; g.add(s);
           var hals=new THREE.Mesh(rundQuader(2.4,4.4,0.5,0.2,3), M.alu); hals.position.set(0,-6.6,-0.9); hals.rotation.x=-0.12; g.add(hals);
           var fuss=new THREE.Mesh(rundQuader(6.5,0.35,4.2,0.17,3), M.alu); fuss.position.set(0,-8.7,-0.4); g.add(fuss);
