@@ -319,8 +319,12 @@ function main() {
   // ein `git add` sie in den Commit ziehen — die Datei kommt dann als GEMISCHT
   // und bleibt liegen.
   if (process.argv.includes('--geaendert')) {
+    // package.json, README.md und das EN-Woerterbuch aendern sich nur beim Bump
+    // und staged der Hook dann ausdruecklich — hier gemeldet, landeten sie als
+    // GEMISCHT in der Warnung, obwohl sie im Commit sind.
+    const beimBump = new Set(['package.json', 'README.md', 'tools/i18n/dict/index.en-overrides.json']);
     const liste = [...GEAENDERT].map(f => path.relative(ROOT, f).split(path.sep).join('/'))
-      .filter(f => f !== 'index.html' && !f.startsWith('pages/en/'));
+      .filter(f => f !== 'index.html' && !f.startsWith('pages/en/') && !beimBump.has(f));
     const zeilen = liste.map(f => (nurStempelDiff(f) ? 'STEMPEL ' : 'GEMISCHT ') + f);
     process.stdout.write(zeilen.join('\n') + (zeilen.length ? '\n' : ''));
   }
