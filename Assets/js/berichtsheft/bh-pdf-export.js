@@ -38,13 +38,16 @@ function exportReportPDFCore(id) {
 }
 
 // ── RENDER SINGLE REPORT ───────────────────────────────────────────────
+// Drei freie Vorlagen: "klassisch" und "klar" sind Papier ohne Farbflaechen
+// (seit v8.1.2, ersetzen "IHK Classic" und "Modern Dark" — der Nutzer fand die
+// blau-goldene und die dunkle Fassung zu laut). "clean" (Schlicht) zeichnet
+// weiter mit grauem Kopf und Kaesten.
 function renderSingleReportToDoc(doc, report) {
     const PH = doc.internal.pageSize.getHeight(); // 297
     const PW = doc.internal.pageSize.getWidth();  // 210
-    const ML = 14, MR = 14, CW = PW - ML - MR;  // margins + content width
+    const ML = 14, MR = 14, CW = PW - ML - MR;
 
-    // ── Read modal config ──────────────────────────────────────────────────
-    const pdfStyle = _pdfCurrentStyle || 'ihk';
+    const pdfStyle = ['klassisch', 'klar', 'clean'].includes(_pdfCurrentStyle) ? _pdfCurrentStyle : 'klar';
     const azubiName = document.getElementById('pdfAzubiName')?.value?.trim() || '—';
     const betrieb = document.getElementById('pdfBetrieb')?.value?.trim() || '—';
     const ausbilder = document.getElementById('pdfAusbilder')?.value?.trim() || '—';
@@ -54,276 +57,198 @@ function renderSingleReportToDoc(doc, report) {
     const optFooter = document.getElementById('pdfOptFooter')?.classList.contains('on');
     const optHours = document.getElementById('pdfOptHours')?.classList.contains('on');
     const statusLabel = { incomplete: 'Entwurf', complete: 'Vollständig', signed: 'Unterschrieben' }[report.status] || 'Entwurf';
+    const zeitraum = `${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}`;
 
-    // ── THEME TOKENS ──────────────────────────────────────────────────────
     const THEMES = {
-        ihk: {
-            pageBg: null,              // white (default)
-            hdrBg: [0, 52, 120],      // #003478
-            hdrTitle: [255, 255, 255],
-            hdrSub: [180, 205, 245],
-            accentBarFn: () => {            // Gold bar
-                doc.setFillColor(255, 215, 0);
-                doc.rect(0, 0, PW, 2.5, 'F');
-            },
-            kwColor: [255, 255, 255],
-            kwAlpha: 0.1,               // ghost
-            infoBg: [238, 242, 248],     // #eef2f8
-            infoKeyC: [0, 52, 120],
-            infoValC: [26, 26, 46],
-            infoBorderC: [208, 216, 232],
-            sectionBg: [0, 52, 120],
-            sectionText: [255, 255, 255],
-            rowA: [255, 255, 255],
-            rowB: [245, 248, 254],
-            rowBorderC: [220, 228, 244],
-            dayLabelC: [0, 52, 120],
-            bodyTextC: [30, 30, 55],
-            hoursC: [100, 120, 160],
-            schoolBodyBg: [240, 246, 255],
-            schoolTextC: [30, 30, 55],
-            sigLineC: [0, 52, 120],
-            sigTextC: [80, 100, 140],
-            footerC: [160, 170, 195],
+        klassisch: {
+            font: 'times', ink: [28, 35, 51], text: [45, 52, 68], muted: [105, 112, 128],
+            accent: [28, 35, 51], hair: [214, 218, 226], footer: [150, 156, 168],
+            body: 10, lh: 4.9, dayW: 28
         },
-        modern: {
-            pageBg: [13, 11, 26],        // #0d0b1a — fill whole page!
-            hdrBg: [13, 11, 26],
-            hdrTitle: [255, 255, 255],
-            hdrSub: [150, 110, 220],
-            accentBarFn: () => {            // Purple→Cyan gradient (25 segments)
-                const segs = 25;
-                const segW = PW / segs;
-                for (let i = 0; i < segs; i++) {
-                    const t = i / (segs - 1);
-                    const r = Math.round(168 + (6 - 168) * t);
-                    const g = Math.round(85 + (182 - 85) * t);
-                    const b = Math.round(247 + (212 - 247) * t);
-                    doc.setFillColor(r, g, b);
-                    doc.rect(i * segW, 0, segW + 0.5, 2.5, 'F');
-                }
-            },
-            kwColor: [168, 85, 247],
-            kwAlpha: 0.12,
-            infoBg: [26, 21, 53],        // #1a1535
-            infoKeyC: [168, 85, 247],
-            infoValC: [220, 215, 235],
-            infoBorderC: [55, 44, 100],
-            sectionBg: null,              // no filled bar — underline only
-            sectionText: [168, 85, 247],
-            rowA: [18, 15, 38],
-            rowB: [24, 20, 50],
-            rowBorderC: [42, 35, 85],
-            dayLabelC: [168, 85, 247],
-            bodyTextC: [185, 180, 210],
-            hoursC: [103, 232, 249],
-            schoolBodyBg: [16, 13, 34],
-            schoolTextC: [150, 220, 245],
-            sigLineC: [80, 60, 140],
-            sigTextC: [130, 110, 190],
-            footerC: [70, 60, 110],
+        klar: {
+            font: 'helvetica', ink: [23, 32, 51], text: [51, 65, 85], muted: [100, 116, 139],
+            accent: [47, 95, 138], hair: [226, 232, 240], footer: [160, 170, 185],
+            body: 8.8, lh: 4.6, dayW: 28
         },
         clean: {
-            pageBg: null,              // white
-            hdrBg: [248, 249, 250],     // #f8f9fa
-            hdrTitle: [26, 26, 26],
-            hdrSub: [120, 120, 120],
-            accentBarFn: () => { },          // none — border only
-            kwColor: [0, 0, 0],
-            kwAlpha: 0.06,
-            infoBg: [255, 255, 255],
-            infoKeyC: [100, 100, 100],
-            infoValC: [26, 26, 26],
-            infoBorderC: [200, 200, 200],
-            sectionBg: [240, 240, 240],
-            sectionText: [26, 26, 26],
-            rowA: [255, 255, 255],
-            rowB: [249, 249, 249],
-            rowBorderC: [220, 220, 220],
-            dayLabelC: [26, 26, 26],
-            bodyTextC: [60, 60, 60],
-            hoursC: [130, 130, 130],
-            schoolBodyBg: [255, 255, 255],
-            schoolTextC: [60, 60, 60],
-            sigLineC: [26, 26, 26],
-            sigTextC: [100, 100, 100],
-            footerC: [170, 170, 170],
-        },
+            font: 'helvetica', ink: [26, 26, 26], text: [60, 60, 60], muted: [100, 100, 100],
+            accent: [26, 26, 26], hair: [220, 220, 220], footer: [170, 170, 170],
+            body: 8, lh: 4.8, dayW: 26,
+            hdrBg: [248, 249, 250], sectionBg: [240, 240, 240], rowB: [249, 249, 249], box: [200, 200, 200]
+        }
     };
-    const T = THEMES[pdfStyle] || THEMES.ihk;
+    const T = THEMES[pdfStyle];
+    const F = T.font;
+    const isClean = pdfStyle === 'clean';
+    const font = (style, size, color) => {
+        doc.setFont(F, style); doc.setFontSize(size); doc.setTextColor(...color);
+    };
+    // Einzeilig kuerzen statt ueberlaufen — am Wortlaut gemessen, nicht an Zeichen.
+    const fit = (txt, w) => {
+        const lines = doc.splitTextToSize(String(txt), w);
+        return lines.length > 1 ? lines[0].replace(/\s*\S{0,3}$/, '') + '…' : lines[0];
+    };
 
-    // ── HELPERS ────────────────────────────────────────────────────────────
     const DAYS_FULL = { monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch', thursday: 'Donnerstag', friday: 'Freitag' };
     const DAYS_ORD = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
-    function newPage() {
-        doc.addPage();
-        if (T.pageBg) { doc.setFillColor(...T.pageBg); doc.rect(0, 0, PW, PH, 'F'); }
-        return 15;
-    }
+    function newPage() { doc.addPage(); return 18; }
 
     function sectionHead(label, yy) {
-        if (T.sectionBg) {
+        if (isClean) {
             doc.setFillColor(...T.sectionBg);
             doc.rect(ML, yy, CW, 7, 'F');
-            doc.setFontSize(6.5); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...T.sectionText);
-            doc.text(label, ML + 3, yy + 4.8);
-            return yy + 9;
-        } else {
-            // Modern: colored text + underline, no bg
-            doc.setFontSize(6.5); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...T.sectionText);
-            doc.text(label, ML, yy + 4);
-            doc.setDrawColor(...T.sectionText);
-            doc.setLineWidth(0.25);
-            doc.line(ML, yy + 5.5, ML + CW, yy + 5.5);
+            font('bold', 6.5, T.ink);
+            doc.text(label.toUpperCase(), ML + 3, yy + 4.8);
             return yy + 9;
         }
+        if (pdfStyle === 'klassisch') {
+            font('bold', 11, T.ink);
+            doc.text(label, ML, yy + 5);
+            doc.setDrawColor(...T.ink); doc.setLineWidth(0.3);
+            doc.line(ML, yy + 7.2, ML + CW, yy + 7.2);
+        } else {
+            font('bold', 9, T.accent);
+            doc.text(label, ML, yy + 5);
+            doc.setDrawColor(...T.hair); doc.setLineWidth(0.25);
+            doc.line(ML, yy + 7.5, ML + CW, yy + 7.5);
+        }
+        return yy + 12;
     }
 
-    // ── 1. FILL PAGE BACKGROUND (Modern Dark only) ────────────────────────
-    if (T.pageBg) {
-        doc.setFillColor(...T.pageBg);
-        doc.rect(0, 0, PW, PH, 'F');
-    }
-
-    // ── 2. ACCENT BAR (top 2.5mm, style-specific) ────────────────────────
-    T.accentBarFn();
-
-    // ── 3. HEADER BACKGROUND ─────────────────────────────────────────────
-    doc.setFillColor(...T.hdrBg);
-    doc.rect(0, 2.5, PW, 42, 'F');
-
-    // Clean: thick black border under header
-    if (pdfStyle === 'clean') {
-        doc.setDrawColor(26, 26, 26);
-        doc.setLineWidth(0.9);
+    // ── KOPF ──────────────────────────────────────────────────────────────
+    let y;
+    if (isClean) {
+        doc.setFillColor(...T.hdrBg);
+        doc.rect(0, 2.5, PW, 42, 'F');
+        doc.setDrawColor(26, 26, 26); doc.setLineWidth(0.9);
         doc.line(0, 44.5, PW, 44.5);
+        font('bold', 19, T.ink);
+        doc.text('AUSBILDUNGSNACHWEIS', ML, 27);
+        font('normal', 8, [120, 120, 120]);
+        doc.text(`${statusLabel}  ·  ${report.year}. Ausbildungsjahr  ·  gem. §14 BBiG`, ML, 37);
+        font('bold', 26, [233, 234, 235]);
+        doc.text(`KW${report.week}`, PW - MR, 33, { align: 'right' });
+        y = 51;
+    } else if (pdfStyle === 'klassisch') {
+        font('bold', 21, T.ink);
+        doc.text('Ausbildungsnachweis', PW / 2, 24, { align: 'center' });
+        font('italic', 10, T.muted);
+        doc.text(`Kalenderwoche ${report.week}  ·  ${zeitraum}`, PW / 2, 31.5, { align: 'center' });
+        font('normal', 8.5, T.muted);
+        doc.text(`${report.year}. Ausbildungsjahr  ·  ${statusLabel}  ·  gemäß § 14 BBiG`, PW / 2, 37, { align: 'center' });
+        doc.setDrawColor(...T.ink);
+        doc.setLineWidth(0.6); doc.line(ML, 42, PW - MR, 42);
+        doc.setLineWidth(0.2); doc.line(ML, 43.3, PW - MR, 43.3);
+        y = 51;
+    } else {
+        font('bold', 18, T.ink);
+        doc.text('Ausbildungsnachweis', ML, 22);
+        font('bold', 18, T.accent);
+        doc.text(`KW ${report.week}`, PW - MR, 22, { align: 'right' });
+        font('normal', 8.5, T.muted);
+        doc.text(`${zeitraum}  ·  ${report.year}. Ausbildungsjahr  ·  ${statusLabel}`, ML, 29);
+        doc.text('§ 14 BBiG', PW - MR, 29, { align: 'right' });
+        doc.setDrawColor(...T.hair); doc.setLineWidth(0.25);
+        doc.line(ML, 34, PW - MR, 34);
+        doc.setDrawColor(...T.accent); doc.setLineWidth(0.9);
+        doc.line(ML, 34, ML + 18, 34);
+        y = 42;
     }
 
-    // ── 4. HEADER TEXT ────────────────────────────────────────────────────
-    doc.setFontSize(7); doc.setFont(undefined, 'normal');
-    doc.setTextColor(...T.hdrSub);
-    const orgLabel = pdfStyle === 'ihk' ? 'INDUSTRIE- UND HANDELSKAMMER' : pdfStyle === 'modern' ? 'MYWORKLOG AUSBILDUNGSPORTAL' : 'AUSBILDUNGSNACHWEIS';
-    doc.text(orgLabel, ML, 16);
-
-    doc.setFontSize(19); doc.setFont(undefined, 'bold');
-    doc.setTextColor(...T.hdrTitle);
-    doc.text('AUSBILDUNGSNACHWEIS', ML, 27);
-
-    doc.setFontSize(8); doc.setFont(undefined, 'normal');
-    doc.setTextColor(...T.hdrSub);
-    doc.text(`${statusLabel}  ·  ${report.year}. Ausbildungsjahr  ·  gem. §14 BBiG`, ML, 37);
-
-    // ── 5. KW GHOST NUMBER ────────────────────────────────────────────────
-    // Simulate transparency by blending with background color
-    const bgBlend = T.pageBg || [255, 255, 255];
-    const a = T.kwAlpha;
-    const kwR = Math.round(T.kwColor[0] * a + bgBlend[0] * (1 - a));
-    const kwG = Math.round(T.kwColor[1] * a + bgBlend[1] * (1 - a));
-    const kwB = Math.round(T.kwColor[2] * a + bgBlend[2] * (1 - a));
-    // Blend with header bg instead
-    const hA = T.kwAlpha;
-    const kwR2 = Math.round(T.kwColor[0] * hA + T.hdrBg[0] * (1 - hA));
-    const kwG2 = Math.round(T.kwColor[1] * hA + T.hdrBg[1] * (1 - hA));
-    const kwB2 = Math.round(T.kwColor[2] * hA + T.hdrBg[2] * (1 - hA));
-    doc.setFontSize(26); doc.setFont(undefined, 'bold');
-    doc.setTextColor(kwR2, kwG2, kwB2);
-    doc.text(`KW${report.week}`, PW - MR, 33, { align: 'right' });
-
-    // ── 6. INFO GRID ──────────────────────────────────────────────────────
-    let y = 51;
-    const cellW4 = CW / 4;
-    const gridH = 17;
+    // ── ANGABEN ───────────────────────────────────────────────────────────
     const infoFields = [
         { label: 'Auszubildende/r', value: azubiName },
         { label: 'Ausbildungsbetrieb', value: betrieb },
-        { label: 'Zeitraum', value: `${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}` },
+        { label: 'Zeitraum', value: zeitraum },
         { label: 'Beruf / Abteilung', value: beruf },
     ];
-
-    if (pdfStyle === 'modern') {
-        // Individual cards with gap
-        infoFields.forEach((f, i) => {
-            const cx = ML + i * cellW4;
-            doc.setFillColor(...T.infoBg);
-            doc.rect(cx, y, cellW4 - 1.5, gridH, 'F');
-            doc.setDrawColor(...T.infoBorderC);
-            doc.setLineWidth(0.2);
-            doc.rect(cx, y, cellW4 - 1.5, gridH, 'S');
-            doc.setFontSize(5.5); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...T.infoKeyC);
-            doc.text(f.label.toUpperCase(), cx + 2.5, y + 5.5);
-            doc.setFontSize(7.5); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...T.infoValC);
-            const v = f.value.length > 24 ? f.value.substring(0, 22) + '…' : f.value;
-            doc.text(v, cx + 2.5, y + 13);
-        });
-    } else {
-        // Unified bordered grid with dividers
-        doc.setFillColor(...T.infoBg);
-        doc.rect(ML, y, CW, gridH, 'F');
-        doc.setDrawColor(...T.infoBorderC);
-        doc.setLineWidth(0.2);
+    if (isClean) {
+        const cellW4 = CW / 4, gridH = 17;
+        doc.setDrawColor(...T.box); doc.setLineWidth(0.2);
         doc.rect(ML, y, CW, gridH, 'S');
         infoFields.forEach((f, i) => {
             const cx = ML + i * cellW4;
-            if (i > 0) { doc.setDrawColor(...T.infoBorderC); doc.line(cx, y, cx, y + gridH); }
-            doc.setFontSize(5.5); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...T.infoKeyC);
+            if (i > 0) doc.line(cx, y, cx, y + gridH);
+            font('bold', 5.5, T.muted);
             doc.text(f.label.toUpperCase(), cx + 2.5, y + 5.5);
-            doc.setFontSize(7.5); doc.setFont(undefined, 'bold');
-            doc.setTextColor(...T.infoValC);
-            const v = f.value.length > 24 ? f.value.substring(0, 22) + '…' : f.value;
-            doc.text(v, cx + 2.5, y + 13);
+            font('bold', 7.5, T.ink);
+            doc.text(fit(f.value, cellW4 - 5), cx + 2.5, y + 13);
         });
+        y += gridH + 6;
+    } else if (pdfStyle === 'klassisch') {
+        // Ohne Zeitraum: der steht schon unter dem Titel.
+        const felder = [infoFields[0], infoFields[1], infoFields[3], { label: 'Ausbilder/in', value: ausbilder }];
+        const colW = CW / 2;
+        felder.forEach((f, i) => {
+            const cx = ML + (i % 2) * colW, cy = y + Math.floor(i / 2) * 12;
+            font('italic', 8.5, T.muted);
+            doc.text(f.label, cx, cy);
+            font('bold', 10.5, T.ink);
+            doc.text(fit(f.value, colW - 6), cx, cy + 5.2);
+        });
+        y += 24 + 2;
+    } else {
+        const felder = [infoFields[0], infoFields[1], infoFields[3], { label: 'Ausbilder/in', value: ausbilder }];
+        const colW = CW / 4;
+        felder.forEach((f, i) => {
+            const cx = ML + i * colW;
+            font('normal', 7, T.muted);
+            doc.text(f.label, cx, y);
+            font('bold', 8.5, T.ink);
+            doc.text(fit(f.value, colW - 4), cx, y + 5);
+        });
+        y += 14;
     }
-    y += gridH + 6;
 
-    // ── 7. ACTIVITIES TABLE ───────────────────────────────────────────────
-    y = sectionHead('AUSGEFÜHRTE TÄTIGKEITEN — BETRIEB', y);
+    // ── TAETIGKEITEN ──────────────────────────────────────────────────────
+    y = sectionHead(isClean ? 'Ausgeführte Tätigkeiten — Betrieb' : 'Ausgeführte Tätigkeiten im Betrieb', y);
 
-    // Table col-header
-    doc.setFillColor(...T.rowB);
-    doc.rect(ML, y, CW, 6, 'F');
-    doc.setDrawColor(...T.rowBorderC); doc.setLineWidth(0.15);
-    doc.rect(ML, y, CW, 6, 'S');
-    doc.setFontSize(5.5); doc.setFont(undefined, 'bold');
-    doc.setTextColor(...T.infoKeyC);
-    doc.text('TAG', ML + 2, y + 4);
-    doc.text('TÄTIGKEIT', ML + 27, y + 4);
-    if (optHours) doc.text('STD.', ML + CW - 2, y + 4, { align: 'right' });
-    y += 7;
+    if (isClean) {
+        doc.setFillColor(...T.rowB);
+        doc.rect(ML, y, CW, 6, 'F');
+        doc.setDrawColor(...T.hair); doc.setLineWidth(0.15);
+        doc.rect(ML, y, CW, 6, 'S');
+        font('bold', 5.5, T.muted);
+        doc.text('TAG', ML + 2, y + 4);
+        doc.text('TÄTIGKEIT', ML + 27, y + 4);
+        if (optHours) doc.text('STD.', ML + CW - 2, y + 4, { align: 'right' });
+        y += 7;
+    }
 
     let rowFlip = false;
+    const textX = ML + T.dayW;
+    const textW = CW - T.dayW - (optHours ? 12 : 2);
 
     function drawRow(dayName, text, hrs) {
-        const lines = doc.splitTextToSize(text.trim(), CW - 30);
-        const rH = Math.max(9, lines.length * 4.8 + 4);
+        font('normal', T.body, T.text);
+        const lines = doc.splitTextToSize(text.trim(), textW);
+        const rH = Math.max(isClean ? 9 : 8, lines.length * T.lh + (isClean ? 4 : 3.5));
         if (y + rH > PH - 48) y = newPage();
 
-        doc.setFillColor(...(rowFlip ? T.rowB : T.rowA));
-        doc.rect(ML, y, CW, rH, 'F');
-        doc.setDrawColor(...T.rowBorderC); doc.setLineWidth(0.12);
-        doc.rect(ML, y, CW, rH, 'S');
-        // Divider between day and text cols
-        doc.line(ML + 24, y, ML + 24, y + rH);
+        if (isClean) {
+            doc.setFillColor(...(rowFlip ? T.rowB : [255, 255, 255]));
+            doc.rect(ML, y, CW, rH, 'F');
+            doc.setDrawColor(...T.hair); doc.setLineWidth(0.12);
+            doc.rect(ML, y, CW, rH, 'S');
+            doc.line(ML + 24, y, ML + 24, y + rH);
+        } else {
+            doc.setDrawColor(...T.hair); doc.setLineWidth(0.2);
+            doc.line(ML, y + rH, ML + CW, y + rH);
+        }
 
-        // Day name
-        doc.setFontSize(7.5); doc.setFont(undefined, 'bold');
-        doc.setTextColor(...T.dayLabelC);
-        doc.text(dayName, ML + 1.5, y + rH / 2 + 1.5, { baseline: 'middle' });
+        // Tag und erste Textzeile auf einer Grundlinie — bei mehrzeiligen
+        // Eintraegen steht der Tag oben, nicht in der Mitte.
+        const base = y + (isClean ? 5.5 : 5);
+        font('bold', isClean ? 7.5 : T.body, isClean ? T.ink : T.ink);
+        doc.text(dayName, ML + (isClean ? 1.5 : 0), base);
 
-        // Text
-        doc.setFont(undefined, 'normal'); doc.setFontSize(8);
-        doc.setTextColor(...T.bodyTextC);
-        lines.forEach((ln, li) => doc.text(ln, ML + 26, y + 5.5 + li * 4.8));
+        font('normal', T.body, T.text);
+        lines.forEach((ln, li) => doc.text(ln, textX, base + li * T.lh));
 
-        // Hours
         if (optHours && hrs) {
-            doc.setFontSize(7); doc.setTextColor(...T.hoursC);
-            doc.text(hrs + 'h', ML + CW - 2, y + rH / 2 + 1.5, { align: 'right', baseline: 'middle' });
+            font('normal', isClean ? 7 : T.body - 1, T.muted);
+            doc.text(hrs + ' h', ML + CW - (isClean ? 2 : 0), base, { align: 'right' });
         }
         y += rH;
         rowFlip = !rowFlip;
@@ -335,7 +260,7 @@ function renderSingleReportToDoc(doc, report) {
             if (!txt) return;
             // Schultag kenntlich machen — dailySchool kam in den freien Stilen
             // bis v7.2.4 gar nicht vor, der Ausbilder sah Schulstoff als
-            // Betriebsarbeit. Die Tagesspalte ist 24 mm breit, also in den Text.
+            // Betriebsarbeit. Die Tagesspalte ist schmal, also in den Text.
             if (report.dailySchool?.[dk] && !/^\s*(\[?Berufsschule\]?)/i.test(txt)) txt = 'Berufsschule: ' + txt;
             drawRow(DAYS_FULL[dk], txt, report.dailyHours?.[dk] || null);
         });
@@ -345,49 +270,53 @@ function renderSingleReportToDoc(doc, report) {
         });
     }
 
-    // ── 8. SCHOOL SECTION ─────────────────────────────────────────────────
+    // ── BERUFSSCHULE ──────────────────────────────────────────────────────
     if (optSchool && report.school) {
-        y += 5;
+        y += isClean ? 5 : 7;
         if (y > PH - 60) y = newPage();
-        y = sectionHead('BERUFSSCHULE', y);
-        const sLines = doc.splitTextToSize(report.school.trim(), CW - 6);
-        const sH = Math.max(14, sLines.length * 5 + 6);
-        doc.setFillColor(...T.schoolBodyBg);
-        doc.rect(ML, y, CW, sH, 'F');
-        doc.setDrawColor(...T.rowBorderC); doc.setLineWidth(0.12);
-        doc.rect(ML, y, CW, sH, 'S');
-        doc.setFontSize(8.5); doc.setFont(undefined, 'normal');
-        doc.setTextColor(...T.schoolTextC);
+        y = sectionHead('Berufsschule', y);
+        const sz = isClean ? 8.5 : T.body;
+        const lh = isClean ? 5 : T.lh;
+        font('normal', sz, T.text);
+        const sLines = doc.splitTextToSize(report.school.trim(), isClean ? CW - 6 : CW);
+        const sH = Math.max(isClean ? 14 : 6, sLines.length * lh + (isClean ? 6 : 2));
+        if (isClean) {
+            doc.setDrawColor(...T.hair); doc.setLineWidth(0.12);
+            doc.rect(ML, y, CW, sH, 'S');
+        }
+        const sx = isClean ? ML + 3 : ML;
+        const sy = y + (isClean ? 5.5 : 3.5);
         sLines.forEach((ln, li) => {
-            if (y + 5 + li * 5 < PH - 10) doc.text(ln, ML + 3, y + 5.5 + li * 5);
+            if (sy + li * lh < PH - 10) doc.text(ln, sx, sy + li * lh);
         });
         y += sH;
     }
 
-    // ── 9. SIGNATURE ──────────────────────────────────────────────────────
+    // ── UNTERSCHRIFTEN ────────────────────────────────────────────────────
     if (optSig) {
-        const sigY = Math.max(y + 12, PH - 42);
-        doc.setDrawColor(...T.sigLineC);
-        doc.setLineWidth(0.7);
-        doc.line(ML, sigY, PW - MR, sigY);
-        doc.setFontSize(7); doc.setFont(undefined, 'bold');
-        doc.setTextColor(...T.sigTextC);
-        doc.text(azubiName, ML, sigY + 7);
-        doc.setFont(undefined, 'normal'); doc.setFontSize(6.5);
-        doc.text('Datum: ___________    Unterschrift: _______________________', ML, sigY + 13);
-        doc.setFont(undefined, 'bold'); doc.setFontSize(7);
-        doc.text(ausbilder, PW / 2 + 4, sigY + 7);
-        doc.setFont(undefined, 'normal'); doc.setFontSize(6.5);
-        doc.text('Datum: ___________    Unterschrift: _______________________', PW / 2 + 4, sigY + 13);
+        const sigY = Math.max(y + 16, PH - 40);
+        const half = (CW - 12) / 2;
+        const ziel = [
+            { x: ML, name: azubiName, rolle: 'Auszubildende/r' },
+            { x: ML + half + 12, name: ausbilder, rolle: 'Ausbilder/in' },
+        ];
+        doc.setDrawColor(...(isClean ? T.ink : T.muted));
+        doc.setLineWidth(isClean ? 0.4 : 0.25);
+        ziel.forEach(s => {
+            doc.line(s.x, sigY, s.x + half, sigY);
+            font('bold', isClean ? 7 : T.body - 1, T.ink);
+            doc.text(s.name, s.x, sigY + 5);
+            font(pdfStyle === 'klassisch' ? 'italic' : 'normal', isClean ? 6.5 : T.body - 2, T.muted);
+            doc.text(`Datum, Unterschrift ${s.rolle}`, s.x, sigY + 9.5);
+        });
     }
 
-    // ── 10. FOOTER ────────────────────────────────────────────────────────
+    // ── FUSSZEILE ─────────────────────────────────────────────────────────
     if (optFooter) {
-        doc.setFontSize(6); doc.setFont(undefined, 'normal');
-        doc.setTextColor(...T.footerC);
+        font('normal', 6.5, T.footer);
         doc.text(
-            `MyWorkLog · Ausbildungsnachweis KW${report.week}/${report.year} · Erstellt: ${new Date().toLocaleDateString((window.mwlLocale ? window.mwlLocale() : document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE'))} · §14 BBiG`,
-            PW / 2, PH - 5, { align: 'center' }
+            `MyWorkLog  ·  Ausbildungsnachweis KW ${report.week}/${report.year}  ·  Erstellt am ${new Date().toLocaleDateString((window.mwlLocale ? window.mwlLocale() : document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE'))}  ·  § 14 BBiG`,
+            PW / 2, PH - 6, { align: 'center' }
         );
     }
 }

@@ -1,406 +1,306 @@
 /* pdf-stile.css — Teil von /berichtsheft/
-   Die drei Ausgabestile des PDFs: IHK Classic, Modern, Clean/Amtlich.
+   Vorschau der drei freien PDF-Vorlagen: Klassisch, Klar, Schlicht.
    Feste Hexwerte sind hier Absicht — das Blatt ist weiss, unabhaengig vom Theme.
-   Herausgeloest aus pages/berichtsheft/index.html. */
+   Die Masse folgen dem jsPDF-Bild (bh-pdf-export.js): die Vorschau ist ~460 px
+   fuer 210 mm, also ~0,77 px je Punkt Schriftgroesse. Wer dort etwas aendert,
+   zieht es hier nach — die Vorschau ist eine Zusage ueber das PDF.
+   Seit v8.1.2 ohne "IHK Classic" (blau-gold) und "Modern Dark" (dunkle Seite):
+   beide waren dem Nutzer zu laut. Keine Farbflaechen mehr in den neuen Vorlagen. */
 
-/* IHK CLASSIC */
-.pdf-doc.style-ihk .doc-header {
-    background: #003478;
-    color: white;
-    padding: 18px 20px 14px;
+/* ── GEMEINSAM ─────────────────────────────────────────────────────── */
+.pdf-doc .doc-header {
     position: relative;
-    overflow: hidden;
-}
-
-.pdf-doc.style-ihk .doc-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #ffd700 0%, #ffaa00 50%, #ffd700 100%);
-}
-
-.pdf-doc.style-ihk .doc-header::after {
-    content: '';
-    position: absolute;
-    top: -30px;
-    right: -20px;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.04);
-}
-
-.doc-header-org {
-    font-size: 6.5px;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    opacity: 0.65;
-    margin-bottom: 4px;
+    padding: 22px 30px 0;
 }
 
 .doc-header-title {
-    font-size: 16px;
-    font-weight: 900;
-    letter-spacing: 0.04em;
+    font-weight: 700;
     line-height: 1.1;
 }
 
+.doc-header-week,
+.doc-header-meta,
 .doc-header-sub {
-    font-size: 7.5px;
-    letter-spacing: 0.06em;
-    opacity: 0.6;
-    margin-top: 3px;
-}
-
-.doc-kw-badge {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    text-align: right;
-}
-
-.doc-kw-num {
-    font-size: 28px;
-    font-weight: 900;
-    color: rgba(255, 255, 255, 0.12);
-    line-height: 1;
-}
-
-.doc-kw-label {
-    font-size: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    opacity: 0.4;
-    margin-top: 1px;
-}
-
-.doc-gold-bar {
-    height: 3px;
-    background: linear-gradient(90deg, #ffd700, #ffaa00 50%, #ffd700);
-}
-
-.pdf-doc.style-ihk .doc-info-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    margin: 14px 16px 0;
-    border: 1px solid #d0d8e8;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.doc-info-cell {
-    padding: 8px 9px;
-    background: white;
-    position: relative;
-}
-
-.doc-info-cell:not(:last-child) {
-    border-right: 1px solid #d0d8e8;
+    margin-top: 4px;
 }
 
 .doc-info-key {
-    font-size: 5.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: #003478;
-    font-weight: 700;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 
 .doc-info-val {
-    font-size: 8px;
-    color: #1a1a2e;
     font-weight: 700;
     line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.pdf-doc.style-ihk .doc-section {
-    margin: 12px 16px 0;
+.pdf-doc .doc-section,
+.pdf-doc .doc-school {
+    margin: 14px 30px 0;
 }
 
-.pdf-doc.style-ihk .doc-section-head {
-    background: #003478;
-    color: white;
-    padding: 5px 10px;
-    font-size: 7px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.pdf-doc.style-ihk .doc-table {
+.pdf-doc .doc-table {
     width: 100%;
     border-collapse: collapse;
-    border: 1px solid #d0d8e8;
 }
 
-.pdf-doc.style-ihk .doc-table th {
-    background: #eef2f8;
-    padding: 5px 8px;
-    font-size: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #003478;
-    text-align: left;
-    border-bottom: 1px solid #d0d8e8;
-}
-
-.pdf-doc.style-ihk .doc-table td {
-    padding: 7px 8px;
-    font-size: 7px;
-    color: #1a1a2e;
-    border-bottom: 1px solid #eef2f8;
+.pdf-doc .doc-table td {
     vertical-align: top;
-    line-height: 1.55;
-}
-
-.pdf-doc.style-ihk .doc-table tr:nth-child(even) td {
-    background: #fafbff;
+    line-height: 1.5;
 }
 
 .doc-day-label {
     font-weight: 700;
     white-space: nowrap;
-    width: 50px;
+    width: 56px;
 }
 
 .doc-hours-label {
     width: 28px;
     text-align: right;
-    color: #888;
+    white-space: nowrap;
 }
 
-.pdf-doc.style-ihk .doc-day-label {
-    color: #003478;
-}
-
-.pdf-doc.style-ihk .doc-school {
-    margin: 12px 16px 0;
-}
-
-.pdf-doc.style-ihk .doc-school-head {
-    background: #005bab;
-    color: white;
-    padding: 5px 10px;
-    font-size: 7px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.pdf-doc.style-ihk .doc-school-body {
-    border: 1px solid #d0d8e8;
-    border-top: none;
-    padding: 9px 10px;
-    font-size: 7px;
-    color: #333;
-    line-height: 1.6;
-}
-
-.pdf-doc.style-ihk .doc-sig {
+.pdf-doc .doc-sig {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 14px 16px 16px;
-    padding-top: 12px;
-    border-top: 2px solid #003478;
+    gap: 24px;
+    margin: 30px 30px 18px;
 }
 
 .doc-sig-line {
-    border-bottom: 1px solid #888;
     height: 22px;
     margin-bottom: 4px;
 }
 
-.doc-sig-label {
-    font-size: 5.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888;
-}
-
 .doc-footer {
-    padding: 7px 16px;
+    padding: 8px 16px 10px;
     text-align: center;
-    font-size: 5.5px;
-    border-top: 1px solid #e5e7eb;
-    color: #aaa;
+    font-size: 5px;
 }
 
-/* MODERN STYLE */
-.pdf-doc.style-modern {
-    background: #0d0b1a;
-    color: #e4e4e7;
+/* ── KLASSISCH: Times, zentriert, Doppellinie ──────────────────────── */
+.pdf-doc.style-klassisch {
+    font-family: 'Times New Roman', Times, Georgia, serif;
+    color: #1c2333;
 }
 
-.pdf-doc.style-modern .doc-header {
-    background: #0d0b1a;
-    padding: 18px 20px 14px;
-    position: relative;
-    overflow: hidden;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.15);
+.pdf-doc.style-klassisch .doc-header {
+    text-align: center;
+    padding-top: 28px;
 }
 
-.pdf-doc.style-modern .doc-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #a855f7, #06b6d4);
+.pdf-doc.style-klassisch .doc-header-title {
+    font-size: 16px;
+    letter-spacing: 0.01em;
 }
 
-.pdf-doc.style-modern .doc-header-org {
-    color: rgba(168, 85, 247, 0.65);
+.pdf-doc.style-klassisch .doc-header-week {
+    font-style: italic;
+    font-size: 7.7px;
+    color: #697080;
+    margin-top: 6px;
 }
 
-.pdf-doc.style-modern .doc-header-title {
-    color: white;
-    font-size: 15px;
+.pdf-doc.style-klassisch .doc-header-sub {
+    font-size: 6.5px;
+    color: #697080;
 }
 
-.pdf-doc.style-modern .doc-header-sub {
-    color: rgba(255, 255, 255, 0.4);
+.pdf-doc.style-klassisch .doc-header-meta,
+.pdf-doc.style-klassisch .doc-kw-num {
+    display: none;
 }
 
-.pdf-doc.style-modern .doc-kw-num {
-    color: rgba(168, 85, 247, 0.12);
+/* Doppellinie: 0,6 mm + 0,2 mm im PDF */
+.pdf-doc.style-klassisch .doc-rule {
+    margin: 10px 30px 0;
+    height: 3px;
+    border-top: 1.3px solid #1c2333;
+    border-bottom: 0.5px solid #1c2333;
 }
 
-.pdf-doc.style-modern .doc-kw-label {
-    color: rgba(168, 85, 247, 0.4);
-}
-
-.pdf-doc.style-modern .doc-gold-bar {
-    background: linear-gradient(90deg, #a855f7, #06b6d4);
-    height: 1px;
-}
-
-.pdf-doc.style-modern .doc-info-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin: 14px 16px 0;
-}
-
-.pdf-doc.style-modern .doc-info-cell {
-    background: #1a1535;
-    padding: 7px 8px;
-    border-radius: 5px;
-    border: 1px solid rgba(168, 85, 247, 0.12);
-}
-
-.pdf-doc.style-modern .doc-info-key {
-    color: rgba(168, 85, 247, 0.7);
-}
-
-.pdf-doc.style-modern .doc-info-val {
-    color: #e4e4e7;
-}
-
-.pdf-doc.style-modern .doc-info-cell:not(:last-child) {
-    border-right: none;
-}
-
-.pdf-doc.style-modern .doc-section {
-    margin: 12px 16px 0;
-}
-
-.pdf-doc.style-modern .doc-section-head {
-    background: transparent;
-    color: #a78bfa;
-    padding: 0 0 5px;
-    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
-    font-size: 7px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 6px;
-}
-
-.pdf-doc.style-modern .doc-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.pdf-doc.style-modern .doc-table th {
-    font-size: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: rgba(168, 85, 247, 0.5);
-    text-align: left;
-    padding: 3px 7px;
-}
-
-.pdf-doc.style-modern .doc-table td {
-    padding: 6px 7px;
-    font-size: 7px;
-    color: #b0b0c0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    vertical-align: top;
-    line-height: 1.55;
-}
-
-.pdf-doc.style-modern .doc-day-label {
-    color: #a78bfa;
-}
-
-.pdf-doc.style-modern .doc-hours-label {
-    color: #67e8f9;
-}
-
-.pdf-doc.style-modern .doc-school {
-    margin: 12px 16px 0;
-}
-
-.pdf-doc.style-modern .doc-school-head {
-    font-size: 7px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #67e8f9;
-    padding: 0 0 5px;
-    border-bottom: 1px solid rgba(103, 232, 249, 0.15);
-    margin-bottom: 6px;
-}
-
-.pdf-doc.style-modern .doc-school-body {
-    font-size: 7px;
-    color: #a0a0b0;
-    line-height: 1.6;
-    padding: 8px 0;
-    border-top: none;
-}
-
-.pdf-doc.style-modern .doc-sig {
+.pdf-doc.style-klassisch .doc-info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin: 14px 16px 16px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(168, 85, 247, 0.2);
+    gap: 9px 14px;
+    margin: 16px 30px 0;
 }
 
-.pdf-doc.style-modern .doc-sig-line {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.pdf-doc.style-klassisch .is-zeitraum {
+    display: none;
 }
 
-.pdf-doc.style-modern .doc-sig-label {
-    color: rgba(255, 255, 255, 0.25);
+.pdf-doc.style-klassisch .doc-info-key {
+    font-style: italic;
+    font-size: 6.5px;
+    color: #697080;
 }
 
-.pdf-doc.style-modern .doc-footer {
-    border-top-color: rgba(255, 255, 255, 0.06);
-    color: rgba(255, 255, 255, 0.2);
+.pdf-doc.style-klassisch .doc-info-val {
+    font-size: 8px;
 }
 
-/* CLEAN/AMTLICH */
+.pdf-doc.style-klassisch .doc-section-head,
+.pdf-doc.style-klassisch .doc-school-head {
+    font-size: 8.5px;
+    font-weight: 700;
+    padding-bottom: 4px;
+    border-bottom: 0.7px solid #1c2333;
+    margin-bottom: 2px;
+}
+
+.pdf-doc.style-klassisch .doc-table thead {
+    display: none;
+}
+
+.pdf-doc.style-klassisch .doc-table td {
+    font-size: 7.7px;
+    color: #2d3444;
+    padding: 5px 0;
+    border-bottom: 0.5px solid #d6dae2;
+}
+
+.pdf-doc.style-klassisch .doc-day-label {
+    color: #1c2333;
+}
+
+.pdf-doc.style-klassisch .doc-hours-label {
+    color: #697080;
+}
+
+.pdf-doc.style-klassisch .doc-school-body {
+    font-size: 7.7px;
+    color: #2d3444;
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
+.pdf-doc.style-klassisch .doc-sig-line {
+    border-bottom: 0.6px solid #697080;
+}
+
+.pdf-doc.style-klassisch .doc-sig-label {
+    font-style: italic;
+    font-size: 6px;
+    color: #697080;
+}
+
+.pdf-doc.style-klassisch .doc-footer {
+    font-size: 5px;
+    color: #969ca8;
+}
+
+/* ── KLAR: Helvetica, linksbuendig, Stahlblau nur als Linie und KW ── */
+.pdf-doc.style-klar {
+    font-family: Helvetica, Arial, sans-serif;
+    color: #172033;
+}
+
+.pdf-doc.style-klar .doc-header-title {
+    font-size: 14px;
+}
+
+.pdf-doc.style-klar .doc-kw-num {
+    position: absolute;
+    top: 22px;
+    right: 30px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #2f5f8a;
+}
+
+.pdf-doc.style-klar .doc-header-meta {
+    font-size: 6.5px;
+    color: #64748b;
+    margin-top: 5px;
+}
+
+.pdf-doc.style-klar .doc-header-week,
+.pdf-doc.style-klar .doc-header-sub {
+    display: none;
+}
+
+/* Haarlinie ueber die Breite, darauf 18 mm Akzent */
+.pdf-doc.style-klar .doc-rule {
+    margin: 10px 30px 0;
+    height: 2px;
+    background: linear-gradient(#2f5f8a, #2f5f8a) left / 40px 2px no-repeat,
+                linear-gradient(#e2e8f0, #e2e8f0) center / 100% 0.6px no-repeat;
+}
+
+.pdf-doc.style-klar .doc-info-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin: 14px 30px 0;
+}
+
+.pdf-doc.style-klar .is-zeitraum {
+    display: none;
+}
+
+.pdf-doc.style-klar .doc-info-key {
+    font-size: 5.4px;
+    color: #64748b;
+}
+
+.pdf-doc.style-klar .doc-info-val {
+    font-size: 6.5px;
+}
+
+.pdf-doc.style-klar .doc-section-head,
+.pdf-doc.style-klar .doc-school-head {
+    font-size: 7px;
+    font-weight: 700;
+    color: #2f5f8a;
+    padding-bottom: 5px;
+    border-bottom: 0.6px solid #e2e8f0;
+}
+
+.pdf-doc.style-klar .doc-table thead {
+    display: none;
+}
+
+.pdf-doc.style-klar .doc-table td {
+    font-size: 6.8px;
+    color: #334155;
+    padding: 5px 0;
+    border-bottom: 0.6px solid #e2e8f0;
+}
+
+.pdf-doc.style-klar .doc-day-label {
+    color: #172033;
+}
+
+.pdf-doc.style-klar .doc-hours-label {
+    color: #64748b;
+}
+
+.pdf-doc.style-klar .doc-school-body {
+    font-size: 6.8px;
+    color: #334155;
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
+.pdf-doc.style-klar .doc-sig-line {
+    border-bottom: 0.6px solid #64748b;
+}
+
+.pdf-doc.style-klar .doc-sig-label {
+    font-size: 5.3px;
+    color: #64748b;
+}
+
+.pdf-doc.style-klar .doc-footer {
+    color: #a0aab9;
+}
+
+/* ── SCHLICHT: grauer Kopf, Kaesten ────────────────────────────────── */
 .pdf-doc.style-clean {
     background: white;
     color: #1a1a1a;
@@ -410,62 +310,74 @@
     background: #f8f9fa;
     padding: 18px 20px 14px;
     border-bottom: 3px solid #1a1a1a;
-    position: relative;
-}
-
-.pdf-doc.style-clean .doc-header-org {
-    color: #888;
 }
 
 .pdf-doc.style-clean .doc-header-title {
     color: #1a1a1a;
     font-size: 15px;
     font-weight: 900;
+    text-transform: uppercase;
 }
 
 .pdf-doc.style-clean .doc-header-sub {
+    font-size: 7.5px;
     color: #888;
 }
 
-.pdf-doc.style-clean .doc-kw-num {
-    color: rgba(0, 0, 0, 0.07);
-}
-
-.pdf-doc.style-clean .doc-kw-label {
-    color: #bbb;
-}
-
-.pdf-doc.style-clean .doc-gold-bar {
+.pdf-doc.style-clean .doc-header-week,
+.pdf-doc.style-clean .doc-header-meta,
+.pdf-doc.style-clean .doc-rule,
+.pdf-doc.style-clean .is-ausbilder {
     display: none;
+}
+
+.pdf-doc.style-clean .doc-kw-num {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 28px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.07);
 }
 
 .pdf-doc.style-clean .doc-info-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     margin: 14px 16px 0;
     border: 1px solid #e5e7eb;
-    overflow: hidden;
     border-radius: 2px;
+    overflow: hidden;
 }
 
-.pdf-doc.style-clean .doc-info-cell:not(:last-child) {
+.pdf-doc.style-clean .doc-info-cell {
+    padding: 8px 9px;
+}
+
+.pdf-doc.style-clean .doc-info-cell:not(:nth-child(4)) {
     border-right: 1px solid #e5e7eb;
 }
 
 .pdf-doc.style-clean .doc-info-key {
+    font-size: 5.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
     color: #666;
 }
 
 .pdf-doc.style-clean .doc-info-val {
+    font-size: 8px;
     color: #1a1a1a;
 }
 
-.pdf-doc.style-clean .doc-section {
+.pdf-doc.style-clean .doc-section,
+.pdf-doc.style-clean .doc-school {
     margin: 12px 16px 0;
 }
 
-.pdf-doc.style-clean .doc-section-head {
+.pdf-doc.style-clean .doc-section-head,
+.pdf-doc.style-clean .doc-school-head {
     background: #f5f5f5;
     color: #1a1a1a;
     padding: 5px 10px;
@@ -477,8 +389,6 @@
 }
 
 .pdf-doc.style-clean .doc-table {
-    width: 100%;
-    border-collapse: collapse;
     border: 1px solid #e5e7eb;
     border-top: none;
 }
@@ -499,31 +409,10 @@
     font-size: 7px;
     color: #333;
     border-bottom: 1px solid #f3f4f6;
-    vertical-align: top;
-    line-height: 1.55;
-}
-
-.pdf-doc.style-clean .doc-day-label {
-    color: #1a1a1a;
 }
 
 .pdf-doc.style-clean .doc-hours-label {
     color: #888;
-}
-
-.pdf-doc.style-clean .doc-school {
-    margin: 12px 16px 0;
-}
-
-.pdf-doc.style-clean .doc-school-head {
-    background: #f5f5f5;
-    color: #1a1a1a;
-    padding: 5px 10px;
-    font-size: 7px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    border: 1px solid #e5e7eb;
 }
 
 .pdf-doc.style-clean .doc-school-body {
@@ -536,9 +425,6 @@
 }
 
 .pdf-doc.style-clean .doc-sig {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
     margin: 14px 16px 16px;
     padding-top: 12px;
     border-top: 2px solid #1a1a1a;
@@ -549,9 +435,13 @@
 }
 
 .pdf-doc.style-clean .doc-sig-label {
+    font-size: 5.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: #888;
 }
 
 .pdf-doc.style-clean .doc-footer {
-    border-top-color: #e5e7eb;
+    border-top: 1px solid #e5e7eb;
+    color: #aaa;
 }

@@ -9,12 +9,11 @@
 
 let _pdfCurrentId = null;
 let _pdfCurrentStyle = 'form';
-let _pdfActiveTheme = null;
 
 const PDF_LABELS = {
     form: L('IHK-Vordruck', 'IHK form'),
-    ihk: 'IHK Classic',
-    modern: 'Modern Dark',
+    klassisch: L('Klassisch', 'Classic'),
+    klar: L('Klar', 'Clear'),
     clean: L('Schlicht', 'Plain')
 };
 
@@ -48,7 +47,9 @@ function openPDFModal(id) {
     document.getElementById('pdfEnde').value = saved.ende || '';
 
     // Vorlage, Kammer und Vordruck wiederherstellen
-    _pdfCurrentStyle = PDF_LABELS[saved.style] ? saved.style : 'form';
+    // 'ihk' und 'modern' gab es bis v8.1.1 — gespeicherte Wahl auf die Nachfolger heben.
+    const alt = { ihk: 'klassisch', modern: 'klar' }[saved.style] || saved.style;
+    _pdfCurrentStyle = PDF_LABELS[alt] ? alt : 'form';
     document.querySelectorAll('.pdf-style-card').forEach(c =>
         c.classList.toggle('selected', c.dataset.style === _pdfCurrentStyle));
     document.getElementById('pdfPreviewBadge').textContent = pdfBadgeLabel(_pdfCurrentStyle);
@@ -284,6 +285,7 @@ function updatePDFPreview() {
     const showHours = document.getElementById('pdfOptHours')?.classList.contains('on');
 
     const statusLabel = { incomplete: 'Entwurf', complete: 'Vollständig', signed: 'Unterschrieben' }[report.status] || 'Entwurf';
+    const zeitraum = `${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}`;
 
     // Build activities rows
     let activityRows = '';
@@ -296,7 +298,7 @@ function updatePDFPreview() {
             activityRows += `<tr>
                         <td class="doc-day-label">${DAYS_MAP[key]}</td>
                         <td>${escapeHtml(firstLine)}${text.split('\n').length > 1 ? '…' : ''}</td>
-                        ${showHours ? `<td class="doc-hours-label">${hrs ? hrs + 'h' : ''}</td>` : ''}
+                        ${showHours ? `<td class="doc-hours-label">${hrs ? hrs + ' h' : ''}</td>` : ''}
                     </tr>`;
         });
     } else if (report.activities) {
@@ -320,8 +322,8 @@ function updatePDFPreview() {
 
     const sigHtml = showSig ? `
                 <div class="doc-sig">
-                    <div><div class="doc-sig-line"></div><div class="doc-sig-label">Auszubildende/r — Datum &amp; Unterschrift</div></div>
-                    <div><div class="doc-sig-line"></div><div class="doc-sig-label">Ausbilder/in — Datum &amp; Unterschrift</div></div>
+                    <div><div class="doc-sig-line"></div><div class="doc-sig-label">Datum, Unterschrift Auszubildende/r</div></div>
+                    <div><div class="doc-sig-line"></div><div class="doc-sig-label">Datum, Unterschrift Ausbilder/in</div></div>
                 </div>` : '';
 
     const footerHtml = showFooter ? `
@@ -329,23 +331,22 @@ function updatePDFPreview() {
 
     document.getElementById('pdfDocPreview').innerHTML = `
                 <div class="doc-header">
-                    <div class="doc-header-org">Industrie- und Handelskammer</div>
-                    <div class="doc-header-title">AUSBILDUNGSNACHWEIS</div>
-                    <div class="doc-header-sub">Wöchentlicher Bericht gem. §14 BBiG · ${statusLabel}</div>
-                    <div class="doc-kw-badge">
-                        <div class="doc-kw-num">KW${report.week}</div>
-                        <div class="doc-kw-label">Kalenderwoche</div>
-                    </div>
+                    <div class="doc-header-title">Ausbildungsnachweis</div>
+                    <div class="doc-header-week">Kalenderwoche ${report.week} · ${zeitraum}</div>
+                    <div class="doc-header-meta">${zeitraum} · ${report.year}. Ausbildungsjahr · ${statusLabel}</div>
+                    <div class="doc-header-sub">${report.year}. Ausbildungsjahr · ${statusLabel} · gemäß § 14 BBiG</div>
+                    <div class="doc-kw-num">KW ${report.week}</div>
                 </div>
-                <div class="doc-gold-bar"></div>
+                <div class="doc-rule"></div>
                 <div class="doc-info-grid">
                     <div class="doc-info-cell"><div class="doc-info-key">Auszubildende/r</div><div class="doc-info-val">${name}</div></div>
                     <div class="doc-info-cell"><div class="doc-info-key">Ausbildungsbetrieb</div><div class="doc-info-val">${betrieb}</div></div>
-                    <div class="doc-info-cell"><div class="doc-info-key">Zeitraum</div><div class="doc-info-val">${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}</div></div>
+                    <div class="doc-info-cell is-zeitraum"><div class="doc-info-key">Zeitraum</div><div class="doc-info-val">${zeitraum}</div></div>
                     <div class="doc-info-cell"><div class="doc-info-key">Beruf / Abteilung</div><div class="doc-info-val">${beruf}</div></div>
+                    <div class="doc-info-cell is-ausbilder"><div class="doc-info-key">Ausbilder/in</div><div class="doc-info-val">${ausbilder}</div></div>
                 </div>
-                <div class="doc-section" style="margin-top:12px;">
-                    <div class="doc-section-head">Ausgeführte Tätigkeiten / Betrieb</div>
+                <div class="doc-section">
+                    <div class="doc-section-head">Ausgeführte Tätigkeiten im Betrieb</div>
                     <table class="doc-table">
                         <thead><tr>
                             <th>Tag</th><th>Tätigkeit</th>${showHours ? '<th>Std.</th>' : ''}
