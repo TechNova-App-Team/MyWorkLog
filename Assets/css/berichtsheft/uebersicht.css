@@ -485,6 +485,9 @@
 .hf-blatt.b2 .hf-rotstift { right: 190px; bottom: 12px; }
 /* Auf dem obersten Blatt steht die Anmerkung im Fluss unter den Tageszeilen —
    absolut lag sie ueber Kopfzeile und Datum. */
+/* Notiz vor der Unterschrift: Platz fuer den Namen in Handschrift darueber. */
+.hf-rotstift + .hf-unterschrift { margin-top: 48px; }
+.hf-schau-blatt .hf-rotstift { position: relative; max-width: none; margin: 16px 6px -10px 0; text-align: right; transform: rotate(-2deg); }
 .hf-blatt.b1 .hf-rotstift { position: relative; max-width: none; margin: 16px 6px -10px 0; text-align: right; transform: rotate(-2deg); }
 
 /* ══════════ DEIN JAHR: Stempelkarte ══════════
@@ -787,4 +790,108 @@
     .hf-cta, .hf-cta-kreis, .hf-kfeld, .hf-blatt.b1, .hf-kf-bar > span, .btn { transition: none; }
     .hf-kfeld:hover, .hf-blatt.b1:hover { transform: none; }
     .hf-blatt.b1:hover { transform: rotate(-1.3deg); }
+}
+
+/* ══════════ WOCHENSCHAU (bh-wochenschau.js) ══════════
+   Alle Wochen als Blaetter im Raum. Die Lage jedes Blatts (translate/rotateY/
+   translateZ) setzt das JS inline; hier nur Buehne, Perspektive und Uebergang. */
+.is-neu #hfSchauKnopf { display: none; }
+body.hf-schau-offen { overflow: hidden; }
+.hf-schau {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    background:
+        radial-gradient(70% 60% at 50% 45%, rgba(var(--primary-rgb), 0.22), transparent 70%),
+        linear-gradient(180deg, var(--buehne-1), var(--buehne-3));
+}
+.hf-schau[hidden] { display: none; }
+.hf-schau-kopf {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 28px 0;
+}
+.hf-schau-titel {
+    margin: 0;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 48;
+    font-size: clamp(1.2rem, 1rem + 1vw, 1.7rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+}
+.hf-schau-zu, .hf-schau-pfeil {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--bg-input);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background-color 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+.hf-schau-zu:hover, .hf-schau-pfeil:hover { background: var(--bg-hover); }
+.hf-schau-zu:focus-visible, .hf-schau-pfeil:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: 2px; }
+.hf-schau-pfeil:disabled { opacity: 0.3; cursor: default; }
+.hf-schau-pfeil.is-vor .icon { transform: rotate(180deg); }
+.hf-schau-buehne {
+    position: relative;
+    perspective: 1400px;
+    perspective-origin: 50% 45%;
+    overflow: hidden;
+    touch-action: pan-y;          /* waagerechtes Wischen gehoert uns, senkrechtes der Seite */
+    cursor: grab;
+    user-select: none;
+}
+.hf-schau-buehne:active { cursor: grabbing; }
+.hf-schau-blatt {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(460px, 78vw);
+    padding: 28px 26px 26px 60px;
+    transform-origin: 50% 50%;
+    transition: transform 0.5s var(--spring), opacity 0.5s var(--ease);
+    will-change: transform;
+    backface-visibility: hidden;
+}
+.hf-schau-blatt::before {
+    content: '';
+    position: absolute;
+    left: 44px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--papier-rand);
+}
+.hf-schau-blatt[aria-hidden="false"] { cursor: pointer; }
+.hf-schau-fuss {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    padding: 0 28px 26px;
+}
+.hf-schau-hinweis {
+    min-width: 8ch;
+    text-align: center;
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+    .hf-schau-kopf { padding: 16px 16px 0; }
+    .hf-schau-blatt { padding: 22px 16px 20px 46px; }
+    .hf-schau-blatt::before { left: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hf-schau-blatt { transition: opacity 0.2s linear; }
 }

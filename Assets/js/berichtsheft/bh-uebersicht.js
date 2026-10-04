@@ -373,6 +373,27 @@ function renderStapel(fokusMo, r) {
     if (!box) return;
     const kw = getWeekNumber(fokusMo);
     const jahr = isoWeekYear(fokusMo);
+    const klick = r ? (r.status === 'incomplete' || (r.approval && r.approval.state === 'rejected') ? `editReport('${r.id}')` : `viewReport('${r.id}')`)
+        : `openWeek(${kw}, ${jahr})`;
+    const label = r ? L(`KW ${kw} öffnen`, `Open week ${kw}`) : L(`KW ${kw} schreiben`, `Write week ${kw}`);
+
+    const vorMo = new Date(fokusMo); vorMo.setDate(vorMo.getDate() - 7);
+    const vor = hfBerichtFuer(vorMo);
+
+    box.innerHTML =
+        `<div class="hf-blatt b3" aria-hidden="true"></div>` +
+        `<div class="hf-blatt b2" aria-hidden="true">${hfStempel(vor)}${hfRotstift(vor)}</div>` +
+        `<div class="hf-blatt b1" role="button" tabindex="0" onclick="${klick}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" aria-label="${escapeHtml(label)}">` +
+        hfBlattInnen(fokusMo, r) +
+        `</div>`;
+}
+
+// Inhalt EINES Vordruck-Blatts (Kopf, fuenf Tageslinien, Rotstift,
+// Unterschriften, Stempel). Teilen sich der Stapel auf der Buehne und die
+// Wochenschau (bh-wochenschau.js) — zwei Fassungen desselben Blatts wuerden
+// auseinanderlaufen (CLAUDE.md: Markup nie ein zweites Mal ablegen).
+function hfBlattInnen(fokusMo, r) {
+    const kw = getWeekNumber(fokusMo);
     const fr = new Date(fokusMo); fr.setDate(fr.getDate() + 4);
     const kurz = (d) => `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.`;
     const tageNamen = L('Mo Di Mi Do Fr', 'Mo Tu We Th Fr').split(' ');
@@ -401,24 +422,12 @@ function renderStapel(fokusMo, r) {
     const nameAusb = ausbilderUnterschrieben && ((r.approval && r.approval.by) || cfg.ausbilder)
         ? `<span class="hf-hand">${escapeHtml(String((r.approval && r.approval.by) || cfg.ausbilder).trim())}</span>` : '';
 
-    const klick = r ? (r.status === 'incomplete' || (r.approval && r.approval.state === 'rejected') ? `editReport('${r.id}')` : `viewReport('${r.id}')`)
-        : `openWeek(${kw}, ${jahr})`;
-    const label = r ? L(`KW ${kw} öffnen`, `Open week ${kw}`) : L(`KW ${kw} schreiben`, `Write week ${kw}`);
-
-    const vorMo = new Date(fokusMo); vorMo.setDate(vorMo.getDate() - 7);
-    const vor = hfBerichtFuer(vorMo);
-
-    box.innerHTML =
-        `<div class="hf-blatt b3" aria-hidden="true"></div>` +
-        `<div class="hf-blatt b2" aria-hidden="true">${hfStempel(vor)}${hfRotstift(vor)}</div>` +
-        `<div class="hf-blatt b1" role="button" tabindex="0" onclick="${klick}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}" aria-label="${escapeHtml(label)}">` +
-        `<div class="hf-vk"><span>${escapeHtml(L('Ausbildungsnachweis', 'Training record'))}</span><b>${escapeHtml(L(`KW ${kw}`, `CW ${kw}`))}</b>` +
+    return `<div class="hf-vk"><span>${escapeHtml(L('Ausbildungsnachweis', 'Training record'))}</span><b>${escapeHtml(L(`KW ${kw}`, `CW ${kw}`))}</b>` +
         `<span>${kurz(fokusMo)} ${escapeHtml(L('bis', 'to'))} ${kurz(fr)}${fr.getFullYear()}</span></div>` +
         `<div>${zeilen}</div>` + hfRotstift(r) +
         `<div class="hf-unterschrift"><div class="hf-us">${nameAzubi}${escapeHtml(L('Unterschrift Azubi', 'Trainee signature'))}</div>` +
         `<div class="hf-us">${nameAusb}${escapeHtml(L('Unterschrift Ausbilder', 'Trainer signature'))}</div></div>` +
-        hfStempel(r) +
-        `</div>`;
+        hfStempel(r);
 }
 
 // ═══════════════════════════════════════
