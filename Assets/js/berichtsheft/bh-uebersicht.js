@@ -548,26 +548,31 @@ function renderCalendarHeatmap() {
     const year = (years.includes(nowYear) || !years.length) ? nowYear : Math.max(...years);
     document.getElementById('calendarYear').textContent = year;
 
+    // Je Woche der weiteste Stand; eine Freigabe zaehlt wie "unterschrieben".
     const weekMap = {};
     reports.forEach(r => {
         const ry = reportCalendarYear(r);
         if (ry !== null && ry !== year) return;
+        const frei = r.approval && r.approval.state === 'approved' && !r.approval.stale;
+        const st = frei ? 'signed' : r.status;
         const existing = weekMap[r.week];
-        if (!existing || statusPriority(r.status) > statusPriority(existing)) {
-            weekMap[r.week] = r.status;
-        }
+        if (!existing || statusPriority(st) > statusPriority(existing)) weekMap[r.week] = st;
     });
-    // Fehlende Wochen kommen aus derselben Rechnung wie das Kaestchen "fehlen noch".
+    // Fehlende Wochen aus derselben Rechnung wie das Kaestchen "fehlen noch".
     const fehlt = new Set(hfLuecken().filter(d => isoWeekYear(d) === year).map(d => getWeekNumber(d)));
 
     const STATUS_TEXT = {
         signed: L('unterschrieben', 'signed'),
-        complete: L('vollständig', 'complete'),
+        complete: L('fertig', 'done'),
         incomplete: L('Entwurf', 'draft')
     };
-    const STATUS_CLASS = { signed: 'signed', complete: 'complete', incomplete: 'draft' };
-    const MONTHS = L('Jan Feb Mär Apr Mai Jun Jul Aug Sep Okt Nov Dez',
-        'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec').split(' ');
+    // 🔴 Der Zustand steht in der FORM (Stempelring, Haken, Strichelrahmen,
+    // Rotstift-Kringel), nicht in Abstufungen der Theme-Farbe. Die erste Fassung
+    // (v8.1.12) stufte nur --primary ab — bei einem gedeckten Theme waren die
+    // Stufen ununterscheidbar (Screenshot des Nutzers, graubraun).
+    const STATUS_CLASS = { signed: 'is-stempel', complete: 'is-haken', incomplete: 'is-entwurf' };
+    const MONTHS = L('Januar Februar März April Mai Juni Juli August September Oktober November Dezember',
+        'January February March April May June July August September October November December').split(' ');
     const totalWeeks = isoWeeksInYear(year);
     const currentWeek = year === nowYear ? getWeekNumber(new Date()) : (year < nowYear ? totalWeeks + 1 : 0);
 
@@ -581,10 +586,9 @@ function renderCalendarHeatmap() {
         buckets[thursday.getUTCMonth()].push(w);
     }
 
+    const haken = '<svg class="hf-k-haken" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13.5l5 4.5L20 6"/></svg>';
     grid.innerHTML = buckets.map((weeks, m) => {
-        const jetzt = weeks.includes(currentWeek);
-        const zukunft = weeks.length && weeks[0] > currentWeek;
-        const striche = weeks.map(w => {
+        const felder = weeks.map(w => {
             const status = weekMap[w] || null;
             const istFehlt = !status && fehlt.has(w);
             const mon = isoWeekMonday(year, w);
@@ -593,16 +597,18 @@ function renderCalendarHeatmap() {
                 : istFehlt ? L('fehlt', 'missing')
                 : (w > currentWeek ? L('noch nicht dran', 'not yet') : L('kein Bericht', 'no report'));
             const label = L(`KW ${w}, ab ${dm}: ${statusLabel}`, `Week ${w}, from ${dm}: ${statusLabel}`);
-            const cls = 'hf-strich' + (status ? ' ' + STATUS_CLASS[status] : '') + (istFehlt ? ' fehlt' : '') + (w === currentWeek ? ' is-now' : '');
-            return `<button type="button" class="${cls}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w}, ${year})"><span class="hf-tip" aria-hidden="true">${label}</span></button>`;
+            const cls = 'hf-kfeld' + (status ? ' ' + STATUS_CLASS[status] : '') + (istFehlt ? ' is-fehlt' : '')
+                + (w === currentWeek ? ' is-now' : '') + (!status && w > currentWeek ? ' is-zukunft' : '');
+            return `<button type="button" class="${cls}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w}, ${year})">` +
+                `<span class="hf-kfeld-nr">${w}</span>${status === 'complete' ? haken : ''}<span class="hf-tip" aria-hidden="true">${label}</span></button>`;
         }).join('');
-        return `<div class="hf-reiter${jetzt ? ' is-jetzt' : ''}${zukunft ? ' is-zukunft' : ''}"><b>${MONTHS[m]}</b><div class="hf-striche">${striche}</div></div>`;
+        return `<div class="hf-kmonat"><span class="hf-kmonat-name">${MONTHS[m]}</span><div class="hf-kfelder">${felder}</div></div>`;
     }).join('');
 
     // Rollender Fokus: nur EINE Woche liegt in der Tab-Reihenfolge, innerhalb wird
     // mit den Pfeiltasten gewandert. 53 Tabstopps vor dem ersten Knopf wären
     // sonst für Tastaturnutzer eine Zumutung.
-    const cells = [...grid.querySelectorAll('.hf-strich')];
+    const cells = [...grid.querySelectorAll('.hf-kfeld')];
     const start = cells.find(c => c.classList.contains('is-now')) || cells[0];
     if (start) start.tabIndex = 0;
     grid.onkeydown = (e) => {

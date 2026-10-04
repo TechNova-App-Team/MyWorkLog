@@ -487,64 +487,117 @@
    absolut lag sie ueber Kopfzeile und Datum. */
 .hf-blatt.b1 .hf-rotstift { position: relative; max-width: none; margin: 16px 6px -10px 0; text-align: right; transform: rotate(-2deg); }
 
-/* ══════════ DEIN JAHR: Registerreiter ══════════ */
-.hf-legende { display: flex; gap: 14px; flex-wrap: wrap; }
-.hf-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--text-muted); }
-.hf-leg-k { display: inline-block; width: 10px; height: 10px; border-radius: 2px; border: 1px solid var(--border-light); }
-.hf-leg-k.signed { background: rgb(var(--primary-rgb)); border-color: transparent; }
-.hf-leg-k.complete { background: rgba(var(--primary-rgb), 0.52); border-color: transparent; }
-.hf-leg-k.draft { background: rgba(var(--primary-rgb), 0.22); border-color: transparent; }
-.hf-leg-k.fehlt { border: 1.5px dashed var(--rot-hell); }
+/* ══════════ DEIN JAHR: Stempelkarte ══════════
+   Eine Papierkarte, ein Feld je Woche mit KW-Nummer. 🔴 Der Zustand steht in
+   der FORM — Stempelring, Kuli-Haken, Strichelrahmen, Rotstift-Kringel — und
+   nie in Abstufungen der Theme-Farbe: die Registerreiter (v8.1.12) stuften nur
+   --primary ab und waren bei einem gedeckten Theme ununterscheidbar. */
+.hf-legende { display: flex; gap: 16px; flex-wrap: wrap; }
+.hf-leg { display: inline-flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--text-secondary); }
+/* Legende auf der Buehne: dieselben Formen wie auf der Karte, in Buehnenfarben. */
+.hf-leg-k { position: relative; display: inline-block; width: 14px; height: 14px; color: var(--text-main); }
+.hf-leg-k.is-stempel { border: 2.5px double currentColor; border-radius: 50%; transform: rotate(-8deg); }
+.hf-leg-k.is-haken::before {
+    content: '';
+    position: absolute;
+    left: 3px;
+    top: 0;
+    width: 5px;
+    height: 10px;
+    border: solid currentColor;
+    border-width: 0 2px 2px 0;
+    transform: rotate(40deg);
+}
+.hf-leg-k.is-entwurf { border: 1.5px dashed currentColor; border-radius: 3px; opacity: 0.8; }
+.hf-leg-k.is-fehlt { border: 2px solid var(--rot-hell); border-radius: 52% 48% 55% 45%; transform: rotate(-12deg); }
 
-.hf-register {
+.hf-karte {
     display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 6px;
-    align-items: end;
-    padding-top: 10px;
-}
-.hf-reiter {
-    min-width: 0;
-    padding: 10px 9px 12px;
-    border: 1px solid var(--border);
-    border-bottom-width: 3px;
-    border-radius: 10px 10px 4px 4px;
-    background: var(--bg-glass);
-    transition: transform 0.25s var(--spring);
-}
-.hf-reiter > b { display: block; margin-bottom: 10px; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
-/* Der laufende Monat ist als Blatt herausgezogen. */
-.hf-reiter.is-jetzt {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px 34px;
+    padding: 24px 28px 26px;
+    border-radius: 6px;
     background: var(--papier);
-    border-color: var(--papier);
-    transform: translateY(-8px);
+    color: var(--papier-tinte);
     box-shadow: var(--papier-schatten);
 }
-.hf-reiter.is-jetzt > b { color: var(--papier-tinte); }
-.hf-reiter.is-zukunft { opacity: 0.45; }
-.hf-striche { display: flex; gap: 3px; }
-.hf-strich {
-    position: relative;
-    flex: 1;
-    min-width: 0;
-    height: 18px;
-    padding: 0;
-    border: 1px solid var(--border-light);
-    border-radius: 2px;
-    background: transparent;
-    cursor: pointer;
-    transition: transform 0.15s var(--ease);
+.hf-kmonat { min-width: 0; }
+.hf-kmonat-name {
+    display: block;
+    margin-bottom: 9px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--papier-linie);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 400;
+    font-size: 0.62rem;
+    color: var(--papier-tinte-2);
 }
-.hf-strich:hover { transform: translateY(-2px); }
-.hf-strich:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: 2px; }
-.hf-strich.signed { background: rgb(var(--primary-rgb)); border-color: transparent; }
-.hf-strich.complete { background: rgba(var(--primary-rgb), 0.52); border-color: transparent; }
-.hf-strich.draft { background: rgba(var(--primary-rgb), 0.22); border-color: transparent; }
-.hf-strich.fehlt { border: 1.5px dashed var(--rot-hell); }
-.is-jetzt .hf-strich { border-color: var(--papier-linie); }
-.is-jetzt .hf-strich.signed { background: var(--kuli); }
-.is-jetzt .hf-strich.fehlt { border-color: var(--rotstift); }
-.hf-strich.is-now { box-shadow: 0 0 0 2px var(--papier), 0 0 0 3.5px var(--papier-tinte); }
+.hf-kfelder { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.hf-kfeld {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    min-width: 0;
+    padding: 0;
+    border: 1px solid rgba(21, 19, 29, 0.16);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--papier-tinte-2);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 400;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+.hf-kfeld:hover { transform: translateY(-2px); background: rgba(21, 19, 29, 0.04); }
+.hf-kfeld:focus-visible { outline: 2px solid var(--papier-tinte); outline-offset: 2px; }
+.hf-kfeld-nr { position: relative; z-index: 1; }
+
+/* unterschrieben / freigegeben: Stempelring */
+.hf-kfeld.is-stempel { border-color: transparent; color: var(--kuli); font-weight: 500; }
+.hf-kfeld.is-stempel::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 3px double var(--kuli);
+    border-radius: 50%;
+    transform: rotate(-8deg);
+    opacity: 0.85;
+}
+/* fertig: Kuli-Haken quer ueber das Feld */
+.hf-kfeld.is-haken { color: rgba(21, 19, 29, 0.5); }
+/* Nummer in die Ecke, sonst laeuft der Haken mitten durch sie. */
+.hf-kfeld.is-haken .hf-kfeld-nr { position: absolute; top: 3px; left: 5px; font-size: 0.55rem; }
+.hf-k-haken {
+    position: absolute;
+    inset: 12%;
+    width: 76%;
+    height: 76%;
+    fill: none;
+    stroke: var(--kuli);
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+/* Entwurf: gestrichelter Bleistiftrahmen */
+.hf-kfeld.is-entwurf { border: 1.5px dashed rgba(21, 19, 29, 0.5); color: var(--papier-tinte); }
+/* fehlt: Rotstift-Kringel um die Nummer */
+.hf-kfeld.is-fehlt { border-color: transparent; color: var(--rotstift); font-weight: 500; }
+.hf-kfeld.is-fehlt::before {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    border: 2px solid var(--rotstift);
+    border-radius: 52% 48% 55% 45%;
+    transform: rotate(-12deg);
+}
+.hf-kfeld.is-zukunft { border-style: dotted; opacity: 0.45; }
+/* laufende Woche: kraeftiger Rahmen in Papiertinte — sie steht ja gerade an */
+.hf-kfeld.is-now { box-shadow: 0 0 0 2px var(--papier), 0 0 0 3.5px var(--papier-tinte); opacity: 1; }
+
 .hf-tip {
     position: absolute;
     left: 50%;
@@ -552,8 +605,9 @@
     transform: translateX(-50%);
     padding: 5px 9px;
     border-radius: 8px;
-    background: var(--ink);
-    color: var(--on-ink);
+    background: var(--papier-tinte);
+    color: var(--papier);
+    font-family: var(--font-main);
     font-size: 0.72rem;
     font-weight: 500;
     white-space: nowrap;
@@ -562,7 +616,7 @@
     transition: opacity 0.12s ease;
     z-index: 5;
 }
-.hf-strich:hover .hf-tip, .hf-strich:focus-visible .hf-tip { opacity: 1; }
+.hf-kfeld:hover .hf-tip, .hf-kfeld:focus-visible .hf-tip { opacity: 1; }
 
 /* Noch kein Bericht (.container.is-neu, setzt updateUI): Kaestchen mit viermal 0
    und leere Reiter sagen nichts. Der Stapel bleibt — das leere Blatt IST die
@@ -700,7 +754,7 @@
     .hf-buehne { grid-template-columns: minmax(0, 1fr); gap: 44px; padding-top: 20px; }
     .hf-stapel { max-width: 480px; }
     .hf-kaestchen { max-width: none; }
-    .hf-register { grid-template-columns: repeat(6, minmax(0, 1fr)); row-gap: 14px; }
+    .hf-karte { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 24px; }
 }
 @media (max-width: 640px) {
     .hf-now-aktionen { flex-direction: column; align-items: stretch; }
@@ -715,7 +769,11 @@
     .hf-blatt.b2 .hf-rotstift { right: 150px; font-size: 1.15rem; max-width: 150px; }
     .hf-blatt.b1 .hf-rotstift { display: none; }
     .hf-vk { flex-wrap: wrap; }
-    .hf-register { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .hf-karte { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 18px; padding: 18px 16px 20px; }
+    .hf-kfelder { gap: 4px; }
+    .hf-kfeld { font-size: 0.56rem; }
+    .hf-kfeld.is-stempel::before { inset: 0; border-width: 2.5px; }
+    .hf-kfeld.is-fehlt::before { inset: 0; }
     .hf-werkzeuge { width: 100%; }
     .hf-werkzeuge .hf-kbd { display: none; }
     .hf-menue-liste { left: 0; right: auto; width: min(290px, calc(100vw - 48px)); }
@@ -726,7 +784,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .hf-cta, .hf-cta-kreis, .hf-strich, .hf-reiter, .hf-blatt.b1, .hf-kf-bar > span, .btn { transition: none; }
-    .hf-strich:hover, .hf-blatt.b1:hover { transform: none; }
+    .hf-cta, .hf-cta-kreis, .hf-kfeld, .hf-blatt.b1, .hf-kf-bar > span, .btn { transition: none; }
+    .hf-kfeld:hover, .hf-blatt.b1:hover { transform: none; }
     .hf-blatt.b1:hover { transform: rotate(-1.3deg); }
 }
