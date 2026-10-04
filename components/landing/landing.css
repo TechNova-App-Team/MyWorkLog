@@ -1,269 +1,197 @@
 /* ═══ LANDING / INTRO (Erstbesuch) ═══
-   Seit v7.5.0 ohne Film: ein Rundgang durch echte App-Aufnahmen. Der
-   Bildschirm liegt im Hero gekippt unter dem Titel, richtet sich beim ersten
-   Scrollen auf und faehrt dann je Kapitel an einen Brennpunkt heran.
-   Stellung, Kamera und Blenden rechnet landing.js aus der Scrollposition und
-   schreibt sie als transform/opacity — hier stehen nur Groessen und Gestalt.
-   Schrift wie die Infoseiten (Bricolage/Geist); landing.js laedt sie erst,
-   wenn das Intro wirklich laeuft — Wiederkehrer zahlen nichts dafuer. */
+   Seit v8.1.3 eine Fahrt von Tag in Nacht (landing.js, Three.js). Ebenen von
+   hinten nach vorn: Himmel (.vi-sky, Pastell) → Nacht (.vi-night, Deckkraft aus
+   landing.js) → Riesenworte + Hero-Typo → Leinwand (.vi-gl, durchsichtig) →
+   Texte, Knoepfe, Ecken. Die 3D-Objekte liegen also VOR der grossen Schrift —
+   das ist die Tiefe der Vorlage (noomoagency.com), ohne Text in 3D.
+   Farbe der Schrift ueber --vi-ink: tagsueber dunkel auf Pastell, nachts
+   (.vi-dunkel, setzt landing.js) hell auf Schwarz.
+   Feste Pastellwerte sind hier Absicht: der Himmel ist Kulisse, kein Theme —
+   Akzente (Knopfscheibe, Stoppuhr) kommen weiter aus --primary. */
 
     #pro-intro{
       --vi-fd:'Bricolage Grotesque','Geist',system-ui,sans-serif;
+      --vi-fm:'Martian Mono','JetBrains Mono',ui-monospace,monospace;
       --vi-spring:cubic-bezier(.32,.72,0,1);
       --vi-out:cubic-bezier(.23,1,.32,1);
+      --vi-ink:#15131d; --vi-ink2:rgba(21,19,29,.62); --vi-line:rgba(21,19,29,.16); --vi-chip:rgba(255,255,255,.45);
       position:fixed;inset:0;z-index:99999;
       overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-      /* Fallback PFLICHT: ein undefiniertes var() ist invalid at computed-value time
-         und faellt auf den Initialwert (transparent) — dann scheint die App durch. */
-      background:var(--bg-deep,#07070e);
-      color:#fff;
+      background:#cdd3ef;
+      color:var(--vi-ink);
       font-family:'Geist',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
       scrollbar-width:none;-ms-overflow-style:none;
     }
+    #pro-intro.vi-dunkel{--vi-ink:#fff; --vi-ink2:rgba(255,255,255,.62); --vi-line:rgba(255,255,255,.16); --vi-chip:rgba(255,255,255,.06)}
     #pro-intro::-webkit-scrollbar{display:none}
     /* Reset OHNE padding:0 — `#pro-intro *` hat Spezifitaet (1,0,0) und schlaegt
        JEDE .vi-*-Klassenregel. Deshalb stehen Margins unten mit #pro-intro davor. */
     #pro-intro *{box-sizing:border-box;margin:0}
 
-    /* Laenge des Rundgangs: Hero + sechs Aufnahmen + Handy + Abschluss.
-       Kuerzer, und die Kamerafahrten werden hektisch. */
-    .vi-scroll{position:relative;height:1150vh}
+    /* Hoehe setzt landing.js aus den Abschnittsgewichten; das hier ist nur der Startwert */
+    .vi-scroll{position:relative;height:1500vh}
     .vi-stick{position:sticky;top:0;width:100%;height:100vh;height:100dvh;overflow:hidden}
 
-    /* Licht von oben, eine Lichtinsel hinter dem Bildschirm, Rand abgedunkelt. */
-    .vi-amb{
-      position:absolute;inset:0;z-index:0;pointer-events:none;
-      background:
-        radial-gradient(60% 45% at 50% -6%, rgba(var(--primary-rgb),0.30) 0%, rgba(var(--primary-rgb),0) 70%),
-        radial-gradient(40% 40% at 62% 55%, rgba(var(--primary-rgb),0.13) 0%, rgba(var(--primary-rgb),0) 70%),
-        radial-gradient(120% 95% at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.65) 100%);
+    /* ═══ HIMMEL ═══ Pastell mit drei weichen Flecken, die langsam wandern */
+    .vi-sky{
+      position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+      background:linear-gradient(180deg,#c6cdee 0%,#d9d6f1 55%,#ecdfee 100%);
     }
-    /* Feines Raster, nach unten ausgeblendet: gibt dem Raum eine Flaeche,
-       auf der der gekippte Bildschirm steht. */
-    .vi-amb::before{
-      content:'';position:absolute;inset:0;opacity:.5;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.035) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(255,255,255,0.035) 1px,transparent 1px);
-      background-size:64px 64px;background-position:center top;
-      -webkit-mask-image:radial-gradient(70% 55% at 50% 20%,#000 0%,transparent 75%);
-              mask-image:radial-gradient(70% 55% at 50% 20%,#000 0%,transparent 75%);
-    }
-    /* Korn: sitzt in der klebenden Buehne (scrollt nicht mit), ohne Zeiger. */
-    .vi-amb::after{
-      content:'';position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;
+    .vi-blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.75;animation:viBlob 22s ease-in-out infinite alternate}
+    .vi-blob-a{width:46vmax;height:46vmax;left:-10vmax;top:-14vmax;background:rgba(var(--primary-rgb),.32)}
+    .vi-blob-b{width:40vmax;height:40vmax;right:-12vmax;top:22vh;background:#ffd8c8;animation-duration:27s}
+    .vi-blob-c{width:36vmax;height:36vmax;left:26vw;bottom:-18vmax;background:#c4f0e6;opacity:.5;animation-duration:31s}
+    @keyframes viBlob{to{transform:translate3d(6vmax,4vmax,0) scale(1.12)}}
+    .vi-sky::after{
+      content:'';position:absolute;inset:0;opacity:.07;mix-blend-mode:multiply;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .vi-night{
+      position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;
+      background:radial-gradient(70% 50% at 50% 100%,#14131c 0%,#050507 70%);
     }
 
     .vi-stage{position:absolute;inset:0;z-index:10}
+    .vi-gl{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block}
 
-    /* ═══ DIE AUFNAHMEN ═══ */
-    .vi-rig{position:absolute;inset:0;pointer-events:none}
-
-    /* Doppelrand: Aussenschale + Innenkern. 16:10 = Format der Aufnahmen,
-       also kein Beschnitt. Stellung ausschliesslich per transform (landing.js). */
-    .vi-screen{
-      position:absolute;left:0;top:0;
-      width:min(58vw,1060px);aspect-ratio:16/10;
-      transform-origin:50% 50%;
-      padding:7px;border-radius:24px;
-      background:linear-gradient(180deg,rgba(255,255,255,0.10),rgba(255,255,255,0.025));
-      border:1px solid rgba(255,255,255,0.12);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.14),
-        0 60px 140px -40px rgba(0,0,0,0.95),
-        0 0 120px -20px rgba(var(--primary-rgb),0.40);
-    }
-    .vi-screen-in{
-      position:relative;width:100%;height:100%;
-      border-radius:17px;overflow:hidden;
-      background:var(--bg-deep,#07070e);
-      box-shadow:inset 0 1px 1px rgba(255,255,255,0.14);
-    }
-    /* Kamera: Ursprung oben links, landing.js schreibt translate + scale.
-       BEWUSST kein will-change (auch nicht am .vi-screen): Chrome rastert eine
-       will-change-Ebene einmal in Ausgangsgroesse und skaliert danach nur das
-       Bitmap — bei 2,2-fachem Zoom war jede Aufnahme Matsch, obwohl die Datei
-       2880 px breit ist. Ohne den Hinweis rastert er nach dem Scrollen neu. */
-    .vi-view{position:absolute;inset:0;transform-origin:0 0}
-    .vi-shot{
-      position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;
-      clip-path:inset(100% 0 0 0);
-    }
-    .vi-shot:first-child{clip-path:none}
-    /* Erst wenn die erste Aufnahme da ist, duerfen die uebrigen laden
-       (loading=lazy laedt nichts, was display:none ist). */
-    .vi-view:not(.vi-go) .vi-shot:not(:first-child){display:none}
-    /* Glanz auf dem Glas und Lichtabfall an der Unterkante */
-    .vi-screen-in::after{
-      content:'';position:absolute;inset:0;pointer-events:none;z-index:3;
-      background:
-        linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,0.055) 45%,rgba(255,255,255,0) 60%),
-        linear-gradient(180deg,rgba(255,255,255,0.035) 0%,rgba(255,255,255,0) 22%,rgba(0,0,0,0.22) 100%);
-    }
-    /* Brennpunkt: Rahmen um die Stelle, um die es geht, der Rest abgedunkelt.
-       Groesse und Lage schreibt landing.js in Bildschirmkoordinaten — NICHT in
-       der Kamera, sonst waere der Strich bei 2x Zoom doppelt so dick. */
-    .vi-ring{
-      position:absolute;left:0;top:0;width:10px;height:10px;z-index:2;opacity:0;
-      border-radius:12px;pointer-events:none;
-      border:1.5px solid rgba(var(--primary-rgb),0.9);
-      box-shadow:0 0 0 200vmax rgba(4,4,10,0.55),0 0 34px rgba(var(--primary-rgb),0.45),inset 0 0 24px rgba(var(--primary-rgb),0.18);
-    }
-
-    /* Das Handy: im Hero vorn rechts am Bildschirm, im Kapitel „Unterwegs“ allein. */
-    .vi-phone{
-      position:absolute;left:0;top:0;
-      height:min(70vh,640px);aspect-ratio:796/1704;
-      padding:8px;border-radius:44px;will-change:transform,opacity;
-      background:linear-gradient(160deg,#2a2833,#0d0c12 55%,#1c1b22);
-      border:1px solid rgba(255,255,255,0.14);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.18),
-        inset 0 0 0 2px rgba(0,0,0,0.6),
-        0 50px 100px -30px rgba(0,0,0,0.95),
-        0 0 80px -20px rgba(var(--primary-rgb),0.35);
-    }
-    .vi-phone-in{width:100%;height:100%;border-radius:36px;overflow:hidden;background:#07070e}
-    .vi-phone-in img{width:100%;height:100%;display:block;object-fit:cover}
-
-    /* ═══ HERO ═══ */
-    .vi-hero{
-      position:absolute;left:0;right:0;top:0;z-index:5;
-      display:flex;flex-direction:column;align-items:center;text-align:center;
-      padding:13vh 6vw 0;will-change:transform,opacity;
-    }
+    /* ═══ HERO ═══ Titel + drei Zeilen UNTER der Leinwand (z 0) — die Stoppuhr
+       und die Wuerfeltrauben schweben davor. Zeilen laufen gegeneinander
+       (translate aus landing.js). */
+    .vi-hero{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
     .vi-logo{
-      font-family:var(--vi-fd);font-variation-settings:'opsz' 96;
-      font-size:clamp(3.4rem,10.5vw,8.6rem);font-weight:600;letter-spacing:-.055em;line-height:.9;
-      color:#fff;perspective:600px;
+      position:absolute;left:max(4vw,24px);top:11vh;white-space:nowrap;
+      font-family:var(--vi-fm);font-weight:300;font-stretch:112.5%;text-transform:uppercase;
+      font-size:clamp(2.6rem,9.6vw,11rem);letter-spacing:-.06em;line-height:.9;
+      color:var(--vi-ink);perspective:600px;
     }
-    /* Buchstaben steigen einzeln auf — der eine inszenierte Moment der Seite.
+    /* Die Einblendung sitzt am Container: eine Animation mit fill:both schlaegt
+       das Inline-transform, mit dem landing.js die Zeilen laufen laesst. */
+    .vi-lines{position:absolute;left:0;right:0;top:37vh;display:flex;flex-direction:column;animation:viUp 1.1s var(--vi-out) .4s both}
+    .vi-line{
+      display:block;white-space:nowrap;padding-left:max(4vw,24px);
+      font-family:var(--vi-fm);font-weight:300;font-stretch:112.5%;text-transform:uppercase;
+      font-size:clamp(2.2rem,7.6vw,8.8rem);letter-spacing:-.05em;line-height:1.02;
+      color:var(--vi-ink);
+    }
+    /* Buchstaben steigen einzeln auf — der eine inszenierte Moment beim Laden.
        Die Spans baut landing.js; der Text steht fuer Crawler unveraendert im h1. */
     .vi-l{
       display:inline-block;transform-origin:50% 100%;
-      background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,0.62));
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-      animation:viRise .9s var(--vi-out) both;animation-delay:calc(var(--i) * 42ms + 120ms);
+      animation:viRise 1s var(--vi-out) both;animation-delay:calc(var(--i) * 45ms + 80ms);
     }
     @keyframes viRise{
       from{opacity:0;transform:translateY(.42em) rotateX(-70deg);filter:blur(10px)}
       to{opacity:1;transform:none;filter:blur(0)}
     }
-    #pro-intro .vi-sub-row{display:flex;align-items:center;gap:2px;margin-top:1.1rem;min-height:1.6em}
-    .vi-typed{
-      font-family:var(--vi-fd);font-size:clamp(1.15rem,2.2vw,1.55rem);font-weight:500;
-      color:rgba(255,255,255,0.9);letter-spacing:-.025em;
-    }
-    .vi-caret{color:var(--primary);font-weight:300;font-size:clamp(1.15rem,2.3vw,1.6rem);animation:viBlink 1s step-end infinite}
-    @keyframes viBlink{50%{opacity:0}}
-    #pro-intro .vi-lede{
-      margin-top:.9rem;max-width:58ch;font-size:clamp(.95rem,1.3vw,1.06rem);line-height:1.6;
-      color:rgba(255,255,255,0.62);text-wrap:balance;
-    }
-    #pro-intro .vi-hero-cta{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-top:1.6rem}
-    .vi-hero > *:not(.vi-logo){animation:viUp .9s var(--vi-out) both}
-    .vi-hero > .vi-sub-row{animation-delay:.5s}
-    .vi-hero > .vi-lede{animation-delay:.62s}
-    .vi-hero > .vi-hero-cta{animation-delay:.74s}
-    @keyframes viUp{from{opacity:0;transform:translateY(14px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+    /* Bis der Lader weg ist, warten alle Einblendungen im Startzustand */
+    #pro-intro:not(.vi-bereit) .vi-l,
+    #pro-intro:not(.vi-bereit) .vi-lines,
+    #pro-intro:not(.vi-bereit) .vi-hero-foot > *{animation-play-state:paused}
 
-    /* ═══ KNOEPFE ═══ Pille, Pfeil in eigener Scheibe */
+    /* Fuss unten rechts — wie der kleine Textblock bei noomo */
+    .vi-hero-foot{
+      position:absolute;right:max(4vw,24px);bottom:calc(8vh + env(safe-area-inset-bottom,0px));z-index:3;
+      width:min(400px,40vw);display:flex;flex-direction:column;align-items:flex-start;
+    }
+    #pro-intro .vi-sub-row{display:flex;align-items:center;gap:2px;min-height:1.6em}
+    .vi-typed{font-family:var(--vi-fd);font-size:1.15rem;font-weight:600;letter-spacing:-.02em;color:var(--vi-ink)}
+    .vi-caret{color:var(--primary);font-weight:300;font-size:1.2rem;animation:viBlink 1s step-end infinite}
+    @keyframes viBlink{50%{opacity:0}}
+    #pro-intro .vi-lede{margin-top:.55rem;font-size:.9rem;line-height:1.6;color:var(--vi-ink2)}
+    #pro-intro .vi-hero-cta{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:1.2rem}
+    .vi-hero-foot > *{animation:viUp .9s var(--vi-out) both}
+    .vi-hero-foot > .vi-sub-row{animation-delay:.7s}
+    .vi-hero-foot > .vi-lede{animation-delay:.8s}
+    .vi-hero-foot > .vi-hero-cta{animation-delay:.9s}
+    @keyframes viUp{from{opacity:0;transform:translateY(18px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+
+    /* ═══ KNOEPFE ═══ dunkle Pille am Tag (wie noomos „View project“), Pfeil in eigener Scheibe */
     .vi-btn{
       display:inline-flex;align-items:center;gap:.7rem;border-radius:999px;cursor:pointer;
-      font-family:inherit;font-size:.95rem;font-weight:600;white-space:nowrap;text-decoration:none;
+      font-family:inherit;font-size:.92rem;font-weight:600;white-space:nowrap;text-decoration:none;
       transition:transform .16s ease-out,box-shadow .3s ease,background-color .2s ease,border-color .2s ease,color .2s ease;
     }
     .vi-btn:active{transform:scale(.97)}
     .vi-btn:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:4px}
-    .vi-btn-main{
-      padding:.4rem .4rem .4rem 1.35rem;border:0;background:#fff;color:#0a0a10;
-      box-shadow:0 14px 44px -12px rgba(var(--primary-rgb),.7);
-    }
+    .vi-btn-main{padding:.38rem .38rem .38rem 1.25rem;border:0;background:var(--vi-ink);color:#fff;box-shadow:0 12px 34px -12px rgba(21,19,29,.55)}
     .vi-btn-disc{
       display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;
       background:var(--primary);color:#fff;transition:transform .45s var(--vi-spring);
     }
     .vi-btn-disc svg{width:16px;height:16px}
-    .vi-btn-ghost{
-      padding:.78rem 1.3rem;color:rgba(255,255,255,0.86);
-      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.14);
-    }
+    .vi-btn-ghost{padding:.74rem 1.2rem;color:var(--vi-ink);background:var(--vi-chip);border:1px solid var(--vi-line)}
     @media(hover:hover) and (pointer:fine){
-      .vi-btn-main:hover{box-shadow:0 18px 56px -12px rgba(var(--primary-rgb),.95)}
       .vi-btn-main:hover .vi-btn-disc{transform:translateX(3px) rotate(-45deg)}
-      .vi-btn-ghost:hover{color:#fff;border-color:rgba(var(--primary-rgb),.5);background:rgba(var(--primary-rgb),.1)}
+      .vi-btn-ghost:hover{border-color:rgba(var(--primary-rgb),.55)}
     }
 
-    /* ═══ KAPITEL ═══ */
-    .vi-copy{position:absolute;inset:0;pointer-events:none;z-index:6}
+    /* ═══ RIESENWORTE ═══ je Tag-Station ein Wort, massiv, hinter dem Objekt.
+       Lage und Scherung schreibt landing.js. */
+    .vi-big{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+    .vi-big-w{
+      position:absolute;left:0;top:44%;opacity:0;white-space:nowrap;
+      font-family:var(--vi-fm);font-weight:300;font-stretch:112.5%;text-transform:uppercase;
+      font-size:clamp(4.5rem,15vw,17rem);line-height:1;letter-spacing:-.06em;
+      color:var(--vi-ink);
+    }
+    #pro-intro:not(.vi-gl-an) .vi-big{display:none}
+
+    /* ═══ KAPITEL ═══ unten, wie der Infoblock einer noomo-Station: links die
+       Pille, rechts Ueberschrift und Text. Nachts dieselbe Ecke, hell. */
+    .vi-copy{position:absolute;inset:0;pointer-events:none;z-index:3}
     .vi-ch{
-      position:absolute;left:max(5vw,32px);top:50%;transform:translateY(-50%);
-      width:min(29vw,420px);
-      display:flex;flex-direction:column;align-items:flex-start;
+      position:absolute;left:max(4vw,24px);right:max(4vw,24px);bottom:calc(9vh + 1.6rem);
+      display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);align-items:end;gap:2rem;
       visibility:hidden;transition:visibility 0s linear .5s;
     }
     .vi-ch.on{visibility:visible;transition-delay:0s}
-    /* Zeilen gleiten einzeln herein, gestaffelt; hinaus alle zugleich und
-       schneller (Ausgang kuerzer als Eingang). .up = schon vorbei, also nach
-       oben weg statt nach unten. */
     .vi-ch > *{
       opacity:0;transform:translateY(22px);filter:blur(6px);
       transition:opacity .3s ease,transform .4s var(--vi-out),filter .3s ease;
     }
     .vi-ch.up > *{transform:translateY(-22px)}
-    .vi-ch.on > *{
-      opacity:1;transform:none;filter:blur(0);
-      transition:opacity .6s var(--vi-out),transform .9s var(--vi-spring),filter .6s ease;
-    }
+    .vi-ch.on > *{opacity:1;transform:none;filter:blur(0);transition:opacity .6s var(--vi-out),transform .9s var(--vi-spring),filter .6s ease}
     .vi-ch.on > :nth-child(2){transition-delay:.07s}
     .vi-ch.on > :nth-child(3){transition-delay:.14s}
-
     .vi-eyebrow{
+      grid-column:1;grid-row:1 / span 2;align-self:end;justify-self:start;
       display:inline-flex;align-items:center;gap:.6em;
-      font-size:.8rem;font-weight:500;color:rgba(255,255,255,0.78);
-      padding:.42em .9em .42em .5em;border-radius:100px;
-      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);
+      font-size:.8rem;font-weight:500;color:var(--vi-ink);
+      padding:.4em .95em .4em .45em;border-radius:100px;
+      background:var(--vi-chip);border:1px solid var(--vi-line);
     }
     /* Kapitelnummer (data-n schreibt landing.js): der Rundgang IST eine Folge. */
     .vi-eyebrow::before{
       content:attr(data-n);display:inline-flex;align-items:center;justify-content:center;
       min-width:1.75em;height:1.75em;border-radius:50%;
       font-size:.72em;font-weight:600;font-variant-numeric:tabular-nums;
-      background:rgba(var(--primary-rgb),.24);color:#fff;
+      background:var(--primary);color:#fff;
     }
     #pro-intro .vi-h{
+      grid-column:2;
       font-family:var(--vi-fd);font-variation-settings:'opsz' 96;
-      font-size:clamp(2rem,3.6vw,3.3rem);font-weight:600;line-height:.98;
-      letter-spacing:-.022em;margin-top:1.15rem;text-wrap:balance;
+      font-size:clamp(1.5rem,2.2vw,2.15rem);font-weight:650;line-height:1.05;letter-spacing:-.02em;text-wrap:balance;
+      color:var(--vi-ink);
     }
-    #pro-intro .vi-p{
-      font-size:clamp(.95rem,1.2vw,1.05rem);line-height:1.65;
-      color:rgba(255,255,255,0.62);margin-top:1rem;max-width:40ch;text-wrap:pretty;
-    }
+    #pro-intro .vi-p{grid-column:2;font-size:.93rem;line-height:1.6;color:var(--vi-ink2);margin-top:.6rem;text-wrap:pretty}
 
-    /* ═══ ABSCHLUSS ═══ */
-    .vi-wall{
-      position:absolute;inset:0;z-index:1;opacity:0;pointer-events:none;overflow:hidden;
-      perspective:1400px;
-      -webkit-mask-image:radial-gradient(75% 70% at 50% 50%,#000 20%,transparent 80%);
-              mask-image:radial-gradient(75% 70% at 50% 50%,#000 20%,transparent 80%);
+    /* ═══ ECKEN ═══ Marke + Kapitelzaehler oben links (Vorbild Jesper) */
+    .vi-corner{
+      position:absolute;top:1.35rem;left:max(4vw,24px);z-index:40;
+      display:flex;align-items:baseline;gap:1rem;
+      font-size:.74rem;font-weight:500;color:var(--vi-ink2);letter-spacing:.01em;
+      opacity:0;transform:translateY(-6px);transition:opacity .5s ease,transform .6s var(--vi-spring),color .6s ease;
+      pointer-events:none;white-space:pre;
     }
-    .vi-wall-in{
-      position:absolute;left:50%;top:50%;width:170vmax;
-      display:grid;grid-template-columns:repeat(4,1fr);gap:2.2vmax;
-      transform-style:preserve-3d;will-change:transform;
-    }
-    .vi-wall-in img{
-      width:100%;aspect-ratio:16/10;object-fit:cover;display:block;border-radius:1vmax;
-      border:1px solid rgba(255,255,255,0.1);opacity:.55;
-      box-shadow:0 30px 60px -20px rgba(0,0,0,.9);
-    }
+    .vi-corner.on{opacity:1;transform:none}
+    .vi-corner-m{font-family:var(--vi-fm);font-stretch:112.5%;font-weight:500;font-size:.8rem;color:var(--vi-ink);text-transform:uppercase;letter-spacing:-.02em}
+    .vi-corner-n{font-variant-numeric:tabular-nums}
+
+    /* ═══ ABSCHLUSS ═══ in der Nacht, ueber dem Gitterboden */
     .vi-end{
-      position:absolute;inset:0;z-index:7;
+      position:absolute;inset:0;z-index:3;
       display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
-      padding:0 6vw;visibility:hidden;transition:visibility 0s linear .5s;
-      background:radial-gradient(45% 45% at 50% 50%,rgba(7,7,14,0.85),rgba(7,7,14,0) 100%);
+      padding:0 6vw 4vh;visibility:hidden;transition:visibility 0s linear .5s;color:#fff;
     }
     .vi-end.on{visibility:visible;transition-delay:0s}
     .vi-end > *{opacity:0;transform:translateY(22px);filter:blur(6px);transition:opacity .3s ease,transform .4s var(--vi-out),filter .3s ease}
@@ -273,14 +201,11 @@
     .vi-end.on > :nth-child(4){transition-delay:.22s}
     .vi-end.on > :nth-child(5){transition-delay:.28s}
     .vi-end-t{
-      font-family:var(--vi-fd);font-variation-settings:'opsz' 96;
-      font-size:clamp(3.6rem,12vw,9.5rem);font-weight:600;letter-spacing:-.06em;line-height:.88;
-      background:linear-gradient(180deg,#fff 35%,rgba(255,255,255,0.6));
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-      padding-bottom:.06em;
+      font-family:var(--vi-fm);font-weight:300;font-stretch:112.5%;text-transform:uppercase;
+      font-size:clamp(3.2rem,13vw,13rem);letter-spacing:-.06em;line-height:.9;color:#fff;
     }
-    #pro-intro .vi-end-p{margin-top:1.1rem;font-size:clamp(1rem,1.5vw,1.15rem);color:rgba(255,255,255,0.66)}
-    #pro-intro .vi-cta{margin-top:2.1rem}
+    #pro-intro .vi-end-p{margin-top:1.1rem;font-size:clamp(.98rem,1.3vw,1.1rem);color:rgba(255,255,255,.66)}
+    #pro-intro .vi-cta{margin-top:2rem}
     .vi-cta{
       display:inline-flex;align-items:center;gap:.8rem;cursor:pointer;
       padding:.45rem .45rem .45rem 1.6rem;border:0;border-radius:999px;background:#fff;color:#0a0a10;
@@ -296,117 +221,107 @@
     .vi-cta:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:5px}
     #pro-intro .vi-alt{
       display:inline-flex;margin-top:.9rem;padding:.7rem 1.2rem;border-radius:999px;
-      font-size:.92rem;font-weight:500;color:rgba(255,255,255,0.78);text-decoration:none;
-      background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.14);
+      font-size:.92rem;font-weight:500;color:rgba(255,255,255,.8);text-decoration:none;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.16);
     }
-    .vi-alt:hover,.vi-alt:focus-visible{color:#fff;border-color:rgba(var(--primary-rgb),.5);background:rgba(var(--primary-rgb),.1)}
+    .vi-alt:hover,.vi-alt:focus-visible{color:#fff;border-color:rgba(var(--primary-rgb),.55);background:rgba(var(--primary-rgb),.12)}
     .vi-alt:focus-visible{outline:2px solid rgba(var(--primary-rgb),.7);outline-offset:4px}
     #pro-intro .vi-ver{
       display:inline-flex;align-items:center;gap:.5rem;margin-top:1.6rem;
-      font-size:.74rem;color:rgba(255,255,255,0.4);font-variant-numeric:tabular-nums;
+      font-size:.74rem;color:rgba(255,255,255,.42);font-variant-numeric:tabular-nums;
     }
     .vi-ver::before{content:'';width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.18)}
 
-    /* ═══ KAPITEL-LEISTE ═══ Ein Segment je Kapitel, fuellt sich mit dessen
-       Fortschritt (--f), anklickbar. Beschriftung aus den .vi-eyebrow, also auf
-       /en/ schon uebersetzt. Sichtbarkeit schaltet landing.js (.on). */
+    /* ═══ KAPITEL-LEISTE ═══ ganz unten, ein Segment je Kapitel, anklickbar */
     .vi-rail{
-      position:absolute;left:50%;bottom:1.7rem;z-index:40;transform:translate(-50%,8px);
-      display:flex;gap:.35rem;opacity:0;pointer-events:none;
+      position:absolute;left:max(4vw,24px);right:max(4vw,24px);bottom:1.4rem;z-index:40;
+      display:flex;gap:.35rem;opacity:0;pointer-events:none;transform:translateY(8px);
       transition:opacity .5s ease,transform .6s var(--vi-spring);
     }
-    .vi-rail.on{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+    .vi-rail.on{opacity:1;pointer-events:auto;transform:none}
     .vi-rail-btn{
-      display:flex;flex-direction:column;gap:.55rem;width:clamp(74px,8vw,112px);
+      flex:1;display:flex;flex-direction:column;gap:.5rem;min-width:0;
       padding:.4rem 0;background:none;border:0;cursor:pointer;text-align:left;
-      font-family:inherit;font-size:.72rem;font-weight:500;color:rgba(255,255,255,0.38);
-      transition:color .3s ease;
+      font-family:var(--vi-fm);font-stretch:112.5%;font-size:.62rem;font-weight:400;text-transform:uppercase;
+      color:var(--vi-ink2);opacity:.6;transition:opacity .3s ease,color .6s ease;
     }
     .vi-rail-btn > span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .vi-rail-btn.on,.vi-rail-btn.done{color:rgba(255,255,255,0.86)}
-    .vi-rail-bar{position:relative;display:block;height:3px;border-radius:3px;background:rgba(255,255,255,0.14);overflow:hidden}
-    .vi-rail-fill{position:absolute;inset:0;background:var(--primary);transform:scaleX(var(--f,0));transform-origin:left}
+    .vi-rail-btn.on,.vi-rail-btn.done{opacity:1;color:var(--vi-ink)}
+    .vi-rail-bar{position:relative;display:block;height:2px;border-radius:2px;background:var(--vi-line);overflow:hidden}
+    .vi-rail-fill{position:absolute;inset:0;background:var(--vi-ink);transform:scaleX(var(--f,0));transform-origin:left;transition:background-color .6s ease}
     .vi-rail-btn:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:4px;border-radius:4px}
-    @media(hover:hover) and (pointer:fine){.vi-rail-btn:hover{color:#fff}}
+    @media(hover:hover) and (pointer:fine){.vi-rail-btn:hover{opacity:1}}
 
-    /* ═══ SCROLL-HINWEIS ═══ Sichtbarkeit per .on aus landing.js */
+    /* ═══ SCROLL-HINWEIS ═══ wie bei noomo: klein, mittig unten */
     .vi-hint{
-      position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);z-index:40;
-      display:flex;align-items:center;gap:.5rem;
-      padding:.45rem .9rem;border-radius:999px;
-      background:rgba(10,10,16,0.6);border:1px solid rgba(255,255,255,0.1);
-      font-size:.78rem;font-weight:500;color:rgba(255,255,255,0.62);
-      opacity:0;transition:opacity .5s ease;pointer-events:none;
+      position:absolute;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:40;
+      display:flex;flex-direction:column;align-items:center;gap:.2rem;
+      font-family:var(--vi-fm);font-stretch:112.5%;font-size:.6rem;text-transform:uppercase;letter-spacing:.04em;
+      color:var(--vi-ink2);opacity:0;transition:opacity .5s ease;pointer-events:none;
     }
-    .vi-hint.on{opacity:1;transition-delay:1.4s}
+    .vi-hint.on{opacity:1;transition-delay:2.2s}
     .vi-hint svg{width:14px;height:14px;animation:viNudge 1.9s cubic-bezier(.4,0,.2,1) infinite}
     @keyframes viNudge{0%,100%{transform:translateY(-1px);opacity:.5}50%{transform:translateY(3px);opacity:1}}
 
     /* ═══ UEBERSPRINGEN ═══ Text statt X: ein X liest sich wie „Fenster zu“. */
     .vi-skip{
-      position:absolute;top:1.2rem;right:1.2rem;z-index:50;
-      display:inline-flex;align-items:center;gap:.45rem;padding:.5rem .6rem .5rem .95rem;border-radius:999px;
-      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);
-      color:rgba(255,255,255,0.72);cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:500;
-      transition:color .2s ease,background-color .2s ease,border-color .2s ease,transform .16s ease-out;
+      position:absolute;top:1.1rem;right:max(4vw,24px);z-index:50;
+      display:inline-flex;align-items:center;gap:.45rem;padding:.48rem .6rem .48rem .95rem;border-radius:999px;
+      background:var(--vi-chip);border:1px solid var(--vi-line);
+      color:var(--vi-ink);cursor:pointer;font-family:inherit;font-size:.8rem;font-weight:500;
+      transition:color .6s ease,background-color .6s ease,border-color .6s ease,transform .16s ease-out;
     }
     .vi-skip svg{width:14px;height:14px;display:block}
-    @media(hover:hover) and (pointer:fine){
-      .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.24)}
-    }
     .vi-skip:active{transform:scale(.96)}
     .vi-skip:focus-visible{outline:2px solid rgba(var(--primary-rgb),.8);outline-offset:3px}
 
-    /* Ausgang in die App: das Intro waechst leicht und verschwimmt — man geht
-       hindurch, statt dass ein Vorhang faellt. */
+    /* ═══ LADER ═══ drei Striche (Vorbild Jesper), bis Three.js da ist */
+    .vi-load{position:absolute;left:50%;top:50%;z-index:60;display:flex;gap:6px;transform:translate(-50%,-50%);transition:opacity .4s ease}
+    .vi-load i{display:block;width:16px;height:2px;background:var(--vi-ink);animation:viLoad 1s ease-in-out infinite}
+    .vi-load i:nth-child(2){animation-delay:.15s}
+    .vi-load i:nth-child(3){animation-delay:.3s}
+    @keyframes viLoad{0%,100%{opacity:.25}50%{opacity:1}}
+    #pro-intro.vi-bereit .vi-load{opacity:0;pointer-events:none}
+
+    /* Ausgang in die App: das Intro waechst leicht und verschwimmt */
     @keyframes viExit{to{opacity:0;transform:scale(1.05);filter:blur(10px)}}
 
-    /* ═══ SCHMAL: Bildschirm oben, Text darunter ═══
-       900 px ist derselbe Umschaltpunkt wie in landing.js (schmal()). */
+    /* ═══ SCHMAL: Objekt oben, Text unten ═══ 900 px wie SCHMAL in landing.js */
     @media(max-width:900px){
-      .vi-screen{width:92vw;padding:5px;border-radius:18px}
-      .vi-screen-in{border-radius:14px}
-      .vi-ring{border-radius:8px}
-      .vi-phone{height:min(52vh,470px);padding:6px;border-radius:34px}
-      .vi-phone-in{border-radius:28px}
-      .vi-hero{padding-top:11vh}
-      .vi-ch{
-        top:auto;bottom:calc(8vh + env(safe-area-inset-bottom,0px));transform:none;
-        left:1.4rem;right:1.4rem;width:auto;
-      }
-      #pro-intro .vi-h{font-size:clamp(1.7rem,7vw,2.3rem);margin-top:.85rem}
-      #pro-intro .vi-p{margin-top:.65rem;max-width:none}
-      /* Kapitel oben als Story-Balken, ohne Beschriftung — sie passt nicht. */
-      .vi-rail{top:4.4rem;bottom:auto;left:1.2rem;right:1.2rem;transform:translateY(-6px);gap:.25rem}
-      .vi-rail.on{transform:none}
-      .vi-rail-btn{flex:1;width:auto;font-size:0;gap:0;padding:.5rem 0}
-      .vi-hint{bottom:1.2rem}
-      /* Schmal ohne Perspektive: landing.js neigt die Wand dort flach (Stauchen +
-         Drehen). Mit perspective + rotateX war sie EINE 3D-Ebene von 2049x1734 CSS-px,
-         bei DPR 3,5 rund 174 MB — Chrome auf Android liess Kacheln aus, und mit
-         ihnen die ganze Abschluss-Ebene („Bereit?“ + Knoepfe). Gemeldet 24.09.2026. */
-      .vi-wall{perspective:none}
-      .vi-wall-in{grid-template-columns:repeat(3,1fr);width:230vmax;will-change:auto}
+      .vi-logo{top:12vh;font-size:clamp(2.2rem,12vw,6rem)}
+      .vi-lines{top:24vh}
+      .vi-line{font-size:clamp(1.9rem,10.5vw,5rem)}
+      .vi-hero-foot{left:1.3rem;right:1.3rem;width:auto;bottom:calc(5vh + env(safe-area-inset-bottom,0px))}
+      .vi-ch{left:1.3rem;right:1.3rem;bottom:calc(4.6rem + env(safe-area-inset-bottom,0px));grid-template-columns:1fr;gap:.7rem}
+      .vi-eyebrow{grid-row:auto}
+      #pro-intro .vi-h,#pro-intro .vi-p{grid-column:1}
+      #pro-intro .vi-h{font-size:clamp(1.45rem,6.4vw,2rem)}
+      #pro-intro .vi-p{font-size:.9rem;margin-top:0}
+      .vi-big-w{top:30%;font-size:clamp(3.4rem,22vw,9rem)}
+      .vi-corner{left:1.2rem;top:1.15rem}
+      .vi-corner-n{display:none}
+      .vi-rail{left:1.2rem;right:1.2rem;bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));gap:.25rem}
+      .vi-rail-btn{font-size:0;gap:0;padding:.6rem 0}
+      .vi-skip{right:1rem;top:.9rem}
     }
     @media(max-width:600px){
-      .vi-skip{top:.8rem;right:.8rem}
-      #pro-intro .vi-hero-cta{flex-direction:column;align-items:stretch;width:min(100%,340px)}
+      #pro-intro .vi-hero-cta{flex-direction:column;align-items:stretch;width:100%}
       .vi-btn{justify-content:center}
       .vi-btn-main{justify-content:space-between}
-      #pro-intro .vi-lede{font-size:.95rem}
+      /* Die Knoepfe stehen am Handy bis knapp ueber den Rand — der Hinweis laege darauf */
+      .vi-hint{display:none}
     }
-    /* Niedrige Fenster (Laptop mit Lesezeichenleiste, Handy quer): Hero enger. */
     @media(max-height:720px){
-      .vi-hero{padding-top:8vh}
-      .vi-logo{font-size:clamp(3rem,8.5vw,6.6rem)}
+      .vi-logo{top:8vh}
+      .vi-lines{top:30vh}
     }
 
-    /* ═══ WENIGER BEWEGUNG ═══ sanfter, nicht gar nichts: Deckkraft bleibt,
-       Aufsteigen, Unschaerfe und Kippung fallen weg (landing.js liest dasselbe). */
+    /* ═══ WENIGER BEWEGUNG ═══ Deckkraft bleibt, Aufsteigen und Unschaerfe
+       fallen weg; landing.js schaltet Drehen, Schweben und Filme ab. */
     @media(prefers-reduced-motion:reduce){
-      .vi-l,.vi-hero > *{animation:viFade .4s ease both}
+      .vi-l,.vi-lines,.vi-hero-foot > *{animation:viFade .4s ease both}
+      .vi-blob,.vi-load i,.vi-hint svg,.vi-caret{animation:none}
       .vi-ch > *,.vi-ch.on > *,.vi-ch.up > *,.vi-end > *,.vi-end.on > *{transform:none;filter:none;transition:opacity .25s ease}
-      .vi-hint svg,.vi-caret{animation:none}
       .vi-cta,.vi-btn,.vi-btn-disc{transition:none}
     }
     @keyframes viFade{from{opacity:0}to{opacity:1}}
