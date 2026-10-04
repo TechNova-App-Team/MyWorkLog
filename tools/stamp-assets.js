@@ -35,7 +35,12 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 // Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
 // jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen. data-src
 // gehoert dazu, fuer Bilder, die ein Skript erst beim Oeffnen einsetzt.
-const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
+// Seit v8.1.10 auch die Icons (favicon.ico/.svg, apple-touch-icon, icon-NNN):
+// "die aendern sich nie unter gleichem Namen" stimmte bis zum neuen App-Symbol
+// in v8.1.7. Gemessen am 04.10.2026: der Edge lieferte favicon.ico und
+// icon-192.png noch Tage spaeter in der alten Fassung (270 KB statt 48 KB,
+// age 354889), der Origin schon die neue.
+const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)|\/favicon\.(?:ico|svg)|\/Grafiken\/(?:apple-touch-icon|icon-\d+)\.png))(?:\?v=[^"]*)?(")/g;
 
 // Versionsnummern, die im HTML stehen MUESSEN und daher unweigerlich veralten:
 //  - <meta name="generator">: Crawler lesen statisches HTML, JS kommt zu spaet.
