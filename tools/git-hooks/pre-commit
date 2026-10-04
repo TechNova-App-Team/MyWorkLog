@@ -55,16 +55,30 @@ fi
 # Ohne Versions-Query im HTML sehen Nutzer nach einem Deploy bis zu 24h altes JS/CSS.
 # Stempelt index.template.html (die QUELLE!) — nur das Artefakt zu stempeln brächte
 # nichts, der naechste Rebuild wuerde es ueberschreiben.
-if echo "$changed" | grep -qE '^config/version\.json'; then
-  echo "[stamp] Version gebumpt → stemple Asset-URLs …"
-  if ! node tools/stamp-assets.js; then
+#
+# Seit v8.1.11 ist der Stempel der Inhalts-Hash der Datei. Er aendert sich also mit
+# JEDER Asset-Aenderung, nicht nur beim Bump — deshalb laeuft das hier immer, wenn
+# eine stempelbare Datei im Commit ist. Gestaged wird NUR, was das Skript als
+# STEMPEL meldet (nicht gestagter Unterschied besteht nur aus ?v=); kein
+# `git add components pages` mehr, das fremde Arbeit mitgerissen hat.
+# Vergessen ist harmlos: Cloudflare stempelt im Build selbst.
+if echo "$changed" | grep -qE '^config/version\.json|\.(js|css|html|mp4|webm|webp)$'; then
+  if ! out=$(node tools/stamp-assets.js --geaendert); then
     echo "[stamp] ✗ Stamping fehlgeschlagen — Commit abgebrochen."
     exit 1
   fi
-  # stamp-assets gleicht auch package.json, README.md (Badge + Changelog-
-  # Tabelle) und das EN-Woerterbuch (JSON-LD-Version) an config/version.json an
-  git add index.template.html components pages package.json README.md \
-          tools/i18n/dict/index.en-overrides.json 2>/dev/null
+  echo "$out" | grep -v '^STEMPEL \|^GEMISCHT '
+  echo "$out" | sed -n 's/^STEMPEL //p' | while read -r f; do git add -- "$f"; done
+  gemischt=$(echo "$out" | sed -n 's/^GEMISCHT //p')
+  if [ -n "$gemischt" ]; then
+    echo "[stamp] Neu gestempelt, aber NICHT gestaged (enthalten fremde Aenderungen):"
+    echo "$gemischt" | sed 's/^/          /'
+  fi
+  # Beim Bump gleicht stamp-assets auch package.json, README.md (Badge +
+  # Changelog-Tabelle) und das EN-Woerterbuch (JSON-LD-Version) an version.json an.
+  if echo "$changed" | grep -qE '^config/version\.json'; then
+    git add package.json README.md tools/i18n/dict/index.en-overrides.json 2>/dev/null
+  fi
   node tools/build-index.js > /dev/null   # index.html mit frischen Stempeln neu bauen
 fi
 

@@ -18,22 +18,23 @@
     // yearview + monthcompare kommen zusammen: yvOpenMonth() setzt den Monat
     // per mcPickMonth(), BEVOR es auf die Monatsansicht schaltet.
     const VIEW_SCRIPTS = (function () {
-        const ym = ['/components/yearview/yearview.js', '/components/monthcompare/monthcompare.js'];
+        const ym = ['/components/yearview/yearview.js?v=cee3ddc0e8', '/components/monthcompare/monthcompare.js?v=1f9b06cea5'];
         return {
-            'performance':   ['/components/performance/performance.js'],
+            'performance':   ['/components/performance/performance.js?v=a652713e91'],
             'yearview':      ym,
             'monthcompare':  ym,
-            'urlaubsplaner': ['/components/urlaubsplaner/urlaubsplaner.js'],
-            'weekview':      ['/components/weekview/weekview.js'],
-            'history':       ['/components/history/history.js'],
-            'analytics-pro': ['/components/core/analytics-pro-engine.js',
-                              '/components/core/galaxy-ultra-engine.js',
-                              '/components/analytics-pro/analytics-pro.js']
+            'urlaubsplaner': ['/components/urlaubsplaner/urlaubsplaner.js?v=ae79efc83b'],
+            'weekview':      ['/components/weekview/weekview.js?v=fd76c6ae9b'],
+            'history':       ['/components/history/history.js?v=170862dd4b'],
+            'analytics-pro': ['/components/core/analytics-pro-engine.js?v=cea6619329',
+                              '/components/core/galaxy-ultra-engine.js?v=5136be531d',
+                              '/components/analytics-pro/analytics-pro.js?v=53062e7207']
         };
     })();
-    // Cache-Buster von dieser Datei selbst uebernehmen: stamp-assets.js stempelt
-    // nur src/href-Attribute, keine Zeichenketten in JS.
-    const TN_VER = ((document.currentScript && document.currentScript.src) || '').match(/\?v=[^&#]+/);
+    // Jeder Pfad oben traegt seinen EIGENEN Inhalts-Hash: stamp-assets.js schreibt
+    // ihn in jedes Literal, das schon auf `?v=` endet. Bis v8.1.10 stand hier der
+    // ?v= dieser Datei — mit Hashes waere das der Hash von tab-navigation.js, der
+    // sich nicht aendert, wenn sich history.js aendert.
     const _tnLoads = {};
     function tnL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
@@ -41,12 +42,12 @@
         if (_tnLoads[path]) return _tnLoads[path];
         _tnLoads[path] = new Promise((resolve, reject) => {
             const s = document.createElement('script');
-            s.src = path + (TN_VER ? TN_VER[0] : '');
+            s.src = path;
             s.onload = () => { s.dataset.ready = '1'; resolve(); };
             s.onerror = () => {
                 delete _tnLoads[path]; s.remove();
                 // Offline ist ein Fehlschlag erwartbar (und der Leerlauf-Prefetch versucht es dann auch) — gezaehlt wird nur online.
-                if (navigator.onLine && typeof mwlEvent === 'function') mwlEvent('problem_ansicht_laden', { datei: path.split('/').pop() });
+                if (navigator.onLine && typeof mwlEvent === 'function') mwlEvent('problem_ansicht_laden', { datei: path.split('?')[0].split('/').pop() });
                 reject(new Error('Laden fehlgeschlagen: ' + path));
             };
             document.head.appendChild(s);
@@ -71,7 +72,7 @@
         const c = navigator.connection;
         if (c && (c.saveData || /2g/.test(c.effectiveType || ''))) return;
         const all = [...new Set(Object.values(VIEW_SCRIPTS).flat())];
-        all.forEach(path => { fetch(path + (TN_VER ? TN_VER[0] : ''), { credentials: 'same-origin' }).catch(() => {}); });
+        all.forEach(path => { fetch(path, { credentials: 'same-origin' }).catch(() => {}); });
     }
     window.addEventListener('load', () => {
         const go = () => prefetchViewScripts();

@@ -83,12 +83,19 @@ class FakeCache {
  * Laedt service-worker.js in eine frische Attrappen-Umgebung und gibt einen
  * Treiber zurueck, der EINEN fetch-Event durchspielt.
  */
-function ladeSW({ netz, cacheVorbelegt = {} } = {}) {
+function ladeSW({ netz, cacheVorbelegt = {}, benannt = null } = {}) {
   const hoerer = {};
   const cache = new FakeCache();
   for (const [u, r] of Object.entries(cacheVorbelegt)) cache.eintraege.set(u, r);
 
-  const caches = {
+  // benannt: Map name → FakeCache, fuer die Pruefungen, bei denen es darauf
+  // ankommt, IN WELCHEM Cache etwas liegt (Abschnitt 7). Sonst teilen sich alle
+  // Namen einen Cache, wie bisher.
+  const caches = benannt ? {
+    open: async (n) => { if (!benannt.has(n)) benannt.set(n, new FakeCache()); return benannt.get(n); },
+    keys: async () => [...benannt.keys()],
+    delete: async (n) => benannt.delete(n),
+  } : {
     open: async () => cache,
     keys: async () => ['tt-cache-6.5.3'],
     delete: async () => true,
@@ -424,7 +431,57 @@ console.log('\n6. Navigation');
   ok(a.res?.marke === 'cache', 'Navigation faellt offline auf den Cache zurueck');
 }
 
+// ── 7. Gestempelte Dateien ueberleben den Release ───────────────────────────
+// Seit v8.1.11: ?v=<inhalts-hash> liegt in ASSET_CACHE (ohne Versionsnamen),
+// je Pfad nur EINE Fassung. Gegen den alten Stand ist 7a rot: dort lag alles
+// in tt-cache-<version> und activate warf es beim naechsten Bump weg.
+console.log('\n7. Asset-Cache ueber Releases');
+{
+  const benannt = new Map();
+  const netz = async (req) => new FakeResponse('neu', { status: 200, marke: 'netz' });
+  const sw = ladeSW({ netz, benannt });
+  const url = 'https://myworklog.de/Assets/css/core.css?v=68380d1fdd';
+  let p;
+  sw.hoerer.fetch({ request: new FakeRequest(url), respondWith: (x) => { p = x; }, waitUntil: () => {} });
+  await p; await new Promise(r => setTimeout(r, 0));
+
+  const assetNamen = [...benannt.keys()].filter(n => !n.startsWith('tt-cache-'));
+  ok(assetNamen.length === 1 && benannt.get(assetNamen[0]).eintraege.has(url),
+     '7a gestempelte Datei liegt in einem Cache OHNE Versionsnamen (' + assetNamen.join(',') + ')');
+  ok(!(benannt.get('tt-cache-6.5.3')?.eintraege.has(url)), '7a … und nicht im versionsgebundenen Cache');
+
+  // Neuer Release: ein Worker mit anderer Version aktiviert sich.
+  benannt.set('tt-cache-6.5.2', new FakeCache());
+  let w;
+  sw.hoerer.activate({ waitUntil: (x) => { w = x; } });
+  await w;
+  ok(!benannt.has('tt-cache-6.5.2'), '7b activate raeumt alte Versions-Caches weg (Gegenprobe)');
+  ok(benannt.get(assetNamen[0])?.eintraege.has(url), '7b … der Asset-Cache bleibt stehen');
+
+  // SKIP_WAITING raeumt genauso — und darf den Asset-Cache auch nicht anfassen.
+  benannt.set('tt-cache-6.5.1', new FakeCache());
+  sw.hoerer.message({ data: { type: 'SKIP_WAITING' } });
+  await new Promise(r => setTimeout(r, 10));
+  ok(!benannt.has('tt-cache-6.5.1') && benannt.has(assetNamen[0]), '7c SKIP_WAITING laesst den Asset-Cache stehen');
+
+  // Neue Fassung desselben Pfads verdraengt die alte.
+  const url2 = 'https://myworklog.de/Assets/css/core.css?v=aaaaaaaaaa';
+  sw.hoerer.fetch({ request: new FakeRequest(url2), respondWith: (x) => { p = x; }, waitUntil: () => {} });
+  await p; await new Promise(r => setTimeout(r, 10));
+  const e = benannt.get(assetNamen[0]).eintraege;
+  ok(e.has(url2) && !e.has(url), '7d neue Fassung ersetzt die alte desselben Pfads (' + [...e.keys()].length + ' Eintrag)');
+
+  // Ungestempeltes bleibt im Versions-Cache: ohne Hash weiss niemand, ob es noch stimmt.
+  const font = 'https://myworklog.de/Assets/fonts/geist.woff2';
+  sw.hoerer.fetch({ request: new FakeRequest(font), respondWith: (x) => { p = x; }, waitUntil: () => {} });
+  await p; await new Promise(r => setTimeout(r, 10));
+  ok(benannt.get('tt-cache-6.5.3')?.eintraege.has(font) && !e.has(font), '7e Datei ohne ?v= bleibt im versionsgebundenen Cache');
+
+  // Ein CDN-?v= ist kein Hash von uns.
+  ok(/u\.origin === new URL\(self\.location\.href\)\.origin/.test(QUELLE), '7f nur eigener Origin zaehlt als gestempelt');
+}
+
 // ── Ergebnis ─────────────────────────────────────────────────────────────────
 console.log(`\n${geprueft - fehler}/${geprueft} bestanden`);
-if (geprueft < 58) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
+if (geprueft < 65) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
 process.exit(fehler ? 1 : 0);

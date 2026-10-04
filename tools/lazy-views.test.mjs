@@ -16,7 +16,10 @@ const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8').spli
 
 const tn = read('components/core/tab-navigation.js');
 const block = tn.slice(tn.indexOf('const VIEW_SCRIPTS'), tn.indexOf('})();', tn.indexOf('const VIEW_SCRIPTS')));
-const lazy = [...new Set([...block.matchAll(/'\/([^']+\.js)'/g)].map(m => m[1]))];
+// Pfade tragen seit v8.1.11 ihren eigenen ?v=<hash> (stamp-assets.js, JS_RE).
+const lazy = [...new Set([...block.matchAll(/'\/([^'?]+\.js)(?:\?v=[^']*)?'/g)].map(m => m[1]))];
+const ungestempelt = [...block.matchAll(/'\/[^']+\.js(?:\?v=[^']*)?'/g)].map(m => m[0]).filter(s => !s.includes('?v='));
+ok(ungestempelt.length === 0, 'jeder Pfad in VIEW_SCRIPTS endet auf ?v= (sonst stempelt stamp-assets ihn nicht)', ungestempelt);
 const tpl = read('index.template.html');
 const eager = [...tpl.matchAll(/<script[^>]*src="\/([^"?]+)/g)].map(m => m[1]).filter(f => existsSync(new URL('../' + f, import.meta.url)));
 const includes = [...tpl.matchAll(/@include ([^ ]+)/g)].map(m => m[1]);

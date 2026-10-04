@@ -1,19 +1,32 @@
 #!/usr/bin/env node
 /**
- * stamp-assets.js — haengt ?v=<version> an lokale JS/CSS-Referenzen in HTML-Seiten.
+ * stamp-assets.js — haengt ?v=<inhalts-hash> an lokale Asset-Referenzen.
  *
  * Warum: Cloudflare liefert /Assets/* mit `Cache-Control: max-age=86400` aus (kommt
  * NICHT aus _headers — dort steht max-age=0 — sondern aus einer Dashboard-Regel).
  * Browser halten JS/CSS damit 24h fest, ohne je nachzufragen. Das HTML selbst ist
- * `max-age=0`, also immer frisch. Eine Versions-Query im HTML erzeugt nach jedem
- * Bump eine neue URL → garantierter Cache-Miss, egal was der Header sagt.
+ * `max-age=0`, also immer frisch. Eine Query im HTML, die sich mit dem Inhalt
+ * aendert, ist deshalb ein garantierter Cache-Miss genau dann, wenn es noetig ist.
  *
- * Laeuft im Pre-Commit-Hook nach dem i18n-Build.
+ * 🔴 Seit v8.1.11 der HASH der Datei, nicht mehr die App-Version. Mit der Version
+ * bekamen bei JEDEM Bump alle 87 App-Dateien eine neue Adresse (650 KB gzip je
+ * Nutzer und Release), obwohl sich je Release gemessen 1, 2 oder 15 davon
+ * geaendert hatten. Nebenwirkung, die man nicht verlieren darf: der Stempel
+ * stimmt jetzt auch OHNE Bump — Cloudflare stempelt im Build (`npm run build`)
+ * selbst, ein vergessener Bump liefert keine veraltete Datei mehr aus.
+ *
+ * Gehasht wird mit CRLF→LF: lokal liegt der Baum wegen core.autocrlf mit CRLF,
+ * der Cloudflare-Klon mit LF. Ohne Normalisierung waeren alle Stempel im
+ * committeten HTML auf Live falsch (harmlos, Cloudflare stempelt neu — aber
+ * jeder Vergleich lokal/live liefe ins Leere).
+ *
+ * Laeuft im Pre-Commit-Hook beim Bump und in `npm run build`.
  * Aufruf: node tools/stamp-assets.js
  */
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
 const versionJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'), 'utf8'));
@@ -30,12 +43,86 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 // der Name bleibt. `immutable` heisst, der Browser fragt NIE nach: auch nicht beim
 // Neuladen und auch nicht nach einem Cloudflare-Purge, denn der raeumt die Kante,
 // nicht den Geraete-Cache. Ergebnis war ein Handy, das nach dem Deploy weiter den
-// alten Clip zeigte (intro.mp4, seit v7.5.0 entfernt). Mit ?v=<version> aendert
-// sich der Cache-Key bei jedem Bump.
+// alten Clip zeigte (intro.mp4, seit v7.5.0 entfernt). Mit ?v=<hash> aendert
+// sich der Cache-Key, sobald sich die Datei aendert.
+// Icons (favicon, apple-touch-icon, icon-NNN) bewusst NICHT: die laufen ohne
+// Query mit `immutable`, Cache-Rate geht vor. Aendert sich das Symbol, einmal
+// Cloudflare-Custom-Purge auf die Adressen (so am 04.10.2026 nach v8.1.7).
 // Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
 // jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen. data-src
 // gehoert dazu, fuer Bilder, die ein Skript erst beim Oeffnen einsetzt.
 const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
+
+// Zeichenketten in JS, die ein Skript zur Laufzeit nachlaedt (VIEW_SCRIPTS in
+// tab-navigation.js, qrcode.min.js). NUR Literale, die schon `?v=` tragen —
+// das ist das Opt-in: kein anderer Pfad in einer JS-Datei wird je angefasst.
+// Bis v8.1.10 schauten diese Lader den ?v= eines fremden <script> ab; mit
+// Inhalts-Hashes ergaebe das den Hash der FALSCHEN Datei, also eine Adresse,
+// die sich nicht aendert, wenn sich das Nachgeladene aendert.
+const JS_RE = /(['"`])(\/(?:Assets|components)\/[^'"`?\s]+\.(?:js|css))\?v=[^'"`]*\1/g;
+
+const TEXT_EXT = new Set(['.js', '.css', '.html', '.json', '.svg']);
+
+// sha256 ueber den Inhalt, Textdateien mit LF (siehe Kopf), 10 Hex-Zeichen.
+function hashInhalt(buf, ext) {
+  const daten = TEXT_EXT.has(ext) ? Buffer.from(buf.toString('utf8').split('\r\n').join('\n'), 'utf8') : buf;
+  return crypto.createHash('sha256').update(daten).digest('hex').slice(0, 10);
+}
+
+// Schreibt die JS-Literale einer Datei und gibt danach ihren Hash. Eine Datei,
+// die eine andere nachlaedt, wird ZUERST gestempelt: ihr Hash muss den Hash des
+// Nachgeladenen enthalten, sonst bliebe tab-navigation.js gleich, waehrend sich
+// history.js aendert — und die alte tab-navigation.js zeigte aus dem Cache
+// weiter auf die alte history.js.
+const _hashCache = new Map();
+function hashVon(url, kette = []) {
+  if (_hashCache.has(url)) return _hashCache.get(url);
+  const datei = path.join(ROOT, url);
+  if (!fs.existsSync(datei)) { _hashCache.set(url, null); return null; }
+  if (kette.includes(url)) throw new Error('stamp-assets: Lade-Zyklus ' + [...kette, url].join(' → '));
+  const ext = path.extname(datei).toLowerCase();
+  if (ext === '.js') stampJsDatei(datei, url, kette);
+  const h = hashInhalt(fs.readFileSync(datei), ext);
+  _hashCache.set(url, h);
+  return h;
+}
+
+function stampJsText(text, hashFn) {
+  return text.replace(JS_RE, (m, q, url) => {
+    const h = hashFn(url);
+    return h ? q + url + '?v=' + h + q : m;
+  });
+}
+
+function stampJsDatei(datei, url, kette) {
+  const raw = fs.readFileSync(datei, 'utf8');
+  if (!JS_RE.test(raw)) return;
+  JS_RE.lastIndex = 0;
+  const out = stampJsText(raw, (u) => hashVon(u, [...kette, url]));
+  if (out !== raw) atomarSchreiben(datei, out);
+}
+
+// Jede geschriebene Datei, fuer --geaendert (der Hook staged genau diese).
+const GEAENDERT = new Set();
+function atomarSchreiben(file, out) {
+  GEAENDERT.add(file);
+  // 🔴 Atomar schreiben, nicht direkt. Dieses Werkzeug schreibt beim Bump 22
+  // Quelldateien neu; ein `writeFileSync` darauf ist erst leer, dann halb, dann
+  // ganz. Wer dieselbe Datei in dem Moment liest — ein Test, ein Editor, ein
+  // parallel laufender Build — bekommt einen Torso und meldet einen Fehler, den
+  // es im Code nicht gibt. Genau so sind am 2026-09-07 zweimal Tests
+  // durchgefallen, die einzeln und danach wieder sauber liefen.
+  // rename() im selben Verzeichnis ist auf allen hier benutzten Systemen
+  // atomar: der Leser sieht entweder die alte oder die neue Datei, nie eine
+  // halbe. Das Temporaerfile liegt bewusst DANEBEN, nicht in %TEMP% —
+  // ueber Laufwerksgrenzen hinweg ist rename() kein Rename mehr.
+  // Endung bewusst `.stamp.tmp`: `.gitignore` sperrt `*.tmp` (Z. 82). Mit
+  // `-tmp` griffe die Regel NICHT, und ein nach einem Abbruch liegen
+  // gebliebener Torso landete beim naechsten `git add -A` des Hooks im Commit.
+  const tmp = file + '.stamp.tmp';
+  fs.writeFileSync(tmp, out);
+  fs.renameSync(tmp, file);
+}
 
 // Versionsnummern, die im HTML stehen MUESSEN und daher unweigerlich veralten:
 //  - <meta name="generator">: Crawler lesen statisches HTML, JS kommt zu spaet.
@@ -82,27 +169,20 @@ function stampFile(file) {
   // erst von build-index.js erzeugt. Fehlende Dateien sind kein Fehler.
   if (!fs.existsSync(file)) return null;
   const raw = fs.readFileSync(file, 'utf8');
-  let out = raw.replace(RE, (_m, pre, url, post) => pre + url + '?v=' + version + post);
+  let n = 0;
+  // Fehlt die Datei (Tippfehler im Pfad, 404 auf Live), bleibt die Referenz
+  // unangetastet — ein erfundener Stempel wuerde den Fehler nur verdecken.
+  let out = raw.replace(RE, (m, pre, url, post) => {
+    const h = hashVon(url);
+    if (!h) return m;
+    n++;
+    return pre + url + '?v=' + h + post;
+  });
   for (const re of VERSION_RES) out = out.replace(re, (_m, pre, post) => pre + version + post);
   if (releaseDate && APP_FILES.has(file)) out = out.replace(DATE_RE, (_m, pre, post) => pre + releaseDate + post);
   if (out === raw) return null;
-  // 🔴 Atomar schreiben, nicht direkt. Dieses Werkzeug schreibt beim Bump 22
-  // Quelldateien neu; ein `writeFileSync` darauf ist erst leer, dann halb, dann
-  // ganz. Wer dieselbe Datei in dem Moment liest — ein Test, ein Editor, ein
-  // parallel laufender Build — bekommt einen Torso und meldet einen Fehler, den
-  // es im Code nicht gibt. Genau so sind am 2026-09-07 zweimal Tests
-  // durchgefallen, die einzeln und danach wieder sauber liefen.
-  // rename() im selben Verzeichnis ist auf allen hier benutzten Systemen
-  // atomar: der Leser sieht entweder die alte oder die neue Datei, nie eine
-  // halbe. Das Temporaerfile liegt bewusst DANEBEN, nicht in %TEMP% —
-  // ueber Laufwerksgrenzen hinweg ist rename() kein Rename mehr.
-  // Endung bewusst `.stamp.tmp`: `.gitignore` sperrt `*.tmp` (Z. 82). Mit
-  // `-tmp` griffe die Regel NICHT, und ein nach einem Abbruch liegen
-  // gebliebener Torso landete beim naechsten `git add -A` des Hooks im Commit.
-  const tmp = file + '.stamp.tmp';
-  fs.writeFileSync(tmp, out);
-  fs.renameSync(tmp, file);
-  return (out.match(new RegExp('\\?v=' + version.replace(/\./g, '\\.'), 'g')) || []).length;
+  atomarSchreiben(file, out);
+  return n;
 }
 
 function walk(dir, acc) {
@@ -213,6 +293,7 @@ function main() {
     const old = pkg.version;
     pkg.version = version;
     fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+    GEAENDERT.add(pkgPath);
     console.log('stamp-assets: package.json ' + old + ' → ' + version);
   }
 
@@ -224,13 +305,46 @@ function main() {
       const tmp = readmePath + '.stamp.tmp';   // atomar, siehe stampFile()
       fs.writeFileSync(tmp, out);
       fs.renameSync(tmp, readmePath);
+      GEAENDERT.add(readmePath);
       console.log('stamp-assets: README.md → v' + version);
     }
   }
 
-  console.log('stamp-assets: v' + version + ' → ' + refs + ' Referenzen in ' + touched + ' Datei(en)');
+  console.log('stamp-assets: v' + version + ', ' + refs + ' Hash-Referenzen in ' + touched + ' geaenderten Datei(en)');
+  // Fuer den Pre-Commit-Hook: eine Datei je Zeile auf stdout, relativ zum Repo,
+  // OHNE die generierten Artefakte (index.html, pages/en/ sind gitignored).
+  // 🔴 Gemeldet wird nur, was der Hook gefahrlos stagen darf: eine Datei, deren
+  // NICHT gestagter Unterschied ausschliesslich aus ?v=-Stempeln besteht. Liegt
+  // daneben fremde Arbeit (Codex parallel, CLAUDE.md „Fremde Änderungen"), wuerde
+  // ein `git add` sie in den Commit ziehen — die Datei kommt dann als GEMISCHT
+  // und bleibt liegen.
+  if (process.argv.includes('--geaendert')) {
+    const liste = [...GEAENDERT].map(f => path.relative(ROOT, f).split(path.sep).join('/'))
+      .filter(f => f !== 'index.html' && !f.startsWith('pages/en/'));
+    const zeilen = liste.map(f => (nurStempelDiff(f) ? 'STEMPEL ' : 'GEMISCHT ') + f);
+    process.stdout.write(zeilen.join('\n') + (zeilen.length ? '\n' : ''));
+  }
+}
+
+// Vergleicht den Unterschied Arbeitsbaum ↔ Index, mit herausgenommenen Stempeln.
+function nurStempelDiff(rel) {
+  let diff;
+  try {
+    diff = require('child_process').execFileSync('git', ['diff', '--no-color', '-U0', '--', rel], { cwd: ROOT, encoding: 'utf8' });
+  } catch (e) { return false; }
+  // Versionsnummern und Daten zaehlen mit: die setzt dieses Skript beim Bump
+  // selbst (VERSION_RES, DATE_RE).
+  const ohne = (z) => z.slice(1).replace(/\r$/, '').replace(/\?v=[^"'`\s]*/g, '?v=')
+    .replace(/\d+\.\d+\.\d+/g, 'X.Y.Z').replace(/\d{4}-\d{2}-\d{2}/g, 'JJJJ-MM-TT');
+  const weg = [], dazu = [];
+  for (const z of diff.split('\n')) {
+    if (z.startsWith('---') || z.startsWith('+++')) continue;
+    if (z.startsWith('-')) weg.push(ohne(z));
+    else if (z.startsWith('+')) dazu.push(ohne(z));
+  }
+  return weg.sort().join('\n') === dazu.sort().join('\n');
 }
 
 if (require.main === module) main();
 
-module.exports = { readmeStempeln, changelogTitel, README_ANFANG, README_ENDE, README_ANZAHL };
+module.exports = { hashInhalt, stampJsText, nurStempelDiff, JS_RE, RE, readmeStempeln, changelogTitel, README_ANFANG, README_ENDE, README_ANZAHL };

@@ -6,8 +6,9 @@
  * → HTML-Navigation: Network-First (cache:'reload') — die Seite muss die neuen
  *   ?v=-Nummern mitbringen, sonst greift unten nie ein Miss.
  * → Eigene Assets (JS/CSS/Bilder/Medien): Cache-First. Die Referenzen tragen
- *   ?v=<version> (tools/stamp-assets.js), eine neue Version ist also eine neue URL
- *   und im versionsgebundenen CACHE_NAME zwangsläufig ein Miss.
+ *   ?v=<inhalts-hash> (tools/stamp-assets.js), eine geänderte Datei ist also eine
+ *   neue URL und zwangsläufig ein Miss; unveränderte überleben den Release in
+ *   ASSET_CACHE.
  * → Die vier Dateien ohne ?v= (version.json, supabase-config.js, footer.html,
  *   manifest.json): Stale-While-Revalidate — sofort aus dem Cache, Auffrischung
  *   im Hintergrund. Damit sind auch sie offline da.
@@ -27,6 +28,14 @@ const SW_VERSION  = (function () {
   catch (e) { return 'dev'; }
 })();
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
+// Alles mit ?v=<inhalts-hash> liegt in einem Cache, der KEINEN Release-Namen
+// traegt und deshalb einen Bump ueberlebt. Bis v8.1.10 lag es im versions-
+// gebundenen CACHE_NAME: jeder Bump warf alle 87 App-Dateien weg, auch die
+// 85 unveraenderten. Ein Treffer kann nicht veraltet sein — die Adresse
+// enthaelt den Hash des Inhalts. Aufgeraeumt wird je Pfad (legeAssetAb):
+// kommt eine neue Fassung, fliegt die alte. Die Ziffer am Ende ist der
+// Notschalter: hochzaehlen wirft den ganzen Bestand einmal weg.
+const ASSET_CACHE = 'tt-assets-1';
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
 
@@ -48,6 +57,26 @@ const NO_CACHE_ORIGINS = [
   'cloudflareinsights.com',
   'fonts.googleapis.com',   // dynamische Font-CSS, nicht cachen
 ];
+
+// Nur eigener Origin: ein CDN-?v= ist kein Hash von uns.
+function istGestempelt(url) {
+  const u = new URL(url);
+  return u.origin === new URL(self.location.href).origin && u.searchParams.has('v');
+}
+
+// Legt eine gestempelte Datei ab und loescht jede andere Fassung desselben
+// Pfads. Damit waechst der Cache nicht ueber die Releases hinweg, und ein
+// Pfad hat nie zwei Eintraege. Preis: eine Seite, die waehrend eines Deploys
+// noch offen ist, und eine frische wechseln sich bei einer Datei ab — zwei
+// Netzabrufe, kein falscher Inhalt.
+async function legeAssetAb(cache, url, response) {
+  await cache.put(url, response);
+  const pfad = new URL(url).pathname;
+  const alle = await cache.keys();
+  await Promise.all(alle
+    .filter(r => r.url !== url && new URL(r.url).pathname === pfad)
+    .map(r => cache.delete(r)));
+}
 
 function isCacheable(url) {
   const u = new URL(url);
@@ -196,7 +225,7 @@ self.addEventListener('activate', event => {
     caches.keys()
       .then(keys => Promise.all(
         keys
-          .filter(key => key !== CACHE_NAME)
+          .filter(key => key !== CACHE_NAME && key !== ASSET_CACHE)
           .map(key => { log('Delete old cache:', key); return caches.delete(key); })
       ))
       .then(async () => {
@@ -322,10 +351,11 @@ self.addEventListener('fetch', event => {
   // das Netz — die 206er-Antwort von dort wandert NICHT in den Cache, dort gehoert
   // nur das Ganze hin (das legt der Zweig darunter ab, wenn landing.js den Film
   // am Stueck holt).
+  const gestempelt = istGestempelt(request.url);
   const bereich = request.headers.get('range');
   if (bereich) {
     event.respondWith((async () => {
-      const cache = await caches.open(CACHE_NAME);
+      const cache = await caches.open(gestempelt ? ASSET_CACHE : CACHE_NAME);
       let voll = await cache.match(request.url);
 
       // 🔴 Beim Miss das GANZE holen, nicht den erfragten Schnipsel. Eine Datei,
@@ -339,7 +369,8 @@ self.addEventListener('fetch', event => {
         try {
           const ganz = await fetch(request.url, { credentials: 'same-origin' });
           if (ganz.status === 200) {
-            await cache.put(request.url, ganz.clone());
+            if (gestempelt) await legeAssetAb(cache, request.url, ganz.clone());
+            else await cache.put(request.url, ganz.clone());
             voll = ganz;
           } else {
             return ganz;   // 404/403 gehoert dem Server, nicht uns
@@ -358,12 +389,18 @@ self.addEventListener('fetch', event => {
   }
 
   // Eigene Assets: Cache-First.
-  // Jede Referenz traegt ?v=<version> (stamp-assets.js) und CACHE_NAME haengt an
-  // derselben Version — ein Treffer kann deshalb nicht veraltet sein, und ein
-  // Deploy ist automatisch ein Miss. Netz-Antworten mit Status 200 wandern in den
-  // Cache, alles andere (206, 3xx, 404, Opaque) wird nur durchgereicht.
+  // Gestempelte Referenzen (?v=<inhalts-hash>, stamp-assets.js) liegen in
+  // ASSET_CACHE — ein Treffer kann nicht veraltet sein, eine geaenderte Datei
+  // ist eine neue Adresse und damit ein Miss. Ungestempeltes (Schriften, Bilder
+  // ohne ?v=) bleibt im versionsgebundenen CACHE_NAME und wird je Release neu
+  // geholt — dort gibt es keinen Hash, der sagen koennte, ob es noch stimmt.
+  // Netz-Antworten mit Status 200 wandern in den Cache, alles andere (206, 3xx,
+  // 404, Opaque) wird nur durchgereicht.
+  const ablegen = (cache, response) => gestempelt
+    ? legeAssetAb(cache, request.url, response)
+    : cache.put(request, response);
   event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
+    const cache = await caches.open(gestempelt ? ASSET_CACHE : CACHE_NAME);
 
     // Auf Localhost/127.0.0.1 immer Netzwerk zuerst, damit lokale Änderungen
     // sofort ohne Version-Bump wirksam werden und Entwickler nicht im Cache festsitzen.
@@ -372,7 +409,7 @@ self.addEventListener('fetch', event => {
       try {
         const netResp = await fetch(request);
         if (netResp.status === 200) {
-          cache.put(request, netResp.clone()).catch(() => {});
+          ablegen(cache, netResp.clone()).catch(() => {});
         }
         return netResp;
       } catch (e) {
@@ -388,7 +425,7 @@ self.addEventListener('fetch', event => {
     try {
       const response = await fetch(request);
       if (response.status === 200) {
-        cache.put(request, response.clone()).catch(() => {});
+        ablegen(cache, response.clone()).catch(() => {});
       }
       return response;
     } catch (e) {
@@ -407,9 +444,11 @@ self.addEventListener('message', event => {
       // Erst alle alten Caches löschen, DANN aktivieren.
       // Selbst wenn der alte apply()-Code sofort location.reload() aufruft (Race Condition),
       // findet der alte SW beim Reload leere Caches → holt alles frisch vom Netz.
+      // ASSET_CACHE bleibt: seine Schlüssel enthalten den Inhalts-Hash, er kann
+      // keinem Release-Wechsel hinterherhinken.
       caches.keys()
         .then(keys => Promise.all(
-          keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+          keys.filter(k => k !== CACHE_NAME && k !== ASSET_CACHE).map(k => caches.delete(k))
         ))
         .then(() => self.skipWaiting());
       break;

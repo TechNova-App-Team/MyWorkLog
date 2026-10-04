@@ -2,7 +2,8 @@ window._clsBC='onboarding.js-start';(function(){
         try {
             if (!window.initializeTouchOptimizations) {
                 var s = document.createElement('script');
-                s.src = '/Assets/js/touch-mobile-optimizations.js';
+                // ?v= = derselbe Hash wie das <script> im HTML, also derselbe Cache-Eintrag
+                s.src = '/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00';
                 s.defer = true;
                 s.onload = function(){ if (window.initializeTouchOptimizations) window.initializeTouchOptimizations(); };
                 document.head.appendChild(s);
@@ -900,13 +901,21 @@ const networkMonitor = (() => {
 // Regel jetzt:
 // - Seite == Version des wartenden Workers → still SKIP_WAITING, KEIN Reload.
 // - Seite älter (Tab lief über einen Deploy hinweg) → NICHT still aktivieren: der
-//   neue Worker räumt im activate den alten Cache weg, nachgeladene Ansichten
-//   (VIEW_SCRIPTS) kämen dann mit neuem Code in eine alte Seite. Stattdessen nur ein
+//   alte Seite fragt nachgeladene Ansichten (VIEW_SCRIPTS) unter ihrem alten Hash
+//   an; liegt der nicht im Cache, liefert der Server unter dieser Adresse schon den
+//   NEUEN Code (die Query ist nur Cache-Schlüssel). Stattdessen nur ein
 //   „Neu"-Abzeichen am Menüpunkt „App aktualisieren"; der nächste Start holt sie ohnehin.
 const updateManager = (() => {
-    // Version des laufenden Codes = ?v= dieser Datei (stamp-assets stempelt sie).
+    // Version des laufenden Codes = <meta name="generator" content="MyWorkLog vX.Y.Z">
+    // (stamp-assets zieht sie an version.json). NICHT der ?v= dieser Datei: das ist
+    // seit v8.1.11 ein Inhalts-Hash und nie gleich der Worker-Version — die stille
+    // Aktivierung griffe nie mehr, jeder Release zeigte wieder das „Neu"-Abzeichen.
     const SEITEN_VERSION = (() => {
-        try { return new URL(document.currentScript.src).searchParams.get('v'); } catch (e) { return null; }
+        try {
+            const m = document.querySelector('meta[name="generator"]');
+            const v = m && (m.getAttribute('content') || '').match(/v(\d+\.\d+\.\d+)/);
+            return v ? v[1] : null;
+        } catch (e) { return null; }
     })();
 
     function workerVersion(worker) {

@@ -1476,15 +1476,9 @@
         if (typeof QRCode !== 'undefined') return Promise.resolve();
         if (_p2pQrLoading) return _p2pQrLoading;
         _p2pQrLoading = new Promise(function (resolve, reject) {
-            // stamp-assets.js stempelt nur .html — den ?v= deshalb von einem bereits
-            // gestempelten Script-Tag abschauen, statt hier eine Version zu pflegen.
-            let v = '';
-            try {
-                const stamped = document.querySelector('script[src*="/Assets/js/"][src*="?v="]');
-                if (stamped) v = '?v=' + new URL(stamped.src, location.href).searchParams.get('v');
-            } catch (e) { /* ohne Stempel laden ist ok, der SW cached nach Version */ }
+            // Den Inhalts-Hash schreibt stamp-assets.js in das Literal (Opt-in: `?v=`).
             const s = document.createElement('script');
-            s.src = '/Assets/js/qrcode.min.js' + v;
+            s.src = '/Assets/js/qrcode.min.js?v=c541ef0632';
             s.onload = function () { resolve(); };
             s.onerror = function () {
                 _p2pQrLoading = null;
