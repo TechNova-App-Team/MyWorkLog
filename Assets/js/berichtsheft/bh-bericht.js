@@ -236,6 +236,9 @@ async function saveReport(event) {
     }
 
     saveToStorage();
+    // Lernprofil: Entwurf gegen das Gespeicherte halten (bh-lernen.js). Darf
+    // das Speichern nie stoeren — der Bericht ist zu diesem Zeitpunkt schon sicher.
+    if (window.BHLernen) { try { BHLernen.berichtGespeichert(report); } catch (e) { } }
     updateUI();
     closeReportModal();
     clearDraft();

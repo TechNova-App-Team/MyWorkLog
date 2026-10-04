@@ -1135,6 +1135,11 @@ function _doFillForm(week) {
         }
         if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
 
+        // Lernprofil: den Entwurf merken, damit saveReport() sieht, was der
+        // Azubi daran aendert (bh-lernen.js). Nur der ganze Wochen-Einschub —
+        // ein einzelner Tag ist kein Entwurf der Woche.
+        if (window.BHLernen) { try { BHLernen.entwurfMerken(week); } catch (e) { } }
+
         // Set hours
         const hoursInput = document.getElementById('reportHours');
         if (hoursInput) {
