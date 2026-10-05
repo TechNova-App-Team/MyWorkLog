@@ -1,0 +1,505 @@
+/* ═══ TRAUM MODULE ═══ /traum/ — Reisetraum Japan & China, Machart wie das Intro
+   (noomoagency.com): Pastellhimmel, Riesenschrift HINTER 3D-Fotos, Scroll faehrt
+   die Kamera. Wunsch des Nutzers 05.10.2026: "maximum an Modernheit, wie im
+   Intro, richtig crazy mit Scroll-Effekten, aber clean".
+
+   EBENEN — die Reihenfolge traegt das ganze Bild, nicht anfassen ohne Grund:
+     .tr-sky (fixed, z -1)  Pastell, Farben je Station setzt traum.js
+     Riesenschrift (z 0)    Hero-Titel, .tr-reise__back
+     canvas.tr-canvas (fixed, z 1)  Fotos in 3D, durchsichtig
+     Texte/Knoepfe (z 2)    .tr-hero__foot, .tr-reise__front
+     deckende Abschnitte (z 3)  Frage, Laufband, Plan, Ende, Footer
+     Navigation (z 30)
+   Dafuer duerfen .tr-hero und .tr-reise KEINEN Stapelkontext bilden (kein
+   z-index, kein transform, kein filter) — sonst landet die Riesenschrift
+   ueber der Leinwand. Die zwei Sticky-Ebenen der Reise tragen deshalb je
+   ihren eigenen z-index (sticky erzeugt immer einen Kontext).
+
+   Modi: html.tr-gl = Kamerafahrt, html.tr-flat = ruhige Fassung (kein WebGL,
+   "Bewegung reduzieren"). Ohne JS fehlen beide — die Regeln fuer die Fahrt
+   haengen deshalb alle an .tr-gl, alles andere ist die ruhige Fassung.
+   Feste Pastell- und Stempelwerte sind Kulisse wie im Intro, kein Theme;
+   Stempelrot NUR fuer Stempel. */
+
+:root {
+    --primary: #5578a8;
+    --primary-rgb: 85, 120, 168;
+
+    --sky-a: #c6cdee;
+    --sky-b: #ecdfee;
+    --tr-paper: #f4f2f9;
+    --tr-sheet: #fbfaff;
+    --tr-peach: #ffd8c8;
+    --tr-mint: #c4f0e6;
+    --tr-ink: #15131d;
+    --tr-ink-2: rgba(21, 19, 29, .64);
+    --tr-ink-3: rgba(21, 19, 29, .42);
+    --tr-line: rgba(21, 19, 29, .12);
+    --tr-night: #1a1726;
+    --tr-night-2: #252136;
+    --tr-on-night: #f1eff7;
+    --tr-on-night-2: rgba(241, 239, 247, .64);
+    --tr-stamp: #c8402e;
+    --tr-akz: color-mix(in srgb, var(--primary) 58%, #8f8ca6);
+
+    --tr-display: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+    --tr-text: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --tr-jp: 'Noto Serif JP', 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+    --tr-sc: 'Noto Serif SC', 'SimSun', 'Songti SC', serif;
+
+    --tr-out: cubic-bezier(.23, 1, .32, 1);
+    --tr-spring: cubic-bezier(.32, .72, 0, 1);
+    --tr-soft: 0 40px 80px -36px rgba(48, 36, 96, .42), 0 12px 24px -12px rgba(48, 36, 96, .18);
+    --tr-gutter: max(4vw, 24px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+/* Ein <button> erbt font-family NICHT (Browser-Voreinstellung) */
+button, input, select, textarea { font-family: inherit; }
+
+html { scroll-behavior: smooth; }
+body.tr {
+    background: var(--tr-paper);
+    color: var(--tr-ink);
+    font-family: var(--tr-text);
+    font-size: 1rem; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+::selection { background: rgba(var(--primary-rgb), .28); }
+[lang="ja"] { font-family: var(--tr-jp); }
+[lang="zh"] { font-family: var(--tr-sc); }
+:focus-visible { outline: 2px solid var(--tr-akz); outline-offset: 3px; border-radius: 6px; }
+svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ═══ Kulisse ═══ */
+.tr-sky {
+    position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
+    background: linear-gradient(180deg, var(--sky-a) 0%, color-mix(in srgb, var(--sky-a) 50%, var(--sky-b)) 55%, var(--sky-b) 100%);
+}
+.tr-blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .7; animation: trBlob 22s ease-in-out infinite alternate; }
+.tr-blob--a { width: 46vmax; height: 46vmax; left: -10vmax; top: -14vmax; background: rgba(var(--primary-rgb), .28); }
+.tr-blob--b { width: 40vmax; height: 40vmax; right: -12vmax; top: 22%; background: var(--tr-peach); animation-duration: 27s; }
+.tr-blob--c { width: 36vmax; height: 36vmax; left: 26vw; bottom: -18vmax; background: var(--tr-mint); opacity: .5; animation-duration: 31s; }
+@keyframes trBlob { to { transform: translate3d(6vmax, 4vmax, 0) scale(1.12); } }
+.tr-sky::after {
+    content: ''; position: absolute; inset: 0; opacity: .07; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+canvas.tr-canvas { display: none; }
+.tr-gl canvas.tr-canvas {
+    display: block; position: fixed; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none;
+    opacity: 0; transition: opacity 1.2s var(--tr-out);
+}
+.tr-gl.tr-gl-an canvas.tr-canvas { opacity: 1; }
+
+/* ═══ Navigation ═══ schwebende Pillen, kein Balken */
+.tr-nav {
+    position: fixed; z-index: 30; top: 16px; left: var(--tr-gutter); right: var(--tr-gutter);
+    display: flex; justify-content: space-between; align-items: center; pointer-events: none;
+}
+.tr-nav > a {
+    pointer-events: auto; display: inline-flex; align-items: center; gap: .4rem;
+    height: 42px; padding: 0 1rem; border-radius: 999px; text-decoration: none;
+    font-size: .875rem; font-weight: 500; letter-spacing: -.01em;
+    background: rgba(255, 255, 255, .58); border: 1px solid rgba(255, 255, 255, .7);
+    box-shadow: 0 8px 24px -14px rgba(48, 36, 96, .35);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4);
+    color: var(--tr-ink);
+    transition: transform .16s var(--tr-out), opacity .3s ease, translate .4s var(--tr-out);
+}
+.tr-nav__back { padding-left: .7rem; }
+.tr-nav__back svg { font-size: 1.1rem; }
+.tr-nav > .tr-nav__cta { background: var(--tr-ink); color: var(--tr-on-night); border-color: rgba(255, 255, 255, .14); }
+.tr-nav > a:active { transform: scale(.97); }
+/* Waehrend die Frage im Bild ist, ist "Zur Frage" ein Knopf ins Nichts */
+.tr-nav.is-frage .tr-nav__cta { opacity: 0; translate: 0 -8px; pointer-events: none; }
+
+/* ═══ Knoepfe ═══ */
+.tr-btn {
+    display: inline-flex; align-items: center; gap: .75rem;
+    height: 54px; padding: 0 .5rem 0 1.4rem; border-radius: 999px;
+    font-size: 1rem; font-weight: 500; text-decoration: none; letter-spacing: -.01em; white-space: nowrap;
+    transition: transform .16s var(--tr-out), background-color .2s ease;
+}
+.tr-btn--ink { background: var(--tr-ink); color: var(--tr-on-night); }
+.tr-btn--ghost {
+    padding: 0 1.4rem; color: var(--tr-ink); border: 1px solid rgba(255, 255, 255, .7);
+    background: rgba(255, 255, 255, .42); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.tr-btn__ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .12); font-size: 1.05rem; transition: transform .3s var(--tr-spring); }
+.tr-btn:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+    .tr-btn--ink:hover .tr-btn__ico { transform: translateY(2px) scale(1.06); }
+    .tr-btn--ghost:hover { background: rgba(255, 255, 255, .7); }
+}
+
+/* ═══ EINSTIEG ═══ */
+.tr-hero {
+    position: relative; min-height: 100vh; min-height: 100dvh;
+    padding: 110px 0 clamp(2rem, 7vh, 4.5rem);
+    display: flex; flex-direction: column; justify-content: space-between; gap: 2.5rem;
+}
+.tr-hero__title {
+    position: relative; z-index: 0;
+    font-family: var(--tr-display); font-weight: 650; font-stretch: 88%;
+    font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(3.4rem, 11.5vw, 13rem); line-height: .88; letter-spacing: -.035em;
+    color: var(--tr-ink);
+}
+.tr-line { display: block; white-space: nowrap; padding-left: var(--tr-gutter); will-change: transform; }
+.tr-line:nth-child(2) { padding-left: calc(var(--tr-gutter) + 14vw); }
+.tr-line:nth-child(3) { padding-left: calc(var(--tr-gutter) + 4vw); }
+/* Zeilen steigen aus einer Maske — bewusst OHNE opacity: Text ab Deckkraft 0
+   zaehlt Chrome nicht als LCP (CLAUDE.md, Falle „Einblendung ab opacity 0").
+   Die Einblendung sitzt an .tr-mask, das Laufen (translate aus traum.js) an
+   .tr-line — eine Animation mit fill:both wuerde sonst das Inline-transform schlagen. */
+.tr-mask { display: inline-block; overflow: hidden; padding: 0 .04em .1em; margin-bottom: -.1em; vertical-align: top; }
+.tr-mask > span { display: inline-block; animation: trRise 1.2s var(--tr-out) both; }
+.tr-line:nth-child(2) .tr-mask > span { animation-delay: .1s; }
+.tr-line:nth-child(3) .tr-mask > span { animation-delay: .2s; }
+@keyframes trRise { from { transform: translateY(105%) rotate(4deg); } }
+
+.tr-hero__foot {
+    position: relative; z-index: 2; padding: 0 var(--tr-gutter);
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; flex-wrap: wrap;
+    animation: trFade 1s var(--tr-out) .6s both;
+}
+.tr-hero__lede { max-width: 26rem; font-size: clamp(1.05rem, 1.35vw, 1.2rem); line-height: 1.55; color: var(--tr-ink-2); }
+.tr-hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+@keyframes trFade { from { opacity: 0; transform: translateY(16px); } }
+
+/* ═══ FRAGE ═══ */
+.tr-ask {
+    position: relative; z-index: 3; background: var(--tr-night); color: var(--tr-on-night);
+    padding: clamp(6rem, 16vh, 11rem) var(--tr-gutter);
+    min-height: 100vh; min-height: 100dvh; display: flex; align-items: center;
+}
+/* Kuppel: der Block waechst beim Hereinscrollen von einer Karte zur vollen Breite.
+   Nur clip-path am Abschnitt selbst — nichts darin ragt heraus (vgl. CLAUDE.md,
+   clip-path an Sammelklassen). Ohne Unterstuetzung steht er einfach da. */
+@supports (animation-timeline: view()) {
+    .tr-gl .tr-ask { animation: trDome linear both; animation-timeline: view(); animation-range: entry 0% entry 90%; }
+    @keyframes trDome {
+        from { clip-path: inset(0 7vw 0 7vw round 48px 48px 0 0); }
+        to   { clip-path: inset(0 0 0 0 round 0); }
+    }
+}
+.tr-ask__inner {
+    width: 100%; max-width: 1280px; margin: 0 auto;
+    display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(3rem, 7vw, 7rem); align-items: center;
+}
+.tr-ask__title {
+    font-family: var(--tr-display); font-weight: 600; font-stretch: 88%;
+    font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(2.6rem, 6.4vw, 6.4rem); line-height: .94; letter-spacing: -.03em; text-wrap: balance;
+}
+.tr-ask__lede { margin-top: 1.75rem; max-width: 34rem; font-size: 1.125rem; line-height: 1.65; color: var(--tr-on-night-2); }
+.tr-ask__side { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+.tr-ask__choices { display: flex; gap: 1.25rem; }
+.tr-pick {
+    width: clamp(8.5rem, 13vw, 11.5rem); aspect-ratio: 1; border-radius: 50%;
+    display: grid; place-items: center; padding: 1.25rem; text-align: center;
+    font-family: var(--tr-display); font-weight: 600; font-size: clamp(1.05rem, 1.5vw, 1.3rem); line-height: 1.1; letter-spacing: -.02em;
+    cursor: pointer; border: 1px solid rgba(241, 239, 247, .22); background: transparent; color: var(--tr-on-night);
+    transition: transform .16s var(--tr-out), background-color .25s ease, border-color .25s ease, opacity .25s ease;
+}
+.tr-pick--ja { background: var(--tr-on-night); color: var(--tr-night); border-color: transparent; }
+.tr-pick:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) {
+    .tr-pick--nein:hover { border-color: rgba(241, 239, 247, .5); background: rgba(241, 239, 247, .05); }
+    .tr-pick--ja:hover { background: #fff; }
+}
+.tr-pick[disabled] { opacity: .5; cursor: progress; }
+
+/* Zustaende haengen an data-state; traum.js setzt nur das Attribut */
+.tr-ask__thanks, .tr-ask__error, .tr-ask__change { display: none; }
+.tr-ask__side[data-state="ja"] .tr-ask__choices,
+.tr-ask__side[data-state="nein"] .tr-ask__choices { display: none; }
+.tr-ask__side[data-state="ja"] .tr-ask__thanks--ja,
+.tr-ask__side[data-state="nein"] .tr-ask__thanks--nein { display: block; animation: trFade .6s var(--tr-out) both; }
+.tr-ask__side[data-state="ja"] .tr-ask__change,
+.tr-ask__side[data-state="nein"] .tr-ask__change { display: inline-flex; }
+.tr-ask__side[data-state="fehler"] .tr-ask__error { display: block; }
+.tr-ask__thanks h3 { font-family: var(--tr-display); font-weight: 600; font-size: clamp(1.8rem, 3vw, 2.6rem); letter-spacing: -.03em; line-height: 1; }
+.tr-ask__thanks p { margin-top: .75rem; max-width: 26rem; color: var(--tr-on-night-2); font-size: 1.05rem; }
+.tr-ask__error { color: #ffb4a8; font-size: .95rem; }
+.tr-ask__change {
+    align-items: center; height: 36px; padding: 0 .9rem; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(241, 239, 247, .18); background: transparent; color: var(--tr-on-night-2); font-size: .85rem;
+    transition: transform .16s var(--tr-out);
+}
+.tr-ask__change:active { transform: scale(.97); }
+.tr-ask__note { font-size: .82rem; line-height: 1.55; color: rgba(241, 239, 247, .42); max-width: 26rem; }
+
+/* Hanko-Stempel: faellt beim Ja auf die Flaeche */
+.tr-hanko {
+    width: 112px; height: 112px; margin-bottom: 1.5rem; border-radius: 16px;
+    display: grid; place-items: center; position: relative;
+    border: 4px solid var(--tr-stamp); color: var(--tr-stamp); background: rgba(200, 64, 46, .08);
+    transform: rotate(-8deg);
+}
+.tr-hanko__glyph { writing-mode: vertical-rl; font-size: 2.2rem; line-height: 1; font-weight: 600; letter-spacing: .05em; }
+.tr-ask__side[data-state="ja"] .tr-hanko { animation: trStamp .55s cubic-bezier(.2, 1.3, .4, 1) .05s both; }
+.tr-ask__side[data-state="ja"] .tr-hanko::after {
+    content: ''; position: absolute; inset: -4px; border-radius: 16px; border: 2px solid var(--tr-stamp);
+    animation: trRing .7s var(--tr-out) .28s both;
+}
+@keyframes trStamp {
+    0%   { transform: rotate(-20deg) scale(1.7); opacity: 0; }
+    60%  { opacity: 1; }
+    100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
+@keyframes trRing { from { transform: scale(1); opacity: .7; } to { transform: scale(1.5); opacity: 0; } }
+
+/* ═══ LAUFBAND ═══ (das eine auf der Seite) */
+.tr-marquee {
+    position: relative; z-index: 3; overflow: hidden; padding: 1.4rem 0;
+    background: var(--tr-night); color: var(--tr-on-night);
+    border-top: 1px solid rgba(241, 239, 247, .08);
+}
+.tr-marquee__track { display: flex; width: max-content; will-change: transform; }
+.tr-marquee__set { display: flex; list-style: none; flex-shrink: 0; }
+.tr-marquee__set li {
+    display: flex; align-items: baseline; gap: .55em; padding-right: 1.4em;
+    font-family: var(--tr-display); font-weight: 600; font-stretch: 88%; font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(2.4rem, 6.4vw, 6rem); letter-spacing: -.03em; line-height: 1; white-space: nowrap;
+}
+.tr-marquee__cjk { font-size: .5em; color: var(--tr-stamp); letter-spacing: 0; }
+/* Ohne die Fahrt (tr-flat) laeuft es per CSS, mit ihr setzt traum.js das transform */
+.tr-flat .tr-marquee__track { animation: trMarquee 48s linear infinite; }
+@keyframes trMarquee { to { transform: translateX(-50%); } }
+
+/* ═══ DIE REISE ═══ ruhige Fassung zuerst, die Fahrt darunter unter .tr-gl */
+.tr-reise { position: relative; }
+.tr-reise__back { display: none; }
+.tr-reise__front { padding: clamp(6rem, 14vh, 9rem) var(--tr-gutter) clamp(4rem, 10vh, 7rem); }
+.tr-reise__title {
+    font-family: var(--tr-display); font-weight: 700; font-stretch: 88%; font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(3.6rem, 12vw, 11rem); line-height: .85; letter-spacing: -.035em;
+}
+.tr-reise__intro p { margin-top: 1.1rem; max-width: 26rem; font-size: 1.125rem; color: var(--tr-ink-2); }
+.tr-rail { display: none; }
+.tr-stations { display: grid; gap: clamp(5rem, 12vh, 8rem); margin-top: clamp(4rem, 10vh, 6rem); }
+.tr-st { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+.tr-st__cjk { display: block; font-size: 1.5rem; color: var(--tr-stamp); line-height: 1; }
+.tr-st__text h3 {
+    margin-top: .6rem; font-family: var(--tr-display); font-weight: 700; font-stretch: 88%; font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(2.6rem, 6vw, 5rem); line-height: .9; letter-spacing: -.035em;
+}
+.tr-st__text p { margin-top: 1rem; font-size: 1.05rem; line-height: 1.7; color: var(--tr-ink-2); max-width: 28rem; }
+.tr-st__pics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.tr-st__pics figure:first-child { grid-column: 1 / -1; }
+.tr-st__pics img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; background: var(--sky-a); }
+.tr-st__pics figure:first-child img { aspect-ratio: 16 / 9; border-radius: 22px; }
+.tr-st__pics figcaption { margin-top: .5rem; font-size: .8rem; color: var(--tr-ink-3); }
+
+/* — Die Fahrt — Hoehe = Scrollweg; traum.js liest daraus den Fortschritt */
+.tr-gl .tr-reise { height: calc(100vh + 6 * 135vh); }
+.tr-gl .tr-reise__back,
+.tr-gl .tr-reise__front {
+    position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden;
+}
+.tr-gl .tr-reise__back { display: block; z-index: 0; margin-bottom: -100vh; margin-bottom: -100dvh; pointer-events: none; }
+.tr-gl .tr-reise__front { z-index: 2; padding: 0; pointer-events: none; }
+.tr-gl .tr-reise__front a, .tr-gl .tr-reise__front button { pointer-events: auto; }
+
+.tr-giant {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+    padding: 0 var(--tr-gutter) 14vh; visibility: hidden;
+}
+.tr-giant.is-on { visibility: visible; }
+.tr-giant__w {
+    display: block; white-space: nowrap;
+    font-family: var(--tr-display); font-weight: 700; font-stretch: 88%; font-variation-settings: 'opsz' 96, 'wdth' 88;
+    /* lange Namen (Zhangjiajie) duerfen nicht aus dem Bild laufen: --len setzt traum.js */
+    font-size: min(19vw, calc(165vw / var(--len, 6)), 22rem); line-height: .8; letter-spacing: -.045em; color: var(--tr-ink);
+}
+.tr-giant__w .tr-ch { display: inline-block; transform: translateY(110%); transition: transform .9s var(--tr-out); transition-delay: calc(var(--i) * 28ms); }
+.tr-giant__w { overflow: hidden; padding: 0 .05em .08em; }
+.tr-giant.is-on .tr-ch { transform: none; }
+.tr-giant__c {
+    display: block; margin: 1.2rem 0 0 .4vw; font-size: clamp(1.6rem, 3vw, 2.8rem); color: var(--tr-stamp); letter-spacing: .3em;
+    opacity: 0; transition: opacity .8s ease .25s;
+}
+.tr-giant.is-on .tr-giant__c { opacity: 1; }
+
+.tr-gl .tr-reise__intro {
+    position: absolute; left: var(--tr-gutter); top: 50%; translate: 0 -50%; max-width: 46rem;
+    transition: opacity .6s ease, transform .9s var(--tr-out);
+}
+.tr-gl .tr-reise__intro.is-weg { opacity: 0; transform: translateY(-40px); }
+.tr-gl .tr-stations { margin: 0; display: block; }
+.tr-gl .tr-st {
+    position: absolute; left: var(--tr-gutter); bottom: clamp(2rem, 8vh, 4.5rem); width: min(25rem, 78vw);
+    display: block; opacity: 0; transform: translateY(26px); visibility: hidden;
+    transition: opacity .5s ease, transform .9s var(--tr-out), visibility 0s linear .5s;
+}
+.tr-gl .tr-st.is-on { opacity: 1; transform: none; visibility: visible; transition: opacity .7s ease .1s, transform .9s var(--tr-out) .1s, visibility 0s; }
+.tr-gl .tr-st__pics, .tr-gl .tr-st__cjk { display: none; }
+.tr-gl .tr-st__text {
+    padding: 1.4rem 1.5rem 1.5rem; border-radius: 22px;
+    background: rgba(255, 255, 255, .5); border: 1px solid rgba(255, 255, 255, .7);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: var(--tr-soft);
+}
+.tr-gl .tr-st__text h3 { font-size: clamp(1.8rem, 3vw, 2.6rem); margin-top: .4rem; }
+.tr-gl .tr-st__text p { font-size: 1rem; margin-top: .6rem; }
+
+.tr-gl .tr-rail {
+    display: flex; flex-direction: column; gap: .2rem; list-style: none;
+    position: absolute; right: var(--tr-gutter); top: 50%; translate: 0 -50%;
+    padding: .8rem 1.1rem .8rem 1.25rem; border-radius: 18px;
+    background: rgba(255, 255, 255, .5); border: 1px solid rgba(255, 255, 255, .7);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow: 0 8px 24px -14px rgba(48, 36, 96, .35);
+    transition: opacity .5s ease;
+}
+.tr-gl .tr-rail.is-weg { opacity: 0; }
+.tr-gl .tr-rail::before {          /* Fortschritt der Fahrt auf der Linie */
+    content: ''; position: absolute; left: .55rem; top: 1rem; bottom: 1rem; width: 1px;
+    background: var(--tr-ink); transform-origin: top; transform: scaleY(var(--fahrt, 0)); z-index: 1;
+}
+.tr-gl .tr-rail::after { content: ''; position: absolute; left: .55rem; top: 1rem; bottom: 1rem; width: 1px; background: var(--tr-line); }
+.tr-rail a {
+    display: block; padding: .3rem 0; font-size: .85rem; text-decoration: none; color: var(--tr-ink-3);
+    transition: color .3s ease, translate .4s var(--tr-out);
+}
+.tr-rail a.is-on { color: var(--tr-ink); translate: 4px 0; font-weight: 600; }
+@media (hover: hover) and (pointer: fine) { .tr-rail a:hover { color: var(--tr-ink); } }
+
+/* ═══ DER PLAN ═══ */
+.tr-plan { position: relative; z-index: 3; background: var(--tr-paper); }
+.tr-plan__stage { padding: clamp(6rem, 14vh, 9rem) 0 clamp(4rem, 10vh, 6rem); }
+.tr-plan__head { padding: 0 var(--tr-gutter); }
+.tr-plan__title {
+    font-family: var(--tr-display); font-weight: 700; font-stretch: 88%; font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(3.6rem, 11vw, 10rem); line-height: .85; letter-spacing: -.035em;
+}
+.tr-plan__lede { margin-top: 1.1rem; max-width: 28rem; font-size: 1.125rem; color: var(--tr-ink-2); }
+.tr-plan__track {
+    position: relative; margin-top: clamp(2.5rem, 6vh, 4rem); overflow-x: auto; scroll-snap-type: x mandatory;
+    padding: 3.2rem var(--tr-gutter) 1.5rem; scrollbar-width: thin; scroll-padding-inline: var(--tr-gutter);
+}
+/* Route: gestrichelte Grundlinie, die Tinte waechst per scaleX (--route 0..1 aus traum.js; ohne Fahrt voll) */
+.tr-route { position: absolute; left: var(--tr-gutter); top: 19px; width: var(--route-w, calc(100% - 2 * var(--tr-gutter))); height: 0; border-top: 2px dashed var(--tr-line); }
+.tr-route__ink { position: absolute; left: 0; right: 0; top: -2px; height: 2px; background: var(--tr-ink); transform-origin: left; transform: scaleX(var(--route, 1)); }
+.tr-plane {
+    position: absolute; top: 20px; left: var(--tr-gutter); width: 34px; height: 34px; margin: -17px 0 0 -17px;
+    display: grid; place-items: center; border-radius: 50%; background: var(--tr-ink); color: var(--tr-on-night);
+    font-size: 1rem; transform: translateX(var(--plane-x, 0px)) rotate(45deg);
+}
+.tr-stops { display: flex; gap: clamp(1.25rem, 3vw, 2.5rem); list-style: none; width: max-content; }
+.tr-stop { position: relative; width: clamp(250px, 24vw, 360px); scroll-snap-align: start; }
+.tr-stop__num { display: block; font-family: var(--tr-display); font-weight: 600; font-size: 1rem; color: var(--tr-ink-3); margin-bottom: .8rem; }
+.tr-stop__img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 20px; background: var(--sky-a); box-shadow: var(--tr-soft); }
+.tr-stop__seal {
+    position: absolute; right: -10px; top: 1.6rem;
+    width: 4.6rem; height: 4.6rem; border-radius: 12px; display: grid; place-items: center;
+    border: 3px solid var(--tr-stamp); color: var(--tr-stamp); background: rgba(251, 250, 255, .82);
+    writing-mode: vertical-rl; font-size: 1.1rem; line-height: 1; font-weight: 600;
+    transform: rotate(-8deg);
+}
+.tr-stop:nth-child(even) .tr-stop__seal { transform: rotate(6deg); }
+.tr-stop h3 { margin-top: 1.1rem; font-family: var(--tr-display); font-weight: 600; font-size: clamp(1.6rem, 2.6vw, 2.2rem); letter-spacing: -.03em; line-height: 1; }
+.tr-stop p { margin-top: .45rem; color: var(--tr-ink-2); font-size: 1rem; max-width: 22rem; }
+
+/* — Fahrt: waagerecht durch senkrechtes Scrollen, Stempel landen nacheinander — */
+.tr-gl .tr-plan { height: 340vh; }
+.tr-gl .tr-plan__stage {
+    position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center; padding: 80px 0 2rem;
+}
+.tr-gl .tr-plan__track { overflow: visible; scroll-snap-type: none; width: max-content; will-change: transform; }
+.tr-gl .tr-stop__seal { opacity: 0; transform: rotate(-24deg) scale(1.7); }
+.tr-gl .tr-stop.is-stamped .tr-stop__seal { animation: trStamp .55s cubic-bezier(.2, 1.3, .4, 1) both; }
+.tr-gl .tr-stop.is-stamped:nth-child(even) .tr-stop__seal { animation-name: trStampR; }
+@keyframes trStampR {
+    0%   { transform: rotate(22deg) scale(1.7); opacity: 0; }
+    60%  { opacity: 1; }
+    100% { transform: rotate(6deg) scale(1); opacity: 1; }
+}
+
+/* ═══ ABSCHLUSS ═══ */
+.tr-end {
+    position: relative; z-index: 3; overflow: hidden;
+    padding: clamp(7rem, 18vh, 12rem) var(--tr-gutter) 4rem;
+    background: linear-gradient(180deg, var(--tr-paper) 0%, #d9d6f1 40%, #ecdfee 100%);
+}
+.tr-end__inner { max-width: 1280px; margin: 0 auto; }
+.tr-end__pre { font-size: 1.125rem; color: var(--tr-ink-2); }
+.tr-end__title {
+    margin-top: .4rem; font-family: var(--tr-display); font-weight: 700; font-stretch: 88%; font-variation-settings: 'opsz' 96, 'wdth' 88;
+    font-size: clamp(4rem, 15vw, 15rem); line-height: .84; letter-spacing: -.04em; transform-origin: left bottom;
+}
+@supports (animation-timeline: view()) {
+    .tr-gl .tr-end__title { animation: trGrow linear both; animation-timeline: view(); animation-range: entry 10% cover 45%; }
+    @keyframes trGrow { from { transform: scale(.72) translateY(12%); opacity: .2; } to { transform: none; opacity: 1; } }
+}
+.tr-end__lede { margin: 1.75rem 0 2.25rem; font-size: 1.15rem; color: var(--tr-ink-2); max-width: 30rem; }
+.tr-end__sign { margin-top: 4rem; font-family: var(--tr-display); font-weight: 500; font-size: 1.25rem; color: var(--tr-ink-2); }
+
+.tr-credits { position: relative; max-width: 1280px; margin: 5rem auto 0; font-size: .82rem; color: var(--tr-ink-2); }
+.tr-credits summary {
+    cursor: pointer; display: inline-flex; align-items: center; height: 36px; padding: 0 .9rem; border-radius: 999px;
+    border: 1px solid var(--tr-line); background: rgba(255, 255, 255, .45); list-style: none;
+}
+.tr-credits summary::-webkit-details-marker { display: none; }
+.tr-credits__intro { margin: 1.25rem 0 .75rem; max-width: 40rem; }
+.tr-credits__list { list-style: none; columns: 2 22rem; column-gap: 2.5rem; }
+.tr-credits__list li { break-inside: avoid; display: flex; flex-wrap: wrap; gap: .25rem .6rem; padding: .45rem 0; border-bottom: 1px solid var(--tr-line); }
+.tr-credits__what { font-weight: 600; color: var(--tr-ink); }
+.tr-credits__list a { color: var(--tr-ink-2); text-underline-offset: 2px; }
+
+/* Geteilter Footer: fuer dunklen Grund gebaut (weisse Schrift mit Alpha) und
+   muss ueber Himmel und Leinwand liegen */
+body.tr .site-footer { position: relative; z-index: 3; background: var(--tr-night); }
+
+/* ═══ Breakpoints ═══ */
+@media (max-width: 900px) {
+    .tr-gl .tr-rail { display: none; }
+    .tr-ask__inner { grid-template-columns: 1fr; gap: 2.75rem; }
+    .tr-st { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .tr-hero { padding-top: 96px; }
+    .tr-hero__title { font-size: clamp(3rem, 15.5vw, 6.5rem); }
+    .tr-line:nth-child(2) { padding-left: calc(var(--tr-gutter) + 8vw); }
+    .tr-gl .tr-st { left: 50%; translate: -50% 0; bottom: 1.25rem; width: calc(100vw - 2 * var(--tr-gutter)); }
+    .tr-gl .tr-st__text { padding: 1.1rem 1.2rem 1.2rem; }
+    .tr-gl .tr-st__text p { font-size: .95rem; }
+    .tr-giant { justify-content: flex-start; padding-top: 12vh; }
+    .tr-giant__w { font-size: min(21vw, calc(170vw / var(--len, 6))); }
+    .tr-st__pics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tr-st__pics figure:last-child { display: none; }
+    .tr-gl .tr-plan { height: 420vh; }
+    .tr-stop { width: 72vw; }
+}
+@media (max-width: 480px) {
+    :root { --tr-gutter: 16px; }
+    .tr-nav { top: 12px; }
+    .tr-nav > a { height: 40px; font-size: .82rem; }
+    .tr-btn { height: 50px; }
+    .tr-hero__actions { width: 100%; flex-direction: column; align-items: stretch; }
+    .tr-hero__actions .tr-btn { justify-content: space-between; }
+    .tr-hero__actions .tr-btn--ghost { justify-content: center; }
+    .tr-ask__choices { width: 100%; gap: .9rem; }
+    .tr-pick { width: min(42vw, 9.5rem); font-size: 1rem; }
+    .tr-credits__list { columns: 1; }
+}
+@media (max-width: 360px) {
+    .tr-hero__title { font-size: 14.5vw; }
+    .tr-pick { width: 8rem; padding: .9rem; font-size: .95rem; }
+}
+
+/* ═══ Bewegung reduzieren ═══ tr-flat setzt das Skript schon im Kopf; hier
+   nur, was in der ruhigen Fassung trotzdem noch liefe */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .tr-blob, .tr-mask > span, .tr-hero__foot, .tr-flat .tr-marquee__track { animation: none !important; }
+    .tr-marquee__track { width: auto; }
+    .tr-marquee__set { flex-wrap: wrap; justify-content: center; padding: 0 var(--tr-gutter); }
+    .tr-marquee__set[aria-hidden="true"] { display: none; }
+}

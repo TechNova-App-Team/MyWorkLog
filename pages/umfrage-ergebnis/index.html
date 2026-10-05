@@ -203,6 +203,14 @@
             <div class="erg-label">Was soll MyWorkLog nächstes Jahr können?</div>
             <div id="ergWuensche"></div>
         </div>
+        <div class="erg-card" id="ergTraumCard">
+            <div class="erg-total">
+                <span class="erg-total-num" id="ergTraumTotal">0</span>
+                <span class="erg-total-lbl">Antworten auf /traum/</span>
+            </div>
+            <div class="erg-label">Würdest du mich unterstützen?</div>
+            <div id="ergTraum"></div>
+        </div>
         <div class="erg-hint" id="ergStand"></div>
     </div>
 </div>
@@ -221,6 +229,7 @@
 (function () {
     var ENDPOINT = 'https://ai-proxy.myworklog.de/umfrage';
     var WUNSCH_ENDPOINT = 'https://ai-proxy.myworklog.de/wunsch';
+    var TRAUM_ENDPOINT = 'https://ai-proxy.myworklog.de/traum';
 
     // Beschriftungen fuer die Keys, die der Worker zaehlt.
     var F_LABEL = {
@@ -335,6 +344,24 @@
         }
     }
 
+    // Ja/Nein von /traum/ — eigener Abruf, eigenes Fehlerbild wie bei den Wuenschen
+    async function ladeTraum(secret) {
+        var box = document.getElementById('ergTraum');
+        try {
+            var res = await fetch(TRAUM_ENDPOINT, { headers: { 'X-Umfrage-Secret': secret } });
+            if (!res.ok) throw new Error('Server antwortete mit ' + res.status + '.');
+            var d = await res.json();
+            document.getElementById('ergTraumTotal').textContent = d.total || 0;
+            renderRows(box, { ja: d.ja || 0, nein: d.nein || 0 }, { ja: 'Ja, ich bin dabei', nein: 'Eher nicht' }, d.total || 0);
+        } catch (err) {
+            document.getElementById('ergTraumTotal').textContent = '–';
+            box.textContent = '';
+            var m = document.createElement('div'); m.className = 'erg-wish-empty';
+            m.textContent = 'Antworten konnten nicht geladen werden: ' + (err instanceof TypeError ? 'keine Verbindung.' : err.message);
+            box.appendChild(m);
+        }
+    }
+
     function show(id, on) { var el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; }
     function fail(msg) {
         document.getElementById('ergErrorText').textContent = msg;
@@ -369,6 +396,7 @@
                 + 'die Summe kann deshalb über 100 % liegen.';
             show('ergOut', true);
             await ladeWuensche(secret);
+            await ladeTraum(secret);
         } catch (err) {
             // 429 wird am Edge geblockt und traegt keine CORS-Header -> TypeError
             fail(err instanceof TypeError

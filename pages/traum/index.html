@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+<!-- Modus VOR dem ersten Bild festlegen, sonst springt das Layout:
+     tr-gl   = Kamerafahrt (WebGL, angeheftete Abschnitte)
+     tr-flat = ruhige Fassung (kein WebGL, "Bewegung reduzieren", kein JS-Modul)
+     Ohne JS fehlen beide Klassen; das CSS behandelt das wie tr-flat. -->
+<script>(function(){var d=document.documentElement,gl=false;try{var c=document.createElement('canvas');gl=!!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){}var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;d.classList.add('tr-js',gl&&!rm?'tr-gl':'tr-flat');})();</script>
+    <title>Mein Reisetraum: Japan und China | MyWorkLog</title>
+    <meta name="description" content="Sven, der Entwickler hinter MyWorkLog, will einmal Japan und China bereisen: Tokio, Kyoto, Fuji, Peking, Zhangjiajie, Shanghai. Eine Kamerafahrt durch sechs Orte, ein Plan und eine Frage: Würdest du mich unterstützen? Nur Ja oder Nein, ohne Geld.">
+    <meta name="keywords" content="Japan Reise, China Reise, Tokio, Kyoto, Fuji, Peking, Zhangjiajie, Shanghai, Reisetraum, MyWorkLog">
+    <meta name="theme-color" content="#c6cdee">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://myworklog.de/traum/">
+    <link rel="alternate" hreflang="de" href="https://myworklog.de/traum/">
+    <link rel="alternate" hreflang="en" href="https://myworklog.de/en/traum/">
+    <link rel="alternate" hreflang="x-default" href="https://myworklog.de/traum/">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/Grafiken/icon-192.png">
+    <link rel="apple-touch-icon" href="/Grafiken/apple-touch-icon.png">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myworklog.de/traum/">
+    <meta property="og:title" content="Irgendwann nicht nur davon träumen: Japan und China">
+    <meta property="og:description" content="Sechs Orte, ein Plan und eine Frage: Würdest du mich unterstützen? Nur Ja oder Nein.">
+    <meta property="og:image" content="https://myworklog.de/Grafiken/traum/og-traum.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Irgendwann nicht nur davon träumen: Japan und China">
+    <meta name="twitter:description" content="Sechs Orte, ein Plan und eine Frage: Würdest du mich unterstützen? Nur Ja oder Nein.">
+    <meta name="twitter:image" content="https://myworklog.de/Grafiken/traum/og-traum.jpg">
+
+    <!-- Schriften wie im Intro (Bricolage Grotesque + Geist). Die CJK-Familien
+         kommen nur als Teilmenge (&text=): die volle Noto Serif JP waere mehrere
+         MB, hier sind es die rund 20 Zeichen, die wirklich auf der Seite stehen.
+         Neues Zeichen im Markup = hier ergaenzen, sonst faellt es in die Systemschrift. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=Geist:wght@300..700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&text=%E6%97%A5%E6%9C%AC%E6%9D%B1%E4%BA%AC%E9%83%BD%E5%AF%8C%E5%A3%AB%E5%B1%B1%E5%BF%9C%E6%8F%B4%E6%97%85&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600&text=%E4%B8%AD%E5%9B%BD%E5%8C%97%E4%BA%AC%E5%BC%A0%E5%AE%B6%E7%95%8C%E4%B8%8A%E6%B5%B7&display=swap">
+
+    <link rel="stylesheet" href="/Assets/css/traum.css?v=dfe0a4da0c">
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
+    <script defer src="/Assets/js/version-loader.js?v=0a687fa2b5"></script>
+    <script defer src="/Assets/js/ph-init.js?v=58fa141e89"></script>
+    <script defer src="/Assets/js/traum.js?v=9148f9817b"></script>
+</head>
+<body class="tr">
+
+<!-- Ebenen (feste Reihenfolge, siehe Kopf von traum.css):
+     Himmel (fix, z -1) → Riesenschrift (z 0) → Leinwand (fix, z 1) → Texte/Knoepfe (z 2)
+     → deckende Abschnitte Frage/Plan/Ende (z 3) → Navigation (z 30) -->
+<div class="tr-sky" id="trSky" aria-hidden="true">
+    <span class="tr-blob tr-blob--a"></span>
+    <span class="tr-blob tr-blob--b"></span>
+    <span class="tr-blob tr-blob--c"></span>
+</div>
+<canvas class="tr-canvas" id="trGl" aria-hidden="true"></canvas>
+
+<nav class="tr-nav" id="trNav" aria-label="Seitennavigation">
+    <a class="tr-nav__back" href="/" aria-label="Zurück zu MyWorkLog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>MyWorkLog</span>
+    </a>
+    <a class="tr-nav__cta" href="#frage"><span>Zur Frage</span></a>
+</nav>
+
+<main>
+
+<!-- ═══ EINSTIEG ═══ Riesenschrift HINTER der Fotowolke, Zeilen laufen beim Scrollen gegeneinander -->
+<header class="tr-hero" id="trHero">
+    <h1 class="tr-hero__title" id="trTitle">
+        <span class="tr-line" data-dir="-1"><span class="tr-mask"><span>Irgendwann</span></span></span>
+        <span class="tr-line" data-dir="1"><span class="tr-mask"><span>nicht nur</span></span></span>
+        <span class="tr-line" data-dir="-1"><span class="tr-mask"><span>davon träumen.</span></span></span>
+    </h1>
+    <div class="tr-hero__foot" id="trHeroFoot">
+        <p class="tr-hero__lede">Japan und China. Seit Jahren nur auf Bildschirmen gesehen. Hier ist mein Plan und eine Frage an dich.</p>
+        <div class="tr-hero__actions">
+            <a class="tr-btn tr-btn--ink" href="#frage">
+                <span>Zur Frage</span>
+                <span class="tr-btn__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+            </a>
+            <a class="tr-btn tr-btn--ghost" href="#reise"><span>Die Reise ansehen</span></a>
+        </div>
+    </div>
+</header>
+
+<!-- ═══ FRAGE ═══ waechst als dunkle Kuppel von unten herein -->
+<section class="tr-ask" id="frage" aria-labelledby="trAskTitle">
+    <div class="tr-ask__inner">
+        <div class="tr-ask__copy">
+            <h2 class="tr-ask__title" id="trAskTitle">Würdest du mich dabei unterstützen?</h2>
+            <p class="tr-ask__lede">Kein Geld, keine Anmeldung, kein Haken. Nur Ja oder Nein. Ich will wissen, ob da draußen jemand mitfiebert, bevor ich den nächsten Schritt plane.</p>
+        </div>
+
+        <div class="tr-ask__side" id="trAsk" data-state="frage" aria-live="polite">
+            <div class="tr-ask__choices" id="trChoices">
+                <button type="button" class="tr-pick tr-pick--ja" data-antwort="ja"><span>Ja, ich bin dabei</span></button>
+                <button type="button" class="tr-pick tr-pick--nein" data-antwort="nein"><span>Eher nicht</span></button>
+            </div>
+
+            <div class="tr-ask__thanks tr-ask__thanks--ja" id="trDankJa">
+                <div class="tr-hanko" aria-hidden="true">
+                    <span class="tr-hanko__glyph" lang="ja" translate="no">応援</span>
+                </div>
+                <h3>Danke. Ehrlich.</h3>
+                <p>Dein Ja ist ein Stempel mehr im Pass. Mehr passiert nicht, versprochen.</p>
+            </div>
+            <div class="tr-ask__thanks tr-ask__thanks--nein" id="trDankNein">
+                <h3>Alles gut.</h3>
+                <p>Danke, dass du ehrlich warst. Die Reise darfst du trotzdem mitfliegen.</p>
+            </div>
+            <p class="tr-ask__error" id="trFehler" role="alert">Die Antwort kam nicht an. Prüf die Verbindung und tipp noch einmal.</p>
+
+            <button type="button" class="tr-ask__change" id="trAendern"><span>Antwort ändern</span></button>
+            <p class="tr-ask__note" id="trHinweis">Gezählt wird nur Ja oder Nein, ohne Namen und ohne IP-Adresse. Dein Browser merkt sich deine Antwort, damit sie nicht doppelt zählt.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ LAUFBAND ═══ Tempo und Richtung folgen dem Scrollen (traum.js) -->
+<div class="tr-marquee" id="trMarquee" aria-label="Die sechs Stationen der Reise">
+    <div class="tr-marquee__track" id="trMarqueeTrack">
+        <ul class="tr-marquee__set">
+            <li><span>Tokio</span><span class="tr-marquee__cjk" lang="ja" translate="no">東京</span></li>
+            <li><span>Kyoto</span><span class="tr-marquee__cjk" lang="ja" translate="no">京都</span></li>
+            <li><span>Fuji</span><span class="tr-marquee__cjk" lang="ja" translate="no">富士山</span></li>
+            <li><span>Peking</span><span class="tr-marquee__cjk" lang="zh" translate="no">北京</span></li>
+            <li><span>Zhangjiajie</span><span class="tr-marquee__cjk" lang="zh" translate="no">张家界</span></li>
+            <li><span>Shanghai</span><span class="tr-marquee__cjk" lang="zh" translate="no">上海</span></li>
+        </ul>
+        <ul class="tr-marquee__set" aria-hidden="true">
+            <li><span>Tokio</span><span class="tr-marquee__cjk" lang="ja" translate="no">東京</span></li>
+            <li><span>Kyoto</span><span class="tr-marquee__cjk" lang="ja" translate="no">京都</span></li>
+            <li><span>Fuji</span><span class="tr-marquee__cjk" lang="ja" translate="no">富士山</span></li>
+            <li><span>Peking</span><span class="tr-marquee__cjk" lang="zh" translate="no">北京</span></li>
+            <li><span>Zhangjiajie</span><span class="tr-marquee__cjk" lang="zh" translate="no">张家界</span></li>
+            <li><span>Shanghai</span><span class="tr-marquee__cjk" lang="zh" translate="no">上海</span></li>
+        </ul>
+    </div>
+</div>
+
+<!-- ═══ DIE REISE ═══ angeheftet; die Kamera fliegt durch sechs Stationen.
+     Die <img> der Stationen sind die Quelle der Texturen UND die ruhige
+     Fassung (tr-flat). Bildgroesse in width/height = Seitenverhaeltnis der Flaeche. -->
+<section class="tr-reise" id="reise" aria-labelledby="trReiseTitle">
+    <div class="tr-reise__back" aria-hidden="true">
+        <div class="tr-giant" data-st="0"><span class="tr-giant__w">Tokio</span><span class="tr-giant__c" lang="ja" translate="no">東京</span></div>
+        <div class="tr-giant" data-st="1"><span class="tr-giant__w">Kyoto</span><span class="tr-giant__c" lang="ja" translate="no">京都</span></div>
+        <div class="tr-giant" data-st="2"><span class="tr-giant__w">Fuji</span><span class="tr-giant__c" lang="ja" translate="no">富士</span></div>
+        <div class="tr-giant" data-st="3"><span class="tr-giant__w">Peking</span><span class="tr-giant__c" lang="zh" translate="no">北京</span></div>
+        <div class="tr-giant" data-st="4"><span class="tr-giant__w">Zhangjiajie</span><span class="tr-giant__c" lang="zh" translate="no">张家界</span></div>
+        <div class="tr-giant" data-st="5"><span class="tr-giant__w">Shanghai</span><span class="tr-giant__c" lang="zh" translate="no">上海</span></div>
+    </div>
+
+    <div class="tr-reise__front">
+        <div class="tr-reise__intro" id="trReiseIntro">
+            <h2 class="tr-reise__title" id="trReiseTitle">Die Reise</h2>
+            <p>Sechs Orte, zwei Länder, eine Strecke. Scroll, und du fliegst mit.</p>
+        </div>
+
+        <ol class="tr-rail" id="trRail" aria-label="Stationen">
+            <li><a href="#st-tokio" data-go="0"><span>Tokio</span></a></li>
+            <li><a href="#st-kyoto" data-go="1"><span>Kyoto</span></a></li>
+            <li><a href="#st-fuji" data-go="2"><span>Fuji</span></a></li>
+            <li><a href="#st-peking" data-go="3"><span>Peking</span></a></li>
+            <li><a href="#st-zhangjiajie" data-go="4"><span>Zhangjiajie</span></a></li>
+            <li><a href="#st-shanghai" data-go="5"><span>Shanghai</span></a></li>
+        </ol>
+
+        <div class="tr-stations" id="trStations">
+            <article class="tr-st" id="st-tokio" data-st="0" data-sky="#c4c3ec,#f2d4e6">
+                <div class="tr-st__text">
+                    <span class="tr-st__cjk" lang="ja" translate="no">東京</span>
+                    <h3>Tokio</h3>
+                    <p>An der Shibuya-Kreuzung stehen, wenn die Ampel umspringt und Hunderte Menschen gleichzeitig losgehen. Danach durch Gassen, in die gerade so ein Imbiss passt.</p>
+                </div>
+                <div class="tr-st__pics">
+                    <figure class="tr-st__main"><img src="/Grafiken/traum/tokio-shibuya-900.webp?v=8a1c27c819" data-hd="/Grafiken/traum/tokio-shibuya-1800.webp" width="1800" height="1200" alt="Die Shibuya-Kreuzung in Tokio zur blauen Stunde, Menschen überqueren sie in alle Richtungen" loading="lazy" decoding="async"><figcaption>Shibuya-Kreuzung</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/tokio-kabukicho-900.webp?v=e1f3b9876b" width="900" height="600" alt="Bunte Neonschilder über einer Straße in Kabukichō, Shinjuku" loading="lazy" decoding="async"><figcaption>Kabukichō bei Nacht</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/tokio-tower-900.webp?v=a09c6a791f" width="900" height="506" alt="Tokio bei Nacht von oben, in der Mitte leuchtet der Tokyo Tower" loading="lazy" decoding="async"><figcaption>Tokyo Tower von oben</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/osaka-dotonbori-900.webp?v=0455d45cfe" width="900" height="1101" alt="Eine Wand aus Leuchtreklamen am Dōtonbori-Kanal in Osaka" loading="lazy" decoding="async"><figcaption>Dōtonbori, Osaka</figcaption></figure>
+                </div>
+            </article>
+            <article class="tr-st" id="st-kyoto" data-st="1" data-sky="#f2d6d0,#f7e8de">
+                <div class="tr-st__text">
+                    <span class="tr-st__cjk" lang="ja" translate="no">京都</span>
+                    <h3>Kyoto</h3>
+                    <p>Früh aufstehen, bevor die Busse kommen. Durch die roten Tore von Fushimi Inari den Berg hoch, so weit, bis es still wird.</p>
+                </div>
+                <div class="tr-st__pics">
+                    <figure class="tr-st__main"><img src="/Grafiken/traum/kyoto-fushimi-900.webp?v=c49e2d63c3" data-hd="/Grafiken/traum/kyoto-fushimi-1800.webp" width="1800" height="1200" alt="Ein Weg durch dicht stehende rote Torii-Tore mit einer Laterne in Fushimi Inari, Kyoto" loading="lazy" decoding="async"><figcaption>Fushimi Inari</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/kyoto-bambus-900.webp?v=4d235bc48e" width="900" height="600" alt="Hohe grüne Bambusstämme im Bambuswald von Arashiyama" loading="lazy" decoding="async"><figcaption>Bambuswald, Arashiyama</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/kyoto-ninenzaka-900.webp?v=94a279ac24" width="900" height="600" alt="Eine leere Gasse mit Holzhäusern und Papierschirmen in Kyoto" loading="lazy" decoding="async"><figcaption>Ninenzaka</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/kyoto-kiyomizu-900.webp?v=0c919d5497" width="900" height="554" alt="Der Kiyomizu-dera-Tempel zwischen rot gefärbten Herbstbäumen" loading="lazy" decoding="async"><figcaption>Kiyomizu-dera im Herbst</figcaption></figure>
+                </div>
+            </article>
+            <article class="tr-st" id="st-fuji" data-st="2" data-sky="#bcd0f2,#f9d6cf">
+                <div class="tr-st__text">
+                    <span class="tr-st__cjk" lang="ja" translate="no">富士</span>
+                    <h3>Fuji</h3>
+                    <p>Einmal den Berg sehen, der auf jeder zweiten Postkarte steht. Am liebsten an einem klaren Morgen, mit einem Kaffee aus dem Automaten in der Hand.</p>
+                </div>
+                <div class="tr-st__pics">
+                    <figure class="tr-st__main"><img src="/Grafiken/traum/fuji-abend-900.webp?v=035f88ac47" data-hd="/Grafiken/traum/fuji-abend-1800.webp" width="1800" height="1200" alt="Der Fuji mit Schneekappe im Abendlicht, davor ein glatter See in Pastellfarben" loading="lazy" decoding="async"><figcaption>Fuji am Kawaguchi-See</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/fuji-arakurayama-900.webp?v=1478da5271" width="900" height="600" alt="Blick über grüne Hügel auf den Fuji unter Wolken" loading="lazy" decoding="async"><figcaption>Fuji vom Arakurayama</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/kirschbluete-900.webp?v=f49da40c46" width="900" height="600" alt="Ein Zweig mit weißen Kirschblüten vor dunklem Hintergrund" loading="lazy" decoding="async"><figcaption>Kirschblüte</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/miyajima-900.webp?v=655d274622" width="900" height="601" alt="Das rote Torii von Itsukushima steht bei Sonnenuntergang im Wasser" loading="lazy" decoding="async"><figcaption>Das Tor im Meer, Miyajima</figcaption></figure>
+                </div>
+            </article>
+            <article class="tr-st" id="st-peking" data-st="3" data-sky="#ead7cf,#f4e4dc">
+                <div class="tr-st__text">
+                    <span class="tr-st__cjk" lang="zh" translate="no">北京</span>
+                    <h3>Peking</h3>
+                    <p>Auf der Großen Mauer laufen, dort, wo die Treppen steil werden und kaum noch jemand mitkommt. Dann zurück in die Stadt, in den Kaiserpalast und zu einem Teller Jiaozi.</p>
+                </div>
+                <div class="tr-st__pics">
+                    <figure class="tr-st__main"><img src="/Grafiken/traum/mauer-jinshanling-900.webp?v=268ed9c0d6" data-hd="/Grafiken/traum/mauer-jinshanling-1800.webp" width="1800" height="1197" alt="Die Große Mauer bei Jinshanling zieht sich mit Wachtürmen über grüne Berge" loading="lazy" decoding="async"><figcaption>Große Mauer bei Jinshanling</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/peking-kaiserpalast-900.webp?v=8f37d48136" width="900" height="450" alt="Die Dächer des Kaiserpalasts in Peking im Dunst der Abenddämmerung" loading="lazy" decoding="async"><figcaption>Kaiserpalast vom Kohlehügel</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/peking-himmelstempel-900.webp?v=63c99bbab9" width="900" height="600" alt="Die runde Halle der Ernteopfer im Himmelstempel in Peking" loading="lazy" decoding="async"><figcaption>Himmelstempel</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/mauer-badaling-900.webp?v=2e1e231a4d" width="900" height="577" alt="Die Große Mauer bei Badaling schlängelt sich über bewaldete Hügel" loading="lazy" decoding="async"><figcaption>Große Mauer bei Badaling</figcaption></figure>
+                </div>
+            </article>
+            <article class="tr-st" id="st-zhangjiajie" data-st="4" data-sky="#c6e5da,#e6f1ec">
+                <div class="tr-st__text">
+                    <span class="tr-st__cjk" lang="zh" translate="no">张家界</span>
+                    <h3>Zhangjiajie</h3>
+                    <p>Die Felsnadeln, die aussehen wie aus einem Film. Ich will wissen, ob sie im Nebel wirklich so schweben wie auf den Bildern.</p>
+                </div>
+                <div class="tr-st__pics">
+                    <figure class="tr-st__main"><img src="/Grafiken/traum/zhangjiajie-tianzi-900.webp?v=ace78a8327" data-hd="/Grafiken/traum/zhangjiajie-tianzi-1800.webp" width="1800" height="899" alt="Steile Sandsteinsäulen mit Bäumen auf den Spitzen in Zhangjiajie" loading="lazy" decoding="async"><figcaption>Tianzi Shan</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/zhangjiajie-huangshizhai-900.webp?v=3a1e940e2c" width="900" height="455" alt="Ein Tal voller Felssäulen bei Huangshizhai in Zhangjiajie" loading="lazy" decoding="async"><figcaption>Huangshizhai</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/guilin-li-900.webp?v=9432f88e9c" width="900" height="596" alt="Der Li-Fluss windet sich zwischen Karstbergen bei Yangshuo" loading="lazy" decoding="async"><figcaption>Li-Fluss bei Yangshuo</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/xian-terrakotta-900.webp?v=df0144045a" width="900" height="1287" alt="Reihen von Terrakotta-Kriegern in Xi’an" loading="lazy" decoding="async"><figcaption>Terrakotta-Armee, Xi’an</figcaption></figure>
+                </div>
+            </article>
+            <article class="tr-st" id="st-shanghai" data-st="5" data-sky="#b7c0ec,#dccdf0">
+                <div class="tr-st__text">
+                    <span class="tr-st__cjk" lang="zh" translate="no">上海</span>
+                    <h3>Shanghai</h3>
+                    <p>Am Bund stehen, wenn in Pudong die Lichter angehen. Das alte Ufer auf der einen Seite, die Zukunft auf der anderen.</p>
+                </div>
+                <div class="tr-st__pics">
+                    <figure class="tr-st__main"><img src="/Grafiken/traum/shanghai-pudong-900.webp?v=15b978c788" data-hd="/Grafiken/traum/shanghai-pudong-1800.webp" width="1800" height="900" alt="Die beleuchtete Skyline von Pudong in Shanghai bei Nacht mit dem Oriental Pearl Tower" loading="lazy" decoding="async"><figcaption>Pudong bei Nacht</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/shanghai-ufer-900.webp?v=0e93eba35a" width="900" height="675" alt="Die Skyline von Pudong in Shanghai am Ufer, bei Tag" loading="lazy" decoding="async"><figcaption>Pudong bei Tag</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/shanghai-lotus-900.webp?v=313320e32b" width="900" height="600" alt="Eine rosa-weiße Lotusblüte in einem Teich in Shanghai" loading="lazy" decoding="async"><figcaption>Lotus</figcaption></figure>
+                    <figure><img src="/Grafiken/traum/tokio-shinjuku-900.webp?v=5fc02f5ba9" width="900" height="646" alt="Verkehr und Leuchtreklamen auf einer Straße in Shinjuku bei Nacht" loading="lazy" decoding="async"><figcaption>Und zurück über Shinjuku</figcaption></figure>
+                </div>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ DER PLAN ═══ senkrechtes Scrollen schiebt die Strecke waagerecht; die Route zeichnet sich, Stempel landen -->
+<section class="tr-plan" id="plan" aria-labelledby="trPlanTitle">
+    <div class="tr-plan__stage">
+        <div class="tr-plan__head">
+            <h2 class="tr-plan__title" id="trPlanTitle">Der Plan</h2>
+            <p class="tr-plan__lede">Sechs Stationen, noch ohne Datum. Die Reihenfolge steht, der Rest wächst mit jedem Ja.</p>
+        </div>
+        <div class="tr-plan__track" id="trPlanTrack">
+            <div class="tr-route" aria-hidden="true"><span class="tr-route__ink"></span></div>
+            <span class="tr-plane" id="trPlane" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></span>
+            <ol class="tr-stops">
+                <li class="tr-stop">
+                    <span class="tr-stop__num">01</span>
+                    <img class="tr-stop__img" src="/Grafiken/traum/tokio-kabukicho-900.webp?v=e1f3b9876b" width="900" height="600" alt="" loading="lazy" decoding="async">
+                    <span class="tr-stop__seal" lang="ja" translate="no">東京</span>
+                    <h3>Tokio</h3>
+                    <p>Ankommen, den Jetlag ignorieren, Shibuya bei Nacht.</p>
+                </li>
+                <li class="tr-stop">
+                    <span class="tr-stop__num">02</span>
+                    <img class="tr-stop__img" src="/Grafiken/traum/kyoto-bambus-900.webp?v=4d235bc48e" width="900" height="600" alt="" loading="lazy" decoding="async">
+                    <span class="tr-stop__seal" lang="ja" translate="no">京都</span>
+                    <h3>Kyoto</h3>
+                    <p>Tempel am Morgen, Bambuswald am Nachmittag.</p>
+                </li>
+                <li class="tr-stop">
+                    <span class="tr-stop__num">03</span>
+                    <img class="tr-stop__img" src="/Grafiken/traum/fuji-arakurayama-900.webp?v=1478da5271" width="900" height="600" alt="" loading="lazy" decoding="async">
+                    <span class="tr-stop__seal" lang="ja" translate="no">富士</span>
+                    <h3>Fuji</h3>
+                    <p>Ein Tag am Kawaguchi-See, den Berg im Blick.</p>
+                </li>
+                <li class="tr-stop">
+                    <span class="tr-stop__num">04</span>
+                    <img class="tr-stop__img" src="/Grafiken/traum/peking-himmelstempel-900.webp?v=63c99bbab9" width="900" height="600" alt="" loading="lazy" decoding="async">
+                    <span class="tr-stop__seal" lang="zh" translate="no">北京</span>
+                    <h3>Peking</h3>
+                    <p>Große Mauer, Kaiserpalast, Himmelstempel.</p>
+                </li>
+                <li class="tr-stop">
+                    <span class="tr-stop__num">05</span>
+                    <img class="tr-stop__img" src="/Grafiken/traum/zhangjiajie-huangshizhai-900.webp?v=3a1e940e2c" width="900" height="455" alt="" loading="lazy" decoding="async">
+                    <span class="tr-stop__seal" lang="zh" translate="no">张家界</span>
+                    <h3>Zhangjiajie</h3>
+                    <p>Felsnadeln im Nebel und die Glasbrücke, falls ich mich traue.</p>
+                </li>
+                <li class="tr-stop">
+                    <span class="tr-stop__num">06</span>
+                    <img class="tr-stop__img" src="/Grafiken/traum/shanghai-ufer-900.webp?v=0e93eba35a" width="900" height="675" alt="" loading="lazy" decoding="async">
+                    <span class="tr-stop__seal" lang="zh" translate="no">上海</span>
+                    <h3>Shanghai</h3>
+                    <p>Zum Schluss der Bund bei Nacht, dann der lange Flug nach Hause.</p>
+                </li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ ABSCHLUSS ═══ zurueck in den Pastellhimmel -->
+<section class="tr-end" id="schluss" aria-labelledby="trEndTitle">
+    <div class="tr-end__inner">
+        <p class="tr-end__pre">Wer bis hier mitgeflogen ist:</p>
+        <h2 class="tr-end__title" id="trEndTitle">Wärst du dabei?</h2>
+        <p class="tr-end__lede">Die Frage oben dauert eine Sekunde. Danke, dass du mitgeflogen bist.</p>
+        <a class="tr-btn tr-btn--ink" href="#frage">
+            <span>Zur Frage</span>
+            <span class="tr-btn__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
+        </a>
+        <p class="tr-end__sign">Sven, 2026</p>
+    </div>
+
+    <details class="tr-credits" id="bildnachweis">
+        <summary><span>Bildnachweis</span></summary>
+        <p class="tr-credits__intro">Alle Fotos stammen von Wikimedia Commons. Sie wurden verkleinert und als WebP gespeichert, sonst unverändert.</p>
+        <ul class="tr-credits__list" id="trCredits" translate="no">
+            <li><span class="tr-credits__what">Shibuya</span><span class="tr-credits__who">Benh LIEU SONG (Flickr)</span><a href="https://creativecommons.org/licenses/by-sa/2.0" rel="license noopener" target="_blank">CC BY-SA 2.0</a><a href="https://commons.wikimedia.org/wiki/File:Tokyo_Shibuya_Scramble_Crossing_2018-10-09.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Kabukichō</span><span class="tr-credits__who">Basile Morin</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Colorful_neon_street_signs_in_Kabukich%C5%8D,_Shinjuku,_Tokyo.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Shinjuku</span><span class="tr-credits__who">Martin Falbisoner</span><a href="https://creativecommons.org/licenses/by-sa/3.0" rel="license noopener" target="_blank">CC BY-SA 3.0</a><a href="https://commons.wikimedia.org/wiki/File:Night_in_Shinjuku_3.JPG" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Tokyo Tower</span><span class="tr-credits__who">David Kernan</span><a href="https://creativecommons.org/licenses/by/4.0" rel="license noopener" target="_blank">CC BY 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Tokyo_Tower,_Minato_City.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Fushimi Inari</span><span class="tr-credits__who">Basile Morin</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Torii_path_with_lantern_at_Fushimi_Inari_Taisha_Shrine,_Kyoto,_Japan.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Arashiyama</span><span class="tr-credits__who">Basile Morin</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Bamboo_Forest,_Arashiyama,_Kyoto,_Japan.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Ninenzaka</span><span class="tr-credits__who">Basile Morin</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Pedestrian_road_with_pavements_and_paper_umbrellas,_Higashiyama-ku,_Kyoto,_Japan,_early_morning.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Kiyomizu-dera</span><span class="tr-credits__who">Martin Falbisoner</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Kiyomizu-dera,_Kyoto,_November_2016_-01.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Yasaka</span><span class="tr-credits__who">Basile Morin</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Yasaka-dori_early_morning_with_street_lanterns_and_the_Tower_of_Yasaka_(Hokan-ji_Temple),_Kyoto,_Japan.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Fuji, Kawaguchiko</span><span class="tr-credits__who">Romain Guy</span><a href="http://creativecommons.org/publicdomain/zero/1.0/deed.en" rel="license noopener" target="_blank">CC0</a><a href="https://commons.wikimedia.org/wiki/File:Mount_Fuji_at_sunset,_March_2025.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Fuji, Arakurayama</span><span class="tr-credits__who">Ximonic (Simo Räsänen)</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:View_towards_Mount_Fuji_from_Arakurayama_Sengen_Park_in_Fujiyoshida,_Yamanashi,_Japan,_2024_May_-_2.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Miyajima</span><span class="tr-credits__who">Jakub Hałun</span><a href="https://creativecommons.org/licenses/by/4.0" rel="license noopener" target="_blank">CC BY 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Itsukushima-jinja_torii_at_sunset,_Miyajima,_Japan,_20240816_1812_4144.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Dōtonbori</span><span class="tr-credits__who">Martin Falbisoner</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Dotonbori,_Osaka,_at_night,_November_2016.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Somei Yoshino</span><span class="tr-credits__who">Laitche</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Cherry_blossoms_(Somei_Yoshino),_Nagai_Botanical_Garden,_April_2026_-1488.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Chāhan</span><span class="tr-credits__who">Ocdp</span><a href="http://creativecommons.org/publicdomain/zero/1.0/deed.en" rel="license noopener" target="_blank">CC0</a><a href="https://commons.wikimedia.org/wiki/File:Ramen_and_Chahan_002.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Jinshanling</span><span class="tr-credits__who">Jakub Hałun</span><a href="https://creativecommons.org/licenses/by-sa/3.0" rel="license noopener" target="_blank">CC BY-SA 3.0</a><a href="https://commons.wikimedia.org/wiki/File:20090529_Great_Wall_8185.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Badaling</span><span class="tr-credits__who">CEphoto, Uwe Aranas</span><a href="https://creativecommons.org/licenses/by-sa/3.0" rel="license noopener" target="_blank">CC BY-SA 3.0</a><a href="https://commons.wikimedia.org/wiki/File:Badaling_China_Great-Wall-of-China-01.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Tianzi Shan</span><span class="tr-credits__who">chensiyuan</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:1_tianzishan_wulingyuan_zhangjiajie_2012.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Huangshizhai</span><span class="tr-credits__who">chensiyuan</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:1_zhangjiajie_huangshizhai_wulingyuan_panorama_2012.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Pudong</span><span class="tr-credits__who">King of Hearts</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Pudong_Shanghai_November_2017_HDR_panorama.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Pudong 2</span><span class="tr-credits__who">Ermell</span><a href="http://creativecommons.org/publicdomain/zero/1.0/deed.en" rel="license noopener" target="_blank">CC0</a><a href="https://commons.wikimedia.org/wiki/File:Shanghai_skyline_waterfront_pudong_5166168_69_70.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Gugong</span><span class="tr-credits__who">Pixelflake</span><a href="https://creativecommons.org/licenses/by-sa/3.0" rel="license noopener" target="_blank">CC BY-SA 3.0</a><a href="https://commons.wikimedia.org/wiki/File:The_Forbidden_City_-_View_from_Coal_Hill.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Tiantan</span><span class="tr-credits__who">Fong Chen</span><span>Public domain</span><a href="https://commons.wikimedia.org/wiki/File:Hall_of_Prayer_for_Good_Harvest.JPG" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Li Jiang</span><span class="tr-credits__who">chensiyuan</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:1_li_jiang_guilin_yangshuo_2011.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Xi’an</span><span class="tr-credits__who">High Contrast</span><a href="https://creativecommons.org/licenses/by/3.0/de/deed.en" rel="license noopener" target="_blank">CC BY 3.0 de</a><a href="https://commons.wikimedia.org/wiki/File:A_rank_of_terracotta_soldiers.jpg" rel="noopener" target="_blank">Commons</a></li>
+            <li><span class="tr-credits__what">Lotus</span><span class="tr-credits__who">Daftation</span><a href="https://creativecommons.org/licenses/by-sa/4.0" rel="license noopener" target="_blank">CC BY-SA 4.0</a><a href="https://commons.wikimedia.org/wiki/File:Sacred_Lotus_in_a_Pond_2.jpg" rel="noopener" target="_blank">Commons</a></li>
+        </ul>
+    </details>
+</section>
+
+</main>
+
+<div id="page-footer"></div>
+
+<script>
+    fetch('/pages/footer/footer.html')
+        .then(r => r.text())
+        .then(html => {
+            const ph = document.getElementById('page-footer');
+            if (!ph) return;
+            const tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            ph.replaceWith(tmpl.content);
+            if (typeof loadAppVersion === 'function') loadAppVersion();
+        });
+</script>
+
+<!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
+<script>
+(function() {
+    function applyTheme(hex) {
+        if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        document.documentElement.style.setProperty('--primary', hex);
+        document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+        document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+    }
+    function syncTheme() {
+        try {
+            var raw = localStorage.getItem('tg_pro_data');
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+        } catch (e) { /* ignore */ }
+    }
+    syncTheme();
+    window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+})();
+</script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
+</html>

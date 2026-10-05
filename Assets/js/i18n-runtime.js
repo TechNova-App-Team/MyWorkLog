@@ -305,6 +305,7 @@
     'Anbieter-Vergleich': 'Compare providers',
     'Über uns': 'About us',
     'So funktioniert MyWorkLog': 'How MyWorkLog works',
+    'Mein Reisetraum': 'My travel dream',
     'Was ist MyWorkLog?': 'What is MyWorkLog?',
     'Datenschutz': 'Privacy',
     'Impressum': 'Legal notice',
