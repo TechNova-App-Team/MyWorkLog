@@ -438,13 +438,27 @@
         var scene = new THREE.Scene();
         var cam = new THREE.PerspectiveCamera(40, 1, 0.5, 400);
 
+        // Texturen erst laden, wenn die Kamera in die Naehe kommt (laden()) — vorher
+        // gingen beim Seitenaufruf alle 36 Bilder raus, 3,4 MB (gemessen 05.10.).
+        // Bis dahin traegt die Flaeche einen 1x1-Platzhalter und uBereit = 0.
         var lader = new THREE.TextureLoader(), cache = {};
-        function tex(src) {
-            if (cache[src]) return cache[src];
-            var t = lader.load(src);
-            t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO;
-            t.minFilter = THREE.LinearMipmapLinearFilter;
-            return (cache[src] = t);
+        var LEER = new THREE.DataTexture(new Uint8Array([233, 230, 246, 255]), 1, 1); LEER.needsUpdate = true;
+        function tex(src, fertig) {
+            var c = cache[src];
+            if (!c) {
+                c = cache[src] = { t: null, warten: [] };
+                lader.load(src, function (t) {
+                    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO; t.minFilter = THREE.LinearMipmapLinearFilter;
+                    c.t = t; c.warten.forEach(function (f) { f(t); }); c.warten = [];
+                });
+            }
+            if (c.t) fertig(c.t); else c.warten.push(fertig);
+        }
+        function laden(m) {
+            var u = m.userData;
+            if (u.angefragt) return;
+            u.angefragt = true;
+            tex(u.src, function (t) { m.material.uniforms.map.value = t; u.da = true; });
         }
 
         // Foto als Flaeche: runde Ecken per Abstandsfeld, Biegung aus der
@@ -458,13 +472,13 @@
             '  p.z -= uBend*(nx*nx*uSize.x*0.22 + ny*ny*uSize.y*0.06);\n' +
             '  p.y *= 1.0 + abs(uBend)*0.18;\n' +
             '  vec4 mv=modelViewMatrix*vec4(p,1.0); vDepth=-mv.z; gl_Position=projectionMatrix*mv; }';
-        var FS = 'uniform sampler2D map; uniform vec2 uSize; uniform float uR; uniform float uAlpha; uniform float uFar; uniform vec3 uHaze; uniform float uBend; uniform float uHov;\n' +
+        var FS = 'uniform sampler2D map; uniform vec2 uSize; uniform float uR; uniform float uAlpha; uniform float uFar; uniform vec3 uHaze; uniform float uBend; uniform float uHov; uniform float uBereit;\n' +
             'varying vec2 vUv; varying float vDepth;\n' +
             'float box(vec2 p, vec2 b, float r){ vec2 q=abs(p)-b+r; return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r; }\n' +
             'void main(){ vec2 px=(vUv-0.5)*uSize; float d=box(px,uSize*0.5,uR); float aa=fwidth(d);\n' +
             '  float a=1.0-smoothstep(-aa,aa,d); if(a<=0.0) discard;\n' +
             '  float fern=smoothstep(uFar*0.35,uFar,vDepth)*(1.0-uHov);\n' +
-            '  a*= (1.0-fern) * smoothstep(3.0,11.0,vDepth) * uAlpha; if(a<=0.002) discard;\n' +
+            '  a*= (1.0-fern) * smoothstep(3.0,11.0,vDepth) * uAlpha * uBereit; if(a<=0.002) discard;\n' +
             '  vec2 rgb=vec2(0.0, uBend*0.035);\n' +
             '  vec4 c=texture2D(map,vUv); c.r=texture2D(map,vUv+rgb).r; c.b=texture2D(map,vUv-rgb).b;\n' +
             '  c.rgb=mix(c.rgb,uHaze,fern*0.3); c.rgb*=1.0+uHov*0.08;\n' +
@@ -475,12 +489,13 @@
             var h = w / aspekt;
             var mat = new THREE.ShaderMaterial({
                 uniforms: {
-                    map: { value: tex(src) }, uSize: { value: new THREE.Vector2(w, h) }, uR: { value: Math.min(w, h) * 0.06 },
-                    uBend: { value: 0 }, uAlpha: { value: 1 }, uFar: { value: 170 }, uHaze: { value: new THREE.Color(0xe9e6f6) }, uHov: { value: 0 },
+                    map: { value: LEER }, uSize: { value: new THREE.Vector2(w, h) }, uR: { value: Math.min(w, h) * 0.06 },
+                    uBend: { value: 0 }, uAlpha: { value: 1 }, uFar: { value: 170 }, uHaze: { value: new THREE.Color(0xe9e6f6) }, uHov: { value: 0 }, uBereit: { value: 0 },
                 },
                 vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false,
             });
             var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h, 24, 6), mat);
+            m.userData.src = src;
             bilder.push(m);
             return m;
         }
@@ -497,7 +512,7 @@
             var asp = q[0] === 'osaka-dotonbori' ? 900 / 1101 : 1.5;
             var m = foto('/Grafiken/traum/' + q[0] + '-900.webp', q[4], asp);
             m.position.set(q[1], q[2], q[3]);
-            m.userData = { x: q[1], y: q[2], z: q[3], ph: i * 1.7, ry: (q[1] > 0 ? -1 : 1) * 0.18 };
+            Object.assign(m.userData, { x: q[1], y: q[2], z: q[3], ph: i * 1.7, ry: (q[1] > 0 ? -1 : 1) * 0.18 });
             scene.add(m);
             return m;
         });
@@ -520,7 +535,7 @@
                 var m = foto(imgs[k].getAttribute('src'), b[3], aspektVon(imgs[k]));
                 m.position.set(b[0] * sp, b[1], b[2]);
                 m.rotation.y = b[4] * sp;
-                m.userData = { x: b[0] * sp, y: b[1], ph: i * 2 + k };
+                Object.assign(m.userData, { x: b[0] * sp, y: b[1], ph: i * 2 + k });
                 g.add(m); begleiter.push(m);
             }
             g.position.z = z;
@@ -569,7 +584,13 @@
             function weichen(abstand) { return sm(seg(18 - abstand, 0, 13)); }
             function ausblenden(m, k) { m.material.uniforms.uAlpha.value = 1 - sm(seg(k, 0.25, 0.95)); }
 
+            // Geladene Bilder blenden weich ein statt aufzuploppen
+            bilder.forEach(function (m) {
+                var u = m.userData;
+                if (u.da && u.bereit !== 1) { u.bereit = Math.min(1, (u.bereit || 0) + 0.04); m.material.uniforms.uBereit.value = u.bereit; }
+            });
             wolke.forEach(function (m, i) {
+                laden(m);
                 var u = m.userData;
                 // Warp: die Wolke schiesst beim Laden gestaffelt aus 240 Einheiten Tiefe an
                 // ihren Platz, gebogen wie bei Lichtgeschwindigkeit — der erste Eindruck.
@@ -587,6 +608,8 @@
                 u.basis = 1;
             });
             stationen.forEach(function (s, i) {
+                // Vorausladen: eine Station vor der Kamera (Abstand 78) plus Reserve
+                if (Math.abs(cam.position.z - s.z) < 175) { laden(s.main); s.begleiter.forEach(laden); }
                 var nah = Math.abs(cam.position.z - s.z) < 150;
                 s.g.visible = nah;
                 if (!nah) return;
