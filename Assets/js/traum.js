@@ -20,6 +20,8 @@
     function seg(p, a, b) { return clamp((p - a) / (b - a), 0, 1); }
     function mix(a, b, t) { return a + (b - a) * t; }
     function sm(x) { return x * x * (3 - 2 * x); }
+    // weichere Kurve fuer die Kamerafahrt: Anfahren und Abbremsen ohne Ruck (auch die Beschleunigung startet bei 0)
+    function sm2(x) { return x * x * x * (x * (x * 6 - 15) + 10); }
 
     /* ═══ DIE FRAGE ═══ laeuft in beiden Modi */
     (function frage() {
@@ -111,8 +113,12 @@
         W = window.innerWidth; H = window.innerHeight; SCHMAL = W / H < 1;
         heroH = hero.offsetHeight;
         rTop = reise.offsetTop; rLen = Math.max(1, reise.offsetHeight - H);
-        pTop = plan.offsetTop; pLen = Math.max(1, plan.offsetHeight - H);
         travel = Math.max(0, planTrack.scrollWidth - W);
+        // Scrollweg = Schiebeweg (+ etwas Ruhe an den Enden). Eine feste Hoehe in CSS
+        // war auf breiten Schirmen tot: bei 2560 px passten alle Karten nebeneinander,
+        // 5 px Weg auf 4900 px Scrollen (gemessen 05.10.) — "da macht es nix".
+        plan.style.height = Math.round(H + travel * 1.1 + H * 0.35) + 'px';
+        pTop = plan.offsetTop; pLen = Math.max(1, plan.offsetHeight - H);
         routeW = stopList.offsetWidth;
         planTrack.style.setProperty('--route-w', routeW + 'px');
         mqHalf = mqSet ? mqSet.offsetWidth : 1;
@@ -195,10 +201,15 @@
             planTrack.style.transform = 'translate3d(' + (-pp * travel).toFixed(1) + 'px,0,0)';
             planTrack.style.setProperty('--route', pp.toFixed(4));
             planTrack.style.setProperty('--plane-x', (pp * routeW).toFixed(1) + 'px');
-            stops.forEach(function (s) {
-                if (s.classList.contains('is-stamped')) return;
-                var r = s.getBoundingClientRect();
-                if (r.left + r.width * 0.5 < W * 0.82) s.classList.add('is-stamped');
+            // erst alle messen, dann schreiben (kein Layout-Wechselspiel je Karte).
+            // Stempel-Schwelle 0.88: die letzte Karte kommt am Ende nur bis ~0.8 W (gemessen 1920 px)
+            var mitten = [];
+            stops.forEach(function (s) { var r = s.getBoundingClientRect(); mitten.push(r.left + r.width * 0.5); });
+            stops.forEach(function (s, i) {
+                // Karte hebt sich, waehrend sie durch die Bildmitte laeuft
+                var nah = 1 - Math.min(1, Math.abs(mitten[i] - W * 0.5) / (W * 0.6));
+                s.style.transform = 'translate3d(0,' + (-sm(nah) * 26).toFixed(1) + 'px,0)';
+                if (!s.classList.contains('is-stamped') && mitten[i] < W * 0.88) s.classList.add('is-stamped');
             });
         }
     }
@@ -247,7 +258,7 @@
             'void main(){ vec2 px=(vUv-0.5)*uSize; float d=box(px,uSize*0.5,uR); float aa=fwidth(d);\n' +
             '  float a=1.0-smoothstep(-aa,aa,d); if(a<=0.0) discard;\n' +
             '  float fern=smoothstep(uFar*0.35,uFar,vDepth);\n' +
-            '  a*= (1.0-fern) * smoothstep(1.0,7.0,vDepth) * uAlpha; if(a<=0.002) discard;\n' +
+            '  a*= (1.0-fern) * smoothstep(3.0,11.0,vDepth) * uAlpha; if(a<=0.002) discard;\n' +
             '  vec4 c=texture2D(map,vUv); c.rgb=mix(c.rgb,uHaze,fern*0.3);\n' +
             '  gl_FragColor=vec4(c.rgb,a);\n' +
             '  #include <colorspace_fragment>\n}';
@@ -315,7 +326,7 @@
         KEYS.push([1, stationen[N - 1].z + 6]);
         function kameraZ(p) {
             for (var i = 0; i < KEYS.length - 1; i++) {
-                if (p <= KEYS[i + 1][0]) return mix(KEYS[i][1], KEYS[i + 1][1], sm(seg(p, KEYS[i][0], KEYS[i + 1][0])));
+                if (p <= KEYS[i + 1][0]) return mix(KEYS[i][1], KEYS[i + 1][1], sm2(seg(p, KEYS[i][0], KEYS[i + 1][0])));
             }
             return KEYS[KEYS.length - 1][1];
         }
@@ -342,27 +353,39 @@
             // Schmal (Hochformat): Hauptbild kleiner und ueber die Textkarte
             var mScale = SCHMAL ? clamp(asp * 1.35, 0.5, 1) : 1;
 
+            // Vorhang statt Aufprall: was die Kamera gleich passiert, weicht zur Seite aus,
+            // dreht sich weg und blendet aus, BEVOR es den Bildschirm fuellt (Nutzer 05.10.:
+            // "damit das Bild ned so in die Fresse knallt"). k: 0 ab 18 Einheiten Abstand, 1 bei 5.
+            function weichen(abstand) { return sm(seg(18 - abstand, 0, 13)); }
+            function ausblenden(m, k) { m.material.uniforms.uAlpha.value = 1 - sm(seg(k, 0.25, 0.95)); }
+
             wolke.forEach(function (m) {
                 var u = m.userData;
+                var k = weichen(cam.position.z - m.position.z);
                 // Hochformat: Wolke nach oben ziehen, sonst liegt sie auf Einleitung und Knoepfen
                 m.position.y = (SCHMAL ? u.y * 0.55 + 5 : u.y) + Math.sin(T * 0.6 + u.ph) * 0.45;
-                m.position.x = u.x * (SCHMAL ? 0.55 : 1);
-                m.rotation.y = u.ry + Math.sin(T * 0.4 + u.ph) * 0.05;
+                m.position.x = u.x * (SCHMAL ? 0.55 : 1) * (1 + k * 1.4);
+                m.rotation.y = u.ry + Math.sin(T * 0.4 + u.ph) * 0.05 + (u.x > 0 ? -1 : 1) * k * 0.8;
+                ausblenden(m, k);
                 m.material.uniforms.uBend.value = bend;
             });
             stationen.forEach(function (s, i) {
                 var nah = Math.abs(cam.position.z - s.z) < 150;
                 s.g.visible = nah;
                 if (!nah) return;
-                s.main.position.set(SCHMAL ? 0 : 3.6, SCHMAL ? 0.6 : 0.8, 0);
+                var k = weichen(cam.position.z - s.z);
+                s.main.position.set((SCHMAL ? 0 : 3.6) + s.sp * k * 20, (SCHMAL ? 0.6 : 0.8) + k * 1.5, 0);
                 s.main.scale.setScalar(mScale);
-                s.main.rotation.y = -0.1 * s.sp + Math.sin(T * 0.35 + i) * 0.03;
+                s.main.rotation.y = -0.1 * s.sp + Math.sin(T * 0.35 + i) * 0.03 + s.sp * k * 0.9;
+                ausblenden(s.main, k);
                 s.main.rotation.x = Math.sin(T * 0.3 + i) * 0.02;
                 s.main.material.uniforms.uBend.value = bend;
                 s.begleiter.forEach(function (m) {
                     var u = m.userData;
                     m.position.y = u.y + Math.sin(T * 0.7 + u.ph) * 0.35;
-                    m.position.x = u.x * (SCHMAL ? 0.7 : 1);
+                    var kb = weichen(cam.position.z - (s.z + m.position.z));
+                    m.position.x = u.x * (SCHMAL ? 0.7 : 1) * (1 + kb * 1.6);
+                    ausblenden(m, kb);
                     m.material.uniforms.uBend.value = bend;
                 });
             });
