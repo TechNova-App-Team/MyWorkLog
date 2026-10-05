@@ -144,28 +144,33 @@
         var ende = $('trEnde');
         function zeige(z) {
             box.setAttribute('data-state', z);
-            if (ende && z !== 'fehler') ende.setAttribute('data-state', z === 'ja' ? 'ja' : 'frage');
+            if (ende) ende.setAttribute('data-state', z);
         }
         // Der Ja-Moment: der Block bebt, wenn der Hanko aufschlaegt (CSS-Stempel landet
         // nach ~330 ms), und die sechs Ortsstempel fliegen aus ihm heraus. Nur Deko,
         // deshalb aria-hidden und bei "Bewegung reduzieren" ganz weg.
         var ORTE = [['東京', 'ja'], ['京都', 'ja'], ['富士', 'ja'], ['北京', 'zh'], ['张家界', 'zh'], ['上海', 'zh']];
-        function feuer() {
+        // ursprung: oben der Hanko (wird erst nach dem Zustandswechsel sichtbar, daher
+        // spaet gemessen); im Schluss der geklickte Knopf — dessen Lage VOR dem
+        // Wechsel gemessen, danach ist er ausgeblendet.
+        function feuer(ursprung) {
             if (!Element.prototype.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-            var hanko = box.querySelector('.tr-hanko');
-            var flaeche = box.closest('.tr-ask');
+            var hier = ursprung ? ende : box;
+            var hanko = ursprung ? null : box.querySelector('.tr-hanko');
+            var flaeche = hier.closest('.tr-ask, .tr-end');
             setTimeout(function () {
                 if (flaeche) flaeche.animate([
                     { transform: 'translate(0,0)' }, { transform: 'translate(-6px,4px)' }, { transform: 'translate(5px,-3px)' },
                     { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }
                 ], { duration: 380, easing: 'cubic-bezier(.23,1,.32,1)' });
-                if (!hanko) return;
-                var r = hanko.getBoundingClientRect(), b = box.getBoundingClientRect();
+                var r = ursprung || (hanko && hanko.getBoundingClientRect());
+                if (!r) return;
+                var b = hier.getBoundingClientRect();
                 ORTE.forEach(function (o, i) {
                     var s = document.createElement('span');
                     s.className = 'tr-burst'; s.setAttribute('aria-hidden', 'true'); s.lang = o[1]; s.textContent = o[0];
                     s.style.left = (r.left - b.left + r.width / 2) + 'px'; s.style.top = (r.top - b.top + r.height / 2) + 'px';
-                    box.appendChild(s);
+                    hier.appendChild(s);
                     var w = (i / ORTE.length) * Math.PI * 2 - Math.PI / 2 + (Math.random() - 0.5) * 0.5;
                     var weit = 150 + Math.random() * 110, dreh = (Math.random() - 0.5) * 70;
                     // Kurven je Abschnitt, Gesamtzeit linear: eine Kurve auf der ganzen Animation
@@ -190,10 +195,12 @@
                 body: JSON.stringify({ id: geraeteId(), antwort: antwort, lang: root.lang === 'en' ? 'en' : 'de' }),
             }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); });
         }
-        var picks = box.querySelectorAll('.tr-pick');
+        // Oben UND im Schluss — dieselbe Antwort, derselbe Weg
+        var picks = document.querySelectorAll('[data-antwort]');
         picks.forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var antwort = btn.getAttribute('data-antwort');
+                var ausDemSchluss = ende && ende.contains(btn) ? btn.getBoundingClientRect() : null;
                 picks.forEach(function (b) { b.disabled = true; });
                 var warJa = lies(KEY_ANTWORT) === 'ja';
                 senden(antwort).then(function () {
@@ -202,7 +209,7 @@
                     if (antwort === 'ja') setTimeout(Ton.stempel, 330);
                     schreib(KEY_ANTWORT, antwort);
                     zeige(antwort);
-                    if (antwort === 'ja') feuer();
+                    if (antwort === 'ja') feuer(ausDemSchluss);
                     if (typeof mwlEvent === 'function') mwlEvent('traum_antwort', { antwort: antwort });
                 }).catch(function () { zeige('fehler'); })
                   .then(function () { picks.forEach(function (b) { b.disabled = false; }); });

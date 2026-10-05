@@ -552,9 +552,16 @@ body.tr .site-footer { position: relative; z-index: 3; background: var(--tr-nigh
 .tr-brief__hand { font-family: 'Caveat', var(--tr-display); font-weight: 600; font-size: clamp(3rem, 6vw, 4.6rem); line-height: 1; color: var(--primary); display: inline-block; transform: rotate(-4deg); }
 
 /* ═══ Schluss je nach Antwort ═══ */
-.tr-end__dabei { display: none; }
-.tr-end__inner[data-state="ja"] .tr-end__offen { display: none; }
-.tr-end__inner[data-state="ja"] .tr-end__dabei { display: block; }
+.tr-end__dabei, .tr-end__nein, .tr-end__error { display: none; }
+.tr-end__inner[data-state="ja"] .tr-end__offen,
+.tr-end__inner[data-state="nein"] .tr-end__offen { display: none; }
+.tr-end__inner[data-state="ja"] .tr-end__dabei,
+.tr-end__inner[data-state="nein"] .tr-end__nein { display: block; animation: trFade .6s var(--tr-out) both; }
+.tr-end__inner[data-state="fehler"] .tr-end__error { display: block; margin-top: 1rem; color: var(--tr-stamp); }
+.tr-end__inner { position: relative; }
+.tr-end__picks { display: flex; flex-wrap: wrap; gap: .75rem; }
+.tr-end__picks .tr-btn { border: 0; cursor: pointer; font-family: inherit; }
+.tr-end__picks .tr-btn--ghost { border: 1px solid rgba(255, 255, 255, .7); }
 
 /* ═══ Breakpoints ═══ */
 @media (max-width: 900px) {

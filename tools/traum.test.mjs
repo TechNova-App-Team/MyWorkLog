@@ -120,6 +120,22 @@ const warte = () => new Promise((r) => setTimeout(r, 20));
     await warte();
     ok(wl.document.getElementById('trProofN').textContent === '5', 'von localhost zaehlt das eigene Ja auch optisch nicht mit');
 }
+{   // Antwort direkt im Schluss (emotionaler Hoehepunkt, kein Zurueckscrollen noetig)
+    let gesendet = 0;
+    const w = seite('myworklog.de', null, () => { gesendet++; return Promise.resolve({ ok: true }); }, 4);
+    await warte();
+    w.document.querySelector('#trEnde [data-antwort="ja"]').click();
+    await warte();
+    ok(gesendet === 1, 'Ja im Schluss geht genau einmal an den Worker');
+    ok(w.document.getElementById('trAsk').getAttribute('data-state') === 'ja', 'Ja im Schluss setzt auch die Frage oben auf Ja');
+    ok(w.document.getElementById('trEnde').getAttribute('data-state') === 'ja', 'Schluss zeigt danach "Du bist dabei"');
+    ok(w.document.getElementById('trProofN').textContent === '5', 'Zaehler zaehlt das Ja aus dem Schluss mit (4 -> 5)');
+    w.document.querySelector('#trEnde .tr-end__dabei') && w.document.getElementById('trAendern').click();
+    w.document.querySelector('#trEnde [data-antwort="nein"]').click();
+    await warte();
+    ok(w.document.getElementById('trEnde').getAttribute('data-state') === 'nein', 'Nein im Schluss zeigt den eigenen, freundlichen Abschluss');
+    ok(w.document.getElementById('trProofN').textContent === '4', 'Umentscheiden auf Nein nimmt das Ja wieder aus dem Zaehler');
+}
 {   // Teilen: ohne Web Share wird der saubere Link kopiert
     let kopiert = null;
     const w = seite('myworklog.de', 'ja', null, 0, (win) => {
