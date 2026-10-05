@@ -222,8 +222,11 @@
         var MIN_ZAHL = 3, zahl = null, proof = $('trProof');
         function zeigeZahl() {
             if (!proof || zahl === null) return;
+            var txt = zahl.toLocaleString(root.lang === 'en' ? 'en-GB' : 'de-DE');
             proof.classList.toggle('is-an', zahl >= MIN_ZAHL);
-            $('trProofN').textContent = zahl.toLocaleString(root.lang === 'en' ? 'en-GB' : 'de-DE');
+            $('trProofN').textContent = txt;
+            var hp = $('trHeroProof');   // dieselbe Zahl schon im Einstieg
+            if (hp) { hp.classList.toggle('is-an', zahl >= MIN_ZAHL); $('trHeroProofN').textContent = txt; }
             var dots = proof.querySelector('.tr-proof__dots');
             if (dots && !dots.children.length) {
                 for (var i = 0; i < 4; i++) { var d = document.createElement('i'); d.style.setProperty('--r', (i % 2 ? 7 : -9) + 'deg'); dots.appendChild(d); }
@@ -573,8 +576,9 @@
                 var e = sm2(clamp((T - T0 - 0.15 - i * 0.09) / 1.7, 0, 1));
                 m.position.z = u.z - (1 - e) * 240;
                 var k = weichen(cam.position.z - m.position.z);
-                // Hochformat: Wolke nach oben ziehen, sonst liegt sie auf Einleitung und Knoepfen
-                m.position.y = (SCHMAL ? u.y * 0.55 + 5 : u.y) + Math.sin(T * 0.6 + u.ph) * 0.45;
+                // Hochformat: Wolke in die freie Mitte zwischen Titel und Einleitung stauchen —
+                // oben verdeckt sie den Titel, unten Einleitung und Knoepfe (beides gemessen)
+                m.position.y = (SCHMAL ? u.y * 0.35 + 0.5 : u.y) + Math.sin(T * 0.6 + u.ph) * 0.45;
                 m.position.x = u.x * (SCHMAL ? 0.55 : 1) * (1 + k * 1.4);
                 m.rotation.y = u.ry + Math.sin(T * 0.4 + u.ph) * 0.05 + (u.x > 0 ? -1 : 1) * k * 0.8;
                 ausblenden(m, k);
