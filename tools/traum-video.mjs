@@ -86,9 +86,17 @@ async function main() {
     const ws = new WebSocket(page.webSocketDebuggerUrl);
     await new Promise((r) => ws.addEventListener('open', r));
     const cdp = new CDP(ws);
-    await cdp.send('Page.enable'); await cdp.send('Runtime.enable');
+    await cdp.send('Page.enable'); await cdp.send('Runtime.enable'); await cdp.send('Inspector.enable');
+    // Abbruch-Ursache sichtbar machen (Absturz vs. Navigation, z. B. Portman-Neuladen)
+    cdp.handlers.set('Inspector.targetCrashed', [() => console.log('  ✗ Renderer abgestuerzt')]);
+    cdp.handlers.set('Page.frameNavigated', [(p) => { if (!p.frame.parentId) console.log('  ↻ navigiert:', p.frame.url); }]);
+    cdp.handlers.set('Runtime.exceptionThrown', [(p) => console.log('  ! JS:', p.exceptionDetails?.exception?.description?.slice(0, 160))]);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: DPR, mobile: true });
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false });
+    // Portman laedt bei JEDER Dateiaenderung im Projekt neu (EventSource /__portman/live) —
+    // ein Commit-Hook oder der Graph-Nachlauf riss so zweimal die Aufnahme ab. Stummschalten.
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source:
+      "(function(){var E=window.EventSource;window.EventSource=function(u){if(String(u).indexOf('/__portman/')>=0)return{addEventListener:function(){},close:function(){}};return new E(u);};})();" });
     const geladen = cdp.once('Page.loadEventFired');
     await cdp.send('Page.navigate', { url: URL });
     console.log('  navigiere …');
