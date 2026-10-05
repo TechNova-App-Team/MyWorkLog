@@ -238,6 +238,7 @@ var EVENT_LABELS = {
     'geburtstag_kerze': ['Geburtstag: Kerze ausgepustet', 'Birthday: candle blown out'],
     'geburtstag_wunsch': ['Geburtstag: Wunsch geschickt', 'Birthday: wish sent'],
     'traum_antwort':    ['Reisetraum: Frage beantwortet', 'Travel dream: question answered'],
+    'traum_teilen':     ['Reisetraum: Seite geteilt', 'Travel dream: page shared'],
     'ghost_mode_on':    ['Ghost Mode (seit v7.5.4 entfernt)', 'Ghost mode (removed in v7.5.4)'],
     // Probleme — alles mit 'problem_' landet im eigenen Reiter.
     'problem_js_fehler':      ['Skriptfehler', 'Script error'],

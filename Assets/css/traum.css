@@ -100,7 +100,7 @@ canvas.tr-canvas { display: none; }
     position: fixed; z-index: 30; top: 16px; left: var(--tr-gutter); right: var(--tr-gutter);
     display: flex; justify-content: space-between; align-items: center; pointer-events: none;
 }
-.tr-nav > a {
+.tr-nav a, .tr-nav__ton {
     pointer-events: auto; display: inline-flex; align-items: center; gap: .4rem;
     height: 42px; padding: 0 1rem; border-radius: 999px; text-decoration: none;
     font-size: .875rem; font-weight: 500; letter-spacing: -.01em;
@@ -112,8 +112,14 @@ canvas.tr-canvas { display: none; }
 }
 .tr-nav__back { padding-left: .7rem; }
 .tr-nav__back svg { font-size: 1.1rem; }
-.tr-nav > .tr-nav__cta { background: var(--tr-ink); color: var(--tr-on-night); border-color: rgba(255, 255, 255, .14); }
-.tr-nav > a:active { transform: scale(.97); }
+.tr-nav__end { display: flex; gap: .5rem; align-items: center; }
+/* Ton-Schalter: runde Pille, zeigt den Zustand ueber aria-pressed */
+.tr-nav__ton { width: 42px; padding: 0; justify-content: center; cursor: pointer; font-size: 1.15rem; }
+.tr-nav__ton .tr-ton-an, .tr-nav__ton[aria-pressed="true"] .tr-ton-aus { display: none; }
+.tr-nav__ton[aria-pressed="true"] .tr-ton-an { display: block; }
+.tr-nav__ton[aria-pressed="true"] { background: var(--tr-ink); color: var(--tr-on-night); }
+.tr-nav .tr-nav__cta { background: var(--tr-ink); color: var(--tr-on-night); border-color: rgba(255, 255, 255, .14); }
+.tr-nav a:active, .tr-nav__ton:active { transform: scale(.97); }
 /* Waehrend die Frage im Bild ist, ist "Zur Frage" ein Knopf ins Nichts */
 .tr-nav.is-frage .tr-nav__cta { opacity: 0; translate: 0 -8px; pointer-events: none; }
 
@@ -471,6 +477,63 @@ canvas.tr-canvas { display: none; }
    muss ueber Himmel und Leinwand liegen */
 body.tr .site-footer { position: relative; z-index: 3; background: var(--tr-night); }
 
+/* ═══ Sozialer Beweis ═══ nur echte Zahlen, erst ab 3 sichtbar (traum.js) */
+.tr-proof { display: none; align-items: center; gap: .6rem; font-size: .95rem; color: var(--tr-on-night-2); }
+.tr-proof.is-an { display: flex; animation: trFade .6s var(--tr-out) both; }
+.tr-proof__n { font-family: var(--tr-display); font-weight: 700; font-size: 1.35rem; color: var(--tr-on-night); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tr-proof__dots { display: flex; }
+.tr-proof__dots i {
+    width: 22px; height: 22px; border-radius: 6px; margin-left: -6px; display: block;
+    border: 2px solid var(--tr-stamp); background: var(--tr-night); transform: rotate(var(--r, -8deg));
+}
+.tr-proof__dots i:first-child { margin-left: 0; }
+
+/* ═══ Teilen ═══ */
+.tr-share { margin-top: 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.tr-share__ask { width: 100%; font-size: .95rem; color: var(--tr-on-night-2); }
+.tr-share__btn {
+    display: inline-flex; align-items: center; gap: .55rem; height: 46px; padding: 0 1.2rem; border-radius: 999px;
+    border: 0; cursor: pointer; background: var(--tr-on-night); color: var(--tr-night); font-size: .95rem; font-weight: 600;
+    transition: transform .16s var(--tr-out);
+}
+.tr-share__btn svg { font-size: 1.05rem; }
+.tr-share__btn:active, .tr-share .tr-btn:active { transform: scale(.97); }
+.tr-share__ok { font-size: .85rem; color: var(--tr-on-night-2); opacity: 0; transition: opacity .3s ease; }
+.tr-share__ok.is-an { opacity: 1; }
+.tr-share--end .tr-share__ok { color: var(--tr-ink-2); }
+.tr-share .tr-btn { border: 0; cursor: pointer; font-family: inherit; }
+
+/* ═══ Kilometer ═══ */
+.tr-rail__km { display: none; }
+.tr-gl .tr-rail__km {
+    display: flex; flex-direction: column; margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--tr-line);
+    font-size: .72rem; color: var(--tr-ink-3); line-height: 1.2;
+}
+.tr-rail__km b { font-family: var(--tr-display); font-size: 1.15rem; color: var(--tr-ink); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.tr-plan__km { margin-top: 1rem; display: flex; align-items: baseline; gap: .5rem; color: var(--tr-ink-2); font-size: .95rem; }
+.tr-plan__km b { font-family: var(--tr-display); font-weight: 700; font-size: 1.6rem; color: var(--tr-ink); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+
+/* ═══ DER BRIEF ═══ Papier, Woerter leuchten beim Scrollen auf */
+.tr-brief { position: relative; z-index: 3; background: var(--tr-paper); padding: clamp(7rem, 18vh, 12rem) var(--tr-gutter); }
+.tr-brief__inner { max-width: 54rem; margin: 0 auto; }
+.tr-brief__title { font-family: var(--tr-text); font-weight: 500; font-size: 1rem; color: var(--tr-ink-3); }
+.tr-brief__text { margin-top: 2rem; display: grid; gap: 1.6rem; }
+.tr-brief__text p {
+    font-family: var(--tr-display); font-weight: 500; font-variation-settings: 'opsz' 48;
+    font-size: clamp(1.6rem, 3.2vw, 2.7rem); line-height: 1.22; letter-spacing: -.022em; color: var(--tr-ink);
+}
+/* Wortweises Aufleuchten: traum.js zerlegt die Absaetze in .tr-wort und setzt
+   is-an. Ohne die Fahrt (tr-flat) bleiben die Absaetze unangetastet. */
+.tr-gl .tr-wort { color: rgba(21, 19, 29, .16); transition: color .35s ease; }
+.tr-gl .tr-wort.is-an { color: var(--tr-ink); }
+.tr-brief__sign { margin-top: 2.5rem; }
+.tr-brief__hand { font-family: 'Caveat', var(--tr-display); font-weight: 600; font-size: clamp(3rem, 6vw, 4.6rem); line-height: 1; color: var(--primary); display: inline-block; transform: rotate(-4deg); }
+
+/* ═══ Schluss je nach Antwort ═══ */
+.tr-end__dabei { display: none; }
+.tr-end__inner[data-state="ja"] .tr-end__offen { display: none; }
+.tr-end__inner[data-state="ja"] .tr-end__dabei { display: block; }
+
 /* ═══ Breakpoints ═══ */
 @media (max-width: 900px) {
     .tr-gl .tr-rail { display: none; }
@@ -494,7 +557,8 @@ body.tr .site-footer { position: relative; z-index: 3; background: var(--tr-nigh
 @media (max-width: 480px) {
     :root { --tr-gutter: 16px; }
     .tr-nav { top: 12px; }
-    .tr-nav > a { height: 40px; font-size: .82rem; }
+    .tr-nav a, .tr-nav__ton { height: 40px; font-size: .82rem; }
+    .tr-nav__ton { width: 40px; font-size: 1.05rem; }
     .tr-btn { height: 50px; }
     .tr-hero__actions { width: 100%; flex-direction: column; align-items: stretch; }
     .tr-hero__actions .tr-btn { justify-content: space-between; }

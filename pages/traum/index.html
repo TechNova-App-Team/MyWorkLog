@@ -46,13 +46,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&family=Geist:wght@300..700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@600&text=%E6%97%A5%E6%9C%AC%E6%9D%B1%E4%BA%AC%E9%83%BD%E5%AF%8C%E5%A3%AB%E5%B1%B1%E5%BF%9C%E6%8F%B4%E6%97%85&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&text=Sven&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600&text=%E4%B8%AD%E5%9B%BD%E5%8C%97%E4%BA%AC%E5%BC%A0%E5%AE%B6%E7%95%8C%E4%B8%8A%E6%B5%B7&display=swap">
 
-    <link rel="stylesheet" href="/Assets/css/traum.css?v=838669f0a3">
+    <link rel="stylesheet" href="/Assets/css/traum.css?v=c573defe8b">
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
     <script defer src="/Assets/js/version-loader.js?v=0a687fa2b5"></script>
     <script defer src="/Assets/js/ph-init.js?v=58fa141e89"></script>
-    <script defer src="/Assets/js/traum.js?v=a3524675f3"></script>
+    <script defer src="/Assets/js/traum.js?v=d4df3ae04a"></script>
 </head>
 <body class="tr">
 
@@ -71,7 +72,13 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
         <span>MyWorkLog</span>
     </a>
-    <a class="tr-nav__cta" href="#frage"><span>Zur Frage</span></a>
+    <div class="tr-nav__end">
+        <button type="button" class="tr-nav__ton" id="trTon" aria-pressed="false" aria-label="Ton einschalten" title="Ton einschalten">
+            <svg class="tr-ton-aus" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+            <svg class="tr-ton-an" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+        </button>
+        <a class="tr-nav__cta" href="#frage"><span>Zur Frage</span></a>
+    </div>
 </nav>
 
 <main>
@@ -115,6 +122,14 @@
                 </div>
                 <h3>Danke. Ehrlich.</h3>
                 <p>Dein Ja ist ein Stempel mehr im Pass. Mehr passiert nicht, versprochen.</p>
+                <div class="tr-share">
+                    <p class="tr-share__ask">Kennst du jemanden, der auch mitfiebern würde?</p>
+                    <button type="button" class="tr-share__btn" data-teilen>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg>
+                        <span>Seite teilen</span>
+                    </button>
+                    <span class="tr-share__ok" data-teilen-ok role="status">Link kopiert</span>
+                </div>
             </div>
             <div class="tr-ask__thanks tr-ask__thanks--nein" id="trDankNein">
                 <h3>Alles gut.</h3>
@@ -122,6 +137,7 @@
             </div>
             <p class="tr-ask__error" id="trFehler" role="alert">Die Antwort kam nicht an. Prüf die Verbindung und tipp noch einmal.</p>
 
+            <p class="tr-proof" id="trProof"><span class="tr-proof__dots" aria-hidden="true"></span><b class="tr-proof__n" id="trProofN" translate="no">0</b><span>Leute sind schon dabei.</span></p>
             <button type="button" class="tr-ask__change" id="trAendern"><span>Antwort ändern</span></button>
             <p class="tr-ask__note" id="trHinweis">Gezählt wird nur Ja oder Nein, ohne Namen und ohne IP-Adresse. Dein Browser merkt sich deine Antwort, damit sie nicht doppelt zählt.</p>
         </div>
@@ -176,10 +192,11 @@
             <li><a href="#st-peking" data-go="3"><span>Peking</span></a></li>
             <li><a href="#st-zhangjiajie" data-go="4"><span>Zhangjiajie</span></a></li>
             <li><a href="#st-shanghai" data-go="5"><span>Shanghai</span></a></li>
+            <li class="tr-rail__km" aria-hidden="true"><b id="trKm" translate="no">0</b><span>km geflogen</span></li>
         </ol>
 
         <div class="tr-stations" id="trStations">
-            <article class="tr-st" id="st-tokio" data-st="0" data-sky="#c4c3ec,#f2d4e6">
+            <article class="tr-st" id="st-tokio" data-st="0" data-geo="35.5494,139.7798" data-sky="#c4c3ec,#f2d4e6">
                 <div class="tr-st__text">
                     <span class="tr-st__cjk" lang="ja" translate="no">東京</span>
                     <h3>Tokio</h3>
@@ -192,7 +209,7 @@
                     <figure><img src="/Grafiken/traum/osaka-dotonbori-900.webp?v=0455d45cfe" width="900" height="1101" alt="Eine Wand aus Leuchtreklamen am Dōtonbori-Kanal in Osaka" loading="lazy" decoding="async"><figcaption>Dōtonbori, Osaka</figcaption></figure>
                 </div>
             </article>
-            <article class="tr-st" id="st-kyoto" data-st="1" data-sky="#f2d6d0,#f7e8de">
+            <article class="tr-st" id="st-kyoto" data-st="1" data-geo="35.0116,135.7681" data-sky="#f2d6d0,#f7e8de">
                 <div class="tr-st__text">
                     <span class="tr-st__cjk" lang="ja" translate="no">京都</span>
                     <h3>Kyoto</h3>
@@ -205,7 +222,7 @@
                     <figure><img src="/Grafiken/traum/kyoto-kiyomizu-900.webp?v=0c919d5497" width="900" height="554" alt="Der Kiyomizu-dera-Tempel zwischen rot gefärbten Herbstbäumen" loading="lazy" decoding="async"><figcaption>Kiyomizu-dera im Herbst</figcaption></figure>
                 </div>
             </article>
-            <article class="tr-st" id="st-fuji" data-st="2" data-sky="#bcd0f2,#f9d6cf">
+            <article class="tr-st" id="st-fuji" data-st="2" data-geo="35.5005,138.7553" data-sky="#bcd0f2,#f9d6cf">
                 <div class="tr-st__text">
                     <span class="tr-st__cjk" lang="ja" translate="no">富士</span>
                     <h3>Fuji</h3>
@@ -218,7 +235,7 @@
                     <figure><img src="/Grafiken/traum/miyajima-900.webp?v=655d274622" width="900" height="601" alt="Das rote Torii von Itsukushima steht bei Sonnenuntergang im Wasser" loading="lazy" decoding="async"><figcaption>Das Tor im Meer, Miyajima</figcaption></figure>
                 </div>
             </article>
-            <article class="tr-st" id="st-peking" data-st="3" data-sky="#ead7cf,#f4e4dc">
+            <article class="tr-st" id="st-peking" data-st="3" data-geo="39.9042,116.4074" data-sky="#ead7cf,#f4e4dc">
                 <div class="tr-st__text">
                     <span class="tr-st__cjk" lang="zh" translate="no">北京</span>
                     <h3>Peking</h3>
@@ -231,7 +248,7 @@
                     <figure><img src="/Grafiken/traum/mauer-badaling-900.webp?v=2e1e231a4d" width="900" height="577" alt="Die Große Mauer bei Badaling schlängelt sich über bewaldete Hügel" loading="lazy" decoding="async"><figcaption>Große Mauer bei Badaling</figcaption></figure>
                 </div>
             </article>
-            <article class="tr-st" id="st-zhangjiajie" data-st="4" data-sky="#c6e5da,#e6f1ec">
+            <article class="tr-st" id="st-zhangjiajie" data-st="4" data-geo="29.1171,110.4792" data-sky="#c6e5da,#e6f1ec">
                 <div class="tr-st__text">
                     <span class="tr-st__cjk" lang="zh" translate="no">张家界</span>
                     <h3>Zhangjiajie</h3>
@@ -244,7 +261,7 @@
                     <figure><img src="/Grafiken/traum/xian-terrakotta-900.webp?v=df0144045a" width="900" height="1287" alt="Reihen von Terrakotta-Kriegern in Xi’an" loading="lazy" decoding="async"><figcaption>Terrakotta-Armee, Xi’an</figcaption></figure>
                 </div>
             </article>
-            <article class="tr-st" id="st-shanghai" data-st="5" data-sky="#b7c0ec,#dccdf0">
+            <article class="tr-st" id="st-shanghai" data-st="5" data-geo="31.2304,121.4737" data-sky="#b7c0ec,#dccdf0">
                 <div class="tr-st__text">
                     <span class="tr-st__cjk" lang="zh" translate="no">上海</span>
                     <h3>Shanghai</h3>
@@ -261,12 +278,27 @@
     </div>
 </section>
 
+<!-- ═══ DER BRIEF ═══ Menschen unterstuetzen Menschen, nicht Seiten. Die Woerter
+     leuchten beim Scrollen nacheinander auf (traum.js); ohne Fahrt steht alles da. -->
+<section class="tr-brief" id="brief" aria-labelledby="trBriefTitle">
+    <div class="tr-brief__inner">
+        <h2 class="tr-brief__title" id="trBriefTitle">Ein paar Zeilen von mir</h2>
+        <div class="tr-brief__text" id="trBriefText">
+            <p>Ich bin Sven. Ich mache gerade meine Ausbildung und baue nebenbei MyWorkLog, allein, abends und am Wochenende.</p>
+            <p>Japan und China sind seit Jahren der Ort, an den meine Gedanken wandern, wenn ich eine Pause brauche. Für einen Azubi ist so eine Reise kein Wochenendtrip. Flug, Unterkunft und Zeit sind für mich gerade ein großes Ziel.</p>
+            <p>Warum diese Seite? Weil Träume, die niemand kennt, leise verschwinden. Wenn du Ja sagst, weiß ich, dass da jemand mitfiebert. Das ist mehr, als du denkst.</p>
+        </div>
+        <p class="tr-brief__sign"><span class="tr-brief__hand" translate="no">Sven</span></p>
+    </div>
+</section>
+
 <!-- ═══ DER PLAN ═══ senkrechtes Scrollen schiebt die Strecke waagerecht; die Route zeichnet sich, Stempel landen -->
 <section class="tr-plan" id="plan" aria-labelledby="trPlanTitle">
     <div class="tr-plan__stage">
         <div class="tr-plan__head">
             <h2 class="tr-plan__title" id="trPlanTitle">Der Plan</h2>
             <p class="tr-plan__lede">Sechs Stationen, noch ohne Datum. Die Reihenfolge steht, der Rest wächst mit jedem Ja.</p>
+            <p class="tr-plan__km"><b id="trPlanKm" translate="no">20.000</b><span>Kilometer, ab Frankfurt und wieder zurück</span></p>
         </div>
         <div class="tr-plan__track" id="trPlanTrack">
             <div class="tr-route" aria-hidden="true"><span class="tr-route__ink"></span></div>
@@ -321,14 +353,28 @@
 
 <!-- ═══ ABSCHLUSS ═══ zurueck in den Pastellhimmel -->
 <section class="tr-end" id="schluss" aria-labelledby="trEndTitle">
-    <div class="tr-end__inner">
-        <p class="tr-end__pre">Wer bis hier mitgeflogen ist:</p>
-        <h2 class="tr-end__title" id="trEndTitle">Wärst du dabei?</h2>
-        <p class="tr-end__lede">Die Frage oben dauert eine Sekunde. Danke, dass du mitgeflogen bist.</p>
-        <a class="tr-btn tr-btn--ink" href="#frage">
-            <span>Zur Frage</span>
-            <span class="tr-btn__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
-        </a>
+    <div class="tr-end__inner" id="trEnde" data-state="frage">
+        <div class="tr-end__offen">
+            <p class="tr-end__pre">Wer bis hier mitgeflogen ist:</p>
+            <h2 class="tr-end__title" id="trEndTitle">Wärst du dabei?</h2>
+            <p class="tr-end__lede">Die Frage oben dauert eine Sekunde. Danke, dass du mitgeflogen bist.</p>
+            <a class="tr-btn tr-btn--ink" href="#frage">
+                <span>Zur Frage</span>
+                <span class="tr-btn__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span>
+            </a>
+        </div>
+        <div class="tr-end__dabei">
+            <p class="tr-end__pre">Du hast Ja gesagt.</p>
+            <p class="tr-end__title">Du bist dabei.</p>
+            <p class="tr-end__lede">Danke. Wenn du jemanden kennst, der auch mitfiebern würde, schick die Seite weiter.</p>
+            <div class="tr-share tr-share--end">
+                <button type="button" class="tr-btn tr-btn--ink" data-teilen>
+                    <span>Seite teilen</span>
+                    <span class="tr-btn__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v13"/></svg></span>
+                </button>
+                <span class="tr-share__ok" data-teilen-ok role="status">Link kopiert</span>
+            </div>
+        </div>
         <p class="tr-end__sign">Sven, 2026</p>
     </div>
 

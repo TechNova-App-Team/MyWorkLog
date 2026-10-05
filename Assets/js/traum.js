@@ -23,6 +23,112 @@
     // weichere Kurve fuer die Kamerafahrt: Anfahren und Abbremsen ohne Ruck (auch die Beschleunigung startet bei 0)
     function sm2(x) { return x * x * x * (x * (x * 6 - 15) + 10); }
 
+    /* ═══ TON ═══ zum Einschalten (Schalter in der Leiste), alles synthetisch per
+       WebAudio — keine Dateien. Wusch beim Stationswechsel, ein Zupfen in der
+       japanischen In-Tonleiter beim Ankommen, ein dumpfer Schlag beim Stempel.
+       Browser erlauben Ton erst nach einer Geste, deshalb entsteht der Kontext
+       erst beim Klick; die Vorliebe merkt sich localStorage. */
+    var Ton = (function () {
+        var ctx = null, an = false, knopf = $('trTon');
+        var EN = root.lang === 'en';
+        function kontext() {
+            if (!ctx) { var A = window.AudioContext || window.webkitAudioContext; if (!A) return null; ctx = new A(); }
+            if (ctx.state === 'suspended') ctx.resume();
+            return ctx;
+        }
+        function setze(v) {
+            an = v; schreib('mwl_traum_ton', v ? 'an' : 'aus');
+            if (knopf) {
+                knopf.setAttribute('aria-pressed', v ? 'true' : 'false');
+                var t = v ? (EN ? 'Mute sound' : 'Ton ausschalten') : (EN ? 'Turn sound on' : 'Ton einschalten');
+                knopf.setAttribute('aria-label', t); knopf.title = t;
+            }
+        }
+        if (knopf) knopf.addEventListener('click', function () { setze(!an); if (an && kontext()) zupfen([0, 2, 4], 0); });
+        // Wer den Ton anhatte, hat ihn beim naechsten Besuch wieder — sobald er irgendwo hintippt
+        if (lies('mwl_traum_ton') === 'an') {
+            setze(true);
+            window.addEventListener('pointerdown', function einmal() { kontext(); window.removeEventListener('pointerdown', einmal); });
+        }
+        function bereit() { return an && ctx && ctx.state === 'running'; }
+        // In-Tonleiter auf A: A, B, D, E, F (+ Oktaven)
+        var LEITER = [220, 233.08, 293.66, 329.63, 349.23, 440, 466.16, 587.33, 659.25, 698.46];
+        function ton(freq, wann, dauer, laut) {
+            var o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+            o.type = 'triangle'; o2.type = 'sine'; o.frequency.value = freq; o2.frequency.value = freq * 2.003;
+            f.type = 'lowpass'; f.frequency.value = 2400;
+            g.gain.setValueAtTime(0.0001, wann);
+            g.gain.exponentialRampToValueAtTime(laut, wann + 0.008);
+            g.gain.exponentialRampToValueAtTime(0.0001, wann + dauer);
+            o.connect(f); o2.connect(f); f.connect(g); g.connect(ctx.destination);
+            o.start(wann); o2.start(wann); o.stop(wann + dauer + 0.05); o2.stop(wann + dauer + 0.05);
+        }
+        function zupfen(stufen, versatz) {
+            if (!bereit()) return;
+            var t = ctx.currentTime + 0.02;
+            stufen.forEach(function (st, i) { ton(LEITER[(st + versatz) % LEITER.length], t + i * 0.11, 1.4, 0.07); });
+        }
+        function rauschen(dauer) {
+            var b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dauer), ctx.sampleRate), d = b.getChannelData(0);
+            for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+            var q = ctx.createBufferSource(); q.buffer = b; return q;
+        }
+        return {
+            wusch: function () {
+                if (!bereit()) return;
+                var t = ctx.currentTime, q = rauschen(0.9), f = ctx.createBiquadFilter(), g = ctx.createGain();
+                f.type = 'bandpass'; f.Q.value = 0.9;
+                f.frequency.setValueAtTime(260, t); f.frequency.exponentialRampToValueAtTime(2200, t + 0.45); f.frequency.exponentialRampToValueAtTime(500, t + 0.85);
+                g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.3); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.88);
+                q.connect(f); f.connect(g); g.connect(ctx.destination); q.start(t); q.stop(t + 0.9);
+            },
+            station: function (i) { zupfen([0, 2, 4], i); },
+            stempel: function () {
+                if (!bereit()) return;
+                var t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+                o.type = 'sine'; o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(45, t + 0.22);
+                g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+                o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.32);
+                var q = rauschen(0.06), gq = ctx.createGain(); gq.gain.value = 0.12;
+                q.connect(gq); gq.connect(ctx.destination); q.start(t);
+                zupfen([0, 2, 4, 5], 3);
+            },
+        };
+    })();
+
+    /* ═══ KILOMETER ═══ Grosskreis-Entfernung aus den Koordinaten der Stationen
+       (data-geo), Start und Ende Frankfurt. Keine erfundene Zahl, sondern Geometrie. */
+    var FRA = [50.0379, 8.5622];
+    function kmZwischen(a, b) {
+        var R = 6371, r = Math.PI / 180, dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
+        var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * R * Math.asin(Math.sqrt(h));
+    }
+    var orte = [].map.call(document.querySelectorAll('.tr-st[data-geo]'), function (st) { return st.getAttribute('data-geo').split(',').map(Number); });
+    var KM_BIS = [];   // Kilometer bis zur Ankunft an Station i
+    orte.forEach(function (o, i) { KM_BIS.push((i ? KM_BIS[i - 1] : 0) + kmZwischen(i ? orte[i - 1] : FRA, o)); });
+    var KM_GESAMT = orte.length ? KM_BIS[KM_BIS.length - 1] + kmZwischen(orte[orte.length - 1], FRA) : 0;
+    function kmText(n) { return Math.round(n).toLocaleString(root.lang === 'en' ? 'en-GB' : 'de-DE'); }
+    (function () { var el = $('trPlanKm'); if (el && KM_GESAMT) el.textContent = kmText(Math.round(KM_GESAMT / 100) * 100); })();
+
+    /* ═══ TEILEN ═══ Web Share, sonst Link kopieren */
+    document.querySelectorAll('[data-teilen]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var url = location.origin + location.pathname;
+            var ok = btn.parentNode.querySelector('[data-teilen-ok]');
+            var daten = { title: document.title, text: (document.querySelector('meta[property="og:description"]') || {}).content || '', url: url };
+            function gemeldet(weg) { if (typeof mwlEvent === 'function') mwlEvent('traum_teilen', { weg: weg }); }
+            if (navigator.share) {
+                navigator.share(daten).then(function () { gemeldet('share'); }).catch(function () { /* abgebrochen */ });
+            } else if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function () {
+                    gemeldet('kopie');
+                    if (ok) { ok.classList.add('is-an'); setTimeout(function () { ok.classList.remove('is-an'); }, 2200); }
+                });
+            }
+        });
+    });
+
     /* ═══ DIE FRAGE ═══ laeuft in beiden Modi */
     (function frage() {
         var box = $('trAsk');
@@ -35,7 +141,11 @@
             schreib(KEY_ID, id);
             return id;
         }
-        function zeige(z) { box.setAttribute('data-state', z); }
+        var ende = $('trEnde');
+        function zeige(z) {
+            box.setAttribute('data-state', z);
+            if (ende && z !== 'fehler') ende.setAttribute('data-state', z === 'ja' ? 'ja' : 'frage');
+        }
         // Der Ja-Moment: der Block bebt, wenn der Hanko aufschlaegt (CSS-Stempel landet
         // nach ~330 ms), und die sechs Ortsstempel fliegen aus ihm heraus. Nur Deko,
         // deshalb aria-hidden und bei "Bewegung reduzieren" ganz weg.
@@ -85,7 +195,11 @@
             btn.addEventListener('click', function () {
                 var antwort = btn.getAttribute('data-antwort');
                 picks.forEach(function (b) { b.disabled = true; });
+                var warJa = lies(KEY_ANTWORT) === 'ja';
                 senden(antwort).then(function () {
+                    if (antwort === 'ja' && !warJa) zahlPlus(1);
+                    if (antwort !== 'ja' && warJa) zahlPlus(-1);
+                    if (antwort === 'ja') setTimeout(Ton.stempel, 330);
                     schreib(KEY_ANTWORT, antwort);
                     zeige(antwort);
                     if (antwort === 'ja') feuer();
@@ -102,6 +216,22 @@
         });
         var gemerkt = lies(KEY_ANTWORT);
         if (gemerkt === 'ja' || gemerkt === 'nein') zeige(gemerkt);
+
+        // Sozialer Beweis — nur die echte Zahl vom Worker, erst ab MIN_ZAHL sichtbar
+        // (eine "1" wirkt wie eine leere Party). Keine Schaetzung, kein Aufrunden.
+        var MIN_ZAHL = 3, zahl = null, proof = $('trProof');
+        function zeigeZahl() {
+            if (!proof || zahl === null) return;
+            proof.classList.toggle('is-an', zahl >= MIN_ZAHL);
+            $('trProofN').textContent = zahl.toLocaleString(root.lang === 'en' ? 'en-GB' : 'de-DE');
+            var dots = proof.querySelector('.tr-proof__dots');
+            if (dots && !dots.children.length) {
+                for (var i = 0; i < 4; i++) { var d = document.createElement('i'); d.style.setProperty('--r', (i % 2 ? 7 : -9) + 'deg'); dots.appendChild(d); }
+            }
+        }
+        function zahlPlus(n) { if (zahl !== null && !lokal) { zahl = Math.max(0, zahl + n); zeigeZahl(); } }
+        if (window.fetch) fetch(ENDPOINT + '?zahl=1').then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) { if (d && typeof d.ja === 'number') { zahl = d.ja; zeigeZahl(); } }).catch(function () {});
     })();
 
     // "Zur Frage" in der Leiste ausblenden, solange die Frage im Bild ist
@@ -122,6 +252,30 @@
     var mqTrack = $('trMarqueeTrack'), mqSet = mqTrack && mqTrack.querySelector('.tr-marquee__set');
     var planTrack = $('trPlanTrack'), stops = plan.querySelectorAll('.tr-stop'), stopList = plan.querySelector('.tr-stops');
     var N = stEls.length;
+    var kmEl = $('trKm'), kmAlt = -1;
+    var brief = $('brief'), woerter = [];
+
+    // Brief in Woerter zerlegen (nur hier, in der Fahrt) — sie leuchten beim Scrollen auf
+    if (brief) $('trBriefText').querySelectorAll('p').forEach(function (p) {
+        var teile = p.textContent.split(/(\s+)/);
+        p.textContent = '';
+        teile.forEach(function (t) {
+            if (!t.trim()) { p.appendChild(document.createTextNode(t)); return; }
+            var w = document.createElement('span'); w.className = 'tr-wort'; w.textContent = t;
+            p.appendChild(w); woerter.push(w);
+        });
+    });
+    var briefAn = -1;
+
+    // Kilometer bis zum Fortschritt p der Reise (Ankunft an Station i bei (i+0.3)/N)
+    function kmBei(p) {
+        var f = p * N - 0.3;
+        if (f <= -0.3) return 0;
+        if (f < 0) return KM_BIS[0] * sm((f + 0.3) / 0.3);
+        var i = Math.floor(f);
+        if (i >= N - 1) return KM_BIS[N - 1];
+        return mix(KM_BIS[i], KM_BIS[i + 1], sm(f - i));
+    }
 
     // Riesenworte in Buchstaben teilen (sie steigen einzeln auf)
     giants.forEach(function (g) {
@@ -178,11 +332,11 @@
     }
 
     /* ═══ Was ist im Bild ═══ nur das rechnen */
-    var sicht = { hero: true, reise: false, plan: false, marquee: false };
+    var sicht = { hero: true, reise: false, plan: false, marquee: false, brief: false };
     var io = new IntersectionObserver(function (es) {
         es.forEach(function (e) { sicht[e.target.getAttribute('data-sicht')] = e.isIntersecting; });
     }, { rootMargin: '10% 0px 10% 0px' });
-    [[hero, 'hero'], [reise, 'reise'], [plan, 'plan'], [marquee, 'marquee']].forEach(function (p) {
+    [[hero, 'hero'], [reise, 'reise'], [plan, 'plan'], [marquee, 'marquee'], [brief, 'brief']].forEach(function (p) {
         p[0].setAttribute('data-sicht', p[1]); io.observe(p[0]);
     });
 
@@ -208,8 +362,11 @@
             reiseIntro.classList.toggle('is-weg', p > 0.025);
             rail.classList.toggle('is-weg', p < 0.02 || p > 0.995);
             rail.style.setProperty('--fahrt', p.toFixed(4));
+            var km = Math.round(kmBei(p) / 10) * 10;
+            if (kmEl && km !== kmAlt) { kmAlt = km; kmEl.textContent = kmText(km); }
             var a = ys < rTop - 10 ? -1 : stationAktiv(p);
             if (a !== aktiv) {
+                if (a >= 0) { Ton.wusch(); setTimeout(function () { Ton.station(a); }, 380); }
                 aktiv = a;
                 stEls.forEach(function (s, i) { s.classList.toggle('is-on', i === a); });
                 giants.forEach(function (g, i) { g.classList.toggle('is-on', i === a); });
@@ -229,6 +386,13 @@
             mqOff += richtung * (1.1 + Math.min(18, Math.abs(vel) * 900));
             mqOff = ((mqOff % mqHalf) + mqHalf) % mqHalf;
             mqTrack.style.transform = 'translate3d(' + (-mqOff).toFixed(1) + 'px,0,0)';
+        }
+        // Brief: Woerter leuchten der Reihe nach auf, waehrend er durchs Bild zieht
+        if (sicht.brief && woerter.length) {
+            var bt = brief.offsetTop, bh = brief.offsetHeight;
+            var pb = clamp((ys + H * 0.72 - bt) / (bh * 0.75), 0, 1);
+            var bis = Math.round(pb * woerter.length);
+            if (bis !== briefAn) { briefAn = bis; woerter.forEach(function (w, i) { w.classList.toggle('is-an', i < bis); }); }
         }
         // Plan: waagerechter Schwenk, Route zeichnet sich, Stempel landen
         if (sicht.plan) {

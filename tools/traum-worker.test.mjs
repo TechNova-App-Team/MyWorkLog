@@ -81,6 +81,24 @@ ok(d2.total === 4, 'Wuensche/Umfrage im selben KV zaehlen nicht mit');
 
 ok((await call({ UMFRAGE_SECRET: 'geheim' }, post({ id: A, antwort: 'ja' }))).status === 500, 'fehlendes KV-Binding → 500');
 
+// Oeffentliche Zahl (?zahl): nur Ja, ohne Secret, ueber den Edge-Cache
+const ablage = new Map(); let lesungen = 0;
+globalThis.caches = { default: {
+  async match(r) { const v = ablage.get(r.url); return v ? new Response(v) : undefined; },
+  async put(r, res) { ablage.set(r.url, await res.text()); },
+} };
+const kvZaehlend = env.UMFRAGE, listeOrig = kvZaehlend.list.bind(kvZaehlend);
+kvZaehlend.list = (o) => { lesungen++; return listeOrig(o); };
+const zr = await call(env, new Request(URL_ + '?zahl=1'));
+const zd = await zr.json();
+ok(zr.status === 200 && zd.ja === 2, `?zahl liefert ohne Secret die Ja-Zahl (${zd.ja})`);
+ok(Object.keys(zd).join() === 'ja', '?zahl verraet nur die Ja-Zahl — kein Nein, keine Zeiten');
+ok(zr.headers.get('X-Test') === '1', '?zahl traegt CORS-Header');
+const vorher = lesungen;
+const zd2 = await (await call(env, new Request(URL_ + '?zahl=1&cb=123'))).json();
+ok(zd2.ja === 2 && lesungen === vorher, 'zweiter Abruf kommt aus dem Cache (kein KV-Lesen, ?cb= umgeht ihn nicht)');
+ok((await call(env, get())).status === 401, 'ohne ?zahl bleibt der Abruf geschuetzt');
+
 console.log(`\n${n - fails}/${n} bestanden`);
 if (n < 10) { console.log('✗ zu wenige Pruefungen gelaufen'); process.exit(1); }
 process.exit(fails ? 1 : 0);

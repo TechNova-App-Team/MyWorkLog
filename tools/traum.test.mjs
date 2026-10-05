@@ -49,14 +49,19 @@ ok(dom0.querySelectorAll('.tr-st').length === 6 && dom0.querySelectorAll('.tr-gi
     'sechs Stationen in Reise, Riesenschrift und Plan');
 
 /* ── 2. Die Frage (jsdom, ruhige Fassung) ───────────────── */
-function seite(host, gemerkt, fetchImpl) {
+function seite(host, gemerkt, fetchImpl, jaZahl = 0, extra) {
     const dom = new JSDOM(HTML.replace(/<script defer src="\/Assets\/js\/traum\.js[^"]*"><\/script>/, ''), {
         url: 'https://' + host + '/traum/', runScripts: 'outside-only', pretendToBeVisual: true,
     });
     const w = dom.window;
     w.document.documentElement.classList.add('tr-js', 'tr-flat');
     if (gemerkt) w.localStorage.setItem('mwl_traum_antwort', gemerkt);
-    w.fetch = fetchImpl || (() => Promise.reject(new Error('kein Netz im Test')));
+    // Der oeffentliche Zahl-Abruf (?zahl) ist Lesen, keine Stimme — getrennt beantworten
+    const stimme = fetchImpl || (() => Promise.reject(new Error('kein Netz im Test')));
+    w.fetch = (url, opt) => String(url).includes('?zahl')
+        ? Promise.resolve({ ok: true, json: () => Promise.resolve({ ja: jaZahl }) })
+        : stimme(url, opt);
+    if (extra) extra(w);
     w.eval(JS);
     return w;
 }
@@ -96,6 +101,42 @@ const warte = () => new Promise((r) => setTimeout(r, 20));
 {   // Wiederkehrer sieht seine Antwort
     const w = seite('myworklog.de', 'ja');
     ok(w.document.getElementById('trAsk').getAttribute('data-state') === 'ja', 'gemerkte Antwort steht beim naechsten Besuch da');
+}
+
+{   // Sozialer Beweis: erst ab 3 sichtbar, eigenes Ja zaehlt sofort mit
+    const w2 = seite('myworklog.de', null, null, 2);
+    await warte();
+    ok(!w2.document.getElementById('trProof').classList.contains('is-an'), 'bei 2 Ja bleibt der Zaehler unsichtbar (keine leere Party)');
+    const w5 = seite('myworklog.de', null, () => Promise.resolve({ ok: true }), 5);
+    await warte();
+    ok(w5.document.getElementById('trProof').classList.contains('is-an') && w5.document.getElementById('trProofN').textContent === '5', 'ab 3 steht die echte Zahl da (5)');
+    w5.document.querySelector('.tr-pick--ja').click();
+    await warte();
+    ok(w5.document.getElementById('trProofN').textContent === '6', 'eigenes Ja zaehlt sofort mit (6)');
+    ok(w5.document.getElementById('trEnde').getAttribute('data-state') === 'ja', 'Schluss spricht nach dem Ja persoenlich an');
+    const wl = seite('localhost', null, () => Promise.resolve({ ok: true }), 5);
+    await warte();
+    wl.document.querySelector('.tr-pick--ja').click();
+    await warte();
+    ok(wl.document.getElementById('trProofN').textContent === '5', 'von localhost zaehlt das eigene Ja auch optisch nicht mit');
+}
+{   // Teilen: ohne Web Share wird der saubere Link kopiert
+    let kopiert = null;
+    const w = seite('myworklog.de', 'ja', null, 0, (win) => {
+        Object.defineProperty(win.navigator, 'clipboard', { value: { writeText: (t) => { kopiert = t; return Promise.resolve(); } } });
+    });
+    w.history.replaceState(null, '', '/traum/?utm=x#frage');
+    w.document.querySelector('#trDankJa [data-teilen]').click();
+    await warte();
+    ok(kopiert === 'https://myworklog.de/traum/', 'kopiert wird der Link ohne Query und Anker (' + kopiert + ')');
+    ok(w.document.querySelector('#trDankJa [data-teilen-ok]').classList.contains('is-an'), '"Link kopiert" wird bestaetigt');
+}
+{   // Kilometer: aus echten Koordinaten, Hin- und Rueckflug
+    const w = seite('myworklog.de');
+    const km = Number(w.document.getElementById('trPlanKm').textContent.replace(/\D/g, ''));
+    ok(km > 18000 && km < 26000, 'Gesamtstrecke ist plausibel (' + km + ' km)');
+    const p = w.document.querySelector('#trBriefText p');
+    ok(p && !p.querySelector('.tr-wort'), 'ruhige Fassung laesst den Brief als normalen Text stehen');
 }
 
 console.log(`\n${n - fails}/${n} bestanden`);
