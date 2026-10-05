@@ -230,10 +230,11 @@
         function zeigeZahl() {
             if (!proof || zahl === null) return;
             var txt = zahl.toLocaleString(root.lang === 'en' ? 'en-GB' : 'de-DE');
-            proof.classList.toggle('is-an', zahl >= MIN_ZAHL);
+            // hidden im Markup: sonst lesen Crawler "0 sagen schon Ja" als Snippet
+            proof.hidden = zahl < MIN_ZAHL; proof.classList.toggle('is-an', zahl >= MIN_ZAHL);
             $('trProofN').textContent = txt;
             var hp = $('trHeroProof');   // dieselbe Zahl schon im Einstieg
-            if (hp) { hp.classList.toggle('is-an', zahl >= MIN_ZAHL); $('trHeroProofN').textContent = txt; }
+            if (hp) { hp.hidden = zahl < MIN_ZAHL; hp.classList.toggle('is-an', zahl >= MIN_ZAHL); $('trHeroProofN').textContent = txt; }
             var dots = proof.querySelector('.tr-proof__dots');
             if (dots && !dots.children.length) {
                 for (var i = 0; i < 4; i++) { var d = document.createElement('i'); d.style.setProperty('--r', (i % 2 ? 7 : -9) + 'deg'); dots.appendChild(d); }
