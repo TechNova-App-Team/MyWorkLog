@@ -36,6 +36,40 @@
             return id;
         }
         function zeige(z) { box.setAttribute('data-state', z); }
+        // Der Ja-Moment: der Block bebt, wenn der Hanko aufschlaegt (CSS-Stempel landet
+        // nach ~330 ms), und die sechs Ortsstempel fliegen aus ihm heraus. Nur Deko,
+        // deshalb aria-hidden und bei "Bewegung reduzieren" ganz weg.
+        var ORTE = [['東京', 'ja'], ['京都', 'ja'], ['富士', 'ja'], ['北京', 'zh'], ['张家界', 'zh'], ['上海', 'zh']];
+        function feuer() {
+            if (!Element.prototype.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+            var hanko = box.querySelector('.tr-hanko');
+            var flaeche = box.closest('.tr-ask');
+            setTimeout(function () {
+                if (flaeche) flaeche.animate([
+                    { transform: 'translate(0,0)' }, { transform: 'translate(-6px,4px)' }, { transform: 'translate(5px,-3px)' },
+                    { transform: 'translate(-3px,2px)' }, { transform: 'translate(0,0)' }
+                ], { duration: 380, easing: 'cubic-bezier(.23,1,.32,1)' });
+                if (!hanko) return;
+                var r = hanko.getBoundingClientRect(), b = box.getBoundingClientRect();
+                ORTE.forEach(function (o, i) {
+                    var s = document.createElement('span');
+                    s.className = 'tr-burst'; s.setAttribute('aria-hidden', 'true'); s.lang = o[1]; s.textContent = o[0];
+                    s.style.left = (r.left - b.left + r.width / 2) + 'px'; s.style.top = (r.top - b.top + r.height / 2) + 'px';
+                    box.appendChild(s);
+                    var w = (i / ORTE.length) * Math.PI * 2 - Math.PI / 2 + (Math.random() - 0.5) * 0.5;
+                    var weit = 150 + Math.random() * 110, dreh = (Math.random() - 0.5) * 70;
+                    // Kurven je Abschnitt, Gesamtzeit linear: eine Kurve auf der ganzen Animation
+                    // staucht die Zeit, das Ausblenden stand dann schon nach einem Drittel (gemessen).
+                    s.animate([
+                        { transform: 'translate(-50%,-50%) scale(.4) rotate(0deg)', opacity: 0, easing: 'cubic-bezier(.2,1.4,.4,1)' },
+                        { transform: 'translate(-50%,-50%) scale(1.15) rotate(' + dreh * 0.3 + 'deg)', opacity: 1, offset: 0.14, easing: 'cubic-bezier(.16,1,.3,1)' },
+                        { opacity: 1, offset: 0.72 },
+                        { transform: 'translate(calc(-50% + ' + Math.cos(w) * weit + 'px), calc(-50% + ' + (Math.sin(w) * weit + 40) + 'px)) scale(1) rotate(' + dreh + 'deg)', opacity: 0 }
+                    ], { duration: 1500 + i * 60, easing: 'linear', fill: 'forwards' })
+                     .onfinish = function () { s.remove(); };
+                });
+            }, 330);
+        }
         // Lokal nicht zaehlen: der Zaehler im Worker ist der echte, Testklicks von
         // localhost wuerden ihn verfaelschen. Mit ?echt=1 laesst es sich trotzdem pruefen.
         var lokal = /^(localhost|127\.0\.0\.1|::1|)$/.test(location.hostname) && !/[?&]echt=1/.test(location.search);
@@ -54,6 +88,7 @@
                 senden(antwort).then(function () {
                     schreib(KEY_ANTWORT, antwort);
                     zeige(antwort);
+                    if (antwort === 'ja') feuer();
                     if (typeof mwlEvent === 'function') mwlEvent('traum_antwort', { antwort: antwort });
                 }).catch(function () { zeige('fehler'); })
                   .then(function () { picks.forEach(function (b) { b.disabled = false; }); });
@@ -248,18 +283,24 @@
         // Foto als Flaeche: runde Ecken per Abstandsfeld, Biegung aus der
         // Scrollgeschwindigkeit, Dunst nach hinten (laeuft in den Himmel aus)
         // und Ausblenden ganz nah vor der Kamera (man fliegt hindurch).
+        // Tempo wird sichtbar: bei schnellem Scrollen streckt sich das Bild in
+        // Fahrtrichtung und die Farbkanaele laufen auseinander (uBend kommt aus der
+        // Scrollgeschwindigkeit). uHov: Zeiger liegt auf dem Bild → Dunst weg, heller.
         var VS = 'uniform float uBend; uniform vec2 uSize; varying vec2 vUv; varying float vDepth;\n' +
             'void main(){ vUv=uv; vec3 p=position; float nx=p.x/(uSize.x*0.5); float ny=p.y/(uSize.y*0.5);\n' +
             '  p.z -= uBend*(nx*nx*uSize.x*0.22 + ny*ny*uSize.y*0.06);\n' +
+            '  p.y *= 1.0 + abs(uBend)*0.18;\n' +
             '  vec4 mv=modelViewMatrix*vec4(p,1.0); vDepth=-mv.z; gl_Position=projectionMatrix*mv; }';
-        var FS = 'uniform sampler2D map; uniform vec2 uSize; uniform float uR; uniform float uAlpha; uniform float uFar; uniform vec3 uHaze;\n' +
+        var FS = 'uniform sampler2D map; uniform vec2 uSize; uniform float uR; uniform float uAlpha; uniform float uFar; uniform vec3 uHaze; uniform float uBend; uniform float uHov;\n' +
             'varying vec2 vUv; varying float vDepth;\n' +
             'float box(vec2 p, vec2 b, float r){ vec2 q=abs(p)-b+r; return length(max(q,0.0))+min(max(q.x,q.y),0.0)-r; }\n' +
             'void main(){ vec2 px=(vUv-0.5)*uSize; float d=box(px,uSize*0.5,uR); float aa=fwidth(d);\n' +
             '  float a=1.0-smoothstep(-aa,aa,d); if(a<=0.0) discard;\n' +
-            '  float fern=smoothstep(uFar*0.35,uFar,vDepth);\n' +
+            '  float fern=smoothstep(uFar*0.35,uFar,vDepth)*(1.0-uHov);\n' +
             '  a*= (1.0-fern) * smoothstep(3.0,11.0,vDepth) * uAlpha; if(a<=0.002) discard;\n' +
-            '  vec4 c=texture2D(map,vUv); c.rgb=mix(c.rgb,uHaze,fern*0.3);\n' +
+            '  vec2 rgb=vec2(0.0, uBend*0.035);\n' +
+            '  vec4 c=texture2D(map,vUv); c.r=texture2D(map,vUv+rgb).r; c.b=texture2D(map,vUv-rgb).b;\n' +
+            '  c.rgb=mix(c.rgb,uHaze,fern*0.3); c.rgb*=1.0+uHov*0.08;\n' +
             '  gl_FragColor=vec4(c.rgb,a);\n' +
             '  #include <colorspace_fragment>\n}';
         var bilder = [];
@@ -268,7 +309,7 @@
             var mat = new THREE.ShaderMaterial({
                 uniforms: {
                     map: { value: tex(src) }, uSize: { value: new THREE.Vector2(w, h) }, uR: { value: Math.min(w, h) * 0.06 },
-                    uBend: { value: 0 }, uAlpha: { value: 1 }, uFar: { value: 170 }, uHaze: { value: new THREE.Color(0xe9e6f6) },
+                    uBend: { value: 0 }, uAlpha: { value: 1 }, uFar: { value: 170 }, uHaze: { value: new THREE.Color(0xe9e6f6) }, uHov: { value: 0 },
                 },
                 vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false,
             });
@@ -289,7 +330,7 @@
             var asp = q[0] === 'osaka-dotonbori' ? 900 / 1101 : 1.5;
             var m = foto('/Grafiken/traum/' + q[0] + '-900.webp', q[4], asp);
             m.position.set(q[1], q[2], q[3]);
-            m.userData = { x: q[1], y: q[2], ph: i * 1.7, ry: (q[1] > 0 ? -1 : 1) * 0.18 };
+            m.userData = { x: q[1], y: q[2], z: q[3], ph: i * 1.7, ry: (q[1] > 0 ? -1 : 1) * 0.18 };
             scene.add(m);
             return m;
         });
@@ -338,7 +379,9 @@
         }
 
         var blick = new THREE.Vector3();
+        var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), T0 = -1;
         function zeichnen(T) {
+            if (T0 < 0) T0 = T;   // Warp-Auftakt zaehlt ab dem ersten Bild der Szene, nicht ab Seitenstart
             var asp = W / H;
             var z;
             if (ys < rTop) z = 30 - clamp(ys / heroH, 0, 1) * 14;
@@ -359,15 +402,21 @@
             function weichen(abstand) { return sm(seg(18 - abstand, 0, 13)); }
             function ausblenden(m, k) { m.material.uniforms.uAlpha.value = 1 - sm(seg(k, 0.25, 0.95)); }
 
-            wolke.forEach(function (m) {
+            wolke.forEach(function (m, i) {
                 var u = m.userData;
+                // Warp: die Wolke schiesst beim Laden gestaffelt aus 240 Einheiten Tiefe an
+                // ihren Platz, gebogen wie bei Lichtgeschwindigkeit — der erste Eindruck.
+                var e = sm2(clamp((T - T0 - 0.15 - i * 0.09) / 1.7, 0, 1));
+                m.position.z = u.z - (1 - e) * 240;
                 var k = weichen(cam.position.z - m.position.z);
                 // Hochformat: Wolke nach oben ziehen, sonst liegt sie auf Einleitung und Knoepfen
                 m.position.y = (SCHMAL ? u.y * 0.55 + 5 : u.y) + Math.sin(T * 0.6 + u.ph) * 0.45;
                 m.position.x = u.x * (SCHMAL ? 0.55 : 1) * (1 + k * 1.4);
                 m.rotation.y = u.ry + Math.sin(T * 0.4 + u.ph) * 0.05 + (u.x > 0 ? -1 : 1) * k * 0.8;
                 ausblenden(m, k);
-                m.material.uniforms.uBend.value = bend;
+                m.material.uniforms.uAlpha.value *= Math.min(1, e * 2.5);
+                m.material.uniforms.uBend.value = bend + (1 - e) * 0.8;
+                u.basis = 1;
             });
             stationen.forEach(function (s, i) {
                 var nah = Math.abs(cam.position.z - s.z) < 150;
@@ -375,7 +424,7 @@
                 if (!nah) return;
                 var k = weichen(cam.position.z - s.z);
                 s.main.position.set((SCHMAL ? 0 : 3.6) + s.sp * k * 20, (SCHMAL ? 0.6 : 0.8) + k * 1.5, 0);
-                s.main.scale.setScalar(mScale);
+                s.main.userData.basis = mScale;
                 s.main.rotation.y = -0.1 * s.sp + Math.sin(T * 0.35 + i) * 0.03 + s.sp * k * 0.9;
                 ausblenden(s.main, k);
                 s.main.rotation.x = Math.sin(T * 0.3 + i) * 0.02;
@@ -387,7 +436,28 @@
                     m.position.x = u.x * (SCHMAL ? 0.7 : 1) * (1 + kb * 1.6);
                     ausblenden(m, kb);
                     m.material.uniforms.uBend.value = bend;
+                    if (u.ry0 === undefined) u.ry0 = m.rotation.y;
+                    m.rotation.y = u.ry0;
+                    u.basis = 1;
                 });
+            });
+
+            // Zeiger (nur Maus): das Bild darunter kommt nach vorn, neigt sich zum
+            // Zeiger und verliert den Dunst. Raycaster prueft "visible" nicht selbst.
+            var treffer = null;
+            if (FEIN) {
+                ndc.set(tmx, -tmy); ray.setFromCamera(ndc, cam);
+                var kandidaten = bilder.filter(function (m) { return m.parent && m.parent.visible && m.material.uniforms.uAlpha.value > 0.5; });
+                var hit = ray.intersectObjects(kandidaten, false);
+                treffer = hit.length ? hit[0].object : null;
+            }
+            bilder.forEach(function (m) {
+                var u = m.userData;
+                u.h = mix(u.h || 0, m === treffer ? 1 : 0, 0.1);
+                m.scale.setScalar((u.basis || 1) * (1 + u.h * 0.07));
+                m.rotation.y += u.h * tmx * 0.22;
+                m.rotation.x = (m.rotation.x * (1 - u.h)) + u.h * tmy * 0.16;
+                m.material.uniforms.uHov.value = u.h;
             });
             renderer.render(scene, cam);
         }
