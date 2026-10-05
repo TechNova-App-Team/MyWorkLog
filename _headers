@@ -64,11 +64,20 @@
 /*.png
   Cache-Control: public, max-age=31536000, immutable
 
+# favicon.svg/.ico tragen keine Versionsnummer und werden unter gleichem Namen
+# ersetzt. Mit "immutable, 1 Jahr" behielten Browser nach dem neuen App-Symbol
+# (v8.1.7) das alte Icon — auf allen Unterseiten, die nur auf /favicon.ico
+# zurueckfielen (gemeldet 05.10.2026). Ein Tag + stilles Nachladen statt immutable.
+# Achtung: Pages VERBINDET die Werte aller passenden Regeln. Die Favicons treffen
+# nur diese Regeln (/* setzt kein Cache-Control); die Shortcut-SVGs unter
+# /Grafiken/ treffen zusaetzlich /Grafiken/* — dort stand schon vorher ein
+# doppelter Wert, beide ohne Versionsnummer, also ist kurz cachen ohnehin richtig.
+# Keine Regel fuer /favicon.svg allein anlegen: sie wuerde mit /*.svg verbunden.
 /*.svg
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
 /*.ico
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 
 /*.webp
   Cache-Control: public, max-age=31536000, immutable
