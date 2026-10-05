@@ -11,6 +11,7 @@
     var KEY_ANTWORT = 'mwl_traum_antwort';
     var root = document.documentElement;
     var GL = root.classList.contains('tr-gl');
+    var AUFNAHME = /[?&]aufnahme=1/.test(location.search);
     var FEIN = !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches);
 
     function $(id) { return document.getElementById(id); }
@@ -597,6 +598,8 @@
         var ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), T0 = -1;
         function zeichnen(T) {
             if (T0 < 0) T0 = T;   // Warp-Auftakt zaehlt ab dem ersten Bild der Szene, nicht ab Seitenstart
+            // Videoaufnahme (tools/traum-video.mjs, ?aufnahme=1): Warp wartet, bis die Aufnahme laeuft
+            if (AUFNAHME && !window.__traumLos) T0 = T;
             var asp = W / H;
             var z;
             if (ys < rTop) z = 30 - clamp(ys / heroH, 0, 1) * 14;
@@ -690,8 +693,25 @@
 
     /* ═══ SCHLEIFE ═══ */
     var rafId = null, t0 = 0, last = 0, rest = 0;
+    // Videoaufnahme: das Skript gibt den Takt vor (bildgenau statt Echtzeit) —
+    // Glaettung, Szene und alle CSS/WAAPI-Animationen ruecken je Aufruf um ms vor.
+    if (AUFNAHME) {
+        var vT = 0;
+        window.__traumTick = function (ms) {
+            vT += ms;
+            for (var n = 0; n < Math.round(ms / 16); n++) schritt();
+            dom();
+            if (G) G.zeichnen(vT / 1000);
+            document.getAnimations().forEach(function (a) {
+                // scroll-gesteuerte (animation-timeline: view()) folgen der Scrollposition selbst
+                if (a.playState === 'finished' || (a.timeline && a.timeline !== document.timeline)) return;
+                try { a.pause(); a.currentTime = (a.currentTime || 0) + ms; } catch (e) { /* unendlich ohne Zeitachse */ }
+            });
+        };
+    }
     function tick(now) {
         rafId = null;
+        if (AUFNAHME) return;
         if (document.hidden) return;
         if (!t0) t0 = now;
         rest += Math.min(100, last ? now - last : 16); last = now;
