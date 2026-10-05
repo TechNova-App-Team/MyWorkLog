@@ -249,6 +249,18 @@
     /* ═══ DOM-Teile der Fahrt ═══ */
     var hero = $('trHero'), reise = $('reise'), plan = $('plan'), marquee = $('trMarquee');
     var lines = hero.querySelectorAll('.tr-line');
+    // Titel in Buchstaben zerlegen: sie weichen dem Mauszeiger aus und federn
+    // zurueck (nur feiner Zeiger). Text bleibt im h1, nur in Spans gefasst.
+    var buchstaben = [];
+    setTimeout(function () { hero.classList.add('is-frei'); }, 1700);   // Aufstieg (1,2 s + 0,2 s Versatz) ist durch
+    if (FEIN) hero.querySelectorAll('.tr-mask > span').forEach(function (sp) {
+        var t = sp.textContent; sp.textContent = '';
+        t.split('').forEach(function (ch) {
+            if (ch === ' ') { sp.appendChild(document.createTextNode(' ')); return; }
+            var b = document.createElement('span'); b.className = 'tr-bu'; b.textContent = ch;
+            sp.appendChild(b); buchstaben.push({ el: b, x: 0, y: 0, r: 0 });
+        });
+    });
     var sky = $('trSky'), cv = $('trGl');
     var stEls = reise.querySelectorAll('.tr-st'), giants = reise.querySelectorAll('.tr-giant');
     var railLinks = reise.querySelectorAll('.tr-rail a'), rail = $('trRail'), reiseIntro = $('trReiseIntro');
@@ -358,6 +370,19 @@
         if (sicht.hero) {
             var pH = clamp(ys / heroH, 0, 1.2);
             lines.forEach(function (l) { l.style.transform = 'translate3d(' + (Number(l.getAttribute('data-dir')) * pH * 22).toFixed(3) + 'vw,0,0)'; });
+            if (buchstaben.length) {
+                // erst alle lesen, dann schreiben; Ziel = weg vom Zeiger, Feder zieht zurueck
+                var px = (tmx + 1) / 2 * W, py = (tmy + 1) / 2 * H, R = Math.min(190, W * 0.14);
+                var mitte = buchstaben.map(function (b) { var r = b.el.getBoundingClientRect(); return [r.left + r.width / 2 - b.x, r.top + r.height / 2 - b.y]; });
+                buchstaben.forEach(function (b, i) {
+                    var dx = mitte[i][0] - px, dy = mitte[i][1] - py, d = Math.sqrt(dx * dx + dy * dy) || 1;
+                    var k = d < R ? Math.pow(1 - d / R, 2) : 0;
+                    var zx = dx / d * k * 34, zy = dy / d * k * 26, zr = (dx > 0 ? 1 : -1) * k * 9;
+                    b.x += (zx - b.x) * 0.16; b.y += (zy - b.y) * 0.16; b.r += (zr - b.r) * 0.16;
+                    if (Math.abs(b.x) + Math.abs(b.y) > 0.05 || k) b.el.style.transform = 'translate3d(' + b.x.toFixed(2) + 'px,' + b.y.toFixed(2) + 'px,0) rotate(' + b.r.toFixed(2) + 'deg)';
+                    else if (b.el.style.transform) b.el.style.transform = '';
+                });
+            }
         }
         // Reise
         var p = reiseP();
