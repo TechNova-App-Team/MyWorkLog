@@ -1,0 +1,342 @@
+/* ki-dashboard.css — /ki-dashboard/ (internes Werkzeug)
+   Eigene Tokens: Standalone-Seiten laden components/core/core.css nicht.
+
+   Ergebnis-Farben (geliefert / gerettet / fehlgeschlagen) sind Status-Farben
+   und mit dem dataviz-Validator gegen den dunklen Grund geprueft (07.10.2026,
+   alle Checks PASS, schlechtestes Nachbarpaar CVD ΔE 8,4). Die naheliegenden
+   Tailwind-Toene (#34d399/#fbbf24/#f87171) liegen ausserhalb des
+   Helligkeitsbands; Rot neben Bernstein war fuer Deuteranopie zu nah (ΔE 5,4),
+   deshalb das Rot Richtung Magenta. Nicht "vereinheitlichen". */
+
+/* Grundfarben aus components/core/core.css (Projektregel: keine eigenen
+   Hex-Werte auf Standalone-Seiten), hier nur unter kurzen Namen gemischt.
+   Fest sind allein die drei Status-Farben darunter. */
+:root {
+    --bg: var(--bg-deep);
+    --flaeche: color-mix(in srgb, var(--text-main) 4%, var(--bg-deep));
+    --flaeche-2: color-mix(in srgb, var(--text-main) 8%, var(--bg-deep));
+    --rand: color-mix(in srgb, var(--text-main) 9%, transparent);
+    --rand-stark: color-mix(in srgb, var(--text-main) 16%, transparent);
+    --text: var(--text-main);
+    --text-2: var(--text-muted);
+    --text-3: color-mix(in srgb, var(--text-muted) 65%, var(--bg-deep));
+    --ok: #12976d;
+    --rettung: #b88a12;
+    --fehler: #c9457a;
+    --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'Geist Mono', ui-monospace, 'Menlo', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* .kd-login/.kd-tip setzen display — ohne !important schluege das [hidden]. */
+[hidden] { display: none !important; }
+button, input, select, textarea, optgroup { font-family: inherit; }
+
+/* core.css setzt fuer die App-Shell body { display:flex } — hier Block. */
+body {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.kd { max-width: 1120px; margin: 0 auto; padding: 40px 24px 64px; }
+
+/* ── Kopf ── */
+.kd-kopf {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+.kd-kopf h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.025em; }
+.kd-unter { margin-top: 6px; max-width: 62ch; font-size: 0.9rem; color: var(--text-2); }
+.kd-zurueck {
+    flex-shrink: 0;
+    font-size: 0.86rem;
+    color: var(--text-2);
+    text-decoration: none;
+    padding: 8px 14px;
+    border: 1px solid var(--rand);
+    border-radius: 999px;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+.kd-zurueck:hover { color: var(--text); border-color: var(--rand-stark); }
+
+/* ── Anmeldung ── */
+.kd-login {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    max-width: 520px;
+    padding: 20px;
+    background: var(--flaeche);
+    border: 1px solid var(--rand);
+    border-radius: 16px;
+}
+.kd-feld { flex: 1 1 240px; display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; color: var(--text-2); }
+.kd-feld input {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 16px;   /* unter 16 px zoomt iOS beim Fokus */
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--rand-stark);
+    border-radius: 8px;
+    outline: none;
+}
+.kd-feld input:focus { border-color: rgba(var(--primary-rgb), 0.8); }
+.kd-meldung { flex-basis: 100%; font-size: 0.86rem; color: var(--fehler); }
+
+.kd-knopf {
+    height: 40px;
+    padding: 0 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--bg-deep);
+    background: var(--primary-light, color-mix(in srgb, var(--primary) 70%, var(--text-main)));
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.kd-knopf:hover { background: color-mix(in srgb, var(--primary) 55%, var(--text-main)); }
+.kd-knopf:disabled { opacity: 0.6; cursor: wait; }
+.kd-knopf--leise {
+    height: 34px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--flaeche-2);
+    border: 1px solid var(--rand);
+}
+.kd-knopf--leise:hover { background: rgba(var(--primary-rgb), 0.14); }
+
+/* ── Leiste ── */
+.kd-leiste { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+.kd-seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    background: var(--flaeche);
+    border: 1px solid var(--rand);
+    border-radius: 999px;
+}
+.kd-seg button {
+    height: 28px;
+    padding: 0 14px;
+    font-size: 0.84rem;
+    color: var(--text-2);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.kd-seg button:hover { color: var(--text); }
+.kd-seg button.aktiv { color: var(--text); background: var(--flaeche-2); box-shadow: inset 0 0 0 1px var(--rand-stark); }
+.kd-stand { font-size: 0.8rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.kd-abmelden {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--text-3);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.kd-abmelden:hover { color: var(--text-2); }
+
+/* ── Kennzahlen ── */
+.kd-kpis {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1px;
+    margin-bottom: 20px;
+    background: var(--rand);
+    border: 1px solid var(--rand);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.kd-kpi { padding: 16px 18px 18px; background: var(--flaeche); min-width: 0; }
+.kd-kpi-name { font-size: 0.8rem; color: var(--text-2); }
+.kd-kpi-wert {
+    margin-top: 6px;
+    font-size: 1.7rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+.kd-kpi-zusatz { margin-top: 4px; font-size: 0.78rem; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+/* ── Karten ── */
+.kd-karte {
+    padding: 18px 20px 20px;
+    margin-bottom: 20px;
+    background: var(--flaeche);
+    border: 1px solid var(--rand);
+    border-radius: 16px;
+    min-width: 0;
+}
+.kd-karte-kopf {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 16px;
+    margin-bottom: 14px;
+}
+.kd-karte-kopf h2 { font-size: 0.98rem; font-weight: 600; letter-spacing: -0.01em; }
+.kd-hinweis { font-size: 0.78rem; color: var(--text-3); }
+.kd-zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.kd-zwei > .kd-karte { margin-bottom: 20px; }
+
+.kd-legende { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--text-2); }
+.kd-legende span { display: inline-flex; align-items: center; gap: 6px; }
+.kd-legende i { width: 10px; height: 10px; border-radius: 3px; }
+.kd-legende i.ok, .kd-seg-ok { background: var(--ok); }
+.kd-legende i.rettung, .kd-seg-rettung { background: var(--rettung); }
+.kd-legende i.fehler, .kd-seg-fehler { background: var(--fehler); }
+
+/* ── Saeulen ── */
+.kd-chart { position: relative; }
+.kd-saeulen {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    align-items: end;
+    gap: 3px;
+    height: 180px;
+    padding-top: 18px;
+    border-bottom: 1px solid var(--rand-stark);
+}
+.kd-gitter {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1px dashed var(--rand);
+    pointer-events: none;
+}
+.kd-gitter span {
+    position: absolute;
+    right: 0;
+    top: -16px;
+    font-size: 0.7rem;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+}
+/* Trefferflaeche = ganze Spalte, nicht nur die Saeule (dataviz: Hit-Target
+   groesser als die Marke). */
+.kd-spalte {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 2px;
+    cursor: default;
+    outline: none;
+    border-radius: 4px 4px 0 0;
+}
+.kd-spalte:hover, .kd-spalte:focus-visible { background: rgba(255, 255, 255, 0.03); }
+.kd-spalte:focus-visible { box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.8); }
+/* Duenne Marke in breiter Trefferflaeche: bei 7 Tagen waeren volle Spalten
+   140 px breite Bloecke. */
+.kd-spalte { align-items: center; }
+.kd-spalte > i { display: block; width: min(100%, 36px); min-height: 0; }
+.kd-spalte > i:last-child { border-radius: 4px 4px 0 0; }
+.kd-seg-tokens { background: var(--primary); }
+.kd-achse {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 3px;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    color: var(--text-3);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+.kd-achse span { overflow: hidden; white-space: nowrap; }
+.kd-leer { padding: 28px 0; font-size: 0.88rem; color: var(--text-3); text-align: center; }
+
+/* ── Waagerechte Balken ── */
+.kd-hbars { display: flex; flex-direction: column; gap: 12px; }
+.kd-hbar-kopf { display: flex; justify-content: space-between; gap: 12px; font-size: 0.86rem; }
+.kd-hbar-kopf span:last-child { color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kd-hbar-spur { margin-top: 5px; height: 6px; border-radius: 999px; background: var(--flaeche-2); overflow: hidden; }
+.kd-hbar-spur > i { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+
+/* ── Tabellen ── */
+.kd-tabelle-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+.kd-tabelle { width: 100%; border-collapse: collapse; font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+.kd-tabelle th {
+    padding: 0 12px 8px 0;
+    font-weight: 500;
+    font-size: 0.78rem;
+    color: var(--text-3);
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--rand-stark);
+}
+.kd-tabelle td {
+    padding: 9px 12px 9px 0;
+    border-bottom: 1px solid var(--rand);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.kd-tabelle tr:last-child td { border-bottom: 0; }
+.kd-tabelle .zahl { text-align: right; }
+.kd-tabelle .mono { font-family: var(--mono); font-size: 0.78rem; color: var(--text-2); }
+.kd-tabelle .leise { color: var(--text-3); }
+.kd-status { display: inline-flex; align-items: center; gap: 6px; }
+.kd-status::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.kd-status.ok { color: var(--ok); }
+.kd-status.rettung { color: var(--rettung); }
+.kd-status.fehler { color: var(--fehler); }
+.kd-status span { color: var(--text); }
+
+/* ── Tooltip ── */
+.kd-tip {
+    position: fixed;
+    z-index: 50;
+    max-width: 260px;
+    padding: 9px 11px;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text);
+    background: color-mix(in srgb, var(--text-main) 12%, var(--bg-deep));
+    border: 1px solid var(--rand-stark);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+}
+.kd-tip b { display: block; margin-bottom: 3px; font-weight: 600; }
+.kd-tip .zeile { display: flex; align-items: center; gap: 6px; color: var(--text-2); }
+.kd-tip .zeile i { width: 8px; height: 8px; border-radius: 2px; }
+
+/* ── Schmal ── */
+@media (max-width: 1023px) {
+    .kd-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    .kd { padding: 24px 16px 48px; }
+    .kd-kopf { flex-direction: column; gap: 14px; }
+    .kd-zwei { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .kd-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kd-karte { padding: 16px; }
+    .kd-tabelle-wrap { margin: 0 -16px; padding: 0 16px; }
+    .kd-abmelden { margin-left: 0; }
+}
+@media (max-width: 360px) {
+    .kd-kpi-wert { font-size: 1.4rem; }
+}

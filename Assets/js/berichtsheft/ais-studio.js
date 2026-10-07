@@ -2680,6 +2680,7 @@ async function regenerateDayCloud(dayIdx) {
         _updateRateLimitUI();
 
         const result = await generateWithCloud(state.selectedProfession, {
+            art: 'tag',
             yearNum,
             umfang,
             form,

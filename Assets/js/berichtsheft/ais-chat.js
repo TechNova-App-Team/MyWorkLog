@@ -836,7 +836,7 @@ async function denken(nachricht, hinweis) {
         const res = await fetch(proxy.replace(/\/$/, '') + '/', {
             method: 'POST',
             signal: ctrl.signal,
-            headers: { 'Content-Type': 'application/json', ...(KC ? { 'X-MWL-Geraet': KC.geraetId() } : {}) },
+            headers: { 'Content-Type': 'application/json', 'X-MWL-Art': 'chat', ...(KC ? { 'X-MWL-Geraet': KC.geraetId() } : {}) },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: systemPrompt() }] },
                 contents: runden,

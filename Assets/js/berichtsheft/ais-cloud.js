@@ -542,6 +542,8 @@ async function generateWithCloud(professionId, options) {
         'Content-Type': 'application/json',
         'X-MyWorkLog-Token': 'FISI-Berichtsheft-2026',
         'X-MWL-Geraet': geraetId(),
+        // Nur fuer das interne Protokoll (/ki-dashboard/): Woche oder einzelner Tag.
+        'X-MWL-Art': options && options.art === 'tag' ? 'tag' : 'woche',
     };
 
     const response = await fetch(CLOUD_PROXY, {
