@@ -48,50 +48,94 @@ function verbinde(kern) {
 const CLOUD_PROXY = 'https://ai-proxy.myworklog.de';
 
 // ═══════════════════════════════════════
-// CLIENT-SIDE RATE LIMIT
+// TAGESKONTINGENT — zaehlt der SERVER (seit v8.1.16)
 // ═══════════════════════════════════════
-// Schützt den geteilten OpenRouter Free-Tier Pool (1000 Credits/Tag,
-// 13 Modelle geteilt). Limit gilt für ALLE Endpoints (auch localhost),
-// damit Production-Bedingungen reproduzierbar sind.
-// Tweak hier wenn nötig:
-const RATE_LIMIT_DAILY = 20;     // Generationen pro User pro Tag
-const RATE_LIMIT_COOLDOWN_MS = 10000;  // Pause zwischen zwei Calls
-const RATE_LIMIT_STORAGE_KEY = 'tg_ai_rl';
+// Der Proxy fuehrt je Geraet ein Tagesbudget in Tokens (workers/ai-proxy,
+// Block KONTINGENT). Der Browser zaehlt nichts mehr selbst; er merkt sich nur
+// den letzten Stand, den der Server gemeldet hat (Kopf X-MWL-Kontingent bzw.
+// GET /kontingent), um ihn anzuzeigen. Bis v8.1.15 stand hier ein Zaehler
+// "20 am Tag" im localStorage — einmal loeschen, und ein Geraet konnte den
+// gemeinsamen OpenRouter-Topf fuer alle leeren.
+// Generator UND Chat ziehen aus demselben Kontingent.
+const RATE_LIMIT_COOLDOWN_MS = 10000;  // Doppelklick-Schutz, kein Kontingent
+const KONTINGENT_SPEICHER = 'mwl_ki_kontingent';
+const GERAET_SPEICHER = 'mwl_ki_geraet';
 
-const RateLimit = {
-    _todayKey() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    },
-    _read() {
+// Altbestand der browserseitigen Zaehler — wird nirgends mehr gelesen.
+try { localStorage.removeItem('tg_ai_rl'); localStorage.removeItem('bh_chat_rl'); } catch (e) { }
+
+// Zufalls-ID dieses Geraets. Der Server sieht sie nur gehasht mit einem
+// Tagessalz; sie ist kein Konto und verbindet keine Tage miteinander.
+function geraetId() {
+    try {
+        let id = localStorage.getItem(GERAET_SPEICHER);
+        if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+            if (crypto.randomUUID) id = crypto.randomUUID();
+            else {
+                const b = crypto.getRandomValues(new Uint8Array(16));
+                b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+                const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
+                id = h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+            }
+            localStorage.setItem(GERAET_SPEICHER, id);
+        }
+        return id;
+    } catch (e) { return ''; }
+}
+
+const Kontingent = {
+    // Der Server rechnet den Tag in Berliner Zeit — hier genauso, sonst gaelte
+    // ein gemerkter Stand zwischen 0 und 2 Uhr noch als "heute".
+    _tag() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' }); },
+    stand() {
         try {
-            const raw = localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
-            if (!raw) return null;
-            const data = JSON.parse(raw);
-            if (data.date !== this._todayKey()) return null; // stale day → reset
-            return data;
+            const d = JSON.parse(localStorage.getItem(KONTINGENT_SPEICHER) || 'null');
+            return d && d.tag === this._tag() && d.limit > 0 ? d : null;
         } catch (e) { return null; }
     },
-    _write(data) {
-        try { localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(data)); } catch (e) { }
+    _schreib(verbraucht, limit, erschoepft) {
+        const d = { tag: this._tag(), verbraucht, limit, erschoepft: !!erschoepft || verbraucht >= limit };
+        try { localStorage.setItem(KONTINGENT_SPEICHER, JSON.stringify(d)); } catch (e) { }
+        try { window.dispatchEvent(new CustomEvent('mwl-kontingent', { detail: d })); } catch (e) { }
     },
+    ausKopf(response) {
+        const v = response && response.headers && response.headers.get('X-MWL-Kontingent');
+        const m = v && /^(\d+)\/(\d+)$/.exec(v);
+        if (m) this._schreib(+m[1], +m[2], false);
+    },
+    erschoepft() {
+        const d = this.stand();
+        this._schreib(d ? d.limit : 1, d ? d.limit : 1, true);
+    },
+    async abrufen() {
+        try {
+            const r = await fetch(CLOUD_PROXY + '/kontingent', { headers: { 'X-MWL-Geraet': geraetId() }, cache: 'no-store' });
+            if (!r.ok) return null;
+            const j = await r.json();
+            if (j && j.limit > 0) this._schreib(j.verbraucht | 0, j.limit, j.erschoepft);
+            return this.stand();
+        } catch (e) { return null; }
+    },
+};
+
+const RateLimit = {
+    _lastTs: 0,
     status() {
-        const data = this._read() || { date: this._todayKey(), count: 0, lastTs: 0 };
-        const now = Date.now();
-        const cooldownMs = Math.max(0, (data.lastTs + RATE_LIMIT_COOLDOWN_MS) - now);
+        const k = Kontingent.stand();
         return {
-            count: data.count,
-            remaining: Math.max(0, RATE_LIMIT_DAILY - data.count),
-            cooldownMs,
+            cooldownMs: Math.max(0, (this._lastTs + RATE_LIMIT_COOLDOWN_MS) - Date.now()),
+            bekannt: !!k,
+            erschoepft: !!(k && k.erschoepft),
+            rest: k ? Math.max(0, 1 - k.verbraucht / k.limit) : null,   // 0–1
         };
     },
     check() {
         const s = this.status();
-        if (s.remaining <= 0) return {
+        if (s.erschoepft) return {
             ok: false, reason: 'daily',
             message: L(
-                `Tageslimit erreicht (${RATE_LIMIT_DAILY} Generationen). Morgen geht's weiter — nutze solange die lokale Engine.`,
-                `Daily limit reached (${RATE_LIMIT_DAILY} generations). It resets tomorrow — use the local engine until then.`),
+                'Dein KI-Kontingent für heute ist aufgebraucht. Morgen geht es weiter — bis dahin schreibt die lokale Engine.',
+                'Your AI quota for today is used up. It resets tomorrow — the local engine writes until then.'),
         };
         if (s.cooldownMs > 0) return {
             ok: false, reason: 'cooldown',
@@ -102,14 +146,8 @@ const RateLimit = {
         };
         return { ok: true };
     },
-    increment() {
-        const today = this._todayKey();
-        const data = this._read() || { date: today, count: 0, lastTs: 0 };
-        data.date = today;
-        data.count += 1;
-        data.lastTs = Date.now();
-        this._write(data);
-    },
+    // Nur noch der Doppelklick-Schutz. Was verbraucht wurde, meldet der Server.
+    increment() { this._lastTs = Date.now(); },
 };
 
 // Regelwerk je Schreibform fuer den Cloud-Prompt.
@@ -503,6 +541,7 @@ async function generateWithCloud(professionId, options) {
     const fetchHeaders = {
         'Content-Type': 'application/json',
         'X-MyWorkLog-Token': 'FISI-Berichtsheft-2026',
+        'X-MWL-Geraet': geraetId(),
     };
 
     const response = await fetch(CLOUD_PROXY, {
@@ -510,33 +549,35 @@ async function generateWithCloud(professionId, options) {
         headers: fetchHeaders,
         body: JSON.stringify(requestBody),
     });
+    Kontingent.ausKopf(response);
 
     if (!response.ok) {
         const rawText = await response.text().catch(() => '(kein Body)');
         console.error(`[AIStudio] Worker ${response.status} – Raw response:`, rawText);
         let errMsg = response.statusText || String(response.status);
+        let errData = null;
         try {
-            const errData = JSON.parse(rawText);
+            errData = JSON.parse(rawText);
             errMsg = errData?.error?.message || errData?.message || errMsg;
         } catch (_) { }
+        // .grund statt Textsuche: die Meldung ist auf /en/ englisch, ein
+        // includes('Tageslimit') traf dort nie.
+        const fehler = (msg, grund) => Object.assign(new Error(msg), { grund });
+        if (response.status === 429 && errData && errData.kontingent) {
+            Kontingent.erschoepft();
+            throw fehler(L('Dein KI-Kontingent für heute ist aufgebraucht — morgen geht es weiter.',
+                'Your AI quota for today is used up — it resets tomorrow.'), 'tageslimit');
+        }
         if (response.status === 429) {
             // Retry-After (in s) unterscheidet Burst-Limit (10-Min-Window) von Tageslimit.
             const retryAfter = parseInt(response.headers.get('Retry-After') || '0', 10);
             if (retryAfter > 0 && retryAfter < 900) {
-                throw new Error(L(`Burst-Limit erreicht — in ca. ${Math.ceil(retryAfter / 60)} Min wieder verfügbar.`, `Burst limit reached — available again in about ${Math.ceil(retryAfter / 60)} min.`));
+                throw fehler(L(`Burst-Limit erreicht — in ca. ${Math.ceil(retryAfter / 60)} Min wieder verfügbar.`, `Burst limit reached — available again in about ${Math.ceil(retryAfter / 60)} min.`), 'burst_limit');
             }
-            // Tageslimit: Client-Counter auf MAX synchronisieren, damit UI das Limit zeigt.
-            try {
-                const _td = new Date();
-                localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify({
-                    date: `${_td.getFullYear()}-${String(_td.getMonth() + 1).padStart(2, '0')}-${String(_td.getDate()).padStart(2, '0')}`,
-                    count: RATE_LIMIT_DAILY,
-                    lastTs: Date.now(),
-                }));
-            } catch (e) { }
-            throw new Error('Tageslimit erreicht — morgen geht\'s weiter, nutze solange die lokale Engine.');
+            throw fehler(L('Die Cloud-KI nimmt gerade keine Anfragen an — es läuft die lokale Engine.',
+                'Cloud AI is not accepting requests right now — the local engine is running.'), 'burst_limit');
         }
-        if (response.status === 403) throw new Error(L('Proxy nicht erreichbar (403). Worker-URL oder CORS prüfen.', 'Proxy unreachable (403). Check the worker URL or CORS.'));
+        if (response.status === 403) throw fehler(L('Proxy nicht erreichbar (403). Worker-URL oder CORS prüfen.', 'Proxy unreachable (403). Check the worker URL or CORS.'), 'proxy_offline');
         throw new Error(`Cloud-KI Fehler (${response.status}): ${errMsg}`);
     }
 
@@ -896,7 +937,7 @@ async function generateWithCloud(professionId, options) {
 
 return {
     verbinde, GEBRAUCHT,
-    CLOUD_PROXY, RATE_LIMIT_DAILY, RATE_LIMIT_COOLDOWN_MS, RateLimit,
+    CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId,
     CLOUD_FORM, CLOUD_UMFANG, _buildCloudPrompt,
     _repairJSON, _sliceRootJSON, _deEscapeStructural,
     generateWithCloud,

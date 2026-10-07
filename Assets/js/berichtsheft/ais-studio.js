@@ -27,7 +27,7 @@ const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     UNIVERSAL_ACTIVITIES_EXTENDED, FORM_PATTERNS, partizipDoppelt, alsFliesstext,
     UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, schulSaetze, LERN_AKTIVITAETEN, UMFANG_COUNT,
     PLAN_TAG_INDEX, _parseWochenplan, _planEintrag } = window.AIS_SPRACHE;
-const { RATE_LIMIT_DAILY, RateLimit, generateWithCloud } = window.AIS_CLOUD;
+const { RateLimit, Kontingent, generateWithCloud } = window.AIS_CLOUD;
 
 
 // ═══════════════════════════════════════
@@ -1238,6 +1238,8 @@ function init() {
     // Rate-Limit Counter initial befüllen (auch wenn UI noch nicht offen ist —
     // _updateRateLimitUI gettet das DOM defensiv)
     setTimeout(_updateRateLimitUI, 50);
+    // Der Server meldet den Stand nach jeder Anfrage (auch aus dem Chat).
+    if (typeof window.addEventListener === 'function') window.addEventListener('mwl-kontingent', () => _updateRateLimitUI());
     console.log(`[AI Studio] Berichtsheft-Assistent v${VERSION} — ${Object.keys(PROFESSIONS).length} Berufe geladen.`);
 }
 
@@ -1252,6 +1254,9 @@ function open() {
     if (panel) panel.classList.add('open');
     if (backdrop) backdrop.classList.add('open');
     _updateRateLimitUI();
+    // Beim Oeffnen, nicht beim Laden der Seite: wer das Panel nie aufmacht,
+    // fragt den Server auch nie. Mit Cloud aus gibt es nichts abzufragen.
+    if (state.useCloud) Kontingent.abrufen();
     updateSchoolDayChips();
     // ✦ Aufgaben-Badge bei jedem Öffnen aktualisieren (User hat ggf. Tasks geändert)
     _updateAufgabenBadge();
@@ -1424,22 +1429,28 @@ function _updateRateLimitUI() {
 
     const s = RateLimit.status();
     let txt, cls = '';
+    const pct = s.rest == null ? null : Math.floor(s.rest * 100);
 
-    if (s.remaining === 0) {
-        txt = L(`Tageslimit ${s.count}/${RATE_LIMIT_DAILY} — fällt zurück auf lokale Engine`, `Daily limit ${s.count}/${RATE_LIMIT_DAILY} — falling back to the local engine`);
+    // Stand unbekannt (noch keine Antwort vom Server, oder offline): nichts
+    // behaupten — weder "voll" noch eine Zahl.
+    if (s.erschoepft) {
+        txt = L('KI-Kontingent für heute aufgebraucht — es schreibt die lokale Engine', 'AI quota used up for today — the local engine is writing');
         cls = 'limit';
     } else if (s.cooldownMs > 0) {
-        txt = `Cooldown ${Math.ceil(s.cooldownMs / 1000)}s · ${s.count}/${RATE_LIMIT_DAILY} heute`;
+        txt = L(`Kurz warten · ${Math.ceil(s.cooldownMs / 1000)}s`, `One moment · ${Math.ceil(s.cooldownMs / 1000)}s`);
         cls = 'cooldown';
-    } else if (s.remaining <= 3) {
-        txt = L(`Noch ${s.remaining} von ${RATE_LIMIT_DAILY} heute übrig`, `${s.remaining} of ${RATE_LIMIT_DAILY} left today`);
+    } else if (pct == null) {
+        txt = '\u00a0';
+    } else if (pct < 15) {
+        txt = L(`Noch ${pct} % deines KI-Kontingents heute`, `${pct}% of your AI quota left today`);
         cls = 'warning';
     } else {
-        txt = `${s.count}/${RATE_LIMIT_DAILY} heute`;
+        txt = L(`KI-Kontingent heute: ${pct} % übrig`, `AI quota today: ${pct}% left`);
     }
 
     info.textContent = txt;
-    info.className = 'ais-ratelimit-info ' + cls;
+    info.className = 'ais-ratelimit-info ' + cls + (pct != null && !s.erschoepft ? ' mit-balken' : '');
+    info.style.setProperty('--kont-rest', String(s.erschoepft ? 0 : (s.rest ?? 0)));
 
     if (btn) {
         const block = s.cooldownMs > 0;
@@ -2456,15 +2467,13 @@ async function generate() {
                 } catch (apiErr) {
                     console.warn('[AIStudio] Cloud-KI failed, using local engine:', apiErr.message);
                     if (typeof mwlEvent === 'function') mwlEvent('problem_ki', {
-                        grund: apiErr.message.includes('Tageslimit') ? 'tageslimit'
-                             : apiErr.message.includes('Burst-Limit') ? 'burst_limit'
-                             : apiErr.message.includes('Proxy nicht erreichbar') ? 'proxy_offline' : 'sonstiges'
+                        grund: apiErr.grund || 'sonstiges'
                     });
-                    if (apiErr.message.includes('Tageslimit')) {
-                        showToast(L('Tageslimit erreicht — es läuft die lokale Engine', 'Daily limit reached — the local engine is running'), 'warning');
-                    } else if (apiErr.message.includes('Burst-Limit')) {
+                    if (apiErr.grund === 'tageslimit') {
+                        showToast(L('KI-Kontingent für heute aufgebraucht — es läuft die lokale Engine', 'AI quota used up for today — the local engine is running'), 'warning');
+                    } else if (apiErr.grund === 'burst_limit') {
                         showToast(apiErr.message + L(' Nutze solange die lokale Engine.', ' Using the local engine in the meantime.'), 'warning');
-                    } else if (apiErr.message.includes('Proxy nicht erreichbar')) {
+                    } else if (apiErr.grund === 'proxy_offline') {
                         showToast(L('Cloud-KI Proxy offline — es läuft die lokale Engine', 'Cloud AI proxy offline — the local engine is running'), 'warning');
                     }
                     await new Promise(r => setTimeout(r, 300));

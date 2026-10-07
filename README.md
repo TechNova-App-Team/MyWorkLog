@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.1.15-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.1.16-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.1.15** · 2026-10-07
+Aktuelle Version: **v8.1.16** · 2026-10-07
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.1.15** | 2026-10-07 | Der Berichtsheft-Assistent kennt deinen Beruf aus den Einstellungen |
+| **8.1.16** | 2026-10-07 | Das KI-Kontingent für den Berichtsheft-Assistenten zählt jetzt der Server |
+| 8.1.15 | 2026-10-07 | Der Berichtsheft-Assistent kennt deinen Beruf aus den Einstellungen |
 | 8.1.14 | 2026-10-05 | Alle Wochen im Berichtsheft drehen sich jetzt auf einer Trommel |
 | 8.1.13 | 2026-10-05 | Neue Seite: ein Reisetraum nach Japan und China |
 | 8.1.12 | 2026-10-04 | Das Berichtsheft sieht aus wie ein Berichtsheft |
-| 8.1.11 | 2026-10-04 | Der Berichtsheft-Assistent lernt mit |
 
 <!-- changelog:end -->
 

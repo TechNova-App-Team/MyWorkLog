@@ -29,10 +29,9 @@ window.AISChat = (function () {
 'use strict';
 
 const SPEICHER = 'bh_chat_v1';
-const LIMIT_KEY = 'bh_chat_rl';
-// Eigener Zaehler neben dem der Wochen (20/Tag): alle Nutzer teilen sich das
-// Tagesbudget von OpenRouter.
-const LIMIT_TAG = 60;
+// Kein eigener Zaehler mehr (bis v8.1.15: 60 Nachrichten im localStorage):
+// Chat und Generator ziehen aus EINEM Tageskontingent, das der Server fuehrt
+// (AIS_CLOUD.Kontingent, workers/ai-proxy KONTINGENT).
 const MAX_NACHRICHTEN = 60;
 const KONTEXT_RUNDEN = 6;
 const STATUS = ['krank', 'urlaub', 'feiertag'];
@@ -256,18 +255,6 @@ function speichern() {
         if (gespraech.nachrichten.length && !gespraech.woche) gespraech.woche = wochenSchluessel(new Date());
         localStorage.setItem(SPEICHER, JSON.stringify(gespraech));
     } catch (e) { /* Speicher voll/Privatmodus: Gespraech lebt nur bis zum Neuladen */ }
-}
-
-function limitHeute() {
-    const tag = new Date().toISOString().slice(0, 10);
-    try {
-        const d = JSON.parse(localStorage.getItem(LIMIT_KEY) || 'null');
-        return d && d.tag === tag ? d : { tag, n: 0 };
-    } catch (e) { return { tag, n: 0 }; }
-}
-function limitZaehlen() {
-    const d = limitHeute(); d.n++;
-    try { localStorage.setItem(LIMIT_KEY, JSON.stringify(d)); } catch (e) { }
 }
 
 // ── Profilzeile ueber dem Eingabefeld ────────────────────────────────
@@ -831,8 +818,9 @@ function ersterJsonWert(text) {
 }
 
 async function denken(nachricht, hinweis) {
-    if (limitHeute().n >= LIMIT_TAG) throw new Error('limit');
-    const proxy = (window.AIS_CLOUD && window.AIS_CLOUD.CLOUD_PROXY) || 'https://ai-proxy.myworklog.de';
+    const KC = window.AIS_CLOUD;
+    if (KC && KC.RateLimit.status().erschoepft) throw new Error('limit');
+    const proxy = (KC && KC.CLOUD_PROXY) || 'https://ai-proxy.myworklog.de';
     // Die letzten Runden als Gespraech mitgeben, damit "mach es ausfuehrlicher"
     // weiss, worauf es sich bezieht. Der Entwurf selbst steht im System-Prompt.
     const runden = gespraech.nachrichten.slice(-KONTEXT_RUNDEN * 2)
@@ -842,20 +830,25 @@ async function denken(nachricht, hinweis) {
     const letzte = runden[runden.length - 1];
     if (letzte && letzte.role === 'user' && letzte.parts[0].text === nachricht) runden.pop();
     runden.push({ role: 'user', parts: [{ text: nachricht + (hinweis ? '\n\n' + hinweis : '') }] });
-    limitZaehlen();
     const ctrl = new AbortController();
     const uhr = setTimeout(() => ctrl.abort(), 95000);
     try {
         const res = await fetch(proxy.replace(/\/$/, '') + '/', {
             method: 'POST',
             signal: ctrl.signal,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(KC ? { 'X-MWL-Geraet': KC.geraetId() } : {}) },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: systemPrompt() }] },
                 contents: runden,
                 generationConfig: { temperature: 0.3, topP: 0.9, maxOutputTokens: 3000 },
             }),
         });
+        if (KC) KC.Kontingent.ausKopf(res);
+        if (res.status === 429) {
+            let b = null;
+            try { b = await res.clone().json(); } catch (e) { }
+            if (b && b.kontingent) { if (KC) KC.Kontingent.erschoepft(); throw new Error('limit'); }
+        }
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
@@ -964,7 +957,7 @@ function ohneAntwort(grund) {
         return;
     }
     const warum = grund === 'limit'
-        ? Lx('Für heute habe ich genug Nachrichten beantwortet.', 'I have answered enough messages for today.')
+        ? Lx('Dein KI-Kontingent für heute ist aufgebraucht, morgen geht es weiter.', 'Your AI quota for today is used up; it resets tomorrow.')
         : Lx('Ich erreiche die KI gerade nicht.', 'I cannot reach the AI right now.');
     const weiter = k.bereit
         ? Lx(' Schick die Nachricht gleich noch einmal, oder lass die Woche ohne KI schreiben. Dann füllt eine Vorlage alle Tage auf, deine Angaben kommen wörtlich hinein.',

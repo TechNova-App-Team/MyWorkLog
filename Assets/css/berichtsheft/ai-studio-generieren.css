@@ -251,6 +251,25 @@
     font-weight: 600;
 }
 
+/* Rest des Tageskontingents als Laenge auf fester Grundlinie (nicht als
+   Deckkraft) — --kont-rest setzt _updateRateLimitUI() (0–1). */
+.ais-ratelimit-info.mit-balken::after {
+    content: '';
+    display: block;
+    width: 120px;
+    height: 3px;
+    margin: 5px auto 0;
+    border-radius: 2px;
+    background:
+        linear-gradient(var(--primary), var(--primary)) left / calc(var(--kont-rest, 0) * 100%) 100% no-repeat,
+        var(--border);
+}
+.ais-ratelimit-info.mit-balken.warning::after {
+    background:
+        linear-gradient(var(--warning, #f59e0b), var(--warning, #f59e0b)) left / calc(var(--kont-rest, 0) * 100%) 100% no-repeat,
+        var(--border);
+}
+
 .ais-mega-btn.rl-blocked {
     opacity: 0.55;
     cursor: not-allowed;
