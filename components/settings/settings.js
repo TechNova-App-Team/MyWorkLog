@@ -17,6 +17,8 @@
         // Job
         const confJobEl = document.getElementById('confJob');
         if (confJobEl) confJobEl.value = data.settings.job || '';
+        const confJobCustomEl = document.getElementById('confJobCustom');
+        if (confJobCustomEl) confJobCustomEl.value = data.settings.jobCustom || '';
         // Bundesland
         const confBundeslandEl = document.getElementById('confBundesland');
         if (confBundeslandEl) confBundeslandEl.value = data.settings.bundesland || '';
@@ -152,6 +154,9 @@
         // Job
         const confJobSaveEl = document.getElementById('confJob');
         if (confJobSaveEl) data.settings.job = confJobSaveEl.value;
+        // Das Freitextfeld nur lesen, wenn es sichtbar ist (job === 'sonstige').
+        const confJobCustomSaveEl = document.getElementById('confJobCustom');
+        if (confJobCustomSaveEl && data.settings.job === 'sonstige') data.settings.jobCustom = confJobCustomSaveEl.value.trim().slice(0, 80);
         // Jobs aus dem Job-Manager einlesen + Formular-Auswahl aktualisieren
         try { if (typeof collectJobManager === 'function') collectJobManager(); } catch(e) { console.warn('collectJobManager error', e); }
         try { if (typeof populateJobSelect === 'function') populateJobSelect(); } catch(e) {}

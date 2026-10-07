@@ -316,6 +316,33 @@ const PROFESSIONS = {
     }
 };
 
+// Die Berufsliste der App-Einstellungen (#confJob in components/modals/modals.html)
+// → [Anzeigename, Wortschatz der lokalen Engine]. Der NAME geht unveraendert an
+// die Cloud-KI, der Schluessel nur an die lokale Engine. Neue Option dort = Zeile
+// hier, sonst faellt der Beruf auf die Stichwortsuche zurueck.
+const APP_BERUFE = {
+    'fachinformatiker-anwendung':       ['Fachinformatiker Anwendungsentwicklung', 'software'],
+    'fachinformatiker-system':          ['Fachinformatiker Systemintegration', 'sysadmin'],
+    'fachinformatiker-daten':           ['Fachinformatiker Daten- und Prozessanalyse', 'software'],
+    'fachinformatiker-digital':         ['Fachinformatiker Digitale Vernetzung', 'sysadmin'],
+    'it-systemelektroniker':            ['IT-Systemelektroniker', 'sysadmin'],
+    'it-kaufmann':                      ['Kaufmann für IT-System-Management', 'kaufmann'],
+    'it-digitalisierung':               ['Kaufmann für Digitalisierungsmanagement', 'kaufmann'],
+    'kaufmann-bueromanagement':         ['Kaufmann/frau für Büromanagement', 'kaufmann'],
+    'kaufmann-grosshandel':             ['Kaufmann/frau im Groß- und Außenhandel', 'kaufmann'],
+    'industriekaufmann':                ['Industriekaufmann/frau', 'kaufmann'],
+    'bankkaufmann':                     ['Bankkaufmann/frau', 'kaufmann'],
+    'steuerfachangestellter':           ['Steuerfachangestellte/r', 'kaufmann'],
+    'kaufmann-ecommerce':               ['Kaufmann/frau im E-Commerce', 'kaufmann'],
+    'elektroniker':                     ['Elektroniker/in', 'elektro'],
+    'mechatroniker':                    ['Mechatroniker/in', 'metall'],
+    'industriemechaniker':              ['Industriemechaniker/in', 'metall'],
+    'zerspanungsmechaniker':            ['Zerspanungsmechaniker/in', 'metall'],
+    'anlagenmechaniker':                ['Anlagenmechaniker/in', 'sanitaer'],
+    'mediengestalter':                  ['Mediengestalter/in Digital und Print', 'medien'],
+    'gestaltungstechnischer-assistent': ['Gestaltungstechnische/r Assistent/in', 'medien'],
+};
+
 // ═══════════════════════════════════════
 // SEASON & CALENDAR AWARENESS
 // ═══════════════════════════════════════
@@ -442,5 +469,5 @@ const THEME_ACTIVITIES = {
     ],
 };
 
-return { PROFESSIONS, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, THEME_ACTIVITIES };
+return { PROFESSIONS, APP_BERUFE, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, THEME_ACTIVITIES };
 })();

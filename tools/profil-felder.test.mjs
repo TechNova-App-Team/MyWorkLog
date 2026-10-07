@@ -46,7 +46,8 @@ const markupRein = markup.replace(/<!--[\s\S]*?-->/g, '');
 // ─────────────────────────────────────────────────────────────────────────
 console.log('\n── Aufbau der Zeilen ──────────────────────────────────────────');
 const zeilen = [...doc.querySelectorAll('.pfield')];
-ok(zeilen.length === 4, `vier Zeilen, gezaehlt: ${zeilen.length}`);
+// Fuenfte Zeile "Dein Beruf" (#confJobCustomRow) ist nur bei "Eigenen Beruf eintragen" sichtbar.
+ok(zeilen.length === 5, `fuenf Zeilen, gezaehlt: ${zeilen.length}`);
 
 // CLAUDE.md: Kinderzahl gegen Spurenzahl. Die Klickschicht ist absolut
 // positioniert und faellt aus dem Raster — es bleiben genau vier Rasterkinder.

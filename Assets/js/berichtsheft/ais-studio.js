@@ -21,7 +21,7 @@ const AIStudio = (() => {
 // Aufruf darunter weiter so, wie er hiess: PROFESSIONS[id], pickRandom(...),
 // RateLimit.status(). Kein Praefix, kein Suchen-und-Ersetzen ueber 2600 Zeilen.
 // Reihenfolge im HTML: berufe → sprache → cloud → studio.
-const { PROFESSIONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER,
+const { PROFESSIONS, APP_BERUFE, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER,
     THEME_ACTIVITIES } = window.AIS_BERUFE;
 const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     UNIVERSAL_ACTIVITIES_EXTENDED, FORM_PATTERNS, partizipDoppelt, alsFliesstext,
@@ -48,6 +48,8 @@ const STORAGE_KEYS = {
     sundayReminder: 'ais_sunday_reminder',
     lastReminderKW: 'ais_last_reminder_kw',
     aiSettings: 'ais_ai_settings_v1', // Tage + Schultage gebündelt
+    // Zuletzt aus den App-Einstellungen uebernommener Beruf ("job|jobCustom").
+    appBeruf: 'ais_app_beruf',
 };
 
 // Aufgaben (mwl_tasks_cats aus /pages/aufgaben/) — Storage-Key dort
@@ -1203,6 +1205,7 @@ function init() {
     } catch (e) { console.warn('[AIStudio] State restore failed:', e); }
 
     _loadProfile();
+    _berufAusApp();
     _restoreApiSettings();
 
     // ✦ Aufgaben-Pipe + Sonntag-Reminder + AI-Settings Restore
@@ -1324,12 +1327,20 @@ function onCustomProf(value) {
 
 function _detectProfession(input) {
     const lower = input.toLowerCase();
-    for (const [key, prof] of Object.entries(AI_BRAIN.professions)) {
-        if (prof.keywords && prof.keywords.some(kw => lower.includes(kw))) {
-            // Map AI_BRAIN keys to PROFESSIONS keys
-            if (PROFESSIONS[key]) return key;
-        }
+    // Der volle Listenname zuerst: "Fachkraft für Lagerlogistik" traf sonst
+    // "lager"/"logistik" bei den Stichworten des Kaufmanns, der vorne steht.
+    for (const [key, prof] of Object.entries(PROFESSIONS)) {
+        if (lower.includes(prof.name.toLowerCase())) return key;
     }
+    // Dann die Stichworte — der Beruf mit den meisten (laengsten) Treffern,
+    // nicht der erste mit irgendeinem.
+    let best = null, bestScore = 0;
+    for (const [key, prof] of Object.entries(AI_BRAIN.professions)) {
+        if (!PROFESSIONS[key] || !prof.keywords) continue;
+        const score = prof.keywords.filter(kw => lower.includes(kw)).reduce((n, kw) => n + kw.length, 0);
+        if (score > bestScore) { best = key; bestScore = score; }
+    }
+    if (best) return best;
     // Fallback: check PROFESSIONS directly
     for (const [key, prof] of Object.entries(PROFESSIONS)) {
         const nameLower = prof.name.toLowerCase();
@@ -2045,6 +2056,41 @@ function _saveProfile() {
         };
         localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
     } catch (e) { }
+}
+
+// Beruf aus den Einstellungen der App (tg_pro_data.settings.job / jobCustom).
+// Uebernommen wird nur, was sich DORT geaendert hat, seit es zuletzt hier ankam —
+// wer im Assistenten bewusst etwas anderes waehlt, behaelt das bis zur naechsten
+// Aenderung in der App. Beim ersten Mal (kein Vermerk) gewinnt die App.
+function _berufAusApp() {
+    let st = null;
+    try { st = (JSON.parse(localStorage.getItem('tg_pro_data') || 'null') || {}).settings || null; } catch (e) { return; }
+    if (!st || !st.job) return;
+    const eigen = st.job === 'sonstige' ? String(st.jobCustom || '').trim().slice(0, 80) : '';
+    const bekannt = APP_BERUFE[st.job];
+    if (!bekannt && !eigen) return;   // "sonstige" ohne Text: nichts zu uebernehmen
+
+    const merke = st.job + '|' + eigen;
+    let vorher = null;
+    try { vorher = localStorage.getItem(STORAGE_KEYS.appBeruf); } catch (e) { }
+    if (vorher === merke) return;
+
+    const name = bekannt ? bekannt[0] : eigen;
+    const schluessel = bekannt ? bekannt[1] : (_detectProfession(eigen) || 'custom');
+    state.customProfession = name;
+    state.selectedProfession = schluessel;
+    const prof = PROFESSIONS[schluessel];
+    const displayIcon = document.getElementById('aisBerufIcon');
+    const displayName = document.getElementById('aisBerufName');
+    const displayEl = document.getElementById('aisBerufDisplay');
+    const customInput = document.getElementById('aisCustomProf');
+    if (displayIcon) displayIcon.innerHTML = prof ? prof.icon : '<svg class="icon"><use href="#i-grad"/></svg>';
+    if (displayName) displayName.textContent = name;
+    if (displayEl) displayEl.classList.add('has-prof');
+    if (customInput) customInput.value = '';
+    _saveProfile();
+    _updateProfileSummary();
+    try { localStorage.setItem(STORAGE_KEYS.appBeruf, merke); } catch (e) { }
 }
 
 function _loadProfile() {
@@ -2867,6 +2913,7 @@ return {
     _intern: {
         generateWeek, generateDayEntries, generateSchoolEntry, validateIHKCompliance,
         _customContextEntries, _kontextTemplate, getCalendarWeek,
+        _berufAusApp, state,
     },
 };
 
