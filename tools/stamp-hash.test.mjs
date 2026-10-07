@@ -44,6 +44,14 @@ console.log('3. Icons bleiben ungestempelt (Cache-Rate, Entscheidung 04.10.2026)
   ok(treffer.includes('/Assets/js/a.js'), 'Gegenprobe: JS wird getroffen');
 }
 
+console.log('3b. PNG MIT ?v= wird gestempelt (Opt-in, Intro-Textur)');
+{
+  const html = ' data-src="/Grafiken/icon-512.png?v=8.1.3" href="/Grafiken/icon-192.png"';
+  const treffer = [...html.matchAll(RE)].map(m => m[2]);
+  ok(treffer.includes('/Grafiken/icon-512.png'), 'PNG mit ?v= getroffen', treffer);
+  ok(!treffer.includes('/Grafiken/icon-192.png'), 'PNG ohne ?v= bleibt unangetastet', treffer);
+}
+
 console.log('4. Echte Stempel passen zum Inhalt');
 {
   const dateien = ['index.template.html', 'components/core/tab-navigation.js', 'components/core/p2p-sync.js',
@@ -53,7 +61,7 @@ console.log('4. Echte Stempel passen zum Inhalt');
     const txt = readFileSync(join(ROOT, d), 'utf8');
     for (const m of txt.matchAll(/["'`](\/(?:Assets|components|Grafiken)\/[^"'`?\s]+)\?v=([^"'`]*)["'`]/g)) {
       const f = join(ROOT, m[1]);
-      if (!existsSync(f) || /\.(png|ico)$/.test(f)) continue;   // Icons: von Hand, siehe 3.
+      if (!existsSync(f) || /\.ico$/.test(f)) continue;   // .ico: von Hand, siehe 3.
       n++;
       const soll = hashInhalt(readFileSync(f), extname(f).toLowerCase());
       if (m[2] !== soll) falsch.push(d + ': ' + m[1] + ' ?v=' + m[2] + ' statt ' + soll);

@@ -51,7 +51,12 @@ const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1
 // Seit v7.4.5 auch /Grafiken/**/*.webp: die App-Screenshots auf /about/ werden bei
 // jeder Aenderung der Oberflaeche unter gleichem Namen neu aufgenommen. data-src
 // gehoert dazu, fuer Bilder, die ein Skript erst beim Oeffnen einsetzt.
-const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)))(?:\?v=[^"]*)?(")/g;
+// PNG nur als Opt-in (Lookahead auf ?v=): das Intro nimmt icon-512.png als Textur
+// und trug ein festes ?v=8.1.3. Der SW liefert ?v=-Adressen Cache-First aus
+// tt-assets-1, das jeden Release ueberlebt — nach dem neuen Symbol (v8.1.7) zeigte
+// das Intro deshalb weiter das alte (gemeldet 07.10.2026). Favicons ohne ?v=
+// bleiben unberuehrt, siehe oben.
+const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:js|css)|\/Grafiken\/[^"?]+\.(?:mp4|webm|webp)|\/Grafiken\/[^"?]+\.png(?=\?v=)))(?:\?v=[^"]*)?(")/g;
 
 // Zeichenketten in JS, die ein Skript zur Laufzeit nachlaedt (VIEW_SCRIPTS in
 // tab-navigation.js, qrcode.min.js). NUR Literale, die schon `?v=` tragen —
