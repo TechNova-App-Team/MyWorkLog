@@ -1,0 +1,173 @@
+/* ai-studio-kontingent.css — Teil von /berichtsheft/
+   Reiter "Kontingent" im Assistenten (seit v8.1.17): oben der Stand von heute
+   auf der Buehne, darunter das Tarifblatt auf Papier.
+
+   Gestaltung, bewusst so:
+   - Ein Tarif, kein Preisvergleich mit drei Karten. Es gibt nichts zu waehlen;
+     drei Spalten wuerden einen Kauf nahelegen, den es nicht gibt.
+   - Das Tarifblatt ist PAPIER (in beiden Themen hell, --papier-tinte), mit dem
+     roten Heftrand — derselbe Gegenstand wie die Blaetter auf der Seite.
+     Kein Stempel: der Stempel heisst auf dieser Seite "freigegeben"
+     (basis.css, Farbrollen) und gehoert nicht auf einen Tarif.
+   - Der Rest steht als LAENGE auf fester Grundlinie, nicht als Deckkraft
+     oder Ring (dataviz: Menge auf gemeinsamer Grundlinie). */
+
+.ais-kont {
+    padding: 20px var(--ais-pad) 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+/* ── Heute ───────────────────────────────────────────── */
+.ais-kont-heute { display: flex; flex-direction: column; gap: 8px; }
+
+.ais-kont-zahl {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-top: 2px;
+}
+#aisKontPct {
+    font-family: var(--font-display);
+    font-size: 3.4rem;
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+#aisKontPctL {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.ais-kont-balken {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--border-light);
+    overflow: hidden;
+}
+.ais-kont-balken > i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--kont-rest) * 100%);
+    border-radius: inherit;
+    background: var(--primary);
+    transition: width 0.6s var(--ease-out);
+}
+.ais-kont-balken.knapp > i { background: var(--warning); }
+
+.ais-kont-zeile {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.ais-kont-reicht {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--text-main);
+}
+
+/* ── Tarifblatt (Papier) ─────────────────────────────── */
+.ais-tarif {
+    position: relative;
+    padding: 20px 20px 18px 34px;
+    border-radius: 5px;
+    background:
+        linear-gradient(to right, transparent 21px, var(--papier-rand) 21px, var(--papier-rand) 22px, transparent 22px),
+        var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+}
+
+.ais-tarif-kopf {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 2px 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--papier-linie);
+}
+.ais-tarif-kl {
+    grid-column: 1 / -1;
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.66rem;
+    font-weight: 400;
+    color: var(--papier-tinte-2);
+}
+.ais-tarif-name {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+.ais-tarif-preis {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+}
+.ais-tarif-unter {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+    font-size: 0.84rem;
+    color: var(--papier-tinte-2);
+}
+
+/* Zeilen wie auf einem Vordruck: Beschriftung klein in Martian Mono,
+   Eintrag in Textschrift, Linie darunter. */
+.ais-tarif-liste { margin: 0; }
+.ais-tarif-liste > div {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 12px;
+    align-items: baseline;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--papier-linie);
+}
+.ais-tarif-liste > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.ais-tarif-liste dt {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.66rem;
+    line-height: 1.5;
+    color: var(--papier-tinte-2);
+}
+.ais-tarif-liste dd {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* ── Erklaerungen ────────────────────────────────────── */
+.ais-kont-info { display: flex; flex-direction: column; gap: 6px; }
+.ais-kont-info h3 { margin-top: 8px; }
+.ais-kont-info h3:first-child { margin-top: 0; }
+.ais-kont-info p {
+    font-size: 0.86rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    max-width: 60ch;
+}
+.ais-kont-ds {
+    align-self: flex-start;
+    margin-top: 6px;
+    font-size: 0.84rem;
+    color: var(--primary-light);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+.ais-kont-ds:hover { color: var(--text-main); }
+
+@media (prefers-reduced-motion: reduce) {
+    .ais-kont-balken > i { transition: none; }
+}

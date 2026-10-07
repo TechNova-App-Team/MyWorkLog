@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=70b8919493">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=265387b76a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=1deef4653e">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-panel.css?v=91a6ac071d">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-panel.css?v=fe6db95859">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-vorschau.css?v=19dd5382bb">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/foto-import.css?v=6d593ff0f0">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/pdf-studio.css?v=69cfd1339a">
@@ -44,6 +44,7 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-eingaben.css?v=6db624947a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-quellen.css?v=2369ef12fd">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-generieren.css?v=60c9e35c70">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-kontingent.css?v=3118daa1b5">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-chat.css?v=1622dbaae2">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/b2b.css?v=aaa18a26b9">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ihk-import.css?v=c026ac1991">
@@ -1694,6 +1695,10 @@ Beispiel:
                     <svg class="icon" aria-hidden="true"><use href="#i-scroll" /></svg>
                     <span>Verlauf</span>
                 </button>
+                <button type="button" class="ais-tab" data-tab="kontingent" onclick="AIStudio.switchTab('kontingent')">
+                    <svg class="icon" aria-hidden="true"><use href="#i-zap" /></svg>
+                    <span>Kontingent</span>
+                </button>
             </nav>
         </header>
 
@@ -2052,6 +2057,53 @@ Beispiel:
                 </div>
             </div>
         </div>
+
+        <!-- KONTINGENT — Zahlen und Saetze mit Zahlen schreibt _renderKontingent()
+             (ais-studio.js, ueber L()); hier steht nur, was immer gleich ist. -->
+        <div class="ais-panel" data-panel="kontingent">
+            <div class="ais-kont">
+                <section class="ais-kont-heute" aria-labelledby="aisKontT">
+                    <h3 class="ais-gruppe-t" id="aisKontT">Heute</h3>
+                    <div class="ais-kont-zahl">
+                        <span id="aisKontPct">—</span>
+                        <span id="aisKontPctL">&nbsp;</span>
+                    </div>
+                    <div class="ais-kont-balken" id="aisKontBalken" role="meter" aria-valuemin="0"
+                        aria-valuemax="100" aria-valuenow="0" aria-labelledby="aisKontT"><i></i></div>
+                    <p class="ais-kont-zeile" id="aisKontZeile">&nbsp;</p>
+                    <p class="ais-kont-zeile" id="aisKontReset">&nbsp;</p>
+                    <p class="ais-kont-reicht" id="aisKontReicht">&nbsp;</p>
+                </section>
+
+                <article class="ais-tarif" aria-labelledby="aisTarifName">
+                    <header class="ais-tarif-kopf">
+                        <span class="ais-tarif-kl" id="aisTarifKl">Dein Tarif</span>
+                        <h3 class="ais-tarif-name" id="aisTarifName">Frei</h3>
+                        <p class="ais-tarif-preis" id="aisTarifPreis">0 €</p>
+                        <p class="ais-tarif-unter" id="aisTarifUnter">Ohne Konto, ohne Zahlung, ohne Abo.</p>
+                    </header>
+                    <dl class="ais-tarif-liste" id="aisTarifListe">
+                        <div><dt>Tageskontingent</dt><dd>100.000 Tokens</dd></div>
+                        <div><dt>Gilt für</dt><dd>Generator und Assistent</dd></div>
+                        <div><dt>Erneuert sich</dt><dd>jeden Tag um Mitternacht</dd></div>
+                        <div><dt>Lokale Engine</dt><dd>ohne Grenze, auch offline</dd></div>
+                        <div><dt>Konto</dt><dd>nicht nötig</dd></div>
+                    </dl>
+                </article>
+
+                <section class="ais-kont-info">
+                    <h3 class="ais-gruppe-t" id="aisKontTokT">Was ist ein Token?</h3>
+                    <p id="aisKontTokP">Ein Token ist ein Wortstück, in solchen Stücken rechnet ein Sprachmodell. Eine
+                        Woche mit fünf Tagen braucht rund 3.400 Tokens, eine kurze Frage an den Assistenten deutlich
+                        weniger.</p>
+                    <h3 class="ais-gruppe-t" id="aisKontWarT">Warum ein Kontingent?</h3>
+                    <p id="aisKontWarP">Alle teilen sich einen Zugang zu kostenlosen Sprachmodellen. Das Kontingent
+                        sorgt dafür, dass ein einzelnes Gerät ihn nicht für alle aufbraucht. Gezählt wird ohne Konto
+                        und ohne deine Texte.</p>
+                    <a class="ais-kont-ds" id="aisKontDs" href="/DSGVO/#s4">So wird gezählt</a>
+                </section>
+            </div>
+        </div>
     </aside>
 
     <!-- ===== ASSISTENT (Chat, Vollbild) — Logik in Assets/js/berichtsheft/ais-chat.js =====
@@ -2139,7 +2191,7 @@ Beispiel:
     <script src="/Assets/js/berichtsheft/ais-berufe.js?v=63216ea178"></script>
     <script src="/Assets/js/berichtsheft/ais-sprache.js?v=9239193e4a"></script>
     <script src="/Assets/js/berichtsheft/ais-cloud.js?v=bfe21f07f0"></script>
-    <script src="/Assets/js/berichtsheft/ais-studio.js?v=96ed0f4af5"></script>
+    <script src="/Assets/js/berichtsheft/ais-studio.js?v=898a1cb9b1"></script>
     <script src="/Assets/js/berichtsheft/bh-lernen.js?v=d27a4fcea2"></script>
     <script src="/Assets/js/berichtsheft/ais-chat.js?v=73b64bc35e"></script>
     <script>

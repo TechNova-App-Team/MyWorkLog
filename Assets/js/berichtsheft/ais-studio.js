@@ -1239,7 +1239,7 @@ function init() {
     // _updateRateLimitUI gettet das DOM defensiv)
     setTimeout(_updateRateLimitUI, 50);
     // Der Server meldet den Stand nach jeder Anfrage (auch aus dem Chat).
-    if (typeof window.addEventListener === 'function') window.addEventListener('mwl-kontingent', () => _updateRateLimitUI());
+    if (typeof window.addEventListener === 'function') window.addEventListener('mwl-kontingent', () => { _updateRateLimitUI(); _renderKontingent(); });
     console.log(`[AI Studio] Berichtsheft-Assistent v${VERSION} — ${Object.keys(PROFESSIONS).length} Berufe geladen.`);
 }
 
@@ -1266,10 +1266,14 @@ function open() {
     // jemand eine Form anklickt — und gerade beim ERSTEN Blick soll er zeigen,
     // was die Vorgabe bedeutet.
     _renderFormBeispiel();
+    // Stand der Kontingent-Uhr wieder aufnehmen, falls der Reiter offen blieb.
+    if (document.querySelector('.ais-tab.active')?.dataset.tab === 'kontingent') switchTab('kontingent');
 }
 
 function close() {
     state.isOpen = false;
+    clearInterval(_kontUhr);
+    _kontUhr = null;
     const panel = document.getElementById('aiStudioPanel');
     const backdrop = document.getElementById('aiStudioBackdrop');
     if (panel) panel.classList.remove('open');
@@ -1284,6 +1288,81 @@ function switchTab(tabName) {
         p.classList.toggle('active', p.dataset.panel === tabName);
     });
     if (tabName === 'history') renderHistory();
+    clearInterval(_kontUhr);
+    _kontUhr = null;
+    if (tabName === 'kontingent') {
+        _renderKontingent();
+        if (state.useCloud) Kontingent.abrufen().then(_renderKontingent);
+        // Nur die Restzeit bis Mitternacht laeuft; die Zahlen kommen vom Server.
+        _kontUhr = setInterval(_renderKontingent, 30000);
+    }
+}
+
+// ═══ Reiter "Kontingent" ═══
+// Gemessen am 07.10.2026 gegen den echten Proxy: eine Woche (5 Tage,
+// Stichpunkte, mittel) = 3.433 Tokens. Daraus "reicht noch fuer etwa N Wochen"
+// — eine Schaetzung, und so steht sie auch da ("etwa").
+const KONT_WOCHE_TOKENS = 3433;
+let _kontUhr = null;
+
+function _bisMitternachtBerlin() {
+    const t = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+        .format(new Date()).split(':').map(Number);
+    const rest = 24 * 60 - (t[0] * 60 + t[1]);
+    return { h: Math.floor(rest / 60), m: rest % 60 };
+}
+
+function _renderKontingent() {
+    const pctEl = document.getElementById('aisKontPct');
+    if (!pctEl) return;
+    const setz = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt || '\u00a0'; };
+    const balken = document.getElementById('aisKontBalken');
+    const zeigeBalken = (rest) => {
+        if (!balken) return;
+        balken.style.setProperty('--kont-rest', String(rest));
+        balken.setAttribute('aria-valuenow', String(Math.round(rest * 100)));
+        balken.classList.toggle('knapp', rest > 0 && rest < 0.15);
+    };
+    const zahl = (n) => n.toLocaleString(L('de-DE', 'en-US'));
+    const z = _bisMitternachtBerlin();
+    const reset = L(`Wieder voll um Mitternacht, in ${z.h} h ${z.m} min.`, `Refills at midnight, in ${z.h} h ${z.m} min.`);
+
+    // Nichts behaupten, was der Server nicht gesagt hat: ohne Stand kein Prozentwert.
+    if (!state.useCloud) {
+        pctEl.textContent = '—';
+        setz('aisKontPctL', '');
+        zeigeBalken(0);
+        setz('aisKontZeile', L('Die Cloud-KI ist ausgeschaltet. Die lokale Engine braucht kein Kontingent.', 'Cloud AI is switched off. The local engine needs no quota.'));
+        setz('aisKontReset', '');
+        setz('aisKontReicht', '');
+        return;
+    }
+    const k = Kontingent.stand();
+    const s = RateLimit.status();
+    if (!k) {
+        pctEl.textContent = '—';
+        setz('aisKontPctL', '');
+        zeigeBalken(0);
+        setz('aisKontZeile', L('Der Stand von heute wird abgefragt …', 'Fetching today’s usage …'));
+        setz('aisKontReset', reset);
+        setz('aisKontReicht', '');
+        return;
+    }
+    const rest = s.erschoepft ? 0 : Math.max(0, k.limit - k.verbraucht);
+    const anteil = rest / k.limit;
+    const pct = Math.floor(anteil * 100);
+    pctEl.textContent = L(`${pct} %`, `${pct}%`);
+    setz('aisKontPctL', s.erschoepft ? L('aufgebraucht', 'used up') : L('übrig', 'left'));
+    zeigeBalken(anteil);
+    setz('aisKontZeile', L(`${zahl(Math.min(k.verbraucht, k.limit))} von ${zahl(k.limit)} Tokens verbraucht`,
+        `${zahl(Math.min(k.verbraucht, k.limit))} of ${zahl(k.limit)} tokens used`));
+    setz('aisKontReset', reset);
+    const wochen = Math.floor(rest / KONT_WOCHE_TOKENS);
+    setz('aisKontReicht', s.erschoepft
+        ? L('Bis dahin schreibt die lokale Engine.', 'Until then, the local engine writes.')
+        : wochen >= 1
+            ? L(`Reicht heute noch für etwa ${wochen} ${wochen === 1 ? 'Woche' : 'Wochen'}.`, `Enough for about ${wochen} more ${wochen === 1 ? 'week' : 'weeks'} today.`)
+            : L('Reicht noch für kurze Fragen an den Assistenten.', 'Enough for short questions to the assistant.'));
 }
 
 function selectProfession(id) {
