@@ -62,7 +62,6 @@ function setMode(mode) {
         const weeklyTA = document.getElementById('reportActivities');
         if (weeklyTA) weeklyTA.removeAttribute('required');
         renderDailyFields();
-        renderAISuggestions('daily');
     } else {
         if (btnWeekly) btnWeekly.classList.add('active');
         if (btnDaily) btnDaily.classList.remove('active');
@@ -74,7 +73,6 @@ function setMode(mode) {
         // Restore required
         const weeklyTA = document.getElementById('reportActivities');
         if (weeklyTA) weeklyTA.setAttribute('required', '');
-        renderAISuggestions('weekly');
     }
 
     syncModeSliders();
@@ -114,7 +112,6 @@ function renderDailyFields() {
                         </div>
                         <textarea class="daily-textarea" id="daily_${i}" data-day="${day.key}" rows="4"
                                   placeholder="${day.name}: Tätigkeiten beschreiben..."
-                                  onfocus="activeDailyField = this"
                                   oninput="onDailyInput()"></textarea>
                     </div>
                 `;
@@ -141,12 +138,8 @@ function updateDailyTotalHours() {
 }
 
 function onDailyInput() {
-    // Debounced AI refresh
     clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-        renderAISuggestions('daily');
-        saveDraft();
-    }, 1500);
+    autoSaveTimer = setTimeout(saveDraft, 1500);
 }
 
 function getDailyActivitiesFromForm() {

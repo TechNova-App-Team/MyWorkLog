@@ -248,8 +248,6 @@
     'Position': 'Position',
 
     // ─── Berichtsheft ───
-    '💡 Gib eine Abteilung ein (z.B. "Bäckerei", "Maurer", "IT") — die AI denkt mit.':
-      '💡 Enter a department (e.g. "bakery", "bricklaying", "IT") — the AI takes it from there.',
     // Häufige Toast-/Status-Wörter (JS-generiert quer über Tool-Seiten)
     'Gespeichert': 'Saved', 'Gespeichert!': 'Saved!', 'Gelöscht': 'Deleted', 'Kopiert': 'Copied',
     'Kopiert!': 'Copied!', 'Fehler': 'Error', 'Erfolg': 'Success', 'Fertig': 'Done',

@@ -88,10 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Auto-save draft (debounced)
         clearTimeout(autoSaveTimer);
-        autoSaveTimer = setTimeout(() => {
-            saveDraft();
-            renderAISuggestions('weekly');
-        }, 1500);
+        autoSaveTimer = setTimeout(saveDraft, 1500);
     });
 
     // Auto-set dates when week changes. Das Jahr kommt aus dem Datum, das
@@ -124,15 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         bhAusbildungsjahrVorbelegen(monday, true);
         if (currentMode === 'daily') renderDailyFields();
     });
-
-    // Re-render AI when department changes
-    const deptInput = document.getElementById('reportDepartment');
-    if (deptInput) {
-        deptInput.addEventListener('input', () => {
-            clearTimeout(autoSaveTimer);
-            autoSaveTimer = setTimeout(() => renderAISuggestions(currentMode), 600);
-        });
-    }
 
     // Close modals on backdrop click
     document.querySelectorAll('.modal').forEach(modal => {

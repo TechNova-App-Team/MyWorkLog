@@ -134,12 +134,11 @@ function openNewReportModal() {
     document.getElementById('reportModal').classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    // Reset quality meter
-    updateQualityMeter('');
-
-    // Initialize AI suggestions
-    aiUsedChips.clear();
-    setTimeout(() => renderAISuggestions(currentMode), 150);
+    // form.reset() leert das Feld, aber nicht den Zaehler darunter — und ein
+    // wiederhergestellter Entwurf hat Text. Beides aus dem echten Feldinhalt.
+    const text = document.getElementById('reportActivities').value;
+    document.getElementById('charCount').textContent = text.length + L(' Zeichen', ' characters');
+    updateQualityMeter(text);
 }
 
 function closeReportModal() {
@@ -316,7 +315,6 @@ async function editReport(id) {
         // Small delay to ensure daily fields are rendered
         setTimeout(() => {
             setDailyFieldsFromData(report.dailyActivities, report.dailyHours, report.dailySchool);
-            renderAISuggestions('daily');
         }, 50);
         document.getElementById('reportActivities').value = report.activities || '';
         const dailyText = Object.values(report.dailyActivities).join('\n').trim();
@@ -325,7 +323,6 @@ async function editReport(id) {
         document.getElementById('reportActivities').value = report.activities;
         document.getElementById('charCount').textContent = report.activities.length + L(' Zeichen', ' characters');
         updateQualityMeter(report.activities);
-        renderAISuggestions('weekly');
     }
 
     document.getElementById('reportModal').classList.add('active');

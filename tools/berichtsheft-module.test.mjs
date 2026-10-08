@@ -93,7 +93,9 @@ gruppe('index.html traegt keinen Code mehr');
 
 ok(!/<style[\s>]/.test(HTML), 'kein <style>-Block in der Seite');
 
-const inline = [...HTML.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+// JSON-LD ist kein Skript (ein Objekt-Literal als Anweisung wirft) — das parst
+// tools/jsonld.test.mjs als JSON.
+const inline = [...HTML.matchAll(/<script(?![^>]*\ssrc=)(?![^>]*\stype="application\/ld\+json")[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 ok(inline.length > 0, 'es gibt ueberhaupt Inline-Skripte zu pruefen (sonst ist die Zeile darunter leer)');
 
 // Jedes Inline-Skript muss uebersetzbar sein. Genau hier fehlte beim Umzug einmal
