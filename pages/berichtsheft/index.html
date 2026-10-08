@@ -29,12 +29,47 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/berichtsheft/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/berichtsheft/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/berichtsheft/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myworklog.de/berichtsheft/">
+    <meta property="og:title" content="Kostenlose Berichtsheft KI – IHK-konform in Sekunden">
+    <meta property="og:description" content="Die KI schreibt deinen Wochen- oder Tagesbericht aus Stichpunkten, als PDF auf dem IHK-Vordruck. Kostenlos, ohne Anmeldung, für jeden Ausbildungsberuf.">
+    <meta property="og:image" content="https://myworklog.de/Grafiken/og-image.png">
+
+    <!-- Strukturierte Daten: Googles KI-Uebersicht zu "Berichtsheft KI" nannte
+         am 08.10.2026 drei Konkurrenten mit harten Fakten (Berufe, PDF, Preis),
+         MyWorkLog stand trotz Platz 2 nicht dabei — die Seite hatte bis dahin
+         keinen einzigen crawlbaren Satz ueber ihre Funktionen. Die Fakten hier
+         muessen zum sichtbaren Abschnitt #bhFakten passen. Kein aggregateRating,
+         keine softwareVersion (Gruende in CLAUDE.md, JSON-LD). -->
+    <script type="application/ld+json" data-ld-id="app">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "MyWorkLog Berichtsheft",
+      "url": "https://myworklog.de/berichtsheft/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web",
+      "inLanguage": "de",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+      "description": "Kostenloser Berichtsheft-Generator mit KI für Auszubildende. Schreibt Wochen- und Tagesberichte aus Stichpunkten und exportiert sie als PDF auf dem IHK-Vordruck. Ohne Anmeldung, im Browser.",
+      "featureList": [
+        "KI schreibt Wochen- und Tagesberichte aus Stichpunkten",
+        "Lokale KI-Engine, die auch offline arbeitet, und kostenlose Cloud-KI mit Tageskontingent",
+        "Für jeden Ausbildungsberuf, Berufe frei eintragbar",
+        "PDF-Export auf dem IHK-Vordruck nach DIHK-Muster sowie den Fassungen der IHK München, Köln und Frankfurt",
+        "Abzeichnen durch den Ausbilder per Link oder QR-Code, ohne Konto, digital signiert",
+        "Import aus der Zeiterfassung, per Foto vom Papier oder aus dem IHK-Online-Berichtsheft"
+      ]
+    }
+    </script>
     <!-- Seitenstile. Die Reihenfolge ist Teil der Gestaltung: bei gleichem
          Selektor gewinnt die spaetere Datei, und druck-responsive.css muss
          alle Regeln davor schlagen koennen. Nicht umsortieren. -->
     <link rel="stylesheet" href="/Assets/css/berichtsheft/basis.css?v=aa3b95364d">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=70b8919493">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=265387b76a">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=7a4285f447">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=1deef4653e">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-panel.css?v=fe6db95859">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-vorschau.css?v=19dd5382bb">
@@ -48,7 +83,7 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-chat.css?v=1622dbaae2">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/b2b.css?v=aaa18a26b9">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ihk-import.css?v=c026ac1991">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/druck-responsive.css?v=7d71f9b3b8">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/druck-responsive.css?v=9e05e60754">
     <script defer src="/Assets/js/ph-init.js?v=58fa141e89"></script>
     <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=cc131a6705">
     <script defer src="/Assets/js/version-loader.js?v=0a687fa2b5"></script>
@@ -713,6 +748,54 @@
                     <p class="sb-entry-note">Beim ersten Öffnen legst du ein Passwort fest. Alles wird damit auf deinem
                         Gerät verschlüsselt — vergisst du es, sind die Einträge weg.</p>
                 </div>
+            </section>
+
+            <!-- ===== WAS DAS BERICHTSHEFT KANN =====
+                 Fuer Suchmaschinen und Neue: der einzige Text auf der Seite, der die
+                 Funktionen beim Namen nennt (alles andere rendert JS oder steckt in
+                 Dialogen). Muss zum JSON-LD "app" im Kopf passen. Jede Aussage ist im
+                 Code belegt: Vordrucke = IHK_KAMMERN (ihk-formulare.js), freier Beruf =
+                 AIStudio.onCustomProf, Ausbilder ohne Konto = /ausbilder/#w=.
+                 Jede Zeile ein eigenes Element ohne Kind-Elemente, sonst sieht die
+                 i18n-Pipeline den Text nicht. -->
+            <section class="hf-fakten" id="bhFakten" aria-labelledby="bhFaktenT">
+                <div class="hf-kopf">
+                    <h2 class="hf-h2" id="bhFaktenT"><span>So arbeitet das Berichtsheft</span></h2>
+                </div>
+                <p class="hf-fakten-lead">Ein kostenloser Berichtsheft-Generator mit KI für Auszubildende. Er läuft im
+                    Browser, ohne Anmeldung und ohne Abo.</p>
+                <dl class="hf-fakten-liste">
+                    <div>
+                        <dt>Kostenlos, ohne Konto</dt>
+                        <dd>Kein Abo, keine Anmeldung. Deine Berichte liegen im Speicher deines Browsers.</dd>
+                    </div>
+                    <div>
+                        <dt>KI aus Stichpunkten</dt>
+                        <dd>Du notierst, was du in der Woche gemacht hast, die KI formuliert daraus den Wochen- oder
+                            Tagesbericht. Eine lokale Engine arbeitet auch offline, die Cloud-KI ist kostenlos mit einem
+                            Tageskontingent.</dd>
+                    </div>
+                    <div>
+                        <dt>Jeder Ausbildungsberuf</dt>
+                        <dd>Fachinformatiker, Kaufleute, Elektroniker, Mechatroniker und weitere sind hinterlegt. Jeder
+                            andere Beruf lässt sich frei eintragen.</dd>
+                    </div>
+                    <div>
+                        <dt>IHK-Vordruck als PDF</dt>
+                        <dd>Der Ausbildungsnachweis nach dem DIHK-Muster oder in den Fassungen der IHK München, Köln und
+                            Frankfurt, wöchentlich oder täglich. Als PDF für eine Woche oder das ganze Jahr.</dd>
+                    </div>
+                    <div>
+                        <dt>Abzeichnen durch den Ausbilder</dt>
+                        <dd>Dein Ausbilder zeichnet per Link oder QR-Code ab und braucht dafür kein Konto. Die Freigabe
+                            wird digital signiert.</dd>
+                    </div>
+                    <div>
+                        <dt>Übernehmen statt abtippen</dt>
+                        <dd>Zeiten und Notizen aus der Zeiterfassung, ein Foto vom Papier-Berichtsheft mit Texterkennung
+                            auf dem Gerät oder der PDF-Export aus dem Online-Berichtsheft der IHK.</dd>
+                    </div>
+                </dl>
             </section>
         </div>
 
