@@ -21,12 +21,17 @@
     background: rgba(255,255,255,.05);
     border: 1px solid rgba(255,255,255,.1);
     display: flex; align-items: center; justify-content: center;
-    animation: flm-pulse 5s linear infinite;
+    animation: flm-pulse var(--flm-takt) linear infinite;
   }
   .footer-logo-mark svg { stroke: rgba(255,255,255,.7); }
+  /* EIN Takt fuer Icon und Schriftzug (bis 08.10.2026: 5 s gegen 3,2 s, die
+     beiden liefen sichtbar auseinander). Die Welle in .footer-logo-text laeuft
+     von RECHTS nach LINKS und verlaesst den Schriftzug bei ~50 % des Takts —
+     genau dann leuchtet das Icon auf, als waere das Licht dort angekommen.
+     Takt aendern = nur --flm-takt, die Prozentwerte bleiben richtig. */
   @keyframes flm-pulse {
-    0%,41%,100% { opacity:.3; box-shadow:none; border-color:rgba(255,255,255,.08); }
-    5%           { opacity:.9; box-shadow:0 0 10px rgba(255,255,255,.25); border-color:rgba(255,255,255,.28); }
+    0%,48%,100% { opacity:.3; box-shadow:none; border-color:rgba(255,255,255,.08); }
+    55%          { opacity:.9; box-shadow:0 0 10px rgba(255,255,255,.25); border-color:rgba(255,255,255,.28); }
   }
 
   /* ── WAVE TEXT ────────────────────────────────────── */
@@ -48,8 +53,14 @@
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    animation: logo-wave 3.2s linear infinite;
+    animation: logo-wave var(--flm-takt) linear infinite;
     will-change: background-position;
+  }
+  .footer-logo { --flm-takt: 3.2s; }
+  @media (prefers-reduced-motion: reduce) {
+    .footer-logo-mark, .footer-logo-text { animation: none; }
+    /* ohne Welle stuende der Verlauf still, mit einem hellen Fleck am Rand */
+    .footer-logo-text { background: none; -webkit-text-fill-color: currentColor; color: rgba(255,255,255,.88); }
   }
   @keyframes logo-wave {
     to { background-position: 200% 50%; }
