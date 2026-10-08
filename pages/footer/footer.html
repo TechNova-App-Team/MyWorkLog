@@ -24,46 +24,38 @@
     animation: flm-pulse var(--flm-takt) linear infinite;
   }
   .footer-logo-mark svg { stroke: rgba(255,255,255,.7); }
-  /* EIN Takt fuer Icon und Schriftzug (bis 08.10.2026: 5 s gegen 3,2 s, die
-     beiden liefen sichtbar auseinander). Die Welle in .footer-logo-text laeuft
-     von RECHTS nach LINKS und verlaesst den Schriftzug bei ~50 % des Takts —
-     genau dann leuchtet das Icon auf, als waere das Licht dort angekommen.
-     Takt aendern = nur --flm-takt, die Prozentwerte bleiben richtig. */
-  @keyframes flm-pulse {
-    0%,48%,100% { opacity:.3; box-shadow:none; border-color:rgba(255,255,255,.08); }
-    55%          { opacity:.9; box-shadow:0 0 10px rgba(255,255,255,.25); border-color:rgba(255,255,255,.28); }
-  }
 
-  /* ── WAVE TEXT ────────────────────────────────────── */
   .footer-logo-text {
     font-weight: 800; font-size: 1.08rem; letter-spacing: -.04em;
     display: inline-block; line-height: 1.3; user-select: none;
     padding-bottom: .08em;
-    background: linear-gradient(
-      90deg,
-      rgba(150,154,168,.3)  0%,
-      rgba(150,154,168,.3) 20%,
-      #ffffff               42%,
-      #ffffff               58%,
-      rgba(150,154,168,.3) 80%,
-      rgba(150,154,168,.3) 100%
-    );
-    background-size: 200% 100%;
-    background-position: 0% 50%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: logo-wave var(--flm-takt) linear infinite;
-    will-change: background-position;
+    color: var(--flm-text-ruhe);
+    animation: flm-text var(--flm-takt) linear infinite;
   }
-  .footer-logo { --flm-takt: 3.2s; }
+
+  /* Icon und Schriftzug pulsieren GLEICHZEITIG — Wunsch des Nutzers
+     (08.10.2026). Davor lief ueber dem Schriftzug eine Lichtwelle mit eigenem
+     Takt (3,2 s gegen 5 s am Icon); auch als Lauflicht, das ins Icon springt,
+     galt das als "nicht synchron". Deshalb: ein Takt, und beide Keyframes
+     tragen DIESELBEN Prozentwerte (0 / 10 / 45). Wer eine Stelle aendert,
+     aendert beide. */
+  .footer-logo {
+    --flm-takt: 3.2s;
+    --flm-text-ruhe: rgba(150,154,168,.5);
+    --flm-text-hell: #ffffff;
+    --flm-text-glow: rgba(255,255,255,.25);
+  }
+  @keyframes flm-pulse {
+    0%,45%,100% { opacity:.3; box-shadow:none; border-color:rgba(255,255,255,.08); }
+    10%          { opacity:.9; box-shadow:0 0 10px rgba(255,255,255,.25); border-color:rgba(255,255,255,.28); }
+  }
+  @keyframes flm-text {
+    0%,45%,100% { color: var(--flm-text-ruhe); text-shadow: none; }
+    10%          { color: var(--flm-text-hell); text-shadow: 0 0 12px var(--flm-text-glow); }
+  }
   @media (prefers-reduced-motion: reduce) {
     .footer-logo-mark, .footer-logo-text { animation: none; }
-    /* ohne Welle stuende der Verlauf still, mit einem hellen Fleck am Rand */
-    .footer-logo-text { background: none; -webkit-text-fill-color: currentColor; color: rgba(255,255,255,.88); }
-  }
-  @keyframes logo-wave {
-    to { background-position: 200% 50%; }
+    .footer-logo-text { color: var(--flm-text-hell); }
   }
 
   /* ── TAGLINE & BADGES ─────────────────────────────── */
@@ -163,7 +155,7 @@
   [data-theme="light"] .site-footer { border-top-color: rgba(7,16,35,.08); background: linear-gradient(180deg, transparent, rgba(7,16,35,.03)); }
   [data-theme="light"] .footer-logo-mark { background: rgba(7,16,35,.04); border-color: rgba(7,16,35,.12); }
   [data-theme="light"] .footer-logo-mark svg { stroke: rgba(7,16,35,.7); }
-  [data-theme="light"] .footer-logo-text { background: none; -webkit-text-fill-color: currentColor; color: rgba(7,16,35,.85); animation: none; }
+  [data-theme="light"] .footer-logo { --flm-text-ruhe: rgba(7,16,35,.45); --flm-text-hell: rgba(7,16,35,.95); --flm-text-glow: rgba(7,16,35,.12); }
   [data-theme="light"] .footer-tagline { color: rgba(7,16,35,.55); }
   [data-theme="light"] .footer-col-title { color: rgba(7,16,35,.4); border-color: rgba(7,16,35,.08); }
   [data-theme="light"] .footer-nav a,
