@@ -346,30 +346,29 @@ const STORAGE_KEY = 'mwlbench_or_key';
 // koennen die Minute reissen — die Laeufe seit 19.09. liefen mit 2. Ein 429 wird als
 // 0/10 gewertet und sieht in der Matrix genauso aus wie ein Modell, das nichts
 // kann: bei einer Nullzeile erst "Ergebnis als JSON" ziehen und `fehler` lesen.
-// Kette v4.6 (08.10.2026), identisch zu workers/ai-proxy/worker.js MODELS.
-// Ling Santé + Fin sind seit dem Abend nicht mehr frei. Gemessen in zwei Laeufen
-// (.claude/notes/benchmark/benchmark-2026-10-08-2119.json = Kette,
-// -2150.json = alle freien Modelle ausserhalb der Kette). Aus dem zweiten kam nur
-// Apodex 1.1 Mini durch (86 %, 11/12, nie 429/Timeout); Gemma x2 wieder nur 429,
-// Inkling x2 403, Lightning 10x Timeout, Nano 429/Timeout — wie am 26.09.
-// Die stehen schon im Kopf des Workers: NICHT erneut messen, ausser die Kette
-// wird wieder duenn UND die Live-Liste hat sich geaendert.
+// Kette v4.6 (08./09.10.2026), identisch zu workers/ai-proxy/worker.js MODELS —
+// Zahlen und Begruendung je Platz stehen dort. Drei Laeufe in einer Nacht
+// (.claude/notes/benchmark/benchmark-2026-10-08-2119/-2150/-2219.json):
+// Ling Santé + Fin nicht mehr frei; aus allen freien Modellen ausserhalb der
+// Kette kam nur Apodex 1.1 Mini durch (92 %, 24/24, kein 429/Timeout) und ist
+// jetzt Primary. Gemma x2, Inkling x2, Lightning, Nano stehen schon im Kopf des
+// Workers als untauglich: NICHT erneut messen, ausser die Live-Liste aendert sich.
+// Ling 3.1 Flash (Preis 0 ohne ":free") kam auf 21 % — nachmessen, wenn die
+// Startphase vorbei ist.
+//
+// 🔴 Am Ende eines Laufs greift das MINUTENLIMIT des Kontos
+// ("free-models-per-min"): im Lauf 22:19 bekamen die letzten Modelle der Liste
+// nur noch 429 in unter 100 ms — auch die Gegenprobe. Eine Nullzeile weit unten
+// ist deshalb erst mal ein Limit, kein Urteil; `fehler` in der JSON lesen.
 const MODELS = [
-  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Primary'     },
+  { id: 'apodex/apodex-1.1-mini:free',                        label: 'Apodex 1.1 Mini',      role: 'Primary'     },
   { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Fallback 1'  },
-  { id: 'apodex/apodex-1.1-mini:free',                        label: 'Apodex 1.1 Mini',      role: 'Fallback 2'  },
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Fallback 3'  },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 4'  },
-  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 5'  },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Last Resort' },
-  // Kandidaten fuer EINEN Lauf (08.10.2026). Beide tragen KEIN ":free" und
-  // fallen deshalb durch jedes `grep ':free"'` auf die Live-Liste — gefunden nur
-  // ueber pricing.prompt === "0". Ling 3.1 ist der Nachfolger von Santé/Fin
-  // (gleicher Anbieter, Preis 0 seit 02.10. — evtl. nur eine Startphase).
-  // openrouter/free ist ein Router auf ein zufaelliges freies Modell: als
-  // letzter Notnagel gedacht, nicht als Primary.
-  { id: 'inclusionai/ling-3.1-flash',                         label: 'Ling 3.1 Flash',       role: 'Kandidat (neu)' },
-  { id: 'openrouter/free',                                    label: 'OpenRouter Free',      role: 'Kandidat (Router)' },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Fallback 2'  },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 3'  },
+  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 4'  },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Fallback 5'  },
+  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 6'  },
+  { id: 'openrouter/free',                                    label: 'OpenRouter Free',      role: 'Last Resort' },
   // Gegenprobe, nicht in der Kette: ein Moderations-Klassifikator muss hier 0
   // holen. Holt er Punkte, wertet der Benchmark falsch (so war es vor dem 19.09.).
   { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',      role: 'Gegenprobe'  },
