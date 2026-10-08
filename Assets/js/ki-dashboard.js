@@ -87,11 +87,16 @@
     }
 
     // ── Zeichnen ──────────────────────────────────────────
+    // Anzeige und Export lesen denselben Ausschnitt — sonst enthielte die Datei
+    // andere Aufrufe als die Seite, von der sie stammt.
+    function auswahl() {
+        var tagSet = tage === 1 ? [daten.heute] : daten.tage.slice(-tage);
+        return { tagSet: tagSet, auf: daten.aufrufe.filter(function (e) { return tagSet.indexOf(teile(e.ts).tag) >= 0; }) };
+    }
+
     function zeichnen() {
         var d = daten;
-        var heute = d.heute;
-        var tagSet = tage === 1 ? [heute] : d.tage.slice(-tage);
-        var auf = d.aufrufe.filter(function (e) { return tagSet.indexOf(teile(e.ts).tag) >= 0; });
+        var sel = auswahl(), tagSet = sel.tagSet, auf = sel.auf;
 
         $('kdStand').textContent = 'Stand ' + teile(Date.parse(d.stand)).text.slice(-5) + ' Uhr';
         kennzahlen(auf, d);
@@ -280,7 +285,52 @@
     });
     document.addEventListener('focusout', function () { $('kdTip').hidden = true; });
 
+    // ── Export ────────────────────────────────────────────
+    // Exportiert genau den gewaehlten Zeitraum. Der Protokolleintrag enthaelt
+    // ohnehin keine Texte, Geraete oder IPs — die Datei darf also weitergegeben werden.
+    function speichern(inhalt, typ, endung) {
+        var sel = auswahl();
+        var name = 'ki-dashboard_' + sel.tagSet[0] + (sel.tagSet.length > 1 ? '_bis_' + sel.tagSet[sel.tagSet.length - 1] : '') + '.' + endung;
+        var url = URL.createObjectURL(new Blob([inhalt], { type: typ }));
+        var a = document.createElement('a');
+        a.href = url; a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    }
+    function zeile(e) {
+        var f = fehlerListe(e);
+        return {
+            zeit: teile(e.ts).tag + ' ' + teile(e.ts).text.slice(-5), ts: e.ts, art: e.a, ergebnis: e.s,
+            modell: e.m || '', tokens_ein: e.pt || 0, tokens_aus: e.ct || 0, dauer_ms: e.ms || 0,
+            fehlversuche: f.join(','),
+        };
+    }
+    function exportJson() {
+        if (!daten) return;
+        var sel = auswahl();
+        speichern(JSON.stringify({
+            exportiert: new Date().toISOString(), stand: daten.stand, zeitzone: 'Europe/Berlin',
+            zeitraum: { tage: sel.tagSet.length, von: sel.tagSet[0], bis: sel.tagSet[sel.tagSet.length - 1] },
+            kontingent: daten.kontingent, modellkette: daten.modelle,
+            heute: { tag: daten.heute, geraete: daten.geraeteHeute, ipAdressen: daten.ipsHeute },
+            aufrufe: sel.auf.map(zeile),
+        }, null, 2), 'application/json', 'json');
+    }
+    function exportCsv() {
+        if (!daten) return;
+        var spalten = ['zeit', 'ts', 'art', 'ergebnis', 'modell', 'tokens_ein', 'tokens_aus', 'dauer_ms', 'fehlversuche'];
+        var feld = function (v) { v = String(v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+        // Semikolon + BOM: so oeffnet ein deutsches Excel die Datei ohne Import-Dialog in Spalten.
+        var csv = String.fromCharCode(0xFEFF) + [spalten.join(';')].concat(auswahl().auf.map(function (e) {
+            var z = zeile(e);
+            return spalten.map(function (s) { return feld(z[s]); }).join(';');
+        })).join('\r\n');
+        speichern(csv, 'text/csv;charset=utf-8', 'csv');
+    }
+
     // ── Bedienung ─────────────────────────────────────────
+    $('kdExportJson').addEventListener('click', exportJson);
+    $('kdExportCsv').addEventListener('click', exportCsv);
     $('kdLogin').addEventListener('submit', function (ev) {
         ev.preventDefault();
         var s = $('kdSecret').value.trim();
