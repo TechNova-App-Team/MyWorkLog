@@ -7,6 +7,7 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
+<script>/* Lade-Moment (tester.js) vorbereiten; faellt das Skript aus, gibt die Sicherung nach 2,5 s alles frei. */document.documentElement.classList.add('js');setTimeout(function(){var h=document.getElementById('tsHero');if(h)h.classList.add('bereit');},2500);</script>
 <title>Tester werden — MyWorkLog im Play Store</title>
 <meta name="description" content="MyWorkLog kommt als Android-App in den Google Play Store. Dafür braucht Google 12 Tester für 14 Tage. In zwei Schritten bist du dabei.">
 <!-- Zeitlich begrenzte Aktionsseite (geschlossener Test bis ca. Ende November 2026,
@@ -29,9 +30,9 @@
 <meta name="theme-color" content="#0e0e11">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Geist:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="/components/core/core.css?v=68380d1fdd">
-<link rel="stylesheet" href="/Assets/css/tester.css?v=0e687ab08c">
+<link rel="stylesheet" href="/Assets/css/tester.css?v=a3baf51ff3">
 <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
 </head>
 <body>
@@ -42,11 +43,30 @@
         <span>Zur App</span>
     </a>
 
-    <header class="ts-kopf">
-        <img class="ts-icon" src="/Grafiken/icon-512.png" alt="" width="88" height="88">
-        <p class="ts-ueber" id="tsUeber">Android-App im Test</p>
-        <h1 id="tsTitel">MyWorkLog kommt in den Play Store.</h1>
-        <p class="ts-lead" id="tsLead">Bevor eine neue App öffentlich in Google Play erscheinen darf, müssen sie mindestens 12 Leute 14 Tage lang installiert haben. Dafür brauche ich dich: zwei Klicks, gratis.</p>
+    <!-- Kopf in der Handschrift von /about/: Pille, Masken-Aufzug der Zeilen, ein
+         Licht von oben. Das eine praegende Element sind die 12 Plaetze aus dem
+         TikTok — hier bewusst ALLE leer: wie viele Tester es gerade gibt, weiss
+         die Seite nicht, und ein gefuelltes Bild waere eine Behauptung. -->
+    <header class="ts-hero" id="tsHero">
+        <div class="ts-hero-text">
+            <p class="ts-pille" id="tsPille"><span class="ts-punkt" aria-hidden="true"></span><span>Geschlossener Test bei Google Play</span></p>
+            <h1 class="ts-titel" id="tsTitel">
+                <span class="tl"><span style="--i:0">Werd Tester</span></span>
+                <span class="tl"><span style="--i:1">für MyWorkLog.</span></span>
+            </h1>
+            <p class="ts-lead" id="tsLead">Die App aus meiner Ausbildung kommt in den Play Store. Vorher will Google, dass mindestens 12 Leute sie 14 Tage lang installiert haben. Du brauchst dafür zwei Klicks und ein Android-Handy.</p>
+        </div>
+
+        <figure class="ts-plaetze" id="tsPlaetze">
+            <div class="ts-raster" aria-hidden="true">
+                <span class="ts-platz ts-platz--du" style="--i:0"><span>Du?</span></span>
+                <span class="ts-platz" style="--i:1"></span><span class="ts-platz" style="--i:2"></span><span class="ts-platz" style="--i:3"></span>
+                <span class="ts-platz" style="--i:4"></span><span class="ts-platz" style="--i:5"></span><span class="ts-platz" style="--i:6"></span>
+                <span class="ts-platz" style="--i:7"></span><span class="ts-platz" style="--i:8"></span><span class="ts-platz" style="--i:9"></span>
+                <span class="ts-platz" style="--i:10"></span><span class="ts-platz" style="--i:11"></span>
+            </div>
+            <figcaption><span>12 Plätze, 14 Tage.</span> <span>Einer davon ist deiner.</span></figcaption>
+        </figure>
     </header>
 
     <!-- Am Desktop/iPhone sichtbar (tester.js); die Schritte bleiben trotzdem lesbar. -->
@@ -55,9 +75,10 @@
         <span><span>Du bist gerade nicht auf Android. Öffne diese Seite am Android-Handy, dort klappt es in einem Rutsch:</span> <strong>myworklog.de/tester</strong></span>
     </p>
 
-    <ol class="ts-schritte">
+    <!-- Nummern, weil es eine echte Reihenfolge ist: ohne Gruppe kein Testlink. -->
+    <ol class="ts-weg" id="tsSchritte">
         <li class="ts-schritt" id="tsSchritt1">
-            <span class="ts-nr" aria-hidden="true">1</span>
+            <span class="ts-ziffer" aria-hidden="true">1</span>
             <div class="ts-text">
                 <h2>Der Tester-Gruppe beitreten</h2>
                 <p>Mit dem Google-Konto, das auf deinem Handy im Play Store angemeldet ist. Hast du mehrere Konten, achte oben rechts auf das richtige.</p>
@@ -65,7 +86,7 @@
             </div>
         </li>
         <li class="ts-schritt" id="tsSchritt2">
-            <span class="ts-nr" aria-hidden="true">2</span>
+            <span class="ts-ziffer" aria-hidden="true">2</span>
             <div class="ts-text">
                 <h2>Tester werden und installieren</h2>
                 <p>Auf „Tester werden“ tippen, danach die App über den Link zu Google Play installieren.</p>
@@ -73,10 +94,13 @@
             </div>
         </li>
         <li class="ts-schritt" id="tsSchritt3">
-            <span class="ts-nr" aria-hidden="true">3</span>
+            <span class="ts-ziffer" aria-hidden="true">3</span>
             <div class="ts-text">
                 <h2>14 Tage drauf lassen</h2>
                 <p>Mehr ist es nicht. Danach kannst du die App behalten oder wieder löschen.</p>
+                <div class="ts-tage" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                </div>
             </div>
         </li>
     </ol>
@@ -109,7 +133,7 @@
       var t = document.createElement('template'); t.innerHTML = html; ph.replaceWith(t.content);
     });
 </script>
-<script defer src="/Assets/js/tester.js?v=dfe3377299"></script>
+<script defer src="/Assets/js/tester.js?v=18330d5501"></script>
 <script defer src="/Assets/js/ph-init.js?v=58fa141e89"></script>
 <script>
 // Theme-Sync (Pflicht fuer Standalone-Seiten): Akzent aus den App-Einstellungen.

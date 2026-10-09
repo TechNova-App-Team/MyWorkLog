@@ -1,11 +1,21 @@
 /* tester.css — /tester/ (Aktionsseite geschlossener Play-Store-Test, Oktober 2026)
-   Grundfarben aus components/core/core.css (Projektregel: keine eigenen Hex-Werte
-   auf Standalone-Seiten), hier nur gemischt. Gruen fuer "fertig" gibt es hier
-   bewusst nicht: auf der Seite ist noch nichts fertig, das waere eine Behauptung. */
+   Handschrift von /about/: Bricolage Grotesque gross und eng, Geist fuer Text,
+   ein Licht von oben, Pille mit Puls, Zeilen fahren aus einer Maske.
+   Farben nur aus components/core/core.css gemischt (Projektregel), Akzent ist
+   --primary und folgt damit dem Theme-Sync. Gruen gibt es hier bewusst nicht:
+   auf der Seite ist noch nichts "fertig" — ausser dem Puls-Punkt (laeuft = Test aktiv). */
 :root {
-    --flaeche: color-mix(in srgb, var(--text-main) 4%, var(--bg-deep));
-    --rand: color-mix(in srgb, var(--text-main) 9%, transparent);
-    --text-3: color-mix(in srgb, var(--text-muted) 70%, var(--bg-deep));
+    --ink: var(--text-main);
+    --ink-2: var(--text-muted);
+    --ink-3: color-mix(in srgb, var(--text-muted) 62%, var(--bg-deep));
+    --flaeche: color-mix(in srgb, var(--text-main) 3.5%, var(--bg-deep));
+    --rand: color-mix(in srgb, var(--text-main) 8%, transparent);
+    --rand-2: color-mix(in srgb, var(--text-main) 13%, transparent);
+    --fd: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+    --ff: 'Geist', system-ui, -apple-system, sans-serif;
+    /* Motion-System wie /about/: eine Kurve fuer Eintritte, eine Dauer. */
+    --ease-spring: cubic-bezier(.32, .72, 0, 1);
+    --ease-out: cubic-bezier(.22, 1, .36, 1);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -17,83 +27,166 @@ body {
     display: block;
     height: auto;
     min-height: 100dvh;
-    overflow: visible;
+    overflow-x: hidden;
     background: var(--bg-deep);
-    color: var(--text-main);
-    font-family: var(--font-main);
+    color: var(--ink);
+    font-family: var(--ff);
     font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
 }
+/* Ein Licht von oben, sonst nichts (wie /about/ .hero::before). */
+body::before {
+    content: ''; position: absolute; left: 0; right: 0; top: 0; height: 760px; pointer-events: none; z-index: 0;
+    background:
+        radial-gradient(55% 60% at 30% -12%, rgba(var(--primary-rgb), .26), transparent 70%),
+        radial-gradient(35% 40% at 88% 8%, rgba(var(--primary-rgb), .10), transparent 70%);
+}
 
-.ts { max-width: 640px; margin: 0 auto; padding: 28px 20px 72px; }
+.ts { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 28px 28px 96px; }
 
 .ts-zurueck {
     display: inline-flex; align-items: center; gap: 6px;
-    color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+    color: var(--ink-2); text-decoration: none; font-size: .9rem; font-weight: 500;
     padding: 6px 10px 6px 4px; margin-left: -4px; border-radius: 8px;
-    transition: color 0.2s ease, background-color 0.2s ease;
+    transition: color .2s ease, background-color .2s ease;
 }
 .ts-zurueck svg { width: 18px; height: 18px; }
-.ts-zurueck:hover { color: var(--text-main); background: var(--hover-fill); }
+.ts-zurueck:hover { color: var(--ink); background: var(--hover-fill); }
+.ts-zurueck:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .35); }
 
-.ts-kopf { margin: 36px 0 28px; }
-.ts-icon { width: 88px; height: 88px; border-radius: 22px; display: block; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); }
-.ts-ueber { margin-top: 26px; font-size: 0.95rem; font-weight: 600; color: var(--primary); }
-.ts-kopf h1 {
-    margin-top: 6px;
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 7vw, 2.9rem); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700;
+/* ── Kopf ── */
+.ts-hero {
+    display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr);
+    gap: 3rem 4.5rem; align-items: end;
+    padding: 6.5rem 0 4.5rem;
 }
-.ts-lead { margin-top: 16px; font-size: 1.05rem; color: var(--text-muted); max-width: 52ch; }
+.ts-pille {
+    display: inline-flex; align-items: center; gap: .6rem;
+    padding: .38rem .9rem .38rem .55rem; margin-bottom: 2rem;
+    background: rgba(255, 255, 255, .035); border: 1px solid var(--rand-2); border-radius: 999px;
+    font-size: .82rem; font-weight: 500; color: var(--ink-2);
+}
+.ts-punkt {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+    animation: tsPuls 2.6s ease-in-out infinite;
+}
+@keyframes tsPuls {
+    0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent); }
+    50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--success) 5%, transparent); }
+}
+.ts-titel {
+    font-family: var(--fd); font-variation-settings: 'opsz' 96;
+    font-size: clamp(3rem, 6.6vw, 5.6rem); font-weight: 600;
+    line-height: .95; letter-spacing: -.045em; color: var(--ink);
+    margin-bottom: 2rem;
+}
+/* Masken-Aufzug je Zeile; padding-bottom haelt Unterlaengen (g, f) in der Maske. */
+.tl { display: block; overflow: hidden; padding-bottom: .1em; margin-bottom: -.1em; }
+/* Jede Zeile bleibt eine Zeile — sonst steht "für" allein (gemessen bei 1288 px). */
+.tl > span { display: block; white-space: nowrap; }
+.js .tl > span { transform: translate3d(0, 110%, 0); transition: transform 1100ms var(--ease-spring); transition-delay: calc(var(--i, 0) * 110ms); }
+.js .ts-hero.bereit .tl > span { transform: none; }
+.ts-lead { font-size: 1.12rem; line-height: 1.65; color: var(--ink-2); max-width: 44ch; text-wrap: pretty; }
 
+/* ── Die zwoelf Plaetze ── */
+.ts-plaetze { justify-self: end; width: 100%; max-width: 380px; }
+.ts-raster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.ts-platz {
+    aspect-ratio: 1; border-radius: 14px;
+    border: 1.5px dashed var(--rand-2);
+    background: color-mix(in srgb, var(--text-main) 1.5%, transparent);
+}
+.ts-platz--du {
+    display: grid; place-items: center;
+    border: 1.5px solid rgba(var(--primary-rgb), .9);
+    background: rgba(var(--primary-rgb), .16);
+    box-shadow: 0 0 0 6px rgba(var(--primary-rgb), .08), 0 14px 40px -10px rgba(var(--primary-rgb), .55);
+    font-family: var(--fd); font-variation-settings: 'opsz' 48; font-weight: 600;
+    font-size: clamp(1.05rem, 2.2vw, 1.4rem); letter-spacing: -.03em; color: var(--ink);
+}
+.js .ts-platz { opacity: 0; transform: scale(.82); transition: opacity 500ms var(--ease-out), transform 700ms var(--ease-spring); transition-delay: calc(450ms + var(--i, 0) * 45ms); }
+.js .ts-hero.bereit .ts-platz { opacity: 1; transform: none; }
+.ts-plaetze figcaption { margin-top: 1rem; font-size: .92rem; color: var(--ink-3); }
+.ts-plaetze figcaption span + span { color: var(--ink-2); }
+
+/* ── Hinweis ausserhalb von Android ── */
 .ts-hinweis {
-    display: flex; gap: 12px; align-items: flex-start;
-    padding: 14px 16px; margin-bottom: 22px;
+    display: flex; gap: 12px; align-items: flex-start; max-width: 720px;
+    padding: 14px 16px; margin-bottom: 2.5rem;
     border: 1px solid var(--hover-border); background: var(--hover-fill); border-radius: 12px;
-    font-size: 0.92rem; color: var(--text-main);
+    font-size: .93rem; color: var(--ink);
 }
 .ts-hinweis svg { width: 20px; height: 20px; flex: 0 0 20px; margin-top: 2px; color: var(--primary); }
 
-.ts-schritte { list-style: none; display: grid; gap: 14px; }
-.ts-schritt {
-    display: flex; gap: 18px; align-items: flex-start;
-    padding: 22px; border-radius: 16px;
-    background: var(--flaeche); border: 1px solid var(--rand);
+/* ── Der Weg: drei Schritte an einer Linie ── */
+.ts-weg { list-style: none; position: relative; max-width: 720px; }
+.ts-weg::before {
+    content: ''; position: absolute; left: 27px; top: 40px; bottom: 40px; width: 1px;
+    background: linear-gradient(var(--rand-2), var(--rand-2) 70%, transparent);
 }
-.ts-nr {
-    width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
+.ts-schritt { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 0 1.6rem; padding: 0 0 2.75rem; }
+.ts-schritt:last-child { padding-bottom: 0; }
+.ts-ziffer {
+    width: 56px; height: 56px; border-radius: 50%;
     display: grid; place-items: center;
-    background: var(--primary); color: #fff; font-weight: 700; font-size: 1.05rem;
+    background: var(--bg-deep); border: 1px solid var(--rand-2);
+    font-family: var(--fd); font-variation-settings: 'opsz' 48; font-size: 1.6rem; font-weight: 600; color: var(--ink);
 }
-.ts-text { min-width: 0; }
-.ts-text h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
-.ts-text p { margin-top: 4px; font-size: 0.95rem; color: var(--text-muted); }
+.ts-schritt:first-child .ts-ziffer { background: var(--primary); border-color: transparent; color: #fff; }
+.ts-text { padding-top: .55rem; min-width: 0; }
+.ts-text h2 { font-family: var(--fd); font-variation-settings: 'opsz' 48; font-size: 1.55rem; font-weight: 600; letter-spacing: -.03em; line-height: 1.15; }
+.ts-text p { margin-top: .45rem; color: var(--ink-2); max-width: 56ch; }
 
 .ts-knopf {
     display: inline-flex; align-items: center; justify-content: center;
-    margin-top: 14px; min-height: 44px; padding: 10px 20px; border-radius: 10px;
-    background: var(--primary); color: #fff; text-decoration: none; font-weight: 600; font-size: 0.98rem;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 1.1rem; min-height: 46px; padding: 11px 22px; border-radius: 999px;
+    background: var(--ink); color: var(--bg-deep); text-decoration: none; font-weight: 600; font-size: .98rem;
+    transition: background-color .2s ease, box-shadow .2s ease;
 }
-.ts-knopf:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
+.ts-schritt:first-child .ts-knopf { background: var(--primary); color: #fff; }
+.ts-knopf:hover { background: color-mix(in srgb, var(--ink) 86%, var(--bg-deep)); }
+.ts-schritt:first-child .ts-knopf:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
 .ts-knopf:active { transform: translateY(1px); }
-.ts-knopf:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35); }
+.ts-knopf:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), .45); }
 
-.ts-fragen { margin-top: 44px; }
-.ts-fragen h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
-.ts-fragen dl { display: grid; gap: 14px; }
-.ts-fragen dt { font-weight: 600; font-size: 0.97rem; }
-.ts-fragen dd { margin-top: 2px; font-size: 0.93rem; color: var(--text-muted); }
+/* 14 Tage als Streifen: zwei Wochen, nichts abgehakt — die Zeit beginnt erst. */
+.ts-tage { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; margin-top: 1.1rem; max-width: 420px; }
+.ts-tage i { height: 26px; border-radius: 7px; border: 1px solid var(--rand-2); background: var(--flaeche); }
+.ts-tage i:nth-child(7) { margin-right: 6px; }
 
+/* ── Fragen ── */
+.ts-fragen { max-width: 720px; margin-top: 5.5rem; }
+.ts-fragen h2 { font-family: var(--fd); font-variation-settings: 'opsz' 48; font-size: 1.55rem; font-weight: 600; letter-spacing: -.03em; margin-bottom: .8rem; }
+.ts-fragen dl > div { padding: 1.15rem 0; border-top: 1px solid var(--rand); }
+.ts-fragen dl > div:last-child { border-bottom: 1px solid var(--rand); }
+.ts-fragen dt { font-weight: 600; }
+.ts-fragen dd { margin-top: .25rem; color: var(--ink-2); max-width: 60ch; }
+
+@media (max-width: 860px) {
+    .ts-hero { grid-template-columns: minmax(0, 1fr); padding: 4.5rem 0 3.5rem; gap: 2.5rem; }
+    .ts-plaetze { justify-self: start; max-width: 340px; }
+}
 @media (max-width: 480px) {
-    .ts { padding: 20px 16px 64px; }
-    .ts-schritt { padding: 18px; gap: 14px; }
+    .ts { padding: 20px 16px 72px; }
+    .ts-hero { padding-top: 3.5rem; }
+    .ts-titel { font-size: clamp(2.6rem, 13vw, 3.4rem); }
+    .ts-weg::before { left: 21px; }
+    .ts-schritt { grid-template-columns: 44px minmax(0, 1fr); gap: 0 1.1rem; }
+    .ts-ziffer { width: 44px; height: 44px; font-size: 1.3rem; }
+    .ts-text { padding-top: .35rem; }
+    .ts-text h2 { font-size: 1.3rem; }
     .ts-knopf { width: 100%; }
+    .ts-tage { gap: 4px; }
+    .ts-tage i { height: 22px; border-radius: 6px; }
+    .ts-tage i:nth-child(7) { margin-right: 4px; }
 }
 @media (max-width: 360px) {
-    .ts-nr { width: 34px; height: 34px; flex-basis: 34px; font-size: 0.95rem; }
+    .ts-raster { gap: 8px; }
 }
 @media (prefers-reduced-motion: reduce) {
+    .js .tl > span, .js .ts-platz { transition: none; transform: none; opacity: 1; }
+    .ts-punkt { animation: none; }
     .ts-zurueck, .ts-knopf { transition: none; }
 }
