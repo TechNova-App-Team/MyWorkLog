@@ -6,8 +6,8 @@
 // Ein Protokolleintrag (Metadata im KV) sieht so aus:
 //   { ts, a: 'woche'|'tag'|'chat'|'?', s: 'ok'|'rettung'|'fehler', m: Modell,
 //     pt, ct: Tokens Eingabe/Ausgabe, ms: Dauer, f: '429,zeit,…' }
-// f listet die Fehlversuche in Reihenfolge der Modellkette — Position j gehoert
-// zu modelle[j]. Aendert sich die Kette, sind aeltere Eintraege dort verschoben;
+// f listet die Fehlversuche, seit Worker v4.6 als "<j>:<grund>" (j = Platz in
+// modelle[]); aeltere Eintraege ohne Platz: Position j gehoert zu modelle[j]. Aendert sich die Kette, sind aeltere Eintraege dort verschoben;
 // die Tabelle sagt das dazu, statt es zu verschweigen.
 (function () {
     'use strict';
@@ -38,7 +38,16 @@
     };
     var sek = function (ms) { return (ms / 1000).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' s'; };
     var modellKurz = function (m) { return String(m || '').replace(/^[^/]+\//, '').replace(/:free$/, ''); };
-    var fehlerListe = function (e) { return e.f ? e.f.split(',').filter(Boolean) : []; };
+    var fehlerListe = function (e) { return fehlerPlaetze(e).map(function (x) { return x.code; }); };
+    // Seit Worker v4.6 (Rennen) "<platz>:<grund>": Fehler kommen nicht mehr in
+    // Kettenreihenfolge an, und das erste Modell kann zweimal scheitern. Aeltere
+    // Eintraege ohne Doppelpunkt: Position = Kettenplatz, wie bisher.
+    var fehlerPlaetze = function (e) {
+        return (e.f ? e.f.split(',').filter(Boolean) : []).map(function (c, i) {
+            var m = /^(\d+):(.+)$/.exec(c);
+            return m ? { j: +m[1], code: m[2] } : { j: i, code: c };
+        });
+    };
     var FEHLER_KURZ = { zeit: 'Zeit', form: 'Form', leer: 'leer', json: 'JSON', netz: 'Netz' };
     // '429,429,zeit' → '429 ×2 · Zeit' — die Langform steht im Titel der Zelle.
     function fehlerKurz(f) {
@@ -223,11 +232,10 @@
     function modelle(auf, kette) {
         var z = kette.map(function () { return { gefragt: 0, ok: 0, gerettet: 0, tok: 0, fehler: {} }; });
         auf.forEach(function (e) {
-            var f = fehlerListe(e);
-            f.forEach(function (code, j) {
-                if (!z[j]) return;
-                z[j].gefragt++;
-                z[j].fehler[code] = (z[j].fehler[code] || 0) + 1;
+            fehlerPlaetze(e).forEach(function (x) {
+                if (!z[x.j]) return;
+                z[x.j].gefragt++;
+                z[x.j].fehler[x.code] = (z[x.j].fehler[x.code] || 0) + 1;
             });
             var j = kette.indexOf(e.m);
             if (e.s === 'ok' && z[j]) { z[j].gefragt++; z[j].ok++; z[j].tok += e.pt + e.ct; }

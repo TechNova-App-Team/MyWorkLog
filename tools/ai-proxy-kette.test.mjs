@@ -23,12 +23,12 @@ let src = fs.readFileSync(WORKER, 'utf8');
 const TIMEOUT_ZEILE = /const MODEL_TIMEOUT_MS = \d+;/;
 if (!TIMEOUT_ZEILE.test(src)) { console.error('✗ MODEL_TIMEOUT_MS fehlt im Worker'); process.exit(1); }
 src = src.replace(TIMEOUT_ZEILE, 'const MODEL_TIMEOUT_MS = 300;')
-         .replace(/^export default \{/m, 'export const MODELS_EXPORT = MODELS;\nexport default {');
+         .replace(/^export default \{/m, 'export const MODELS_EXPORT = MODELS;\nexport { rennen };\nexport default {');
 
 const tmp = new URL('./.ai-proxy-kette.generated.mjs', import.meta.url);
 fs.writeFileSync(tmp, src);
 const worker = (await import(tmp.href)).default;
-const { MODELS_EXPORT: MODELS } = await import(tmp.href);
+const { MODELS_EXPORT: MODELS, rennen } = await import(tmp.href);
 fs.unlinkSync(tmp);
 
 let ok = 0, fail = 0;
@@ -105,7 +105,8 @@ const verboten = ['minimax/minimax-m3:free', 'minimax/minimax-m2.7:free', 'nvidi
   'thinkingmachines/inkling:free', 'thinkingmachines/inkling-small:free', 'nvidia/nemotron-3.5-content-safety:free'];
 pruefe(new Set(MODELS).size === MODELS.length, `kein Modell doppelt (${MODELS.length} Eintraege)`);
 pruefe(!MODELS.some(m => verboten.includes(m)), 'keiner der am 19.09.2026 rausgeflogenen Eintraege ist zurueck');
-pruefe(MODELS.length > 0 && MODELS.every(m => m.endsWith(':free')), 'nur :free-Modelle in der Kette');
+// openrouter/free (v4.5) ist der Router auf freie Modelle: Preis 0, aber ohne Endung.
+pruefe(MODELS.length > 0 && MODELS.every(m => m.endsWith(':free') || m === 'openrouter/free'), 'nur kostenlose Modelle in der Kette');
 
 // ── Chat-Assistent (App v8.0.0) ueber "/" ─────────────────────────────
 // Der Chat schickt seinen Wochenentwurf ueber den Wochen-Pfad und bekommt
@@ -155,6 +156,80 @@ const rv = await worker.fetch(new Request('https://ai-proxy.myworklog.de/versteh
 pruefe(rv.status === 410, `/verstehen antwortet 410 (war ${rv.status})`);
 pruefe(aufrufe.length === 0, `kein Modell angefasst (${aufrufe.length})`);
 pruefe(rv.headers.get('Access-Control-Allow-Origin') === 'https://myworklog.de', 'mit CORS-Kopf, sonst sieht die alte App nur "Netzwerkfehler"');
+
+// ── Gestaffeltes Rennen (v4.6) ───────────────────────────────────────
+// Direkt an rennen(), mit Attrappe statt fetch und Staffel 100 ms statt 12 s.
+console.log('\nRennen: gestaffelt statt strenger Reihe');
+const schlaf = ms => new Promise(r => setTimeout(r, ms));
+const KETTE = ['a', 'b', 'c', 'd'];
+function attrappe(plan) {
+  const log = { start: [], abgebrochen: [], gleichzeitig: 0, max: 0 };
+  const fn = (model, payload, key, ref, signal) => {
+    log.start.push(model);
+    log.gleichzeitig++; log.max = Math.max(log.max, log.gleichzeitig);
+    const schritt = plan[model].shift();
+    return new Promise(resolve => {
+      const t = setTimeout(() => { log.gleichzeitig--; resolve(schritt.r); }, schritt.ms);
+      signal.addEventListener('abort', () => {
+        clearTimeout(t); log.gleichzeitig--; log.abgebrochen.push(model);
+        resolve({ ok: false, code: 'zeit' });
+      }, { once: true });
+    });
+  };
+  return { fn, log };
+}
+const WIN = { ok: true, data: { usage: {} } };
+
+// 1. Erstes Modell haengt, zweites ist schnell: nach der Staffel startet b parallel und gewinnt.
+{
+  const { fn, log } = attrappe({ a: [{ ms: 5000, r: WIN }], b: [{ ms: 50, r: WIN }], c: [], d: [] });
+  const f = [], t0 = Date.now();
+  const e = await rennen(KETTE, {}, 'k', 'r', f, { staffelMs: 100, versuch: fn });
+  const dauer = Date.now() - t0;
+  pruefe(e.gewinner && e.gewinner.model === 'b', `langsames a, schnelles b → b gewinnt (${e.gewinner && e.gewinner.model})`);
+  pruefe(dauer >= 140 && dauer < 1000, `nach Staffel + Antwortzeit fertig, nicht nach 5 s (${dauer} ms)`);
+  pruefe(log.abgebrochen.includes('a'), 'der Verlierer a wird abgebrochen');
+  pruefe(f.length === 0, `Abbruch des Verlierers zaehlt nicht als Fehlversuch (${f.join(',') || 'leer'})`);
+}
+
+// 2. Leere Antwort des ersten Modells: einmal wiederholen, dann weiter.
+{
+  const LEER = { ok: false, code: 'leer' };
+  const { fn, log } = attrappe({ a: [{ ms: 10, r: LEER }, { ms: 10, r: WIN }], b: [], c: [], d: [] });
+  const f = [];
+  const e = await rennen(KETTE, {}, 'k', 'r', f, { staffelMs: 1000, versuch: fn });
+  pruefe(e.gewinner && e.gewinner.model === 'a' && log.start.join() === 'a,a', `a leer → a noch einmal → geliefert (${log.start.join(' → ')})`);
+  pruefe(f.join() === '0:leer', `Fehlversuch mit Kettenplatz protokolliert (${f.join()})`);
+}
+{
+  const LEER = { ok: false, code: 'leer' };
+  const { fn, log } = attrappe({ a: [{ ms: 10, r: LEER }, { ms: 10, r: LEER }], b: [{ ms: 10, r: WIN }], c: [], d: [] });
+  const f = [];
+  const e = await rennen(KETTE, {}, 'k', 'r', f, { staffelMs: 1000, versuch: fn });
+  pruefe(e.gewinner && e.gewinner.model === 'b' && log.start.join() === 'a,a,b', `zweimal leer → nur EINE Wiederholung, dann b (${log.start.join(' → ')})`);
+  pruefe(f.join() === '0:leer,0:leer', `beide Versuche stehen im Protokoll (${f.join()})`);
+}
+
+// 3. Nie mehr als RENNEN_PARALLEL (2) gleichzeitig, auch wenn alle haengen.
+{
+  const H = { ms: 400, r: { ok: false, code: '429' } };
+  const { fn, log } = attrappe({ a: [H], b: [H], c: [H], d: [H] });
+  const f = [];
+  const e = await rennen(KETTE, {}, 'k', 'r', f, { staffelMs: 20, versuch: fn });
+  pruefe(log.max === 2, `hoechstens 2 gleichzeitig (${log.max})`);
+  pruefe(e.gewinner === null && log.start.length === 4, `alle scheitern → kein Gewinner, alle 4 probiert (${log.start.length})`);
+  pruefe(f.length === 4 && f.every(x => /^\d:429$/.test(x)), `vier Eintraege "<platz>:429" (${f.join()})`);
+  pruefe(f.length > 0, 'Gegenprobe: es gibt ueberhaupt Eintraege');
+}
+
+// 4. Unbrauchbare Form wird als Rettung gemerkt, die Kette laeuft weiter.
+{
+  const FORM = { ok: false, code: 'form', data: { x: 1 } };
+  const { fn } = attrappe({ a: [{ ms: 10, r: FORM }], b: [{ ms: 10, r: WIN }], c: [], d: [] });
+  const f = [];
+  const e = await rennen(KETTE, {}, 'k', 'r', f, { staffelMs: 1000, versuch: fn });
+  pruefe(e.gewinner && e.gewinner.model === 'b' && e.salvage && e.salvage.model === 'a', 'Form-Fehler von a gemerkt, b liefert');
+}
 
 console.log(`\n${ok} OK, ${fail} FAIL`);
 process.exit(fail ? 1 : 0);

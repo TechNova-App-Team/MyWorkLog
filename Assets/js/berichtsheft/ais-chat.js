@@ -503,15 +503,109 @@ function zeichnen() {
         });
         if (letzte === -1 && karte) html += '<div class="aic-n is-karte">' + karte + '</div>';
         box.innerHTML = html + (beschaeftigt ? tippenHTML() : '');
+        if (beschaeftigt) warteAnimieren();
     }
     profilZeichnen();
     nachUnten();
 }
-function tippenHTML() {
-    return '<div class="aic-n is-assistent is-tippt" role="status"><span class="aic-avatar">' + MARKE + '</span>' +
-        '<div class="aic-inhalt"><p class="aic-tippt"><span></span><span></span><span></span>' +
-        '<em>' + esc(beschaeftigt === 'lokal' ? Lx('Schreibe deine Woche …', 'Writing your week …') : Lx('Schreibt …', 'Writing …')) + '</em></p></div></div>';
+// ── Warten: ein Wochenblatt, das sich beschreibt ─────────────────────
+// Statt "Schreibt …" (Wunsch 09.10.2026). Bewusst EHRLICH: der Kopf zeigt nur,
+// was wirklich mitgeschickt wird (KW, Beruf, Lehrjahr), die Zeilen sind die
+// gewaehlten Tage, und der Statussatz haengt an der echten Wartezeit. Die
+// Schwelle 12 s ist RENNEN_STAFFEL_MS im Worker (ab da schreibt dort ein
+// zweites Modell parallel) — wer sie dort aendert, aendert sie hier mit.
+// 95 s = Zeitlimit in denken().
+const WARTE_STAFFEL_S = 12, WARTE_LIMIT_S = 95;
+const TAG_KURZ = [['Mo', 'Mon'], ['Di', 'Tue'], ['Mi', 'Wed'], ['Do', 'Thu'], ['Fr', 'Fri']];
+// Feste Strichlaengen je Zeile: sieht nach Handschrift aus, springt aber nicht
+// bei jedem Neuzeichnen.
+const STRICHE = [[92, 58], [74, 86], [88, 41], [63, 79], [81, 52]];
+let wartenSeit = 0, warteUhr = null;
+
+function warteSatz(sek) {
+    if (beschaeftigt === 'lokal') return Lx('Schreibt deine Woche aus der Vorlage …', 'Writing your week from the template …');
+    if (sek < WARTE_STAFFEL_S) return Lx('Formuliert deine Woche …', 'Writing your week …');
+    if (sek < 40) return Lx('Dauert länger als sonst. Ein zweites Modell schreibt jetzt parallel mit.',
+                            'Taking longer than usual. A second model is now writing in parallel.');
+    return Lx('Die Modelle sind gerade stark ausgelastet. Ich warte noch, höchstens bis 1:35.',
+              'The models are very busy right now. I will keep waiting, until 1:35 at most.');
 }
+function uhrText(sek) { return Math.floor(sek / 60) + ':' + String(sek % 60).padStart(2, '0'); }
+
+function tippenHTML() {
+    // typeof statt window.AIStudio: ein const-Global haengt nicht an window.
+    const k = (typeof AIStudio !== 'undefined' && AIStudio.konfig) ? AIStudio.konfig() : {};
+    const en = Lx(0, 1);
+    const tage = (k.tage && k.tage.length ? k.tage : [0, 1, 2, 3, 4]).filter(t => t >= 0 && t < 5).sort();
+    const kopf = [
+        k.kw ? Lx('KW ', 'CW ') + k.kw : '',
+        k.berufName || '',
+        k.lehrjahr ? Lx(k.lehrjahr + '. Lehrjahr', 'Year ' + k.lehrjahr) : '',
+    ].filter(Boolean);
+    const sek = wartenSeit ? Math.floor((Date.now() - wartenSeit) / 1000) : 0;
+    const zeilen = tage.map(t =>
+        '<div class="aic-warte-zeile"><span class="aic-warte-tag">' + TAG_KURZ[t][en] + '</span><span class="aic-warte-striche">' +
+        STRICHE[t].map(w => '<span class="aic-warte-strich" style="--w:' + w + '%"><span class="aic-warte-tinte"><i class="aic-warte-feder"></i></span></span>').join('') +
+        '</span></div>').join('');
+    return '<div class="aic-n is-assistent is-tippt"><span class="aic-avatar">' + MARKE + '</span>' +
+        '<div class="aic-inhalt"><div class="aic-warte">' +
+        (kopf.length ? '<div class="aic-warte-kopf">' + kopf.map(c => '<span class="aic-chip">' + esc(c) + '</span>').join('') + '</div>' : '') +
+        '<div class="aic-warte-blatt" aria-hidden="true">' + zeilen + '</div>' +
+        '<p class="aic-warte-status" role="status"><span class="aic-warte-satz">' + esc(warteSatz(sek)) + '</span>' +
+        '<span class="aic-warte-zeit" aria-hidden="true">' + uhrText(sek) + '</span></p>' +
+        '</div></div></div>';
+}
+
+// Nach jedem Zeichnen: Striche per WAAPI, currentTime = vergangene Wartezeit —
+// so laeuft die Schrift nach einem Neuzeichnen weiter statt neu anzufangen.
+function warteAnimieren() {
+    const blatt = document.querySelector('.aic-warte-blatt');
+    if (!blatt || !blatt.animate) return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { blatt.classList.add('is-still'); return; }
+    const tinten = [...blatt.querySelectorAll('.aic-warte-tinte')];
+    const ZUG = 620, TAKT = 430, HALT = 1100, AUS = 420;
+    const T = (tinten.length - 1) * TAKT + ZUG + HALT + AUS;
+    const t = Date.now() - (wartenSeit || Date.now());
+    const kurve = 'cubic-bezier(0.65, 0, 0.35, 1)';
+    tinten.forEach((el, i) => {
+        const a = (i * TAKT) / T, b = (i * TAKT + ZUG) / T;
+        const tinte = el.animate([
+            { offset: 0, transform: 'translateX(-101%)' },
+            { offset: a, transform: 'translateX(-101%)', easing: kurve },
+            { offset: b, transform: 'translateX(0)' },
+            { offset: 1, transform: 'translateX(0)' },
+        ], { duration: T, iterations: Infinity });
+        const feder = el.firstElementChild.animate([
+            { offset: 0, opacity: 0 },
+            { offset: a, opacity: 0 },
+            { offset: Math.min(a + 0.01, b), opacity: 1 },
+            { offset: b, opacity: 1 },
+            { offset: Math.min(b + 0.04, 1), opacity: 0 },
+            { offset: 1, opacity: 0 },
+        ], { duration: T, iterations: Infinity });
+        tinte.currentTime = feder.currentTime = t;
+    });
+    const aus = blatt.animate([
+        { offset: 0, opacity: 1 },
+        { offset: (T - AUS) / T, opacity: 1, easing: 'ease-out' },
+        { offset: 1, opacity: 0 },
+    ], { duration: T, iterations: Infinity });
+    aus.currentTime = t;
+}
+
+// Uhr und Satz einmal je Sekunde nachziehen — nur Text, kein Neuzeichnen.
+function wartenBeginnen() {
+    wartenSeit = Date.now();
+    clearInterval(warteUhr);
+    warteUhr = setInterval(() => {
+        if (!beschaeftigt) { wartenEnden(); return; }
+        const sek = Math.floor((Date.now() - wartenSeit) / 1000);
+        const z = document.querySelector('.aic-warte-zeit'), s = document.querySelector('.aic-warte-satz');
+        if (z) z.textContent = uhrText(sek);
+        if (s) { const neu = warteSatz(sek); if (s.textContent !== neu) s.textContent = neu; }
+    }, 1000);
+}
+function wartenEnden() { clearInterval(warteUhr); warteUhr = null; wartenSeit = 0; }
 function nachUnten() {
     const s = $('aicScroll');
     if (s) requestAnimationFrame(() => { s.scrollTop = s.scrollHeight; });
@@ -911,6 +1005,7 @@ async function senden(e, vorgabeText) {
     zuletztGeaendert = [];
     gespraech.nachrichten.push({ rolle: 'nutzer', text });
     beschaeftigt = 'denken';
+    wartenBeginnen();
     speichern();
     zeichnen();
     knopfZustand();
@@ -928,6 +1023,7 @@ async function senden(e, vorgabeText) {
         catch (err) { grund = err && err.message; }
     }
     beschaeftigt = false;
+    wartenEnden();
 
     if (!ergebnis) { ohneAntwort(grund); return; }
 
@@ -974,12 +1070,14 @@ async function ohneKi() {
     const text = gespraech.nachrichten.filter(n => n.rolle === 'nutzer').map(n => n.text).join('\n');
     if (!text) return;
     beschaeftigt = 'lokal';
+    wartenBeginnen();
     zeichnen();
     knopfZustand();
     let ok = false;
     const vorher = AIStudio.woche();
     try { ok = await AIStudio.erzeugeAusText(text); } catch (e) { ok = false; }
     beschaeftigt = false;
+    wartenEnden();
     const w = AIStudio.woche();
     if (ok && w && w !== vorher) {
         const tage = (w.days || []).map(d => ({

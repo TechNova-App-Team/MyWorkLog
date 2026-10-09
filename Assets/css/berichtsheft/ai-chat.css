@@ -258,20 +258,77 @@ body.aic-offen { overflow: hidden; }
 }
 .aic-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 
-/* "Denkt nach …" — drei Punkte, darunter der Satz als Klartext (fuer Leser
-   ohne Bewegung und fuer Screenreader). */
-.aic-tippt { display: flex; align-items: center; gap: 4px; margin: 0; padding-top: 6px; color: var(--text-muted); }
-.aic-tippt span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--text-muted);
-    animation: aicPunkt 1.2s ease-in-out infinite;
+/* Warten: ein Wochenblatt, das sich beschreibt (ais-chat.js, tippenHTML +
+   warteAnimieren). Die Bewegung macht WAAPI, nicht @keyframes: sie muss beim
+   Neuzeichnen an der Stelle weiterlaufen, an der sie war. Hier steht nur die
+   Ruhelage — ohne JS/Bewegung sind die Striche als leise Linien zu sehen. */
+.aic-warte {
+    max-width: 440px;
+    padding: 14px 16px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: var(--bg-card);
 }
-.aic-tippt span:nth-child(2) { animation-delay: 0.15s; }
-.aic-tippt span:nth-child(3) { animation-delay: 0.3s; }
-.aic-tippt em { margin-left: 8px; font-style: normal; font-size: 0.85rem; }
-@keyframes aicPunkt { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+.aic-warte-kopf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.aic-warte-blatt { display: grid; gap: 12px; }
+.aic-warte-zeile { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: start; gap: 10px; }
+.aic-warte-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text-muted);
+    padding-top: 1px;
+}
+.aic-warte-striche { display: grid; gap: 9px; padding-top: 4px; }
+/* Heftlinie unter jedem Strich, die Tinte liegt darauf. */
+.aic-warte-strich {
+    position: relative;
+    display: block;
+    --w: 70%;   /* Startwert; ais-chat.js setzt je Strich inline eine eigene Laenge */
+    width: var(--w);
+    height: 3px;
+    border-radius: 2px;
+    box-shadow: 0 2px 0 -1px var(--border-light);
+    /* Links kappen (dort wartet die Tinte), rechts Luft fuer die Feder. */
+    clip-path: inset(-6px -8px -6px 0);
+}
+.aic-warte-tinte {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--primary) 55%, var(--text-secondary));
+    transform: translateX(-101%);
+    will-change: transform;
+}
+.aic-warte-feder {
+    position: absolute;
+    right: -3px;
+    top: -2.5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 10px 2px rgba(var(--primary-rgb), 0.55);
+    opacity: 0;
+}
+.aic-warte-blatt.is-still .aic-warte-tinte { transform: none; opacity: 0.35; }
+.aic-warte-status {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 14px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--text-secondary);
+}
+.aic-warte-zeit {
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
 
 /* ── Knoepfe ──────────────────────────────────────────────────── */
 .aic-knopf {
@@ -729,6 +786,5 @@ body.aic-offen .ai-studio-fab { display: none; }
 @media (prefers-reduced-motion: reduce) {
     .aic-n { animation: none; }
     .aic-tag.is-neu::before { animation: none; opacity: 0.8; }
-    .aic-tippt span { animation: none; opacity: 0.6; }
     .aic-rail { transition: none; }
 }
