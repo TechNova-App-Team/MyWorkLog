@@ -68,14 +68,14 @@
         }
 
 
-        /* 🔴 Erzwungener Dunkelmodus: In der Play-Store-App (TWA) laeuft die Seite im
-           STANDARDBROWSER des Handys — auf Samsung oft Samsung Internet. Dessen
-           Dunkelmodus faerbt jede Seite um, die nicht selbst per
-           prefers-color-scheme-Regel zeigt, dass sie dunkel kann; das meta
-           color-scheme allein reicht ihm nicht. Folge (gemeldet 09.10.2026):
-           Arbeit-Balken fast schwarz, Schule/Urlaub/Krank abgedunkelt, die Sonne im
-           Wetter ein schwarzer Kreis. Diese beiden Regeln aendern am Aussehen
-           nichts — sie sind die Erklaerung "ich kann dunkel" fuer solche Browser. */
+        /* 🔴 Erzwungener Dunkelmodus: Chrome laesst eine Seite mit color-scheme dark
+           in Ruhe, Samsung Internet NICHT. Dort wirkt das nur mit einem Labs-Flag,
+           das kein Nutzer gesetzt hat. Nachgemessen 09.10.2026 auf einem S25 Ultra,
+           NACHDEM diese Regeln live waren: Arbeit-Balken fast schwarz, Mond im Wetter
+           schwarz. Laut Samsung gibt es von der Seite aus keinen Weg daran vorbei.
+           Die Play-Store-App startet deshalb seit 1.0.2 in Chrome, wenn es da ist
+           (Patch in bauen.mjs, ausserhalb des Repos). Die Regeln bleiben fuer Chrome
+           und fuer Samsung mit Flag, sie aendern am Aussehen nichts. */
         :root { color-scheme: dark; }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) { color-scheme: dark; }
