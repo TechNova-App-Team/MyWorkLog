@@ -756,6 +756,27 @@
             outline: 2px solid var(--border-focus);
             outline-offset: 2px;
         }
+        /* Zweiter Weg im leeren Aktivitaeten-Kasten, bewusst leiser als "Tag
+           erfassen": Textverweis statt zweitem Knopf gleicher Gewichtung. */
+        .activities-empty__import {
+            padding: 0.25rem 0.5rem;
+            font: inherit;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            background: none;
+            border: 0;
+            border-radius: 6px;
+            text-decoration: underline;
+            text-decoration-color: var(--border-interactive);
+            text-underline-offset: 3px;
+            cursor: pointer;
+            transition: color var(--dur-fast) var(--ease-out);
+        }
+        .activities-empty__import:hover { color: var(--text-main); }
+        .activities-empty__import:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
+        }
 
         /* Die Ring-Kacheln (Woche/Monat) und die Stats-Kachel (Ø + Urlaub)
            sind entfallen — alle vier KPI-Karten teilen sich jetzt .kpi-v2.
@@ -1528,6 +1549,11 @@
             transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
         }
         .setup-step__mark svg { width: 12px; height: 12px; }
+        /* Optionaler dritter Schritt: volle Breite statt allein in der linken
+           Spalte, gestrichelt, weil er im Gegensatz zu den beiden anderen nicht
+           noetig ist. 1 / -1 statt span 2 — span 2 legt im Ein-Spalten-Raster
+           am Handy eine Phantomspalte an. */
+        #setupStepImport { grid-column: 1 / -1; border-style: dashed; }
         .setup-step.is-done .setup-step__mark {
             background: var(--success);
             border-color: var(--success);

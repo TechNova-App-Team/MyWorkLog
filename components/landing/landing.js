@@ -23,6 +23,8 @@
     // Deshalb Intro ueberspringen — und 'pro_intro_seen' bewusst NICHT setzen, damit es
     // beim naechsten normalen Aufruf ganz normal kommt.
     if(/[#&]p2p=/.test(location.hash||'')){ return; }
+    // Dasselbe fuer den Direktlink in den Import-Assistenten (/?import=tabelle von /wechseln/).
+    if(/[?&]import=tabelle(?:&|$)/.test(location.search)){ return; }
     var intro=document.getElementById('pro-intro');
     intro.style.display='block';
 

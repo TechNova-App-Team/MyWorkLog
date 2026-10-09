@@ -281,6 +281,9 @@
         if (!entries.length) {
             trackEl.style.display = 'none';
             if (emptyEl) emptyEl.style.display = 'flex';
+            const impBtn = document.getElementById('activitiesImport');
+            if (impBtn) impBtn.style.display =
+                (!(data.entries && data.entries.length) && typeof openImportWizard === 'function') ? '' : 'none';
             dayTabsEl.innerHTML = '';
             renderActivityDaySum(null);
             return;

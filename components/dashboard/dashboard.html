@@ -121,6 +121,17 @@
                         </div>
                         <button type="button" class="setup-step__btn setup-step__btn--main" onclick="openSettings(); switchSettingsTab('work');">Einrichten</button>
                     </li>
+                    <!-- Bewusst NACH den Arbeitszeiten: der Import rechnet Soll und
+                         Saldo jeder Zeile aus den Settings. Kein is-done noetig —
+                         nach dem Import gibt es Eintraege, und die Karte geht weg. -->
+                    <li class="setup-step" id="setupStepImport">
+                        <span class="setup-step__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                        <div class="setup-step__body">
+                            <span class="setup-step__t">Alte Zeiten übernehmen</span>
+                            <span class="setup-step__s">Falls du schon in Excel oder einer anderen App erfasst hast. Sonst einfach überspringen.</span>
+                        </div>
+                        <button type="button" class="setup-step__btn" onclick="openImportWizard()">Übernehmen</button>
+                    </li>
                 </ol>
                 <button type="button" class="setup-card__close" onclick="dismissSetupHint()" aria-label="Später einrichten" title="Später einrichten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </section>
@@ -670,6 +681,9 @@
                                 <div class="empty-text">Für diesen Tag ist nichts erfasst</div>
                                 <div class="empty-subtext">Trag deine Zeiten oben ein — der Tag landet dann hier.</div>
                                 <button type="button" class="chart-empty__btn" onclick="focusEntryForm()">Tag erfassen</button>
+                                <!-- Nur solange noch GAR KEIN Eintrag existiert (charts.js
+                                     renderLists): wer umsteigt, hat die Monate schon woanders. -->
+                                <button type="button" class="activities-empty__import" id="activitiesImport" onclick="openImportWizard()" style="display:none"><span>Zeiten aus Excel oder einer anderen App übernehmen</span></button>
                             </div>
                         </div>
                     </div>

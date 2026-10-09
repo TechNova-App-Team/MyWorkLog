@@ -889,3 +889,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.key === 'Escape' && ov && ov.classList.contains('open')) closeImportWizard();
     });
 });
+
+// ── Direktlink /?import=tabelle ─────────────────────────────────────────
+// Kommt vom Knopf auf /wechseln/. Ohne den Link landet ein Umsteiger im
+// leeren Dashboard und muss den Assistenten selbst finden (Seitenleiste →
+// Import → dritter Eintrag). landing.js ueberspringt das Intro bei diesem
+// Parameter, sonst laege der Assistent unsichtbar hinter dessen z-index.
+document.addEventListener('DOMContentLoaded', function () {
+    if (!/[?&]import=tabelle(?:&|$)/.test(location.search)) return;
+    history.replaceState(null, '', location.pathname + location.hash);
+    openImportWizard();
+    if (typeof mwlEvent === 'function') mwlEvent('import_deeplink', {});
+});
