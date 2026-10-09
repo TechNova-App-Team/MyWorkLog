@@ -68,6 +68,20 @@
         }
 
 
+        /* 🔴 Erzwungener Dunkelmodus: In der Play-Store-App (TWA) laeuft die Seite im
+           STANDARDBROWSER des Handys — auf Samsung oft Samsung Internet. Dessen
+           Dunkelmodus faerbt jede Seite um, die nicht selbst per
+           prefers-color-scheme-Regel zeigt, dass sie dunkel kann; das meta
+           color-scheme allein reicht ihm nicht. Folge (gemeldet 09.10.2026):
+           Arbeit-Balken fast schwarz, Schule/Urlaub/Krank abgedunkelt, die Sonne im
+           Wetter ein schwarzer Kreis. Diese beiden Regeln aendern am Aussehen
+           nichts — sie sind die Erklaerung "ich kann dunkel" fuer solche Browser. */
+        :root { color-scheme: dark; }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) { color-scheme: dark; }
+        }
+        [data-theme="light"] { color-scheme: light; }
+
         /* Light theme overrides (applied via data-theme="light" on <html>) */
         [data-theme="light"] {
             --bg-deep: #f8fafc;
