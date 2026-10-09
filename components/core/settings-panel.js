@@ -664,8 +664,6 @@
             updateUI();
             renderLists();
             try { renderSidebarNav(); } catch(e) {}
-            try { renderWidgetManager(); } catch(e) {}
-            try { enableWidgetDragDrop(); applyWidgetLayout(); } catch(e) {}
             try { if (typeof renderPerformanceView === 'function') renderPerformanceView(calculatePerformanceData(), calculateDeepPerformanceData()); } catch(e) {}
             try { if (document.getElementById('view-history').classList.contains('active') && typeof renderHistoryView === 'function') renderHistoryView(); } catch(e) {}
             try { if (document.getElementById('view-goals').classList.contains('active')) renderGoalsView(); } catch(e) {}

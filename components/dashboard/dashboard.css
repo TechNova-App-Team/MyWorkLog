@@ -77,19 +77,13 @@
            Kleinwerte laufen in Mono (dort ist die Gitteroptik richtig),
            Displayzahlen in der Textschrift: bei 2,5 rem reisst eine
            Mono-Ziffer das Dezimalkomma sichtbar aus der Zahl. */
-        .dash-num,
-        .kpi-v2__foot-num,
-        .devbar__scale-num {
+        .dash-num {
             font-family: var(--font-mono);
             font-variant-numeric: tabular-nums;
             font-feature-settings: "tnum" 1;
             letter-spacing: -0.02em;
         }
-        .kpi-v2__value {
-            font-family: var(--font-num);
-            font-variant-numeric: tabular-nums;
-            font-feature-settings: "tnum" 1;
-        }
+        
         [data-theme="light"] {
             --role-neutral:        rgba(7, 16, 35, 0.20);
             --role-track:          rgba(7, 16, 35, 0.07);
@@ -115,64 +109,13 @@
             --shadow-glow-primary: 0 0 24px rgba(var(--primary-rgb), 0.06);
         }
 
-
         /* ─── DASHBOARD GRID LAYOUT ──────────────────────────────────── */
         .main { position: relative; z-index: 1; }
-
-        .dashboard-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
 
         /* Gestaffelte Einblendung nur beim Rueckkehren aufs Dashboard, nicht
            beim Seitenaufruf: mit `both` stehen die Karten bis zu 220 ms bei
            Deckkraft 0, und Chrome nimmt so gemalten Inhalt nicht als
            LCP-Kandidat (Details an .view-section in core.css). */
-        body.mwl-navigated .dashboard-item {
-            animation: fadeInUp var(--dur-slow) var(--ease-out) both;
-        }
-        .dashboard-item:nth-child(1) { animation-delay: 0ms; }
-        .dashboard-item:nth-child(2) { animation-delay: 55ms; }
-        .dashboard-item:nth-child(3) { animation-delay: 110ms; }
-        .dashboard-item:nth-child(4) { animation-delay: 165ms; }
-        .dashboard-item:nth-child(5) { animation-delay: 220ms; }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Edit mode */
-        .dashboard-grid.edit-mode {
-            outline: 2px dashed rgba(var(--primary-rgb), 0.25);
-            padding: 1rem;
-            border-radius: 18px;
-        }
-        .dashboard-grid.edit-mode .dashboard-item {
-            cursor: grab;
-            border: 1px dashed rgba(var(--primary-rgb), 0.35);
-            padding: 0.5rem;
-            border-radius: 16px;
-            position: relative;
-            transition: background var(--dur-fast) var(--ease-out);
-        }
-        .dashboard-grid.edit-mode .dashboard-item::before {
-            content: '\2261';
-            position: absolute;
-            top: 8px;
-            left: 10px;
-            opacity: 0.3;
-            font-size: 1rem;
-            pointer-events: none;
-            color: var(--text-muted);
-            z-index: 2;
-        }
-        .dashboard-grid.edit-mode .dashboard-item.dragging {
-            opacity: 0.45;
-            background: rgba(var(--primary-rgb), 0.06);
-            box-shadow: var(--shadow-lg);
-        }
-
 
         /* ─── SHARED CARD FOUNDATION ─────────────────────────────────── */
         /* 🔴 Die Liste ist die Wahrheit darueber, was auf dem Dashboard eine
@@ -183,10 +126,6 @@
            andere Rundung, anderer Rahmen, kein Lichtrand, dafuer ein
            backdrop-filter, den sonst keine Karte hat.
            Neue Karte auf dem Dashboard? Hier eintragen, nicht daneben. */
-        .kpi-card,
-        .chart-card,
-        .activities-card,
-        .activities-card-new,
         .input-wrapper {
             /* Seit v8.1.8 wie die Objekte im Intro: keine aufgemalte Rahmen-
                linie, sondern eine Flaeche mit Lichtkante oben, leichtem
@@ -223,15 +162,10 @@
            Rahmen wird deutlicher, der Schatten eine Stufe tiefer.
            Alles, was wirklich klickbar ist — Knoepfe, Tabs, Listenzeilen —
            faerbt sich im Akzent (--hover-fill). Fuellung = klickbar. */
-        .kpi-card:hover,
-        .chart-card:hover,
-        .activities-card:hover,
-        .activities-card-new:hover,
         .input-wrapper:hover {
             border-color: var(--border-interactive);
             box-shadow: var(--edge-top), var(--shadow-md);
         }
-
 
         /* ─── KPI GRID ───────────────────────────────────────────────── */
         /* Die drei Saldo-Karten sind dieselbe Groesse auf drei Zeit-
@@ -252,332 +186,6 @@
             margin-bottom: 0;
             align-items: stretch;
         }
-        .kpi-grid.edit-mode .kpi-card { cursor: grab; }
-        .kpi-grid.edit-mode .kpi-card.dragging {
-            opacity: 0.45;
-            background: rgba(var(--primary-rgb), 0.08);
-        }
-
-
-        /* ═══════════════════════════════════════════════════════════════
-           KPI-KARTE — EINE ANATOMIE FUER ALLE VIER
-           Zeile 1  Eyebrow + optionale Meta rechts
-           Zeile 2  Hauptwert (genau einer pro Karte)
-           Zeile 3  Visual (Abweichungsbalken oder Fortschritt)
-           Zeile 4  Fusszeile — woran der Wert gemessen wird
-           Die Zeilen sind ein Grid mit fester Reihenfolge, damit die
-           Grundlinien ueber alle vier Karten auf gleicher Hoehe liegen.
-           ═══════════════════════════════════════════════════════════════ */
-        .kpi-v2 {
-            display: grid;
-            grid-template-rows: auto 1fr auto auto;
-            gap: 0.625rem;
-            /* 1rem seitlich: so sahen es die Nutzer bis v8.1.8 (eine verrutschte
-               Media-Query in mobile-nav.css setzte .card global auf 1rem).
-               Mit 1,25 rem bricht "Abweichung vom Monatssoll" bei 1440 px um
-               und die Zahlen der vier Karten stehen nicht mehr auf einer Linie. */
-            padding: 1.125rem 1rem 1.125rem;
-            min-height: 172px;
-        }
-
-        .kpi-v2__top {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-            min-height: 20px;
-        }
-
-        /* Genau ein Eyebrow-Stil im ganzen Dashboard. Vorher war das
-           mal eine Pille mit Rahmen, mal nackter Grosstext. */
-        .kpi-v2__eyebrow {
-            font-size: var(--eyebrow-size);
-            font-weight: 600;
-            letter-spacing: var(--eyebrow-tracking);
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-
-        .kpi-v2__meta {
-            font-size: var(--num-sm);
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            color: var(--text-muted);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            white-space: nowrap;
-        }
-        .kpi-v2__meta.is-pos { color: var(--role-pos); }
-        .kpi-v2__meta.is-neg { color: var(--role-neg); }
-
-        .kpi-v2__value {
-            font-family: var(--font-display);
-            font-size: var(--num-hero);
-            font-weight: 600;
-            letter-spacing: -0.03em;
-            line-height: 1;
-            color: var(--text-main);
-            align-self: end;
-            display: flex;
-            align-items: baseline;
-            gap: 0.18em;
-            /* Displayzahlen in der Textschrift vertragen nur wenig Zug —
-               die harte -0.045em stammte aus der Mono-Zeit und presste
-               die Ziffern ineinander. */
-            letter-spacing: -0.025em;
-        }
-        /* Der Messwert bleibt bewusst in Textfarbe. Das Vorzeichen steht
-           schon als Glyphe davor UND als Seite, auf der der Balken aus
-           der Null herauswaechst — die Zahl zusaetzlich einzufaerben
-           haette drei grosse gruene Zahlen nebeneinander ergeben, und
-           damit traegt die Farbe wieder keine Information.
-           Die Klassen bleiben, damit JS den Zustand ausdruecken kann. */
-        .kpi-v2__value.is-pos,
-        .kpi-v2__value.is-neg { color: var(--text-main); }
-        .kpi-v2__unit {
-            font-size: 0.45em;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 0;
-        }
-
-        .kpi-v2__foot {
-            font-size: 0.75rem;
-            line-height: 1.35;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 0.5rem;
-            min-height: 17px;
-        }
-        /* Die Zahl bricht nie um ("39,5" / "h" bei 1280 px); umbrechen darf
-           nur die Beschriftung davor. Kein Kuerzen mit Ellipse: in der
-           Gleitzeit-Karte steckt die Zahl IM ersten Element ("+4,5…").
-           min-width:0, weil Grid-Kinder sonst nie schmaler als ihr Inhalt
-           werden und die Zeile aus der Karte ragt. */
-        .kpi-v2 > * { min-width: 0; }
-        .kpi-v2__foot > span:first-child { min-width: 0; }
-        .kpi-v2__foot-num {
-            white-space: nowrap;
-            flex-shrink: 0;
-            font-size: var(--num-sm);
-            color: var(--text-main);
-            font-weight: 600;
-            /* Mono neben Fliesstext braucht Luft, sonst klebt "0,0h" an
-               "Ø" und "pro Tag" — die Mono-Ziffern haben kein optisches
-               Seitenweiss wie die Textschrift. */
-            margin: 0 0.15em;
-        }
-
-        /* Gleitzeit-Karte: gleiche Anatomie, groesserer Auftritt */
-        .kpi-v2--hero .kpi-v2__value { font-size: clamp(2rem, 1.4rem + 2.1vw, 2.75rem); }
-        @media (max-width: 1180px) {
-            .kpi-v2--hero { grid-column: span 2; }
-        }
-        @media (max-width: 560px) {
-            .kpi-v2--hero { grid-column: span 1; }
-        }
-
-
-        /* ═══════════════════════════════════════════════════════════════
-           ABWEICHUNGSBALKEN — ersetzt den irrefuehrenden Ring
-           Der alte Ring bildete einen SALDO auf einen Fortschrittsbogen
-           ab (charts.js: pct = 0.5 + val/40). Null war halb voll, voll
-           hiess "+20h Ueberstunden" — und die Skala stand nirgends.
-           Hier waechst der Balken aus einer sichtbaren Nulllinie nach
-           rechts (Plus) oder links (Minus), und die Enden sind beziffert.
-           Skala kommt aus data.settings, nicht aus einer festen 40.
-           ═══════════════════════════════════════════════════════════════ */
-        .devbar {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-            align-self: end;
-        }
-
-        .devbar__track {
-            position: relative;
-            height: 6px;
-            border-radius: 3px;
-            background: var(--role-track);
-            overflow: hidden;
-        }
-
-        /* Nulllinie — die Bezugsgroesse muss sichtbar sein, sonst ist
-           ein Abweichungsbalken nicht lesbar. */
-        .devbar__zero {
-            position: absolute;
-            top: -2px;
-            bottom: -2px;
-            left: 50%;
-            width: 1px;
-            margin-left: -0.5px;
-            background: var(--role-neutral);
-            z-index: 2;
-        }
-
-        .devbar__fill {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            border-radius: 3px;
-            background: var(--role-pos);
-            transition: left var(--dur-slow) var(--ease-out),
-                        width var(--dur-slow) var(--ease-out),
-                        background-color var(--dur-normal) var(--ease-out);
-        }
-        .devbar[data-sign="neg"] .devbar__fill { background: var(--role-neg); }
-        .devbar[data-sign="zero"] .devbar__fill { background: var(--role-neutral); }
-
-        /* Anschlag-Marke: der Wert liegt ausserhalb der Skala. Ohne das
-           sieht ein Balken am Rand aus wie ein exakt getroffenes Maximum. */
-        .devbar__fill.is-clamped::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--bg-surface);
-            opacity: 0.9;
-        }
-        .devbar[data-sign="pos"] .devbar__fill.is-clamped::after { right: 0; }
-        .devbar[data-sign="neg"] .devbar__fill.is-clamped::after { left: 0; }
-
-        .devbar__scale {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.625rem;
-            color: var(--text-muted);
-            opacity: 0.65;
-            letter-spacing: 0.02em;
-        }
-        .devbar__scale-num { font-size: 0.625rem; }
-        .devbar__scale-zero { font-weight: 600; }
-
-
-        /* ─── FORTSCHRITTSSPUR (Durchschnitt / Urlaub) ────────────────
-           Echter Fortschritt 0→100 %: einfarbig, Akzent, keine Nulllinie.
-           Bewusst anders als der Abweichungsbalken, weil es eine andere
-           Groesse ist — gleiche Form waere hier eine Luege. */
-        .ptrack {
-            position: relative;
-            height: 6px;
-            border-radius: 3px;
-            background: var(--role-track);
-            overflow: hidden;
-            align-self: end;
-        }
-        .ptrack__fill {
-            position: absolute;
-            inset: 0 auto 0 0;
-            width: 0;
-            border-radius: 3px;
-            background: var(--role-accent);
-            transition: width var(--dur-slow) var(--ease-out);
-        }
-        /* Ueber Soll: der Balken laeuft nicht weiter, er wechselt die
-           Rolle — sonst waere "110 %" optisch nicht von "100 %" zu
-           unterscheiden. */
-        .ptrack__fill.is-over { background: var(--role-pos); }
-        .ptrack__fill.is-warn { background: #f59e0b; }
-        .ptrack__fill.is-crit { background: var(--role-neg); }
-
-
-        /* ─── AKTION & LINK IN DER KARTE ──────────────────────────────
-           Beide sitzen in Zeilen, die es ohnehin gibt (Top / Fuss) —
-           sie brauchen keinen eigenen Block und keine eigene Hoehe. */
-        .kpi-v2__action {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
-            padding: 0;
-            border-radius: 7px;
-            border: 1px solid var(--border-default);
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: color var(--dur-fast) var(--ease-out),
-                        border-color var(--dur-fast) var(--ease-out),
-                        background-color var(--dur-fast) var(--ease-out);
-        }
-        .kpi-v2__action svg { width: 14px; height: 14px; }
-        .kpi-v2__action:hover {
-            color: var(--text-main);
-            border-color: var(--border-interactive);
-            background: var(--bg-inset);
-        }
-        .kpi-v2__action:active { transform: translateY(1px); }
-        .kpi-v2__action:focus-visible {
-            outline: 2px solid var(--border-focus);
-            outline-offset: 2px;
-        }
-
-        .kpi-v2__link {
-            border: 0;
-            background: none;
-            padding: 0;
-            font: inherit;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-bottom: 1px solid transparent;
-            transition: color var(--dur-fast) var(--ease-out),
-                        border-color var(--dur-fast) var(--ease-out);
-        }
-        .kpi-v2__link:hover {
-            color: var(--text-main);
-            border-bottom-color: var(--border-interactive);
-        }
-        .kpi-v2__link:focus-visible {
-            outline: 2px solid var(--border-focus);
-            outline-offset: 3px;
-            border-radius: 2px;
-        }
-
-        .kpi-v2__streak {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            white-space: nowrap;
-        }
-        .kpi-v2__streak-icon {
-            display: inline-flex;
-            color: var(--text-muted);
-            opacity: 0.7;
-        }
-        .kpi-v2__streak-icon svg { width: 13px; height: 13px; }
-        /* Laufende Serie: das Icon nimmt die Positiv-Rolle an — es ist
-           ein Zustand, kein Messwert, deshalb faerbt sich das Symbol und
-           nicht die Zahl daneben. */
-        .kpi-v2__streak-icon.streak-active { color: var(--role-pos); opacity: 1; }
-        .kpi-v2__streak-best { opacity: 0.55; }
-        .kpi-v2__streak-lbl { color: var(--text-muted); }
-        /* inline-flex oben schlaegt das hidden-Attribut — ohne diese Zeile
-           stuende "0 in Folge · Rekord 0" auch ohne jede Serie da. */
-        .kpi-v2__streak[hidden] { display: none; }
-
-        /* Wochenpunkte sitzen als vierte Zeile unter der Fusszeile und
-           duerfen die Grundlinien der anderen Karten nicht verschieben. */
-        .kpi-v2 .week-dots {
-            display: flex;
-            gap: 5px;
-            margin-top: 0.125rem;
-        }
-
-        /* Die Prognose war eine Pille mit eigener Farbe. In einer Fusszeile,
-           die ohnehin aus Text besteht, ist eine Pille ein zweiter Rahmen
-           ohne Aufgabe — und sie bleibt wie alle Messwerte hier farblos:
-           das Vorzeichen steht als Glyphe davor. */
-        .kpi-v2__foot-num.positive,
-        .kpi-v2__foot-num.negative { color: var(--text-main); }
-
 
         /* ═══════════════════════════════════════════════════════════════
            ARBEITSZEIT-VERTEILUNG
@@ -586,7 +194,6 @@
            Vorher klebten sie als Inline-Style an zehn Elementen, also an
            zehn Stellen zu pflegen.
            ═══════════════════════════════════════════════════════════════ */
-        .dist-bar,
         .dist-legend {
             --cat-work:     var(--primary);
             --cat-school:   var(--school);
@@ -600,100 +207,15 @@
         [data-cat="sick"]     { background: var(--cat-sick); }
         [data-cat="holiday"]  { background: var(--cat-holiday); }
 
-        .donut-wrapper {
-            display: flex;
-            flex-direction: column;
-            height: auto;
-            padding: 0.5rem 0 0;
-            gap: 0.875rem;
-        }
-        .donut-center-info {
-            position: static;
-            transform: none;
-            text-align: left;
-        }
-        .donut-center-info .center-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            line-height: 1;
-            color: var(--text-main);
-        }
-        .donut-center-info .center-label {
-            font-size: var(--eyebrow-size);
-            font-weight: 600;
-            letter-spacing: var(--eyebrow-tracking);
-            color: var(--text-muted);
-            margin-top: 0.3rem;
-        }
-
-        .dist-bar {
-            display: flex;
-            gap: 2px;             /* Fuge in Kartenfarbe statt Trennlinie */
-            width: 100%;
-            height: 10px;
-            border-radius: 5px;
-            overflow: hidden;
-            background: var(--role-track);
-        }
-        .dist-bar__seg {
-            height: 100%;
-            /* shrink 1, nicht 0: die Fugen kosten Breite (4 Fugen x 2 px), die
-               Basen summieren sich aber auf 100 %. Ohne Schrumpfen laeuft der
-               Balken um 8 px ueber und overflow:hidden schneidet das letzte —
-               seit der Sortierung das kleinste — Segment ab. Mit shrink 1 tragen
-               alle Segmente die 8 px anteilig, das Verhaeltnis bleibt. */
-            flex: 0 1 0%;
-            border-radius: 2px;
-            min-width: 0;
-            transition: flex var(--dur-slow) var(--ease-out),
-                        opacity var(--dur-fast) var(--ease-out);
-        }
         /* Beim Hervorheben eines Segments treten die anderen zurueck,
            statt dass das aktive zusaetzlich leuchtet — sonst verschiebt
            sich der wahrgenommene Flaechenanteil. */
-        .dist-bar.is-dimmed .dist-bar__seg { opacity: 0.28; }
-        .dist-bar.is-dimmed .dist-bar__seg.is-active { opacity: 1; }
 
         .dist-legend {
             display: flex;
             flex-direction: column;
             gap: 1px;
         }
-        .dist-legend__row {
-            display: grid;
-            grid-template-columns: 8px 1fr auto auto;
-            align-items: center;
-            gap: 0.625rem;
-            padding: 0.4rem 0.5rem;
-            border-radius: 7px;
-            cursor: default;
-            transition: background-color var(--dur-fast) var(--ease-out);
-        }
-        .dist-legend__row:hover,
-        .dist-legend__row.is-active { background: var(--bg-inset); }
-        .dist-legend__dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 2px;
-        }
-        .dist-legend__name {
-            font-size: 0.8125rem;
-            color: var(--text-main);
-        }
-        .dist-legend__val {
-            font-size: var(--num-sm);
-            color: var(--text-main);
-            font-weight: 600;
-        }
-        /* Prozent rechts in fester Spaltenbreite: sonst wandert die
-           Spalte, sobald ein Wert von 9 % auf 10 % springt. */
-        .dist-legend__pct {
-            font-size: var(--num-sm);
-            color: var(--text-muted);
-            min-width: 3.5em;
-            text-align: right;
-        }
-
 
         /* ═══════════════════════════════════════════════════════════════
            LEERE ZUSTAENDE
@@ -712,781 +234,23 @@
             padding: 1.5rem;
             text-align: center;
         }
-        /* Angedeutete Kurve: zeigt die Form der spaeteren Daten, ohne
-           Zahlen zu erfinden. Gestrichelt, damit sie nicht als Messwert
-           missverstanden wird. */
-        .chart-empty__art {
-            width: 120px;
-            height: 48px;
-            color: var(--role-accent);
-            margin-bottom: 0.25rem;
-        }
-        .chart-empty__title {
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-        .chart-empty__text {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            max-width: 30ch;
-            text-wrap: balance;
-        }
-        .chart-empty__btn {
-            margin-top: 0.5rem;
-            padding: 0.5rem 0.9rem;
-            font: inherit;
-            font-size: 0.8125rem;
-            font-weight: 500;
-            color: var(--text-main);
-            background: var(--bg-inset);
-            border: 1px solid var(--border-interactive);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color var(--dur-fast) var(--ease-out),
-                        border-color var(--dur-fast) var(--ease-out),
-                        transform var(--dur-fast) var(--ease-out);
-        }
-        .chart-empty__btn:hover {
-            background: var(--role-accent-soft);
-            border-color: var(--border-focus);
-        }
-        .chart-empty__btn:active { transform: translateY(1px); }
-        .chart-empty__btn:focus-visible {
-            outline: 2px solid var(--border-focus);
-            outline-offset: 2px;
-        }
-        /* Zweiter Weg im leeren Aktivitaeten-Kasten, bewusst leiser als "Tag
-           erfassen": Textverweis statt zweitem Knopf gleicher Gewichtung. */
-        .activities-empty__import {
-            padding: 0.25rem 0.5rem;
-            font: inherit;
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            background: none;
-            border: 0;
-            border-radius: 6px;
-            text-decoration: underline;
-            text-decoration-color: var(--border-interactive);
-            text-underline-offset: 3px;
-            cursor: pointer;
-            transition: color var(--dur-fast) var(--ease-out);
-        }
-        .activities-empty__import:hover { color: var(--text-main); }
-        .activities-empty__import:focus-visible {
-            outline: 2px solid var(--border-focus);
-            outline-offset: 2px;
-        }
-
-        /* Die Ring-Kacheln (Woche/Monat) und die Stats-Kachel (Ø + Urlaub)
-           sind entfallen — alle vier KPI-Karten teilen sich jetzt .kpi-v2.
-           Ihre Reste standen hier noch: .kpi-card--ring/--stats, .kpi-card__tag,
-           .progress-ring, .ring-* und .kpi-stats__* hatten null Treffer im
-           Markup. */
-
-
-        /* ═══ GLEITZEIT CARD V2 — MODERN REDESIGN ═══ */
-
-
-
-
-
-
-
-
-
-
-        /* gz-scale-tilt / gz-fill-grow sind entfallen: sie animierten das
-           Waagen-Icon und den Prognosebalken der alten Gleitzeit-Karte,
-           die es nicht mehr gibt. */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        /* Die Container-Queries auf gz-card sind entfallen: die alte
-           Gleitzeit-Karte brauchte sie, weil ihre drei verschachtelten
-
-
-        /* ─── WEEK DOTS ──────────────────────────────────────────────── */
-        .week-dots {
-            display: flex;
-            gap: 5px;
-            align-items: center;
-            margin-top: 10px;
-        }
-        .week-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--border-default);
-            transition: all var(--dur-normal) var(--ease-out);
-            position: relative;
-        }
-        .week-dot.filled {
-            background: var(--success);
-            box-shadow: 0 0 6px rgba(16, 185, 129, 0.30);
-        }
-        .week-dot.today {
-            border: 1.5px solid var(--primary);
-            background: transparent;
-            box-shadow: 0 0 5px rgba(var(--primary-rgb), 0.25);
-        }
-        .week-dot-label {
-            font-size: 0.48rem;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 1px;
-            font-family: var(--font-mono);
-            opacity: 0.6;
-        }
-
-
-        /* ─── KPI VALUE GLOW ─────────────────────────────────────────── */
-        .kpi-value-positive {
-            text-shadow: 0 0 18px rgba(16, 185, 129, 0.30), 0 0 36px rgba(16, 185, 129, 0.08);
-        }
-        .kpi-value-negative {
-            text-shadow: 0 0 18px rgba(239, 68, 68, 0.30), 0 0 36px rgba(239, 68, 68, 0.08);
-        }
-        .kpi-value-accent {
-            text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.22), 0 0 36px rgba(var(--primary-rgb), 0.07);
-        }
-
-
-        /* ─── PROJECTION BADGE ───────────────────────────────────────── */
-        .projection-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 9px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            font-family: var(--font-mono);
-            font-weight: 700;
-            background: rgba(var(--primary-rgb), 0.07);
-            border: 1px solid rgba(var(--primary-rgb), 0.12);
-            color: var(--primary);
-        }
-        .projection-badge.positive {
-            background: rgba(16, 185, 129, 0.07);
-            border-color: rgba(16, 185, 129, 0.14);
-            color: var(--success);
-        }
-        .projection-badge.negative {
-            background: rgba(239, 68, 68, 0.07);
-            border-color: rgba(239, 68, 68, 0.14);
-            color: var(--danger);
-        }
-
 
         /* ─── STREAK ─────────────────────────────────────────────────── */
-        @keyframes streakPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50%       { transform: scale(1.10); opacity: 0.75; }
-        }
-        /* Icon-Container der Streak-Kacheln. Groesse hier, nicht per font-size —
-           die SVGs erben die Textfarbe (currentColor), damit sie dem User-Akzent
-           folgen. */
 
-        /* Nur die Animation — Layout/Groesse kommt aus .kpi-v2__streak-icon. */
-        .streak-active {
-            animation: streakPulse 3s ease-in-out infinite;
-        }
-
-
-        /* ─── COMMAND BAR ────────────────────────────────────────────── */
-        /* ─── WERKZEUGLEISTE ──────────────────────────────────────────
-           War eine Karte in voller Breite mit Rahmen, Flaeche und Schatten
-           — optisch also gleichrangig zu den KPI-Karten, obwohl es nur
-           Sprungziele sind. Jetzt eine ruhige Leiste ohne Kartenflaeche:
-           sie gehoert zur Seite, nicht zu den Daten. */
-        .quick-actions {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            padding: 0;
-            background: none;
-            border: 0;
-            border-radius: 0;
-            margin-bottom: 0;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scrollbar-width: none;
-            box-shadow: none;
-        }
-        .quick-actions::-webkit-scrollbar { display: none; }
-
-        .quick-actions :is(button, a) {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 7px 11px;
-            background: transparent;
-            color: var(--text-muted);
-            border: none;
-            border-radius: 9px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            white-space: nowrap;
-            cursor: pointer;
-            letter-spacing: -0.01em;
-            transition:
-                background var(--dur-fast) var(--ease-out),
-                color var(--dur-fast) var(--ease-out),
-                transform var(--dur-fast) var(--ease-out);
-        }
-        .quick-actions :is(button, a):hover:not([disabled]) {
-            background: var(--hover-fill);
-            color: var(--text-main);
-        }
-        .quick-actions :is(button, a):active:not([disabled]) {
-            transform: scale(0.97);
-            background: rgba(var(--primary-rgb), 0.10);
-        }
-        .quick-actions :is(button, a)[disabled] {
-            opacity: 0.28;
-            cursor: not-allowed;
-        }
-        .quick-actions :is(button, a)[disabled] .cmd-label {
-            text-decoration: line-through;
-        }
-        /* Das Icon sass in einem eigenen gefuellten Kaestchen — ein Rahmen
-           im Knopf im (frueheren) Karten-Rahmen. Drei Ebenen fuer ein
-           12-px-Symbol. Es steht jetzt frei neben der Schrift. */
-        .quick-actions :is(button, a) .cmd-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 16px;
-            height: 16px;
-            border-radius: 0;
-            background: none;
-            flex-shrink: 0;
-        }
-        .quick-actions :is(button, a) .cmd-icon svg {
-            width: 14px;
-            height: 14px;
-            stroke: currentColor;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            fill: none;
-        }
-        .quick-actions :is(button, a):hover:not([disabled]) .cmd-icon {
-            background: rgba(var(--primary-rgb), 0.12);
-        }
-        .cmd-sep {
-            width: 1px;
-            height: 16px;
-            background: var(--border-default);
-            flex-shrink: 0;
-            margin: 0 3px;
-        }
-        .cmd-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 17px;
-            height: 17px;
-            padding: 0 5px;
-            background: rgba(var(--primary-rgb), 0.12);
-            color: var(--primary);
-            border-radius: 10px;
-            font-size: 0.6rem;
-            font-weight: 700;
-            font-family: var(--font-mono);
-            animation: badgePop 0.3s var(--ease-spring);
-            letter-spacing: 0;
-        }
-        .cmd-kbd {
-            font-size: 0.56rem;
-            font-family: var(--font-mono);
-            color: rgba(255, 255, 255, 0.15);
-            background: rgba(255, 255, 255, 0.03);
-            padding: 2px 4px;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            font-weight: 600;
-            margin-left: 2px;
-        }
-        .quick-actions :is(button, a):hover .cmd-kbd {
-            color: rgba(var(--primary-rgb), 0.45);
-            border-color: rgba(var(--primary-rgb), 0.12);
-        }
         /* Ein <a> bringt weder Textfarbe noch Unterstreichungs-Reset mit —
            ohne das steht der Sprachwechsel unterstrichen und blau zwischen
            lauter Knoepfen. */
-        .quick-actions a { text-decoration: none; color: var(--text-muted); }
-        .quick-actions :is(button, a):focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.5);
-        }
-        
+
         .cmd-label { font-size: inherit; }
 
-
-        /* ─── CHARTS ROW ─────────────────────────────────────────────── */
-        .charts-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 1rem;
-            margin-bottom: 0;
-        }
-
-        .chart-card {
-            overflow: visible;
-            transform-style: flat !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            padding: 20px;
-        }
-        .chart-card:hover {
-            border-color: var(--border-interactive);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 14px;
-            gap: 8px;
-        }
-        .donut-redesign .chart-header {
-            position: relative;
-            padding-top: 0;
-        }
-        .chart-header-top {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .chart-header-top .chart-title {
-            margin: 0;
-        }
-        .chart-title {
-            font-family: var(--font-display);
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: -0.01em;
-        }
-        .chart-sub {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin-top: 2px;
-            font-weight: 400;
-        }
-
-        .chart-config-btn {
-            padding: 4px !important;
-            border: none !important;
-            background: transparent !important;
-            color: var(--text-muted) !important;
-            cursor: pointer !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color var(--dur-fast) var(--ease-out), transform 120ms var(--ease-out) !important;
-            flex-shrink: 0;
-            position: relative;
-            width: 32px;
-            height: 32px;
-            min-width: 32px;
-        }
-        .chart-config-btn svg {
-            opacity: 1;
-        }
-        .chart-config-btn:hover {
-            color: var(--primary) !important;
-        }
-        .chart-config-btn:focus-visible {
-            color: var(--primary) !important;
-            outline: 2px solid var(--primary);
-            outline-offset: 3px;
-        }
-        .chart-config-btn:active {
-            transform: scale(0.96);
-        }
-
-        .donut-redesign .donut-settings-btn {
-            position: absolute !important;
-            top: 0 !important;
-            right: 0 !important;
-            width: 16px !important;
-            height: 16px !important;
-            min-width: 16px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            background: none !important;
-            border: none !important;
-            display: block !important;
-            align-items: unset !important;
-            justify-content: unset !important;
-            flex-direction: unset !important;
-        }
-        .donut-redesign .donut-settings-btn svg {
-            width: 16px !important;
-            height: 16px !important;
-            display: block !important;
-        }
-
-        @media (max-width: 640px) {
-            .chart-config-btn {
-                width: 36px;
-                height: 36px;
-                min-width: 36px;
-            }
-        }
-
-
-        /* ─── TREND CHART ────────────────────────────────────────────── */
-        .trend-period-selector {
-            display: flex;
-            gap: 6px;
-            background: transparent;
-            border-radius: 0;
-            padding: 0;
-            border: none;
-        }
-        .trend-period-btn {
-            padding: 8px 12px;
-            min-height: 36px;
-            min-width: 36px;
-            font-size: 0.7rem;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 200ms cubic-bezier(0.2, 0.6, 0.2, 1);
-            font-weight: 600;
-            font-family: var(--font-mono);
-            letter-spacing: 0;
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        /* Kein Anheben: die fuenf Knoepfe sitzen in einer gemeinsamen Spur,
-           und einer, der aus der Reihe springt, laesst die Leiste wackeln. */
-        .trend-period-btn:hover {
-            color: var(--text-main);
-            background: var(--hover-fill);
-        }
-        .trend-period-btn.active {
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.12);
-            box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), 0.2);
-            font-weight: 700;
-        }
-        .trend-period-btn.active::before {
-            content: '';
-            position: absolute;
-            bottom: 2px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60%;
-            height: 2px;
-            background: var(--primary);
-            border-radius: 1px;
-            box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.4);
-        }
-
-        @media (max-width: 640px) {
-            .trend-period-selector {
-                gap: 6px;
-            }
-            .trend-period-btn {
-                padding: 10px 10px;
-                min-height: 40px;
-                min-width: 40px;
-                font-size: 0.7rem;
-            }
-        }
-
-        /* Drei Kennzahlen, links ausgerichtet statt ueber die volle Breite
-           gestreckt: sie gehoeren zur Ueberschrift des Diagramms, nicht zu
-           einer eigenen Tabelle. Sechs zentrierte Spalten liessen sie wie
-           ein Terminal-Ticker aussehen. */
-        .trend-stats-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.75rem;
-            padding: 2px 0 12px;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-        .trend-stat {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 3px;
-        }
-        .trend-stat-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            letter-spacing: 0;
-            font-weight: 600;
-        }
-        .trend-stat-value {
-            font-size: 0.78rem;
-            font-weight: 700;
-            font-family: var(--font-mono);
-            color: var(--text-main);
-        }
-        .trend-stat-positive { color: var(--success) !important; }
-        .trend-stat-negative { color: var(--danger) !important; }
-
-        .trend-container-wrapper {
-            display: flex;
-            gap: 0;
-            position: relative;
-        }
-        .trend-container-wrapper .trend-container {
-            flex: 1;
-            min-width: 0;
-        }
-        .trend-container {
-            height: 220px;
-            width: 100%;
-            position: relative;
-            overflow: visible;
-            isolation: isolate;
-        }
-        .trend-container svg,
-        .donut-container svg {
-            overflow: visible;
-            will-change: filter;
-        }
-        .trend-y-axis {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 0 6px 0 0;
-            width: 44px;
-            min-width: 44px;
-            font-size: 0.54rem;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            pointer-events: none;
-            opacity: 0.75;
-        }
-        .trend-x-axis {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0 0 50px;
-            font-size: 0.52rem;
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            opacity: 0.75;
-        }
-
-        .trend-line {
-            fill: none;
-            stroke: var(--primary);
-            stroke-width: 2;
-            stroke-linecap: round;
-            filter: drop-shadow(0 0 4px rgba(var(--primary-rgb), 0.22));
-        }
-        .trend-area {
-            fill: var(--primary);
-            opacity: 0.04;
-        }
-        .trend-grid {
-            stroke: rgba(255, 255, 255, 0.02);
-            stroke-width: 1;
-        }
-        [data-theme="light"] .trend-grid {
-            stroke: rgba(0, 0, 0, 0.04);
-        }
-        .trend-crosshair {
-            stroke: rgba(255, 255, 255, 0.10);
-            stroke-width: 1;
-            stroke-dasharray: 3 4;
-            pointer-events: none;
-        }
-        [data-theme="light"] .trend-crosshair {
-            stroke: rgba(0, 0, 0, 0.12);
-        }
-        .trend-zero-line {
-            stroke: rgba(255, 255, 255, 0.08);
-            stroke-width: 1;
-            stroke-dasharray: 4 5;
-        }
-        [data-theme="light"] .trend-zero-line {
-            stroke: rgba(0, 0, 0, 0.10);
-        }
-        .trend-dot-hover {
-            transition: r 0.15s ease, opacity 0.15s ease;
-            cursor: pointer;
-        }
-
-        .trend-tooltip {
-            position: absolute;
-            left: 0;
-            top: 0;
-            will-change: transform;
-            pointer-events: none;
-            z-index: 100;
-            background: rgba(8, 8, 12, 0.97);
-            border: 1px solid var(--border-interactive);
-            border-radius: 10px;
-            padding: 10px 13px;
-            min-width: 165px;
-            box-shadow: var(--shadow-lg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            font-size: 0.74rem;
-            line-height: 1.55;
-            color: var(--text-main);
-            transition: opacity var(--dur-fast), transform var(--dur-fast);
-        }
-        [data-theme="light"] .trend-tooltip {
-            background: rgba(255, 255, 255, 0.98);
-            border-color: var(--border-interactive);
-        }
-        .trend-tooltip .tt-date {
-            font-weight: 700;
-            color: var(--text-main);
-            font-size: 0.80rem;
-            margin-bottom: 5px;
-            font-family: var(--font-mono);
-        }
-        .trend-tooltip .tt-row {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-        }
-        .trend-tooltip .tt-label { color: var(--text-muted); }
-        .trend-tooltip .tt-val {
-            font-weight: 600;
-            font-family: var(--font-mono);
-        }
-        .trend-tooltip .tt-positive { color: var(--success); }
-        .trend-tooltip .tt-negative { color: var(--danger); }
-        .trend-tooltip .tt-type-badge {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 0.6rem;
-            background: rgba(var(--primary-rgb), 0.10);
-            color: var(--primary);
-            font-weight: 600;
-            margin-top: 5px;
-            border: 1px solid rgba(var(--primary-rgb), 0.15);
-        }
-
-
-        /* ─── MODERN DONUT CHART REDESIGN ────────────────────────────── */
-        .donut-redesign {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            padding-bottom: 0;
-        }
-
-
-
-        /* Donut Tooltip */
-        .donut-tooltip {
-            position: absolute;
-            background: rgba(8, 8, 12, 0.96);
-            border: 1px solid var(--border-interactive);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 0.75rem;
-            color: var(--text-main);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.40);
-            pointer-events: none;
-            z-index: 100;
-            white-space: nowrap;
-            transition: all var(--dur-fast) var(--ease-out);
-        }
-
-        [data-theme="light"] .donut-tooltip {
-            background: rgba(255, 255, 255, 0.98);
-        }
-
-        .donut-tooltip.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .donut-tooltip.hidden {
-            opacity: 0;
-            transform: translateY(6px);
-            pointer-events: none;
-        }
-
-        /* Die Verteilung ist auf schmalen Schirmen unveraendert lesbar:
-           ein Balken ueber die volle Breite und darunter eine Liste
-           brauchen keine eigene Umbruchregel. Nur die Kopfzahl wird
-           etwas kleiner. */
-        @media (max-width: 768px) {
-            .donut-center-info .center-value { font-size: 1.5rem; }
-        }
-
-
         /* OLD STYLES - Keep for backwards compatibility */
-        .donut-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 160px;
-            position: relative;
-            overflow: visible;
-            isolation: isolate;
-        }
-        .donut-legend {
-            margin-top: 14px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 5px;
-            font-size: 0.72rem;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            color: var(--text-muted);
-            gap: 7px;
-            padding: 4px 5px;
-            border-radius: 6px;
-            transition: background-color var(--dur-fast) var(--ease-out),
-                        color var(--dur-fast) var(--ease-out);
-            cursor: default;
-        }
-        .legend-item:hover {
-            background: var(--hover-fill);
-            color: var(--text-main);
-        }
+
         .dot {
             width: 8px;
             height: 8px;
             border-radius: 3px;
             flex-shrink: 0;
         }
-
 
         /* ─── EINRICHTUNG (erster Start) ───────────────────────────────
            Karte oberhalb des Rasters, nicht im Eintrags-Formular. Der Akzent
@@ -1945,36 +709,12 @@
             border-color: var(--hover-border);
         }
 
-        /* sonar rings – hidden by default */
-        .vbtn-ring {
-            position: absolute;
-            inset: 0;
-            border-radius: 10px;
-            border: 1.5px solid rgba(var(--primary-rgb), 0.6);
-            opacity: 0;
-            pointer-events: none;
-        }
-
         /* active: button glows + rings pulse outward */
         .entry-form__voice-btn.voice-active {
             background: rgba(var(--primary-rgb), 0.18) !important;
             border-color: var(--primary) !important;
             box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.35), inset 0 0 12px rgba(var(--primary-rgb), 0.08) !important;
             color: #fff !important;
-        }
-        .entry-form__voice-btn.voice-active .vbtn-ring.r1 { animation: sonar 2s ease-out infinite; }
-        .entry-form__voice-btn.voice-active .vbtn-ring.r2 { animation: sonar 2s ease-out 0.55s infinite; }
-        .entry-form__voice-btn.voice-active .vbtn-ring.r3 { animation: sonar 2s ease-out 1.1s infinite; }
-        .entry-form__voice-btn.voice-active .vbtn-icon svg {
-            animation: mic-bounce 0.5s cubic-bezier(0.34,1.56,0.64,1) infinite alternate;
-        }
-        @keyframes sonar {
-            0%   { transform: scale(1);    opacity: 0.7; }
-            100% { transform: scale(1.9);  opacity: 0; }
-        }
-        @keyframes mic-bounce {
-            from { transform: scale(1);    filter: drop-shadow(0 0 4px rgba(var(--primary-rgb),0.5)); }
-            to   { transform: scale(1.18); filter: drop-shadow(0 0 8px rgba(var(--primary-rgb),0.9)); }
         }
 
         /* ── Voice Feedback Card ── */
@@ -2000,10 +740,6 @@
             height: 2px;
             width: 100%;
         }
-        .vfc-bar--info    { background: linear-gradient(90deg, var(--primary), #818cf8, transparent); }
-        .vfc-bar--success { background: linear-gradient(90deg, #10b981, #34d399, transparent); }
-        .vfc-bar--warning { background: linear-gradient(90deg, #f59e0b, #fbbf24, transparent); }
-        .vfc-bar--error   { background: linear-gradient(90deg, #ef4444, #f87171, transparent); }
 
         .vfc-body {
             padding: 11px 14px 13px;
@@ -2105,7 +841,6 @@
             border-color: rgba(239, 68, 68, 0.18) !important;
             color: var(--danger) !important;
         }
-
 
         /* ─── TIMER BOX ──────────────────────────────────────────────── */
         /* ═══════════════════════════════════════════════════════════════
@@ -2260,234 +995,6 @@
             .timer-box__help   { display: none; }
         }
 
-
-        /* ═══════════════════════════════════════════════════════════════
-           LETZTE AKTIVITAETEN
-           🔴 Diese Karte lief auf var(--card-bg) und var(--border-color).
-           Beide Tokens gibt es in der App NICHT — sie stammen aus den
-           Standalone-Seiten, die einen eigenen :root-Block haben. Ein
-           var() ohne Fallback ist "invalid at computed-value time": die
-           Eigenschaft faellt auf ihren Initialwert zurueck, also
-           background: transparent und border-style: none. Uebrig blieb
-           ein backdrop-filter: blur(8px) ohne alles — eine randlose
-           Milchglasscheibe mitten zwischen lauter festen Karten. Genau
-           daher kam der milchige Eindruck.
-           Die Karte holt ihre Flaeche jetzt aus der SHARED CARD
-           FOUNDATION ganz oben; hier steht nur noch, was sie INNEN
-           anders macht.
-           ═══════════════════════════════════════════════════════════════ */
-        .activities-card-new {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            padding: 1.375rem 1.5rem 1.5rem;
-        }
-
-        .activities-header-new {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-
-        .activities-header-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .activities-title-container {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-        }
-
-        /* Die Kopfzeile hatte drei eigene Einblend-Animationen (Icon 0,1 s,
-           Titel 0,15 s, Meta 0,2 s). Eine Ueberschrift, die bei jedem
-           Ansichtswechsel neu hereinfaehrt, ist Dekoration — die Karte als
-           Ganzes blendet ohnehin schon ueber .dashboard-item ein. */
-        .activities-icon {
-            width: 32px;
-            height: 32px;
-            padding: 7px;
-            border-radius: 9px;
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.10);
-            border: 1px solid rgba(var(--primary-rgb), 0.18);
-            flex-shrink: 0;
-        }
-
-        .activities-title-new {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-            margin: 0;
-        }
-
-        .activities-meta {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            margin: 2px 0 0 0;
-            line-height: 1.2;
-        }
-
-        /* Tagessumme: die Zahl, wegen der man diese Liste ueberhaupt
-           aufmacht. Rein numerisch — damit sie auf /en/ nicht uebersetzt
-           werden muss (die statische Pipeline sieht nur, was im HTML
-           steht, und hier schreibt JS). */
-        .activities-sum {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 3px;
-            flex-shrink: 0;
-        }
-        .activities-sum__value {
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            font-size: 1.0625rem;
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-            line-height: 1;
-        }
-        .activities-sum__value small {
-            font-size: 0.7em;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-left: 3px;
-        }
-        .activities-sum__label {
-            font-size: var(--eyebrow-size);
-            letter-spacing: var(--eyebrow-tracking);
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        /* Day Tabs Navigation */
-        .day-tabs-container {
-            position: relative;
-            width: 100%;
-            padding: 0;
-            margin: 0;
-        }
-        .day-tabs {
-            display: flex;
-            gap: 6px;
-            width: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-behavior: smooth;
-            padding: 0;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(var(--primary-rgb), 0.15) transparent;
-            -webkit-overflow-scrolling: touch;
-            cursor: grab;
-        }
-        .day-tabs.grabbing {
-            cursor: grabbing;
-        }
-        .day-tabs::-webkit-scrollbar {
-            height: 3px;
-        }
-        .day-tabs::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .day-tabs::-webkit-scrollbar-thumb {
-            background: rgba(var(--primary-rgb), 0.15);
-            border-radius: 2px;
-        }
-        .day-tabs::-webkit-scrollbar-thumb:hover {
-            background: rgba(var(--primary-rgb), 0.35);
-        }
-
-        .day-tab {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 54px;
-            padding: 8px 12px;
-            background: var(--bg-inset);
-            border: 1px solid var(--border-default);
-            border-radius: 9px;
-            cursor: pointer;
-            /* `all` animierte auch Rahmen-Breite und Schatten mit; benannte
-               Eigenschaften reichen und flackern nicht. */
-            transition: background-color var(--dur-fast) var(--ease-out),
-                        border-color var(--dur-fast) var(--ease-out),
-                        color var(--dur-fast) var(--ease-out);
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        /* Kein Anheben, kein Schatten: das sind sieben bis zehn Kacheln in
-           einer Reihe — springt eine heraus, wirkt die ganze Leiste unruhig. */
-        .day-tab:hover {
-            background: var(--hover-fill);
-            border-color: var(--hover-border);
-            color: var(--text-main);
-        }
-        .day-tab:active { transform: scale(0.97); }
-        .day-tab.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-            font-weight: 600;
-        }
-        .day-tab:focus-visible {
-            outline: 2px solid var(--border-focus);
-            outline-offset: 2px;
-        }
-        .day-tab-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-bottom: 2px;
-            letter-spacing: 0;
-            opacity: 0.75;
-        }
-        .day-tab-date {
-            font-size: 0.8rem;
-            font-weight: 600;
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-        }
-
-        /* Activities Timeline */
-        .activities-timeline {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 500px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            padding-right: 6px;
-            scroll-behavior: smooth;
-            -webkit-overflow-scrolling: touch;
-            cursor: grab;
-        }
-        .activities-timeline.grabbing {
-            cursor: grabbing;
-        }
-        .activities-timeline::-webkit-scrollbar {
-            width: 5px;
-        }
-        .activities-timeline::-webkit-scrollbar-track {
-            background: rgba(var(--primary-rgb), 0.02);
-            border-radius: 3px;
-        }
-        .activities-timeline::-webkit-scrollbar-thumb {
-            background: rgba(var(--primary-rgb), 0.12);
-            border-radius: 3px;
-        }
-        .activities-timeline::-webkit-scrollbar-thumb:hover {
-            background: rgba(var(--primary-rgb), 0.25);
-        }
-
         /* ═══════════════════════════════════════════════════════════════
            EINE ZEILE = EIN EINTRAG
            Vorher war jeder Eintrag ein Block aus vier gestapelten Bloecken:
@@ -2530,112 +1037,8 @@
             outline-offset: 2px;
         }
 
-        /* Kachel-Optik kommt aus .type-tile (core.css), hier nur Groesse
-           und Platz im Raster. */
-        .activity-icon {
-            grid-column: 1;
-            grid-row: 1 / span 2;
-            width: 32px;
-            height: 32px;
-            align-self: center;
-        }
-        .activity-type-label {
-            grid-column: 2;
-            grid-row: 1;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: -0.01em;
-            line-height: 1.25;
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        /* Zeitraum + Projekt in einer ruhigen Zeile statt als zwei Chips.
-           Chips sind fuer Dinge, die man anklickt. */
-        .activity-meta {
-            grid-column: 2;
-            grid-row: 2;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            min-width: 0;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            line-height: 1.25;
-        }
-        .activity-time {
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            font-weight: 500;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-        .activity-meta__sep { opacity: 0.4; flex-shrink: 0; }
-        .activity-project {
-            min-width: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        /* 🔴 Der Messwert traegt Textfarbe, nicht den Akzent — dieselbe
-           Farbregel wie in den KPI-Karten: Akzent = Identitaet und
-           Fortschritt, nie eine gemessene Zahl. Das Vorzeichen steht
-           darunter und traegt --role-pos/--role-neg. */
-        .activity-hours {
-            grid-column: 3;
-            grid-row: 1;
-            justify-self: end;
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            font-size: 0.9375rem;
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-            line-height: 1.25;
-            white-space: nowrap;
-        }
-        .activity-hours small {
-            font-size: 0.72em;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-left: 2px;
-        }
-        .activity-diff {
-            grid-column: 3;
-            grid-row: 2;
-            justify-self: end;
-            font-family: var(--font-mono);
-            font-variant-numeric: tabular-nums;
-            font-size: 0.7rem;
-            font-weight: 600;
-            line-height: 1.25;
-            white-space: nowrap;
-            color: var(--text-muted);
-        }
-        .activity-diff[data-sign="pos"] { color: var(--role-pos); }
-        .activity-diff[data-sign="neg"] { color: var(--role-neg); }
-        .activity-note {
-            grid-column: 2 / -1;
-            grid-row: 3;
-            margin-top: 6px;
-            padding-left: 9px;
-            border-left: 2px solid var(--border-default);
-            font-size: 0.74rem;
-            color: var(--text-muted);
-            line-height: 1.45;
-            overflow-wrap: break-word;
-        }
-
         /* Empty State */
-        .activities-empty {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-            text-align: center;
-        }
+        
         .empty-state {
             display: flex;
             flex-direction: column;
@@ -2643,73 +1046,29 @@
             gap: 12px;
             padding: 40px 20px;
         }
-        .empty-icon-svg {
-            width: 56px;
-            height: 56px;
-            color: rgba(var(--primary-rgb), 0.3);
-            opacity: 0.6;
-        }
+        
         .empty-text {
             font-size: 0.95rem;
             font-weight: 500;
             color: var(--text-muted);
             margin: 0;
         }
-        .empty-subtext {
-            font-size: 0.8rem;
-            color: rgba(var(--text-muted), 0.7);
-            margin: 0;
-        }
 
         /* ─── RESPONSIVE: TABLET ─────────────────────────────────────── */
         @media (max-width: 768px) {
-            .activities-card-new,
             .input-wrapper {
                 padding: 1.125rem 1.125rem 1.25rem;
             }
-            .activities-card-new { gap: 14px; }
-            .activities-header-new {
-                padding-bottom: 12px;
-            }
-            .day-tab {
-                min-width: 50px;
-                padding: 8px 10px;
-            }
-            .activities-timeline {
-                max-height: 450px;
-                gap: 8px;
-            }
+
         }
 
         /* ─── RESPONSIVE: MOBILE ─────────────────────────────────────── */
         @media (max-width: 480px) {
-            .activities-card-new,
             .input-wrapper {
                 padding: 1rem 0.875rem 1.125rem;
                 border-radius: 14px;
             }
-            .activities-card-new { gap: 12px; }
-            .activities-title-container {
-                gap: 9px;
-            }
-            .activities-icon {
-                width: 28px;
-                height: 28px;
-                padding: 6px;
-            }
-            .day-tabs-container {
-                margin: 0 -8px;
-                padding: 0 8px;
-            }
-            .day-tab {
-                min-width: 48px;
-                padding: 8px 9px;
-            }
-            .activities-timeline {
-                max-height: 450px;
-                gap: 8px;
-                padding-right: 4px;
-            }
+
             /* Am Handy wird aus der dritten Spalte eine dritte Zeile: sonst
                quetschen sich Typ und Messwert auf ~150 px und der Typname
                bricht mitten im Wort ab. */
@@ -2718,40 +1077,13 @@
                 padding: 10px 11px 10px 10px;
                 column-gap: 10px;
             }
-            .activity-icon { grid-row: 1 / span 2; }
-            .activity-hours {
-                grid-column: 2;
-                grid-row: 3;
-                justify-self: start;
-                margin-top: 5px;
-            }
-            .activity-diff {
-                grid-column: 2;
-                grid-row: 3;
-                justify-self: end;
-                align-self: end;
-                margin-top: 5px;
-            }
-            .activity-note {
-                grid-column: 2;
-                grid-row: 4;
-            }
+
             .carousel-wrapper {
                 margin-bottom: 10px;
                 border-radius: 10px;
             }
-            .carousel-dots {
-                gap: 5px;
-            }
-            .carousel-dot {
-                width: 5px;
-                height: 5px;
-            }
-            .carousel-dot.active {
-                width: 18px;
-            }
-        }
 
+        }
 
         /* ─── MOOD SYSTEM ────────────────────────────────────────────── */
         .mood-btn {
@@ -2773,21 +1105,6 @@
             transform: scale(1.06);
         }
         .mood-btn:active { transform: scale(0.96); }
-        .mood-display {
-            font-size: 1.05em;
-            margin-left: 6px;
-            opacity: 0.82;
-        }
-        .mood-display[title*="glücklich"],
-        .mood-display[title*="zufrieden"] { color: var(--success); }
-        .mood-display[title*="neutral"]   { color: var(--text-muted); }
-        .mood-display[title*="unzufrieden"],
-        .mood-display[title*="traurig"],
-        .mood-display[title*="wütend"]    { color: var(--danger); }
-        .mood-display[title*="krank"],
-        .mood-display[title*="müde"],
-        .mood-display[title*="überwältigt"] { color: #f59e0b; }
-
 
         /* ─── GREETING ───────────────────────────────────────────────── */
         .greeting-enhanced {
@@ -2795,22 +1112,6 @@
             align-items: center;
             gap: 8px;
         }
-        .greeting-emoji {
-            font-size: 1.25rem;
-            display: inline-block;
-            animation: greetWave 2.5s ease-in-out 1;
-            transform-origin: 70% 70%;
-        }
-        @keyframes greetWave {
-            0%, 100% { transform: rotate(0deg); }
-            10%       { transform: rotate(14deg); }
-            20%       { transform: rotate(-8deg); }
-            30%       { transform: rotate(14deg); }
-            40%       { transform: rotate(-4deg); }
-            50%       { transform: rotate(10deg); }
-            60%, 100% { transform: rotate(0deg); }
-        }
-
 
         /* ─── WEATHER WIDGET ─────────────────────────────────────────── */
         .weather-trigger {
@@ -2839,40 +1140,13 @@
            New living-weather experience now lives entirely in weather-live.css.) */
         @keyframes spin { to { transform: rotate(360deg); } }
 
-
         /* ─── MINI CALENDAR ──────────────────────────────────────────── */
         /* .mini-cal-* und .week-cmp-* sind mit v6.3.5 entfallen — das Raster und
            der doppelte Monatsvergleich standen nur in der Monatsansicht und sind
            dort durch .mc-* (components/monthcompare/monthcompare.css) ersetzt. */
 
-
         /* ─── ANIMATIONS ─────────────────────────────────────────────── */
-        @keyframes heroAccentSlide {
-            0%, 100% { background-position: -100% 0; }
-            50%       { background-position: 200% 0; }
-        }
-        @keyframes indicatorPulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(16, 185, 129, 0.4); }
-            50%       { opacity: 0.55; box-shadow: 0 0 3px rgba(16, 185, 129, 0.2); }
-        }
-        @keyframes streakPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50%       { transform: scale(1.10); opacity: 0.75; }
-        }
-        @keyframes greetWave {
-            0%, 100% { transform: rotate(0deg); }
-            10%       { transform: rotate(14deg); }
-            20%       { transform: rotate(-8deg); }
-            30%       { transform: rotate(14deg); }
-            40%       { transform: rotate(-4deg); }
-            50%       { transform: rotate(10deg); }
-            60%, 100% { transform: rotate(0deg); }
-        }
-        @keyframes badgePop {
-            0%   { transform: scale(0); opacity: 0; }
-            50%  { transform: scale(1.18); }
-            100% { transform: scale(1); opacity: 1; }
-        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to   { opacity: 1; }
@@ -2892,59 +1166,24 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        @keyframes trendPulse {
-            0%, 100% { r: 5; opacity: 0.9; }
-            50%       { r: 8; opacity: 1; }
-        }
+        
         /* Moderner Live-Marker: einzelner, auslaufender Radar-Ping */
-        @keyframes trendPing {
-            0%   { r: 3.5; opacity: 0.55; }
-            70%  { opacity: 0; }
-            100% { r: 15;  opacity: 0; }
-        }
-        .trend-marker-ping {
-            animation: trendPing 2.6s cubic-bezier(0, 0.2, 0.7, 1) infinite;
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .trend-marker-ping { animation: none; opacity: 0.4; }
-        }
+
         @keyframes drawLine {
             from { stroke-dasharray: 9999; stroke-dashoffset: 9999; }
             to   { stroke-dasharray: 9999; stroke-dashoffset: 0; }
         }
-        @keyframes donutFill {
-            from { stroke-dasharray: 0 251; }
-            to   { stroke-dasharray: var(--dash-value, 251) 251; }
-        }
-        @keyframes barGrow {
-            from { transform: scaleY(0); opacity: 0; }
-            to   { transform: scaleY(1); opacity: 0.85; }
-        }
+
         @keyframes blink {
             0%, 49%  { border-right-color: var(--primary); }
             50%, 100%{ border-right-color: transparent; }
         }
-        @keyframes thinkingPulse {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50%       { opacity: 1; transform: scale(1.1); }
-        }
-        @keyframes thinkingDots {
-            0%, 20%  { opacity: 0.3; }
-            50%       { opacity: 1; }
-            100%      { opacity: 0.3; }
-        }
-        @keyframes thinkingFloat {
-            0%, 100% { transform: translateY(0px); }
-            50%       { transform: translateY(-4px); }
-        }
+
         @keyframes particleFloat {
             0%   { transform: translateY(0) translateX(0); opacity: 1; }
             100% { transform: translateY(-100px) translateX(var(--tx)); opacity: 0; }
         }
-        @keyframes rainbowShift {
-            0%   { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
-        }
+        
         @keyframes shake {
             0%, 100%             { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
@@ -2954,11 +1193,7 @@
             0%, 100% { transform: translateY(0); }
             50%       { transform: translateY(-8px); }
         }
-        @keyframes glitch {
-            0%   { clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 0% 50%); }
-            50%  { clip-path: polygon(0% 50%, 100% 50%, 100% 100%, 0% 100%); }
-            100% { clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); }
-        }
+        
         @keyframes floatUp {
             0%   { transform: translateY(0) rotateZ(0deg); opacity: 1; }
             100% { transform: translateY(-60px) rotateZ(8deg); opacity: 0; }
@@ -2967,73 +1202,25 @@
             0%   { r: 2; opacity: 1; }
             100% { r: 20; opacity: 0; }
         }
-        @keyframes zigzag {
-            0%   { transform: translateX(0); }
-            25%  { transform: translateX(4px); }
-            50%  { transform: translateX(-4px); }
-            75%  { transform: translateX(4px); }
-            100% { transform: translateX(0); }
-        }
 
         /* Modern Bar Chart Animations */
-        @keyframes barSegmentFill {
-            from { flex-basis: 0% !important; opacity: 0.7; }
-            to { opacity: 1; }
-        }
-
-        @keyframes barGlowPulse {
-            0%, 100% { filter: brightness(1) drop-shadow(0 0 0 rgba(255,255,255,0)); }
-            50% { filter: brightness(1.1) drop-shadow(0 0 8px rgba(255,255,255,0.3)); }
-        }
-
-        @keyframes barSegmentSlide {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Stacked Bar Segments - Smooth entrance with flex transition */
-        #donutWork { animation: barSegmentSlide 1.1s ease-out 0ms forwards; }
-        #donutSchool { animation: barSegmentSlide 1.1s ease-out 100ms forwards; }
-        #donutVac { animation: barSegmentSlide 1.1s ease-out 200ms forwards; }
-        #donutSick { animation: barSegmentSlide 1.1s ease-out 300ms forwards; }
-        #donutHoliday { animation: barSegmentSlide 1.1s ease-out 400ms forwards; }
-
-        .donut-segment {
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-
-
-
-
 
         /* Effect utility classes */
-        .effect-shake         { animation: shake 0.4s ease-in-out; }
-        .effect-bounce        { animation: bounce 0.6s ease-in-out; }
-        .effect-glow          { filter: drop-shadow(0 0 8px var(--primary)) drop-shadow(0 0 16px rgba(var(--primary-rgb), 0.45)); }
-        .effect-rainbow       { animation: rainbowShift 3s linear infinite; }
-        .effect-pulse-intense { animation: pulse 0.6s ease-in-out infinite; }
-        .particle-container   { position: fixed; pointer-events: none; z-index: 999; }
 
+        .particle-container   { position: fixed; pointer-events: none; z-index: 999; }
 
         /* ─── ACCESSIBILITY ──────────────────────────────────────────── */
         @media (prefers-reduced-motion: reduce) {
-            .dashboard-item { animation: none !important; }
-            .streak-active { animation: none !important; }
-            .greeting-emoji { animation: none !important; }
+
             * {
                 transition-duration: 0.01ms !important;
                 animation-duration: 0.01ms !important;
             }
-            /* Die Balken laufen sonst weiter, weil sie eigene Dauern
-               setzen — der Stern oben deckt nur die Standardwerte ab. */
-            .devbar__fill,
-            .ptrack__fill { transition-duration: 0.01ms !important; }
+
         }
 
         /* Light theme adjustments */
         [data-theme="light"] .ambient-orb { opacity: 0.45; filter: blur(100px); }
-
 
         /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 
@@ -3050,10 +1237,7 @@
               und keine Regel in dieser Datei erklaert warum. */
         @media (max-width: 1180px) {
             .kpi-grid { grid-template-columns: 1fr 1fr; }
-            .kpi-v2--hero { grid-column: span 2; }
-        }
-        @media (max-width: 767px) {
-            .kpi-v2--hero { grid-column: span 1; }
+            
         }
 
         @media (max-width: 768px) {
@@ -3061,48 +1245,23 @@
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
             }
-            .kpi-v2 { min-height: 150px; padding: 1rem; }
-            .charts-row {
-                grid-template-columns: 1fr;
-            }
-            .trend-stats-bar {
-                gap: 1.25rem;
-            }
+
             .entry-form__row,
             .entry-form__actions {
                 flex-direction: column;
             }
             .entry-form__time-group { flex: 1; }
             .entry-form__more-hint { display: none; }
-            .quick-actions {
-                border-radius: 10px;
-                padding: 2px;
-            }
-            .quick-actions :is(button, a) {
-                padding: 6px 9px;
-                font-size: 0.72rem;
-            }
-            .dashboard-grid { gap: 1rem; }
+
         }
 
         @media (max-width: 480px) {
             .kpi-grid {
                 grid-template-columns: 1fr;
             }
-            .kpi-v2--hero { grid-column: span 1; }
+            
             /* Zeitraum-Pfeil auf kleinen Phones ausblenden — Zeit-Inputs bleiben nebeneinander. */
             .entry-form__time-sep { display: none; }
             .entry-form__time-row { gap: 6px; }
-            .gleitzeit-hero-value {
-                font-size: 2.4rem;
-            }
-            .trend-stats-bar {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .trend-container {
-                height: 180px;
-            }
-            .donut-container {
-                height: 140px;
-            }
+
         }

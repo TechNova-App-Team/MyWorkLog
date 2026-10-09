@@ -205,7 +205,6 @@
     function initNewDashboardWidgets() {
 
 
-        try { renderQuickTemplates(); } catch(e) { console.warn('Quick Templates init error:', e); }
         try { startBreakWarningMonitor(); } catch(e) { console.warn('Break Warning init error:', e); }
     }
 

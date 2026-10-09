@@ -29,7 +29,7 @@
         {
             icon: 'barChart',
             title: 'Dein Dashboard',
-            text: 'Oben stehen deine Woche als Ring und die Gleitzeit. Ein Klick auf die Gleitzeit öffnet alle Kennzahlen im Detail.',
+            text: 'Oben stehen deine Woche als Ring und die Gleitzeit mit Prognose. Über das Regler-Symbol oben rechts sortierst du die Module, stellst ihre Breite ein oder blendest sie aus.',
             target: '.dn-hero',
             tab: 'dashboard',
             position: 'bottom'
@@ -121,7 +121,7 @@
         {
             icon: 'barChart',
             title: 'Dashboard — Deine Übersicht',
-            text: 'Hier siehst du deine Woche, die Gleitzeit und den heutigen Tag. Darunter folgen Einträge, Kalender und Schnellzugriff.',
+            text: 'Hier siehst du deine Woche, die Gleitzeit und den heutigen Tag. Darunter folgen Statistik, Urlaub, Kalender und Arbeitsverteilung.',
             target: '.dn-hero',
             tab: 'dashboard',
             position: 'bottom-sheet'

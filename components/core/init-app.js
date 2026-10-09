@@ -382,10 +382,6 @@
         try { renderSidebarNav(); } catch(e) { console.warn('renderSidebarNav failed', e); }
         window._clsBC = 'before-updateSidebarAvatar';
         try { updateSidebarAvatar(); } catch(e) { console.warn('updateSidebarAvatar failed', e); }
-        window._clsBC = 'before-applyWidgetLayout';
-        try { enableWidgetDragDrop(); applyWidgetLayout(); } catch(e) { console.warn('widget drag init failed', e); }
-        window._clsBC = 'before-renderWidgetManager';
-        try { renderWidgetManager(); } catch(e) { console.error('Error rendering widget manager:', e); }
         window._clsBC = 'init-complete';
         if (typeof hideLoadingSpinner === 'function') hideLoadingSpinner();
 

@@ -4,10 +4,6 @@
     // NEW FEATURES
     // ============================================
 
-    // FEATURE 1: Daily Summary (Streak only)
-    function updateDailySummary() {
-        if (typeof updateStreakCounter === 'function') updateStreakCounter();
-    }
 
     // FEATURE 3: Weekly Goals Progress
     // FEATURE 4: Dark/Light Mode Theme
@@ -130,45 +126,11 @@
         return pool[Math.abs(h) % pool.length];
     }
 
+    // Nur noch die Meldung bei einer neuen Bestserie. Die Anzeige der Serie
+    // (frueher #streakBox in der KPI-Karte) zeichnet das Dashboard selbst.
     function updateStreakCounter() {
         if (typeof calculateStreak !== 'function') return;
         const streak = calculateStreak();
-        const elCount = document.getElementById('streakCount');
-        const elBest = document.getElementById('streakBest');
-        const elEmoji = document.getElementById('streakEmoji');
-        const box = document.getElementById('streakBox');
-        if (box) box.hidden = !(streak.current > 0 || streak.best > 0);
-
-        if (elCount) {
-            try { elCount.innerText = streak.current; } catch (e) { console.warn('updateStreakCounter: failed to set streakCount', e); }
-        } else {
-            console.warn('updateStreakCounter: #streakCount not found');
-        }
-
-        if (elBest) {
-            // Nur die Zahl — das Label "Best" steht schon im Markup darueber,
-            // und das Pokal-Icon sitzt jetzt links in der Kachel.
-            try { elBest.innerText = streak.best; } catch (e) { console.warn('updateStreakCounter: failed to set streakBest', e); }
-        } else {
-            console.warn('updateStreakCounter: #streakBest not found');
-        }
-
-        // Icon basiert auf aktueller Streak — wähle eine tägliche Variation
-        var iconName = getDailyStreakIcon(streak.current);
-
-        if (elEmoji) {
-            try {
-                elEmoji.innerHTML = streakIconSVG(iconName);
-                // Add pulse animation when streak is active
-                if (streak.current > 0) {
-                    elEmoji.classList.add('streak-active');
-                } else {
-                    elEmoji.classList.remove('streak-active');
-                }
-            } catch (e) { console.warn('updateStreakCounter: failed to set streakEmoji', e); }
-        } else {
-            console.warn('updateStreakCounter: #streakEmoji not found');
-        }
 
         // Trigger Notification bei neuer Best-Streak (EINMALIG PRO TAG)
         if (streak.current > 0 && streak.current === streak.best && streak.current > 1) {
@@ -184,6 +146,5 @@
             }
         }
     }
-
 
 

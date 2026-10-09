@@ -237,14 +237,6 @@
         checkSetupHint();
         
         console.log('✅ App initialized with Smart Alerts enabled');
-        
-        // Initialize dashboard layout
-        loadDashboardLayout();
-        
-        // Initialize all widgets
-        setTimeout(() => {
-            initializeAllWidgets();
-        }, 200);
     }
 
     // Der Name, mit dem die App jemanden anspricht — oder '' fuer "keiner".
