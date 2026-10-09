@@ -27,7 +27,7 @@ let fails = 0, n = 0;
 const ok = (c, msg) => { n++; if (c) console.log('  ✓ ' + msg); else { fails++; console.log('  ✗ ' + msg); } };
 
 // Ohne Route prueft der Test eine Funktion, die nie aufgerufen wird.
-ok(/pathname === '\/traum'[\s\S]{0,80}handleTraum\(/.test(src), '/traum ist im Entry Point geroutet');
+ok(src.includes("'/traum': handleTraum,"), '/traum ist im Entry Point geroutet');
 
 function makeKV() {
   const store = new Map();

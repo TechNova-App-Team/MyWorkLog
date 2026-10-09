@@ -67,7 +67,10 @@
         try {
             var r = await fetch(ENDPOINT + '?tage=' + Math.max(tage, 1), { headers: { 'X-Umfrage-Secret': secret }, cache: 'no-store' });
             if (r.status === 401) { sessionStorage.removeItem(SECRET_KEY); return zeigeLogin('Das Secret stimmt nicht.'); }
-            if (!r.ok) throw new Error('Der Proxy antwortet mit ' + r.status + '.');
+            if (!r.ok) {
+                var grund = await r.json().then(function (j) { return j && j.error; }, function () { return ''; });
+                throw new Error('Der Proxy antwortet mit ' + r.status + (grund ? ': ' + grund : '.'));
+            }
             daten = await r.json();
             $('kdLogin').hidden = true;
             $('kdInhalt').hidden = false;

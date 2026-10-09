@@ -28,7 +28,7 @@ fs.unlinkSync(tmp);
 
 // Der Entry Point muss den Pfad auch wirklich routen — sonst prueft dieser
 // Test eine Funktion, die nie aufgerufen wird.
-if (!/pathname === '\/wunsch'[\s\S]{0,80}handleWunsch\(/.test(src)) {
+if (!src.includes("'/wunsch': handleWunsch,")) {
   console.error('✗ /wunsch ist im Entry Point nicht geroutet'); process.exit(1);
 }
 
