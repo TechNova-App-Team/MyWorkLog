@@ -388,85 +388,6 @@
         }
     };
 
-    function openWidgetManager() {
-        console.log('Opening widget manager - EXTREME MODE');
-        const modal = document.getElementById('widgetManagerModal');
-        console.log('Modal element:', modal);
-
-        if (modal) {
-            modal.style.cssText = `
-                display: flex !important;
-                position: fixed !important;
-                top: 0px !important;
-                left: 0px !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: rgba(255, 0, 0, 0.95) !important;
-                z-index: 2147483647 !important;
-                justify-content: center !important;
-                align-items: center !important;
-                backdrop-filter: blur(10px) !important;
-                pointer-events: auto !important;
-            `;
-
-            const modalBox = modal.querySelector('.modal-box');
-            if (modalBox) {
-                modalBox.style.cssText = `
-                    display: block !important;
-                    position: relative !important;
-                    background: white !important;
-                    border: 10px solid black !important;
-                    border-radius: 20px !important;
-                    padding: 50px !important;
-                    max-width: 800px !important;
-                    max-height: 90vh !important;
-                    overflow-y: auto !important;
-                    color: black !important;
-                    font-size: 18px !important;
-                    z-index: 2147483647 !important;
-                    box-shadow: 0 0 100px rgba(0,0,0,1) !important;
-                    margin: 20px auto !important;
-                    width: 90% !important;
-                `;
-                console.log('Modal box EXTREME styled');
-            }
-
-            modal.classList.add('active');
-            console.log('Modal classes:', modal.className);
-            console.log('Modal computed display:', window.getComputedStyle(modal).display);
-
-            // Force render after a delay
-            setTimeout(() => {
-                renderWidgetManager();
-                console.log('Widget manager rendered with delay');
-                
-                // Force scroll to top in case modal is outside viewport
-                window.scrollTo(0, 0);
-                
-                // Additional visibility check
-                setTimeout(() => {
-                    const modalRect = modal.getBoundingClientRect();
-                    console.log('Modal position:', modalRect);
-                    if (modalRect.top < 0 || modalRect.left < 0) {
-                        console.log('Modal is outside viewport, adjusting...');
-                        modal.style.top = '10px !important';
-                        modal.style.left = '10px !important';
-                    }
-                }, 200);
-            }, 100);
-
-        } else {
-            console.error('Widget manager modal not found');
-        }
-    }
-
-    function closeWidgetManager() {
-        const modal = document.getElementById('widgetManagerModal');
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    }
-
     // ============================================
     // WIDGET MANAGER — class-based modal (z-Index ueber Settings)
     // ============================================
@@ -599,21 +520,6 @@
         availableContainer.querySelectorAll('[data-wm-add]').forEach(btn => {
             btn.onclick = (e) => { e.stopPropagation(); addWidget(btn.getAttribute('data-wm-add')); renderNewWidgetManager(); };
         });
-    }
-
-    function addRandomWidget() {
-        const available = Object.keys(widgetLibrary).filter(id => {
-            const dc = document.getElementById('dashboardContainer');
-            if (!dc) return true;
-            return !dc.querySelector(`[data-item-id="${id}"]`);
-        });
-        if (available.length === 0) {
-            if (typeof showCustomMessage === 'function') showCustomMessage('Alles aktiv', 'Alle Widgets sind schon im Dashboard.', 'info');
-            return;
-        }
-        const pick = available[Math.floor(Math.random() * available.length)];
-        addWidget(pick);
-        renderNewWidgetManager();
     }
 
 

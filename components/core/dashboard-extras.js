@@ -9,63 +9,6 @@
         if (typeof updateStreakCounter === 'function') updateStreakCounter();
     }
 
-    // FEATURE 2: Pomodoro Timer Mode
-    let pomodoroState = {
-        enabled: false,
-        isWorkPhase: true,
-        timeLeft: 25 * 60,
-        intervalId: null
-    };
-
-    function togglePomodoroMode() {
-        if (!pomodoroState.enabled) {
-            pomodoroState.enabled = true;
-            pomodoroState.timeLeft = 25 * 60;
-            pomodoroState.isWorkPhase = true;
-            startPomodoroTimer();
-            showCustomMessage('🍅 Pomodoro', 'Arbeitsphase gestartet!', 'success');
-        } else {
-            stopPomodoroTimer();
-            pomodoroState.enabled = false;
-            showCustomMessage('🍅 Pomodoro', 'Beendet', 'info');
-        }
-    }
-
-    function startPomodoroTimer() {
-        if (pomodoroState.intervalId) clearInterval(pomodoroState.intervalId);
-        
-        pomodoroState.intervalId = setInterval(() => {
-            pomodoroState.timeLeft--;
-            
-            const mins = Math.floor(pomodoroState.timeLeft / 60);
-            const secs = pomodoroState.timeLeft % 60;
-            const display = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-            
-            const card = document.getElementById('pomodoroCard');
-            if (card) {
-                const title = pomodoroState.isWorkPhase ? '🍅 Arbeitsphase' : '☕ Pausenphase';
-                card.querySelector('h4').innerText = title + ` - ${display}`;
-            }
-            
-            if (pomodoroState.timeLeft === 0) {
-                pomodoroState.isWorkPhase = !pomodoroState.isWorkPhase;
-                pomodoroState.timeLeft = pomodoroState.isWorkPhase ? 25 * 60 : 5 * 60;
-                
-                const sound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj==');
-                sound.play().catch(() => {});
-                
-                showCustomMessage('🔔', pomodoroState.isWorkPhase ? 'Pause vorbei! Arbeitsphase!' : 'Arbeitszeit vorbei! Pause!', 'warning');
-            }
-        }, 1000);
-    }
-
-    function stopPomodoroTimer() {
-        if (pomodoroState.intervalId) {
-            clearInterval(pomodoroState.intervalId);
-            pomodoroState.intervalId = null;
-        }
-    }
-
     // FEATURE 3: Weekly Goals Progress
     // FEATURE 4: Dark/Light Mode Theme
     function setTheme(theme) {
