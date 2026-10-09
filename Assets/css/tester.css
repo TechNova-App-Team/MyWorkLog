@@ -1,0 +1,99 @@
+/* tester.css — /tester/ (Aktionsseite geschlossener Play-Store-Test, Oktober 2026)
+   Grundfarben aus components/core/core.css (Projektregel: keine eigenen Hex-Werte
+   auf Standalone-Seiten), hier nur gemischt. Gruen fuer "fertig" gibt es hier
+   bewusst nicht: auf der Seite ist noch nichts fertig, das waere eine Behauptung. */
+:root {
+    --flaeche: color-mix(in srgb, var(--text-main) 4%, var(--bg-deep));
+    --rand: color-mix(in srgb, var(--text-main) 9%, transparent);
+    --text-3: color-mix(in srgb, var(--text-muted) 70%, var(--bg-deep));
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+button, input, select, textarea, optgroup { font-family: inherit; }
+
+/* core.css setzt fuer die App-Shell body { display:flex } — hier Block. */
+body {
+    display: block;
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+.ts { max-width: 640px; margin: 0 auto; padding: 28px 20px 72px; }
+
+.ts-zurueck {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+    padding: 6px 10px 6px 4px; margin-left: -4px; border-radius: 8px;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+.ts-zurueck svg { width: 18px; height: 18px; }
+.ts-zurueck:hover { color: var(--text-main); background: var(--hover-fill); }
+
+.ts-kopf { margin: 36px 0 28px; }
+.ts-icon { width: 88px; height: 88px; border-radius: 22px; display: block; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45); }
+.ts-ueber { margin-top: 26px; font-size: 0.95rem; font-weight: 600; color: var(--primary); }
+.ts-kopf h1 {
+    margin-top: 6px;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 7vw, 2.9rem); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700;
+}
+.ts-lead { margin-top: 16px; font-size: 1.05rem; color: var(--text-muted); max-width: 52ch; }
+
+.ts-hinweis {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px; margin-bottom: 22px;
+    border: 1px solid var(--hover-border); background: var(--hover-fill); border-radius: 12px;
+    font-size: 0.92rem; color: var(--text-main);
+}
+.ts-hinweis svg { width: 20px; height: 20px; flex: 0 0 20px; margin-top: 2px; color: var(--primary); }
+
+.ts-schritte { list-style: none; display: grid; gap: 14px; }
+.ts-schritt {
+    display: flex; gap: 18px; align-items: flex-start;
+    padding: 22px; border-radius: 16px;
+    background: var(--flaeche); border: 1px solid var(--rand);
+}
+.ts-nr {
+    width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--primary); color: #fff; font-weight: 700; font-size: 1.05rem;
+}
+.ts-text { min-width: 0; }
+.ts-text h2 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+.ts-text p { margin-top: 4px; font-size: 0.95rem; color: var(--text-muted); }
+
+.ts-knopf {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 14px; min-height: 44px; padding: 10px 20px; border-radius: 10px;
+    background: var(--primary); color: #fff; text-decoration: none; font-weight: 600; font-size: 0.98rem;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ts-knopf:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
+.ts-knopf:active { transform: translateY(1px); }
+.ts-knopf:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35); }
+
+.ts-fragen { margin-top: 44px; }
+.ts-fragen h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 12px; }
+.ts-fragen dl { display: grid; gap: 14px; }
+.ts-fragen dt { font-weight: 600; font-size: 0.97rem; }
+.ts-fragen dd { margin-top: 2px; font-size: 0.93rem; color: var(--text-muted); }
+
+@media (max-width: 480px) {
+    .ts { padding: 20px 16px 64px; }
+    .ts-schritt { padding: 18px; gap: 14px; }
+    .ts-knopf { width: 100%; }
+}
+@media (max-width: 360px) {
+    .ts-nr { width: 34px; height: 34px; flex-basis: 34px; font-size: 0.95rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ts-zurueck, .ts-knopf { transition: none; }
+}
