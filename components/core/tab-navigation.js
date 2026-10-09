@@ -131,8 +131,16 @@
         };
         document.title = 'MyWorkLog | ' + (titles[tabId] || tabId);
 
-        if (window.innerWidth < 1024 && tabId !== 'dashboard') {
-             toggleSidebar(); // Sidebar auf Mobile nach Klick ausblenden
+        // Am Handy die Schublade SCHLIESSEN, nicht umschalten: kam der Wechsel
+        // von der unteren Leiste, dem Mehr-Menue oder Strg+K, war sie schon zu,
+        // und toggleSidebar() hat sie geoeffnet (gemessen 10/2026, headless 412 px:
+        // mobNavSwitch('performance') → Schublade offen ueber der Bilanz).
+        if (window.innerWidth < 1024) {
+            const sb = document.getElementById('sidebar');
+            if (sb) { sb.classList.remove('active'); sb.classList.remove('hidden'); }
+            const ov = document.querySelector('.sidebar-overlay');
+            if (ov) ov.classList.remove('active');
+            isSidebarOpen = false;
         }
 
         // Die Ansicht steht schon da; ihr Skript kommt beim ersten Oeffnen nach.
