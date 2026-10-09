@@ -441,6 +441,36 @@ class SupabaseCloudSync {
     }
 
     /**
+     * Loescht das angemeldete Konto endgueltig (RPC public.konto_loeschen, seit 10/2026).
+     * Die Funktion loescht serverseitig auth.users + Cloud-Kopie + Berichte; die
+     * Daten auf dem Geraet bleiben. Ausbilder mit Freigaben fremder Berichte
+     * lehnt der Server ab (Nachweise der Azubis) — grund 'ausbilder'.
+     * @returns {Promise<{ok: boolean, grund?: string, hinweis?: string}>}
+     */
+    async kontoLoeschen() {
+        if (!this.client || !this.user) return { ok: false, grund: 'abgemeldet' };
+        const uid = this.user.id;
+        const { error } = await this.client.rpc('konto_loeschen');
+        if (error) {
+            const m = String(error.message || '');
+            if (m.includes('ausbilder_freigaben') || m.includes('betrieb_mit_mitgliedern')) {
+                return { ok: false, grund: 'ausbilder', hinweis: error.hint || '' };
+            }
+            console.error('[Auth] Konto loeschen fehlgeschlagen:', error);
+            return { ok: false, grund: 'fehler' };
+        }
+        // Das Konto ist weg; die Sitzung im Speicher ist damit tot. signOut kann
+        // deshalb mit 403 antworten — egal, lokal wird trotzdem aufgeraeumt.
+        try { if (window.MWLE2E) await window.MWLE2E.vergessen(uid); } catch (e) {}
+        try { await this.client.auth.signOut({ scope: 'local' }); } catch (e) {}
+        this.session = null;
+        this.user = null;
+        if (typeof mwlEvent === 'function') mwlEvent('konto', { aktion: 'geloescht' });
+        this.onAuthStateChanged(false, null);
+        return { ok: true };
+    }
+
+    /**
      * Sammelt ALLE LocalStorage-Keys und speichert sie in Supabase
      * @returns {Promise<Object>} Speicher-Resultat
      */

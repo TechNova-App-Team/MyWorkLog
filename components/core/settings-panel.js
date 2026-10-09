@@ -349,6 +349,46 @@
         }
     }
     
+    // Konto endgueltig loeschen (Google-Play-Pflicht). Lokale Daten bleiben —
+    // wer auch die loswerden will, hat den Knopf darueber.
+    async function confirmAndDeleteAccount() {
+        const cs = window.cloudSync;
+        if (!cs || !cs.user) {
+            showCustomMessage(recL('Kein Konto angemeldet', 'No account signed in'),
+                recL('Melde dich zuerst über Cloud Sync an. Ohne Anmeldung gibt es hier kein Konto, das gelöscht werden könnte — deine Daten liegen dann nur auf diesem Gerät.',
+                     'Sign in via Cloud Sync first. Without signing in there is no account to delete — your data only lives on this device.'), 'info');
+            return;
+        }
+        const ok = await appConfirm(recL('Konto endgültig löschen?', 'Delete account permanently?'),
+            recL('Gelöscht werden: deine Anmeldung (' + cs.user.email + '), die verschlüsselte Cloud-Kopie und deine Berichtsheft-Berichte samt Freigaben. Die Daten auf diesem Gerät bleiben erhalten. Das lässt sich nicht rückgängig machen.',
+                 'This deletes your login (' + cs.user.email + '), the encrypted cloud copy and your report book entries including approvals. The data on this device stays. This cannot be undone.'),
+            { danger: true, confirmText: recL('Weiter', 'Continue') });
+        if (!ok) return;
+        const wort = recL('LÖSCHEN', 'DELETE');
+        const txt = await showCustomPrompt(recL('Löschen bestätigen', 'Confirm deletion'),
+            recL('Tippe LÖSCHEN in Großbuchstaben, um dein Konto zu löschen.', 'Type DELETE in capital letters to delete your account.'), '',
+            { placeholder: wort, confirmText: recL('Konto löschen', 'Delete account') });
+        if (txt !== wort) {
+            showCustomMessage(recL('Abgebrochen', 'Cancelled'), recL('Die Eingabe stimmte nicht überein. Dein Konto bleibt bestehen.', 'The input did not match. Your account stays.'), 'info');
+            return;
+        }
+        let r;
+        try { r = await cs.kontoLoeschen(); } catch (e) { r = { ok: false, grund: 'fehler' }; }
+        if (r.ok) {
+            showCustomMessage(recL('Konto gelöscht', 'Account deleted'),
+                recL('Dein Konto und deine Cloud-Daten sind gelöscht. Auf diesem Gerät kannst du ohne Konto weiterarbeiten.',
+                     'Your account and cloud data have been deleted. You can keep working on this device without an account.'), 'success');
+        } else if (r.grund === 'ausbilder') {
+            showCustomMessage(recL('Bitte per Mail', 'Please email us'),
+                recL('Du hast als Ausbilder Berichte freigegeben oder einen Betrieb mit weiteren Mitgliedern angelegt. Diese Nachweise gehören auch den Azubis, deshalb löschen wir dieses Konto auf Anfrage an info@myworklog.de.',
+                     'As a trainer you have approved reports or created a company with other members. Those records also belong to the apprentices, so we delete this account on request to info@myworklog.de.'), 'warning');
+        } else {
+            showCustomMessage(recL('Nicht gelöscht', 'Not deleted'),
+                recL('Das Konto konnte gerade nicht gelöscht werden. Prüf die Verbindung und versuch es noch einmal.',
+                     'The account could not be deleted right now. Check your connection and try again.'), 'error');
+        }
+    }
+
     /* ===== Backups helper functions (for debugging & restore) ===== */
 
     // Lokaler i18n-Helfer: Die Backup-Liste wird komplett per JS gebaut und von der
