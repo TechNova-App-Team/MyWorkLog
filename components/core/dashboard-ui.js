@@ -326,5 +326,9 @@
         
         // Update Advanced Dashboard Widgets
         if (typeof renderQuickTemplates === 'function') renderQuickTemplates();
+
+        // Das neue Dashboard liest dieselben Daten (und #valProjected von oben),
+        // deshalb als letzter Schritt. Ein Fehler darin darf das Speichern nicht mitreissen.
+        if (typeof dnRender === 'function') { try { dnRender(); } catch (e) { console.warn('dnRender', e); } }
     }
     

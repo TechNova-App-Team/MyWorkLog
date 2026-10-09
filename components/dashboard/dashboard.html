@@ -1,10 +1,5 @@
 <div id="view-dashboard" class="view-section active">
 
-            <!-- Edit Mode Controls -->
-            <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
-                <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.85rem; background:rgba(217,119,6,0.15); border:1px solid rgba(217,119,6,0.3); color:#f59e0b; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen — Speichern erfolgt über den grünen Layout-Button rechts"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg><span>Abbrechen / Speichern</span></button>
-            </div>
-
             <!-- ═══ GEBURTSTAG (12.09. 0 Uhr bis 13.09. 13 Uhr) ═══
                  Sichtbar nur mit html.mwl-geburtstag-karte — den Torwaechter setzt das
                  Pre-Apply-Skript im <head> VOR dem ersten Zeichnen, sonst schoebe die
@@ -135,6 +130,209 @@
                 </ol>
                 <button type="button" class="setup-card__close" onclick="dismissSetupHint()" aria-label="Später einrichten" title="Später einrichten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
             </section>
+
+            <!-- Hinweise, die frueher im Eintrags-Formular sassen. Sie gehoeren
+                 zur Seite, nicht zum Formular: das liegt jetzt in einer Schublade
+                 und waere beim Laden zu. Sichtbarkeit weiter ueber style.display
+                 (play-tester.js, umfrage.js). -->
+            <div class="dn-notes">
+                            <!-- Tester-Aufruf Google Play (Sichtbarkeit: testerApplyBanner() in play-tester.js).
+                                 Traegt bewusst die Klassen des Umfrage-Banners: zwei Hinweise an derselben
+                                 Stelle sollen gleich aussehen. -->
+                            <div id="testerBanner" class="umf-banner" style="display:none;">
+                                <div class="umf-banner-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                                </div>
+                                <div class="umf-banner-content">
+                                    <div class="umf-banner-title">MyWorkLog kommt in den Play Store</div>
+                                    <div class="umf-banner-text">Damit die App öffentlich erscheinen darf, braucht Google 14 Tage lang mindestens 12 Testerinnen und Tester. Hilfst du mit? Erst der Gruppe beitreten, dann im Play Store auf „Tester werden“ tippen.</div>
+                                    <div class="umf-banner-actions">
+                                        <a class="umf-banner-btn" href="https://groups.google.com/g/myworklog-tester/about" target="_blank" rel="noopener" onclick="testerSchritt('gruppe')">1. Gruppe beitreten</a>
+                                        <a class="umf-banner-btn" href="https://play.google.com/apps/testing/de.myworklog.app" target="_blank" rel="noopener" onclick="testerSchritt('play')">2. Tester werden</a>
+                                        <button class="umf-banner-btn umf-banner-btn--quiet" onclick="testerAblehnen()">Nein danke</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Umfrage-Banner (Sichtbarkeit: umfApplyBanner() in umfrage.js) -->
+                            <div id="umfrageBanner" class="umf-banner" style="display:none;">
+                                <div class="umf-banner-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
+                                </div>
+                                <div class="umf-banner-content">
+                                    <div class="umf-banner-title">Kurze Frage zur Zukunft der App</div>
+                                    <div class="umf-banner-text">Die Zeiterfassung bleibt kostenlos. Aber wäre dir eine stärkere KI fürs Berichtsheft etwas wert? Zwei Fragen, keine Anmeldung.</div>
+                                    <div class="umf-banner-actions">
+                                        <button class="umf-banner-btn" onclick="openUmfrage()">Antworten</button>
+                                        <button class="umf-banner-btn umf-banner-btn--quiet" onclick="dismissUmfrage()">Nein danke</button>
+                                    </div>
+                                </div>
+                            </div>
+            </div>
+
+            <!-- ═══ DASHBOARD (neu, Branch dashboard-neu) ═══
+                 Feste Ordnung statt Kachelraster: Kopf mit Begruessung, dann Woche
+                 und Heute, darunter Eintraege, Kalender, Schnellzugriff und eine
+                 Statuszeile. Gefuellt von dashboard-neu.js (dnRender, gerufen am Ende
+                 von updateUI). Was frueher hier stand, liegt unveraendert in der
+                 Kennzahlen-Ansicht (#dnSheet) und der Eintrag-Schublade (#dnDrawer). -->
+            <section class="dn" id="dn" aria-label="Dashboard">
+                <header class="dn-top">
+                    <button type="button" class="dn-search" data-dn="palette">
+                        <svg data-dn-i="search"></svg><span id="dnSearchLbl">Suchen …</span><kbd>Strg K</kbd>
+                    </button>
+                    <div class="dn-top__tools">
+                        <button type="button" class="dn-chip dn-weather" id="dnWeather" data-dn="weather" hidden></button>
+                        <button type="button" class="dn-ibtn" id="dnTheme" data-dn="theme" aria-label="Hell oder dunkel" title="Hell oder dunkel"><svg data-dn-i="sun"></svg></button>
+                        <button type="button" class="dn-ibtn" data-dn="alerts" aria-label="Meldungen" title="Meldungen"><svg data-dn-i="bell"></svg><i class="dn-badge" id="dnBell" hidden></i></button>
+                        <button type="button" class="dn-chip dn-date" data-dn="today"><svg data-dn-i="calendar"></svg><span id="dnDate"></span></button>
+                        <button type="button" class="dn-ibtn" data-dn="sheet" aria-label="Kennzahlen" title="Kennzahlen"><svg data-dn-i="grid"></svg></button>
+                    </div>
+                </header>
+
+                <div class="dn-hero">
+                    <div class="dn-hello">
+                        <p class="dn-hello__greet" id="dnGreet">Willkommen zurück,</p>
+                        <h1 class="dn-hello__name" id="dnName">schön, dass du da bist</h1>
+                        <p class="dn-hello__quote" id="dnQuote"></p>
+                    </div>
+                    <div class="dn-hero__cards">
+                        <button type="button" class="dn-card dn-kw" data-dn="weekview">
+                            <span class="dn-tile"><svg data-dn-i="calendar"></svg></span>
+                            <span class="dn-kw__txt"><b id="dnKwTitle">Woche</b><small id="dnKwRange"></small></span>
+                            <span class="dn-ring dn-ring--sm" id="dnKwRing"></span>
+                        </button>
+                        <button type="button" class="dn-card dn-flex" data-dn="sheet">
+                            <span class="dn-flex__top"><span id="dnFlexLbl">Gleitzeit</span><svg data-dn-i="chevron"></svg></span>
+                            <b class="dn-flex__val" id="dnFlexVal">±0,00 h</b>
+                            <span class="dn-flex__spark" id="dnSpark" aria-hidden="true"></span>
+                            <small class="dn-flex__meta" id="dnFlexMeta"></small>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="dn-grid">
+                    <section class="dn-panel dn-week" data-dn-mod="week" aria-labelledby="dnWeekTitle">
+                        <div class="dn-week__days" id="dnDays" role="tablist" aria-label="Tage"></div>
+                        <div class="dn-week__main">
+                            <div class="dn-ph">
+                                <span class="dn-tile"><svg data-dn-i="calcheck"></svg></span>
+                                <div class="dn-ph__txt"><h2 id="dnWeekTitle">Deine Woche</h2><p id="dnWeekSub">Ein Eintrag pro Tag. Schritt für Schritt.</p></div>
+                                <div class="dn-ph__act">
+                                    <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="wk-prev" aria-label="Vorige Woche"><svg data-dn-i="left"></svg></button>
+                                    <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="wk-next" aria-label="Nächste Woche"><svg data-dn-i="right"></svg></button>
+                                    <button type="button" class="dn-btn dn-btn--ghost dn-hide-s" data-dn="weekview"><span id="dnWeekOpen">Woche öffnen</span><svg data-dn-i="arrow"></svg></button>
+                                </div>
+                            </div>
+                            <div class="dn-tl" id="dnTl"></div>
+                            <div class="dn-goal">
+                                <span id="dnGoalLbl">Tagesziel</span>
+                                <div class="dn-goal__bar"><i id="dnGoalFill"></i></div>
+                                <b id="dnGoalVal"></b>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="dn-panel dn-today" id="dnToday" data-dn-mod="today" aria-labelledby="dnTodayTitle">
+                        <div class="dn-ph dn-ph--plain">
+                            <div class="dn-ph__txt"><h2 id="dnTodayTitle">Heute</h2><p id="dnTodayDate"></p></div>
+                            <span class="dn-live" id="dnLive" hidden></span>
+                            <div class="dn-timer" id="dnTimer" role="group" aria-label="Stempeluhr"></div>
+                        </div>
+                        <div class="dn-ring dn-ring--lg" id="dnTodayRing"></div>
+                        <ul class="dn-legend" id="dnTodayLegend"></ul>
+                        <button type="button" class="dn-cta" data-dn="entry"><span class="dn-cta__plus"><svg data-dn-i="plus"></svg></span><span id="dnCtaLbl">Eintrag schreiben</span></button>
+                    </section>
+
+                    <section class="dn-panel dn-recent" data-dn-mod="recent" aria-labelledby="dnRecentTitle">
+                        <div class="dn-ph">
+                            <span class="dn-tile"><svg data-dn-i="list"></svg></span>
+                            <div class="dn-ph__txt"><h2 id="dnRecentTitle">Letzte Einträge</h2><p id="dnRecentSub">Deine letzten Wochen im Überblick.</p></div>
+                            <div class="dn-ph__act"><button type="button" class="dn-btn dn-btn--ghost dn-btn--sm" data-dn="history"><span id="dnRecentAll">Alle anzeigen</span><svg data-dn-i="arrow"></svg></button></div>
+                        </div>
+                        <div class="dn-recent__list" id="dnRecent"></div>
+                    </section>
+
+                    <section class="dn-panel dn-cal" data-dn-mod="cal" aria-labelledby="dnCalTitle">
+                        <div class="dn-flip" id="dnCalFlip">
+                            <div class="dn-flip__a" id="dnCalMonth">
+                                <div class="dn-ph dn-ph--plain">
+                                    <div class="dn-ph__txt"><h2 id="dnCalTitle">Kalender</h2><p id="dnCalMonthLbl"></p></div>
+                                    <div class="dn-ph__act">
+                                        <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="cal-prev" aria-label="Voriger Monat"><svg data-dn-i="left"></svg></button>
+                                        <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="cal-next" aria-label="Nächster Monat"><svg data-dn-i="right"></svg></button>
+                                    </div>
+                                </div>
+                                <div class="dn-cal__wd" id="dnCalWd" aria-hidden="true"></div>
+                                <div class="dn-cal__grid" id="dnCalGrid" role="grid"></div>
+                                <div class="dn-cal__legend" id="dnCalLegend"></div>
+                            </div>
+                            <div class="dn-flip__b" id="dnCalDay" hidden></div>
+                        </div>
+                    </section>
+
+                    <section class="dn-panel dn-quick" data-dn-mod="quick" aria-labelledby="dnQuickTitle">
+                        <div class="dn-flip" id="dnQuickFlip">
+                            <div class="dn-flip__a">
+                                <div class="dn-ph">
+                                    <span class="dn-tile"><svg data-dn-i="bolt"></svg></span>
+                                    <div class="dn-ph__txt"><h2 id="dnQuickTitle">Schnellzugriff</h2></div>
+                                    <div class="dn-ph__act"><button type="button" class="dn-btn dn-btn--ghost dn-btn--sm" data-dn="quick-all" aria-expanded="false"><span id="dnQuickAllLbl">Alles anzeigen</span><svg data-dn-i="chevdown"></svg></button></div>
+                                </div>
+                                <div class="dn-quick__grid" id="dnQuick"></div>
+                            </div>
+                            <div class="dn-flip__b" id="dnTpl" hidden></div>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="dn-status" id="dnStatus" aria-live="polite"></section>
+            </section>
+
+            <!-- ═══ DATENSICHERHEITS-HINWEIS ═══
+                 Ausserhalb von #dashboardContainer: kein Widget, nicht
+                 verschiebbar, sitzt immer als letzte Zeile unter den Karten. -->
+            <div class="data-note data-note-page" style="margin-top:1.5rem;">
+                <div class="data-note-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+                </div>
+                <div class="data-note-body">
+                    <div class="data-note-title">Deine Daten liegen nur auf diesem Gerät</div>
+                    <p class="data-note-text">MyWorkLog speichert alles lokal in deinem Browser. Wir haben keine Kopie davon und können nichts für dich wiederherstellen.</p>
+                    <p class="data-note-text">Deine Einträge gehen verloren, wenn du die Browserdaten löschst, im privaten Modus arbeitest oder die Seite in Safari auf iPhone und iPad 7 Tage lang nicht öffnest. Installierst du MyWorkLog über „Zum Home-Bildschirm“, gilt diese Frist nicht.</p>
+                    <p class="data-note-text">Sicher dich deshalb ab: lade dir regelmäßig ein Backup herunter oder schalte Cloud-Sync ein.</p>
+                    <div class="data-note-actions">
+                        <button type="button" class="data-note-action" onclick="openRecoveryModal()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Backup sichern</span>
+                        </button>
+                        <button type="button" class="data-note-action" onclick="openSettingsCloudTab()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                            <span>Cloud-Sync einrichten</span>
+                        </button>
+                        <button type="button" class="data-note-dismiss" onclick="dismissDataNotice()">Nicht mehr anzeigen</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ KENNZAHLEN (Ansicht hinter der Gleitzeit-Karte) ═══
+                 Hier liegt das bisherige Raster UNVERAENDERT, samt #dashboardContainer:
+                 updateUI() schreibt viele dieser Ids ohne Absicherung (valProjected,
+                 valVacationUsed …), und Editor, Vorlagen und Widget-System greifen ohne
+                 Null-Pruefung auf den Container zu. Fehlte er, braeche das Speichern ab.
+                 dashboard-neu.js haengt die Ansicht beim Start an den <body>. -->
+            <div class="dn-sheet" id="dnSheet" role="dialog" aria-modal="true" aria-labelledby="dnSheetTitle" hidden>
+                <div class="dn-sheet__scrim" data-dn="sheet-close"></div>
+                <div class="dn-sheet__panel">
+                    <div class="dn-sheet__head">
+                        <div><h2 class="dn-sheet__title" id="dnSheetTitle">Kennzahlen</h2><p class="dn-sheet__sub" id="dnSheetSub">Saldo, Urlaub, Verlauf und Verteilung im Detail</p></div>
+                        <button type="button" class="dn-x" data-dn="sheet-close" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+                    </div>
+                    <div class="dn-sheet__body">
+            <!-- Edit Mode Controls -->
+            <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
+                <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.85rem; background:rgba(217,119,6,0.15); border:1px solid rgba(217,119,6,0.3); color:#f59e0b; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen — Speichern erfolgt über den grünen Layout-Button rechts"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg><span>Abbrechen / Speichern</span></button>
+            </div>
             <div id="dashboardContainer" class="dashboard-grid">
 
                 <!-- ═══ KPI OVERVIEW ═══
@@ -433,43 +631,82 @@
                     </div>
                 </div>
 
+                <!-- ═══ LETZTE AKTIVITÄTEN NEU ═══ -->
+                <div class="dashboard-item" data-item-id="last-activities">
+                    <div class="card activities-card-new">
+                        <div class="activities-header-new">
+                            <div class="activities-header-content">
+                                <div class="activities-title-container">
+                                    <svg class="activities-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                    </svg>
+                                    <div>
+                                        <div class="activities-title-new">Letzte Aktivitäten</div>
+                                        <div class="activities-meta">Deine Arbeitszeiteinträge (14 Tage)</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Summe des gewaehlten Tages. Bewusst nur Zeichen
+                                 und Zahl: den Inhalt schreibt JS, und was JS
+                                 schreibt, sieht die statische /en/-Pipeline
+                                 nicht — deutscher Text landete hier
+                                 unuebersetzt. -->
+                            <div class="activities-sum" id="activitiesDaySum" style="display:none;" title="Summe des gewählten Tages">
+                                <span class="activities-sum__label" aria-hidden="true">Σ</span>
+                                <span class="activities-sum__value"><span id="activitiesDaySumValue">0,00</span><small>h</small></span>
+                            </div>
+                        </div>
+
+                        <!-- Day Tabs -->
+                        <div class="day-tabs-container">
+                            <div class="day-tabs" id="dayTabsList"></div>
+                        </div>
+
+                        <!-- Activities Timeline -->
+                        <div class="activities-timeline" id="entryListShort"></div>
+
+                        <!-- Leerer Zustand. Vorher: ein Haus-Icon (ohne Bezug
+                             zur Zeiterfassung) und "Starten Sie mit einer neuen
+                             Arbeitszeiteintrag" — falscher Kasus, und gesiezt,
+                             obwohl die App sonst durchgehend duzt. -->
+                        <div class="activities-empty" id="activitiesEmpty">
+                            <div class="empty-state">
+                                <svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <polyline points="12 7 12 12 15 14"></polyline>
+                                </svg>
+                                <div class="empty-text">Für diesen Tag ist nichts erfasst</div>
+                                <div class="empty-subtext">Trag deine Zeiten oben ein — der Tag landet dann hier.</div>
+                                <button type="button" class="chart-empty__btn" onclick="focusEntryForm()">Tag erfassen</button>
+                                <!-- Nur solange noch GAR KEIN Eintrag existiert (charts.js
+                                     renderLists): wer umsteigt, hat die Monate schon woanders. -->
+                                <button type="button" class="activities-empty__import" id="activitiesImport" onclick="openImportWizard()" style="display:none"><span>Zeiten aus Excel oder einer anderen App übernehmen</span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ EINTRAG-SCHUBLADE ═══
+                 Das Formular samt Stempeluhr ist UNVERAENDERT: handleEntry(), timer.js
+                 und die Typauswahl haengen an seinen Ids. Es traegt data-item-id
+                 "entry-form", aber bewusst NICHT .dashboard-item, damit der Editor
+                 es nicht als Kachel einsortiert. -->
+            <div class="dn-drawer" id="dnDrawer" role="dialog" aria-modal="true" aria-label="Eintrag schreiben" hidden>
+                <div class="dn-drawer__scrim" data-dn="drawer-close"></div>
+                <div class="dn-drawer__panel">
+                    <div class="dn-drawer__grip" aria-hidden="true"><span></span></div>
+                    <button type="button" class="dn-x dn-drawer__x" data-dn="drawer-close" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                 <!-- ═══ ENTRY FORM + TIMER ═══ -->
-                <div class="dashboard-item" data-item-id="entry-form">
+                <div class="dn-entry" data-item-id="entry-form">
                     <div class="card input-wrapper">
                         <div class="entry-form">
 
-                            <!-- Tester-Aufruf Google Play (Sichtbarkeit: testerApplyBanner() in play-tester.js).
-                                 Traegt bewusst die Klassen des Umfrage-Banners: zwei Hinweise an derselben
-                                 Stelle sollen gleich aussehen. -->
-                            <div id="testerBanner" class="umf-banner" style="display:none;">
-                                <div class="umf-banner-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-                                </div>
-                                <div class="umf-banner-content">
-                                    <div class="umf-banner-title">MyWorkLog kommt in den Play Store</div>
-                                    <div class="umf-banner-text">Damit die App öffentlich erscheinen darf, braucht Google 14 Tage lang mindestens 12 Testerinnen und Tester. Hilfst du mit? Erst der Gruppe beitreten, dann im Play Store auf „Tester werden“ tippen.</div>
-                                    <div class="umf-banner-actions">
-                                        <a class="umf-banner-btn" href="https://groups.google.com/g/myworklog-tester/about" target="_blank" rel="noopener" onclick="testerSchritt('gruppe')">1. Gruppe beitreten</a>
-                                        <a class="umf-banner-btn" href="https://play.google.com/apps/testing/de.myworklog.app" target="_blank" rel="noopener" onclick="testerSchritt('play')">2. Tester werden</a>
-                                        <button class="umf-banner-btn umf-banner-btn--quiet" onclick="testerAblehnen()">Nein danke</button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Umfrage-Banner (Sichtbarkeit: umfApplyBanner() in umfrage.js) -->
-                            <div id="umfrageBanner" class="umf-banner" style="display:none;">
-                                <div class="umf-banner-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
-                                </div>
-                                <div class="umf-banner-content">
-                                    <div class="umf-banner-title">Kurze Frage zur Zukunft der App</div>
-                                    <div class="umf-banner-text">Die Zeiterfassung bleibt kostenlos. Aber wäre dir eine stärkere KI fürs Berichtsheft etwas wert? Zwei Fragen, keine Anmeldung.</div>
-                                    <div class="umf-banner-actions">
-                                        <button class="umf-banner-btn" onclick="openUmfrage()">Antworten</button>
-                                        <button class="umf-banner-btn umf-banner-btn--quiet" onclick="dismissUmfrage()">Nein danke</button>
-                                    </div>
-                                </div>
-                            </div>
 
                             <div class="entry-form__header">
                                 <span class="entry-form__badge" aria-hidden="true">
@@ -632,88 +869,6 @@
 
                     </div>
                 </div>
-
-                <!-- ═══ LETZTE AKTIVITÄTEN NEU ═══ -->
-                <div class="dashboard-item" data-item-id="last-activities">
-                    <div class="card activities-card-new">
-                        <div class="activities-header-new">
-                            <div class="activities-header-content">
-                                <div class="activities-title-container">
-                                    <svg class="activities-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                        <polyline points="17 6 23 6 23 12"></polyline>
-                                    </svg>
-                                    <div>
-                                        <div class="activities-title-new">Letzte Aktivitäten</div>
-                                        <div class="activities-meta">Deine Arbeitszeiteinträge (14 Tage)</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Summe des gewaehlten Tages. Bewusst nur Zeichen
-                                 und Zahl: den Inhalt schreibt JS, und was JS
-                                 schreibt, sieht die statische /en/-Pipeline
-                                 nicht — deutscher Text landete hier
-                                 unuebersetzt. -->
-                            <div class="activities-sum" id="activitiesDaySum" style="display:none;" title="Summe des gewählten Tages">
-                                <span class="activities-sum__label" aria-hidden="true">Σ</span>
-                                <span class="activities-sum__value"><span id="activitiesDaySumValue">0,00</span><small>h</small></span>
-                            </div>
-                        </div>
-
-                        <!-- Day Tabs -->
-                        <div class="day-tabs-container">
-                            <div class="day-tabs" id="dayTabsList"></div>
-                        </div>
-
-                        <!-- Activities Timeline -->
-                        <div class="activities-timeline" id="entryListShort"></div>
-
-                        <!-- Leerer Zustand. Vorher: ein Haus-Icon (ohne Bezug
-                             zur Zeiterfassung) und "Starten Sie mit einer neuen
-                             Arbeitszeiteintrag" — falscher Kasus, und gesiezt,
-                             obwohl die App sonst durchgehend duzt. -->
-                        <div class="activities-empty" id="activitiesEmpty">
-                            <div class="empty-state">
-                                <svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <circle cx="12" cy="12" r="9"></circle>
-                                    <polyline points="12 7 12 12 15 14"></polyline>
-                                </svg>
-                                <div class="empty-text">Für diesen Tag ist nichts erfasst</div>
-                                <div class="empty-subtext">Trag deine Zeiten oben ein — der Tag landet dann hier.</div>
-                                <button type="button" class="chart-empty__btn" onclick="focusEntryForm()">Tag erfassen</button>
-                                <!-- Nur solange noch GAR KEIN Eintrag existiert (charts.js
-                                     renderLists): wer umsteigt, hat die Monate schon woanders. -->
-                                <button type="button" class="activities-empty__import" id="activitiesImport" onclick="openImportWizard()" style="display:none"><span>Zeiten aus Excel oder einer anderen App übernehmen</span></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- ═══ DATENSICHERHEITS-HINWEIS ═══
-                 Ausserhalb von #dashboardContainer: kein Widget, nicht
-                 verschiebbar, sitzt immer als letzte Zeile unter den Karten. -->
-            <div class="data-note data-note-page" style="margin-top:1.5rem;">
-                <div class="data-note-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
-                </div>
-                <div class="data-note-body">
-                    <div class="data-note-title">Deine Daten liegen nur auf diesem Gerät</div>
-                    <p class="data-note-text">MyWorkLog speichert alles lokal in deinem Browser. Wir haben keine Kopie davon und können nichts für dich wiederherstellen.</p>
-                    <p class="data-note-text">Deine Einträge gehen verloren, wenn du die Browserdaten löschst, im privaten Modus arbeitest oder die Seite in Safari auf iPhone und iPad 7 Tage lang nicht öffnest. Installierst du MyWorkLog über „Zum Home-Bildschirm“, gilt diese Frist nicht.</p>
-                    <p class="data-note-text">Sicher dich deshalb ab: lade dir regelmäßig ein Backup herunter oder schalte Cloud-Sync ein.</p>
-                    <div class="data-note-actions">
-                        <button type="button" class="data-note-action" onclick="openRecoveryModal()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            <span>Backup sichern</span>
-                        </button>
-                        <button type="button" class="data-note-action" onclick="openSettingsCloudTab()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                            <span>Cloud-Sync einrichten</span>
-                        </button>
-                        <button type="button" class="data-note-dismiss" onclick="dismissDataNotice()">Nicht mehr anzeigen</button>
-                    </div>
                 </div>
             </div>
         </div>

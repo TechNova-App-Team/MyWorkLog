@@ -29,24 +29,24 @@
         {
             icon: 'barChart',
             title: 'Dein Dashboard',
-            text: 'Hier siehst du deine wichtigsten Kennzahlen auf einen Blick — Wochensaldo, Monatssaldo, Gleitzeitkonto und Tagesdurchschnitt.',
-            target: '#dashboardGrid',
+            text: 'Oben stehen deine Woche als Ring und die Gleitzeit. Ein Klick auf die Gleitzeit öffnet alle Kennzahlen im Detail.',
+            target: '.dn-hero',
             tab: 'dashboard',
             position: 'bottom'
         },
         {
             icon: 'trendingUp',
-            title: 'Trend & Verteilung',
-            text: 'Der Wochenverlauf zeigt dir, wie sich dein Saldo entwickelt. Das Donut-Diagramm zeigt die Verteilung deiner Eintragstypen.',
-            target: '[data-item-id="charts"]',
+            title: 'Deine Woche',
+            text: 'Jeder Tag ist ein Punkt auf der Linie, darunter steht, was du eingetragen hast. Fehlt ein Tag, siehst du es hier zuerst.',
+            target: '.dn-week',
             tab: 'dashboard',
             position: 'top'
         },
         {
             icon: 'filePen',
             title: 'Eintrag erfassen',
-            text: 'Wähle Datum, Typ und gib Start/Ende oder Stunden ein. Die „Jetzt"-Buttons setzen die aktuelle Uhrzeit. Entwürfe werden automatisch gespeichert.',
-            target: '[data-item-id="entry-form"]',
+            text: '„Eintrag schreiben“ öffnet das Formular mit allen Feldern, die Stempeluhr startet hier mit einem Klick. Entwürfe werden automatisch gespeichert.',
+            target: '.dn-today',
             tab: 'dashboard',
             position: 'top'
         },
@@ -121,16 +121,16 @@
         {
             icon: 'barChart',
             title: 'Dashboard — Deine Übersicht',
-            text: 'Hier siehst du Wochensaldo, Monatssaldo, Gleitzeitkonto und mehr. Scrolle runter für Diagramme und das Eintragsformular.',
-            target: '#dashboardGrid',
+            text: 'Hier siehst du deine Woche, die Gleitzeit und den heutigen Tag. Darunter folgen Einträge, Kalender und Schnellzugriff.',
+            target: '.dn-hero',
             tab: 'dashboard',
             position: 'bottom-sheet'
         },
         {
             icon: 'filePen',
             title: 'Eintrag erfassen',
-            text: 'Scrolle im Dashboard runter zum Formular. Wähle Datum & Typ, gib Start- und Endzeit ein. Die „Jetzt"-Buttons setzen die aktuelle Uhrzeit.',
-            target: '[data-item-id="entry-form"]',
+            text: 'Tippe auf „Eintrag schreiben“, das Formular kommt von unten. Die „Jetzt“-Knöpfe setzen die aktuelle Uhrzeit.',
+            target: '.dn-today',
             tab: 'dashboard',
             position: 'bottom-sheet'
         },

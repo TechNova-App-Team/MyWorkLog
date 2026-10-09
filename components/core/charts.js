@@ -131,6 +131,8 @@
     // Zustaende. Scrollt zum Formular und setzt den Fokus auf das erste
     // Feld, damit die Tastatur-Reise dort weitergeht, wo der Klick war.
     function focusEntryForm() {
+        // Seit dem neuen Dashboard liegt das Formular in einer Schublade (#dnDrawer).
+        if (typeof dnOpenEntry === 'function') { dnOpenEntry(); return; }
         const form = document.querySelector('[data-item-id="entry-form"]') ||
                      document.querySelector('.entry-form');
         if (!form) return;

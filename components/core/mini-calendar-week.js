@@ -14,6 +14,8 @@
     }
 
     function miniCalDayClick(dateStr) {
+        // Formular liegt in der Schublade des neuen Dashboards: aufmachen statt scrollen.
+        if (typeof dnOpenEntry === 'function') { dnOpenEntry(dateStr); return; }
         // Set entry form date to clicked day
         const inp = document.getElementById('inpDate');
         if (inp) {
