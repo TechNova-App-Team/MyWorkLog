@@ -318,18 +318,56 @@
 
     // Three star layers with parallax depth. Restricted to the sky area (top 45%)
     // so they don't show through the landscape.
+    // Funkeln je GRUPPE, nicht je Stern (v8.2.4): 140 einzeln animierte Sterne
+    // waren 140 GPU-Ebenen und der groesste Posten beim Flackern am Handy
+    // (gemessen 195 laufende Animationen in der Wetteransicht). Sechs Gruppen
+    // mit eigenem Takt sehen gleich unruhig aus und kosten sechs Ebenen.
+    const STERN_GRUPPEN = 6;
     function buildStars(count) {
-        let html = '';
+        const gruppen = Array.from({ length: STERN_GRUPPEN }, () => '');
         for (let i = 0; i < count; i++) {
             const tier = i < count * 0.45 ? 'back' : (i < count * 0.85 ? 'mid' : 'front');
             const x    = (Math.random() * 98).toFixed(1);
             const y    = (Math.random() * 45).toFixed(1);
-            const dur  = (1.8 + Math.random() * 3.5).toFixed(2);
-            const d    = (Math.random() * 5).toFixed(2);
             const s    = tier === 'back' ? 1.3 : tier === 'mid' ? 2.2 : 4.5;
-            html += `<span class="star star--${tier}" style="left:${x}%;top:${y}%;--dur:${dur}s;--d:${d}s;--s:${s}px"></span>`;
+            gruppen[i % STERN_GRUPPEN] += `<span class="star star--${tier}" style="left:${x}%;top:${y}%;--s:${s}px"></span>`;
         }
-        return html;
+        return gruppen.map((inhalt, g) => {
+            const dur = (1.8 + g * 0.7 + Math.random() * 0.5).toFixed(2);
+            const d   = (g * 0.83).toFixed(2);
+            return `<span class="star-gruppe" style="--dur:${dur}s;--d:${d}s">${inhalt}</span>`;
+        }).join('');
+    }
+
+    // ── Ruhende Ebenen (v8.2.4) ──
+    // Die Szene traegt ALLE Wetterlagen gleichzeitig im DOM (Sonne, Polarlicht,
+    // Gewitterwolken, Nebel, Tornado, Flugzeug …) und blendet per Deckkraft um.
+    // Deren Animationen liefen aber weiter: bei "bewoelkt, nachts" drehten sich
+    // drei Gewitterwolken mit 34 px Blur und vier Nebelbaenke 724x235 mit Blur,
+    // alle unsichtbar. Am Handy reicht der GPU-Kachelspeicher dafuer nicht,
+    // Chrome verwirft Kacheln und malt neu — das gemeldete Flackern (09.10.2026,
+    // S25 Ultra; am PC unsichtbar). Hier bekommt jedes animierte Element, dessen
+    // Vorfahren auf Deckkraft 0 stehen, `wl-ruht` (animation: none → keine
+    // Ebene). 1,6 s Verzug, damit Ueberblendungen beim Wetterwechsel fertig sind.
+    function _ruhendeEbenen(widget) {
+        widget.querySelectorAll('.wl-ruht').forEach(e => e.classList.remove('wl-ruht'));
+        clearTimeout(widget._ruheUhr);
+        widget._ruheUhr = setTimeout(() => {
+            if (!widget.isConnected || !widget.getAnimations) return;
+            const ruhen = new Set();
+            widget.getAnimations({ subtree: true }).forEach(a => {
+                const el = a.effect && a.effect.target;
+                if (!el || !(el instanceof Element)) return;
+                // Die eigene Deckkraft zaehlt nur, wenn keine Animation sie bewegt
+                // (ein funkelnder Stern ist zwischendurch fast 0, aber sichtbar).
+                const eigeneBewegt = el.getAnimations().some(x => x.effect.getKeyframes().some(k => 'opacity' in k));
+                for (let p = eigeneBewegt ? el.parentElement : el; p && p !== widget; p = p.parentElement) {
+                    const c = getComputedStyle(p);
+                    if (c.display === 'none' || parseFloat(c.opacity) === 0) { ruhen.add(el); break; }
+                }
+            });
+            ruhen.forEach(el => el.classList.add('wl-ruht'));
+        }, 1600);
     }
 
     // Shooting stars — fire periodically across the upper sky.
@@ -942,6 +980,7 @@
 
         // Continuous time-of-day color shift + wind dynamics.
         _applyDynamicSky(widget, cond, wind);
+        _ruhendeEbenen(widget);
 
         // Character reactions to weather (umbrella, sunscreen, scarf, shiver, etc).
         _applyCharacterReactions(widget, cond, temp);
@@ -1062,6 +1101,7 @@
         _populateParticles(widget, 'ambient');
         // No wind data → calm baseline. Still shift colors with time-of-day.
         _applyDynamicSky(widget, 'ambient', 0);
+        _ruhendeEbenen(widget);
         const content = widget.querySelector('.weather-content');
         if (!content) return;
         content.innerHTML = `
@@ -1538,6 +1578,7 @@
             const cond = widget.dataset.condition || 'ambient';
             const wind = (weatherData && weatherData.current) ? weatherData.current.wind_speed_10m : 0;
             _applyDynamicSky(widget, cond, wind);
+            _ruhendeEbenen(widget);   // Daemmerung blendet Sonne/Mond um
         }, 5 * 60 * 1000);
     }
 

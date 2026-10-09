@@ -274,6 +274,11 @@
     height: var(--s, 2px);
     border-radius: 50%;
     background: #fff;
+}
+/* Funkeln je Gruppe statt je Stern (weather.js, STERN_GRUPPEN): 6 GPU-Ebenen statt 140. */
+.weather-stars .star-gruppe {
+    position: absolute;
+    inset: 0;
     animation: starTwinkle var(--dur, 3s) ease-in-out infinite;
     animation-delay: var(--d, 0s);
 }
@@ -1159,7 +1164,7 @@
     .weather-sun .sun-rays-container,
     .weather-sun .sun-ray,
     .weather-moon .moon-glow,
-    .weather-stars .star,
+    .weather-stars .star-gruppe,
     .weather-shooting .shooting,
     .weather-aurora .aurora-band,
     .weather-clouds .cloud,
@@ -1867,7 +1872,7 @@
 .weather-live.is-paused .weather-sun .sun-rays-container,
 .weather-live.is-paused .weather-sun .sun-ray,
 .weather-live.is-paused .weather-moon .moon-glow,
-.weather-live.is-paused .weather-stars .star,
+.weather-live.is-paused .weather-stars .star-gruppe,
 .weather-live.is-paused .weather-shooting .shooting,
 .weather-live.is-paused .weather-aurora .aurora-band,
 .weather-live.is-paused .weather-clouds .cloud,
@@ -1909,4 +1914,20 @@
     .weather-sun, .weather-moon { transform: scale(0.85); top: 10%; right: 12%; }
     .weather-forecast-day { padding: 0.45rem 0.2rem; }
     .weather-forecast-day-icon { font-size: 1rem; }
+}
+
+/* ───── RUHENDE EBENEN + TOUCH (v8.2.4, Flackern am Handy) ─────
+   wl-ruht setzt weather.js (_ruhendeEbenen) an Animationen, deren Ebene im
+   aktuellen Wetter auf Deckkraft 0 steht: ohne Animation keine GPU-Ebene.
+   Milchglas ueber der bewegten Szene rechnet jedes Bild alles darunter neu
+   weich; auf Touch reicht eine deckendere Flaeche, der Unterschied ist bei
+   dem dunklen Himmel kaum zu sehen. */
+.weather-live .wl-ruht { animation: none !important; will-change: auto !important; }
+@media (hover: none) {
+    .weather-live .weather-stats,
+    .weather-live .weather-action-btn {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)), rgba(10, 12, 24, 0.42);
+    }
 }
