@@ -83,6 +83,13 @@
     // Gibt ein Promise zurueck, das erfuellt ist, sobald die Ansicht gezeichnet
     // ist — wer danach auf ihre Funktionen zugreift, haengt sich daran.
     function switchTab(tabId) {
+        // Unbekannter Name (Tippfehler, entfernte Ansicht) → Dashboard statt
+        // TypeError weiter unten. tools/lazy-views.test.mjs prueft zusaetzlich
+        // jeden switchTab('…')-Aufruf gegen die vorhandenen Ansichten.
+        if (!document.getElementById('view-' + tabId)) {
+            console.warn('switchTab: keine Ansicht', tabId);
+            tabId = 'dashboard';
+        }
         // Feature-Nutzung zaehlen — nur der View-Name (Kategorie), nie Inhalte.
         // switchTab wird ausschliesslich durch echte Navigation getriggert (Dashboard
         // ist per HTML default aktiv, kein Auto-Call beim Start) → kein Rausch-Event.
@@ -120,10 +127,7 @@
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
             'weekview': 'Wochenansicht',
             'urlaubsplaner': 'Urlaubsplaner',
-            'aibot': 'AI-Bot Assistent',
             'analytics-pro': 'Diagramme',
-            'aufgaben': 'Aufgaben',
-            'aufgaben-tab': 'Aufgaben',
         };
         document.title = 'MyWorkLog | ' + (titles[tabId] || tabId);
 
@@ -177,9 +181,6 @@
         }
         if (tabId === 'urlaubsplaner') {
             renderUrlaubsplaner();
-        }
-        if (tabId === 'aibot') {
-            initializeAIBot();
         }
         if (tabId === 'analytics-pro') {
             if (typeof renderAnalyticsPro === 'function') renderAnalyticsPro();

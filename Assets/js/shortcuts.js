@@ -382,8 +382,10 @@ function resetTimer() {
 }
 
 function addNewEntry() {
-    // Wechsle zum Timer-Tab und fokus auf Datumsfeld
-    switchTab('timer');
+    // Das Erfassungsformular (#inpDate) steht auf dem Dashboard. Bis 10/2026
+    // stand hier switchTab('timer') — eine Ansicht, die es nicht gibt; Strg+N
+    // warf damit in tab-navigation.js (als "Skriptfehler" in /analytics/).
+    switchTab('dashboard');
     setTimeout(() => {
         const dateInput = document.getElementById('inpDate');
         if (dateInput) dateInput.focus();

@@ -82,5 +82,23 @@ for (const f of [...eager, ...includes, 'index.template.html']) {
 ok(verstoesse.length === 0, 'kein ungeschuetzter Aufruf aus sofort geladenem Code', verstoesse);
 ok(aufrufe > 5, 'es gibt ueberhaupt Aufrufe von aussen zu pruefen (' + aufrufe + ')');
 
+// switchTab('x') ohne #view-x warf in tab-navigation.js (Strg+N rief 'timer',
+// gemeldet als "Skriptfehler: tab-navigation.js" in /analytics/, 10/2026).
+// Nur Dateien, die die App laedt — das Berichtsheft hat ein eigenes switchTab.
+const viewIds = new Set();
+for (const inc of includes) {
+    if (!existsSync(new URL('../' + inc, import.meta.url))) continue;
+    for (const m of read(inc).matchAll(/id="view-([a-z-]+)"/g)) viewIds.add(m[1]);
+}
+for (const m of tpl.matchAll(/id="view-([a-z-]+)"/g)) viewIds.add(m[1]);
+const tabZiele = [];
+for (const f of [...new Set([...eager, ...lazy])].filter(f => f.endsWith('.js'))) {
+    for (const m of read(f).split('\n').map(strip).join('\n').matchAll(/(^|[^\w.])switchTab\(\s*'([a-z-]+)'/g)) tabZiele.push([f, m[2]]);
+}
+for (const m of tpl.matchAll(/(^|[^\w.])(?:switchTab|mobNavSwitch)\(\s*'([a-z-]+)'/g)) tabZiele.push(['index.template.html', m[2]]);
+ok(tabZiele.every(([, t]) => viewIds.has(t)), 'jeder switchTab(\'…\')-Aufruf trifft eine vorhandene Ansicht',
+    tabZiele.filter(([, t]) => !viewIds.has(t)).map(([f, t]) => f + ' → ' + t));
+ok(tabZiele.length > 10 && viewIds.size > 5, `es gibt ueberhaupt Aufrufe (${tabZiele.length}) und Ansichten (${viewIds.size})`);
+
 console.log(fails ? `\n✗ ${fails} von ${checks} fehlgeschlagen` : `\n✓ ${checks}/${checks}`);
 process.exit(fails ? 1 : 0);
