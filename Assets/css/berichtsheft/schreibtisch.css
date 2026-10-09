@@ -1,0 +1,249 @@
+/* ═══ SCHREIBTISCH (v8.2.5) ═══
+   Stilschicht ueber dem "Heft" (v8.1.12). Bewusst NUR Oberflaeche — kein Markup,
+   keine Funktion veraendert. Ein erster Entwurf als Attrappe liess Werkzeugleiste,
+   Filter und Abschnitte weg und kam deshalb schlecht an; ein zweiter mit warmem
+   Creme-Papier wirkte "vergilbt" (beides 09.10.2026). Darum: Papier bleibt das
+   kuehle Weiss aus basis.css, Gelbtoene gibt es hier keine.
+   Zurueck zum alten Look: die zwei Zeilen fuer diese Datei und bh-stapel.js in
+   pages/berichtsheft/index.html entfernen. Sicherung: Git-Tag
+   berichtsheft-vor-redesign-2026-10-09.
+
+   EIN Effekt (Rueckmeldung zum Cloud-Login: nicht alles gleichzeitig): der
+   Papierstapel ist ein 3D-Objekt. bh-stapel.js setzt am #hfStapel
+   --rx/--ry (Neigung), --fan (Auffaechern 0…1) und --gx (Glanz-Lage). */
+
+/* ── Tischplatte: neutrales Graphit statt Lila-Verlauf ── */
+:root:not([data-theme="light"]) {
+    --buehne-1: #111116;
+    --buehne-2: #121217;
+    --buehne-3: #15141a;
+    /* Flaechen-Tokens aus basis.css waren lila getoent (#1e1c35 …): hier
+       dieselben Stufen neutral, damit Umfrage, Werkzeugleiste und Karten zur
+       Platte passen. */
+    --bg-deep: #131318;
+    --bg-surface: #18181e;
+    --bg-card: #1b1b21;
+    --bg-glass: rgba(27, 27, 33, 0.72);
+    --bg-glass-heavy: rgba(19, 19, 24, 0.95);
+    --bg-sidebar: rgba(24, 24, 30, 0.98);
+    --bg-elevated: rgba(42, 42, 50, 0.6);
+    --text-secondary: #b8b7c2;
+    --text-muted: #908f9b;
+    --text-dim: #67666f;
+}
+:root:not([data-theme="light"]) .hf-fleck { display: none; }
+/* Ein ruhiges Licht von oben rechts, ueber dem Stapel — fest, ohne Bewegung. */
+:root:not([data-theme="light"]) .bg-mesh::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(44vmax 34vmax at 76% 22%, rgba(220, 226, 255, 0.075), transparent 70%),
+        radial-gradient(80vmax 46vmax at 28% -12%, rgba(var(--primary-rgb), 0.1), transparent 62%);
+}
+/* Feine Koernung der Platte — fest, nicht scrollend. */
+:root:not([data-theme="light"]) .bg-mesh::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Der Stapel als 3D-Objekt (gilt in beiden Themen) ──
+   Die Blaetter haben in uebersicht.css schon ein `transform` (Drehung, Versatz,
+   je Breakpoint anders). Tiefe und Auffaechern kommen deshalb ueber die
+   EINZEL-Eigenschaften `translate`/`rotate` dazu — die setzen sich mit
+   `transform` zusammen, statt es zu ueberschreiben. */
+.hf-buehne { perspective: 1500px; }
+.hf-stapel {
+    --rx: 0deg;
+    --ry: 0deg;
+    --fan: 0;
+    --gx: 50%;
+    --fx: 1;   /* seitlicher Anteil des Auffaecherns; am Handy fast 0 */
+    transform-style: preserve-3d;
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    animation: hfLanden 1s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.hf-stapel .hf-blatt.b1 { translate: 0 0 4px; }
+.hf-stapel .hf-blatt.b2 {
+    /* Nach UNTEN auffaechern, nicht nach rechts: b2 steht schon ohne Faecher an der
+       rechten Kante von .page-wrap (overflow-x: hidden) und wurde sonst abgeschnitten
+       (gemeldet 09.10.2026, Stempel FREIGEGEBEN halb weg). */
+    translate: calc(var(--fan) * var(--fx) * -8px) calc(var(--fan) * 26px) calc(-22px - var(--fan) * 30px);
+    rotate: calc(var(--fan) * 2deg);
+}
+.hf-stapel .hf-blatt.b3 {
+    translate: calc(var(--fan) * var(--fx) * -30px) calc(var(--fan) * 16px) calc(-44px - var(--fan) * 60px);
+    rotate: calc(var(--fan) * -4.5deg);
+}
+/* Glanz: ein heller Streifen, der mit der Neigung ueber das oberste Blatt
+   wandert — wie Licht ueber echtes Papier. Als Hintergrundschicht, weil
+   ::before/::after am Blatt schon roten Rand und Rotstift tragen. */
+.hf-stapel .hf-blatt.b1 {
+    background:
+        linear-gradient(112deg, transparent calc(var(--gx) - 22%), rgba(255, 255, 255, 0.55) var(--gx), transparent calc(var(--gx) + 22%)),
+        var(--papier);
+}
+:root:not([data-theme="light"]) .hf-stapel .hf-blatt.b2,
+:root:not([data-theme="light"]) .hf-stapel .hf-blatt.b3 { filter: brightness(calc(0.9 - var(--fan) * 0.08)); }
+
+/* Der Stapel landet einmal beim Laden — nur Bewegung, keine Deckkraft: eine
+   Einblendung ab opacity 0 nimmt dem Inhalt den LCP (CLAUDE.md). */
+@keyframes hfLanden {
+    from { translate: 0 -26px 60px; }
+}
+
+/* ── Aktionen: EINE Kapsel statt zweier loser Pillen ──
+   Hauptaktion als helle Pille IN der Kapsel, Nebenaktion daneben als ruhiger
+   Text-Knopf; das Symbol steht in beiden links im Knopf (Wunsch 09.10.2026).
+   Die Kapsel haelt alles zusammen, egal ob renderNow eine, zwei oder drei
+   Aktionen schreibt. */
+.hf-now-aktionen {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 5px;
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-glass);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 20px 40px -26px rgba(0, 0, 0, 0.8);
+}
+.hf-now-aktionen .hf-cta {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 8px 22px -12px rgba(0, 0, 0, 0.7);
+    transition: transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.hf-now-aktionen .hf-chip--gross {
+    height: 50px;
+    padding: 0 20px 0 16px;
+    gap: 10px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font-weight: 500;
+    transition: background-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.hf-now-aktionen .hf-chip--gross .icon { width: 18px; height: 18px; opacity: 0.8; }
+.hf-now-aktionen .hf-chip--gross:active { transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+    .hf-now-aktionen .hf-chip--gross:hover { background: var(--bg-hover); }
+}
+
+/* ── Kennzahlen: vier schmale Kacheln nebeneinander ──
+   Oben die Zahl mit einem kleinen Zeichen daneben (Strichliste, Haken bzw.
+   Rotstift-Kringel, Stempel), beim Fortschritt ein Lineal darunter. Die obere
+   Zeile ist ueberall gleich hoch, damit alle Zahlen auf einer Linie stehen.
+   Bewusst KLEIN: ein Ring um die Zahl wirkte "klobig" (Rueckmeldung 09.10.2026). */
+.hf-kaestchen {
+    gap: 8px;
+    max-width: 36rem;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    overflow: visible;
+}
+.hf-kaestchen > .hf-kf {   /* (0,2,0): schlaegt .hf-kf:nth-child(2) aus uebersicht.css */
+    justify-content: flex-start;
+    gap: 8px;
+    min-width: 0;
+    padding: 12px 14px 13px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+[data-theme="light"] .hf-kaestchen > .hf-kf { background: rgba(255, 255, 255, 0.6); box-shadow: 0 10px 24px -20px rgba(21, 19, 29, 0.35); }
+.hf-kf-zeile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    height: 34px;
+}
+.hf-kf small::first-letter { text-transform: uppercase; }
+
+/* Strichliste in Kuli-Farbe */
+.hf-striche { display: inline-flex; align-items: center; gap: 1px; color: var(--primary-light); }
+.hf-striche svg { height: 16px; width: auto; }
+.hf-striche i { font-style: normal; font-size: 0.72rem; color: var(--text-muted); }
+
+/* Lineal: Grundlinie, kleine Striche je Quartal, grosse je Lehrjahr, Fuellung darauf */
+.hf-kf--lineal .hf-kf-bar {
+    --jahre: 3;
+    position: relative;
+    height: 9px;
+    margin-top: 0;
+    border-radius: 0;
+    overflow: visible;
+    background:
+        repeating-linear-gradient(90deg, var(--text-dim) 0 1px, transparent 1px calc(100% / var(--jahre))) left bottom / 100% 9px no-repeat,
+        repeating-linear-gradient(90deg, var(--border-hover) 0 1px, transparent 1px calc(100% / var(--jahre) / 4)) left bottom / 100% 4px no-repeat,
+        linear-gradient(var(--border-light), var(--border-light)) left bottom / 100% 1px no-repeat;
+}
+.hf-kf--lineal .hf-kf-bar > span {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--primary-light);
+}
+
+/* Luecken: bei 0 ein Kuli-Haken, sonst ein Rotstift-Kringel um die Zahl */
+.hf-kf-haken { width: 18px; height: 18px; color: var(--primary-light); flex-shrink: 0; }
+.hf-kf--knopf.is-offen .hf-kf-haken { display: none; }
+.hf-kf--knopf.is-offen b { position: relative; color: var(--rot-hell); }
+.hf-kf--knopf.is-offen b::after {
+    content: '';
+    position: absolute;
+    inset: -6px -14px -4px -14px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 60' fill='none' stroke='%23e0675d' stroke-width='3' stroke-linecap='round'%3E%3Cpath d='M78 10C62 2 22 4 9 22c-9 13 4 30 36 32 30 2 50-10 47-26C90 15 70 8 52 9'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+    pointer-events: none;
+}
+
+/* Stempel als kleines Zeichen NEBEN der Zahl: gestrichelter Kreis = wartet,
+   roter Doppelring mit Haken = unterschrieben. Die Huelle .hf-stempelring
+   traegt selbst keinen Rahmen mehr. */
+.hf-stempelring { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; }
+.hf-stempelring::after {
+    content: '';
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px dashed var(--text-dim);
+}
+.hf-kf--stempel.is-gestempelt .hf-stempelring::after {
+    border: 1.5px solid var(--rot-hell);
+    box-shadow: inset 0 0 0 2px transparent, inset 0 0 0 3px color-mix(in srgb, var(--rot-hell) 55%, transparent);
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0675d' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 12.5l3.2 3.2L17 9'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
+    transform: rotate(-10deg);
+}
+
+@media (max-width: 640px) {
+    .hf-now-aktionen { display: flex; flex-direction: column; align-items: stretch; border-radius: 30px; width: 100%; }
+    .hf-now-aktionen .hf-chip--gross { justify-content: center; }
+    .hf-kaestchen { gap: 8px; }
+    .hf-kaestchen > .hf-kf { padding: 11px 13px 12px; }
+}
+
+/* ── Blattkanten der Liste: beim Zeigen hebt sich das Blatt ── */
+@media (hover: hover) and (pointer: fine) {
+    .report-item { transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.25s ease; }
+    .report-item:hover { transform: translateY(-2px); box-shadow: var(--papier-schatten); }
+}
+
+/* Am Handy steht der Stapel randvoll: seitlich ragte das hintere Blatt 53 px
+   ueber den Bildschirm (gemessen bei 390 px). Kaum seitlich, schwaechere Perspektive. */
+@media (max-width: 640px) {
+    .hf-buehne { perspective: 2600px; }
+    .hf-stapel { --fx: 0.1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hf-stapel { animation: none; transform: none; }
+    .hf-stapel .hf-blatt.b2, .hf-stapel .hf-blatt.b3 { rotate: 0deg; }
+}

@@ -68,7 +68,7 @@
          Selektor gewinnt die spaetere Datei, und druck-responsive.css muss
          alle Regeln davor schlagen koennen. Nicht umsortieren. -->
     <link rel="stylesheet" href="/Assets/css/berichtsheft/basis.css?v=aa3b95364d">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=70b8919493">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=9ee6acc95a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=7a4285f447">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=8e6917c7a1">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-panel.css?v=fe6db95859">
@@ -88,6 +88,8 @@
     <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=cc17946a25">
     <script defer src="/Assets/js/version-loader.js?v=0a687fa2b5"></script>
     <link rel="stylesheet" href="/Assets/css/berichtsheft/cv2-hinweis.css?v=6f071c6993">
+    <!-- Schreibtisch-Schicht (v8.2.5) zuletzt: sie liegt nur ueber dem Look. Entfernen = alter Look. -->
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/schreibtisch.css?v=be3977dcf3">
 </head>
 
 <body>
@@ -520,22 +522,26 @@
                 <div class="hf-links">
                     <div class="hf-now" id="hfNow" aria-live="polite"></div>
                     <div class="hf-kaestchen" role="group" aria-label="Stand">
-                        <div class="hf-kf">
+                        <!-- Je Kennzahl eine kleine Grafik aus dem Heft (v8.2.5): Strichliste,
+                             Lineal je Lehrjahr, Haken bzw. Rotstift-Kringel, Stempelring.
+                             Gezeichnet wird nur, was die Zahl schon sagt — nichts dazu erfunden.
+                             Der Stempel ist voll nur bei echt unterschriebenen Wochen. -->
+                        <div class="hf-kf hf-kf--serie">
+                            <span class="hf-kf-zeile"><b id="streakNum">0</b><span class="hf-striche" id="streakViz" aria-hidden="true"></span></span>
                             <small id="streakTxt">Wochen am Stück</small>
-                            <b id="streakNum">0</b>
                         </div>
-                        <div class="hf-kf">
-                            <small id="progressSub">von 0 Wochen</small>
-                            <b id="progressNum">0</b>
+                        <div class="hf-kf hf-kf--lineal">
+                            <span class="hf-kf-zeile"><b id="progressNum">0</b></span>
                             <span class="hf-kf-bar" aria-hidden="true"><span id="progressBarFill"></span></span>
+                            <small id="progressSub">von 0 Wochen</small>
                         </div>
                         <button type="button" class="hf-kf hf-kf--knopf" id="hfLuecke" onclick="hfLueckeOeffnen()">
+                            <span class="hf-kf-zeile"><b id="hfLueckeNum">0</b><svg class="hf-kf-haken" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5c2 1.6 3.6 3.4 4.8 5.5C11.8 12.3 15 8.1 19.5 5"/></svg></span>
                             <small id="hfLueckeTxt">Lücken</small>
-                            <b id="hfLueckeNum">0</b>
                         </button>
-                        <div class="hf-kf">
+                        <div class="hf-kf hf-kf--stempel" id="hfSignKf">
+                            <span class="hf-kf-zeile"><span class="hf-stempelring"><b id="hfSignNum">0</b></span></span>
                             <small id="hfSignTxt">warten auf Unterschrift</small>
-                            <b id="hfSignNum">0</b>
                         </div>
                     </div>
                 </div>
@@ -2225,7 +2231,7 @@ Beispiel:
          Vor bh-ui-helfer.js, das die zwei Namen nur durchreicht. -->
     <script src="/Assets/js/mwl-dialog.js?v=bf6a68ada1"></script>
     <script src="/Assets/js/berichtsheft/bh-basis.js?v=3dcc4a5a2d"></script>
-    <script src="/Assets/js/berichtsheft/bh-uebersicht.js?v=875c48953f"></script>
+    <script src="/Assets/js/berichtsheft/bh-uebersicht.js?v=a2107973f3"></script>
     <script src="/Assets/js/berichtsheft/bh-wochenschau.js?v=8021c7bfc6"></script>
     <script src="/Assets/js/berichtsheft/bh-freigabe.js?v=3b2bc43e33"></script>
     <!-- B2B: Betriebs-Anbindung. supabase-config.js OHNE ?v= laden (eine der
@@ -2242,6 +2248,7 @@ Beispiel:
     <script src="/Assets/js/berichtsheft/bh-tagesmodus.js?v=38cf5513dc"></script>
     <script src="/Assets/js/berichtsheft/bh-ihk-import.js?v=0f97f3b2ff"></script>
     <script src="/Assets/js/berichtsheft/bh-start.js?v=ebe76b2d36"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-stapel.js?v=3e72ccfbed"></script>
     <script src="/Assets/js/berichtsheft/ais-berufe.js?v=63216ea178"></script>
     <script src="/Assets/js/berichtsheft/ais-sprache.js?v=9239193e4a"></script>
     <script src="/Assets/js/berichtsheft/ais-cloud.js?v=10f47b22fc"></script>

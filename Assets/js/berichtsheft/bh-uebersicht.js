@@ -238,7 +238,9 @@ function renderNow() {
 
     const ico = (n) => `<svg class="icon" aria-hidden="true"><use href="#i-${n}"/></svg>`;
     const cta = (text, onclick, icon) =>
-        `<button type="button" class="hf-cta" onclick="${onclick}"><span>${escapeHtml(text)}</span><span class="hf-cta-kreis">${ico(icon)}</span></button>`;
+        // Symbol links IM Knopf, ohne eigenen Kreis (Wunsch 09.10.2026: der
+        // Kreis in der Theme-Farbe sah bei gedeckten Themen wie ein Fleck aus).
+        `<button type="button" class="hf-cta" onclick="${onclick}">${ico(icon)}<span>${escapeHtml(text)}</span></button>`;
     const chip = (text, onclick, icon) =>
         `<button type="button" class="hf-chip hf-chip--gross" onclick="${onclick}">${icon ? ico(icon).replace('class="icon"', 'class="icon icon-sm"') : ''}<span>${escapeHtml(text)}</span></button>`;
     const assistent = "AISChat.oeffnen()";
@@ -441,6 +443,10 @@ function updateStats() {
     const signiert = reports.filter(r => r.status === 'signed' || (r.approval && r.approval.state === 'approved')).length;
     const num = document.getElementById('hfSignNum'), txt = document.getElementById('hfSignTxt');
     if (!num || !txt) return;
+    // Voller Stempel nur, wenn die Zahl wirklich unterschriebene Wochen zaehlt;
+    // "wartet" bleibt ein gestrichelter Ring (Notiz: nichts fuer die Optik erfinden).
+    const kf = document.getElementById('hfSignKf');
+    if (kf) kf.classList.toggle('is-gestempelt', offen === 0 && signiert > 0);
     if (offen > 0) {
         animateCounter(num, offen);
         txt.textContent = offen === 1 ? L('wartet auf Unterschrift', 'awaiting signature') : L('warten auf Unterschrift', 'awaiting signature');
@@ -460,6 +466,7 @@ function updateStreak() {
     const setzen = (n) => {
         animateCounter(el, n);
         if (txt) txt.textContent = n === 1 ? L('Woche am Stück', 'week in a row') : L('Wochen am Stück', 'weeks in a row');
+        hfStrichliste(document.getElementById('streakViz'), n);
     };
     if (reports.length === 0) { setzen(0); return; }
 
@@ -500,7 +507,31 @@ function updateProgress() {
     const sub = document.getElementById('progressSub');
     if (sub) sub.textContent = L(`von ${maxWeeks} Wochen der Ausbildung`, `of ${maxWeeks} training weeks`);
     const bar = fill && fill.parentElement;
-    if (bar) bar.title = percent + ' %';
+    if (bar) {
+        bar.title = percent + ' %';
+        // Das Lineal teilt sich in Lehrjahre (schreibtisch.css liest --jahre).
+        bar.style.setProperty('--jahre', Math.max(1, Math.round(maxWeeks / 52)));
+    }
+}
+
+// Strichliste wie auf einem Zettel: je Woche ein Strich, fuenf als Buendel.
+// Mehr als zwei Buendel passen nicht in die schmale Kachel — dann steht "+" dahinter,
+// die genaue Zahl steht ja daneben.
+function hfStrichliste(box, n) {
+    if (!box) return;
+    const BUENDEL = 2, gezeigt = Math.min(n, BUENDEL * 5);
+    let svg = '';
+    for (let b = 0; b * 5 < gezeigt; b++) {
+        const im = Math.min(5, gezeigt - b * 5), x0 = b * 19;
+        for (let i = 0; i < Math.min(im, 4); i++) {
+            const x = x0 + 2 + i * 3.6;
+            svg += `<path d="M${x.toFixed(1)} 3.5 L${(x + 0.6).toFixed(1)} 20.5"/>`;
+        }
+        if (im === 5) svg += `<path d="M${(x0 - 0.5).toFixed(1)} 16 L${(x0 + 15).toFixed(1)} 7"/>`;
+    }
+    box.innerHTML = gezeigt
+        ? `<svg viewBox="0 0 ${Math.ceil(gezeigt / 5) * 19} 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">${svg}</svg>${n > gezeigt ? '<i>+</i>' : ''}`
+        : '';
 }
 
 // ═══════════════════════════════════════
