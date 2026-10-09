@@ -510,8 +510,8 @@
     [/^Anmeldung fehlgeschlagen: (.+)$/g, 'Sign-in failed: $1'],
     [/^Anmeldung fehlgeschlagen\.$/g, 'Sign-in failed.'],
     [/^(Discord|GitHub|Google)-Anmeldung fehlgeschlagen: (.+)$/g, '$1 sign-in failed: $2'],
-    [/^Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link\.$/g,
-      'Magic link sent! Please check your email and click the link.'],
+    [/^Anmeldelink verschickt\. Öffne deine E-Mail und tippe auf den Link\.$/g,
+      'Sign-in link sent. Open your email and tap the link.'],
     // Passkey-Meldungen (supabase-ui.js / api-cloud-sync.js). Ebenfalls
     // JS-generiert und damit unsichtbar fuer den i18n-Build.
     [/^Die Passkey-Anmeldung wurde abgebrochen — oder auf diesem Gerät liegt noch keiner für MyWorkLog\. Richte ihn einmalig in den Einstellungen unter Cloud ein\.$/g,

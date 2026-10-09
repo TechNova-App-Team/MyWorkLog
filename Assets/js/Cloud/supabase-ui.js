@@ -285,7 +285,7 @@ class SupabaseCloudSyncUI {
 
             // Success Message
             this.showMessage(
-                'Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link.',
+                'Anmeldelink verschickt. Öffne deine E-Mail und tippe auf den Link.',
                 'success'
             );
 

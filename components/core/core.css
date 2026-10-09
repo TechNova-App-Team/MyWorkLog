@@ -193,7 +193,11 @@
         }
         
 
-        /* ── Cloud Login Modal ── */
+        /* ── Cloud Login Modal (Neuentwurf v8.2.3) ──
+           Doppelrand: .cg-shell = Haarlinie + 6 px Innenabstand, .cg-core = eigene
+           Flaeche mit Lichtkante. Radien konzentrisch (30 - 6 = 24). Markup in
+           components/modals/modals.html, Verhalten in Assets/js/Cloud/supabase-ui.js
+           (setzt style.display none/flex — deshalb das !important unten). */
         .cloud-login-modal {
             position: fixed;
             inset: 0;
@@ -206,257 +210,302 @@
         .cloud-login-modal[style*="display: none"] {
             display: none !important;
         }
-
         .cloud-login-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(3, 3, 5, 0.85);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            background: rgba(3, 3, 6, 0.78);
+            backdrop-filter: blur(20px) saturate(120%);
+            -webkit-backdrop-filter: blur(20px) saturate(120%);
+            animation: cg-dunkel 0.32s ease both;
         }
+        @keyframes cg-dunkel { from { opacity: 0; } }
 
-        .cloud-login-box {
+        .cg-shell {
             position: relative;
-            width: 100%;
-            max-width: 400px;
-            background: #0e0e18;
-            border: 1px solid var(--border);
-            border-top: 1px solid rgba(var(--primary-rgb), 0.28);
-            border-radius: 20px;
-            box-shadow:
-                0 0 0 1px rgba(var(--primary-rgb), 0.07),
-                0 32px 80px rgba(0,0,0,0.72),
-                0 0 80px rgba(var(--primary-rgb), 0.06);
             z-index: 2010;
-            overflow: hidden;
-            animation: cl-appear 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes cl-appear {
-            from { opacity: 0; transform: translateY(22px) scale(0.97); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        /* Close */
-        .cloud-modal-close {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            width: 28px;
-            height: 28px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: transparent;
-            cursor: pointer;
-            color: var(--text-muted);
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s, color 0.15s, border-color 0.15s;
-            padding: 0;
-            z-index: 10;
+            width: 100%;
+            max-width: 420px;
+            max-height: calc(100dvh - 2rem);
+            padding: 6px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 50px 120px -30px rgba(0, 0, 0, 0.75),
+                0 0 0 1px rgba(0, 0, 0, 0.35);
+            animation: cg-rein 0.46s cubic-bezier(0.32, 0.72, 0, 1) both;
         }
-        .cloud-modal-close:hover {
-            background: rgba(var(--primary-rgb), 0.08);
-            border-color: rgba(var(--primary-rgb), 0.2);
+        @keyframes cg-rein {
+            from { opacity: 0; transform: translateY(16px) scale(0.965); filter: blur(6px); }
+        }
+        .cg-core {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: none;
+            padding: 30px 28px 26px;
+            border-radius: 24px;
+            background:
+                linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, var(--bg-deep)) 0%, var(--bg-deep) 52%);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+            isolation: isolate;
+        }
+        .cg-core::-webkit-scrollbar { display: none; }
+        /* Schimmer von oben: ein Verlauf, kein filter — kostet beim Scrollen nichts. */
+        .cg-glow {
+            position: absolute;
+            top: -150px;
+            left: 50%;
+            width: 420px;
+            height: 300px;
+            transform: translateX(-50%);
+            background: radial-gradient(closest-side, rgba(var(--primary-rgb), 0.24), transparent);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .cg-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.2s ease, background-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .cg-close:active { transform: scale(0.92); }
+
+        /* Emblem: um seine Kante laeuft langsam ein Lichtpunkt (conic + Maske). */
+        @property --cg-winkel { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+        .cg-mark {
+            position: relative;
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
             color: var(--text-main);
         }
-
-        /* Header band */
-        .cl-header-band {
-            position: relative;
-            padding: 22px 24px 18px;
-            background: linear-gradient(155deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.03) 60%, transparent 100%);
-            border-bottom: 1px solid var(--border);
-            overflow: hidden;
-        }
-        .cl-header-band::after {
-            content: '';
+        .cg-mark-ring {
             position: absolute;
-            top: -60px;
-            right: -60px;
-            width: 160px;
-            height: 160px;
-            background: radial-gradient(circle, rgba(var(--primary-rgb), 0.12) 0%, transparent 65%);
-            pointer-events: none;
+            inset: -1px;
+            padding: 1px;
+            border-radius: inherit;
+            background: conic-gradient(from var(--cg-winkel), transparent 0 72%, rgba(var(--primary-rgb), 0.95) 86%, transparent 96%);
+            -webkit-mask: linear-gradient(black 0 0) content-box, linear-gradient(black 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: cg-kreis 4.5s linear infinite;
         }
+        @keyframes cg-kreis { to { --cg-winkel: 360deg; } }
 
-        .cl-brand {
-            display: flex;
+        .cg-eyebrow {
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-            margin-bottom: 12px;
+            gap: 7px;
+            margin-top: 22px;
+            padding: 5px 11px 5px 9px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.025);
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text-muted);
         }
-        .cl-brand-dot {
-            width: 5px;
-            height: 5px;
+        .cg-eyebrow::before {
+            content: '';
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: var(--primary);
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.8);
         }
-        .cl-brand-name {
-            font-size: 10.5px;
-            font-weight: 700;
-            letter-spacing: 1.8px;
-            text-transform: uppercase;
-            color: var(--primary);
-            opacity: 0.85;
+        .cg-title {
+            margin: 14px 0 0;
+            font-size: clamp(1.55rem, 4.8vw, 1.9rem);
+            font-weight: 600;
+            line-height: 1.08;
+            letter-spacing: -0.035em;
+            color: var(--text-main);
+            text-wrap: balance;
+        }
+        .cg-sub {
+            margin: 10px 0 0;
+            max-width: 34ch;
+            font-size: 0.9rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+        }
+        .cg-fine {
+            margin: 9px 4px 0;
+            font-size: 0.76rem;
+            line-height: 1.5;
+            color: var(--text-muted);
         }
 
-        .cl-icon-wrap {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: rgba(var(--primary-rgb), 0.12);
-            border: 1px solid rgba(var(--primary-rgb), 0.2);
+        .cg-passkey { margin-top: 26px; }
+        .cg-btn {
+            width: 100%;
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--primary);
-            margin-bottom: 12px;
-        }
-
-        .cl-title {
-            margin: 0 0 5px 0;
-            font-size: 20px;
-            font-weight: 700;
+            gap: 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
             color: var(--text-main);
-            letter-spacing: -0.4px;
-            line-height: 1.2;
+            font-size: 0.92rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        .cl-subtitle {
-            margin: 0;
-            font-size: 13px;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
+        .cg-btn:active { transform: scale(0.98); }
+        .cg-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-        /* Form */
-        .cl-form {
-            padding: 18px 24px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .cl-field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .cl-label {
-            font-size: 11px;
-            font-weight: 600;
+        .cg-form { display: grid; margin-top: 26px; }
+        .cg-passkey + .cg-form { margin-top: 22px; }
+        .cg-label {
+            margin: 0 0 8px 4px;
+            font-size: 0.78rem;
+            font-weight: 500;
             color: var(--text-muted);
-            letter-spacing: 0.6px;
-            text-transform: uppercase;
-            opacity: 0.7;
         }
-        .cl-input-wrap {
-            position: relative;
-        }
-        .cl-input-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            opacity: 0.4;
-            pointer-events: none;
+        /* Das Feld als eingelassene Mulde: dunkler als der Kern, Schatten innen. */
+        .cg-field {
             display: flex;
             align-items: center;
-            transition: color 0.15s, opacity 0.15s;
+            height: 52px;
+            padding-left: 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.28);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+            color: var(--text-muted);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
         }
-        .cl-input-wrap:focus-within .cl-input-icon {
-            color: var(--primary);
-            opacity: 0.7;
-        }
-        .cl-input {
-            width: 100%;
-            padding: 10px 14px 10px 38px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: rgba(var(--primary-rgb), 0.03);
+        .cg-field:focus-within {
+            border-color: rgba(var(--primary-rgb), 0.6);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 4px rgba(var(--primary-rgb), 0.14);
             color: var(--text-main);
-            font-family: var(--font-main, 'Inter'), sans-serif;
-            font-size: 14px;
+        }
+        .cg-field svg { flex-shrink: 0; }
+        .cg-input {
+            flex: 1;
+            min-width: 0;
+            height: 100%;
+            padding: 0 16px 0 12px;
+            border: 0;
             outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-            box-sizing: border-box;
-            display: block;
+            background: transparent;
+            color: var(--text-main);
+            font-size: 16px;   /* iOS zoomt bei kleinerer Schrift in die Seite */
         }
-        .cl-input:focus {
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: rgba(var(--primary-rgb), 0.05);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
-        }
-        .cl-input::placeholder { color: var(--text-muted); opacity: 0.4; }
+        .cg-input::placeholder { color: var(--text-muted); opacity: 0.55; }
 
-        /* Primary button */
-        .cl-btn {
+        /* Hauptknopf hell auf dunkel, der Pfeil sitzt in einer eigenen Scheibe. */
+        .cg-cta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            width: 100%;
+            height: 56px;
+            margin-top: 12px;
+            padding: 0 7px 0 24px;
+            border: 0;
+            border-radius: 999px;
+            background: var(--text-main);
+            color: var(--bg-deep);
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            box-shadow: 0 14px 34px -14px rgba(var(--primary-rgb), 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+            transition: transform 0.16s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+        }
+        .cg-cta:active { transform: scale(0.98); }
+        .cg-cta:disabled { opacity: 0.6; cursor: progress; }
+        .cg-cta .cloud-loading { display: inline-flex; align-items: center; gap: 8px; }
+        .cg-cta-disc {
+            flex-shrink: 0;
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: var(--bg-deep);
+            color: var(--text-main);
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .cg-form .cl-message { margin-top: 12px; }
+
+        .cg-or {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin: 24px 0 14px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .cg-or::before,
+        .cg-or::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.1));
+        }
+        .cg-or::after { background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.1)); }
+
+        .cg-oauth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .cg-oauth-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            min-width: 0;
+            height: 46px;
+            padding: 0 10px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+            font-size: 0.84rem;
+            font-weight: 500;
+            white-space: nowrap;
             cursor: pointer;
-            font-family: var(--font-main, 'Inter'), sans-serif;
-            font-weight: 600;
-            transition: all 0.15s ease;
-            border: none;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        .cl-btn-primary {
-            width: 100%;
-            padding: 11px 20px;
-            border-radius: 10px;
-            background: var(--primary);
-            color: #fff;
-            font-size: 14px;
-            letter-spacing: 0.1px;
-        }
-        .cl-btn-primary:hover {
-            filter: brightness(1.1);
-            box-shadow: 0 6px 24px rgba(var(--primary-rgb), 0.4);
-            transform: translateY(-1px);
-        }
-        .cl-btn-primary:active { transform: translateY(0); box-shadow: none; filter: none; }
-        .cl-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+        .cg-oauth-btn:active { transform: scale(0.97); }
+        .cg-oauth-btn svg { flex-shrink: 0; }
 
-        /* Passkey — der schnelle Weg, aber nicht die Haupt-Handlung.
-           Deshalb Akzent als Rahmen und Tint statt als Flaeche: die gefuellte
-           Flaeche bleibt dem Magic-Link-Knopf darunter, sonst konkurrieren zwei
-           Knoepfe um dieselbe Aufmerksamkeit. */
-        .cl-passkey {
-            padding: 0 24px;
-            margin-bottom: 14px;
-        }
-        .cl-btn-passkey {
-            width: 100%;
-            padding: 11px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            color: var(--primary);
-            border: 1px solid rgba(var(--primary-rgb), 0.35);
-            background: rgba(var(--primary-rgb), 0.08);
-        }
-        .cl-btn-passkey:hover {
-            background: rgba(var(--primary-rgb), 0.14);
-            border-color: rgba(var(--primary-rgb), 0.5);
-        }
-        /* Bewegung erst beim Druecken: ein Versatz beim blossen Ueberfahren
-           verschiebt Layout, und der Knopf sitzt direkt ueber einem Formular. */
-        .cl-btn-passkey:active { transform: translateY(1px); }
-        .cl-btn-passkey:disabled { opacity: 0.55; cursor: not-allowed; }
-        .cl-passkey-hint {
-            margin: 7px 2px 0;
-            font-size: 11.5px;
-            line-height: 1.5;
-            color: var(--text-muted);
-            opacity: 0.75;
+        /* Touch hat kein :hover — die Flaechen sind ohne Hover vollstaendig lesbar. */
+        @media (hover: hover) and (pointer: fine) {
+            .cg-close:hover { color: var(--text-main); background: var(--hover-fill); }
+            .cg-btn:hover,
+            .cg-oauth-btn:hover { background: var(--hover-fill); border-color: rgba(var(--primary-rgb), 0.32); }
+            .cg-cta:hover { box-shadow: 0 18px 40px -14px rgba(var(--primary-rgb), 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.55); }
+            .cg-cta:hover .cg-cta-disc { transform: translate(2px, -1px) scale(1.04); }
         }
 
-        /* Message */
+        /* Message (auch fuer die Passkey-Liste in den Einstellungen: cl-message) */
         .cl-message,
         .cloud-login-message {
             padding: 9px 12px;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 13px;
             text-align: center;
             font-weight: 500;
@@ -479,103 +528,31 @@
         .cl-spin { animation: cl-spin-anim 0.85s linear infinite; }
         @keyframes cl-spin-anim { to { transform: rotate(360deg); } }
 
-        /* Divider */
-        .cl-divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 24px;
-            margin-bottom: 12px;
+        /* Light theme: Haarlinien und Mulden dunkel statt hell */
+        [data-theme="light"] .cloud-login-overlay { background: rgba(240, 242, 247, 0.82); }
+        [data-theme="light"] .cg-shell {
+            background: rgba(0, 0, 0, 0.025);
+            border-color: rgba(0, 0, 0, 0.07);
+            box-shadow: 0 40px 100px -30px rgba(15, 23, 42, 0.28);
         }
-        .cl-divider-line {
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-        .cl-divider-text {
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--text-muted);
-            opacity: 0.5;
-            white-space: nowrap;
-            letter-spacing: 0.4px;
-        }
-
-        /* OAuth row */
-        .cl-oauth-row {
-            padding: 0 24px;
-            display: flex;
-            gap: 8px;
-        }
-        .cl-oauth-btn {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            padding: 9px 10px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-main);
-            font-family: var(--font-main, 'Inter'), sans-serif;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.15s, border-color 0.15s, transform 0.1s;
-        }
-        .cl-oauth-btn:hover {
-            background: rgba(var(--primary-rgb), 0.07);
-            border-color: rgba(var(--primary-rgb), 0.2);
-            transform: translateY(-1px);
-        }
-        .cl-oauth-btn:active { transform: translateY(0); }
-
-        /* Trust footer */
-        .cl-hint {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            margin: 12px 24px 18px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: var(--primary-dim);
-            border: 1px solid var(--border);
-            font-size: 11.5px;
-            color: var(--text-muted);
-            line-height: 1.4;
-            text-align: center;
-        }
-        .cl-hint svg {
-            flex-shrink: 0;
-            color: var(--primary);
-            opacity: 0.6;
-        }
-
-        /* Light theme overrides */
-        [data-theme="light"] .cloud-login-box {
-            background: #ffffff;
-            box-shadow: 0 0 0 1px rgba(var(--primary-rgb), 0.1), 0 20px 60px rgba(0,0,0,0.12);
-        }
-        [data-theme="light"] .cloud-login-overlay {
-            background: rgba(240,242,247,0.88);
-        }
-        [data-theme="light"] .cl-input {
-            background: rgba(var(--primary-rgb), 0.03);
-        }
-        [data-theme="light"] .cl-input:focus {
-            background: rgba(var(--primary-rgb), 0.04);
-        }
+        [data-theme="light"] .cg-core { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9); }
+        [data-theme="light"] .cg-close,
+        [data-theme="light"] .cg-mark,
+        [data-theme="light"] .cg-eyebrow,
+        [data-theme="light"] .cg-btn,
+        [data-theme="light"] .cg-oauth-btn { border-color: rgba(0, 0, 0, 0.09); background: rgba(255, 255, 255, 0.7); }
+        [data-theme="light"] .cg-field { border-color: rgba(0, 0, 0, 0.1); background: rgba(255, 255, 255, 0.85); box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06); }
+        [data-theme="light"] .cg-or::before { background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1)); }
+        [data-theme="light"] .cg-or::after { background: linear-gradient(to left, transparent, rgba(0, 0, 0, 0.1)); }
 
         @media (max-width: 480px) {
             .cloud-login-modal { padding: 0.75rem; }
-            .cl-header-band { padding: 18px 18px 14px; }
-            .cl-form { padding: 16px 18px 12px; }
-            .cl-divider { padding: 0 18px; }
-            .cl-oauth-row { padding: 0 18px; flex-wrap: wrap; }
-            .cl-oauth-btn { flex: 1 1 calc(50% - 4px); min-width: 0; }
-            .cl-hint { margin: 10px 18px 16px; }
+            .cg-core { padding: 26px 20px 22px; }
+            .cg-close { top: 14px; right: 14px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .cg-shell { animation: cg-dunkel 0.2s ease both; }
+            .cg-mark-ring { animation: none; opacity: 0; }
         }
         
 
