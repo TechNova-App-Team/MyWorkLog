@@ -190,7 +190,22 @@ function parseJS(src, filePath, edges, info) {
 console.log('\n⬡  ArchFlow v3\n' + '─'.repeat(44));
 console.log(`📂 ${ROOT}\n`);
 
-const allFiles = walk(ROOT);
+// Nur, was im Repo steht. Bis 10/2026 nahm der Walk den Arbeitsbaum: 178 der
+// ~540 Knoten waren graphify-out/ (Sicherungsordner je Tag), dazu .claude/ und
+// workers/ — gitignored, aber ueber archflow-data.js samt Funktionsnamen und
+// internen Endpunkten oeffentlich auf /archflow/. Ohne git (z. B. Archiv) faellt
+// das Werkzeug auf den alten Walk zurueck.
+let allFiles = walk(ROOT);
+try {
+  const getrackt = new Set(require('child_process')
+    .execFileSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+    .split('\0').filter(Boolean));
+  // index.html ist gitignored (gebaut), aber der Einstiegspunkt: seine <script>-Tags
+  // tragen 56 der ~335 Kanten (gemessen 09.10.2026). Bewusste Ausnahme.
+  if (getrackt.size > 0) allFiles = allFiles.filter(f => getrackt.has(rel(f)) || rel(f) === 'index.html');
+} catch (e) {
+  console.warn('⚠  git ls-files nicht moeglich — nehme den ganzen Arbeitsbaum.');
+}
 console.log(`📄 ${allFiles.length} files found\n`);
 
 const nodes  = {};

@@ -41,6 +41,11 @@ LOG=".git/graphify-post-commit.log"
   {
     echo "── $(date '+%Y-%m-%d %H:%M:%S')  nach $(git rev-parse --short HEAD)"
     "$GRAPHIFY" update .
+    # graphify legt bei JEDEM Lauf eine Sicherung graphify-out/<JJJJ-MM-TT>/ an
+    # (~8,6 MB, abschaltbar ist das nicht) — bis 09.10.2026 waren es 46 Ordner,
+    # 214 MB. Gelesen wird davon nichts; die drei neuesten bleiben als Rueckweg.
+    ls -d graphify-out/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9] 2>/dev/null | sort -r | tail -n +4 |
+      while read -r alt; do rm -rf "$alt" && echo "[graphify] alte Sicherung entfernt: $alt"; done
   } >"$LOG" 2>&1
 ) &
 
