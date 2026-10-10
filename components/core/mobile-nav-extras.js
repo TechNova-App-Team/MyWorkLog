@@ -421,6 +421,11 @@
 
     // ===== ERROR BOUNDARY / FALLBACK UI =====
     window.addEventListener('error', function(event) {
+        // "ResizeObserver loop …" ist eine harmlose Browser-Meldung, kein Fehler der
+        // App. Bis v8.2.5 schirmte dashboard-power.js sie global ab; seit die Datei
+        // weg ist, legte schon eine Diagramm-Groessenaenderung diese Fehlerseite
+        // ueber das ganze Dashboard (gemessen 10.10.2026).
+        if (/ResizeObserver loop/.test(String(event.message || ''))) return;
         console.error('🔴 Global Error:', event.message, event.filename, event.lineno);
         if (document.querySelector('.mwl-error-overlay')) return;
         const overlay = document.createElement('div');
