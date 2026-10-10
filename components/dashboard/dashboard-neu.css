@@ -49,7 +49,9 @@
 
 /* ── Kopfleiste ── */
 .dn-top { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
-.dn-top__tools { display: flex; align-items: center; gap: 10px; }
+/* Werkzeuge als EINE ruhige Leiste statt sechs einzelner Kaesten (Wunsch des
+   Nutzers, 10.10.2026: "gefaellt mir oben gar nicht"). */
+.dn-top__tools { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; border: 1px solid var(--dn-line); background: var(--dn-panel); }
 .dn-ibtn { position: relative; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; border: 1px solid var(--dn-line); background: var(--dn-panel);
     color: var(--text-main); cursor: pointer; transition: border-color .2s ease, background-color .2s ease, transform .14s var(--dn-out); }
 .dn-ibtn:hover, .dn-ibtn[aria-pressed="true"] { border-color: var(--dn-acc-line); background: var(--dn-soft); }
@@ -65,6 +67,16 @@
 .dn-weather .mwl-icon, .dn-weather svg { width: 20px; height: 20px; }
 .dn-weather small { color: var(--text-muted); font-size: 13px; }
 .dn-lang { padding: 0 14px; }
+.dn-top .dn-ibtn, .dn-top .dn-chip { height: 36px; border-color: transparent; background: transparent; border-radius: 10px; color: var(--text-muted); }
+.dn-top .dn-ibtn { width: 36px; }
+.dn-top .dn-chip { padding: 0 11px; gap: 8px; font-size: 13.5px; }
+.dn-top .dn-ibtn:hover, .dn-top .dn-chip:hover, .dn-top .dn-ibtn[aria-pressed="true"] { background: var(--dn-soft); border-color: transparent; color: var(--text-main); }
+.dn-top svg.dn-i { width: 17px; height: 17px; }
+.dn-top .dn-weather .mwl-icon, .dn-top .dn-weather svg { width: 17px; height: 17px; }
+.dn-top .dn-badge { top: 7px; right: 8px; box-shadow: 0 0 0 2px var(--dn-panel); }
+/* Duenne Trennlinie vor dem Datum: Werkzeuge | Kontext. */
+.dn-top .dn-date { position: relative; margin-left: 5px; color: var(--text-main); }
+.dn-top .dn-date::before { content: ""; position: absolute; left: -4px; top: 9px; bottom: 9px; width: 1px; background: var(--dn-line-2); }
 
 /* ── Begruessung ── */
 .dn-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: end; padding: 6px 2px 2px; }
@@ -72,18 +84,22 @@
 .dn-hello__name { margin: 2px 0 10px; font-family: var(--font-display); font-weight: 700; font-size: clamp(40px, 6cqi, 68px); line-height: 1.02; letter-spacing: -.035em; text-wrap: balance; }
 .dn-dotmark { color: var(--primary); }
 .dn-hello__quote { margin: 0; color: var(--text-muted); font-size: 16px; max-width: 52ch; }
-.dn-hero__cards { display: flex; gap: 14px; }
-.dn-card { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: var(--dn-r); border: 1px solid var(--dn-line); background:
-    linear-gradient(160deg, rgba(var(--primary-rgb), .10), rgba(var(--primary-rgb), 0) 55%), var(--dn-panel);
-    color: var(--text-main); text-align: left; transition: border-color .2s ease, transform .14s var(--dn-out), box-shadow .3s ease; }
-button.dn-card { cursor: pointer; }
-button.dn-card:hover { border-color: var(--dn-acc-line); box-shadow: 0 18px 40px -28px rgba(var(--primary-rgb), .7); }
+/* Woche und Gleitzeit als zwei Kennzahlen ohne Kasten, getrennt durch eine
+   Linie. Zwei Kaesten fuer zwei Zahlen waren neben der Begruessung zu schwer. */
+.dn-hero__cards { display: flex; align-items: stretch; }
+.dn-card { display: flex; align-items: center; gap: 16px; padding: 4px 28px; border: 0; background: none; color: var(--text-main); text-align: left; }
+.dn-card + .dn-card { border-left: 1px solid var(--dn-line-2); }
+.dn-card:last-child { padding-right: 4px; }
+button.dn-card { cursor: pointer; border-radius: 0; font: inherit; }
+button.dn-card:hover .dn-kw__txt b { color: var(--primary); }
 button.dn-card:active { transform: scale(.985); }
-.dn-kw { min-width: 300px; }
+button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-offset: 4px; border-radius: 10px; }
+.dn-kw .dn-tile { display: none; }
+.dn-kw { min-width: 0; }
 .dn-kw__txt { display: grid; gap: 4px; flex: 1; }
-.dn-kw__txt b { font-size: 18px; font-weight: 600; }
+.dn-kw__txt b { font-size: 18px; font-weight: 600; transition: color .2s ease; }
 .dn-kw__txt small { color: var(--text-muted); font-size: 14px; }
-.dn-flex { flex-direction: column; align-items: stretch; gap: 4px; min-width: 250px; }
+.dn-flex { flex-direction: column; align-items: stretch; gap: 2px; min-width: 210px; }
 .dn-flex__top { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 14px; }
 .dn-mini { width: 30px; height: 30px; margin: -6px -8px -6px 0; display: grid; place-items: center; border-radius: 9px; border: 1px solid transparent; background: none; color: var(--text-muted); cursor: pointer;
     transition: border-color .2s ease, color .2s ease, background-color .2s ease, transform .14s var(--dn-out); }
@@ -104,8 +120,8 @@ button.dn-card:active { transform: scale(.985); }
 .dn-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .dn-ring .trk { fill: none; stroke: var(--dn-line-2); }
 .dn-ring .arc { fill: none; stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset .9s var(--dn-out); }
-.dn-ring--sm { width: 74px; height: 74px; }
-.dn-ring--sm b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dn-ring--sm { width: 64px; height: 64px; }
+.dn-ring--sm b { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .dn-ring--lg { width: min(184px, 100%); aspect-ratio: 1; margin: 6px auto 4px; }
 .dn-ring__c { display: grid; justify-items: center; gap: 2px; text-align: center; }
 .dn-ring__c b { font-size: 38px; font-weight: 600; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -521,10 +537,15 @@ body.dn-locked .mobile-bottom-nav, body.dn-locked .mob-nav-handle { transform: t
 }
 @container dn (max-width: 700px) {
     .dn-date span, .dn-weather small, .dn-lang .cmd-label { display: none; }
-    .dn-date, .dn-lang { padding: 0 14px; }
+    .dn-top .dn-date, .dn-top .dn-lang { padding: 0; width: 36px; justify-content: center; }
     .dn-menu__size { display: none; }
-    .dn-top__tools { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-    .dn-hero__cards { flex-direction: column; }
+    .dn-top__tools { flex-wrap: wrap; justify-content: flex-end; }
+    .dn-card { padding: 4px 16px; }
+    .dn-card:first-child { padding-left: 0; }
+    .dn-kw { gap: 12px; }
+    .dn-kw__txt small { white-space: nowrap; font-size: 13px; }
+    .dn-kw .dn-ring--sm { width: 52px; height: 52px; }
+    .dn-kw .dn-ring--sm b { font-size: 12px; }
     .dn-kw { min-width: 0; }
     .dn-mod[data-size] { grid-column: span 12; }
     .dn-modbar__btn[data-dn="mod-size"] { display: none; }
