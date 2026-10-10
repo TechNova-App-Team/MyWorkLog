@@ -2,17 +2,6 @@
     // --- DASHBOARD HELPER FUNCTIONS (Premium Enhancements) ---
     
     // Smooth value animation for dashboard numbers
-    function animateDashboardValue(el, newText) {
-        if (!el) return;
-        if (el.textContent === newText) return;
-        el.style.opacity = '0.5';
-        el.style.transform = 'translateY(-2px)';
-        setTimeout(() => {
-            el.textContent = newText;
-            el.style.opacity = '1';
-            el.style.transform = 'translateY(0)';
-        }, 150);
-    }
     // --- WEATHER INTEGRATION (Open-Meteo API - Free, No API Key) ---
     let weatherData = null;
     let weatherLastFetch = 0;
@@ -1596,15 +1585,15 @@
     }
 
     // All UI render now flows through renderWeatherWidget() — these stubs keep legacy callers working.
-    function updateWeatherUI()            { renderWeatherWidget(); }
+    // Der Wetter-Chip im Dashboard-Kopf (dnRenderTop) zeichnet nur, wenn weatherData
+    // schon da ist. Kommt es erst aus dem Netz (Cache abgelaufen, z. B. morgens), lief
+    // das Dashboard vorher — ohne diesen Nachruf blieb der Chip bis zum Neuladen weg.
+    function updateWeatherUI() {
+        renderWeatherWidget();
+        if (typeof dnRenderTop === 'function') { try { dnRenderTop(); } catch (e) { /* Dashboard noch nicht gebaut */ } }
+    }
     function updateWeatherUINoLocation()  { renderWeatherWidget(); }
     function weatherShowCityInput()       { openWeatherModal(); /* widget empty-state has the input */ }
-
-    // Legacy global — kept as a thin wrapper. The widget's own input/button calls `_widgetSearchCity` directly.
-    async function weatherSearchCity() {
-        const input = document.querySelector('#weatherModal [data-act="city-input"]');
-        if (input && input.value) return _widgetSearchCity(input.value);
-    }
 
     function updateGreetingWeather() {
         const greetEl = document.getElementById('userGreeting');

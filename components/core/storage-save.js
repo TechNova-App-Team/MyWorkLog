@@ -99,32 +99,3 @@
         try { checkAlertsThresholds(); } catch (e) { console.warn('Alerts-Pruefung nach save():', e); }
         try { updateUI(); } catch (e) { console.warn('updateUI nach save():', e); }
     }
-
-    function checkAchievements() {
-        const workEntries = data.entries.filter(e => e.type === 'work' && e.worked > 0);
-        const totalHours = workEntries.reduce((sum, e) => sum + e.worked, 0);
-        const achievements = data.achievements || [];
-
-        const milestones = [10, 50, 100, 500, 1000];
-        milestones.forEach(milestone => {
-            if (totalHours >= milestone && !achievements.includes(`total_${milestone}`)) {
-                achievements.push(`total_${milestone}`);
-                showCustomMessage('🏆 Achievement!', `Du hast ${milestone} Arbeitsstunden erreicht!`, 'success');
-            }
-        });
-
-        // Wöchentliche Meilensteine
-        const thisWeek = workEntries.filter(e => {
-            const entryDate = new Date(e.date);
-            const now = new Date();
-            const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
-            return entryDate >= weekStart;
-        });
-        const weekHours = thisWeek.reduce((sum, e) => sum + e.worked, 0);
-        if (weekHours >= 40 && !achievements.includes('week_40')) {
-            achievements.push('week_40');
-            showCustomMessage('🏆 Wöchentliches Achievement!', '40h in einer Woche gearbeitet!', 'success');
-        }
-
-    }
-    

@@ -84,15 +84,6 @@
     }
 
     // ── Helper: Group entries by key ──
-    function apGroupBy(entries, keyFn) {
-        const map = {};
-        entries.forEach(e => {
-            const k = keyFn(e);
-            if (!map[k]) map[k] = [];
-            map[k].push(e);
-        });
-        return map;
-    }
 
     // ── Helper: Format hours ──
     function apFmtH(h) { return (h >= 0 ? '+' : '') + h.toFixed(2) + 'h'; }

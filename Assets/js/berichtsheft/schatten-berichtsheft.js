@@ -1092,10 +1092,6 @@ function syncCloudMirror() {
 
 // Belegung in Bytes — jetzt asynchron, weil die Groesse aus den
 // Datei-Metadaten in IndexedDB kommt statt aus einem localStorage-String.
-async function estimateVaultSize() {
-    const usage = await vsUsage();
-    return usage.bytes;
-}
 
 // Reicht bis TB: Seit die Anhaenge in IndexedDB liegen, sind Browser-Quoten
 // im zweistelligen GB-Bereich der Normalfall — bei MB als groesster Einheit
@@ -3232,7 +3228,6 @@ function populateCategorySelects() {
 }
 
 // Alter Name, damit bestehende Aufrufe weiterlaufen.
-function populateCategoryFilter() { populateCategorySelects(); }
 
 let catPickerOpen = false;
 let catPickerIndex = -1;   // Index in der aktuell gefilterten Liste

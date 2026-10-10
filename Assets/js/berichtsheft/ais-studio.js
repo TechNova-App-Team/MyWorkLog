@@ -29,7 +29,6 @@ const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     PLAN_TAG_INDEX, _parseWochenplan, _planEintrag } = window.AIS_SPRACHE;
 const { RateLimit, Kontingent, generateWithCloud } = window.AIS_CLOUD;
 
-
 // ═══════════════════════════════════════
 // CONFIGURATION & STATE
 // ═══════════════════════════════════════
@@ -87,10 +86,6 @@ const DAY_STATUS_LABELS = {
 };
 // Reihenfolge für Cycle-Button: '' → krank → urlaub → feiertag → '' …
 
-
-
-
-
 function generateSchoolEntry(profession, yearNum, form = 'stichpunkte') {
     const prof = PROFESSIONS[profession];
     const topic = pickRandom((prof && prof.schoolTopics) || UNIVERSAL_SCHULFAECHER);
@@ -98,12 +93,9 @@ function generateSchoolEntry(profession, yearNum, form = 'stichpunkte') {
     return pickRandom((SCHUL_FORMATE[form] || SCHUL_FORMATE.stichpunkte)(topic));
 }
 
-
-
 // ═══════════════════════════════════════
 // ENTRY GENERATION — Core Engine
 // ═══════════════════════════════════════
-
 
 // Human-style sentence wrappers (add personal voice)
 
@@ -640,8 +632,6 @@ function generateGenericDayEntries(options) {
     };
 }
 
-
-
 // ═══════════════════════════════════════
 // FULL WEEK GENERATION
 // ═══════════════════════════════════════
@@ -887,11 +877,6 @@ function validateIHKCompliance(week) {
 // ═══════════════════════════════════════
 // UI RENDERING
 // ═══════════════════════════════════════
-
-function renderProfessionGrid() {
-    // Legacy function — new UI uses _renderBerufGrid()
-    _renderBerufGrid('');
-}
 
 function renderPreview(week) {
     const content = document.getElementById('aisPreviewContent');
@@ -1483,7 +1468,6 @@ function updateSchoolDayChips() {
         }
     });
 }
-
 
 let _rateLimitTickHandle = null;
 function _updateRateLimitUI() {
@@ -2286,7 +2270,6 @@ function _restoreApiSettings() {
     }
 }
 
-
 // ═══════════════════════════════════════
 // GENERATE-BUTTON PROGRESS-UI
 // ═══════════════════════════════════════
@@ -2780,7 +2763,6 @@ function verlaufLoeschen(idx) {
     renderHistory();
     return true;
 }
-
 
 // Gegenrichtung: der Cloud-Zweig braucht Teile des Kerns. Steht hier unten,
 // weil alle Namen erst ab hier feststehen — Funktionsdeklarationen sind zwar

@@ -522,60 +522,6 @@
         return types;
     }
 
-    async function p2pTestTURN() {
-        console.log(' TURN Server Test gestartet...');
-        p2pLog('Teste Relay-Server …');
-        const config = p2pGetIceConfig();
-        const pc = new RTCPeerConnection(config);
-        pc.createDataChannel('turntest');
-
-        const candidates = { host: 0, srflx: 0, relay: 0 };
-        const relayDetails = [];
-
-        return new Promise(async (resolve) => {
-            const timeout = setTimeout(() => {
-                pc.close();
-                const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
-                console.log(' TURN Test Ergebnis:', result);
-                p2pLog(result.working
-                    ? `Relay OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} lokal`
-                    : `Kein Relay: ${candidates.srflx} STUN, ${candidates.host} lokal`);
-                resolve(result);
-            }, 8000);
-
-            pc.onicecandidate = (event) => {
-                if (event.candidate) {
-                    const c = event.candidate.candidate;
-                    if (c.includes('typ relay')) { candidates.relay++; relayDetails.push(c); }
-                    else if (c.includes('typ srflx')) candidates.srflx++;
-                    else if (c.includes('typ host')) candidates.host++;
-                    console.log(` [TEST] ${c.includes('typ relay') ? ' RELAY' : c.includes('typ srflx') ? ' STUN' : ' HOST'}: ${c.substring(0, 80)}...`);
-                }
-                if (!event.candidate) {
-                    clearTimeout(timeout);
-                    pc.close();
-                    const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
-                    console.log(' TURN Test Ergebnis:', result);
-                    p2pLog(result.working
-                        ? `Relay OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} lokal`
-                        : `Kein Relay: ${candidates.srflx} STUN, ${candidates.host} lokal`);
-                    resolve(result);
-                }
-            };
-
-            try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-            } catch (e) {
-                clearTimeout(timeout);
-                pc.close();
-                console.error(' TURN Test Error:', e);
-                p2pLog('Relay-Test fehlgeschlagen: ' + e.message);
-                resolve({ ...candidates, working: false, error: e.message });
-            }
-        });
-    }
-
     // === ICE-GATHERING: TIMEOUT + LIVE-FEEDBACK ===
     // Kern des Fixes. Mit trickle:false feuert SimplePeer 'signal' erst, wenn das
     // Gathering über ALLE ICE-Server durch ist — hängt einer, gibt es nie einen Code
@@ -1455,13 +1401,6 @@
             showCustomMessage('Kopiert', 'Antwort-Code liegt in der Zwischenablage.', 'success');
         });
     }
-
-    // === LEGACY COMPAT (alte Button-Handler redirigieren) ===
-    function initiateP2PShare() { openP2PWizard(); }
-    function showJoinModal() { openP2PWizard(); }
-    function closeJoinModal() { closeP2PWizard(); }
-    function joinP2PTeam() { openP2PWizard(); }
-    function stopP2PShare() { p2pDisconnect(); }
 
     // === QR-CODE (optional, Anzeige-Seite) ===
     // Die Lib (Assets/js/qrcode.min.js) kann NUR erzeugen, nicht lesen. Gescannt wird

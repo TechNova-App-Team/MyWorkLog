@@ -78,9 +78,6 @@
     apGxState.accretionDisk = null;
     apGxState.accretionGroup = null;
     apGxState.lensingPass = null;
-    apGxState.forceGraphMode = false;
-    apGxState.forceGraphInstance = null;
-    apGxState.warpActive = false;
     apGxState.jetParticles = null;
 
     // ═══════════════════════════════════════
@@ -456,199 +453,14 @@
     var postVertexShader = 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }';
 
     // ═══════════════════════════════════════
-    //  CONTROL FUNCTIONS
-    // ═══════════════════════════════════════
-
-    window.apGxToggleForceGraph = function(btn) {
-        apGxState.forceGraphMode = !apGxState.forceGraphMode;
-        btn.classList.toggle('active');
-
-        var galaxyCanvas = document.getElementById('apGxContainer');
-        var fgContainer = document.getElementById('apGxForceGraphContainer');
-
-        if (apGxState.forceGraphMode) {
-            // Switch to force graph mode
-            if (galaxyCanvas) galaxyCanvas.style.display = 'none';
-            if (fgContainer) {
-                fgContainer.style.display = 'block';
-                apGxInitForceGraph(fgContainer);
-            }
-            // Pause galaxy animation
-            if (apGxState.animId) {
-                cancelAnimationFrame(apGxState.animId);
-                apGxState.animId = null;
-            }
-        } else {
-            // Switch back to galaxy
-            if (fgContainer) fgContainer.style.display = 'none';
-            if (galaxyCanvas) galaxyCanvas.style.display = 'block';
-            apGxDestroyForceGraph();
-            // Resume galaxy animation
-            if (apGxState.scene && apGxState._animateFn) {
-                apGxState._animateFn();
-            }
-        }
-    };
-
-    window.apGxToggleWarp = function(btn) {
-        apGxState.warpActive = !apGxState.warpActive;
-        btn.classList.toggle('active');
-    };
-
-    // ═══════════════════════════════════════
-    //  FORCE GRAPH
-    // ═══════════════════════════════════════
-
-    function apGxInitForceGraph(container) {
-        if (typeof ForceGraph3D === 'undefined') {
-            // Lazy-load the library on first use
-            container.innerHTML = '<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⏳</div>3D Force Graph wird geladen…</div>';
-            var script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/3d-force-graph@1.73.0/dist/3d-force-graph.min.js';
-            script.crossOrigin = 'anonymous';
-            script.onload = function() { apGxInitForceGraph(container); };
-            script.onerror = function() {
-                container.innerHTML = '<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⚠️</div>Force Graph konnte nicht geladen werden.</div>';
-            };
-            document.head.appendChild(script);
-            return;
-        }
-
-        var entries = (typeof apEntries === 'function') ? apEntries() : [];
-        var range = apGxState.range;
-        var filtered = range > 0 ? entries.slice(-range) : entries;
-        if (!filtered.length) {
-            container.innerHTML = '<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">🔗</div>Keine Daten für Neural Graph</div>';
-            return;
-        }
-
-        container.innerHTML = '';
-
-        var colorMap = {
-            work: '#f8fafc', school: '#f59e0b', vacation: '#94a3b8',
-            holiday: '#94a3b8', gleittag: '#94a3b8', sick: '#ef4444'
-        };
-
-        // Build nodes
-        var nodes = filtered.map(function(e, i) {
-            var hours = e.worked || 0;
-            var expected = e.expected || 8;
-            var ratio = expected > 0 ? hours / expected : 0;
-            var nodeColor = colorMap[e.type] || '#f8fafc';
-            if (e.type === 'work') {
-                if (ratio >= 1.0) nodeColor = '#22c55e';
-                else if (ratio < 0.4) nodeColor = '#ef4444';
-                else if (ratio < 0.7) nodeColor = '#f59e0b';
-            }
-            return {
-                id: i,
-                date: e.date,
-                type: e.type || 'work',
-                hours: hours,
-                project: e.project || '',
-                val: Math.max(1, hours * 2),
-                color: nodeColor,
-                label: new Date(e.date).toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short' })
-            };
-        });
-
-        // Build links
-        var links = [];
-        for (var i = 1; i < nodes.length; i++) {
-            var prev = nodes[i - 1], curr = nodes[i];
-            var d1 = new Date(prev.date), d2 = new Date(curr.date);
-            var dayDiff = Math.abs(d2 - d1) / 86400000;
-            // Connect consecutive days
-            if (dayDiff <= 2) {
-                links.push({ source: prev.id, target: curr.id, color: 'rgba(255,255,255,0.14)', width: 0.5 });
-            }
-            // Connect same-project entries
-            if (prev.project && prev.project === curr.project && dayDiff < 14) {
-                links.push({ source: prev.id, target: curr.id, color: 'rgba(34,197,94,0.2)', width: 1 });
-            }
-        }
-
-        // Cross-connect same projects (not just adjacent)
-        var projectMap = {};
-        nodes.forEach(function(n) {
-            if (n.project) {
-                if (!projectMap[n.project]) projectMap[n.project] = [];
-                projectMap[n.project].push(n.id);
-            }
-        });
-        Object.keys(projectMap).forEach(function(proj) {
-            var ids = projectMap[proj];
-            for (var j = 1; j < ids.length && j < 8; j++) {
-                links.push({
-                    source: ids[j - 1], target: ids[j],
-                    color: 'rgba(6,182,212,0.1)', width: 0.3
-                });
-            }
-        });
-
-        var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-
-        var fg = ForceGraph3D({ controlType: 'orbit' })(container)
-            .graphData({ nodes: nodes, links: links })
-            .nodeVal('val')
-            .nodeColor('color')
-            .nodeOpacity(0.9)
-            .nodeLabel(function(n) {
-                return '<div style="background:rgba(0,0,0,0.85);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.18)">' +
-                    '<strong>' + n.label + '</strong><br>' +
-                    '<span style="color:' + n.color + '">' + n.hours.toFixed(1) + 'h</span> · ' +
-                    (n.project ? '<span style="opacity:0.7">' + n.project + '</span>' : n.type) +
-                    '</div>';
-            })
-            .linkColor('color')
-            .linkWidth('width')
-            .linkDirectionalParticles(2)
-            .linkDirectionalParticleWidth(0.8)
-            .linkDirectionalParticleColor(function() { return 'rgba(255,255,255,0.3)'; })
-            .backgroundColor(isLight ? '#f8fafc' : '#030305')
-            .showNavInfo(false)
-            .warmupTicks(80)
-            .cooldownTime(3000);
-
-        // Customize Three.js scene
-        var scene = fg.scene();
-        if (scene) {
-            scene.fog = new THREE.FogExp2(isLight ? 0xf8fafc : 0x030305, 0.002);
-        }
-
-        // Add bloom-like glow via renderer
-        var renderer = fg.renderer();
-        if (renderer) {
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
-        }
-
-        apGxState.forceGraphInstance = fg;
-    }
-
-    function apGxDestroyForceGraph() {
-        if (apGxState.forceGraphInstance) {
-            apGxState.forceGraphInstance.pauseAnimation();
-            apGxState.forceGraphInstance._destructor && apGxState.forceGraphInstance._destructor();
-            apGxState.forceGraphInstance = null;
-        }
-        var fgContainer = document.getElementById('apGxForceGraphContainer');
-        if (fgContainer) fgContainer.innerHTML = '';
-    }
-
-    // ═══════════════════════════════════════
     //  ENHANCED CLEANUP
     // ═══════════════════════════════════════
     var _origCleanup = apGxCleanup;
     apGxCleanup = function() {
-        // Destroy force graph if active
-        apGxDestroyForceGraph();
-        apGxState.forceGraphMode = false;
         apGxState.volumetricNebula = null;
         apGxState.accretionDisk = null;
         apGxState.accretionGroup = null;
         apGxState.lensingPass = null;
-        apGxState.warpActive = false;
         apGxState.jetParticles = null;
         apGxState._animateFn = null;
         // Call original cleanup
@@ -673,14 +485,6 @@
             return;
         }
         apGxCleanup();
-
-        // Reset force graph UI
-        var fgContainer = document.getElementById('apGxForceGraphContainer');
-        if (fgContainer) fgContainer.style.display = 'none';
-        var galaxyCanvas = document.getElementById('apGxContainer');
-        if (galaxyCanvas) galaxyCanvas.style.display = 'block';
-        var neuralBtn = document.getElementById('apGxNeuralBtn');
-        if (neuralBtn) neuralBtn.classList.remove('active');
 
         var entries = (typeof apEntries === 'function') ? apEntries() : [];
         if (!entries.length) {
@@ -1441,7 +1245,6 @@
         // ANIMATION LOOP — Ultra Cinematic
         // ════════════════════════════════════
         var clock = new THREE.Clock();
-        var warpLerp = 0;
         var _coreVec = new THREE.Vector3();
         var _lensVec = new THREE.Vector3();
 
@@ -1449,11 +1252,6 @@
             apGxState.animId = requestAnimationFrame(animate);
             var elapsed = clock.getElapsedTime();
             controls.update();
-
-            // Warp speed lerp
-            var warpTarget = apGxState.warpActive ? 1.0 : 0.0;
-            warpLerp += (warpTarget - warpLerp) * 0.03;
-            spiralMat.uniforms.uWarp.value = warpLerp;
 
             // Update all shader uniforms
             bgStarMat.uniforms.uTime.value = elapsed;
@@ -1496,7 +1294,6 @@
             var pulse = 1 + Math.sin(elapsed * 1.2) * 0.04 + Math.sin(elapsed * 2.8) * 0.02;
             bhGroup.scale.set(pulse, pulse, pulse);
             coreLight.intensity = 0.8 + Math.sin(elapsed * 1.5) * 0.12 + Math.sin(elapsed * 3.7) * 0.05;
-
 
             // Star twinkle
             for (var sti = 0; sti < stars.length; sti++) {
@@ -1569,26 +1366,4 @@
         apGxRenderStats(filtered);
     };
 
-    // ═══════════════════════════════════════
-    //  INJECT CSS FOR FORCE GRAPH
-    // ═══════════════════════════════════════
-    var ultraCSS = document.createElement('style');
-    ultraCSS.textContent = [
-        '#apGxForceGraphContainer {',
-        '  width: 100%; height: 500px; border-radius: 20px; overflow: hidden;',
-        '  background: var(--bg-deep, #030305);',
-        '}',
-        '#apGxForceGraphContainer canvas {',
-        '  border-radius: 20px;',
-        '}',
-        '[data-theme="light"] #apGxForceGraphContainer {',
-        '  background: var(--bg-deep);',
-        '}',
-        '@media(max-width:640px){',
-        '  #apGxForceGraphContainer { height: 350px; }',
-        '}'
-    ].join('\n');
-    document.head.appendChild(ultraCSS);
-
-    console.log('[Galaxy Ultra] Engine loaded — volumetric nebula, accretion disk, gravitational lensing, force graph ready');
 })();

@@ -1,5 +1,4 @@
 // ═══ SETTINGS MODULE ═══
-    window._clsBC = 'settings.js-start';
 
     function openSettings() {
         // Stoppe den Live-Earnings-Ticker um CPU zu sparen
@@ -340,4 +339,3 @@
         }
     }
     function onWageEnabledChange() { refreshWageUI(); }
-

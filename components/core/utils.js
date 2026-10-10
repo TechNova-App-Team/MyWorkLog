@@ -272,25 +272,7 @@
         if (typeof mwlEvent === 'function') mwlEvent('eintrag_wiederhergestellt', {});
         showCustomMessage('Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
     }
-    
 
-
-
-    function toggleVacationPanel() {
-        const vacationPanel = document.getElementById('vacationPanelCard');
-        if (vacationPanel) {
-            if (vacationPanel.style.display === 'none') {
-                vacationPanel.style.display = 'block';
-                // Load vacation data when opening
-                const proRata = calculateProRataVacation(data.settings.vacation.total || 30);
-                document.getElementById('vacationProRata').innerText = proRata;
-                document.getElementById('confVacationTotal').value = data.settings.vacation.total || 30;
-                document.getElementById('confVacationUsedManual').value = data.settings.vacation.usedManual || 0;
-            } else {
-                vacationPanel.style.display = 'none';
-            }
-        }
-    }
     function closeBackupMenu() {
         if (window.backupMenuElement) {
             window.backupMenuElement.remove();

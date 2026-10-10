@@ -228,7 +228,3 @@ function handleVersionChange(newVersion) {
         console.warn('handleVersionChange err', err);
     }
 }
-
-// Expose globally for debugging
-window.getAppVersion = () => APP_CONFIG.version;
-window.getAppConfig = () => APP_CONFIG;

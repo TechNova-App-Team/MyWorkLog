@@ -1,5 +1,4 @@
 // ═══ SIDEBAR MODULE ═══
-    window._clsBC = 'sidebar.js-start';
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
@@ -94,13 +93,10 @@
 
     // ═══ SIDEBAR COLLAPSE — Icon-Only Mode ═══
     (function initSidebarCollapse() {
-        window._clsBC = 'sidebar-initSidebarCollapse';
         try {
             const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
             if (collapsed && window.innerWidth >= 1024) {
-                window._clsBC = 'sidebar-applySidebarCollapse-before';
                 _applySidebarCollapse(true, false);
-                window._clsBC = 'sidebar-applySidebarCollapse-after';
             }
         } catch(e) {}
         // Ctrl+B shortcut
@@ -213,4 +209,3 @@
             bind();
         }
     })();
-

@@ -1,5 +1,4 @@
 // ═══ DASHBOARD MODULE ═══
-    window._clsBC = 'dashboard.js-start';
 
     function shakeInputError(...ids) {
         ids.forEach(id => {
@@ -126,7 +125,6 @@
                  } else {
                     breakMinutes = timerBreakMinutes;
                  }
-
 
                  worked = h;
                  info = `Live-Tracker (${h.toFixed(2)}h) | ${info}`;
@@ -570,7 +568,6 @@
         return stats;
     }
 
-
     // Optionale Detail-Felder (Pause/Stunden/Projekt/Notiz) ein-/ausklappen.
     // force===true/false erzwingt Zustand; ohne Argument wird umgeschaltet.
     function toggleEntryDetails(force) {
@@ -979,7 +976,6 @@
     // #miniCalGrid. Das Raster gab es nur in der Monatsansicht; dort steht jetzt
     // mcRenderCalendar() (monthcompare.js), das zusaetzlich die Tageslaenge zeigt.
 
-
     // Sprachbewusst: das Hilfe-Panel wird komplett per JS gebaut, die statische
     // i18n-Pipeline erfasst JS nicht → Texte hier direkt zweisprachig halten.
     function qhL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
@@ -1157,7 +1153,6 @@
             modal.classList.add('active');
         } catch (e) { console.warn('openQuickHelp error', e); }
     }
-
 
     function calculateStreak() {
         if (!data.entries || data.entries.length === 0) return { current: 0, best: 0 };

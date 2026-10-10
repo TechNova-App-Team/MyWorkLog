@@ -26,8 +26,8 @@
             'urlaubsplaner': ['/components/urlaubsplaner/urlaubsplaner.js?v=ae79efc83b'],
             'weekview':      ['/components/weekview/weekview.js?v=fd76c6ae9b'],
             'history':       ['/components/history/history.js?v=170862dd4b'],
-            'analytics-pro': ['/components/core/analytics-pro-engine.js?v=cea6619329',
-                              '/components/core/galaxy-ultra-engine.js?v=5136be531d',
+            'analytics-pro': ['/components/core/analytics-pro-engine.js?v=4afdcf04de',
+                              '/components/core/galaxy-ultra-engine.js?v=5f37d2db16',
                               '/components/analytics-pro/analytics-pro.js?v=53062e7207']
         };
     })();

@@ -420,16 +420,4 @@
         }
     });
     
-    // Manuelle Trigger
-    window.triggerFirework = () => createFirework();
-    window.triggerTimePro = () => createTimeProExplosion();
-    
-    // Verschiedene Feuerwerk-Typen manuell
-    window.triggerBurst = () => createNormalFirework('burst');
-    window.triggerWillow = () => createNormalFirework('willow');
-    window.triggerPalm = () => createNormalFirework('palm');
-    window.triggerChrysanthemum = () => createNormalFirework('chrysanthemum');
-    window.triggerRing = () => createNormalFirework('ring');
-    window.triggerCrossette = () => createNormalFirework('crossette');
-    
 })();

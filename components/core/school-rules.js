@@ -1,5 +1,4 @@
 // ═══ CORE: SCHOOL-RULES ═══
-    function copyConnectionCode() { p2pCopyOffer(); }
 
     // Load last sync time on startup
     (() => {

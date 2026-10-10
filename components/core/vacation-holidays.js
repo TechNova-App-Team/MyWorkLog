@@ -242,49 +242,6 @@
             data.settings.vacation.used = vacationEntries.length + manual;
         }
     }
-    
-    function deletePeriod(startStrArg, endStrArg) {
-        const startStr = startStrArg || (document.getElementById('periodStart') ? document.getElementById('periodStart').value : '') || '';
-        const endStr = endStrArg || (document.getElementById('periodEnd') ? document.getElementById('periodEnd').value : '') || '';
-        
-        if (!startStr || !endStr) return showCustomMessage('❌ Fehler', 'Bitte wähle Start- und Enddatum für die zu löschende Periode.', 'error');
-
-        const startDate = new Date(startStr);
-        const endDate = new Date(endStr);
-        
-        if (startDate > endDate) return showCustomMessage('❌ Fehler', 'Startdatum muss vor Enddatum liegen.', 'error');
-        
-        showCustomConfirm(
-            '⚠️ Periodenbuchungen löschen?',
-            `Alle Periodenbuchungen (Urlaub/Feiertag) zwischen ${startStr} und ${endStr} werden unwiderruflich gelöscht!`,
-            () => {
-                let deletedCount = 0;
-
-                // Nur Einträge löschen, die vom Typ vacation oder holiday sind UND die in der Periode liegen
-                data.entries = data.entries.filter(e => {
-                    const eDate = new Date(e.date);
-                    
-                    const isTargetType = (e.type === 'vacation' || e.type === 'holiday');
-                    const isWithinPeriod = eDate >= startDate && eDate <= endDate;
-                    
-                    if (isTargetType && isWithinPeriod) {
-                        deletedCount++;
-                        return false; // Eintrag löschen (nicht behalten)
-                    }
-                    return true; // Eintrag behalten
-                });
-                
-                recalculateVacationUsed();
-                
-                showCustomMessage('✅ Erfolg', `${deletedCount} Perioden-Buchungen wurden gelöscht.`, 'success');
-                save();
-                document.getElementById('settingsModal').classList.remove('active');
-            },
-            null
-        );
-        return;
-    }
-
 
     function bookPeriod(startStrArg, endStrArg, periodTypeArg, skipWeekendsArg) {
         const startStr = startStrArg || (document.getElementById('periodStart') ? document.getElementById('periodStart').value : '') || '';

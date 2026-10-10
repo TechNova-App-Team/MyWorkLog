@@ -1,5 +1,4 @@
 // ═══ CORE: API-CLOUD-SYNC ═══
-    window._clsBC = 'api-cloud-sync.js-start';
     // ============================================
     // API STATUS MONITOR (Edge Logs Style)
     // ============================================
@@ -690,11 +689,6 @@
             passkeyMeldung(typeof authFehlerText === 'function' ? authFehlerText(e)
                                                                 : (e && e.message) || 'Fehlgeschlagen', 'error');
         }
-    }
-    
-    function createCloudSyncButtons() {
-        // DEPRECATED - Cloud Sync Buttons sind jetzt FEST im Settings Modal
-        // Diese Funktion wird nicht mehr verwendet
     }
     
     function openCloudLoginModal() {
@@ -1460,21 +1454,3 @@
     window.toggleCloudChipMode = toggleCloudChipMode;
     window.cloudChipAction = cloudChipAction;
     window.openSettingsCloudTab = openSettingsCloudTab;
-
-    function updateAchievements() {
-        const achievements = data.achievements || [];
-        const display = document.getElementById('achievementsDisplay');
-        if (!display) return;
-
-        const achievementLabels = {
-            'total_10': '10h Total',
-            'total_50': '50h Total',
-            'total_100': '100h Total',
-            'total_500': '500h Total',
-            'total_1000': '1000h Total',
-            'week_40': '40h/Woche'
-        };
-
-    }
-
-

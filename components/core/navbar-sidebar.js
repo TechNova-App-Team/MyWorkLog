@@ -1,5 +1,4 @@
 // ═══ CORE: NAVBAR-SIDEBAR ====
-    window._clsBC = 'navbar-sidebar.js-start';
     function getIconSvgById(id) {
         const icons = {
             dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h6v8H3z"/><path d="M9 8h6v13H9z"/><path d="M15 3h6v18h-6z"/></svg>',
@@ -22,6 +21,7 @@
             import: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>',
             backup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v6h6"/></svg>',
             untis: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9h18"/><path d="M9 9v12"/><path d="M15 9v12"/><rect x="10.2" y="11" width="3.6" height="7" rx="1" fill="currentColor" stroke="none" opacity="0.45"/></svg>',
+            nfc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 0 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></svg>',
             support: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><path d="M4 15h1a3 3 0 003 3v-5"/><path d="M20 15h-1a3 3 0 01-3 3v-5"/></svg>',
             'repo-analysis': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 15v4"/><path d="M12 11v8"/><path d="M16 7v12"/></svg>',
             report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M9 7h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>',
@@ -123,7 +123,6 @@
             }
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
-
 
     // ===== SIDEBAR NAV & CUSTOMIZATION =====
     function renderSidebarNav() {
@@ -289,7 +288,6 @@
 
     // Restore collapsed states on load
     (function restoreSidebarSections() {
-        window._clsBC = 'restoreSidebarSections-start';
         try {
             const states = JSON.parse(localStorage.getItem('sidebar_sections') || '{}');
             Object.keys(states).forEach(name => {
@@ -301,10 +299,8 @@
                 }
             });
         } catch(e) {}
-        window._clsBC = 'restoreSidebarSections-removeAttr';
         // Remove CLS pre-apply so sections can expand/collapse normally
         document.documentElement.removeAttribute('data-sb-pre-sec');
-        window._clsBC = 'restoreSidebarSections-done';
     })();
 
     // ===== SIDEBAR INTERACTIONS — Hover beam + Scroll fade =====
@@ -421,6 +417,10 @@
         { id: 'import',       label: 'Import',            icon: getIconSvgById('import'), group: 'Tools',      action: () => showBackupMenu() },
         { id: 'onboarding',   label: 'Anleitung / Tour',  icon: getIconSvgById('onboarding'), group: 'Tools',      action: () => startOnboardingTour() },
         { id: 'untis',        label: 'Untis Import',      icon: getIconSvgById('untis'), group: 'Tools',      action: () => showUntisImportModal() },
+        // Einziger Einstieg in die NFC-Einrichtung, seit die Befehlsleiste mit dem
+        // alten Dashboard wegfiel (44615da3). Am Handy ueber Mehr → Suche erreichbar;
+        // das Mehr-Blatt selbst ist ein volles 4er-Raster, ein 13. Feld braeche es.
+        { id: 'nfc',          label: 'NFC-Chip einrichten', icon: getIconSvgById('nfc'), group: 'Tools',      action: () => openNFCModal() },
         // Extern
         { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './berichtsheft/'; } },
         { id: 'ihk-berichtsheft', label: 'IHK-Berichtsheft endet 2026', icon: getIconSvgById('berichtsheft'), group: 'Extern', action: () => { window.location.href = './ihk-berichtsheft/'; } },

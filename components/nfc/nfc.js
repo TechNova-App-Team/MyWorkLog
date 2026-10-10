@@ -347,41 +347,6 @@ function _doCheckOut(now, today, session) {
 
 // ─── Randfälle simulieren ─────────────────────────────────────────────────
 
-function nfcSimulateDoubleBounc() {
-    const session = _nfcSession();
-    // Letzter Scan war vor 8 Sekunden → Debounce greift
-    session.lastScan   = Date.now() - 8000;
-    session.lastAction = 'checkin';
-    session.lastDate   = new Date().toISOString().split('T')[0];
-    _saveSession(session);
-
-    setTimeout(() => {
-        handleNFCScan();
-        setTimeout(nfcUpdateStatusView, 350);
-    }, 80);
-
-    _nfcToast('🧪 Simulation', 'Doppel-Bounce wird simuliert...', 'info');
-}
-
-function nfcSimulateMissedCheckout() {
-    const session = _nfcSession();
-    // Letzter Check-In war "Freitag 17:00" (also vorherige Woche)
-    const fake = new Date();
-    fake.setDate(fake.getDate() - 3); // vor 3 Tagen
-
-    session.lastAction = 'checkin';
-    session.lastDate   = fake.toISOString().split('T')[0];
-    session.lastScan   = fake.getTime();
-    _saveSession(session);
-
-    setTimeout(() => {
-        handleNFCScan();
-        setTimeout(nfcUpdateStatusView, 350);
-    }, 80);
-
-    _nfcToast('🧪 Simulation', 'Vergessener Check-Out wird simuliert...', 'info');
-}
-
 // ─── Chip zurücksetzen ────────────────────────────────────────────────────
 
 function nfcResetChip() {

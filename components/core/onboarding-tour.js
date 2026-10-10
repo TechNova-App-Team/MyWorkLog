@@ -495,12 +495,8 @@
         showCustomMessage('Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken!', 'success');
     }
 
-    function highlightElement(selector) {
-        // Legacy - handled by renderOnboardingStep now
-    }
     function closeQuickHelp() {
         const modal = document.getElementById('quickHelpModal');
         if (modal) modal.classList.remove('active');
     }
-    
     

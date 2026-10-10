@@ -1,5 +1,4 @@
 // ═══ CORE: DASHBOARD-EXTRAS ═══
-    window._clsBC = 'dashboard-extras.js-start';
 
     // Serien-Helfer fuer calculateStreak() (dashboard.js).
     function getLastWorkday(date) {

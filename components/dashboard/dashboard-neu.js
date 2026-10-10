@@ -422,7 +422,8 @@ function dnRenderTop() {
     try {
         if (typeof weatherData !== 'undefined' && weatherData && weatherData.current && typeof getWeatherIcon === 'function') {
             const h = now.getHours(), ic = getWeatherIcon(weatherData.current.weather_code, h < 6 || h >= 21);
-            const city = (data.settings.weather && (data.settings.weather.city || data.settings.weather.name)) || '';
+            // weather.js haelt die Stadt in weatherData.cityName; data.settings.weather schreibt niemand.
+            const city = weatherData.cityName || '';
             w.innerHTML = ((typeof mwlIconFromEmoji === 'function') ? mwlIconFromEmoji(ic.icon, 20) : '') + '<b>' + Math.round(weatherData.current.temperature_2m) + '°</b>' + (city ? '<small>' + dnEsc(city) + '</small>' : '');
             w.hidden = false;
         } else w.hidden = true;

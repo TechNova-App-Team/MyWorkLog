@@ -78,10 +78,6 @@
         if (job.primary) return data.settings.break || { thresh: 6, min: [0, 30, 30, 30, 30, 30, 0] };
         return job.break || { thresh: 6, min: [0, 0, 0, 0, 0, 0, 0] };
     }
-    function getJobBreakForDay(jobId, dayIndex) {
-        var b = getJobBreak(jobId);
-        return (Array.isArray(b.min) ? b.min[dayIndex] : b.min) || 0;
-    }
 
     // Auto-Zuordnung nach Startzeit ("HH:MM"): passendes Job-Zeitfenster, sonst primary.
     function resolveJobByStart(startTime) {

@@ -4,7 +4,6 @@
 // "Nicht mehr anzeigen" blendet ALLE gleichzeitig aus — egal, an welcher Stelle
 // geklickt wurde. Zustand haengt an data.settings.hideDataNotice und ist ueber
 // den Schalter in Settings/Profil jederzeit zurueckholbar.
-    window._clsBC = 'data-notice.js-start';
 
     function isDataNoticeHidden() {
         try { return !!(data && data.settings && data.settings.hideDataNotice); }

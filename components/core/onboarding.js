@@ -1,4 +1,4 @@
-window._clsBC='onboarding.js-start';(function(){
+(function(){
         try {
             if (!window.initializeTouchOptimizations) {
                 var s = document.createElement('script');
@@ -15,8 +15,6 @@ window._clsBC='onboarding.js-start';(function(){
     })();
 
 // Voice input is handled in dashboard.js
-
-
 
 // ============================================
 // MOOD TRACKER FEATURE (NEU: CRAZY!)
@@ -107,110 +105,6 @@ function getMoodDescription(emoji) {
     const isEN = document.documentElement.lang === 'en';
     return (isEN ? en : de)[emoji] || (isEN ? 'Unknown' : 'Unbekannt');
 }
-
-// ============================================
-// AI INSIGHTS FEATURE (NEU: CHEF-MÄSSIG!)
-// ============================================
-
-function generateInsights() {
-    const insightsEl = document.getElementById('insightsContentModal');
-    insightsEl.innerHTML = '<p>Analysiere Daten... 🤔</p>';
-
-    setTimeout(() => {
-        const insights = analyzeDataForInsights();
-        let html = '';
-
-        if (insights.length === 0) {
-            html = '<p>Keine Insights verfügbar. Mehr Daten sammeln!</p>';
-        } else {
-            html = insights.map(insight => `<div style="margin-bottom:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;"><strong>${mwlIconFromEmoji(insight.icon, 15)}</strong> ${insight.text}</div>`).join('');
-        }
-
-        insightsEl.innerHTML = html;
-    }, 1000); // Simuliere Denkzeit
-}
-
-function analyzeDataForInsights() {
-    const insights = [];
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    // Filter recent entries
-    const recentEntries = data.entries.filter(e => new Date(e.date) >= monthAgo);
-    const weekEntries = data.entries.filter(e => new Date(e.date) >= weekAgo);
-
-    if (recentEntries.length === 0) return insights;
-
-    // 1. Überstunden Check
-    const totalHours = recentEntries.reduce((sum, e) => sum + e.worked, 0);
-    const avgDaily = totalHours / 30;
-    if (avgDaily > 8) {
-        insights.push({
-            icon: '⚠️',
-            text: `Du arbeitest durchschnittlich ${avgDaily.toFixed(1)}h pro Tag. Überlege, Pausen einzulegen oder Urlaub zu planen.`
-        });
-    }
-
-    // 2. Stimmungs-Analyse
-    const moodEntries = recentEntries.filter(e => e.mood);
-    if (moodEntries.length > 5) {
-        const badMoods = moodEntries.filter(e => ['😞', '😠', '🤒', '😴', '🤯'].includes(e.mood)).length;
-        const moodRatio = badMoods / moodEntries.length;
-        if (moodRatio > 0.5) {
-            insights.push({
-                icon: '😟',
-                text: `Deine Stimmung war in ${Math.round(moodRatio * 100)}% der Fälle negativ. Vielleicht mehr Pausen oder Hobbys?`
-            });
-        }
-    }
-
-    // 3. Wochenend-Arbeit
-    const weekendEntries = weekEntries.filter(e => {
-        const day = new Date(e.date).getDay();
-        return day === 0 || day === 6;
-    });
-    if (weekendEntries.length > 2) {
-        insights.push({
-            icon: '🏖️',
-            text: `Du hast ${weekendEntries.length} Mal am Wochenende gearbeitet. Work-Life-Balance ist wichtig!`
-        });
-    }
-
-    // 4. Saldo-Trend
-    const recentDiffs = recentEntries.slice(-10).reduce((sum, e) => sum + e.diff, 0);
-    if (recentDiffs < -10) {
-        insights.push({
-            icon: '📉',
-            text: `Dein Saldo sinkt. Plane Überstunden oder korrigiere Einträge.`
-        });
-    } else if (recentDiffs > 10) {
-        insights.push({
-            icon: '📈',
-            text: `Super! Du baust Plusstunden auf. Belohne dich mit einer Pause.`
-        });
-    }
-
-    // 5. Max-Schichten
-    const longShifts = recentEntries.filter(e => e.shiftWarning);
-    if (longShifts.length > 0) {
-        insights.push({
-            icon: '⏰',
-            text: `Du hattest ${longShifts.length} Schichten über 10h. Achte auf Gesundheit!`
-        });
-    }
-
-    // Fallback, wenn keine Insights
-    if (insights.length === 0) {
-        insights.push({
-            icon: '✅',
-            text: 'Alles im grünen Bereich! Halte so weiter.'
-        });
-    }
-
-    return insights.slice(0, 3); // Max 3 Insights
-}
-
 
 // ===== PWA SERVICE WORKER REGISTRATION =====
 function setupPWABasePath() {
@@ -696,7 +590,6 @@ function detectLocalhostAndWarn() {
 }
 
 window.checkPWAStatus = checkPWAStatus;
-
 
 // ===== ADVANCED NETWORK MONITOR =====
 const networkMonitor = (() => {

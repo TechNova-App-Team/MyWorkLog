@@ -258,56 +258,6 @@
     }
     
     // Lightbox Modal für Grafiken (optimiert für Performance)
-    function openGraphicModal(imageSrc, imageTitle) {
-        // Konvertiere PNG zu WebP wenn verfügbar
-        const webpSrc = imageSrc.replace(/\.png$/i, '.webp');
-        const pngSrc = imageSrc;
-        
-        const modal = document.createElement('div');
-        modal.id = 'graphicModal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(3, 3, 5, 0.95);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            animation: fadeIn 0.3s ease;
-        `;
-        
-        modal.innerHTML = `
-            <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column;">
-                <button onclick="document.getElementById('graphicModal').remove()" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: var(--text-main); font-size: 2rem; cursor: pointer; padding: 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-                <picture>
-                    <source srcset="${webpSrc}" type="image/webp">
-                    <img src="${pngSrc}" alt="${imageTitle}" decoding="async" style="max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 12px; border: 1px solid var(--border);">
-                </picture>
-                <h3 style="color: var(--primary); text-align: center; margin-top: 1rem; margin-bottom: 0;">${imageTitle}</h3>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Schließen bei Klick außerhalb des Bildes
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-        
-        // ESC zum Schließen
-        const closeOnEsc = (e) => {
-            if (e.key === 'Escape') {
-                modal.remove();
-                document.removeEventListener('keydown', closeOnEsc);
-            }
-        };
-        document.addEventListener('keydown', closeOnEsc);
-    }
     // ===== Account / LocalStorage Löschung (Danger Zone) =====
     function clearAppLocalData() {
         // Vollständiges Leeren des LocalStorage (alle keys)
