@@ -640,300 +640,530 @@
             .recovery-apply-btn { justify-content: center; }
         }
 
-        /* ===== ADVANCED EDIT ENTRY MODAL ===== */
-        .edit-modal-advanced {
-            width: 680px;
-            max-width: 95vw;
-            max-height: 90vh;
+        /* ===== EINTRAG BEARBEITEN (#editEntryModal) ===== */
+        /* Neu seit 10.10.2026, Sprache des neuen Dashboards: Flaechen aus Tokens
+           (bg-sidebar ueber bg-deep, nie Alpha allein), EIN Akzent (--primary),
+           Typfarben nur als Kennung am gewaehlten Typ. Bewusst NICHT mehr: festes
+           #0f0f14-Dunkel (blieb im hellen Theme schwarz), Lila/Cyan/Gruen als drei
+           Akzente, Grossbuchstaben-Labels mit Icon je Feld.
+           Alles haengt an der id: mobile-nav.css setzt fuer .modal-box Breite,
+           Hoehe, Rundung und Innenabstand mit !important — nur eine id schlaegt das.
+           Die Klassen edit-input/-select/-field/-label bleiben gestylt, weil
+           renderEditCustomFields() die eigenen Felder damit baut. */
+        #editEntryModal {
+            --ed-line: rgba(255, 255, 255, 0.075);
+            --ed-line-2: rgba(255, 255, 255, 0.13);
+            --ed-fill: rgba(255, 255, 255, 0.03);
+            --ed-well: color-mix(in srgb, var(--bg-deep) 72%, transparent);
+            --ed-out: cubic-bezier(.23, 1, .32, 1);
+            --ed-sheet: cubic-bezier(.32, .72, 0, 1);
+            background: rgba(0, 0, 0, 0.55);
+            padding: 24px;
+        }
+        [data-theme="light"] #editEntryModal {
+            --ed-line: rgba(7, 16, 35, 0.08);
+            --ed-line-2: rgba(7, 16, 35, 0.15);
+            --ed-fill: rgba(7, 16, 35, 0.03);
+            background: rgba(7, 16, 35, 0.35);
+        }
+        #editEntryModal .ed__box {
+            position: relative;
+            width: min(600px, calc(100vw - 32px));
+            max-height: min(880px, calc(100dvh - 48px));
             display: flex;
             flex-direction: column;
             padding: 0;
             overflow: hidden;
-            background: linear-gradient(165deg, #0f0f14 0%, #0a0a0f 40%, #090912 100%);
-            border: 1px solid rgba(var(--primary-rgb), 0.15);
-            border-radius: 20px;
-            box-shadow: 0 0 80px rgba(var(--primary-rgb), 0.08), 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            border-radius: 22px;
+            border: 1px solid var(--ed-line-2);
+            background: linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep);
+            box-shadow: 0 40px 100px -30px rgba(0, 0, 0, 0.65);
+            color: var(--text-main);
+            animation: edIn .34s var(--ed-out);
         }
-        .edit-modal-header {
-            position: relative;
-            padding: 1.25rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
+        @keyframes edIn { from { opacity: 0; transform: translateY(10px) scale(.985); } }
+        @keyframes edUp { from { transform: translateY(100%); } }
+        #editEntryModal .ed__grip { display: none; }
+
+        /* Kopf: das Datum ist der Titel */
+        #editEntryModal .ed__head {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 12px;
+            padding: 22px 24px 14px;
+        }
+        #editEntryModal .ed__head-txt { position: relative; min-width: 0; }
+        #editEntryModal .ed__kicker {
+            margin: 0 0 4px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        #editEntryModal .ed__date {
+            display: inline-flex;
             align-items: center;
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(6, 182, 212, 0.06) 100%);
-            border-bottom: 1px solid rgba(var(--primary-rgb), 0.1);
+            gap: 10px;
+            max-width: 100%;
+            margin: 0 0 0 -8px;
+            padding: 2px 8px;
+            border: 0;
+            border-radius: 10px;
+            background: transparent;
+            color: var(--text-main);
+            font-family: var(--font-display);
+            font-size: clamp(1.35rem, 1.05rem + 1.1vw, 1.7rem);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color .2s ease;
         }
-        .edit-modal-header::after {
+        #editEntryModal .ed__date-txt { min-width: 0; text-wrap: balance; }
+        #editEntryModal .ed__date-i { flex: none; color: var(--text-muted); transition: color .2s ease; }
+        #editEntryModal .ed__date:hover { background: var(--hover-fill); }
+        #editEntryModal .ed__date:hover .ed__date-i { color: var(--primary); }
+        /* Unsichtbar, aber gerendert: showPicker() braucht ein sichtbares Feld im
+           Layout, und der Kalender klappt an seiner Position auf (unter dem Titel). */
+        #editEntryModal .ed__date-native {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+            border: 0;
+            padding: 0;
+        }
+        #editEntryModal .ed__x {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            border: 1px solid var(--ed-line-2);
+            background: transparent;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background-color .2s ease, border-color .2s ease, transform .14s var(--ed-out);
+        }
+        #editEntryModal .ed__x:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+        #editEntryModal .ed__x:active { transform: scale(.94); }
+
+        #editEntryModal .ed__body {
+            position: relative;
+            display: grid;
+            gap: 18px;
+            padding: 2px 24px 22px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            flex: 1;
+            min-height: 0;
+        }
+        #editEntryModal .ed__native {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Typ als Chips: ein Tipp statt Liste aufklappen */
+        /* Raster statt Umbruch: die sechs festen Typen brauchen 634 px in einer Reihe,
+           der Dialog hat 561 (gemessen) — beim freien Umbruch stand "Feiertag" allein
+           in Zeile 2. Gleich breite Zellen tragen auch jede Zahl eigener Typen. */
+        #editEntryModal .ed__types {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 6px;
+        }
+        #editEntryModal .ed__type {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 36px;
+            padding: 0 11px 0 6px;
+            border-radius: 10px;
+            border: 1px solid var(--ed-line);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            font-weight: 500;
+            white-space: nowrap;
+            min-width: 0;
+            cursor: pointer;
+            transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .14s var(--ed-out);
+        }
+        #editEntryModal .ed__type > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+        #editEntryModal .ed__type:hover { color: var(--text-main); border-color: var(--hover-border); background: var(--hover-fill); }
+        #editEntryModal .ed__type:active { transform: scale(.97); }
+        #editEntryModal .ed__type-i {
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            border-radius: 7px;
+            color: rgb(var(--type-rgb, var(--primary-rgb)));
+            background: rgba(var(--type-rgb, var(--primary-rgb)), 0.12);
+        }
+        #editEntryModal .ed__type-i svg { width: 14px; height: 14px; }
+        #editEntryModal .ed__type[aria-checked="true"] {
+            color: var(--text-main);
+            border-color: rgba(var(--type-rgb, var(--primary-rgb)), 0.55);
+            background: rgba(var(--type-rgb, var(--primary-rgb)), 0.1);
+        }
+
+        /* Stunden + Schichtband + Zeiten */
+        #editEntryModal .ed__time {
+            display: grid;
+            gap: 16px;
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px solid var(--ed-line);
+            background: var(--ed-fill);
+        }
+        #editEntryModal .ed__sum {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 12px 20px;
+            flex-wrap: wrap;
+        }
+        #editEntryModal .ed__hours { display: grid; gap: 4px; }
+        #editEntryModal .ed__hours-row { display: flex; align-items: baseline; gap: 6px; }
+        #editEntryModal .ed__hours-in {
+            /* field-sizing waechst mit der Zahl; eine feste width hebt es auf (Luecke
+               bis zum "h"). 5.2ch bleibt nur als Rueckfall ohne field-sizing. */
+            width: 5.2ch;
+            min-width: 2.2ch;
+            max-width: 7ch;
+            padding: 0 2px;
+            margin-left: -2px;
+            border: 0;
+            border-bottom: 1.5px dashed transparent;
+            border-radius: 0;
+            background: transparent;
+            color: var(--text-main);
+            font-family: var(--font-num);
+            font-variant-numeric: tabular-nums;
+            font-size: 2.75rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            -moz-appearance: textfield;
+            appearance: textfield;
+            transition: border-color .2s ease;
+        }
+        @supports (field-sizing: content) {
+            #editEntryModal .ed__hours-in { width: auto; field-sizing: content; }
+        }
+        #editEntryModal .ed__hours-in::-webkit-outer-spin-button,
+        #editEntryModal .ed__hours-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        #editEntryModal .ed__hours-in:hover { border-bottom-color: var(--ed-line-2); }
+        #editEntryModal .ed__hours-in:focus { outline: none; border-bottom-color: var(--primary); }
+        #editEntryModal .ed__hours-unit { font-size: 1.15rem; font-weight: 500; color: var(--text-muted); }
+        #editEntryModal .ed__stats { display: flex; gap: 22px; margin: 0 0 4px; }
+        #editEntryModal .ed__stats > div { display: grid; gap: 2px; }
+        #editEntryModal .ed__stats dt { font-size: 12.5px; color: var(--text-muted); }
+        #editEntryModal .ed__stats dd {
+            margin: 0;
+            font-family: var(--font-num);
+            font-variant-numeric: tabular-nums;
+            font-size: 1.05rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        #editEntryModal .ed__stats dd.is-pos { color: var(--success); }
+        #editEntryModal .ed__stats dd.is-neg { color: var(--danger); }
+        /* --success auf Weiss: ~2,5:1 — als Textfarbe zu blass, im hellen Theme abgedunkelt. */
+        [data-theme="light"] #editEntryModal .ed__stats dd.is-pos { color: color-mix(in srgb, var(--success) 72%, #000); }
+        [data-theme="light"] #editEntryModal .ed__stats dd.is-neg { color: color-mix(in srgb, var(--danger) 85%, #000); }
+
+        #editEntryModal .ed__band { padding: 0 10px; }
+        #editEntryModal .ed__track {
+            position: relative;
+            height: 14px;
+            border-radius: 7px;
+            background: var(--ed-line);
+        }
+        /* Breite und Lage per clip-path statt left/width: laeuft auf dem Compositor. */
+        #editEntryModal .ed__shift {
+            position: absolute;
+            inset: 0;
+            border-radius: 7px;
+            background: var(--primary);
+            clip-path: inset(0 50% 0 50% round 7px);
+            transition: clip-path .45s var(--ed-out), opacity .3s ease;
+        }
+        #editEntryModal .ed__band.is-empty .ed__shift { opacity: 0; }
+        #editEntryModal .ed__band.is-empty .ed__track {
+            background: repeating-linear-gradient(90deg, var(--ed-line) 0 6px, transparent 6px 10px);
+        }
+        #editEntryModal .ed__ticks { position: relative; height: 16px; margin-top: 7px; }
+        #editEntryModal .ed__ticks span {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted);
+        }
+        #editEntryModal .ed__ticks span::before {
             content: '';
             position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.35), rgba(6, 182, 212, 0.25), transparent);
+            left: 50%;
+            top: -6px;
+            width: 1px;
+            height: 4px;
+            background: var(--ed-line-2);
         }
-        .edit-modal-header-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .edit-modal-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary), #7c3aed);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.3);
-        }
-        .edit-modal-title {
-            margin: 0;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #fff;
-        }
-        .edit-modal-subtitle {
-            margin: 2px 0 0;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.4);
-        }
-        .edit-modal-close {
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
-            color: rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .edit-modal-close:hover {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
-            color: #f87171;
-        }
-        .edit-modal-body {
-            padding: 1.25rem 1.5rem;
-            overflow-y: auto;
-            flex: 1;
-        }
-        .edit-row {
+
+        #editEntryModal .ed__grid3 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 1rem;
-        }
-        .edit-field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .edit-field.full {
-            grid-column: 1 / -1;
-        }
-        .edit-label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.6);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .edit-label svg {
-            opacity: 0.5;
-        }
-        .edit-hint {
-            font-weight: 400;
-            text-transform: none;
-            letter-spacing: 0;
-            opacity: 0.5;
-            font-size: 0.72rem;
-        }
-        .edit-input, .edit-select, .edit-textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
-            color: #fff;
-            font-size: 0.9rem;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-        .edit-input:focus, .edit-select:focus, .edit-textarea:focus {
-            outline: none;
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: rgba(var(--primary-rgb), 0.05);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
-        }
-        .edit-input.edit-time {
-            font-family: 'SF Mono', 'Consolas', monospace;
-            font-size: 1rem;
-            letter-spacing: 1px;
-        }
-        .edit-select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 36px;
-        }
-        .edit-textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-        /* Time Section */
-        .edit-section {
-            margin-bottom: 1rem;
-            padding: 1rem;
-            border-radius: 14px;
-            background: rgba(6, 182, 212, 0.04);
-            border: 1px solid rgba(6, 182, 212, 0.1);
-        }
-        .edit-section-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: #06b6d4;
-        }
-        .edit-time-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
-        }
-        .edit-calc-row {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(6, 182, 212, 0.1);
-        }
-        .edit-calc-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .edit-calc-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.4);
-        }
-        .edit-calc-value {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.7);
-            font-family: 'SF Mono', 'Consolas', monospace;
-        }
-        .edit-calc-item.highlight .edit-calc-value {
-            color: #10b981;
-            font-size: 1rem;
-        }
-        /* Advanced Section */
-        .edit-advanced-section {
-            margin-top: 0.5rem;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            background: rgba(255, 255, 255, 0.01);
-        }
-        .edit-advanced-toggle {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.5);
-            cursor: pointer;
-            user-select: none;
-            list-style: none;
-        }
-        .edit-advanced-toggle::-webkit-details-marker { display: none; }
-        .edit-advanced-toggle::after {
-            content: '';
-            margin-left: auto;
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 5px solid rgba(255, 255, 255, 0.3);
-            transition: transform 0.2s;
-        }
-        .edit-advanced-section[open] .edit-advanced-toggle::after {
-            transform: rotate(180deg);
-        }
-        .edit-advanced-content {
-            padding: 0 14px 14px;
-        }
-        /* Footer */
-        .edit-modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-        }
-        .edit-footer-info {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.35);
-        }
-        .edit-footer-actions {
-            display: flex;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
-        .edit-btn {
-            padding: 9px 20px;
-            border-radius: 10px;
-            border: none;
-            font-size: 0.85rem;
+        #editEntryModal .ed__calc {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 18px;
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        #editEntryModal .ed__calc b {
+            margin-left: 4px;
+            font-family: var(--font-num);
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        #editEntryModal .ed__override {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 4px 10px;
+            margin: -4px 0 0;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+        #editEntryModal .ed__override[hidden] { display: none; }
+        #editEntryModal .ed__link {
+            padding: 0;
+            border: 0;
+            background: none;
+            color: var(--primary);
+            font: inherit;
             font-weight: 600;
             cursor: pointer;
+            text-underline-offset: 3px;
+        }
+        #editEntryModal .ed__link:hover { text-decoration: underline; }
+
+        #editEntryModal .ed__note {
+            margin: 0;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--ed-line);
+            background: var(--ed-fill);
+            font-size: 14px;
+            line-height: 1.55;
+            color: var(--text-muted);
+            text-wrap: pretty;
+        }
+        #editEntryModal .ed__note[hidden] { display: none; }
+
+        /* Felder (auch die eigenen Felder aus renderEditCustomFields) */
+        #editEntryModal .ed__field,
+        #editEntryModal .edit-field { display: grid; gap: 7px; min-width: 0; }
+        #editEntryModal .ed__label,
+        #editEntryModal .edit-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        #editEntryModal .ed__input,
+        #editEntryModal .edit-input,
+        #editEntryModal .edit-select,
+        #editEntryModal .edit-textarea {
+            width: 100%;
+            min-width: 0;
+            height: 44px;
+            padding: 0 12px;
+            border-radius: 12px;
+            border: 1px solid var(--ed-line-2);
+            background: var(--ed-well);
+            color: var(--text-main);
+            font-size: 16px;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+        #editEntryModal .ed__num {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 15.5px;
+        }
+        #editEntryModal .ed__textarea,
+        #editEntryModal .edit-textarea {
+            height: auto;
+            min-height: 88px;
+            padding: 10px 12px;
+            line-height: 1.5;
+            resize: vertical;
+        }
+        #editEntryModal .ed__select,
+        #editEntryModal .edit-select {
+            appearance: none;
+            padding-right: 36px;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        #editEntryModal .ed__input::placeholder,
+        #editEntryModal .edit-input::placeholder { color: color-mix(in srgb, var(--text-muted) 70%, transparent); }
+        #editEntryModal .ed__input:hover,
+        #editEntryModal .edit-input:hover,
+        #editEntryModal .edit-select:hover { border-color: var(--hover-border); }
+        #editEntryModal .ed__input:focus,
+        #editEntryModal .edit-input:focus,
+        #editEntryModal .edit-select:focus,
+        #editEntryModal .edit-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
+        }
+        #editEntryModal .ed__unit-wrap { position: relative; }
+        #editEntryModal .ed__unit-wrap .ed__input { padding-right: 40px; }
+        #editEntryModal .ed__unit {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        #editEntryModal #editCustomFields { display: grid !important; gap: 14px !important; }
+
+        #editEntryModal .ed__more { border-top: 1px solid var(--ed-line); }
+        #editEntryModal .ed__more-sum {
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            justify-content: space-between;
+            padding: 14px 0 2px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            list-style: none;
+            cursor: pointer;
+            transition: color .2s ease;
         }
-        .edit-btn-ghost {
+        #editEntryModal .ed__more-sum::-webkit-details-marker { display: none; }
+        #editEntryModal .ed__more-sum:hover { color: var(--text-main); }
+        #editEntryModal .ed__more-sum svg { transition: transform .25s var(--ed-out); }
+        #editEntryModal .ed__more[open] .ed__more-sum svg { transform: rotate(180deg); }
+        #editEntryModal .ed__more-in {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            padding-top: 14px;
+        }
+
+        #editEntryModal .ed__foot {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 14px 24px;
+            border-top: 1px solid var(--ed-line);
+        }
+        #editEntryModal .ed__btn {
+            height: 42px;
+            padding: 0 20px;
+            border-radius: 12px;
+            font-size: 14.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color .2s ease, border-color .2s ease, transform .14s var(--ed-out);
+        }
+        #editEntryModal .ed__btn:active { transform: scale(.97); }
+        #editEntryModal .ed__btn--ghost {
+            border: 1px solid var(--ed-line-2);
             background: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-main);
         }
-        .edit-btn-ghost:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.15);
-            color: #fff;
+        #editEntryModal .ed__btn--ghost:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+        #editEntryModal .ed__btn--primary {
+            border: 1px solid transparent;
+            background: var(--primary);
+            color: var(--dn-on-primary, #fff);
+            min-width: 120px;
         }
-        .edit-btn-primary {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        #editEntryModal .ed__btn--primary:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
+
+        #editEntryModal :is(button, summary, input, select, textarea):focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
-        .edit-btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+        #editEntryModal .ed__btn--primary:focus-visible { outline-color: var(--text-main); }
+        #editEntryModal :is(.ed__input, .edit-input, .edit-select, .edit-textarea, .ed__hours-in):focus-visible { outline: none; }
+
+        /* Handy: Blatt von unten, wie die Schublade des Dashboards */
+        @media (max-width: 700px) {
+            #editEntryModal.ed { padding: 0 !important; align-items: flex-end; }
+            #editEntryModal .ed__box {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: 94dvh !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                border-radius: 22px 22px 0 0 !important;
+                border-bottom: 0;
+                animation: edUp .46s var(--ed-sheet) !important;
+            }
+            #editEntryModal .ed__grip { display: grid; place-items: center; height: 22px; flex: none; }
+            /* mobile-nav.css setzt font-size:16px !important auf JEDES Eingabefeld
+               (iOS-Zoom); die grosse Stundenzahl schrumpfte dadurch auf 16 px. */
+            #editEntryModal .ed__hours-in { font-size: 2.5rem !important; }
+            #editEntryModal .ed__grip span { width: 40px; height: 5px; border-radius: 3px; background: var(--ed-line-2); }
+            #editEntryModal .ed__head { padding: 2px 18px 12px; }
+            #editEntryModal .ed__body { padding: 2px 18px 18px; gap: 16px; }
+            #editEntryModal .ed__types {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                margin: 0 -18px;
+                padding: 0 18px 2px;
+                scroll-padding-inline: 18px;
+                scrollbar-width: none;
+            }
+            #editEntryModal .ed__types::-webkit-scrollbar { display: none; }
+            #editEntryModal .ed__type { flex: none; }
+            #editEntryModal .ed__time { padding: 14px; }
+            #editEntryModal .ed__band { padding: 0 8px; }
+            /* Drei Zeitfelder bleiben nebeneinander (Wunsch des Nutzers fuers Handy);
+               dafuer faellt das Uhr-Symbol im Feld weg, der Tipp oeffnet ohnehin das Rad. */
+            #editEntryModal .ed__grid3 { gap: 8px; }
+            #editEntryModal .ed__grid3 .ed__input { padding: 0 9px; }
+            #editEntryModal .ed__grid3 .ed__unit-wrap .ed__input { padding-right: 34px; }
+            #editEntryModal .ed__grid3 .ed__unit { right: 9px; }
+            #editEntryModal input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
+            #editEntryModal .ed__more-in { grid-template-columns: minmax(0, 1fr); }
+            #editEntryModal .ed__foot { padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); }
+            #editEntryModal .ed__btn { flex: 1; }
         }
-        /* Mobile */
-        @media (max-width: 600px) {
-            .edit-modal-advanced { max-width: 98vw; border-radius: 16px; }
-            .edit-row { grid-template-columns: 1fr; }
-            .edit-time-grid { grid-template-columns: 1fr 1fr; }
-            .edit-time-grid > .edit-field:last-child { grid-column: 1 / -1; }
-            .edit-calc-row { flex-wrap: wrap; }
-            .edit-modal-footer { flex-direction: column; }
-            .edit-footer-actions { width: 100%; justify-content: stretch; }
-            .edit-footer-actions .edit-btn { flex: 1; justify-content: center; }
+
+        @media (prefers-reduced-motion: reduce) {
+            #editEntryModal .ed__box { animation: none !important; }
+            #editEntryModal .ed__shift,
+            #editEntryModal .ed__more-sum svg { transition: none; }
         }
+
 
         /* 🔴 `.modal-box` hat keine Grundregel — jeder Dialog bringt seine
            eigene Flaeche mit, und #customMessageModal hatte nie eine. Der

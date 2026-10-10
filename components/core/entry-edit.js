@@ -13,6 +13,7 @@
 
         // Basic fields
         document.getElementById('editInpDate').value = entry.date;
+        edFillTypes(entry.type);
         document.getElementById('editInpType').value = entry.type;
         document.getElementById('editInpHours').value = entry.worked || '';
         document.getElementById('editInpProject').value = entry.project || '';
@@ -63,17 +64,208 @@
         const moodSelect = document.getElementById('editInpMood');
         if (moodSelect) moodSelect.value = entry.mood || '';
 
-        // Update subtitle with entry date
-        const dateObj = new Date(entry.date);
-        const dateStr = dateObj.toLocaleDateString(mwlLocale(), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-        document.getElementById('editModalSubtitle').textContent = dateStr;
-
+        edDateTitle();
         populateProjectOptions();
         editTypeChanged();
         recalcEditWorked();
+        // Gespeicherte Stunden zeigen, nicht die aus den Zeiten nachgerechneten: weichen
+        // sie ab, hat jemand sie von Hand gesetzt — dann gilt das auch hier weiter.
+        const nachgerechnet = parseFloat(document.getElementById('editInpHours').value);
+        if (entry.worked !== undefined && entry.worked !== null && !isNaN(nachgerechnet) && Math.abs(nachgerechnet - entry.worked) > 0.009) {
+            document.getElementById('editInpHours').value = entry.worked;
+            editManualHoursOverride = true;
+        }
+        edSummary();
         if (typeof renderEditCustomFields === 'function') renderEditCustomFields(entry);
 
-        document.getElementById('editEntryModal').classList.add('active');
+        const modal = document.getElementById('editEntryModal');
+        modal.classList.add('active');
+        const body = modal.querySelector('.ed__body');
+        if (body) body.scrollTop = 0;
+        const more = modal.querySelector('.ed__more');
+        if (more) more.open = !!entry.mood;   // Soll ist immer befuellt, taugt nicht als Signal
+    }
+
+    // ── Darstellung des neuen Dialogs (10.10.2026) ──────────────────────────
+    // Typen, die ihre Stunden selbst rechnen (saveEditEntry): dort gibt es weder
+    // Zeiten noch Stundenfeld, nur einen Satz, was der Tag zaehlt.
+    const ED_FIXED_TYPES = ['school', 'vacation', 'gleittag', 'sick', 'holiday'];
+    const ED_DE = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+
+    function edEN() { return document.documentElement.lang === 'en'; }
+    function edH(v) {
+        if (v === null || v === undefined || isNaN(v)) return '—';
+        return v.toLocaleString(mwlLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' h';
+    }
+
+    // Bis v8.3.1 kannte das Feld nur die sechs festen Typen. Ein Eintrag mit eigenem
+    // Typ fand seinen Wert nicht, .value wurde '' — und Speichern schrieb type: ''.
+    function edFillTypes(current) {
+        const sel = document.getElementById('editInpType');
+        if (!sel) return;
+        let types = [];
+        try { types = getAllEntryTypes().filter(t => t.id !== 'korrektur' || t.id === current); } catch (e) { types = []; }
+        if (types.length) {
+            sel.innerHTML = '';
+            types.forEach(t => {
+                const o = document.createElement('option');
+                o.value = t.id;
+                o.textContent = (typeof ctCleanLabel === 'function') ? ctCleanLabel(t.label, t.id) : (t.label || t.id);
+                sel.appendChild(o);
+            });
+        }
+        if (current && ![...sel.options].some(o => o.value === current)) {
+            const o = document.createElement('option');
+            o.value = current; o.textContent = current;
+            sel.appendChild(o);
+        }
+        edRenderTypes();
+    }
+
+    function edRenderTypes() {
+        const box = document.getElementById('edTypes');
+        const sel = document.getElementById('editInpType');
+        if (!box || !sel) return;
+        box.innerHTML = '';
+        [...sel.options].forEach(o => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'ed__type';
+            b.setAttribute('role', 'radio');
+            b.dataset.value = o.value;
+            let icon = '';
+            try { icon = getTypeIconHTML(o.value, 16); } catch (e) { icon = ''; }
+            try { const rgb = getTypeRgb(o.value); if (rgb) b.style.setProperty('--type-rgb', rgb); } catch (e) { /* ohne Typfarbe */ }
+            b.innerHTML = '<span class="ed__type-i" aria-hidden="true">' + icon + '</span>';
+            const l = document.createElement('span');
+            l.textContent = o.textContent;
+            b.appendChild(l);
+            b.addEventListener('click', () => edPickType(o.value, false));
+            b.addEventListener('keydown', edTypeKey);
+            box.appendChild(b);
+        });
+        edSyncTypes();
+    }
+
+    function edSyncTypes() {
+        const sel = document.getElementById('editInpType');
+        document.querySelectorAll('#edTypes .ed__type').forEach(b => {
+            const on = b.dataset.value === sel.value;
+            b.setAttribute('aria-checked', on ? 'true' : 'false');
+            b.tabIndex = on ? 0 : -1;
+        });
+    }
+
+    function edPickType(v, focus) {
+        const sel = document.getElementById('editInpType');
+        if (sel.value === v) return;
+        sel.value = v;
+        sel.dispatchEvent(new Event('change'));
+        edSyncTypes();
+        if (focus) { const b = document.querySelector('#edTypes .ed__type[aria-checked="true"]'); if (b) b.focus(); }
+    }
+
+    // Radiogruppe: Pfeile wandern UND waehlen (WAI-ARIA), Tab verlaesst die Gruppe.
+    function edTypeKey(e) {
+        const all = [...document.querySelectorAll('#edTypes .ed__type')];
+        const i = all.indexOf(e.currentTarget);
+        let n = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') n = (i + 1) % all.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') n = (i - 1 + all.length) % all.length;
+        else if (e.key === 'Home') n = 0;
+        else if (e.key === 'End') n = all.length - 1;
+        if (n < 0) return;
+        e.preventDefault();
+        edPickType(all[n].dataset.value, true);
+    }
+
+    function edDateTitle() {
+        const v = document.getElementById('editInpDate').value;
+        const t = document.getElementById('editModalSubtitle');
+        if (!t) return;
+        if (!v) { t.textContent = edEN() ? 'Pick a date' : 'Datum wählen'; return; }
+        const [y, m, d] = v.split('-').map(Number);
+        t.textContent = new Date(y, m - 1, d).toLocaleDateString(mwlLocale(), ED_DE);
+    }
+
+    function edPickDate() {
+        const inp = document.getElementById('editInpDate');
+        try { if (typeof inp.showPicker === 'function') { inp.showPicker(); return; } } catch (e) { /* ohne Nutzergeste o. ae. */ }
+        inp.focus();
+    }
+
+    function edDateChanged() {
+        edDateTitle();
+        recalcEditWorked();
+        edSummary();
+    }
+
+    function edSollFor() {
+        const manual = parseFloat(document.getElementById('editInpExpected').value);
+        if (!isNaN(manual)) return manual;
+        const dateVal = document.getElementById('editInpDate').value;
+        if (!dateVal) return null;
+        const [y, m, d] = dateVal.split('-').map(Number);
+        return editJobHoursDefault(new Date(y, m - 1, d).getDay()) || 0;
+    }
+
+    function edSummary() {
+        const sollEl = document.getElementById('edSoll');
+        const saldoEl = document.getElementById('edSaldo');
+        if (!sollEl || !saldoEl) return;
+        const soll = edSollFor();
+        const ist = parseFloat(document.getElementById('editInpHours').value);
+        sollEl.textContent = edH(soll);
+        saldoEl.classList.remove('is-pos', 'is-neg');
+        if (soll === null || isNaN(ist)) { saldoEl.textContent = '—'; }
+        else {
+            const diff = Math.round((ist - soll) * 100) / 100;
+            saldoEl.textContent = (diff > 0 ? '+' : diff < 0 ? '−' : '±') + edH(Math.abs(diff));
+            if (diff > 0) saldoEl.classList.add('is-pos');
+            if (diff < 0) saldoEl.classList.add('is-neg');
+        }
+        const ov = document.getElementById('edOverride');
+        if (ov) ov.hidden = !editManualHoursOverride;
+    }
+
+    // Schichtband: Anwesenheit von Beginn bis Ende auf einer Tagesleiste. Die Pause
+    // wird bewusst NICHT eingezeichnet — die App weiss nicht, wann sie war.
+    function edBand(startMins, endMins) {
+        const ticksEl = document.getElementById('edTicks');
+        const shift = document.getElementById('edShift');
+        const band = document.getElementById('edBand');
+        if (!ticksEl || !shift || !band) return;
+        const has = startMins !== null && endMins !== null;
+        let lo = 6, hi = 20;
+        if (has) {
+            lo = Math.min(lo, Math.floor(startMins / 60) - 1);
+            hi = Math.max(hi, Math.ceil(endMins / 60) + 1);
+            lo = Math.max(0, lo);
+        }
+        const span = hi - lo;
+        const step = span > 18 ? 4 : span > 12 ? 2 : 1;
+        let html = '';
+        for (let h = Math.ceil(lo / step) * step; h <= hi; h += step) {
+            const pct = ((h - lo) / span) * 100;
+            html += '<span style="left:' + pct.toFixed(2) + '%">' + String(h % 24).padStart(2, '0') + '</span>';
+        }
+        ticksEl.innerHTML = html;
+        band.classList.toggle('is-empty', !has);
+        if (has) {
+            const l = ((startMins / 60 - lo) / span) * 100;
+            const r = 100 - ((endMins / 60 - lo) / span) * 100;
+            shift.style.clipPath = 'inset(0 ' + Math.max(0, r).toFixed(2) + '% 0 ' + Math.max(0, l).toFixed(2) + '% round 7px)';
+        } else {
+            shift.style.clipPath = 'inset(0 50% 0 50% round 7px)';
+        }
+    }
+
+    function edHoursFromTimes() {
+        editManualHoursOverride = false;
+        recalcEditWorked();
+        edSummary();
+        const h = document.getElementById('editInpHours');
+        if (h) h.focus();
     }
 
     function populateProjectOptions() {
@@ -91,30 +283,34 @@
     function editTypeChanged() {
         const type = document.getElementById('editInpType').value;
         const timeSection = document.getElementById('editTimeSection');
+        const fixed = ED_FIXED_TYPES.includes(type);
 
-        // Show time section only for work type
-        if (type === 'work') {
-            timeSection.style.display = 'block';
-        } else {
-            timeSection.style.display = 'none';
-        }
+        // Zeiten und Stunden nur fuer Typen, deren Stunden saveEditEntry() aus dem
+        // Feld uebernimmt (Arbeit und eigene Typen). Vorher hing das an type === 'work':
+        // eigene Typen hatten ein Stundenfeld, aber keine Zeiten.
+        timeSection.style.display = fixed ? 'none' : '';
 
-        // Update info text
-        const infoText = document.getElementById('editInfoText');
+        // Saetze spiegeln, was saveEditEntry() fuer den Typ wirklich rechnet.
         const typeLabels = {
-            'work': 'Arbeitszeit mit Start/Ende/Pause bearbeiten',
-            'school': 'Berufsschultag = volle Sollstunden',
-            'vacation': 'Urlaubstag wird automatisch berechnet',
-            'gleittag': 'Gleittag: Überstundenabbau',
-            'sick': 'Kranktag ohne Auswirkung auf Saldo',
-            'holiday': 'Feiertag ohne Auswirkung auf Saldo'
+            'school': ['Ein Berufsschultag zählt mit den Sollstunden des Tages. Der Saldo bleibt gleich.', 'A vocational school day counts with the target hours of the day. Your balance stays the same.'],
+            'vacation': ['Ein Urlaubstag zählt mit den Sollstunden des Tages. Der Saldo bleibt gleich.', 'A vacation day counts with the target hours of the day. Your balance stays the same.'],
+            'gleittag': ['Ein Gleittag zieht die Sollstunden des Tages vom Saldo ab.', 'A flex day takes the target hours of the day off your balance.'],
+            'sick': ['Ein Krankheitstag zählt mit den Sollstunden des Tages. Der Saldo bleibt gleich.', 'A sick day counts with the target hours of the day. Your balance stays the same.'],
+            'holiday': ['Ein Feiertag zählt mit den Sollstunden des Tages. Der Saldo bleibt gleich.', 'A public holiday counts with the target hours of the day. Your balance stays the same.']
         };
-        infoText.textContent = typeLabels[type] || 'Änderungen werden sofort gespeichert';
+        const note = document.getElementById('editFooterInfo');
+        const infoText = document.getElementById('editInfoText');
+        if (fixed && typeLabels[type]) {
+            infoText.textContent = typeLabels[type][edEN() ? 1 : 0];
+            note.hidden = false;
+        } else {
+            infoText.textContent = '';
+            note.hidden = true;
+        }
+        edSyncTypes();
     }
 
     function recalcEditWorked() {
-        if (editManualHoursOverride) return;
-
         const startVal = document.getElementById('editInpStart').value;
         const endVal = document.getElementById('editInpEnd').value;
         const breakVal = parseInt(document.getElementById('editInpBreak').value) || 0;
@@ -125,8 +321,10 @@
 
         if (!startVal || !endVal) {
             grossEl.textContent = '—';
-            breakEl.textContent = '—';
+            breakEl.textContent = breakVal ? breakVal + ' min' : '—';
             netEl.textContent = '—';
+            edBand(null, null);
+            edSummary();
             return;
         }
 
@@ -145,9 +343,13 @@
         const grossHours = grossMins / 60;
         const netHours = netMins / 60;
 
-        grossEl.textContent = grossHours.toFixed(2) + 'h';
+        // Band und Rechenzeile folgen den Zeiten immer — auch wenn die Stunden von
+        // Hand ueberschrieben sind; nur das Stundenfeld bleibt dann unangetastet.
+        edBand(startMins, endMins);
+        grossEl.textContent = edH(grossHours);
         breakEl.textContent = breakVal + ' min';
-        netEl.textContent = netHours.toFixed(2) + 'h';
+        netEl.textContent = edH(netHours);
+        if (editManualHoursOverride) { edSummary(); return; }
 
         // Auto-fill hours field
         if (netHours >= 0) {
@@ -162,6 +364,7 @@
             const diff = netHours - expected;
             document.getElementById('editInpDiff').value = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'h';
         }
+        edSummary();
     }
 
     // Soll-Default für den im Edit-Modal gewählten Job (fällt auf Legacy zurück)
@@ -215,7 +418,7 @@
         const newMood = document.getElementById('editInpMood')?.value || '';
 
         if (!newDate) {
-            showCustomMessage('❌ Validierungsfehler', 'Bitte gib ein Datum ein.', 'error');
+            showCustomMessage(edEN() ? 'Date missing' : 'Datum fehlt', edEN() ? 'Pick the day this entry belongs to.' : 'Wähle den Tag, zu dem der Eintrag gehört.', 'error');
             return;
         }
 
@@ -291,5 +494,5 @@
         try { updateUI(); } catch(e) {}
         try { renderLists(); } catch(e) {}
 
-        showCustomMessage('✅ Gespeichert', 'Eintrag erfolgreich aktualisiert!', 'success');
+        showCustomMessage(edEN() ? 'Saved' : 'Gespeichert', edEN() ? 'The entry has been updated.' : 'Der Eintrag ist aktualisiert.', 'success');
     }

@@ -2415,197 +2415,155 @@
         </div>
     </div>
 
-    <!-- ADVANCED EDIT ENTRY MODAL -->
-    <div class="modal" id="editEntryModal">
-        <div class="modal-box edit-modal-advanced">
-            <!-- Header -->
-            <div class="edit-modal-header">
-                <div class="edit-modal-header-content">
-                    <div class="edit-modal-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </div>
-                    <div>
-                        <h3 class="edit-modal-title">Eintrag bearbeiten</h3>
-                        <p class="edit-modal-subtitle" id="editModalSubtitle">Vollständige Nachbearbeitung</p>
-                    </div>
+    <!-- EINTRAG BEARBEITEN
+         Neu gebaut 10.10.2026 in der Sprache des neuen Dashboards (Tokens statt fester
+         Farben, ein Akzent). Alle ids des Vorgaengers bleiben: entry-edit.js liest und
+         schreibt sie, renderEditCustomFields() baut in #editCustomFields mit den Klassen
+         edit-input/edit-field/edit-label. Das <select id="editInpType"> bleibt Wert-Quelle,
+         sichtbar sind die Chips (#edTypes), die entry-edit.js aus seinen Optionen baut. -->
+    <div class="modal ed" id="editEntryModal" onclick="if(event.target===this)closeEditModal()">
+        <div class="modal-box ed__box" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+            <div class="ed__grip" aria-hidden="true"><span></span></div>
+
+            <header class="ed__head">
+                <div class="ed__head-txt">
+                    <h3 class="ed__kicker" id="edTitle">Eintrag bearbeiten</h3>
+                    <!-- Das Datum IST der Titel. Das native Feld liegt unsichtbar daneben;
+                         der Knopf oeffnet dessen Kalender (showPicker), Tastatur-Fokus landet
+                         sonst im Feld selbst. -->
+                    <button type="button" class="ed__date" onclick="edPickDate()" aria-label="Datum ändern">
+                        <span class="ed__date-txt" id="editModalSubtitle">Datum</span>
+                        <svg class="ed__date-i" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>
+                    </button>
+                    <input type="date" id="editInpDate" class="ed__date-native" tabindex="-1" aria-label="Datum" onchange="edDateChanged()">
                 </div>
-                <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Schließen">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <button type="button" class="ed__x" onclick="closeEditModal()" aria-label="Schließen">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
-            </div>
+            </header>
 
-            <!-- Body -->
-            <div class="edit-modal-body">
-                <!-- Row 1: Datum & Typ -->
-                <div class="edit-row">
-                    <div class="edit-field">
-                        <label class="edit-label">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            Datum
-                        </label>
-                        <input type="date" id="editInpDate" class="edit-input">
-                    </div>
-                    <div class="edit-field">
-                        <label class="edit-label">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                            Typ
-                        </label>
-                        <!-- Typ-Picker: das native <select> bleibt Wert-Quelle (entry-edit.js
-                             liest/setzt .value), sichtbar ist die Listbox mit SVG-Icons. -->
-                        <div class="type-picker">
-                            <select id="editInpType" class="edit-select type-picker__native" onchange="editTypeChanged();if(typeof renderEditCustomFields==='function')renderEditCustomFields()" tabindex="-1">
-                                <option value="work">Arbeit</option>
-                                <option value="school">Berufsschule</option>
-                                <option value="vacation">Urlaub</option>
-                                <option value="gleittag">Gleittag</option>
-                                <option value="sick">Krank</option>
-                                <option value="holiday">Feiertag</option>
-                            </select>
-                            <button type="button" class="type-picker__trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Eintragstyp">
-                                <span class="type-picker__icon type-tile" aria-hidden="true"></span>
-                                <span class="type-picker__value">Arbeit</span>
-                                <svg class="type-picker__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                            </button>
-                            <div class="type-picker__panel" role="listbox" aria-label="Eintragstyp"></div>
-                        </div>
-                    </div>
-                    <div class="edit-field" id="editJobRow" style="display:none;">
-                        <label class="edit-label">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                            Job
-                        </label>
-                        <select id="editInpJob" class="edit-select" onchange="recalcEditWorked()"></select>
-                    </div>
+            <div class="ed__body">
+                <div class="ed__types" id="edTypes" role="radiogroup" aria-label="Eintragstyp"></div>
+                <select id="editInpType" class="ed__native" tabindex="-1" aria-hidden="true" onchange="editTypeChanged();if(typeof renderEditCustomFields==='function')renderEditCustomFields()">
+                    <option value="work">Arbeit</option>
+                    <option value="school">Berufsschule</option>
+                    <option value="vacation">Urlaub</option>
+                    <option value="gleittag">Gleittag</option>
+                    <option value="sick">Krank</option>
+                    <option value="holiday">Feiertag</option>
+                </select>
+
+                <div class="ed__field" id="editJobRow" style="display:none;">
+                    <label class="ed__label" for="editInpJob">Job</label>
+                    <select id="editInpJob" class="ed__input ed__select" onchange="recalcEditWorked()"></select>
                 </div>
 
-                <!-- Zeit-Sektion (nur für Arbeit sichtbar) -->
-                <div class="edit-section" id="editTimeSection">
-                    <div class="edit-section-header">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        Arbeitszeit
+                <!-- Stunden, Schichtband, Zeiten. Nur fuer Typen, die Stunden tragen;
+                     Schule/Urlaub/Krank/Feiertag/Gleittag rechnet saveEditEntry() selbst. -->
+                <section class="ed__time" id="editTimeSection" aria-label="Arbeitszeit">
+                    <div class="ed__sum">
+                        <div class="ed__hours">
+                            <label class="ed__label" for="editInpHours">Geleistete Stunden</label>
+                            <div class="ed__hours-row">
+                                <input type="number" id="editInpHours" class="ed__hours-in" step="any" min="0" inputmode="decimal" placeholder="0" onchange="editHoursManualChanged();edSummary()" oninput="edSummary()">
+                                <span class="ed__hours-unit">h</span>
+                            </div>
+                        </div>
+                        <dl class="ed__stats">
+                            <div><dt>Soll</dt><dd id="edSoll">—</dd></div>
+                            <div><dt>Saldo</dt><dd id="edSaldo">—</dd></div>
+                        </dl>
                     </div>
-                    <div class="edit-time-grid">
-                        <div class="edit-field">
-                            <label class="edit-label">Beginn</label>
-                            <input type="time" id="editInpStart" class="edit-input edit-time" onchange="recalcEditWorked()">
+
+                    <div class="ed__band" id="edBand" aria-hidden="true">
+                        <div class="ed__track"><div class="ed__shift" id="edShift"></div></div>
+                        <div class="ed__ticks" id="edTicks"></div>
+                    </div>
+
+                    <div class="ed__grid3">
+                        <div class="ed__field">
+                            <label class="ed__label" for="editInpStart">Beginn</label>
+                            <input type="time" id="editInpStart" class="ed__input ed__num" onchange="recalcEditWorked()" oninput="recalcEditWorked()">
                         </div>
-                        <div class="edit-field">
-                            <label class="edit-label">Ende</label>
-                            <input type="time" id="editInpEnd" class="edit-input edit-time" onchange="recalcEditWorked()">
+                        <div class="ed__field">
+                            <label class="ed__label" for="editInpEnd">Ende</label>
+                            <input type="time" id="editInpEnd" class="ed__input ed__num" onchange="recalcEditWorked()" oninput="recalcEditWorked()">
                         </div>
-                        <div class="edit-field">
-                            <label class="edit-label">Pause (Min)</label>
-                            <input type="number" id="editInpBreak" class="edit-input" min="0" step="5" placeholder="30" onchange="recalcEditWorked()">
+                        <div class="ed__field">
+                            <label class="ed__label" for="editInpBreak">Pause</label>
+                            <div class="ed__unit-wrap">
+                                <input type="number" id="editInpBreak" class="ed__input ed__num" min="0" step="5" inputmode="numeric" placeholder="0" onchange="recalcEditWorked()" oninput="recalcEditWorked()">
+                                <span class="ed__unit">min</span>
+                            </div>
                         </div>
                     </div>
-                    <!-- Berechnete Arbeitszeit -->
-                    <div class="edit-calc-row">
-                        <div class="edit-calc-item">
-                            <span class="edit-calc-label">Brutto:</span>
-                            <span class="edit-calc-value" id="editCalcGross">—</span>
-                        </div>
-                        <div class="edit-calc-item">
-                            <span class="edit-calc-label">Pause:</span>
-                            <span class="edit-calc-value" id="editCalcBreak">—</span>
-                        </div>
-                        <div class="edit-calc-item highlight">
-                            <span class="edit-calc-label">Netto:</span>
-                            <span class="edit-calc-value" id="editCalcNet">—</span>
-                        </div>
-                    </div>
+
+                    <p class="ed__calc">
+                        <span><span>Anwesend</span> <b id="editCalcGross">—</b></span>
+                        <span><span>Pause</span> <b id="editCalcBreak">—</b></span>
+                        <span><span>Netto</span> <b id="editCalcNet">—</b></span>
+                    </p>
+                    <!-- Erscheint, sobald jemand die Stunden von Hand ueberschreibt:
+                         ab dann rechnen die Zeiten nicht mehr nach (editManualHoursOverride). -->
+                    <p class="ed__override" id="edOverride" hidden>
+                        <span>Stunden von Hand gesetzt.</span>
+                        <button type="button" class="ed__link" onclick="edHoursFromTimes()">Aus den Zeiten berechnen</button>
+                    </p>
+                </section>
+
+                <p class="ed__note" id="editFooterInfo" hidden><span id="editInfoText"></span></p>
+
+                <div class="ed__field">
+                    <label class="ed__label" for="editInpProject">Projekt oder Kunde</label>
+                    <input type="text" id="editInpProject" class="ed__input" list="editProjectList" placeholder="Optional" autocomplete="off">
+                    <datalist id="editProjectList"></datalist>
+                </div>
+                <div class="ed__field">
+                    <label class="ed__label" for="editInpNotes">Notiz</label>
+                    <textarea id="editInpNotes" class="ed__input ed__textarea" rows="3" placeholder="Was war an dem Tag?"></textarea>
                 </div>
 
-                <!-- Manuelle Stunden (Alternative/Override) -->
-                <div class="edit-row">
-                    <div class="edit-field full">
-                        <label class="edit-label">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                            Geleistete Stunden (Dezimal)
-                            <span class="edit-hint">— überschreibt Zeit-Berechnung</span>
-                        </label>
-                        <input type="number" id="editInpHours" class="edit-input" step="any" placeholder="z.B. 8.5" onchange="editHoursManualChanged()">
-                    </div>
+                <div class="ed__custom" id="editCustomFieldsRow" style="display:none;">
+                    <div id="editCustomFields"></div>
                 </div>
 
-                <!-- Projekt -->
-                <div class="edit-row">
-                    <div class="edit-field full">
-                        <label class="edit-label">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                            Projekt / Kunde
-                        </label>
-                        <input type="text" id="editInpProject" class="edit-input" list="editProjectList" placeholder="Projekt auswählen oder eingeben">
-                        <datalist id="editProjectList"></datalist>
-                    </div>
-                </div>
-                <div class="edit-row">
-                    <div class="edit-field full">
-                        <label class="edit-label">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                            Notizen / Info
-                        </label>
-                        <textarea id="editInpNotes" class="edit-textarea" placeholder="z.B. Bugfix in Modul X, Meeting mit Kunde..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Custom Fields (user-definiert, je nach Eintragstyp) -->
-                <div class="edit-row" id="editCustomFieldsRow" style="display:none;">
-                    <div id="editCustomFields" style="width:100%;"></div>
-                </div>
-
-                <!-- Erweiterte Optionen (kollabierbar) -->
-                <details class="edit-advanced-section">
-                    <summary class="edit-advanced-toggle">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                        Erweiterte Optionen
+                <details class="ed__more">
+                    <summary class="ed__more-sum">
+                        <span>Weitere Angaben</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                     </summary>
-                    <div class="edit-advanced-content">
-                        <div class="edit-row">
-                            <div class="edit-field">
-                                <label class="edit-label">Soll-Stunden</label>
-                                <input type="number" id="editInpExpected" class="edit-input" step="any" placeholder="Auto">
-                            </div>
-                            <div class="edit-field">
-                                <label class="edit-label">Saldo (Auto)</label>
-                                <input type="text" id="editInpDiff" class="edit-input" readonly style="opacity:0.6;">
+                    <div class="ed__more-in">
+                        <div class="ed__field">
+                            <label class="ed__label" for="editInpExpected">Sollstunden für den Tag</label>
+                            <div class="ed__unit-wrap">
+                                <input type="number" id="editInpExpected" class="ed__input ed__num" step="any" min="0" inputmode="decimal" placeholder="Automatisch" oninput="recalcEditWorked();edSummary()">
+                                <span class="ed__unit">h</span>
                             </div>
                         </div>
-                        <div class="edit-row">
-                            <div class="edit-field full">
-                                <label class="edit-label">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
-                                    Mood
-                                </label>
-                                <select id="editInpMood" class="edit-select">
-                                    <option value="">— Kein Mood —</option>
-                                    <option value="energized">Energized</option>
-                                    <option value="focused">Focused</option>
-                                    <option value="productive">Productive</option>
-                                    <option value="creative">Creative</option>
-                                    <option value="neutral">Neutral</option>
-                                    <option value="tired">Tired</option>
-                                    <option value="stressed">Stressed</option>
-                                </select>
-                            </div>
+                        <div class="ed__field">
+                            <label class="ed__label" for="editInpMood">Stimmung</label>
+                            <select id="editInpMood" class="ed__input ed__select">
+                                <option value="">Keine Angabe</option>
+                                <option value="energized">Voller Energie</option>
+                                <option value="focused">Fokussiert</option>
+                                <option value="productive">Produktiv</option>
+                                <option value="creative">Kreativ</option>
+                                <option value="neutral">Neutral</option>
+                                <option value="tired">Müde</option>
+                                <option value="stressed">Gestresst</option>
+                            </select>
                         </div>
+                        <!-- Saldo zeigt jetzt #edSaldo oben; recalcEditWorked() schreibt
+                             trotzdem hierher, deshalb bleibt das Feld als hidden stehen. -->
+                        <input type="hidden" id="editInpDiff">
                     </div>
                 </details>
             </div>
 
-            <!-- Footer -->
-            <div class="edit-modal-footer">
-                <div class="edit-footer-info" id="editFooterInfo">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                    <span id="editInfoText">Änderungen werden sofort gespeichert</span>
-                </div>
-                <div class="edit-footer-actions">
-                    <button class="edit-btn edit-btn-ghost" onclick="closeEditModal()">Abbrechen</button>
-                    <button class="edit-btn edit-btn-primary" onclick="saveEditEntry()">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        Speichern
-                    </button>
-                </div>
-            </div>
+            <footer class="ed__foot">
+                <button type="button" class="ed__btn ed__btn--ghost" onclick="closeEditModal()">Abbrechen</button>
+                <button type="button" class="ed__btn ed__btn--primary" onclick="saveEditEntry()">Speichern</button>
+            </footer>
         </div>
     </div>
 

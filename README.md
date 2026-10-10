@@ -253,7 +253,7 @@ Aktuelle Version: **v8.3.1** · 2026-10-10
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.3.1** | 2026-10-10 | Die Wetteranzeige im Dashboard erscheint wieder, NFC ist wieder einzurichten |
+| **8.3.1** | 2026-10-10 | Neuer Dialog zum Bearbeiten von Einträgen, die Wetteranzeige ist zurück |
 | 8.3.0 | 2026-10-10 | Das Dashboard ist neu: ruhiger aufgebaut, mit Analysen direkt in der Woche |
 | 8.2.5 | 2026-10-09 | Das Berichtsheft liegt jetzt auf einem ruhigen Schreibtisch |
 | 8.2.4 | 2026-10-09 | Die Wetteransicht flackert auf dem Handy nicht mehr |

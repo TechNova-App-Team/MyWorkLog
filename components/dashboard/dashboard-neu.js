@@ -407,6 +407,7 @@ function dnSetInk() {
     const ink = ((L + 0.05) / 0.05) > (1.05 / (L + 0.05)) ? 'rgba(7, 9, 14, .92)' : '#fff';
     const v = dn$('view-dashboard'); if (v) v.style.setProperty('--dn-on-primary', ink);
     const d = dn$('dnDrawer'); if (d) d.style.setProperty('--dn-on-primary', ink);
+    const e = dn$('editEntryModal'); if (e) e.style.setProperty('--dn-on-primary', ink);
 }
 
 function dnRenderTop() {
