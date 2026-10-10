@@ -448,18 +448,7 @@ function dnRenderHero(by, today) {
     const q = DN_QUOTES[doy % DN_QUOTES.length];
     dn$('dnQuote').textContent = dnT('„' + q[0] + '“', '“' + q[1] + '”');
 
-    // Wochenkarte: Ist gegen Soll der laufenden Woche (echter Nenner).
-    const mo = dnMonday(0); let ist = 0, soll = 0;
-    for (let i = 0; i < 7; i++) { const d = dnAdd(mo, i), k = dnISO(d); soll += dnSoll(d); (by[k] || []).forEach(function (e) { ist += dnEntryH(e); }); }
-    ist += dnTimerH();
-    const fr = dnAdd(mo, 4);
-    dn$('dnKwTitle').textContent = dnT('Woche ', 'Week ') + dnKW(mo);
-    dn$('dnKwRange').textContent = mo.toLocaleDateString(dnLoc(), { day: '2-digit', month: 'short' }).replace('.', '') + ' – ' + fr.toLocaleDateString(dnLoc(), { day: '2-digit', month: 'short' }).replace('.', '');
-    const kr = dn$('dnKwRing'), pct = soll > 0 ? ist / soll : 0;
-    dnRing(kr, pct, { size: 74, sw: 6 });
-    if (!kr.querySelector('b')) kr.insertAdjacentHTML('beforeend', '<b></b>');
-    dnCount(kr.querySelector('b'), 'kw', Math.round(pct * 100), function (v) { return Math.round(v) + ' %'; });
-    kr.title = dnNum(ist, 1) + ' / ' + dnNum(soll, 1) + ' h';
+    dnRenderKw(by, today);
 
     const total = dnTotal(), pr = dnProjection();
     dn$('dnFlexLbl').textContent = dnT('Gleitzeit', 'Flexitime');
@@ -469,6 +458,40 @@ function dnRenderHero(by, today) {
     dn$('dnFlexMeta').textContent = pr.ok ? dnT('In 6 Wochen ', 'In 6 weeks ') + dnSigned(pr.value, 1) + ' h'
         : dnT('Prognose ab ' + DN_PROG_MIN + ' Tagen (' + pr.n + ' / ' + DN_PROG_MIN + ')', 'Forecast from ' + DN_PROG_MIN + ' days (' + pr.n + ' / ' + DN_PROG_MIN + ')');
     dnSpark(by, today);
+}
+// Wochen-Anzeige im Kopf: Ist gegen Soll der LAUFENDEN Woche (echter Nenner),
+// ein Balken je Tag ab gemeinsamer Grundlinie mit Soll-Marke, darunter der Rest.
+// Wochenende nur, wenn dort ein Soll steht oder gearbeitet wurde.
+function dnRenderKw(by, today) {
+    const mo = dnMonday(0), todayK = dnISO(today), days = [];
+    let ist = 0, soll = 0;
+    for (let i = 0; i < 7; i++) {
+        const d = dnAdd(mo, i), k = dnISO(d), s = dnSoll(d);
+        let h = (by[k] || []).reduce(function (a, e) { return a + dnEntryH(e); }, 0);
+        if (k === todayK) h += dnTimerH();
+        ist += h; soll += s;
+        if (i >= 5 && !s && h <= 0.004) continue;
+        days.push({ d: d, k: k, h: h, s: s });
+    }
+    const last = days[days.length - 1].d, fmt = function (d) { return d.toLocaleDateString(dnLoc(), { day: '2-digit', month: 'short' }).replace('.', ''); };
+    dn$('dnKwTitle').textContent = dnT('Woche ', 'Week ') + dnKW(mo);
+    dn$('dnKwRange').textContent = fmt(mo) + ' – ' + fmt(last);
+    dnCount(dn$('dnKwVal'), 'kwIst', ist, function (v) { return '<b>' + dnNum(v, 1) + '</b><span>' + (soll > 0 ? ' / ' + dnNum(soll, 1) : '') + ' h</span>'; });
+    const ref = Math.max(1, Math.max.apply(null, days.map(function (x) { return Math.max(x.h, x.s); })));
+    const host = dn$('dnKwBars');
+    host.innerHTML = days.map(function (x) {
+        const cls = 'dn-kwb' + (x.k === todayK ? ' is-today' : '') + (x.k > todayK && x.h <= 0.004 ? ' is-future' : '') + (x.s > 0 && x.h >= x.s - 0.05 ? ' is-met' : '');
+        const name = x.d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', '');
+        const tip = x.d.toLocaleDateString(dnLoc(), { weekday: 'long' }) + ': ' + dnNum(x.h, 1) + (x.s ? ' / ' + dnNum(x.s, 1) : '') + ' h';
+        return '<span class="' + cls + '" title="' + dnEsc(tip) + '"><span class="dn-kwb__t"><i style="height:' + (x.h / ref * 100).toFixed(1) + '%"></i>' +
+            (x.s ? '<em style="bottom:' + (x.s / ref * 100).toFixed(1) + '%"></em>' : '') + '</span><small>' + dnEsc(name.slice(0, dnEN() ? 3 : 2)) + '</small></span>';   // EN 3 Buchstaben, sonst dreht die Laufzeit-MAP Mo/Fr um (dashboard.md, Falle 5)
+    }).join('');
+    host.setAttribute('role', 'img');
+    host.setAttribute('aria-label', days.map(function (x) { return x.d.toLocaleDateString(dnLoc(), { weekday: 'short' }) + ' ' + dnNum(x.h, 1) + ' h'; }).join(', '));
+    const pct = soll > 0 ? Math.round(ist / soll * 100) : 0, rest = soll - ist;
+    dn$('dnKwMeta').textContent = soll <= 0 ? dnT('Kein Soll in dieser Woche', 'No target this week')
+        : rest > 0.05 ? pct + ' %' + dnT(', noch ', ', ') + dnNum(rest, 1) + dnT(' h bis zum Soll', ' h to go')
+        : pct + ' %' + dnT(' erreicht, ', ' reached, ') + dnSigned(-rest, 1) + ' h';
 }
 // Saldo-Verlauf der letzten 30 Tage als Kurve ohne Achse (nur Richtung).
 function dnSpark(by, today) {
@@ -1092,6 +1115,7 @@ function dnIntro() {
     }
     document.querySelectorAll('#dnSaldoFigs .dn-fig, #dnDistLeg li, #dnFacts > div, #dnVacRows > div').forEach(function (n, i) { dnAnim(n, [{ transform: 'translateY(8px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, delay: 300 + (i % 6) * 60, easing: ease, fill: 'backwards' }); });
     document.querySelectorAll('#dnDistBar i, #dnVacBar i').forEach(function (n, i) { dnAnim(n, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 900, delay: 500 + i * 80, easing: ease, fill: 'backwards' }); });
+    document.querySelectorAll('#dnKwBars i').forEach(function (n, i) { n.style.transformOrigin = 'bottom'; dnAnim(n, [{ transform: 'scaleY(0)' }, { transform: 'none' }], { duration: 800, delay: 250 + i * 70, easing: ease, fill: 'backwards' }); });
     document.querySelectorAll('#dnCalGrid .dn-cd i').forEach(function (n, i) { dnAnim(n, [{ transform: 'scale(0)' }, { transform: 'none' }], { duration: 400, delay: 500 + i * 18, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'backwards' }); });
     const sp = document.querySelector('#dnSpark path:last-child');
     if (sp && sp.getTotalLength) { const L = sp.getTotalLength(); if (L) dnAnim(sp, [{ strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDasharray: L + ' ' + L, strokeDashoffset: 0 }], { duration: 1300, delay: 300, easing: 'cubic-bezier(.77,0,.175,1)' }); }

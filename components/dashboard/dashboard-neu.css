@@ -48,7 +48,8 @@
 .dn-notes > .umf-banner { margin-bottom: 14px; }
 
 /* ── Kopfleiste ── */
-.dn-top { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
+/* Sitzt im Kopf rechts neben den zwei Anzeigen, senkrecht mittig. */
+.dn-top { display: flex; align-items: center; justify-content: flex-end; align-self: center; margin-left: 24px; }
 /* Werkzeuge als EINE ruhige Leiste statt sechs einzelner Kaesten (Wunsch des
    Nutzers, 10.10.2026: "gefaellt mir oben gar nicht"). */
 .dn-top__tools { display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 14px; border: 1px solid var(--dn-line); background: var(--dn-panel); }
@@ -91,14 +92,29 @@
 .dn-card + .dn-card { border-left: 1px solid var(--dn-line-2); }
 .dn-card:last-child { padding-right: 4px; }
 button.dn-card { cursor: pointer; border-radius: 0; font: inherit; }
-button.dn-card:hover .dn-kw__txt b { color: var(--primary); }
+button.dn-card:hover .dn-kw__top > span { color: var(--text-main); }
 button.dn-card:active { transform: scale(.985); }
 button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-offset: 4px; border-radius: 10px; }
-.dn-kw .dn-tile { display: none; }
-.dn-kw { min-width: 0; }
-.dn-kw__txt { display: grid; gap: 4px; flex: 1; }
-.dn-kw__txt b { font-size: 18px; font-weight: 600; transition: color .2s ease; }
-.dn-kw__txt small { color: var(--text-muted); font-size: 14px; }
+/* Wochen-Anzeige, gleich gebaut wie die Gleitzeit: Titel, Zahl, Grafik, Satz.
+   Balken: Ist je Tag ab gemeinsamer Grundlinie, Strich = Soll des Tages.
+   Voll gefaerbt erst, wenn das Soll erreicht ist; kommende Tage gestrichelt. */
+.dn-kw { flex-direction: column; align-items: stretch; gap: 2px; min-width: 210px; }
+.dn-kw__top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; color: var(--text-muted); font-size: 14px; }
+.dn-kw__top > span { transition: color .2s ease; }
+.dn-kw__top small { font-size: 12.5px; white-space: nowrap; }
+.dn-kw__val { white-space: nowrap; }
+.dn-kw__val b { font-size: 28px; font-weight: 600; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.dn-kw__val span { margin-left: 3px; font-size: 15px; font-weight: 500; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.dn-kw__bars { display: flex; gap: 6px; height: 40px; margin: 2px 0 3px; }
+.dn-kwb { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dn-kwb__t { position: relative; flex: 1; width: 100%; max-width: 24px; border-radius: 4px 4px 0 0; background: var(--dn-line); }
+.dn-kwb__t i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--primary) 55%, transparent); transition: height .7s var(--dn-out); }
+.dn-kwb.is-met .dn-kwb__t i { background: var(--primary); }
+.dn-kwb__t em { position: absolute; left: -3px; right: -3px; height: 2px; margin-bottom: -1px; border-radius: 1px; background: var(--text-main); opacity: .6; }
+.dn-kwb.is-future .dn-kwb__t { background: none; outline: 1px dashed var(--dn-line-2); outline-offset: -1px; }
+.dn-kwb small { font-size: 10.5px; line-height: 1; color: var(--text-muted); }
+.dn-kwb.is-today small { color: var(--primary); font-weight: 600; }
+.dn-kw__meta { color: var(--text-muted); font-size: 12.5px; }
 .dn-flex { flex-direction: column; align-items: stretch; gap: 2px; min-width: 210px; }
 .dn-flex__top { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); font-size: 14px; }
 .dn-mini { width: 30px; height: 30px; margin: -6px -8px -6px 0; display: grid; place-items: center; border-radius: 9px; border: 1px solid transparent; background: none; color: var(--text-muted); cursor: pointer;
@@ -120,8 +136,6 @@ button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-of
 .dn-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .dn-ring .trk { fill: none; stroke: var(--dn-line-2); }
 .dn-ring .arc { fill: none; stroke: var(--primary); stroke-linecap: round; transition: stroke-dashoffset .9s var(--dn-out); }
-.dn-ring--sm { width: 64px; height: 64px; }
-.dn-ring--sm b { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .dn-ring--lg { width: min(184px, 100%); aspect-ratio: 1; margin: 6px auto 4px; }
 .dn-ring__c { display: grid; justify-items: center; gap: 2px; text-align: center; }
 .dn-ring__c b { font-size: 38px; font-weight: 600; letter-spacing: -.04em; font-variant-numeric: tabular-nums; line-height: 1; }
@@ -529,9 +543,14 @@ body.dn-locked .mobile-bottom-nav, body.dn-locked .mob-nav-handle { transform: t
 }
 
 /* ── Seite: Umbruch an der Breite des Dashboards ── */
+@container dn (max-width: 1320px) {
+    .dn-lang .cmd-label { display: none; }
+    .dn-top .dn-lang { padding: 0; width: 36px; justify-content: center; }
+}
 @container dn (max-width: 1060px) {
     .dn-hero { grid-template-columns: minmax(0, 1fr); align-items: start; }
-    .dn-hero__cards > * { flex: 1; min-width: 0; }
+    .dn-hero__cards > .dn-card { flex: 1; min-width: 0; }
+    .dn-hero__cards > .dn-top { margin-left: auto; }
     .dn-mod[data-size="s"], .dn-mod[data-size="m"] { grid-column: span 6; }
     .dn-mod[data-size="l"] { grid-column: span 12; }
 }
@@ -539,14 +558,17 @@ body.dn-locked .mobile-bottom-nav, body.dn-locked .mob-nav-handle { transform: t
     .dn-date span, .dn-weather small, .dn-lang .cmd-label { display: none; }
     .dn-top .dn-date, .dn-top .dn-lang { padding: 0; width: 36px; justify-content: center; }
     .dn-menu__size { display: none; }
-    .dn-top__tools { flex-wrap: wrap; justify-content: flex-end; }
-    .dn-card { padding: 4px 16px; }
+    /* Handy: die Leiste nach oben neben den Menueknopf, die zwei Anzeigen
+       nebeneinander unter die Begruessung (Kinder des Wrappers ins Raster). */
+    .dn-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "tools tools" "hello hello" "kw flex"; row-gap: 18px; column-gap: 0; }
+    .dn-hero__cards { display: contents; }
+    .dn-hello { grid-area: hello; }
+    .dn-kw { grid-area: kw; }
+    .dn-flex { grid-area: flex; }
+    .dn-top { grid-area: tools; justify-self: end; margin: 0; }
+    .dn-card { padding: 4px 16px; min-width: 0; }
     .dn-card:first-child { padding-left: 0; }
-    .dn-kw { gap: 12px; }
-    .dn-kw__txt small { white-space: nowrap; font-size: 13px; }
-    .dn-kw .dn-ring--sm { width: 52px; height: 52px; }
-    .dn-kw .dn-ring--sm b { font-size: 12px; }
-    .dn-kw { min-width: 0; }
+    .dn-kw__top small { display: none; }
     .dn-mod[data-size] { grid-column: span 12; }
     .dn-modbar__btn[data-dn="mod-size"] { display: none; }
     .dn-panel { padding: 18px 16px; }
