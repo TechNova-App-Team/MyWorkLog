@@ -49,11 +49,12 @@
    auseinander — Kennzahlen 1600 px neben der Begruessung, Ring und Liste in
    "Heute" an entgegengesetzten Raendern, Kalenderzellen 130 px breit. */
 #view-dashboard { width: 100%; max-width: 1600px; margin-inline: auto; }
-/* WQHD und Ultrawide: dieselbe Aufteilung, nur groesser (CSS-zoom). Breiter
-   machen haette die Module wieder auseinandergezogen. Rechnungen von
-   getBoundingClientRect nach Stil teilen durch dnZ() (dashboard-neu.js). */
-@media (min-width: 2200px) { #view-dashboard { zoom: 1.2; } }
-@media (min-width: 3000px) { #view-dashboard { zoom: 1.35; } }
+/* WQHD und breiter: mehr Breite, aber drei Spalten statt gestreckter Module
+   (Nutzerwahl 10.10.2026 nach Vergleich; vergroessern per zoom war "ekelhaft gross").
+   Oben Woche | Heute | Urlaub, darunter der Kalender ueber die volle Breite. */
+@media (min-width: 2200px) { #view-dashboard { max-width: 2240px; } }
+/* Die Spaltenregel dazu steht am Dateiende: sie muss NACH den Grundregeln
+   .dn-mod[data-size] kommen, sonst gewinnen die (gleiche Spezifitaet). */
 .dn { container-type: inline-size; container-name: dn; display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; }
 .dn svg.dn-i, .dn-drawer svg.dn-i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .dn-notes:empty { display: none; }
@@ -609,4 +610,11 @@ body.dn-locked .mobile-bottom-nav, body.dn-locked .mob-nav-handle { transform: t
 
 @media (prefers-reduced-motion: reduce) {
     .dn *, .dn-drawer * { transition-duration: .01ms !important; animation: none !important; }
+}
+
+/* WQHD und breiter: drei Spalten (siehe #view-dashboard oben). */
+@container dn (min-width: 1900px) {
+    .dn-mod[data-size="s"] { grid-column: span 3; }
+    .dn-mod[data-size="m"], .dn-mod[data-size="l"] { grid-column: span 6; }
+    .dn-mod[data-dn-mod="cal"][data-size="l"], .dn-mod[data-size="f"] { grid-column: span 12; }
 }

@@ -80,9 +80,10 @@ function dnNum(h, d) { return new Intl.NumberFormat(dnLoc(), { minimumFractionDi
 function dnSigned(h, d) { const s = h > 0.004 ? '+' : (h < -0.004 ? '−' : '±'); return s + dnNum(Math.abs(h), d == null ? 2 : d); }
 function dnEsc(s) { return (typeof esc === 'function') ? esc(String(s == null ? '' : s)) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
 function dn$(id) { return document.getElementById(id); }
-// Auf grossen Bildschirmen ist #view-dashboard per CSS-zoom vergroessert.
-// getBoundingClientRect liefert dann gezoomte Pixel, style.top/translate innen
-// aber ungezoomte — jede Rechnung von Rect nach Stil teilt durch diesen Faktor.
+// Faktor eines CSS-zoom ueber dem Element (heute 1; ein zoom auf WQHD wurde am
+// 10.10.2026 probiert und verworfen). Bleibt drin, weil getBoundingClientRect
+// dann gezoomte Pixel liefert, style.top/translate aber ungezoomte — jede
+// Rechnung von Rect nach Stil teilt durch diesen Faktor.
 function dnZ(el) { return (el && el.currentCSSZoom) || 1; }
 
 // ── Datum ──
