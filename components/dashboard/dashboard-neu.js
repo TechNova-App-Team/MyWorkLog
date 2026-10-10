@@ -80,6 +80,10 @@ function dnNum(h, d) { return new Intl.NumberFormat(dnLoc(), { minimumFractionDi
 function dnSigned(h, d) { const s = h > 0.004 ? '+' : (h < -0.004 ? '−' : '±'); return s + dnNum(Math.abs(h), d == null ? 2 : d); }
 function dnEsc(s) { return (typeof esc === 'function') ? esc(String(s == null ? '' : s)) : String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
 function dn$(id) { return document.getElementById(id); }
+// Auf grossen Bildschirmen ist #view-dashboard per CSS-zoom vergroessert.
+// getBoundingClientRect liefert dann gezoomte Pixel, style.top/translate innen
+// aber ungezoomte — jede Rechnung von Rect nach Stil teilt durch diesen Faktor.
+function dnZ(el) { return (el && el.currentCSSZoom) || 1; }
 
 // ── Datum ──
 function dnISO(d) { return (typeof toLocalISODate === 'function') ? toLocalISODate(d) : d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -329,7 +333,7 @@ function dnFlip(change) {
         if (m.hidden || m.classList.contains('is-lift')) return;
         const a = r0.get(m), b = m.getBoundingClientRect();
         if (!a) { dnAnim(m, [{ opacity: 0, transform: 'scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.23,1,.32,1)' }); return; }
-        const dx = a.left - b.left, dy = a.top - b.top;
+        const z = dnZ(m), dx = (a.left - b.left) / z, dy = (a.top - b.top) / z;
         if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(a.width - b.width) < 1) return;
         dnAnim(m, [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.32,.72,0,1)' });
     });
@@ -830,8 +834,11 @@ function dnChartPointer() {
         dn$('dnChCl').setAttribute('x1', cr.x); dn$('dnChCl').setAttribute('x2', cr.x); dn$('dnChCd').setAttribute('cx', cr.x); dn$('dnChCd').setAttribute('cy', yy);
         const days = DN._days || [], day = days[Math.round(fi / (DN_N - 1) * (days.length - 1))];
         tip.innerHTML = '<span>' + (day ? day.d.toLocaleDateString(dnLoc(), { weekday: 'short', day: 'numeric', month: 'short' }) : '') + '</span><b>' + dnSigned(v) + ' h</b>';
-        const r = svg.getBoundingClientRect(), px = svg.offsetLeft + cr.x / W * r.width;
-        tip.style.transform = 'translate(' + Math.max(svg.offsetLeft, Math.min(px - tip.offsetWidth / 2, svg.offsetLeft + r.width - tip.offsetWidth)) + 'px,' + (yy - tip.offsetHeight - 14) + 'px)';
+        // Ein SVG hat kein offsetLeft (undefined → NaN, der Tooltip klebte links).
+        // Lage zum Diagramm-Kasten aus den Rechtecken, durch den Zoom geteilt.
+        const host = svg.parentElement, z = dnZ(host), sl = (svg.getBoundingClientRect().left - host.getBoundingClientRect().left) / z;
+        const sw = svg.clientWidth, px = sl + cr.x / W * sw;
+        tip.style.transform = 'translate(' + Math.max(sl, Math.min(px - tip.offsetWidth / 2, sl + sw - tip.offsetWidth)) + 'px,' + (yy - tip.offsetHeight - 14) + 'px)';
         cr.raf = (Math.abs(cr.tx - cr.x) > .2 || Math.abs(cr.v) > .2) ? requestAnimationFrame(loop) : 0;
     };
     const to = function (cx) {
@@ -1173,9 +1180,9 @@ function dnOpenMenu(btn) {
     mod.classList.add('has-menu');
     btn.setAttribute('aria-expanded', 'true');
     dnFillMenu();
-    const r = btn.getBoundingClientRect(), mr = mod.getBoundingClientRect();
-    m.style.top = Math.round(r.bottom - mr.top + 8) + 'px';
-    m.style.right = Math.max(8, Math.round(mr.right - r.right)) + 'px';
+    const r = btn.getBoundingClientRect(), mr = mod.getBoundingClientRect(), z = dnZ(mod);
+    m.style.top = Math.round((r.bottom - mr.top) / z + 8) + 'px';
+    m.style.right = Math.max(8, Math.round((mr.right - r.right) / z)) + 'px';
     dnAnim(m, [{ opacity: 0, transform: 'translateY(-4px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.23,1,.32,1)' });
     const first = m.querySelector('button'); if (first) first.focus({ preventScroll: true });
 }
