@@ -4,6 +4,7 @@
     let onboardingStep = 0;
     let onboardingActive = false;
     let tourTouchStart = null;
+    let _tourRenderNr = 0;
     let _tourResizeHandler = null;
 
     function _isMobile() { return window.innerWidth < 1024; }
@@ -16,12 +17,19 @@
         return icon;
     }
 
-    // Desktop steps (original — unchanged)
+    // Jeder Schritt traegt seine englische Fassung selbst (en: [Titel, Text]):
+    // die Tour wird per innerHTML gebaut, das statische i18n sieht sie nie, und
+    // ganze Saetze im MAP von i18n-runtime.js brechen bei jedem Umformulieren.
+    // Bis v8.3.1 lief die Tour auf /en/ komplett deutsch.
+    // Texte beschreiben nur, was die Ansicht WIRKLICH zeigt — die alten versprachen
+    // Gruen/Rot-Heatmap, KI-Insights, Badges und einen Compliance-Check, die es
+    // dort laengst nicht mehr gab.
     const desktopSteps = [
         {
             icon: 'sparkles',
             title: 'Willkommen bei MyWorkLog',
             text: 'Diese Tour führt dich Schritt für Schritt durch die App. Du lernst alle wichtigen Bereiche und Funktionen kennen.',
+            en: ['Welcome to MyWorkLog', 'This tour walks you through the app step by step. You will get to know all the important areas and features.'],
             target: null,
             tab: null,
             position: 'center'
@@ -29,7 +37,8 @@
         {
             icon: 'barChart',
             title: 'Dein Dashboard',
-            text: 'Oben stehen deine Woche als Ring und die Gleitzeit mit Prognose. Über das Regler-Symbol oben rechts sortierst du die Module, stellst ihre Breite ein oder blendest sie aus.',
+            text: 'Oben stehen deine Woche mit Ist und Soll und die Gleitzeit mit ihrem Verlauf. Über das Regler-Symbol oben rechts sortierst du die Module, stellst ihre Breite ein oder blendest sie aus.',
+            en: ['Your dashboard', 'At the top you see your week with actual and target hours, and your flexitime with its trend. The sliders icon at the top right lets you reorder modules, set their width or hide them.'],
             target: '.dn-hero',
             tab: 'dashboard',
             position: 'bottom'
@@ -38,6 +47,7 @@
             icon: 'trendingUp',
             title: 'Deine Woche',
             text: 'Jeder Tag ist ein Punkt auf der Linie, darunter steht, was du eingetragen hast. Fehlt ein Tag, siehst du es hier zuerst.',
+            en: ['Your week', 'Each day is a point on the line, with what you logged underneath. If a day is missing, this is where you notice it first.'],
             target: '.dn-week',
             tab: 'dashboard',
             position: 'top'
@@ -46,6 +56,7 @@
             icon: 'filePen',
             title: 'Eintrag erfassen',
             text: '„Eintrag schreiben“ öffnet das Formular mit allen Feldern, die Stempeluhr startet hier mit einem Klick. Entwürfe werden automatisch gespeichert.',
+            en: ['Log an entry', '“Write entry” opens the form with all fields, and the time clock starts here with one click. Drafts are saved automatically.'],
             target: '.dn-today',
             tab: 'dashboard',
             position: 'top'
@@ -54,6 +65,7 @@
             icon: 'gauge',
             title: 'Bilanz',
             text: 'Was in einem Zeitraum herauskam: Saldo, Soll und Ist, dein Arbeitsrhythmus, Urlaub und die Prüfung nach Arbeitszeitgesetz. Heatmaps und Projekte stehen unter „Diagramme“.',
+            en: ['Summary', 'What a period added up to: balance, target and actual hours, your work rhythm, vacation and the check against the German Working Hours Act. Heatmaps and projects are under “Charts”.'],
             target: '#view-performance',
             tab: 'performance',
             position: 'bottom'
@@ -61,7 +73,8 @@
         {
             icon: 'calendarDays',
             title: 'Jahresübersicht',
-            text: 'Die Heatmap zeigt dir das ganze Jahr. Grün = produktive Tage, Rot = weniger produktive Tage. Dazu gibt es KI-Insights über deine Muster.',
+            text: 'Das ganze Jahr auf einen Blick: jeder Tag ein Feld, darunter die zwölf Monate, dein Jahreskonto und was aus den Zahlen hervorsticht.',
+            en: ['Year overview', 'The whole year at a glance: one square per day, then the twelve months, your yearly account and what stands out in the numbers.'],
             target: '#view-yearview',
             tab: 'yearview',
             position: 'bottom'
@@ -69,15 +82,17 @@
         {
             icon: 'graduationCap',
             title: 'IHK & Ausbildung',
-            text: 'Verwalte deine Ausbildungsdaten, Prüfungstermine und Noten. Der Compliance-Check prüft Ruhezeiten und Arbeitszeitgrenzen.',
+            text: 'Deine Ausbildung im Überblick: Verlauf, Prüfungszulassung, Fehlzeiten, Zeitverteilung und Prüfungsnoten.',
+            en: ['Chamber & training', 'Your apprenticeship at a glance: progress, exam admission, absences, time split and exam grades.'],
             target: '#view-ihk',
             tab: 'ihk',
             position: 'bottom'
         },
         {
             icon: 'award',
-            title: 'Ziele & Fokus',
-            text: 'Setze persönliche Ziele wie „100h Überstunden" oder „50 positive Wochen". Jedes erreichte Ziel bringt dir ein Achievement-Badge.',
+            title: 'Ziele',
+            text: 'Setze dir eigene Ziele, zum Beispiel ein Stundenpolster. Darunter siehst du, welche Meilensteine du schon erreicht hast.',
+            en: ['Goals', 'Set your own goals, for example a buffer of extra hours. Below you see which milestones you have already reached.'],
             target: '#view-goals',
             tab: 'goals',
             position: 'bottom'
@@ -85,7 +100,8 @@
         {
             icon: 'history',
             title: 'Daten & Historie',
-            text: 'Alle deine Einträge — filterbar nach Datum, Typ und Projekt. Exportiere als CSV oder JSON für Excel, Audits oder Backups.',
+            text: 'Alle deine Einträge — filterbar nach Zeitraum und Typ. Exportiere als CSV oder JSON für Excel, Audits oder Backups.',
+            en: ['Data & history', 'All your entries, filterable by period and type. Export as CSV or JSON for Excel, audits or backups.'],
             target: '#view-history',
             tab: 'history',
             position: 'bottom'
@@ -94,6 +110,7 @@
             icon: 'settings',
             title: 'Sidebar — Dein Menü',
             text: 'Über die Sidebar erreichst du alle Bereiche, Einstellungen, Export, Backup und externe Tools wie Berichtsheft.',
+            en: ['Sidebar — your menu', 'The sidebar takes you to every area, settings, export, backup and external tools such as the report book.'],
             target: '#sidebar',
             tab: null,
             position: 'right'
@@ -102,18 +119,23 @@
             icon: 'partyPopper',
             title: 'Du bist startklar!',
             text: 'Du kennst jetzt alle wichtigen Bereiche. Starte mit dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg!',
+            en: ['You are all set!', 'You now know all the important areas. Start on the dashboard and log your first entry. Good luck!'],
             target: null,
             tab: 'dashboard',
             position: 'center'
         }
     ];
 
-    // Mobile steps — optimiert für Handy-Layout
+    // Mobile steps — optimiert für Handy-Layout.
+    // Jahresansicht und Ziele liegen im Mehr-Blatt; ihre mobNav-Ids sind unsichtbare
+    // Platzhalter (mob-nav-hidden-sync). Ein Schritt zeigt deshalb auf #mobNav-more,
+    // sonst markiert die Tour eine Stelle, an der nichts zu sehen ist.
     const mobileSteps = [
         {
             icon: 'sparkles',
             title: 'Willkommen!',
-            text: 'Swipe links/rechts oder tippe auf "Weiter" um durch die Tour zu gehen. Du lernst alle wichtigen Bereiche deiner App kennen.',
+            text: 'Wische nach links oder rechts oder tippe auf „Weiter“, um durch die Tour zu gehen. Du lernst alle wichtigen Bereiche deiner App kennen.',
+            en: ['Welcome!', 'Swipe left or right, or tap “Next”, to go through the tour. You will get to know all the important areas of your app.'],
             target: null,
             tab: null,
             position: 'center'
@@ -122,6 +144,7 @@
             icon: 'barChart',
             title: 'Dashboard — Deine Übersicht',
             text: 'Hier siehst du deine Woche, die Gleitzeit und den heutigen Tag. Darunter folgen Statistik, Urlaub, Kalender und Arbeitsverteilung.',
+            en: ['Dashboard — your overview', 'Here you see your week, your flexitime and today. Below come statistics, vacation, calendar and work distribution.'],
             target: '.dn-hero',
             tab: 'dashboard',
             position: 'bottom-sheet'
@@ -130,6 +153,7 @@
             icon: 'filePen',
             title: 'Eintrag erfassen',
             text: 'Tippe auf „Eintrag schreiben“, das Formular kommt von unten. Die „Jetzt“-Knöpfe setzen die aktuelle Uhrzeit.',
+            en: ['Log an entry', 'Tap “Write entry” and the form slides up from below. The “Now” buttons fill in the current time.'],
             target: '.dn-today',
             tab: 'dashboard',
             position: 'bottom-sheet'
@@ -137,7 +161,8 @@
         {
             icon: 'gauge',
             title: 'Bilanz',
-            text: 'Tippe in der unteren Leiste auf „Bilanz": Saldo, Soll und Ist, Urlaub und die Prüfung nach Arbeitszeitgesetz für einen Zeitraum.',
+            text: 'Tippe in der unteren Leiste auf „Bilanz“: Saldo, Soll und Ist, Urlaub und die Prüfung nach Arbeitszeitgesetz für einen Zeitraum.',
+            en: ['Summary', 'Tap “Summary” in the bottom bar: balance, target and actual hours, vacation and the Working Hours Act check for a period.'],
             target: '#mobNav-performance',
             tab: 'performance',
             position: 'above-nav'
@@ -145,7 +170,8 @@
         {
             icon: 'history',
             title: 'Historie',
-            text: 'Alle deine Einträge — filterbar nach Datum, Typ und Projekt. Hier kannst du auch einzelne Einträge bearbeiten oder löschen.',
+            text: 'Alle deine Einträge — filterbar nach Zeitraum und Typ. Hier kannst du auch einzelne Einträge bearbeiten oder löschen.',
+            en: ['History', 'All your entries, filterable by period and type. You can also edit or delete individual entries here.'],
             target: '#mobNav-history',
             tab: 'history',
             position: 'above-nav'
@@ -153,16 +179,18 @@
         {
             icon: 'calendarDays',
             title: 'Jahresübersicht',
-            text: 'Die Heatmap zeigt dir das ganze Jahr auf einen Blick. Grün = produktive Tage, Rot = weniger. Dazu KI-Insights.',
-            target: '#mobNav-yearview',
+            text: 'Unter „Mehr“: das ganze Jahr auf einen Blick, jeder Tag ein Feld, dazu dein Jahreskonto und was aus den Zahlen hervorsticht.',
+            en: ['Year overview', 'Under “More”: the whole year at a glance, one square per day, plus your yearly account and what stands out in the numbers.'],
+            target: '#mobNav-more',
             tab: 'yearview',
             position: 'above-nav'
         },
         {
             icon: 'target',
-            title: 'Ziele & Achievements',
-            text: 'Setze persönliche Ziele wie „100h Überstunden". Jedes erreichte Ziel bringt dir ein Badge!',
-            target: '#mobNav-goals',
+            title: 'Ziele',
+            text: 'Ebenfalls unter „Mehr“: setze dir eigene Ziele und sieh, welche Meilensteine du schon erreicht hast.',
+            en: ['Goals', 'Also under “More”: set your own goals and see which milestones you have already reached.'],
+            target: '#mobNav-more',
             tab: 'goals',
             position: 'above-nav'
         },
@@ -170,6 +198,7 @@
             icon: 'menu',
             title: 'Menü & Einstellungen',
             text: 'Tippe oben links auf das Menü-Icon für weitere Bereiche: IHK, Berichtsheft, Export, Backup und Einstellungen.',
+            en: ['Menu & settings', 'Tap the menu icon at the top left for more areas: chamber, report book, export, backup and settings.'],
             target: null,
             tab: 'dashboard',
             position: 'center',
@@ -179,11 +208,17 @@
             icon: 'partyPopper',
             title: 'Du bist startklar!',
             text: 'Du kennst jetzt alle Bereiche! Starte auf dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg!',
+            en: ['You are all set!', 'You now know all the areas! Start on the dashboard and log your first entry. Good luck!'],
             target: null,
             tab: 'dashboard',
             position: 'center'
         }
     ];
+
+    function _tourEN() { return document.documentElement.lang === 'en'; }
+    function _tourT(de, en) { return _tourEN() ? en : de; }
+    function _stepTitle(s) { return _tourEN() && s.en ? s.en[0] : s.title; }
+    function _stepText(s) { return _tourEN() && s.en ? s.en[1] : s.text; }
 
     function _getSteps() { return _isMobile() ? mobileSteps : desktopSteps; }
     // Keep old name for compat
@@ -256,8 +291,13 @@
             targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
-        // Small delay for scroll to settle
+        // Small delay for scroll to settle.
+        // Nur der juengste Aufruf zeichnet: schnelles "Weiter" (oder Beenden) innerhalb
+        // der 350 ms liess sonst jeden ausstehenden Timer eine eigene Blase anlegen —
+        // gemessen 4 Blasen uebereinander, alle deckend (v8.3.1).
+        const renderNr = ++_tourRenderNr;
         setTimeout(() => {
+            if (renderNr !== _tourRenderNr || !onboardingActive) return;
             targetEl = step.target ? document.querySelector(step.target) : null;
             const rect = targetEl ? targetEl.getBoundingClientRect() : null;
 
@@ -337,33 +377,33 @@
 
             // Back button
             const backIcon = typeof mwlIcon === 'function' ? mwlIcon('chevronLeft', 16) : '←';
-            const backBtn = onboardingStep > 0 ? '<button onclick="previousOnboardingStep()" aria-label="Zurück" style="padding:8px 16px;border-radius:10px;background:rgba(var(--primary-rgb),0.08);border:1px solid var(--border);color:var(--text-main);font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;" onmouseover="this.style.background=\'rgba(var(--primary-rgb),.16)\';this.style.borderColor=\'var(--primary)\'" onmouseout="this.style.background=\'rgba(var(--primary-rgb),.08)\';this.style.borderColor=\'var(--border)\'">' + backIcon + '</button>' : '';
+            const backBtn = onboardingStep > 0 ? '<button onclick="previousOnboardingStep()" aria-label="' + _tourT('Zurück', 'Back') + '" style="padding:8px 16px;border-radius:10px;background:rgba(var(--primary-rgb),0.08);border:1px solid var(--border);color:var(--text-main);font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;" onmouseover="this.style.background=\'rgba(var(--primary-rgb),.16)\';this.style.borderColor=\'var(--primary)\'" onmouseout="this.style.background=\'rgba(var(--primary-rgb),.08)\';this.style.borderColor=\'var(--border)\'">' + backIcon + '</button>' : '';
 
             // Next/Finish button
             const nextArrow = typeof mwlIcon === 'function' ? mwlIcon('arrowRight', 16) : '→';
             const checkIcon = typeof mwlIcon === 'function' ? mwlIcon('check', 16) : '✓';
             const nextBtn = onboardingStep < total - 1 ?
-                '<button onclick="nextOnboardingStep()" style="padding:8px 20px;border-radius:10px;background:var(--primary);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(var(--primary-rgb),0.3);display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.filter=\'brightness(1.08)\'" onmouseout="this.style.transform=\'none\';this.style.filter=\'none\'"><span>Weiter</span>' + nextArrow + '</button>' :
-                '<button onclick="endOnboardingTour()" style="padding:8px 20px;border-radius:10px;background:var(--success);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(16,185,129,0.3);display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.filter=\'brightness(1.08)\'" onmouseout="this.style.transform=\'none\';this.style.filter=\'none\'">' + checkIcon + '<span>Fertig!</span></button>';
+                '<button onclick="nextOnboardingStep()" style="padding:8px 20px;border-radius:10px;background:var(--primary);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(var(--primary-rgb),0.3);display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.filter=\'brightness(1.08)\'" onmouseout="this.style.transform=\'none\';this.style.filter=\'none\'"><span>' + _tourT('Weiter', 'Next') + '</span>' + nextArrow + '</button>' :
+                '<button onclick="endOnboardingTour()" style="padding:8px 20px;border-radius:10px;background:var(--success);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(16,185,129,0.3);display:inline-flex;align-items:center;gap:6px;" onmouseover="this.style.transform=\'translateY(-1px)\';this.style.filter=\'brightness(1.08)\'" onmouseout="this.style.transform=\'none\';this.style.filter=\'none\'">' + checkIcon + '<span>' + _tourT('Fertig!', 'Done!') + '</span></button>';
 
             tooltip.innerHTML = progressBar +
                 '<div style="padding:1.5rem 1.5rem 1.25rem;">' +
                     '<div style="display:flex;align-items:center;gap:12px;margin-bottom:.75rem;">' +
                         '<div style="width:44px;height:44px;border-radius:12px;background:rgba(var(--primary-rgb),0.12);border:1px solid rgba(var(--primary-rgb),0.28);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + _renderTourIcon(step.icon) + '</div>' +
                         '<div>' +
-                            '<h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text-main);">' + step.title + '</h3>' +
-                            '<span style="font-size:.75rem;color:var(--text-muted);opacity:0.8;">Schritt ' + (onboardingStep + 1) + ' von ' + total + '</span>' +
+                            '<h3 style="margin:0;font-size:1.05rem;font-weight:700;color:var(--text-main);">' + _stepTitle(step) + '</h3>' +
+                            '<span style="font-size:.75rem;color:var(--text-muted);opacity:0.8;">' + _tourT('Schritt ', 'Step ') + (onboardingStep + 1) + _tourT(' von ', ' of ') + total + '</span>' +
                         '</div>' +
                     '</div>' +
-                    '<p style="margin:0 0 1.25rem;font-size:.9rem;line-height:1.65;color:var(--text-muted);">' + step.text + '</p>' +
+                    '<p style="margin:0 0 1.25rem;font-size:.9rem;line-height:1.65;color:var(--text-muted);">' + _stepText(step) + '</p>' +
                     '<div style="display:flex;align-items:center;justify-content:space-between;">' +
                         '<div style="display:flex;gap:5px;align-items:center;">' + dots + '</div>' +
                         '<div style="display:flex;gap:8px;">' + backBtn + nextBtn + '</div>' +
                     '</div>' +
                 '</div>' +
                 '<div style="padding:0 1.5rem .75rem;display:flex;justify-content:space-between;align-items:center;">' +
-                    '<span style="font-size:.72rem;color:var(--text-muted);opacity:0.7;">' + (isMob ? 'Swipe links/rechts · Tippe zum Überspringen' : 'Pfeiltasten links/rechts · Esc zum Beenden') + '</span>' +
-                    '<button onclick="endOnboardingTour()" style="background:none;border:none;color:var(--text-muted);font-size:.72rem;cursor:pointer;font-family:inherit;padding:2px 4px;opacity:0.85;" onmouseover="this.style.color=\'var(--text-main)\';this.style.opacity=\'1\'" onmouseout="this.style.color=\'var(--text-muted)\';this.style.opacity=\'0.85\'">Überspringen</button>' +
+                    '<span style="font-size:.72rem;color:var(--text-muted);opacity:0.7;">' + (isMob ? _tourT('Wischen zum Blättern', 'Swipe to browse') : _tourT('Pfeiltasten links/rechts · Esc zum Beenden', 'Arrow keys left/right · Esc to close')) + '</span>' +
+                    '<button onclick="endOnboardingTour()" style="background:none;border:none;color:var(--text-muted);font-size:.72rem;cursor:pointer;font-family:inherit;padding:2px 4px;opacity:0.85;" onmouseover="this.style.color=\'var(--text-main)\';this.style.opacity=\'1\'" onmouseout="this.style.color=\'var(--text-muted)\';this.style.opacity=\'0.85\'">' + _tourT('Überspringen', 'Skip') + '</button>' +
                 '</div>';
 
             document.body.appendChild(tooltip);
@@ -492,7 +532,7 @@
         // Switch back to dashboard
         if (typeof switchTab === 'function') switchTab('dashboard');
         if (onboardingStep >= _getSteps().length - 1) launchTourConfetti();
-        showCustomMessage('Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken!', 'success');
+        showCustomMessage(_tourT('Tour abgeschlossen', 'Tour complete'), _tourT('Du kennst jetzt alle Bereiche. Viel Erfolg!', 'You now know all the areas. Good luck!'), 'success');
     }
 
     function closeQuickHelp() {

@@ -219,6 +219,8 @@ var EVENT_LABELS = {
     'berufsschule':     ['Berufsschule', 'Vocational school'],
     'backup':           ['Backup', 'Backup'],
     'konto':            ['Konto', 'Account'],
+    'play_tester':      ['Play-Store-Test', 'Play Store test'],
+    'import_deeplink':  ['Import-Link geöffnet', 'Import link opened'],
     'cloud_sync':       ['Cloud-Sync', 'Cloud sync'],
     'p2p_sync':         ['Geräte-Sync', 'Device sync'],
     'berichtsheft':     ['Berichtsheft', 'Report book'],
@@ -255,6 +257,7 @@ var EVENT_LABELS = {
 // Unterart (Property 'aktion'/'grund', vom Worker als '<event>::<unterart>' angehaengt).
 // Erst '<event>::<unterart>', dann die Unterart allein; sonst wird der Schluessel lesbar gemacht.
 var SUB_LABELS = {
+    'konto::geloescht': ['gelöscht', 'deleted'],
     'timer_action::start': ['gestartet', 'started'], 'timer_action::pause': ['pausiert', 'paused'],
     'timer_action::stop': ['gestoppt', 'stopped'], 'timer_action::resume': ['fortgesetzt', 'resumed'],
     'theme_gewechselt::light': ['hell', 'light'], 'theme_gewechselt::dark': ['dunkel', 'dark'],

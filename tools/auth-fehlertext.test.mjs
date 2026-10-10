@@ -112,7 +112,10 @@ console.log('\n4. Englische Fassung');
         [authFehlerText({ message: 'Signups not allowed for this instance' }),  /sign-ups are currently disabled/i],
         [authFehlerText({ message: 'irgendwas' }),                              /Sign-in failed: irgendwas/],
         ['Discord-Anmeldung fehlgeschlagen: xyz',                               /Discord sign-in failed: xyz/],
-        ['Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link.', /Magic link sent/],
+        // Den Erfolgssatz aus der Quelle lesen statt abschreiben: bis v8.3.1 stand
+        // hier noch "Magic Link versendet! …", den der Dialog seit 20cb6fda nicht mehr
+        // zeigt — der Test pruefte einen Satz, den es nicht gab, und war deshalb rot.
+        [(UI.match(/'(Anmeldelink verschickt\.[^']*)'/) || [])[1] || 'FEHLT IN supabase-ui.js', /^Sign-in link sent\./],
     ];
     for (const [de, erwartet] of faelle) {
         const en = uebersetze(de);
