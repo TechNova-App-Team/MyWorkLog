@@ -175,10 +175,9 @@
                  gespeichert in data.settings.dashLayout). Gefuellt von
                  dashboard-neu.js (dnRender, letzte Zeile von updateUI). -->
             <section class="dn" id="dn" aria-label="Dashboard">
+                <!-- Bewusst ohne Suchfeld: die Suche sitzt in der Seitenleiste (Strg K),
+                     zwei Suchfelder auf einer Seite waren dem Nutzer zu viel (10.10.2026). -->
                 <header class="dn-top">
-                    <button type="button" class="dn-search" data-dn="palette">
-                        <svg data-dn-i="search"></svg><span id="dnSearchLbl">Suchen …</span><kbd>Strg K</kbd>
-                    </button>
                     <div class="dn-top__tools">
                         <button type="button" class="dn-chip dn-weather" id="dnWeather" data-dn="weather" hidden></button>
                         <!-- Sprachwechsel als ECHTER Link (mittelklickbar). cmdRender() in
@@ -221,25 +220,62 @@
                     <button type="button" class="dn-btn dn-btn--solid dn-btn--sm" data-dn="edit"><span id="dnDoneLbl">Fertig</span></button>
                 </div>
 
+                <!-- Module. Jedes traegt rechts oben einen Knopf fuer sein eigenes Menue
+                     (Optionen je Modul, DN_OPTS in dashboard-neu.js). Die Analysen sitzen
+                     bewusst IN der Woche statt als eigenes Modul darunter: zwei grosse
+                     Karten mit Zahlen direkt untereinander waren dem Nutzer zu viel. -->
                 <div class="dn-grid" id="dnGrid">
                     <section class="dn-panel dn-mod dn-week" data-dn-mod="week" aria-labelledby="dnWeekTitle">
-                        <div class="dn-week__days" id="dnDays" role="tablist" aria-label="Tage"></div>
-                        <div class="dn-week__main">
-                            <div class="dn-ph">
-                                <span class="dn-tile"><svg data-dn-i="calcheck"></svg></span>
-                                <div class="dn-ph__txt"><h2 id="dnWeekTitle">Deine Woche</h2><p id="dnWeekSub">Ein Eintrag pro Tag. Schritt für Schritt.</p></div>
-                                <div class="dn-ph__act">
+                        <div class="dn-week__in">
+                        <div class="dn-ph dn-week__head">
+                            <span class="dn-tile"><svg data-dn-i="calcheck"></svg></span>
+                            <div class="dn-ph__txt"><h2 id="dnWeekTitle">Deine Woche</h2><p id="dnWeekSub"></p></div>
+                            <div class="dn-ph__act">
+                                <div class="dn-seg" id="dnViewSeg" role="group" aria-label="Ansicht"><i class="dn-seg__thumb"></i></div>
+                                <span class="dn-wknav" id="dnWkNav">
                                     <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="wk-prev" aria-label="Vorige Woche"><svg data-dn-i="left"></svg></button>
                                     <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="wk-next" aria-label="Nächste Woche"><svg data-dn-i="right"></svg></button>
-                                    <button type="button" class="dn-btn dn-btn--ghost dn-hide-s" data-dn="weekview"><span id="dnWeekOpen">Woche öffnen</span><svg data-dn-i="arrow"></svg></button>
+                                </span>
+                                <button type="button" class="dn-ibtn dn-ibtn--sm dn-more" data-dn="mod-menu" data-id="week" aria-haspopup="menu" aria-expanded="false" aria-label="Woche anpassen"><svg data-dn-i="dots"></svg></button>
+                            </div>
+                        </div>
+                        <div class="dn-week__rail" id="dnDays" role="tablist" aria-label="Tage"></div>
+                        <div class="dn-week__body">
+                            <div class="dn-pane" id="dnPaneWeek">
+                                <div class="dn-tl" id="dnTl"></div>
+                                <div class="dn-goal" id="dnGoal">
+                                    <span id="dnGoalLbl">Tagesziel</span>
+                                    <div class="dn-goal__bar"><i id="dnGoalFill"></i></div>
+                                    <b id="dnGoalVal"></b>
                                 </div>
                             </div>
-                            <div class="dn-tl" id="dnTl"></div>
-                            <div class="dn-goal">
-                                <span id="dnGoalLbl">Tagesziel</span>
-                                <div class="dn-goal__bar"><i id="dnGoalFill"></i></div>
-                                <b id="dnGoalVal"></b>
+                            <div class="dn-pane dn-ana" id="dnPaneAna" hidden>
+                                <div class="dn-ana__bar">
+                                    <p class="dn-ana__lead" id="dnAnaLead"></p>
+                                    <div class="dn-seg" id="dnRangeSeg" role="group" aria-label="Zeitraum"><i class="dn-seg__thumb"></i></div>
+                                </div>
+                                <div class="dn-ana__p" data-ana="saldo">
+                                    <div class="dn-figs" id="dnSaldoFigs"></div>
+                                    <div class="dn-chart" id="dnChart">
+                                        <div class="dn-chart__y" id="dnChartY" aria-hidden="true"></div>
+                                        <svg class="dn-chart__svg" id="dnChartSvg" role="img" aria-label="Saldo-Verlauf"></svg>
+                                        <div class="dn-chart__tip" id="dnChartTip" aria-hidden="true"></div>
+                                    </div>
+                                    <div class="dn-chart__x" id="dnChartX" aria-hidden="true"></div>
+                                </div>
+                                <div class="dn-ana__p" data-ana="dist" hidden>
+                                    <div class="dn-dist__total" id="dnDistTotal"></div>
+                                    <div class="dn-dist__bar" id="dnDistBar" aria-hidden="true"></div>
+                                    <ul class="dn-dist__leg" id="dnDistLeg"></ul>
+                                </div>
+                                <div class="dn-ana__p" data-ana="wd" hidden>
+                                    <div class="dn-wd" id="dnWd"></div>
+                                </div>
+                                <div class="dn-ana__p" data-ana="facts" hidden>
+                                    <dl class="dn-facts" id="dnFacts"></dl>
+                                </div>
                             </div>
+                        </div>
                         </div>
                     </section>
 
@@ -248,49 +284,25 @@
                             <div class="dn-ph__txt"><h2 id="dnTodayTitle">Heute</h2><p id="dnTodayDate"></p></div>
                             <span class="dn-live" id="dnLive" hidden></span>
                             <div class="dn-timer" id="dnTimer" role="group" aria-label="Stempeluhr"></div>
+                            <button type="button" class="dn-ibtn dn-ibtn--sm dn-more" data-dn="mod-menu" data-id="today" aria-haspopup="menu" aria-expanded="false" aria-label="Heute anpassen"><svg data-dn-i="dots"></svg></button>
                         </div>
                         <div class="dn-ring dn-ring--lg" id="dnTodayRing"></div>
                         <ul class="dn-legend" id="dnTodayLegend"></ul>
                         <button type="button" class="dn-cta" data-dn="entry"><span class="dn-cta__plus"><svg data-dn-i="plus"></svg></span><span id="dnCtaLbl">Eintrag schreiben</span></button>
                     </section>
 
-                    <section class="dn-panel dn-mod dn-stats" data-dn-mod="stats" aria-labelledby="dnStatsTitle">
-                        <div class="dn-ph">
-                            <span class="dn-tile"><svg data-dn-i="chart"></svg></span>
-                            <div class="dn-ph__txt"><h2 id="dnStatsTitle">Statistik</h2><p id="dnStatsSub">Saldo über die Zeit</p></div>
-                            <div class="dn-ph__act">
-                                <div class="dn-seg" id="dnStatsSeg" role="group" aria-label="Zeitraum"><i class="dn-seg__thumb"></i></div>
-                            </div>
-                        </div>
-                        <div class="dn-kpis" id="dnKpis"></div>
-                        <div class="dn-chart" id="dnChart">
-                            <div class="dn-chart__y" id="dnChartY" aria-hidden="true"></div>
-                            <svg class="dn-chart__svg" id="dnChartSvg" role="img" aria-label="Saldo-Verlauf"></svg>
-                            <div class="dn-chart__tip" id="dnChartTip" aria-hidden="true"></div>
-                        </div>
-                        <div class="dn-chart__x" id="dnChartX" aria-hidden="true"></div>
-                    </section>
-
                     <section class="dn-panel dn-mod dn-vac" data-dn-mod="vac" aria-labelledby="dnVacTitle">
                         <div class="dn-ph dn-ph--plain">
                             <div class="dn-ph__txt"><h2 id="dnVacTitle">Urlaub</h2><p id="dnVacSub"></p></div>
-                            <div class="dn-ph__act"><button type="button" class="dn-btn dn-btn--ghost dn-btn--sm" data-dn="vacplan"><span id="dnVacPlan">Planen</span><svg data-dn-i="arrow"></svg></button></div>
+                            <div class="dn-ph__act">
+                                <button type="button" class="dn-btn dn-btn--ghost dn-btn--sm" data-dn="vacplan"><span id="dnVacPlan">Planen</span><svg data-dn-i="arrow"></svg></button>
+                                <button type="button" class="dn-ibtn dn-ibtn--sm dn-more" data-dn="mod-menu" data-id="vac" aria-haspopup="menu" aria-expanded="false" aria-label="Urlaub anpassen"><svg data-dn-i="dots"></svg></button>
+                            </div>
                         </div>
                         <div class="dn-vac__big" id="dnVacBig"></div>
                         <div class="dn-vac__bar" id="dnVacBar" aria-hidden="true"></div>
                         <div class="dn-vac__legend" id="dnVacLegend"></div>
                         <div class="dn-vac__rows" id="dnVacRows"></div>
-                        <button type="button" class="dn-btn dn-btn--sm dn-vac__hol" data-dn="holidays"><svg data-dn-i="flag"></svg><span id="dnHolLbl">Feiertage eintragen</span></button>
-                    </section>
-
-                    <section class="dn-panel dn-mod dn-dist" data-dn-mod="dist" aria-labelledby="dnDistTitle">
-                        <div class="dn-ph dn-ph--plain">
-                            <div class="dn-ph__txt"><h2 id="dnDistTitle">Arbeitsverteilung</h2><p id="dnDistSub"></p></div>
-                            <div class="dn-ph__act"><div class="dn-seg" id="dnDistSeg" role="group" aria-label="Zeitraum"><i class="dn-seg__thumb"></i></div></div>
-                        </div>
-                        <div class="dn-dist__total" id="dnDistTotal"></div>
-                        <div class="dn-dist__bar" id="dnDistBar" aria-hidden="true"></div>
-                        <ul class="dn-dist__leg" id="dnDistLeg"></ul>
                     </section>
 
                     <section class="dn-panel dn-mod dn-cal" data-dn-mod="cal" aria-labelledby="dnCalTitle">
@@ -301,6 +313,7 @@
                                     <div class="dn-ph__act">
                                         <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="cal-prev" aria-label="Voriger Monat"><svg data-dn-i="left"></svg></button>
                                         <button type="button" class="dn-ibtn dn-ibtn--sm" data-dn="cal-next" aria-label="Nächster Monat"><svg data-dn-i="right"></svg></button>
+                                        <button type="button" class="dn-ibtn dn-ibtn--sm dn-more" data-dn="mod-menu" data-id="cal" aria-haspopup="menu" aria-expanded="false" aria-label="Kalender anpassen"><svg data-dn-i="dots"></svg></button>
                                     </div>
                                 </div>
                                 <div class="dn-cal__wd" id="dnCalWd" aria-hidden="true"></div>
@@ -312,6 +325,8 @@
                     </section>
                 </div>
 
+                <!-- Nur sichtbar, wenn in dieser Woche ein Tag fehlt. Ein Dauer-Lob
+                     ("Du bist im Plan") wollte der Nutzer ausdruecklich nicht. -->
                 <section class="dn-status" id="dnStatus" aria-live="polite"></section>
             </section>
 

@@ -1,7 +1,7 @@
 /* ═══ DASHBOARD ═══
    Gestaltung nach der Vorlage des Nutzers (10.10.2026): dunkle Flaechen, ein
-   Akzent, Woche als Zeitstrahl, Heute als Ring, Statistik, Urlaub, Verteilung,
-   Kalender mit Tagesverlauf. Module sitzen in einem 12er-Raster; Reihenfolge,
+   Akzent, Woche als Zeitstrahl (mit Analysen als zweiter Ansicht), Heute als Ring,
+   Urlaub, Kalender mit Tagesverlauf. Module sitzen in einem 12er-Raster; Reihenfolge,
    Breite (data-size) und Sichtbarkeit stellt der Nutzer ein.
    Der Akzent ist IMMER var(--primary) (Theme des Nutzers), nie ein fester Wert.
    Bewegung: Text steht beim Laden sofort da (kein opacity:0 auf Ueberschriften),
@@ -48,14 +48,7 @@
 .dn-notes > .umf-banner { margin-bottom: 14px; }
 
 /* ── Kopfleiste ── */
-.dn-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.dn-search { flex: 1; max-width: 560px; display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 10px 0 16px; border-radius: 14px;
-    border: 1px solid var(--dn-line); background: var(--dn-panel); color: var(--text-muted); font-size: 15px; cursor: pointer; text-align: left;
-    transition: border-color .2s ease, transform .14s var(--dn-out); }
-.dn-search span { flex: 1; }
-.dn-search:hover { border-color: var(--dn-line-2); }
-.dn-search:active { transform: scale(.99); }
-.dn kbd { font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); border: 1px solid var(--dn-line-2); border-radius: 7px; padding: 3px 7px; background: var(--dn-panel-2); }
+.dn-top { display: flex; align-items: center; justify-content: flex-end; gap: 14px; }
 .dn-top__tools { display: flex; align-items: center; gap: 10px; }
 .dn-ibtn { position: relative; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; border: 1px solid var(--dn-line); background: var(--dn-panel);
     color: var(--text-main); cursor: pointer; transition: border-color .2s ease, background-color .2s ease, transform .14s var(--dn-out); }
@@ -187,18 +180,57 @@ button.dn-card:active { transform: scale(.985); }
 .dn-modbar svg.dn-i { width: 15px; height: 15px; }
 .dn-mod.is-lift { z-index: 6; box-shadow: 0 30px 60px -24px rgba(0, 0, 0, .75), 0 0 0 1px var(--dn-acc-line); transform: scale(1.012); transition: transform .2s var(--dn-out), box-shadow .2s ease; }
 
-/* ── Woche ── */
-.dn-week { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 18px; padding: 18px 22px 20px 14px; }
-.dn-week__days { display: grid; align-content: start; gap: 4px; position: relative; padding-top: 2px; }
+/* Knopf fuers Modul-Menue: leise, bis er gebraucht wird. */
+.dn-more { border-color: transparent; background: transparent; color: var(--text-muted); }
+.dn-more:hover, .dn-more[aria-expanded="true"] { border-color: var(--dn-line-2); background: var(--dn-panel-2); color: var(--text-main); }
+
+/* ── Modul-Menue ──
+   Liegt im Modul. Jedes Modul ist ein eigener Stapelkontext (container-type),
+   deshalb hebt .has-menu das ganze Modul an, sonst laege das naechste darueber. */
+.dn-mod.has-menu { z-index: 8; }
+.dn-menu { position: absolute; z-index: 9; width: 264px; max-width: calc(100% - 16px); padding: 6px; border-radius: 14px; border: 1px solid var(--dn-line-2);
+    background: linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep); box-shadow: 0 24px 48px -20px rgba(0, 0, 0, .7); transform-origin: top right; }
+.dn-menu__t { margin: 6px 10px 4px; font-size: 12px; color: var(--text-muted); }
+.dn-menu hr { border: 0; border-top: 1px solid var(--dn-line); margin: 6px 4px; }
+.dn-menu__it { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 38px; padding: 0 10px; border: 0; border-radius: 9px;
+    background: none; color: var(--text-main); font-size: 13.5px; text-align: left; cursor: pointer; transition: background-color .15s ease; }
+.dn-menu__it:hover { background: var(--dn-soft); }
+.dn-menu__it:focus-visible { background: var(--dn-soft); outline: 2px solid var(--dn-acc-line); outline-offset: -2px; }
+.dn-menu__it svg.dn-i { width: 15px; height: 15px; color: var(--text-muted); }
+.dn-menu__it em { font-style: normal; color: var(--text-muted); font-size: 12.5px; }
+.dn-sw { position: relative; width: 30px; height: 18px; flex: none; border-radius: 9px; background: var(--dn-line-2); transition: background-color .2s ease; }
+.dn-sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--text-main); transition: transform .25s var(--dn-drawer), background-color .2s ease; }
+.dn-menu__it[aria-checked="true"] .dn-sw { background: var(--primary); }
+.dn-menu__it[aria-checked="true"] .dn-sw::after { transform: translateX(12px); background: var(--dn-on-primary); }
+
+/* ── Woche ──
+   Leiste links (Tage oder Analysen), rechts Kopf und Inhalt. Schmal wandert die
+   Leiste unter den Kopf und liegt waagerecht (nur in den Analysen). */
+.dn-week { padding: 18px 22px 20px 14px; display: flex; flex-direction: column; }
+/* Das Raster sitzt eine Ebene tiefer: eine Container-Query kann den Container
+   selbst nicht umbauen, nur seine Kinder. */
+.dn-week__in { flex: 1; display: grid; grid-template-columns: 108px minmax(0, 1fr); grid-template-areas: "rail head" "rail body"; grid-template-rows: auto 1fr; column-gap: 18px; }
+.dn-week__head { grid-area: head; }
+.dn-week__rail { grid-area: rail; display: grid; align-content: start; gap: 4px; position: relative; padding-top: 2px; }
+.dn-week__body { grid-area: body; min-width: 0; display: flex; flex-direction: column; }
+.dn-pane { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.dn-wknav { display: inline-flex; gap: 6px; }
 .dn-day { position: relative; display: grid; gap: 1px; padding: 10px 12px; border: 0; border-radius: 12px; background: transparent; color: var(--text-main);
-    text-align: left; cursor: pointer; font-size: 14.5px; z-index: 1; transition: color .2s ease, transform .14s var(--dn-out); }
+    text-align: left; cursor: pointer; font-size: 14.5px; white-space: nowrap; z-index: 1; transition: color .2s ease, transform .14s var(--dn-out); }
 .dn-day small { color: var(--text-muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .dn-day:active { transform: scale(.97); }
 .dn-day i { position: absolute; right: 9px; top: 50%; width: 6px; height: 6px; margin-top: -3px; border-radius: 50%; background: var(--primary); }
-.dn-day-pill { position: absolute; left: 0; right: 0; top: 0; height: 0; border-radius: 12px; background: var(--dn-panel-2); border: 1px solid var(--dn-line-2);
-    transition: transform .45s var(--dn-drawer), height .45s var(--dn-drawer); pointer-events: none; }
-.dn-week__main { min-width: 0; display: flex; flex-direction: column; }
+.dn-day-pill { position: absolute; left: 0; top: 0; width: 0; height: 0; border-radius: 12px; background: var(--dn-panel-2); border: 1px solid var(--dn-line-2);
+    transition: transform .45s var(--dn-drawer), width .45s var(--dn-drawer), height .45s var(--dn-drawer); pointer-events: none; }
 .dn-tl { position: relative; flex: 1; min-height: 200px; overflow: hidden; }
+/* Ohne Verlaufskurve: die Tageskarten werden hohe Kacheln und fuellen die
+   Flaeche — sonst klaffte zwischen Karten und Tagesziel ein Loch, weil das
+   Modul so hoch ist wie sein Nachbar (Raster streckt die Zeile). */
+.dn-tl.is-flat { display: flex; min-height: 120px; overflow: visible; }
+.dn-tl.is-flat .dn-tl__track { position: static; flex: 1; display: flex; }
+.dn-tl.is-flat .dn-dcards { position: relative; flex: 1; align-items: stretch; }
+.dn-tl.is-flat .dn-dcard { flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 14px; }
+.dn-tl.is-flat .dn-dcard__t b { font-size: 14.5px; }
 .dn-tl__track { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
 .dn-tl svg.dn-tl__svg { position: absolute; left: 0; top: 0; width: 100%; overflow: visible; }
 .dn-tl__base { fill: none; stroke: var(--dn-line-2); stroke-width: 1.5; stroke-dasharray: 3 5; }
@@ -259,14 +291,37 @@ button.dn-card:active { transform: scale(.985); }
 .dn-cta__plus { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--bg-deep) 88%, transparent); color: var(--text-main); transition: transform .3s var(--dn-out); }
 .dn-cta:hover .dn-cta__plus { transform: rotate(90deg); }
 
-/* ── Statistik ── */
-.dn-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
-.dn-kpi { display: grid; gap: 3px; padding: 12px 14px; border-radius: 13px; border: 1px solid var(--dn-line); background: var(--dn-panel-2); min-width: 0; }
-.dn-kpi span { font-size: 13px; color: var(--text-muted); }
-.dn-kpi b { font-size: 21px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dn-kpi b[data-s="pos"] { color: var(--success); }
-.dn-kpi b[data-s="neg"] { color: var(--danger); }
-.dn-kpi small { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ── Analysen (in der Wochenkarte) ──
+   Zahlen ohne Kaesten: Kennzahl, darunter klein der Bezug. */
+.dn-ana__bar { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.dn-ana__lead { margin: 0; flex: 1 1 220px; color: var(--text-muted); font-size: 14px; max-width: 52ch; text-wrap: pretty; }
+.dn-figs { display: flex; flex-wrap: wrap; gap: 10px 40px; margin-bottom: 18px; }
+.dn-fig { display: grid; gap: 2px; min-width: 0; }
+.dn-fig span { font-size: 13px; color: var(--text-muted); }
+.dn-fig b { font-size: 24px; font-weight: 600; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dn-fig b[data-s="pos"] { color: var(--success); }
+.dn-fig b[data-s="neg"] { color: var(--danger); }
+.dn-fig small { font-size: 12px; color: var(--text-muted); }
+
+/* Wochentage: ein Balken je Tag ab gemeinsamer Grundlinie, Soll als Marke. */
+.dn-wd__cols { display: grid; gap: 10px; height: 230px; }
+.dn-wd__c { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; justify-items: center; gap: 6px; min-width: 0; }
+.dn-wd__c > b { font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dn-wd__track { position: relative; width: min(44px, 100%); border-bottom: 1px solid var(--dn-line-2); }
+.dn-wd__bar { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 4px 4px 0 0; background: var(--primary); transition: height .6s var(--dn-out); }
+.dn-wd__soll { position: absolute; left: -5px; right: -5px; height: 2px; margin-bottom: -1px; border-radius: 2px; background: var(--text-main); }
+.dn-wd__d { font-size: 13px; }
+.dn-wd__c > small { font-size: 11.5px; color: var(--dn-faint); font-variant-numeric: tabular-nums; }
+.dn-wd__key { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 16px 0 0; font-size: 12.5px; color: var(--text-muted); }
+.dn-wd__key span { display: inline-flex; align-items: center; gap: 7px; }
+.dn-wd__key i.bar { width: 10px; height: 10px; border-radius: 3px; background: var(--primary); }
+.dn-wd__key i.soll { width: 14px; height: 2px; border-radius: 2px; background: var(--text-main); }
+
+/* Kennzahlen: zwei Spalten ruhiger Zeilen. */
+.dn-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; margin: 0; }
+.dn-facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid var(--dn-line); font-size: 14px; min-width: 0; }
+.dn-facts dt { color: var(--text-muted); white-space: nowrap; }
+.dn-facts dd { margin: 0; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
 .dn-chart { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; }
 .dn-chart__y { position: relative; font-size: 11.5px; color: var(--dn-faint); font-variant-numeric: tabular-nums; }
 .dn-chart__y span { position: absolute; right: 0; transform: translateY(-50%); }
@@ -298,11 +353,9 @@ button.dn-card:active { transform: scale(.985); }
 .dn-vac__rows > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; font-size: 14px; border-top: 1px solid var(--dn-line); }
 .dn-vac__rows span { color: var(--text-muted); }
 .dn-vac__rows b { font-weight: 500; text-align: right; }
-.dn-vac__hol { align-self: flex-start; margin-top: auto; }
 
-/* ── Arbeitsverteilung ── */
-.dn-dist { display: flex; flex-direction: column; gap: 12px; }
-.dn-dist .dn-ph { margin-bottom: 0; }
+/* ── Verteilung (Analyse) ── */
+.dn-ana__p[data-ana="dist"] { display: flex; flex-direction: column; gap: 12px; }
 .dn-dist__total { display: flex; align-items: baseline; gap: 10px; }
 .dn-dist__total b { font-size: 34px; font-weight: 600; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .dn-dist__total span { color: var(--text-muted); font-size: 14px; }
@@ -405,14 +458,8 @@ button.dn-card:active { transform: scale(.985); }
 .dn-x svg { width: 18px; height: 18px; }
 .dn-drawer__x { position: absolute; top: 18px; right: 18px; z-index: 2; }
 .dn-drawer .entry-form__header { padding-right: 52px; }
-.dn-tplrow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 2px 0 6px; }
-.dn-tplrow__l { font-size: 12.5px; color: var(--text-muted); margin-right: 4px; }
-.dn-tpl { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 11px; border-radius: 9px; border: 1px solid var(--dn-line-2); background: var(--dn-panel-2); color: var(--text-main);
-    font-size: 12.5px; cursor: pointer; transition: border-color .2s ease, background-color .2s ease, transform .14s var(--dn-out); }
-.dn-tpl span { display: inline-grid; color: rgb(var(--dn-rgb, var(--primary-rgb))); }
-.dn-tpl span svg, .dn-tpl span .mwl-icon { width: 14px; height: 14px; }
-.dn-tpl:hover { border-color: rgba(var(--dn-rgb, var(--primary-rgb)), .55); background: rgba(var(--dn-rgb, var(--primary-rgb)), .1); }
-.dn-tpl:active { transform: scale(.96); }
+/* Bewusst ohne Vorlagenreihe („Für heute“): kostete Platz und verwirrte neben
+   dem Typ-Feld, das dasselbe kann (Wunsch des Nutzers, 10.10.2026). */
 /* In der Schublade (560 px) ist die Stempeluhr-Zeile so schmal wie am Handy:
    dieselben Regeln wie dashboard.css @media (max-width: 860px), nur an die
    Schublade gebunden statt an die Fensterbreite. */
@@ -429,26 +476,33 @@ body.dn-locked .mobile-bottom-nav, body.dn-locked .mob-nav-handle { transform: t
 .dn-theme-anim, .dn-theme-anim * { transition: background-color .35s ease, border-color .35s ease, color .35s ease, fill .35s ease, stroke .35s ease !important; }
 
 /* ── Innen: je Modulbreite ── */
+.dn-cal__grid.no-hours .dn-cd small { display: none; }
+
 @container dnm (max-width: 760px) {
-    .dn-week { grid-template-columns: minmax(0, 1fr); padding: 18px 16px; }
-    .dn-week__days { display: none; }
-    .dn-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .dn-kpi[data-k="avg"], .dn-kpi[data-k="streak"] { display: none; }
+    .dn-week__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "rail" "body"; grid-template-rows: auto auto 1fr; }
+    .dn-week:not(.is-ana) .dn-week__rail { display: none; }
+    .dn-week.is-ana .dn-week__rail { display: flex; gap: 4px; padding: 0; margin: 0 0 14px; overflow-x: auto; scrollbar-width: none; }
+    .dn-week.is-ana .dn-week__rail::-webkit-scrollbar { display: none; }
+    .dn-week.is-ana .dn-day { flex: 1 0 auto; padding: 8px; font-size: 13.5px; text-align: center; }
+    .dn-week.is-ana .dn-day small { display: none; }
+    .dn-facts { grid-template-columns: minmax(0, 1fr); }
 }
 @container dnm (max-width: 520px) {
-    .dn-hide-s { display: none; }
-    .dn-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .dn-kpi[data-k="prog"] { grid-column: span 2; }
     .dn-dcard { flex-direction: column; align-items: flex-start; gap: 6px; padding: 9px; }
     .dn-dcard__ic { display: none; }
     .dn-dist__leg li { grid-template-columns: 10px minmax(0, 1fr) auto 40px; }
     .dn-dist__leg li small { display: none; }
     .dn-cd { height: 46px; }
     .dn-ph { flex-wrap: wrap; }
-    .dn-stats .dn-ph .dn-tile { display: none; }
-    .dn-stats .dn-ph__act, .dn-dist .dn-ph__act { width: 100%; }
-    .dn-stats .dn-seg, .dn-dist .dn-seg { width: 100%; }
-    .dn-stats .dn-seg button, .dn-dist .dn-seg button { flex: 1; }
+    .dn-week__head .dn-tile { display: none; }
+    .dn-week__head .dn-ph__act { width: 100%; }
+    .dn-week__head .dn-seg { flex: 1; }
+    .dn-week__head .dn-seg button { flex: 1; }
+    .dn-ana__bar .dn-seg { width: 100%; }
+    .dn-ana__bar .dn-seg button { flex: 1; }
+    .dn-figs { gap: 10px 24px; }
+    .dn-fig b { font-size: 20px; }
+    .dn-wd__cols { gap: 6px; height: 200px; }
 }
 @container dnm (min-width: 560px) {
     .dn-today { display: grid; grid-template-columns: 184px minmax(0, 1fr); grid-template-areas: "ph ph" "ring legend" "ring cta"; column-gap: 26px; row-gap: 14px; }
@@ -466,10 +520,9 @@ body.dn-locked .mobile-bottom-nav, body.dn-locked .mob-nav-handle { transform: t
     .dn-mod[data-size="l"] { grid-column: span 12; }
 }
 @container dn (max-width: 700px) {
-    .dn-top .dn-search span, .dn-top .dn-search kbd, .dn-date span, .dn-weather small, .dn-lang .cmd-label { display: none; }
-    .dn-search { flex: 0 0 46px; padding: 0; justify-content: center; }
+    .dn-date span, .dn-weather small, .dn-lang .cmd-label { display: none; }
     .dn-date, .dn-lang { padding: 0 14px; }
-    .dn-top { justify-content: flex-end; }
+    .dn-menu__size { display: none; }
     .dn-top__tools { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
     .dn-hero__cards { flex-direction: column; }
     .dn-kw { min-width: 0; }

@@ -232,7 +232,7 @@
             days_using_app: String(firstEntry !== '—' ? Math.max(0, Math.floor((now - localDay(firstEntry)) / 86400000)) : 0),
             current_streak: String(currentStreak(entries)),
             active_months: String(new Set(dates.map(function (d) { return String(d).slice(0, 7); })).size),
-            // weeklyTargetHours() in charts.js: Summe der Tagessolls, ohne Angabe 40.
+            // Summe der Tagessolls, ohne Angabe 40 (Test: support-zahlen.test.mjs).
             weekly_soll: (weekly > 0 ? weekly : 40).toFixed(1),
             break_threshold: String((s.break && s.break.thresh) || 6),
             vacation_total: vac.total,

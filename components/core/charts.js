@@ -2,16 +2,6 @@
     // --- CHARTS & PERFORMANCE ---
 
 
-    // Wochensoll aus den Einstellungen — nie eine feste Zahl, sonst
-    // rechnet ein Teilzeit-Azubi gegen fremde Vorgaben.
-    function weeklyTargetHours() {
-        if (typeof data === 'undefined' || !data || !data.settings) return 40;
-        const h = data.settings.hours;
-        if (!Array.isArray(h)) return 40;
-        const sum = h.reduce((a, b) => a + (parseFloat(b) || 0), 0);
-        return sum > 0 ? sum : 40;
-    }
-
     // Zielpunkt fuer alle "jetzt erfassen"-Aufforderungen der leeren
     // Zustaende. Scrollt zum Formular und setzt den Fokus auf das erste
     // Feld, damit die Tastatur-Reise dort weitergeht, wo der Klick war.
@@ -55,37 +45,6 @@
 
     // ========== MEGA ADVANCED EFFECTS ENGINE ==========
     
-    function createParticleEffect(x, y, color = 'var(--primary)', count = 8) {
-        const container = document.createElement('div');
-        container.className = 'particle-container';
-        container.style.left = x + 'px';
-        container.style.top = y + 'px';
-        
-        for (let i = 0; i < count; i++) {
-            const particle = document.createElement('div');
-            const angle = (i / count) * Math.PI * 2;
-            const tx = Math.cos(angle) * 50;
-            const delay = i * 30;
-            
-            particle.style.cssText = `
-                position: absolute;
-                width: 8px;
-                height: 8px;
-                background: ${color.includes('var') ? 'var(--primary)' : color};
-                border-radius: 50%;
-                left: 0;
-                top: 0;
-                --tx: ${tx}px;
-                animation: particleFloat 0.8s ease-out ${delay}ms forwards;
-                box-shadow: 0 0 8px ${color.includes('var') ? 'var(--primary)' : color};
-            `;
-            container.appendChild(particle);
-        }
-        
-        document.body.appendChild(container);
-        setTimeout(() => container.remove(), 1200);
-    }
-    
     function createExplosion(x, y, color = 'var(--primary)') {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('viewBox', '0 0 100 100');
@@ -114,37 +73,6 @@
         document.body.appendChild(svg);
         setTimeout(() => svg.remove(), 1000);
     }
-    
-    function createConfetti(x, y, count = 15) {
-        const colors = ['var(--primary)', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
-        for (let i = 0; i < count; i++) {
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const confetti = document.createElement('div');
-            const rotation = Math.random() * 360;
-            const delay = i * 20;
-            
-            confetti.style.cssText = `
-                position: fixed;
-                left: ${x}px;
-                top: ${y}px;
-                width: 10px;
-                height: 10px;
-                background: ${color.includes('var') ? 'var(--primary)' : color};
-                pointer-events: none;
-                z-index: 9999;
-                transform: rotate(${rotation}deg);
-                animation: floatUp 1s ease-out ${delay}ms forwards;
-            `;
-            document.body.appendChild(confetti);
-            setTimeout(() => confetti.remove(), 1500);
-        }
-    }
-    
-    
-    
-    
-    
-    
     
     // ========== END ADVANCED EFFECTS ENGINE ==========
 

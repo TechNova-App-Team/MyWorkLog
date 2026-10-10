@@ -6,22 +6,39 @@
 // ein Stapelkontext ist (z-index 1) und die Schublade sonst unter der Sidebar laege.
 // Layout (Reihenfolge, Breite, Sichtbarkeit): data.settings.dashLayout.
 
-const DN = { wkOff: 0, sel: null, calY: null, calM: null, calDay: null, statRange: 30, distRange: 'month', booted: false, intro: false, lastKey: '', tick: 0, edit: false };
+const DN = { wkOff: 0, sel: null, calY: null, calM: null, calDay: null, range: 30, ana: 'saldo', booted: false, intro: false, lastKey: '', tick: 0, edit: false, menu: null };
 const DN_RM = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // Module mit ihren erlaubten Breiten. s = 4, m = 6, l = 8, f = 12 Spalten.
+// Statistik und Arbeitsverteilung waren bis 10.10.2026 eigene Module; sie sind
+// jetzt Analysen IN der Woche. Gespeicherte Layouts mit 'stats'/'dist' filtert
+// dnLayout() still heraus.
 const DN_MODS = {
     week:  { sizes: ['m', 'l', 'f'], de: 'Woche', en: 'Week' },
     today: { sizes: ['s', 'm'], de: 'Heute', en: 'Today' },
-    stats: { sizes: ['m', 'l', 'f'], de: 'Statistik', en: 'Statistics' },
     vac:   { sizes: ['s', 'm'], de: 'Urlaub', en: 'Leave' },
-    cal:   { sizes: ['m', 'l', 'f'], de: 'Kalender', en: 'Calendar' },
-    dist:  { sizes: ['s', 'm', 'l'], de: 'Arbeitsverteilung', en: 'Work distribution' }
+    cal:   { sizes: ['m', 'l', 'f'], de: 'Kalender', en: 'Calendar' }
 };
-const DN_DEFAULT = { order: ['week', 'today', 'stats', 'vac', 'cal', 'dist'], hidden: [], size: { week: 'l', today: 's', stats: 'l', vac: 's', cal: 'l', dist: 's' } };
+const DN_DEFAULT = { order: ['week', 'today', 'vac', 'cal'], hidden: [], size: { week: 'l', today: 's', vac: 's', cal: 'l' } };
+
+// Optionen je Modul (Menue rechts oben am Modul). [Schluessel, DE, EN, Vorgabe].
+// Gespeichert in data.settings.dashLayout.opt[modul][schluessel], nur Booleans.
+const DN_OPTS = {
+    week:  [['we', 'Wochenende immer zeigen', 'Always show weekend', false], ['curve', 'Verlaufskurve', 'Progress curve', true], ['goal', 'Tagesziel-Leiste', 'Daily goal bar', true]],
+    today: [['timer', 'Stempeluhr', 'Time clock', true], ['legend', 'Aufteilung nach Art', 'Breakdown by kind', true], ['pct', 'Ring in Prozent', 'Ring as percentage', false]],
+    vac:   [['taken', 'Genommene statt freie Tage', 'Show days taken, not left', false], ['bar', 'Balken mit Jahresmarke', 'Bar with year marker', true], ['rows', 'Tempo und nächster Urlaub', 'Pace and next leave', true]],
+    cal:   [['hours', 'Stunden je Tag', 'Hours per day', true], ['legend', 'Legende', 'Legend', true]]
+};
+// Analysen in der Woche. Reihenfolge = Reihenfolge in der Leiste.
+const DN_ANA = [
+    ['saldo', 'Saldo', 'Balance', 'Verlauf', 'over time'],
+    ['dist', 'Verteilung', 'Breakdown', 'nach Art', 'by kind'],
+    ['wd', 'Wochentage', 'Weekdays', 'Ø je Tag', 'avg per day'],
+    ['facts', 'Kennzahlen', 'Key figures', 'Rhythmus', 'rhythm']
+];
 
 const DN_ICON = {
-    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+    dots: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
     moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
     bell: '<path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
@@ -34,15 +51,12 @@ const DN_ICON = {
     back: '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
     plus: '<path d="M5 12h14"/><path d="M12 5v14"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
-    bolt: '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>',
     play: '<polygon points="6 3 20 12 6 21 6 3"/>',
     pause: '<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
     square: '<rect width="18" height="18" x="3" y="3" rx="2"/>',
     pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
     file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
-    flag: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/>',
     globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
-    chart: '<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/>',
     alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     grip: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>',
@@ -195,14 +209,14 @@ function dnBoot() {
     document.addEventListener('click', dnClick);
     document.addEventListener('keydown', function (e) {
         if (e.key !== 'Escape' || document.querySelector('.modal.active')) return;
-        if (dn$('dnDrawer') && !dn$('dnDrawer').hidden) dnCloseEntry();
+        if (DN.menu) dnCloseMenu(true);
+        else if (dn$('dnDrawer') && !dn$('dnDrawer').hidden) dnCloseEntry();
         else if (DN.edit) dnSetEdit(false);
     });
     dnDrawerDrag();
-    dnDrawerTemplates();
     dnWrapHandleEntry();
     dnChartPointer();
-    new ResizeObserver(function () { if (DN.lastKey) dnRenderWeek(false); }).observe(dn$('dnTl'));
+    new ResizeObserver(function () { if (DN.lastKey && dnView() === 'week') dnRenderWeek(false); }).observe(dn$('dnTl'));
     new ResizeObserver(function () { if (DN._series) dnDrawChart(DN._series.vals, DN._series.lo, DN._series.hi); }).observe(dn$('dnChartSvg'));
     setInterval(dnTick, 1000);
 }
@@ -235,25 +249,41 @@ function dnLayout() {
     const hidden = (Array.isArray(s.hidden) ? s.hidden : []).filter(function (id) { return DN_MODS[id]; });
     const size = {};
     order.forEach(function (id) { const v = s.size && s.size[id]; size[id] = DN_MODS[id].sizes.indexOf(v) >= 0 ? v : DN_DEFAULT.size[id]; });
-    return { order: order, hidden: hidden, size: size };
+    const opt = (s.opt && typeof s.opt === 'object') ? JSON.parse(JSON.stringify(s.opt)) : {};
+    return { order: order, hidden: hidden, size: size, opt: opt };
 }
 function dnSaveLayout(l) {
-    data.settings.dashLayout = { v: 1, order: l.order.slice(), hidden: l.hidden.slice(), size: Object.assign({}, l.size) };
+    data.settings.dashLayout = { v: 1, order: l.order.slice(), hidden: l.hidden.slice(), size: Object.assign({}, l.size), opt: l.opt || {} };
     if (typeof save === 'function') save();
 }
+function dnOpt(mod, key) {
+    const s = (data.settings && data.settings.dashLayout && data.settings.dashLayout.opt) || {};
+    if (s[mod] && key in s[mod]) return s[mod][key];
+    const def = (DN_OPTS[mod] || []).find(function (o) { return o[0] === key; });
+    return def ? def[3] : undefined;
+}
+function dnSetOpt(mod, key, val) {
+    const l = dnLayout();
+    (l.opt[mod] = l.opt[mod] || {})[key] = val;
+    dnSaveLayout(l);
+}
+// Ansicht der Wochenkarte ('week' | 'ana'). Bleibt ueber Seitenaufrufe stehen.
+function dnView() { return dnOpt('week', 'view') === 'ana' ? 'ana' : 'week'; }
 function dnApplyLayout() {
     if (DN._drag) return;
     const l = dnLayout(), grid = dn$('dnGrid');
-    l.order.forEach(function (id) {
+    // Nur verschieben, was nicht schon an seinem Platz steht: jedes Umhaengen
+    // nimmt dem Element darin den Fokus (Menue, Tastatur).
+    l.order.forEach(function (id, i) {
         const m = grid.querySelector('[data-dn-mod="' + id + '"]'); if (!m) return;
-        if (grid.lastElementChild !== m) grid.appendChild(m);
+        if (grid.children[i] !== m) grid.insertBefore(m, grid.children[i] || null);
         m.setAttribute('data-size', l.size[id]);
         m.hidden = l.hidden.indexOf(id) >= 0;
     });
     dnRenderEditUi(l);
 }
 function dnResetLayout() {
-    dnSaveLayout(JSON.parse(JSON.stringify(DN_DEFAULT)));
+    dnSaveLayout(Object.assign(JSON.parse(JSON.stringify(DN_DEFAULT)), { opt: {} }));
     dnFlip(dnApplyLayout);
     setTimeout(function () { dnRenderWeek(true); }, 450);
 }
@@ -354,11 +384,9 @@ function dnRender() {
     const by = dnByDate();
     dnRenderTop();
     dnRenderHero(by, today);
-    dnRenderWeek(true, by);
+    dnRenderWeekCard(by, today);
     dnRenderToday(by, today);
-    dnRenderStats(by, today, false);
     dnRenderVac(today);
-    dnRenderDist(by, today);
     dnRenderCal(by, 0);
     dnRenderDay(DN.calDay, by, false);
     dnRenderStatus(by, today);
@@ -381,7 +409,6 @@ function dnRenderTop() {
     dn$('dnDate').textContent = now.toLocaleDateString(dnLoc(), { weekday: 'short', day: 'numeric', month: 'long' }).replace(/\.,/, ',');
     const light = document.documentElement.getAttribute('data-theme') === 'light';
     dn$('dnTheme').innerHTML = dnSvg(light ? 'moon' : 'sun');
-    dn$('dnSearchLbl').textContent = dnT('Suchen …', 'Search …');
     let unread = 0;
     try { if (typeof alertsHistory !== 'undefined' && Array.isArray(alertsHistory)) unread = alertsHistory.filter(function (a) { return !a.isRead; }).length; } catch (e) { /* ohne Meldungen */ }
     dn$('dnBell').hidden = !unread;
@@ -457,14 +484,28 @@ function dnSpark(by, today) {
 }
 
 // ── Deine Woche ──
+// Eine Karte, zwei Ansichten: die Woche als Zeitstrahl und Analysen ueber einen
+// Zeitraum. Die Leiste links traegt je nach Ansicht Tage oder Analysen.
+function dnRenderWeekCard(by, today, animate) {
+    by = by || dnByDate(); today = today || dnToday();
+    const view = dnView();
+    document.querySelector('.dn-week').classList.toggle('is-ana', view === 'ana');
+    dn$('dnWeekTitle').textContent = dnT('Deine Woche', 'Your week');
+    dn$('dnViewSeg').setAttribute('aria-label', dnT('Ansicht', 'View'));
+    dnSeg(dn$('dnViewSeg'), [['week', dnT('Woche', 'Week')], ['ana', dnT('Analysen', 'Insights')]], view, 'view');
+    dn$('dnWkNav').hidden = view !== 'week';
+    dn$('dnPaneWeek').hidden = view !== 'week';
+    dn$('dnPaneAna').hidden = view !== 'ana';
+    if (view === 'week') dnRenderWeek(true, by); else dnRenderAna(by, today, animate);
+}
 function dnWeekDays(by) {
-    const mo = dnMonday(DN.wkOff), todayK = dnISO(new Date()), out = [], first = dnFirstDate();
+    const mo = dnMonday(DN.wkOff), todayK = dnISO(new Date()), out = [], first = dnFirstDate(), we = dnOpt('week', 'we');
     for (let i = 0; i < 7; i++) {
         const d = dnAdd(mo, i), k = dnISO(d), list = by[k] || [], soll = dnSoll(d);
         let h = list.reduce(function (a, e) { return a + dnEntryH(e); }, 0);
         if (k === todayK) h += dnTimerH();
-        // Wochenende nur, wenn dort gearbeitet wird oder ein Soll steht.
-        if (i >= 5 && !list.length && !soll) continue;
+        // Wochenende nur, wenn dort gearbeitet wird, ein Soll steht oder der Nutzer es so will.
+        if (i >= 5 && !list.length && !soll && !we) continue;
         const isToday = k === todayK, past = k < todayK;
         let s;
         if (h > 0.004) s = (soll > 0 && h < soll - 0.05) ? 'part' : 'done';
@@ -477,24 +518,26 @@ function dnWeekDays(by) {
 }
 function dnRenderWeek(full, by) {
     by = by || dnByDate();
-    const days = dnWeekDays(by), tl = dn$('dnTl');
+    const days = dnWeekDays(by), tl = dn$('dnTl'), curve = dnOpt('week', 'curve');
     // Ohne Auswahl: heute, sonst der letzte Tag mit Eintrag, sonst der erste.
     if (!days.some(function (x) { return x.k === DN.sel; })) DN.sel = (days.find(function (x) { return x.isToday; }) || days.filter(function (x) { return x.list.length; }).pop() || days[0]).k;
-    const key = days.map(function (x) { return x.k + x.s + x.h.toFixed(2); }).join('|');
+    const key = days.map(function (x) { return x.k + x.s + x.h.toFixed(2); }).join('|') + (curve ? 'c' : 'f');
     // Die Flaeche fuellt das Modul: Kurve hoechstens 150 px, Kurve und Karten stehen zusammen mittig.
-    const W = tl.clientWidth || 600, H = Math.max(200, tl.clientHeight || 200), n = days.length, col = W / n;
-    const curveH = Math.min(150, H - 92), top0 = Math.max(0, Math.round((H - (curveH + 14 + 66)) / 2));
+    tl.classList.toggle('is-flat', !curve);
+    const W = tl.clientWidth || 600, H = curve ? Math.max(200, tl.clientHeight || 200) : 0, n = days.length, col = W / n;
+    const curveH = curve ? Math.min(150, H - 92) : 0, top0 = curve ? Math.max(0, Math.round((H - (curveH + 14 + 66)) / 2)) : 0;
     const mid = 22 + (curveH - 22) * 0.5, amp = (curveH - 22) * 0.42;
-    dn$('dnWeekTitle').textContent = dnT('Deine Woche', 'Your week');
-    dn$('dnWeekSub').textContent = DN.wkOff === 0 ? dnT('Ein Eintrag pro Tag. Schritt für Schritt.', 'One entry a day. Step by step.')
-        : dnT('KW ', 'Week ') + dnKW(days[0].d) + ', ' + days[0].d.toLocaleDateString(dnLoc(), { day: '2-digit', month: '2-digit' }) + ' – ' + days[n - 1].d.toLocaleDateString(dnLoc(), { day: '2-digit', month: '2-digit' });
-    dn$('dnWeekOpen').textContent = dnT('Woche öffnen', 'Open week');
+    const fmtD = function (d) { return d.toLocaleDateString(dnLoc(), { day: '2-digit', month: '2-digit' }); };
+    dn$('dnWeekSub').textContent = DN.wkOff === 0 ? dnT('Diese Woche, KW ', 'This week, week ') + dnKW(days[0].d)
+        : dnT('KW ', 'Week ') + dnKW(days[0].d) + ', ' + fmtD(days[0].d) + ' – ' + fmtD(days[n - 1].d);
     document.querySelector('[data-dn="wk-next"]').disabled = DN.wkOff >= 4;
+    dn$('dnGoal').hidden = !dnOpt('week', 'goal');
 
     const dl = dn$('dnDays');
+    dl.setAttribute('aria-label', dnT('Tage', 'Days'));
     dl.innerHTML = '<span class="dn-day-pill" id="dnDayPill"></span>' + days.map(function (x) {
         return '<button type="button" class="dn-day" role="tab" data-dn-day="' + x.k + '" aria-selected="' + (x.k === DN.sel) + '">' +
-            x.d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', '') + '<small>' + x.d.toLocaleDateString(dnLoc(), { day: '2-digit', month: '2-digit' }) + '</small>' + (x.list.length ? '<i></i>' : '') + '</button>';
+            x.d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', '') + '<small>' + fmtD(x.d) + '</small>' + (x.list.length ? '<i></i>' : '') + '</button>';
     }).join('');
     dnMovePill(true);
 
@@ -523,13 +566,16 @@ function dnRenderWeek(full, by) {
     const rebuild = full || tl.dataset.key !== key || tl.dataset.w !== dim;
     if (rebuild) {
         tl.dataset.key = key; tl.dataset.w = dim;
-        let html = '<div class="dn-tl__track" style="top:' + top0 + 'px"><svg class="dn-tl__svg" style="height:' + curveH + 'px" viewBox="0 0 ' + W + ' ' + curveH + '" preserveAspectRatio="none" aria-hidden="true"><path class="dn-tl__base" d="' + path(ext) + '"/>' +
-            (solid ? '<path class="dn-tl__done" id="dnTlDone" d="' + solid + '"/>' : '') + '</svg>';
-        days.forEach(function (x, i) {
-            if (x.isToday) html += '<span class="dn-node__lbl" style="left:' + pts[i].x + 'px;top:' + (pts[i].y - 26) + 'px">' + dnT('Heute', 'Today') + '</span>';
-            html += '<button type="button" class="dn-node' + (x.isToday ? ' is-today' : '') + '" data-s="' + x.s + '" data-dn-day="' + x.k + '" style="left:' + pts[i].x + 'px;top:' + pts[i].y + 'px" aria-label="' + dnEsc(x.d.toLocaleDateString(dnLoc(), { weekday: 'long', day: 'numeric', month: 'long' })) + '">' + (x.s === 'done' ? dnSvg('check') : '') + '</button>';
-        });
-        html += '<div class="dn-dcards" style="top:' + (curveH + 14) + 'px;grid-template-columns:repeat(' + n + ',minmax(0,1fr))">' + days.map(function (x) {
+        let html = '<div class="dn-tl__track" style="top:' + top0 + 'px">';
+        if (curve) {
+            html += '<svg class="dn-tl__svg" style="height:' + curveH + 'px" viewBox="0 0 ' + W + ' ' + curveH + '" preserveAspectRatio="none" aria-hidden="true"><path class="dn-tl__base" d="' + path(ext) + '"/>' +
+                (solid ? '<path class="dn-tl__done" id="dnTlDone" d="' + solid + '"/>' : '') + '</svg>';
+            days.forEach(function (x, i) {
+                if (x.isToday) html += '<span class="dn-node__lbl" style="left:' + pts[i].x + 'px;top:' + (pts[i].y - 26) + 'px">' + dnT('Heute', 'Today') + '</span>';
+                html += '<button type="button" class="dn-node' + (x.isToday ? ' is-today' : '') + '" data-s="' + x.s + '" data-dn-day="' + x.k + '" style="left:' + pts[i].x + 'px;top:' + pts[i].y + 'px" aria-label="' + dnEsc(x.d.toLocaleDateString(dnLoc(), { weekday: 'long', day: 'numeric', month: 'long' })) + '">' + (x.s === 'done' ? dnSvg('check') : '') + '</button>';
+            });
+        }
+        html += '<div class="dn-dcards" style="top:' + (curve ? curveH + 14 : 0) + 'px;grid-template-columns:repeat(' + n + ',minmax(0,1fr))">' + days.map(function (x) {
             let t, sub;
             if (x.s === 'future') { t = dnT('Geplant', 'Planned'); sub = dnT('Soll ', 'Target ') + dnNum(x.soll, 1) + ' h'; }
             else if (x.s === 'open') { t = dnT('Offen', 'Open'); sub = dnT('eintragen', 'add'); }
@@ -558,15 +604,16 @@ function dnDrawLine(ms) {
     const L = p.getTotalLength();
     dnAnim(p, [{ strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDasharray: L + ' ' + L, strokeDashoffset: 0 }], { duration: ms || 1200, easing: 'cubic-bezier(.77,0,.175,1)' });
 }
+// Die Markierung gleitet zum gewaehlten Eintrag der Leiste. Breit steht die
+// Leiste senkrecht, schmal (Analysen) waagerecht, deshalb x, y, Breite und Hoehe.
 function dnMovePill(instant) {
-    const pill = dn$('dnDayPill'), b = document.querySelector('.dn-day[aria-selected="true"]');
+    const pill = dn$('dnDayPill'), b = document.querySelector('#dnDays [aria-selected="true"]');
     if (!pill || !b) return;
-    if (instant && DN._pillY != null && !DN_RM.matches) {
-        pill.style.transition = 'none'; pill.style.transform = 'translateY(' + DN._pillY + 'px)'; pill.style.height = b.offsetHeight + 'px'; void pill.offsetWidth; pill.style.transition = '';
-    }
-    pill.style.height = b.offsetHeight + 'px';
-    pill.style.transform = 'translateY(' + b.offsetTop + 'px)';
-    DN._pillY = b.offsetTop;
+    const to = { x: b.offsetLeft, y: b.offsetTop, w: b.offsetWidth, h: b.offsetHeight };
+    const put = function (p) { pill.style.transform = 'translate(' + p.x + 'px,' + p.y + 'px)'; pill.style.width = p.w + 'px'; pill.style.height = p.h + 'px'; };
+    if (instant && DN._pill && !DN_RM.matches) { pill.style.transition = 'none'; put(DN._pill); void pill.offsetWidth; pill.style.transition = ''; }
+    put(to);
+    DN._pill = to;
 }
 function dnRenderGoal(days) {
     const x = days.find(function (y) { return y.k === DN.sel; }); if (!x) return;
@@ -579,7 +626,47 @@ function dnSelectDay(k) {
     DN.sel = k;
     document.querySelectorAll('.dn-day').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-dn-day') === k)); });
     dnMovePill(false);
-    dnRenderWeek(false);
+    if (dnView() === 'week') dnRenderWeek(false);
+}
+
+// ── Analysen (in der Wochenkarte) ──
+// Ein Zeitraum fuer alle vier Analysen. Nenner sind immer echte Groessen aus den
+// Eintraegen und Einstellungen; wo es nichts zu rechnen gibt, steht "–".
+function dnRanges() { return [[30, dnT('30 T', '30 d')], [90, dnT('90 T', '90 d')], [365, dnT('12 M', '12 mo')], ['all', dnT('Alles', 'All')]]; }
+function dnRangeStart(today) {
+    if (DN.range === 'all') { const f = dnFirstDate(); return f ? dnParse(f) : dnAdd(today, -29); }
+    return dnAdd(today, -(DN.range - 1));
+}
+function dnInRange(from, today) {
+    return (data.entries || []).filter(function (e) { if (!e || !e.date) return false; const d = dnParse(e.date); return d >= from && d <= today; });
+}
+function dnRenderAnaRail() {
+    const dl = dn$('dnDays');
+    dl.setAttribute('aria-label', dnT('Analysen', 'Insights'));
+    dl.innerHTML = '<span class="dn-day-pill" id="dnDayPill"></span>' + DN_ANA.map(function (a) {
+        return '<button type="button" class="dn-day" role="tab" data-dn-ana="' + a[0] + '" aria-selected="' + (a[0] === DN.ana) + '">' + dnT(a[1], a[2]) + '<small>' + dnT(a[3], a[4]) + '</small></button>';
+    }).join('');
+    dnMovePill(true);
+}
+function dnRenderAna(by, today, animate) {
+    by = by || dnByDate(); today = today || dnToday();
+    dnRenderAnaRail();
+    dn$('dnRangeSeg').setAttribute('aria-label', dnT('Zeitraum', 'Period'));
+    dnSeg(dn$('dnRangeSeg'), dnRanges(), DN.range, 'range');
+    document.querySelectorAll('#dnPaneAna .dn-ana__p').forEach(function (p) { p.hidden = p.getAttribute('data-ana') !== DN.ana; });
+    const from = dnRangeStart(today), fmt = function (d) { return d.toLocaleDateString(dnLoc(), { day: 'numeric', month: 'short', year: 'numeric' }); };
+    dn$('dnWeekSub').textContent = fmt(from) + ' – ' + fmt(today);
+    const lead = {
+        saldo: dnT('Wie sich dein Gleitzeit-Saldo entwickelt hat.', 'How your flexitime balance developed.'),
+        dist: dnT('Wofür deine Stunden draufgegangen sind.', 'Where your hours went.'),
+        wd: dnT('Wie lang deine Tage je Wochentag im Schnitt sind, gemessen am Soll.', 'Average day length per weekday, against your target.'),
+        facts: dnT('Wann du anfängst, aufhörst und wie oft du über dem Soll liegst.', 'When you start, when you finish, and how often you go over.')
+    };
+    dn$('dnAnaLead').textContent = lead[DN.ana];
+    if (DN.ana === 'saldo') dnRenderSaldo(by, today, from, animate);
+    else if (DN.ana === 'dist') dnRenderDist(from, today);
+    else if (DN.ana === 'wd') dnRenderWd(from, today);
+    else dnRenderFacts(from, today);
 }
 
 // ── Heute ──
@@ -594,11 +681,16 @@ function dnRenderToday(by, today) {
     const ring = dn$('dnTodayRing');
     dnRing(ring, soll > 0 ? h / soll : (h > 0 ? 1 : 0), { size: 200, sw: 12, head: true, pad: 6 });
     if (!ring.querySelector('.dn-ring__c')) ring.insertAdjacentHTML('beforeend', '<div class="dn-ring__c"><b id="dnTodayVal"></b><small id="dnTodayOf"></small></div>');
-    const fmt = function (v) { return dnNum(v, 1) + '<small>h</small>'; };
-    if (ts === 'run') { dn$('dnTodayVal').innerHTML = fmt(h); dnShown.today = h; } else dnCount(dn$('dnTodayVal'), 'today', h, fmt);
-    dn$('dnTodayOf').textContent = soll > 0 ? dnT('von ', 'of ') + dnNum(soll, 1) + ' h' : dnT('kein Soll heute', 'no target today');
+    // Prozent nur mit echtem Nenner; ohne Soll heute bleibt es bei Stunden.
+    const pct = dnOpt('today', 'pct') && soll > 0, key = pct ? 'todayPct' : 'today', val = pct ? h / soll * 100 : h;
+    const fmt = pct ? function (v) { return Math.round(v) + '<small>%</small>'; } : function (v) { return dnNum(v, 1) + '<small>h</small>'; };
+    if (ts === 'run') { dn$('dnTodayVal').innerHTML = fmt(val); dnShown[key] = val; } else dnCount(dn$('dnTodayVal'), key, val, fmt);
+    dn$('dnTodayOf').textContent = soll > 0 ? (pct ? dnNum(h, 1) + ' / ' + dnNum(soll, 1) + ' h' : dnT('von ', 'of ') + dnNum(soll, 1) + ' h') : dnT('kein Soll heute', 'no target today');
     dn$('dnToday').classList.toggle('is-running', ts === 'run');
-    dn$('dnLive').hidden = ts === 'off';
+    const showTimer = dnOpt('today', 'timer');
+    dn$('dnLive').hidden = ts === 'off' || !showTimer;
+    dn$('dnTimer').hidden = !showTimer;
+    dn$('dnTodayLegend').hidden = !dnOpt('today', 'legend');
     const rows = [['work', dnT('Arbeit', 'Work'), 'var(--primary)'], ['school', dnT('Schule', 'School'), 'var(--school)'], ['other', dnT('Sonstiges', 'Other'), 'var(--text-muted)']];
     dn$('dnTodayLegend').innerHTML = rows.map(function (r) { return '<li><i style="background:' + r[2] + '"></i><span>' + r[1] + '</span><b>' + dnNum(sum[r[0]], 1) + ' h</b></li>'; }).join('');
     // Stempeluhr: dieselben drei Befehle wie im Formular (timerAction).
@@ -631,7 +723,7 @@ function dnTick() {
     if (changed || DN.tick % 30 === 0) { dnRenderWeek(false, by); dnRenderHero(by, today); }
 }
 
-// ── Statistik ──
+// ── Analysen: Saldo, Verteilung, Wochentage, Kennzahlen ──
 // Saldo-Verlauf: Summe aller diff bis zu jedem Tag. Zwischen den Zeitraeumen
 // formt sich die Kurve um (gleich viele Stuetzpunkte), statt neu aufzubauen.
 const DN_N = 140;
@@ -650,46 +742,36 @@ function dnSeries(by, today, range) {
     const pad = (hi - lo) * 0.12 || 1; lo -= pad; hi += pad;
     return { days: days, vals: vals, lo: lo, hi: hi };
 }
-function dnRenderStats(by, today, animate) {
-    dn$('dnStatsTitle').textContent = dnT('Statistik', 'Statistics');
-    const ranges = [[30, dnT('30 T', '30 d')], [90, dnT('90 T', '90 d')], [365, dnT('Jahr', 'Year')], ['all', dnT('Alles', 'All')]];
-    dnSeg(dn$('dnStatsSeg'), ranges, DN.statRange, 'stat-range');
-    const mo = dnMonday(0), now = new Date();
-    let wk = 0, mon = 0, avgH = 0, avgN = 0;
-    (data.entries || []).forEach(function (e) {
-        if (!e.date || e.type === 'korrektur') return;
-        const d = dnParse(e.date), diff = parseFloat(e.diff) || 0;
-        if (d >= mo && d < dnAdd(mo, 7)) wk += diff;
-        if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) mon += diff;
-        if (['work', 'school', 'vacation', 'sick', 'holiday', 'gleittag'].indexOf(e.type) >= 0) { avgH += dnEntryH(e); avgN++; }
+function dnFigs(host, figs) {
+    host.innerHTML = figs.map(function (f) {
+        const sg = f[2] == null ? 'zero' : (f[2] > 0.004 ? 'pos' : f[2] < -0.004 ? 'neg' : 'zero');
+        return '<div class="dn-fig"><span>' + f[0] + '</span><b data-s="' + sg + '">' + f[1] + '</b>' + (f[3] ? '<small>' + dnEsc(f[3]) + '</small>' : '') + '</div>';
+    }).join('');
+}
+function dnRenderSaldo(by, today, from, animate) {
+    let sum = 0, wH = 0; const wDays = new Set();
+    dnInRange(from, today).forEach(function (e) {
+        sum += parseFloat(e.diff) || 0;   // Korrektur gehoert zum Saldo
+        if (e.type === 'work' || e.type === 'school') { wH += dnEntryH(e); wDays.add(e.date); }
     });
     const pr = dnProjection();
-    let st = { current: 0, best: 0 };
-    try { if (typeof calculateStreak === 'function') st = calculateStreak(); } catch (e) { /* ohne Serie */ }
-    const kp = [
-        ['wk', dnT('Woche', 'Week'), dnSigned(wk, 1) + ' h', wk, dnT('KW ', 'Week ') + dnKW(mo)],
-        ['mon', dnT('Monat', 'Month'), dnSigned(mon, 1) + ' h', mon, now.toLocaleDateString(dnLoc(), { month: 'long' })],
-        ['avg', dnT('Ø pro Tag', 'Avg per day'), dnNum(avgN ? avgH / avgN : 0, 1) + ' h', 0, avgN + dnT(' Tage', ' days')],
-        ['prog', dnT('In 6 Wochen', 'In 6 weeks'), pr.ok ? dnSigned(pr.value, 1) + ' h' : '–', pr.ok ? pr.value : 0, pr.ok ? dnT('Prognose', 'Forecast') : dnT('ab ', 'from ') + DN_PROG_MIN + dnT(' Tagen', ' days')],
-        ['streak', dnT('Serie', 'Streak'), st.current + dnT(' Tage', ' days'), 0, dnT('Rekord ', 'Best ') + st.best]
-    ];
-    dn$('dnKpis').innerHTML = kp.map(function (k) {
-        const signed = k[0] === 'wk' || k[0] === 'mon' || k[0] === 'prog';
-        const sg = signed ? (k[3] > 0.004 ? 'pos' : k[3] < -0.004 ? 'neg' : 'zero') : 'zero';
-        return '<div class="dn-kpi" data-k="' + k[0] + '"><span>' + k[1] + '</span><b data-s="' + sg + '">' + k[2] + '</b><small>' + dnEsc(k[4]) + '</small></div>';
-    }).join('');
-    const s = dnSeries(by, today, DN.statRange);
-    dn$('dnStatsSub').textContent = dnT('Saldo seit ', 'Balance since ') + s.days[0].d.toLocaleDateString(dnLoc(), { day: 'numeric', month: 'short', year: 'numeric' });
+    dnFigs(dn$('dnSaldoFigs'), [
+        [dnT('Im Zeitraum', 'In this period'), dnSigned(sum, 1) + ' h', sum],
+        [dnT('Ø je Arbeitstag', 'Avg per workday'), wDays.size ? dnNum(wH / wDays.size, 1) + ' h' : '–', null, wDays.size ? wDays.size + dnT(' Tage', ' days') : ''],
+        [dnT('In 6 Wochen', 'In 6 weeks'), pr.ok ? dnSigned(pr.value, 1) + ' h' : '–', pr.ok ? pr.value : null, pr.ok ? dnT('Prognose', 'Forecast') : dnT('ab ', 'from ') + DN_PROG_MIN + dnT(' Tagen', ' days')]
+    ]);
+    const s = dnSeries(by, today, DN.range);
     const fmtD = function (d) { return d.toLocaleDateString(dnLoc(), { day: 'numeric', month: 'short' }); };
     dn$('dnChartX').innerHTML = '<span>' + fmtD(s.days[0].d) + '</span><span>' + fmtD(s.days[Math.floor(s.days.length / 2)].d) + '</span><span>' + dnT('heute', 'today') + '</span>';
+    dn$('dnChartSvg').setAttribute('aria-label', dnT('Saldo-Verlauf', 'Balance over time'));
     DN._days = s.days;
     if (!DN._series || !animate || DN_RM.matches) { DN._series = { vals: s.vals, lo: s.lo, hi: s.hi }; dnDrawChart(s.vals, s.lo, s.hi); return; }
-    const from = DN._series, t0 = performance.now(), D = 700;
+    const from0 = DN._series, t0 = performance.now(), D = 700;
     cancelAnimationFrame(DN._chartAnim);
     const step = function (t) {
         const k = Math.min(1, (t - t0) / D), e = k < .5 ? 8 * k * k * k * k : 1 - Math.pow(-2 * k + 2, 4) / 2;
-        const v = from.vals.map(function (x, i) { return x + (s.vals[i] - x) * e; });
-        DN._series = { vals: v, lo: from.lo + (s.lo - from.lo) * e, hi: from.hi + (s.hi - from.hi) * e };
+        const v = from0.vals.map(function (x, i) { return x + (s.vals[i] - x) * e; });
+        DN._series = { vals: v, lo: from0.lo + (s.lo - from0.lo) * e, hi: from0.hi + (s.hi - from0.hi) * e };
         dnDrawChart(DN._series.vals, DN._series.lo, DN._series.hi);
         if (k < 1) DN._chartAnim = requestAnimationFrame(step); else DN._series = { vals: s.vals, lo: s.lo, hi: s.hi };
     };
@@ -740,6 +822,108 @@ function dnChartPointer() {
     svg.addEventListener('pointerleave', function () { cr.on = false; const c = dn$('dnChC'); if (c) c.style.opacity = 0; tip.style.opacity = 0; });
 }
 
+// Verteilung: je Eintragstyp Stunden im Zeitraum, Farbe aus der Typdefinition
+// (getTypeRgb, eine Quelle fuer die ganze App). Korrektur zaehlt nicht.
+function dnRenderDist(from, today) {
+    const sum = {}, days = {};
+    dnInRange(from, today).forEach(function (e) {
+        if (e.type === 'korrektur') return;
+        sum[e.type] = (sum[e.type] || 0) + dnEntryH(e);
+        (days[e.type] = days[e.type] || new Set()).add(e.date);
+    });
+    const types = Object.keys(sum).filter(function (t) { return sum[t] > 0.004; }).sort(function (a, b) { return sum[b] - sum[a] || a.localeCompare(b); });
+    const total = types.reduce(function (a, t) { return a + sum[t]; }, 0);
+    dnCount(dn$('dnDistTotal'), 'distTotal', total, function (v) { return '<b>' + dnNum(v, 1) + '</b><span>' + dnT('Stunden gesamt', 'hours in total') + '</span>'; }, 700);
+    const bar = dn$('dnDistBar');
+    if (!types.length) {
+        bar.innerHTML = '';
+        dn$('dnDistLeg').innerHTML = '<li class="dn-dist__empty">' + dnT('In diesem Zeitraum gibt es noch keine Einträge.', 'No entries in this period yet.') + '</li>';
+        return;
+    }
+    // Fuge je Segment, ohne dass die Summe die Breite sprengt (auswertungen.md).
+    const gap = 0.5, room = 100 - gap * (types.length - 1); let left = 0;
+    const known = new Set(types);
+    [...bar.children].forEach(function (c) { if (!known.has(c.getAttribute('data-t'))) c.remove(); });
+    types.forEach(function (t) {
+        let el = bar.querySelector('[data-t="' + t + '"]');
+        if (!el) { el = document.createElement('i'); el.setAttribute('data-t', t); el.style.left = '0'; el.style.width = '0'; bar.appendChild(el); }
+        el.style.background = 'rgb(' + dnTypeRgb(t) + ')';
+        const w = sum[t] / total * room;
+        el.style.left = left + '%'; el.style.width = w + '%'; el.title = dnTypeLabel(t) + ': ' + dnNum(sum[t], 1) + ' h';
+        left += w + gap;
+    });
+    dn$('dnDistLeg').innerHTML = types.map(function (t) {
+        return '<li><i style="background:rgb(' + dnTypeRgb(t) + ')"></i><span>' + dnEsc(dnTypeLabel(t)) + '</span><small>' + days[t].size + (days[t].size === 1 ? dnT(' Tag', ' day') : dnT(' Tage', ' days')) + '</small><b>' + dnNum(sum[t], 1) + ' h</b><em>' + Math.round(sum[t] / total * 100) + ' %</em></li>';
+    }).join('');
+}
+
+// Wochentage: Ø Stunden an den Tagen MIT Eintrag (ein leerer Montag zieht den
+// Schnitt nicht runter, er steht in "Erfasste Tage"), dagegen das Soll des
+// Wochentags als Marke. Wochenende nur, wenn dort Soll oder Eintraege sind.
+function dnRenderWd(from, today) {
+    const sum = [0, 0, 0, 0, 0, 0, 0], days = [0, 1, 2, 3, 4, 5, 6].map(function () { return new Set(); });
+    dnInRange(from, today).forEach(function (e) {
+        if (e.type === 'korrektur') return;
+        const h = dnEntryH(e); if (h <= 0) return;
+        const wd = dnParse(e.date).getDay(); sum[wd] += h; days[wd].add(e.date);
+    });
+    const mo = dnMonday(0);
+    const cols = [1, 2, 3, 4, 5, 6, 0].map(function (wd) {
+        const soll = dnSoll(dnAdd(mo, (wd + 6) % 7)), n = days[wd].size;
+        return { wd: wd, d: dnAdd(mo, (wd + 6) % 7), n: n, avg: n ? sum[wd] / n : 0, soll: soll };
+    }).filter(function (c) { return c.n || c.soll > 0; });
+    const host = dn$('dnWd');
+    if (!cols.some(function (c) { return c.n; })) { host.innerHTML = '<p class="dn-dist__empty">' + dnT('In diesem Zeitraum gibt es noch keine Einträge.', 'No entries in this period yet.') + '</p>'; return; }
+    const max = Math.max.apply(null, cols.map(function (c) { return Math.max(c.avg, c.soll); })) * 1.1 || 1;
+    host.innerHTML = '<div class="dn-wd__cols" style="grid-template-columns:repeat(' + cols.length + ',minmax(0,1fr))">' + cols.map(function (c) {
+        const name = c.d.toLocaleDateString(dnLoc(), { weekday: 'long' });
+        const tip = name + ': ' + (c.n ? dnT('Ø ', 'avg ') + dnNum(c.avg, 1) + ' h, ' + c.n + (c.n === 1 ? dnT(' Tag', ' day') : dnT(' Tage', ' days')) : dnT('keine Einträge', 'no entries')) + (c.soll ? ', ' + dnT('Soll ', 'target ') + dnNum(c.soll, 1) + ' h' : '');
+        return '<div class="dn-wd__c" title="' + dnEsc(tip) + '" aria-label="' + dnEsc(tip) + '" role="img">' +
+            '<b>' + (c.n ? dnNum(c.avg, 1) : '–') + '</b>' +
+            '<div class="dn-wd__track"><i class="dn-wd__bar" style="height:' + (c.avg / max * 100) + '%"></i>' + (c.soll ? '<span class="dn-wd__soll" style="bottom:' + (c.soll / max * 100) + '%"></span>' : '') + '</div>' +
+            '<span class="dn-wd__d">' + c.d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', '') + '</span><small>' + c.n + dnT(' T', ' d') + '</small></div>';
+    }).join('') + '</div>' +
+        '<p class="dn-wd__key"><span><i class="bar"></i>' + dnT('Ø Stunden an Tagen mit Eintrag', 'Avg hours on recorded days') + '</span><span><i class="soll"></i>' + dnT('Soll', 'Target') + '</span></p>';
+}
+
+// Kennzahlen: Rhythmus und Ausreisser. Beginn, Ende und Pause nur aus
+// Arbeitseintraegen mit Uhrzeit — ein manueller Stundeneintrag hat keine.
+function dnRenderFacts(from, today) {
+    const list = dnInRange(from, today).filter(function (e) { return e.type !== 'korrektur'; });
+    const hm = /^\d{1,2}:\d{2}$/, mins = function (s) { const p = s.split(':'); return +p[0] * 60 + +p[1]; };
+    const clock = function (m) { m = Math.round(m); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+    const timed = list.filter(function (e) { return e.type === 'work' && hm.test(e.start || '') && hm.test(e.end || '') && mins(e.end) > mins(e.start); });
+    const mean = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
+    const st = mean(timed.map(function (e) { return mins(e.start); })), en = mean(timed.map(function (e) { return mins(e.end); }));
+    const br = mean(timed.map(function (e) { return parseFloat(e.breakMins) || 0; }));
+    const dayH = {}, dayD = {}, proj = {};
+    list.forEach(function (e) {
+        dayH[e.date] = (dayH[e.date] || 0) + dnEntryH(e);
+        dayD[e.date] = (dayD[e.date] || 0) + (parseFloat(e.diff) || 0);
+        if (e.project) proj[e.project] = (proj[e.project] || 0) + dnEntryH(e);
+    });
+    const dates = Object.keys(dayH);
+    let longest = null; dates.forEach(function (k) { if (!longest || dayH[k] > dayH[longest]) longest = k; });
+    let overN = 0, overH = 0, underN = 0, underH = 0;
+    dates.forEach(function (k) { const v = dayD[k]; if (v > 0.05) { overN++; overH += v; } else if (v < -0.05) { underN++; underH += v; } });
+    const topP = Object.keys(proj).sort(function (a, b) { return proj[b] - proj[a]; })[0];
+    let sk = { current: 0, best: 0 };
+    try { if (typeof calculateStreak === 'function') sk = calculateStreak(); } catch (e) { /* ohne Serie */ }
+    const tage = function (n) { return n + (n === 1 ? dnT(' Tag', ' day') : dnT(' Tage', ' days')); };
+    const rows = [
+        [dnT('Erfasste Tage', 'Recorded days'), String(dates.length)],
+        [dnT('Ø Beginn', 'Avg start'), st == null ? '–' : clock(st)],
+        [dnT('Ø Feierabend', 'Avg finish'), en == null ? '–' : clock(en)],
+        [dnT('Ø Pause', 'Avg break'), br == null ? '–' : Math.round(br) + ' min'],
+        [dnT('Längster Tag', 'Longest day'), longest ? dnNum(dayH[longest], 1) + ' h, ' + dnParse(longest).toLocaleDateString(dnLoc(), { weekday: 'short', day: 'numeric', month: 'short' }) : '–'],
+        [dnT('Über Soll', 'Over target'), overN ? tage(overN) + ', ' + dnSigned(overH, 1) + ' h' : '–'],
+        [dnT('Unter Soll', 'Under target'), underN ? tage(underN) + ', ' + dnSigned(underH, 1) + ' h' : '–'],
+        [dnT('Serie (Soll erfüllt)', 'Streak (target met)'), tage(sk.current) + dnT(', Rekord ', ', best ') + sk.best]
+    ];
+    if (topP) rows.splice(5, 0, [dnT('Größtes Projekt', 'Top project'), topP + ', ' + dnNum(proj[topP], 1) + ' h']);
+    dn$('dnFacts').innerHTML = rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + dnEsc(r[1]) + '</dd></div>'; }).join('');
+}
+
 // ── Urlaub ──
 // Kontingent mit echtem Nenner (Anspruch + Uebertrag). Genommen = bis heute,
 // geplant = eingetragene Urlaubstage danach. Die Marke zeigt, wo man stuende,
@@ -760,8 +944,14 @@ function dnRenderVac(today) {
     dn$('dnVacTitle').textContent = dnT('Urlaub', 'Leave');
     dn$('dnVacSub').textContent = dnT('Anspruch ', 'Allowance ') + y + ': ' + fmt(total) + unitFor(total) + (carried ? dnT(', davon ' + fmt(carried) + ' Übertrag', ', incl. ' + fmt(carried) + ' carried over') : '');
     dn$('dnVacPlan').textContent = dnT('Planen', 'Plan');
-    dn$('dnHolLbl').textContent = dnT('Feiertage eintragen', 'Book public holidays');
-    dnCount(dn$('dnVacBig'), 'vacLeft', left, function (v) { return '<b>' + fmt(v) + '</b><span>' + (hoursMode ? dnT('Stunden frei', 'hours left') : (Math.round(v) === 1 ? dnT('Tag frei', 'day left') : dnT('Tage frei', 'days left'))) + '</span>'; });
+    if (dnOpt('vac', 'taken')) {
+        dnCount(dn$('dnVacBig'), 'vacTaken', taken, function (v) { return '<b>' + fmt(v) + '</b><span>' + (hoursMode ? dnT('Stunden genommen', 'hours taken') : (Math.round(v) === 1 ? dnT('Tag genommen', 'day taken') : dnT('Tage genommen', 'days taken'))) + '</span>'; });
+    } else {
+        dnCount(dn$('dnVacBig'), 'vacLeft', left, function (v) { return '<b>' + fmt(v) + '</b><span>' + (hoursMode ? dnT('Stunden frei', 'hours left') : (Math.round(v) === 1 ? dnT('Tag frei', 'day left') : dnT('Tage frei', 'days left'))) + '</span>'; });
+    }
+    const showBar = dnOpt('vac', 'bar');
+    dn$('dnVacBar').hidden = !showBar; dn$('dnVacLegend').hidden = !showBar;
+    dn$('dnVacRows').hidden = !dnOpt('vac', 'rows');
     const pT = total > 0 ? Math.min(100, taken / total * 100) : 0, pP = total > 0 ? Math.min(100 - pT, planned / total * 100) : 0;
     const yearP = (today - new Date(y, 0, 1)) / (new Date(y + 1, 0, 1) - new Date(y, 0, 1)) * 100;
     const bar = dn$('dnVacBar');
@@ -786,50 +976,6 @@ function dnRenderVac(today) {
     const daysLeft = Math.max(0, Math.ceil((new Date(y, 11, 31) - today) / 864e5));
     dn$('dnVacRows').innerHTML = [[dnT('Tempo', 'Pace'), tempo], [dnT('Nächster Urlaub', 'Next leave'), next], [dnT('Noch im Jahr', 'Left in year'), daysLeft + dnT(' Kalendertage', ' calendar days')]]
         .map(function (r) { return '<div><span>' + r[0] + '</span><b>' + dnEsc(r[1]) + '</b></div>'; }).join('');
-}
-
-// ── Arbeitsverteilung ──
-// Je Eintragstyp Stunden im gewaehlten Zeitraum, Farbe aus der Typdefinition
-// (getTypeRgb, eine Quelle fuer die ganze App). Korrektur zaehlt nicht.
-function dnRenderDist(by, today) {
-    dn$('dnDistTitle').textContent = dnT('Arbeitsverteilung', 'Work distribution');
-    dnSeg(dn$('dnDistSeg'), [['week', dnT('Woche', 'Week')], ['month', dnT('Monat', 'Month')], ['year', dnT('Jahr', 'Year')]], DN.distRange, 'dist-range');
-    let from;
-    if (DN.distRange === 'week') from = dnMonday(0);
-    else if (DN.distRange === 'month') from = new Date(today.getFullYear(), today.getMonth(), 1);
-    else from = new Date(today.getFullYear(), 0, 1);
-    const sum = {}, days = {};
-    (data.entries || []).forEach(function (e) {
-        if (!e.date || e.type === 'korrektur') return;
-        const d = dnParse(e.date); if (d < from || d > today) return;
-        sum[e.type] = (sum[e.type] || 0) + dnEntryH(e);
-        (days[e.type] = days[e.type] || new Set()).add(e.date);
-    });
-    const types = Object.keys(sum).filter(function (t) { return sum[t] > 0.004; }).sort(function (a, b) { return sum[b] - sum[a] || a.localeCompare(b); });
-    const total = types.reduce(function (a, t) { return a + sum[t]; }, 0);
-    dn$('dnDistSub').textContent = from.toLocaleDateString(dnLoc(), { day: 'numeric', month: 'short' }) + ' – ' + today.toLocaleDateString(dnLoc(), { day: 'numeric', month: 'short' });
-    dnCount(dn$('dnDistTotal'), 'distTotal', total, function (v) { return '<b>' + dnNum(v, 1) + '</b><span>' + dnT('Stunden gesamt', 'hours in total') + '</span>'; }, 700);
-    const bar = dn$('dnDistBar');
-    if (!types.length) {
-        bar.innerHTML = '';
-        dn$('dnDistLeg').innerHTML = '<li class="dn-dist__empty">' + dnT('In diesem Zeitraum gibt es noch keine Einträge.', 'No entries in this period yet.') + '</li>';
-        return;
-    }
-    // Fuge je Segment, ohne dass die Summe die Breite sprengt (auswertungen.md).
-    const gap = 0.5, room = 100 - gap * (types.length - 1); let left = 0;
-    const known = new Set(types);
-    [...bar.children].forEach(function (c) { if (!known.has(c.getAttribute('data-t'))) c.remove(); });
-    types.forEach(function (t) {
-        let el = bar.querySelector('[data-t="' + t + '"]');
-        if (!el) { el = document.createElement('i'); el.setAttribute('data-t', t); el.style.left = '0'; el.style.width = '0'; bar.appendChild(el); }
-        el.style.background = 'rgb(' + dnTypeRgb(t) + ')';
-        const w = sum[t] / total * room;
-        el.style.left = left + '%'; el.style.width = w + '%'; el.title = dnTypeLabel(t) + ': ' + dnNum(sum[t], 1) + ' h';
-        left += w + gap;
-    });
-    dn$('dnDistLeg').innerHTML = types.map(function (t) {
-        return '<li><i style="background:rgb(' + dnTypeRgb(t) + ')"></i><span>' + dnEsc(dnTypeLabel(t)) + '</span><small>' + days[t].size + (days[t].size === 1 ? dnT(' Tag', ' day') : dnT(' Tage', ' days')) + '</small><b>' + dnNum(sum[t], 1) + ' h</b><em>' + Math.round(sum[t] / total * 100) + ' %</em></li>';
-    }).join('');
 }
 
 // ── Kalender mit Tagesverlauf ──
@@ -862,6 +1008,8 @@ function dnRenderCal(by, animDir) {
     }
     const g = dn$('dnCalGrid');
     g.innerHTML = html;
+    g.classList.toggle('no-hours', !dnOpt('cal', 'hours'));
+    dn$('dnCalLegend').hidden = !dnOpt('cal', 'legend');
     if (animDir) dnAnim(g, [{ transform: 'translateX(' + (animDir * 28) + 'px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.23,1,.32,1)' });
     dn$('dnCalLegend').innerHTML = [['var(--success)', dnT('Eintrag', 'Entry')], ['var(--primary)', dnT('Heute', 'Today')], ['var(--danger)', dnT('Feiertag', 'Holiday')], ['var(--text-muted)', dnT('Urlaub', 'Leave')]]
         .map(function (l) { return '<span><i style="background:' + l[0] + '"></i>' + l[1] + '</span>'; }).join('');
@@ -902,33 +1050,19 @@ function dnCloseDay() {
     dnAnim(dn$('dnCalMonth'), [{ transform: 'translateX(-24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(.32,.72,0,1)' });
 }
 
-// ── Statuszeile: genau eine Aussage, die stimmt ──
+// ── Statuszeile: nur, wenn in dieser Woche ein Tag fehlt ──
+// Kein Dauer-Lob und kein Leerzustand: den ersten Start fuehrt die Einrichtungs-
+// karte oben, und "alles gut" braucht keine eigene Zeile.
 function dnRenderStatus(by, today) {
     const box = dn$('dnStatus');
-    const entries = data.entries || [];
-    let icon = 'bolt', t, s, btn, act;
     const missing = [], mo = dnMonday(0), first = dnFirstDate();
     for (let i = 0; i < 7; i++) { const d = dnAdd(mo, i); if (d >= today) break; if (first && dnISO(d) > first && dnSoll(d) > 0 && !(by[dnISO(d)] || []).length) missing.push(d); }
-    let wk = 0; for (let i = 0; i < 7; i++) (by[dnISO(dnAdd(mo, i))] || []).forEach(function (e) { if (e.type !== 'korrektur') wk += parseFloat(e.diff) || 0; });
-    if (!entries.length) {
-        t = dnT('Leg los.', 'Get started.'); s = dnT('Trag deinen ersten Tag ein, dann füllen sich Woche, Kalender und Saldo von selbst.', 'Add your first day and the week, calendar and balance fill in by themselves.');
-        btn = dnT('Ersten Eintrag schreiben', 'Write first entry'); act = 'entry';
-    } else if (missing.length) {
-        icon = 'alert';
-        const names = missing.map(function (d) { return d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', ''); }).join(', ');
-        t = missing.length === 1 ? dnT('Ein Tag fehlt noch.', 'One day is missing.') : dnT(missing.length + ' Tage fehlen noch.', missing.length + ' days are missing.');
-        s = dnT('Diese Woche ohne Eintrag: ', 'No entry this week: ') + names + '.';
-        btn = dnT('Nachtragen', 'Add now'); act = 'entry-day:' + dnISO(missing[0]);
-    } else if (wk < -0.25) {
-        icon = 'clock';
-        t = dnT('Alles eingetragen.', 'All recorded.'); s = dnT('Die Woche steht bei ', 'This week stands at ') + dnSigned(wk, 1) + ' h.';
-        btn = dnT('Zur Woche', 'Open week'); act = 'weekview';
-    } else {
-        t = dnT('Du bist im Plan!', 'You’re on track!'); s = dnT('Deine Einträge sind aktuell und vollständig.', 'Your entries are up to date and complete.') + (wk > 0.25 ? dnT(' Woche: ', ' Week: ') + dnSigned(wk, 1) + ' h.' : '');
-        btn = dnT('Zu den Zielen', 'Go to goals'); act = 'goals';
-    }
-    box.innerHTML = '<span class="dn-status__ic">' + dnSvg(icon) + '</span><div class="dn-status__t"><b>' + t + '</b><span>' + s + '</span></div>' +
-        '<button type="button" class="dn-btn" data-dn="status" data-act="' + act + '">' + btn + dnSvg('arrow') + '</button>';
+    if (!missing.length) { box.innerHTML = ''; return; }
+    const names = missing.map(function (d) { return d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', ''); }).join(', ');
+    const t = missing.length === 1 ? dnT('Ein Tag fehlt noch.', 'One day is missing.') : dnT(missing.length + ' Tage fehlen noch.', missing.length + ' days are missing.');
+    const s = dnT('Diese Woche ohne Eintrag: ', 'No entry this week: ') + names + '.';
+    box.innerHTML = '<span class="dn-status__ic">' + dnSvg('alert') + '</span><div class="dn-status__t"><b>' + t + '</b><span>' + s + '</span></div>' +
+        '<button type="button" class="dn-btn" data-dn="entry-day" data-k="' + dnISO(missing[0]) + '">' + dnT('Nachtragen', 'Add now') + dnSvg('arrow') + '</button>';
 }
 
 // ════════════════ BEWEGUNG BEIM LADEN ════════════════
@@ -956,7 +1090,7 @@ function dnIntro() {
         dnAnim(cl, [{ strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDasharray: L + ' ' + L, strokeDashoffset: 0 }], { duration: 1500, delay: 300, easing: 'cubic-bezier(.77,0,.175,1)' });
         dnAnim(dn$('dnChA'), [{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 1000, easing: 'ease', fill: 'backwards' });
     }
-    document.querySelectorAll('#dnKpis .dn-kpi, #dnDistLeg li, #dnVacRows > div').forEach(function (n, i) { dnAnim(n, [{ transform: 'translateY(8px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, delay: 300 + (i % 6) * 60, easing: ease, fill: 'backwards' }); });
+    document.querySelectorAll('#dnSaldoFigs .dn-fig, #dnDistLeg li, #dnFacts > div, #dnVacRows > div').forEach(function (n, i) { dnAnim(n, [{ transform: 'translateY(8px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, delay: 300 + (i % 6) * 60, easing: ease, fill: 'backwards' }); });
     document.querySelectorAll('#dnDistBar i, #dnVacBar i').forEach(function (n, i) { dnAnim(n, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 900, delay: 500 + i * 80, easing: ease, fill: 'backwards' }); });
     document.querySelectorAll('#dnCalGrid .dn-cd i').forEach(function (n, i) { dnAnim(n, [{ transform: 'scale(0)' }, { transform: 'none' }], { duration: 400, delay: 500 + i * 18, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'backwards' }); });
     const sp = document.querySelector('#dnSpark path:last-child');
@@ -970,7 +1104,6 @@ function dnOpenEntry(dateStr) {
         const inp = dn$('inpDate');
         if (inp) { inp.value = dateStr; inp.dispatchEvent(new Event('change', { bubbles: true })); }
     }
-    dnDrawerTemplates();
     d.hidden = false; document.body.classList.add('dn-locked');
     void d.offsetWidth; d.classList.add('is-open');
     setTimeout(function () { const f = dn$('inpDate'); if (f) try { f.focus({ preventScroll: true }); } catch (e) { /* ohne Fokus */ } }, DN_RM.matches ? 0 : 420);
@@ -980,32 +1113,6 @@ function dnCloseEntry() {
     d.classList.remove('is-open'); d.querySelector('.dn-drawer__panel').style.transform = '';
     document.body.classList.remove('dn-locked');
     setTimeout(function () { if (!d.classList.contains('is-open')) d.hidden = true; }, DN_RM.matches ? 0 : 460);
-}
-// Vorlagen fuer heute (frueher eigenes Widget, dann Schnellzugriff): dieselben
-// sechs, gebucht ueber applyQuickTemplate() aus quick-templates.js.
-function dnTemplates() {
-    const now = new Date(), dh = (data.settings && data.settings.hours) ? (data.settings.hours[now.getDay()] || 8) : 8;
-    return [
-        { icon: '💼', label: dnT('Standard Tag', 'Standard day'), sub: dh + dnT('h Arbeit', 'h work'), type: 'work', hours: dh },
-        { icon: '📚', label: dnT('Schultag', 'School day'), sub: dh + dnT('h Schule', 'h school'), type: 'school', hours: dh },
-        { icon: '🌴', label: dnT('Urlaub', 'Leave'), sub: dh + dnT('h Urlaub', 'h leave'), type: 'vacation', hours: dh },
-        { icon: '💊', label: dnT('Krankentag', 'Sick day'), sub: dh + dnT('h Krank', 'h sick'), type: 'sick', hours: dh },
-        { icon: '⏰', label: dnT('Halber Tag', 'Half day'), sub: (dh / 2).toFixed(1) + 'h', type: 'work', hours: dh / 2 },
-        { icon: '🔄', label: dnT('Überstunden', 'Overtime'), sub: (dh + 2) + dnT('h Arbeit', 'h work'), type: 'work', hours: dh + 2 }
-    ];
-}
-function dnDrawerTemplates() {
-    const d = dn$('dnDrawer'); if (!d) return;
-    let row = d.querySelector('.dn-tplrow');
-    if (!row) {
-        const head = d.querySelector('.entry-form__header'); if (!head) return;
-        head.insertAdjacentHTML('afterend', '<div class="dn-tplrow" role="group"></div>');
-        row = d.querySelector('.dn-tplrow');
-    }
-    row.setAttribute('aria-label', dnT('Vorlage für heute', 'Template for today'));
-    row.innerHTML = '<span class="dn-tplrow__l">' + dnT('Für heute', 'For today') + '</span>' + dnTemplates().map(function (x, i) {
-        return '<button type="button" class="dn-tpl" data-dn-tpl="' + i + '" title="' + dnEsc(x.sub) + '" style="--dn-rgb:' + dnTypeRgb(x.type) + '"><span>' + ((typeof mwlIconFromEmoji === 'function') ? mwlIconFromEmoji(x.icon, 14) : '') + '</span>' + dnEsc(x.label) + '</button>';
-    }).join('');
 }
 // Am Handy laesst sich das Blatt am Griff nach unten wegwischen; ein schneller
 // Wisch reicht, auch wenn er kurz ist (Geschwindigkeit statt Schwelle).
@@ -1027,24 +1134,76 @@ function dnDrawerDrag() {
     grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
 }
 
+// ════════════════ MODUL-MENUE ════════════════
+// Je Modul ein kleines Menue: Optionen (DN_OPTS), Breite, Ausblenden, Anordnen.
+// Liegt im Modul selbst; das Modul bekommt dafuer .has-menu, weil jedes Modul
+// (container-type) einen eigenen Stapelkontext bildet und das naechste Modul
+// sonst ueber dem Menue laege.
+function dnOpenMenu(btn) {
+    const id = btn.getAttribute('data-id'), mod = btn.closest('.dn-mod');
+    if (DN.menu && DN.menu.id === id) { dnCloseMenu(true); return; }
+    dnCloseMenu(false);
+    mod.insertAdjacentHTML('beforeend', '<div class="dn-menu" role="menu"></div>');
+    const m = mod.querySelector(':scope > .dn-menu');
+    DN.menu = { id: id, el: m, btn: btn };
+    mod.classList.add('has-menu');
+    btn.setAttribute('aria-expanded', 'true');
+    dnFillMenu();
+    const r = btn.getBoundingClientRect(), mr = mod.getBoundingClientRect();
+    m.style.top = Math.round(r.bottom - mr.top + 8) + 'px';
+    m.style.right = Math.max(8, Math.round(mr.right - r.right)) + 'px';
+    dnAnim(m, [{ opacity: 0, transform: 'translateY(-4px) scale(.97)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(.23,1,.32,1)' });
+    const first = m.querySelector('button'); if (first) first.focus({ preventScroll: true });
+}
+function dnFillMenu() {
+    if (!DN.menu) return;
+    const id = DN.menu.id, m = DN.menu.el, l = dnLayout(), name = dnT(DN_MODS[id].de, DN_MODS[id].en);
+    const sizeName = { s: dnT('Schmal', 'Narrow'), m: dnT('Halb', 'Half'), l: dnT('Breit', 'Wide'), f: dnT('Voll', 'Full') };
+    m.setAttribute('aria-label', name + dnT(' anpassen', ' options'));
+    let html = '<p class="dn-menu__t">' + dnT('Anzeigen', 'Show') + '</p>' + (DN_OPTS[id] || []).map(function (o) {
+        return '<button type="button" role="menuitemcheckbox" class="dn-menu__it" data-dn="opt" data-id="' + id + '" data-k="' + o[0] + '" aria-checked="' + !!dnOpt(id, o[0]) + '"><span>' + dnT(o[1], o[2]) + '</span><i class="dn-sw" aria-hidden="true"></i></button>';
+    }).join('') + '<hr>';
+    if (id === 'week') html += '<button type="button" role="menuitem" class="dn-menu__it" data-dn="weekview"><span>' + dnT('Wochenansicht öffnen', 'Open week view') + '</span>' + dnSvg('arrow') + '</button>';
+    if (DN_MODS[id].sizes.length > 1) html += '<button type="button" role="menuitem" class="dn-menu__it dn-menu__size" data-dn="mod-size" data-id="' + id + '"><span>' + dnT('Breite', 'Width') + '</span><em>' + sizeName[l.size[id]] + '</em></button>';
+    html += '<button type="button" role="menuitem" class="dn-menu__it" data-dn="edit"><span>' + dnT('Module anordnen', 'Arrange modules') + '</span>' + dnSvg('grip') + '</button>' +
+        '<button type="button" role="menuitem" class="dn-menu__it" data-dn="mod-hide" data-id="' + id + '"><span>' + dnT('Ausblenden', 'Hide') + '</span>' + dnSvg('eyeoff') + '</button>';
+    const f = document.activeElement && m.contains(document.activeElement) ? [...m.querySelectorAll('button')].indexOf(document.activeElement) : -1;
+    m.innerHTML = html;
+    if (f >= 0) { const b = m.querySelectorAll('button')[f]; if (b) b.focus({ preventScroll: true }); }
+}
+function dnCloseMenu(focusBtn) {
+    if (!DN.menu) return;
+    const mm = DN.menu; DN.menu = null;
+    mm.btn.setAttribute('aria-expanded', 'false');
+    const mod = mm.el.closest('.dn-mod'); if (mod) mod.classList.remove('has-menu');
+    mm.el.remove();
+    if (focusBtn) mm.btn.focus({ preventScroll: true });
+}
+
 // ════════════════ KLICKS ════════════════
 function dnClick(e) {
+    if (DN.menu && !e.target.closest('.dn-menu') && !e.target.closest('[data-dn="mod-menu"]')) dnCloseMenu(false);
     if (e.target.closest('[data-dn-grip]')) return;   // Ziehen laeuft ueber pointerdown
-    const t = e.target.closest('[data-dn],[data-dn-day],[data-dn-cal],[data-dn-edit],[data-dn-tpl]');
+    const t = e.target.closest('[data-dn],[data-dn-day],[data-dn-ana],[data-dn-cal],[data-dn-edit]');
     if (!t) return;
     if (t.hasAttribute('data-dn-day')) { dnSelectDay(t.getAttribute('data-dn-day')); const x = t.getAttribute('data-s'); if ((x === 'miss' || x === 'open') && t.classList.contains('dn-dcard')) dnOpenEntry(t.getAttribute('data-dn-day')); return; }
+    if (t.hasAttribute('data-dn-ana')) {
+        DN.ana = t.getAttribute('data-dn-ana');
+        dnRenderAna(null, null, true);
+        const p = document.querySelector('#dnPaneAna .dn-ana__p:not([hidden])');
+        dnAnim(p, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.23,1,.32,1)' });
+        return;
+    }
     if (t.hasAttribute('data-dn-cal')) { dnOpenDay(t.getAttribute('data-dn-cal')); return; }
     if (t.hasAttribute('data-dn-edit')) {
         const raw = t.getAttribute('data-dn-edit'), id = isNaN(+raw) ? raw : +raw;
         if (typeof openEditModal === 'function') openEditModal(id);
         return;
     }
-    if (t.hasAttribute('data-dn-tpl')) { window._quickTemplates = dnTemplates(); if (typeof applyQuickTemplate === 'function') Promise.resolve(applyQuickTemplate(+t.getAttribute('data-dn-tpl'))).then(dnCloseEntry); return; }
     const a = t.getAttribute('data-dn');
     const run = function (fn) { if (typeof window[fn] === 'function') window[fn](); };
     const l = dnLayout(), id = t.getAttribute('data-id');
     switch (a) {
-        case 'palette': run('openCmdPalette'); break;
         case 'theme': {
             const light = document.documentElement.getAttribute('data-theme') === 'light';
             document.documentElement.classList.add('dn-theme-anim');
@@ -1056,39 +1215,52 @@ function dnClick(e) {
         case 'weather': run('openWeatherModal'); break;
         case 'today': { const k = dnISO(new Date()); DN.wkOff = 0; dnSelectDay(k); dnOpenDay(k); const c = document.querySelector('.dn-cal'); if (c && !c.hidden) c.scrollIntoView({ behavior: DN_RM.matches ? 'auto' : 'smooth', block: 'center' }); break; }
         case 'saldo': run('openSaldoAdjust'); break;
-        case 'edit': dnSetEdit(!DN.edit); break;
+        case 'mod-menu': dnOpenMenu(t); break;
+        case 'opt': {
+            const k = t.getAttribute('data-k');
+            dnSetOpt(id, k, !dnOpt(id, k));
+            dnRender(); dnFillMenu();
+            break;
+        }
+        case 'view': {
+            const v = t.getAttribute('data-v'); if (v === dnView()) break;
+            dnSetOpt('week', 'view', v);
+            dnRenderWeekCard(null, null, true);
+            const p = dn$(v === 'ana' ? 'dnPaneAna' : 'dnPaneWeek');
+            dnAnim(p, [{ opacity: 0, transform: 'translateX(' + (v === 'ana' ? 14 : -14) + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 360, easing: 'cubic-bezier(.23,1,.32,1)' });
+            if (v === 'week') dnDrawLine(700);
+            break;
+        }
+        case 'range': { const v = t.getAttribute('data-v'); DN.range = v === 'all' ? 'all' : +v; dnRenderAna(null, null, true); break; }
+        case 'edit': dnCloseMenu(false); dnSetEdit(!DN.edit); break;
         case 'layout-reset': dnResetLayout(); break;
-        case 'mod-hide': if (l.hidden.indexOf(id) < 0) l.hidden.push(id); dnSaveLayout(l); dnFlip(dnApplyLayout); break;
-        case 'mod-show': l.hidden = l.hidden.filter(function (x) { return x !== id; }); dnSaveLayout(l); dnFlip(dnApplyLayout); setTimeout(function () { dnRenderWeek(true); }, 30); break;
-        case 'mod-size': { const ss = DN_MODS[id].sizes; l.size[id] = ss[(ss.indexOf(l.size[id]) + 1) % ss.length]; dnSaveLayout(l); dnFlip(dnApplyLayout); setTimeout(function () { dnRenderWeek(true); }, 450); break; }
+        case 'mod-hide': dnCloseMenu(false); if (l.hidden.indexOf(id) < 0) l.hidden.push(id); dnSaveLayout(l); dnFlip(dnApplyLayout); break;
+        case 'mod-show': l.hidden = l.hidden.filter(function (x) { return x !== id; }); dnSaveLayout(l); dnFlip(dnApplyLayout); setTimeout(function () { dnRenderWeekCard(); }, 30); break;
+        case 'mod-size': { const ss = DN_MODS[id].sizes; l.size[id] = ss[(ss.indexOf(l.size[id]) + 1) % ss.length]; dnSaveLayout(l); dnFlip(dnApplyLayout); dnFillMenu(); setTimeout(function () { dnRenderWeekCard(); }, 450); break; }
         case 'drawer-close': dnCloseEntry(); break;
         case 'entry': dnOpenEntry(); break;
         case 'entry-day': dnOpenEntry(t.getAttribute('data-k')); break;
-        case 'weekview': dnOpenWeek(DN.wkOff); break;
+        case 'weekview': dnCloseMenu(false); dnOpenWeek(DN.wkOff); break;
         case 'history': if (typeof switchTab === 'function') switchTab('history'); break;
         case 'vacplan': if (typeof switchTab === 'function') switchTab('urlaubsplaner'); break;
-        case 'holidays': run('checkAndBookHolidays'); break;
-        case 'stat-range': { const v = t.getAttribute('data-v'); DN.statRange = v === 'all' ? 'all' : +v; dnRenderStats(dnByDate(), dnToday(), true); break; }
-        case 'dist-range': DN.distRange = t.getAttribute('data-v'); dnRenderDist(dnByDate(), dnToday()); break;
         case 'wk-prev': case 'wk-next': DN.wkOff += a === 'wk-prev' ? -1 : 1; DN._wkDir = a === 'wk-prev' ? -1 : 1; DN.sel = null; dnRenderWeek(true); break;
         case 'cal-prev': case 'cal-next': { const dir = a === 'cal-prev' ? -1 : 1; let m = DN.calM + dir, y = DN.calY; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } DN.calM = m; DN.calY = y; dnRenderCal(null, dir); break; }
         case 'cal-back': dnCloseDay(); break;
         case 't-start': if (typeof timerAction === 'function') timerAction('start'); DN._lastTs = null; dnTick(); break;
         case 't-pause': if (typeof timerAction === 'function') timerAction('pause'); DN._lastTs = null; dnTick(); break;
         case 't-stop': if (typeof timerAction === 'function') timerAction('stop'); break;
-        case 'status': {
-            const act = t.getAttribute('data-act') || '';
-            if (act.indexOf('entry-day:') === 0) dnOpenEntry(act.slice(10));
-            else if (act === 'entry') dnOpenEntry();
-            else if (act === 'weekview') dnOpenWeek(0);
-            else if (act === 'goals' && typeof switchTab === 'function') switchTab('goals');
-            break;
-        }
         default: break;
     }
 }
 document.addEventListener('pointerdown', function (e) { const g = e.target.closest && e.target.closest('[data-dn-grip]'); if (g && DN.edit && e.button === 0) { e.preventDefault(); dnDragStart(e, g); } });
 document.addEventListener('keydown', function (e) {
+    // Im Menue: Pfeiltasten wandern durch die Eintraege.
+    if (DN.menu && DN.menu.el.contains(e.target) && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        const it = [...DN.menu.el.querySelectorAll('button')], i = it.indexOf(e.target);
+        it[(i + (e.key === 'ArrowDown' ? 1 : -1) + it.length) % it.length].focus();
+        return;
+    }
     const g = e.target.closest && e.target.closest('[data-dn-grip]'); if (!g) return;
     const dir = (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : 0;
     if (dir) { e.preventDefault(); dnMoveBy(g.getAttribute('data-dn-grip'), dir); }

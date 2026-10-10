@@ -975,35 +975,6 @@
         setTimeout(function () { $('sadjHours').focus(); }, 60);
     }
 
-    function checkAndBookHolidays() {
-        const bundesland = (data.settings && data.settings.bundesland) || '';
-        if (!bundesland) {
-            showHolidayNoBundesland();
-            return;
-        }
-
-        const now = new Date();
-        const year = now.getFullYear();
-        let holidays = getGermanHolidays(year).concat(getGermanHolidays(year + 1));
-        const existingDates = data.entries.map(e => e.date);
-
-        // Filter: nur Arbeitstage (mit Sollstunden), nicht bereits gebucht, max 60 Tage Vorausschau
-        const pending = holidays.filter(h => {
-            if (existingDates.includes(h.date)) return false;
-            const dateObj = new Date(h.date);
-            const dayIndex = dateObj.getDay();
-            const expected = data.settings.hours[dayIndex] || 0;
-            return expected > 0 && dateObj.getTime() < now.getTime() + (60 * 86400000);
-        });
-
-        if (pending.length === 0) {
-            showHolidayNoPending();
-            return;
-        }
-
-        showHolidayConfirmModal(pending);
-    }
-
     // renderMiniCalendar() zeichnete bis v6.3.5 ein farbiges Kaestchen je Tag in
     // #miniCalGrid. Das Raster gab es nur in der Monatsansicht; dort steht jetzt
     // mcRenderCalendar() (monthcompare.js), das zusaetzlich die Tageslaenge zeigt.

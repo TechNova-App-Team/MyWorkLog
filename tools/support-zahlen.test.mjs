@@ -78,14 +78,18 @@ ok((await supportStreak([])) === 0 && dashboardStreak([]) === 0, 'leere Daten: b
 // ── Feedback-Bericht (Modus "Vollstaendig") gegen die Regeln der App ──
 // Gelesen wird die Datenvorschau der Seite, also genau das, was gesendet wuerde.
 const vh = read('components/core/vacation-holidays.js');
-const charts = read('components/core/charts.js');
 function appVacationUsed(data) {
     const f = new Function('data', [funktion(vh, 'getVacationMode'), funktion(vh, 'recalculateVacationUsed')].join('\n')
         + '\nrecalculateVacationUsed(); return data.settings.vacation.used;');
     return f(JSON.parse(JSON.stringify(data)));
 }
+// Wochensoll = Summe der Tagessolls aus den Einstellungen, ohne Angabe 40.
+// Bis v8.2.5 lag die Regel als weeklyTargetHours() in charts.js; die hatte in
+// der App keinen Aufrufer mehr und ist entfernt, deshalb steht sie hier.
 function appWeekly(data) {
-    return new Function('data', funktion(charts, 'weeklyTargetHours') + '\nreturn weeklyTargetHours();')(data);
+    const h = data && data.settings && Array.isArray(data.settings.hours) ? data.settings.hours : [];
+    const sum = h.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+    return sum > 0 ? sum : 40;
 }
 async function bericht(data) {
     const dom = new JSDOM(html, { url: 'http://localhost/support/', runScripts: 'outside-only' });
@@ -128,7 +132,7 @@ ok(b['Stunden pro Tag'] === '5.8', 'Durchschnitt wie valAvg (40,5 h / 7 Eintraeg
 ok(b['Urlaub verbraucht'] === used + ' h', 'Urlaub genommen = recalculateVacationUsed() der App (' + used + ' h)', b['Urlaub verbraucht']);
 ok(b['Urlaub gesamt'] === total + ' h', 'Urlaubsanspruch = total + carriedOver, in Stunden', b['Urlaub gesamt']);
 ok(b['Urlaub übrig'] === (Math.round((total - used) * 10) / 10) + ' h', 'Urlaub uebrig = Anspruch − genommen', b['Urlaub übrig']);
-ok(b['Wöchentliches Soll'] === appWeekly(fixture).toFixed(1), 'Wochensoll = weeklyTargetHours()', b['Wöchentliches Soll']);
+ok(b['Wöchentliches Soll'] === appWeekly(fixture).toFixed(1), 'Wochensoll = Summe der Tagessolls', b['Wöchentliches Soll']);
 ok(b['Serie'] === String(dashboardStreak(fixture.entries)), 'Serie im Bericht = Dashboard-Serie', b['Serie']);
 ok(mine['Stunden gearbeitet'] === '24 h', '"Dein Stand" rechnet Stunden wie der Bericht (23,5 → 24 h)', mine['Stunden gearbeitet']);
 
