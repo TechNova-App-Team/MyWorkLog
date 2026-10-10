@@ -973,7 +973,7 @@ function dnRenderVac(today) {
     const fmt = function (v) { const r = Math.round(v * 10) / 10; return dnNum(r, r % 1 ? 1 : 0); };
     const unitFor = function (v) { return hoursMode ? ' h' : (Math.round(v * 10) / 10 === 1 ? dnT(' Tag', ' day') : dnT(' Tage', ' days')); };
     dn$('dnVacTitle').textContent = dnT('Urlaub', 'Leave');
-    dn$('dnVacSub').textContent = dnT('Anspruch ', 'Allowance ') + y + ': ' + fmt(total) + unitFor(total) + (carried ? dnT(', davon ' + fmt(carried) + ' Übertrag', ', incl. ' + fmt(carried) + ' carried over') : '');
+    dn$('dnVacSub').textContent = dnT('Anspruch ', 'Allowance ') + y + ': ' + fmt(total) + unitFor(total) + (carried ? dnT(', davon ', ', incl. ') + fmt(carried) + unitFor(carried) + dnT(' Übertrag', ' carried over') : '');
     dn$('dnVacPlan').textContent = dnT('Planen', 'Plan');
     if (dnOpt('vac', 'taken')) {
         dnCount(dn$('dnVacBig'), 'vacTaken', taken, function (v) { return '<b>' + fmt(v) + '</b><span>' + (hoursMode ? dnT('Stunden genommen', 'hours taken') : (Math.round(v) === 1 ? dnT('Tag genommen', 'day taken') : dnT('Tage genommen', 'days taken'))) + '</span>'; });
