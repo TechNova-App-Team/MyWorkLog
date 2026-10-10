@@ -42,25 +42,21 @@
    ausgeschalteter Uhr da). Deshalb hier ausdruecklich. */
 #view-dashboard [hidden], .dn-drawer [hidden] { display: none !important; }
 
-/* Die Seite fuellt mindestens das Fenster: auf hohen Bildschirmen stand unter
-   den Modulen sonst ein leerer schwarzer Streifen (gemessen 1064 von 1260 px).
-   .dn ist eine Spalte, das Raster nimmt den Rest, seine Zeilen strecken sich.
-   Wird der Inhalt hoeher als das Fenster, aendert sich nichts. */
-#view-dashboard.active { display: flex; flex-direction: column; min-height: 100%; }
-.dn { flex: 1; container-type: inline-size; container-name: dn; display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; }
-.dn > .dn-grid { flex: 1; }
+/* Bewusst KEIN Strecken auf Fensterhoehe: das blaehte auf hohen Bildschirmen
+   die Module auf (Saldo-Diagramm ~900 px hoch, Nutzer 10.10.2026: "kacke gross"). */
+.dn { container-type: inline-size; container-name: dn; display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; }
 .dn svg.dn-i, .dn-drawer svg.dn-i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .dn-notes:empty { display: none; }
 .dn-notes > .umf-banner { margin-bottom: 14px; }
 
 /* ── Kopfleiste ── */
-/* Sitzt im Kopf LINKS neben den zwei Anzeigen als eigene Spalte: oben buendig
-   mit den Titelzeilen, rechts dieselbe Trennlinie wie zwischen Woche und
-   Gleitzeit. Als Kapsel senkrecht mittig "schwebte" sie (Nutzer, 10.10.2026). */
-.dn-top { display: flex; align-items: flex-start; align-self: stretch; padding: 0 22px 0 0; border-right: 1px solid var(--dn-line-2); }
+/* Sitzt im Kopf LINKS neben den zwei Anzeigen als eigene Spalte, senkrecht
+   mittig (auf einer Hoehe mit den Zahlen — oben buendig wollte der Nutzer
+   nicht), rechts dieselbe Trennlinie wie zwischen Woche und Gleitzeit. */
+.dn-top { display: flex; align-items: center; align-self: stretch; padding: 0 22px 0 0; border-right: 1px solid var(--dn-line-2); }
 /* Werkzeuge als EINE ruhige Leiste statt sechs einzelner Kaesten (Wunsch des
    Nutzers, 10.10.2026: "gefaellt mir oben gar nicht"). */
-.dn-top__tools { display: flex; align-items: center; gap: 2px; margin-top: -6px; }
+.dn-top__tools { display: flex; align-items: center; gap: 2px; }
 .dn-ibtn { position: relative; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; border: 1px solid var(--dn-line); background: var(--dn-panel);
     color: var(--text-main); cursor: pointer; transition: border-color .2s ease, background-color .2s ease, transform .14s var(--dn-out); }
 .dn-ibtn:hover, .dn-ibtn[aria-pressed="true"] { border-color: var(--dn-acc-line); background: var(--dn-soft); }
@@ -360,14 +356,12 @@ button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-of
 .dn-facts > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid var(--dn-line); font-size: 14px; min-width: 0; }
 .dn-facts dt { color: var(--text-muted); white-space: nowrap; }
 .dn-facts dd { margin: 0; font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; min-width: 0; overflow-wrap: anywhere; }
-.dn-ana__p[data-ana="saldo"] { flex: 1; display: flex; flex-direction: column; }
-/* Die Zeile hat eine feste Hoehe aus dem Container (minmax(0,1fr)). Ohne sie
-   nahm das SVG seine Hoehe aus dem eigenen viewBox, der Neuzeichner setzte den
-   viewBox aus der Hoehe — eine Schleife, die per ResizeObserver hochlief. */
-.dn-chart { position: relative; flex: 1; min-height: 200px; display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 10px; }
+/* Feste Hoehe. Mit flexibler Hoehe nahm das SVG seine Hoehe aus dem eigenen
+   viewBox und der Neuzeichner den viewBox aus der Hoehe — eine Schleife. */
+.dn-chart { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; }
 .dn-chart__y { position: relative; font-size: 11.5px; color: var(--dn-faint); font-variant-numeric: tabular-nums; }
 .dn-chart__y span { position: absolute; right: 0; transform: translateY(-50%); }
-.dn-chart__svg { width: 100%; height: 100%; min-height: 0; display: block; touch-action: pan-y; overflow: visible; cursor: crosshair; }
+.dn-chart__svg { width: 100%; height: 200px; display: block; touch-action: pan-y; overflow: visible; cursor: crosshair; }
 .dn-chart__x { display: flex; justify-content: space-between; margin: 8px 0 0 50px; font-size: 11.5px; color: var(--dn-faint); }
 .dn-chart__tip { position: absolute; left: 0; top: 0; pointer-events: none; background: linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep); border: 1px solid var(--dn-line-2);
     border-radius: 10px; padding: 7px 10px; font-size: 13px; white-space: nowrap; opacity: 0; transition: opacity .14s ease; will-change: transform; z-index: 2; }
