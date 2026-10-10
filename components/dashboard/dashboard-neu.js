@@ -217,6 +217,9 @@ function dnBoot() {
     dnWrapHandleEntry();
     dnChartPointer();
     new ResizeObserver(function () { if (DN.lastKey && dnView() === 'week') dnRenderWeek(false); }).observe(dn$('dnTl'));
+    // Reihenzahl aendert sich mit der Breite (Umbruch der Module).
+    let fitW = 0;
+    new ResizeObserver(function (en) { const w = Math.round(en[0].contentRect.width); if (w !== fitW) { fitW = w; dnFitRows(); } }).observe(dn$('dnGrid'));
     new ResizeObserver(function () { if (DN._series) dnDrawChart(DN._series.vals, DN._series.lo, DN._series.hi); }).observe(dn$('dnChartSvg'));
     setInterval(dnTick, 1000);
 }
@@ -281,6 +284,18 @@ function dnApplyLayout() {
         m.hidden = l.hidden.indexOf(id) >= 0;
     });
     dnRenderEditUi(l);
+    dnFitRows();
+}
+// Nur die LETZTE Reihe des Rasters darf wachsen, wenn die Seite kuerzer als das
+// Fenster ist. Wie viele Reihen es gibt, haengt an Reihenfolge, Breiten und
+// Umbruechen — deshalb gemessen statt in CSS festgeschrieben.
+function dnFitRows() {
+    const grid = dn$('dnGrid'); if (!grid) return;
+    grid.style.gridTemplateRows = '';
+    const tops = new Set();
+    grid.querySelectorAll(':scope > .dn-mod:not([hidden])').forEach(function (m) { tops.add(m.offsetTop); });
+    const n = tops.size;
+    grid.style.gridTemplateRows = n > 1 ? 'repeat(' + (n - 1) + ', auto) 1fr' : (n ? '1fr' : '');
 }
 function dnResetLayout() {
     dnSaveLayout(Object.assign(JSON.parse(JSON.stringify(DN_DEFAULT)), { opt: {} }));
