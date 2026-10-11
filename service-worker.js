@@ -228,8 +228,67 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => Promise.all([OFFLINE_URL, './'].map(u =>
         cache.add(new Request(u, { cache: 'reload' })).catch(() => {}))))
+      .then(() => huelleVorladen())
   );
 });
+
+// 🔴 Die Huelle allein reicht offline nicht: ihre ~105 Stylesheets und Skripte
+// lagen bis v8.3.2 nur im Cache, wenn eine KONTROLLIERTE Seite sie einmal
+// angefragt hatte. Beim ersten Aufruf kontrolliert der Worker die Seite aber
+// noch nicht — alles ist schon geladen, bevor er aktiv ist. Gemessen nach dem
+// ersten Oeffnen: 0 von 30 Stylesheets im Cache, offline kam die nackte Seite
+// ohne CSS und JS (gemeldet 11.10.2026 als „grauer Bildschirm“ in der Android-App).
+// Dasselbe nach jedem Update: install legt die NEUE Huelle ab, deren neue
+// Hashes noch nie angefragt wurden. Deshalb hier alles holen, was die Huelle
+// referenziert. Nur put, kein legeAssetAb: die alte Fassung gehoert noch der
+// offenen Seite des alten Workers — aufgeraeumt wird in activate.
+async function huelleRefs(cache) {
+  const huelle = await cache.match('./');
+  if (!huelle) return [];
+  const html = await huelle.clone().text();
+  const basis = new URL('./', self.location.href);
+  return [...new Set([...html.matchAll(/(?:src|href)="(\/[^"]+\?v=[^"]+)"/g)]
+    .map(m => new URL(m[1], basis).toString()))];
+}
+
+async function huelleVorladen() {
+  try {
+    const refs = await huelleRefs(await caches.open(CACHE_NAME));
+    const assets = await caches.open(ASSET_CACHE);
+    await Promise.all(refs.map(async url => {
+      if (await assets.match(url)) return;
+      try {
+        const res = await fetch(url, { credentials: 'same-origin' });
+        if (res.status === 200) await assets.put(url, res);
+      } catch (e) { /* einzelne Datei fehlt — holt der fetch-Zweig spaeter */ }
+    }));
+    // supabase-config.js traegt kein ?v= und steht damit nicht in refs; ohne sie
+    // meldet die App offline beim ersten Start einen Ladefehler. version.json
+    // (334 KB) bewusst nicht: die holt onboarding.js ohnehin bei jedem Start.
+    const swr = await caches.open(CACHE_NAME);
+    const cfg = cacheSchluessel(new URL('/config/supabase-config.js', self.location.href).toString());
+    if (!(await swr.match(cfg))) {
+      try {
+        const res = await fetch(cfg);
+        if (res.status === 200) await legeAb(swr, cfg, res);
+      } catch (e) { /* offline beim Install — der SWR-Zweig holt sie spaeter */ }
+    }
+    log('Huelle vorgeladen:', refs.length);
+  } catch (e) { log('Vorladen fehlgeschlagen', e); }
+}
+
+// Gegenstueck zu huelleVorladen: je Pfad bleibt die Fassung, die die aktuelle
+// Huelle referenziert. Pfade ohne Referenz (Nachlade-Ansichten) raeumt
+// legeAssetAb beim naechsten Abruf.
+async function alteAssetsRaeumen() {
+  const refs = new Set(await huelleRefs(await caches.open(CACHE_NAME)));
+  if (!refs.size) return;
+  const gewollt = new Set([...refs].map(u => new URL(u).pathname));
+  const assets = await caches.open(ASSET_CACHE);
+  await Promise.all((await assets.keys())
+    .filter(r => gewollt.has(new URL(r.url).pathname) && !refs.has(r.url))
+    .map(r => assets.delete(r)));
+}
 
 // ─────────────────────────────────────────────
 // ACTIVATE — alte Caches löschen, sofort übernehmen
@@ -257,6 +316,7 @@ self.addEventListener('activate', event => {
             .map(req => { log('Purge stale pages/ URL:', req.url); return cache.delete(req); })
         );
       })
+      .then(() => alteAssetsRaeumen().catch(() => {}))
       .then(() => self.clients.claim())
   );
 });

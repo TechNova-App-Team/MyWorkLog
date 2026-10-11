@@ -60,6 +60,7 @@ class FakeResponse {
     return new FakeResponse(this.body, { status: this.status, marke: this.marke,
                                          headers: new FakeHeaders(Object.fromEntries(this.headers.m)) });
   }
+  async text() { return inhaltVon(this) ?? ''; }
   // legeAb() liest den Koerper als blob und baut die Antwort neu auf.
   async blob() {
     const b = this.body;
@@ -463,6 +464,37 @@ console.log('\n6. Navigation');
   FakeCache.prototype.add = orig;
   ok(hinzu.includes('./') && hinzu.includes('./offline/'),
      '6c install legt App-Huelle und Offline-Seite ab (' + hinzu.join(',') + ')');
+}
+
+// 6d: install laedt alles vor, was die Huelle referenziert. Gegen den alten
+// Stand rot: nach dem ersten Oeffnen lag kein einziges Stylesheet im Cache,
+// offline kam die Seite ohne CSS/JS („grauer Bildschirm“, 11.10.2026).
+{
+  const benannt = new Map();
+  const huelle = '<link href="/a.css?v=111"><script src="/b.js?v=222"></script><a href="/x/">x</a>';
+  const shell = new FakeCache();
+  shell.eintraege.set('./', new FakeResponse(huelle));
+  benannt.set('tt-cache-6.5.3', shell);
+  const assets = new FakeCache();
+  assets.eintraege.set('https://myworklog.de/b.js?v=222', new FakeResponse('alt-da'));
+  assets.eintraege.set('https://myworklog.de/a.css?v=000', new FakeResponse('vorige Fassung'));
+  assets.eintraege.set('https://myworklog.de/view.js?v=999', new FakeResponse('nachlade-ansicht'));
+  benannt.set('tt-assets-1', assets);
+  const geholt = [];
+  const sw = ladeSW({ benannt, netz: async (u) => { geholt.push(typeof u === 'string' ? u : u.url); return new FakeResponse('neu'); } });
+  let w;
+  sw.hoerer.install({ waitUntil: (x) => { w = x; } });
+  await w;
+  ok(assets.eintraege.has('https://myworklog.de/a.css?v=111'), '6d install legt referenziertes Stylesheet ab');
+  ok(geholt.length === 2 && geholt.includes('https://myworklog.de/a.css?v=111')
+     && geholt.includes('https://myworklog.de/config/supabase-config.js'),
+     '6d … und holt nur, was noch fehlt, plus supabase-config.js (' + geholt.join(',') + ')');
+  ok(shell.eintraege.has('https://myworklog.de/config/supabase-config.js'), '6d supabase-config.js liegt im SWR-Cache');
+  ok(assets.eintraege.has('https://myworklog.de/a.css?v=000'), '6d install laesst die alte Fassung fuer den alten Worker stehen');
+  sw.hoerer.activate({ waitUntil: (x) => { w = x; } });
+  await w;
+  ok(!assets.eintraege.has('https://myworklog.de/a.css?v=000'), '6d activate raeumt die alte Fassung weg');
+  ok(assets.eintraege.has('https://myworklog.de/view.js?v=999'), '6d … aber nichts, was die Huelle nicht kennt');
 }
 
 // ── 7. Gestempelte Dateien ueberleben den Release ───────────────────────────
