@@ -35,8 +35,21 @@
 [data-theme="light"] .dn-drawer { --dn-line: rgba(7, 16, 35, 0.08); --dn-line-2: rgba(7, 16, 35, 0.15); --dn-panel-2: rgba(7, 16, 35, 0.035); --dn-soft: rgba(var(--primary-rgb), 0.1); }
 
 /* Die globale Kopfzeile traegt Begruessung und Datum. Auf dem Dashboard steht
-   beides im eigenen Kopf, doppelt waere es nur laut. */
-.main:has(> #view-dashboard.active) > .header { display: none; }
+   beides im eigenen Kopf, doppelt waere es nur laut.
+   Bewusst andersherum formuliert ("sichtbar nur, wenn eine ANDERE Ansicht offen
+   ist"): der Browser malt die Kopfzeile schon, waehrend er #view-dashboard noch
+   gar nicht gelesen hat — mit `:has(#view-dashboard.active) → none` stand sie am
+   Handy beim Start ~1 s lang da und verschwand dann (gemessen 11.10.2026, CPU x4). */
+.main:not(:has(> .view-section.active:not(#view-dashboard))) > .header { display: none; }
+
+/* Das statische Markup ist nur ein Geruest (Begruessung "schön, dass du da bist",
+   leere Karten, zweispaltig). Am Handy stand es bis zum ersten dnRender() sichtbar
+   da und sprang dann in vier Stufen um — Kopf, Einrichtungskarte, Raster, Werte.
+   Deshalb erst zeigen, wenn updateUI() einmal durch ist (setzt .dn-ready). Ohne
+   Einblendung: ab Deckkraft 0 gemalter Inhalt zaehlt nicht als LCP (CLAUDE.md).
+   Die Animation ist nur der Notnagel, falls der Start irgendwo wirft. */
+#view-dashboard:not(.dn-ready) { visibility: hidden; animation: dnZeigenNotfalls 0s 6s forwards; }
+@keyframes dnZeigenNotfalls { to { visibility: visible; } }
 
 /* Eine Klasse mit display schlaegt das hidden-Attribut (Chip "Pause" stand bei
    ausgeschalteter Uhr da). Deshalb hier ausdruecklich. */

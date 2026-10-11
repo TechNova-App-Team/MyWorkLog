@@ -801,3 +801,29 @@
                 transition: none;
             }
         }
+
+        /* Hintergrund-Orbs am Handy ohne Filter und ohne Dauerbewegung. Drei
+           fixe Flaechen mit blur(80px), die 22–30 s lang ewig wandern, liegen
+           hinter der Glas-Leiste unten (backdrop-filter) — der Blur dort muss
+           dann JEDES Bild neu rechnen, und bei jedem Ansichtswechsel rastert das
+           Handy alles darueber neu. Das war das Flimmern beim Start und Wechseln
+           (gemeldet 11.10.2026). Die Orbs sind radiale Verlaeufe, der Filter
+           machte sie nur weicher; als stehendes Licht sehen sie fast gleich aus.
+           Gleiches Prinzip wie die Wetteransicht (v8.2.4, CLAUDE.md). */
+        @media (max-width: 1023px) {
+            .ambient-orb,
+            [data-theme="light"] .ambient-orb {
+                filter: none;
+                will-change: auto;
+                animation: orbFadeIn 0.6s ease forwards;
+            }
+        }
+        /* Geschlossene Schublade: ihre Endlos-Animationen laufen sonst
+           unsichtbar ausserhalb des Bildes weiter. */
+        @media (max-width: 767px) {
+            .sidebar:not(.active)::after,
+            .sidebar:not(.active) .brand,
+            .sidebar:not(.active) .sidebar-footer-avatar::after {
+                animation-play-state: paused;
+            }
+        }

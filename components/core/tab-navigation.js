@@ -144,9 +144,16 @@
         }
 
         // Die Ansicht steht schon da; ihr Skript kommt beim ersten Oeffnen nach.
+        // Bis dahin bleibt sie unsichtbar (view-pending, core.css): sonst blendet
+        // das leere Geruest ein und der Inhalt springt mitten in der Einblendung
+        // hinein — am Handy beim ersten Oeffnen jeder dieser Ansichten zu sehen.
         if (!viewScriptsReady(tabId)) {
+            const viewEl = document.getElementById('view-' + tabId);
+            viewEl.classList.add('view-pending');
+            const zeigen = () => viewEl.classList.remove('view-pending');
             return loadViewScripts(tabId)
-                .then(() => { if (document.getElementById('view-' + tabId).classList.contains('active')) renderTab(tabId); })
+                .then(() => { if (viewEl.classList.contains('active')) renderTab(tabId); })
+                .then(zeigen, err => { zeigen(); throw err; })
                 .catch(err => {
                     console.warn('Ansicht konnte nicht geladen werden:', tabId, err);
                     if (typeof showCustomMessage === 'function') showCustomMessage(

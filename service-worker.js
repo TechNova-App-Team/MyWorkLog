@@ -115,6 +115,17 @@ function cacheSchluessel(url) {
   return u.toString();
 }
 
+// Seiten ohne Query ablegen und nachschlagen. Die installierte App startet ueber
+// die start_url '/?utm_source=pwa&utm_medium=homescreen', der Knopf "App oeffnen"
+// der Offline-Seite geht auf '/' — mit der vollen URL als Schluessel waren das
+// zwei Eintraege, und '/' lag in der installierten App nie im Cache: offline kam
+// man von der Offline-Seite nicht mehr zurueck (gemeldet 11.10.2026). Das HTML
+// haengt an keinem Query-Parameter, die App wertet ?cloud= usw. per JS aus.
+function seitenSchluessel(url) {
+  const u = new URL(url);
+  return u.origin + u.pathname;
+}
+
 // 🔴 SWR frischt per Definition bei JEDEM Treffer auf — ohne Fenster waeren das
 // hier drei Abrufe von version.json pro Seitenaufruf (onboarding.js,
 // version-loader.js, /support/), also gut 1 MB, nur eben im Hintergrund statt
@@ -209,9 +220,14 @@ self.addEventListener('install', event => {
   // onboarding.js schickt dann SKIP_WAITING). Eine ältere, noch offene Seite würde
   // sonst ihren Cache verlieren und nachgeladene Ansichten mit neuem Code bekommen.
   // Ohne Auslöser aktiviert der Browser ihn, sobald alle Tabs der App zu sind.
+  // Die App-Huelle ('./') kommt mit: activate/SKIP_WAITING werfen den alten
+  // Versions-Cache samt der zuletzt gesehenen Seite weg. Wer nach einem Update
+  // offline ging, bevor er einmal neu navigiert hatte, bekam sonst nur noch die
+  // Offline-Seite.
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.add(OFFLINE_URL).catch(() => {}))
+      .then(cache => Promise.all([OFFLINE_URL, './'].map(u =>
+        cache.add(new Request(u, { cache: 'reload' })).catch(() => {}))))
   );
 });
 
@@ -266,13 +282,13 @@ self.addEventListener('fetch', event => {
         .then(response => {
           if (response.status === 200) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then(c => c.put(request, clone)).catch(() => {});
+            caches.open(CACHE_NAME).then(c => c.put(seitenSchluessel(request.url), clone)).catch(() => {});
           }
           return response;
         })
         .catch(async () => {
           const cache = await caches.open(CACHE_NAME);
-          return (await cache.match(request))
+          return (await cache.match(seitenSchluessel(request.url)))
             ?? (await cache.match(OFFLINE_URL))
             ?? new Response('Offline', { status: 503 });
         })

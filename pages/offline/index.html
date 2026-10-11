@@ -301,8 +301,30 @@
         } catch (e) { /* ignore */ }
     })();
 
-    // Sobald wieder online: direkt in die App.
-    window.addEventListener('online', function () { location.href = '/'; });
+    // Sobald wieder online: direkt in die App. Das 'online'-Ereignis allein reicht
+    // nicht — faellt am Handy nur kurz das Netz weg (WLAN bleibt verbunden), war
+    // navigator.onLine nie false und es kommt nie. Deshalb zusaetzlich alle 4 s
+    // nachfragen. maintenance.json laeuft bewusst am Service Worker vorbei, ein
+    // Treffer heisst also wirklich: das Netz ist da.
+    (function () {
+        var weg = false;
+        // Der SW liefert diese Seite unter der Adresse aus, die eigentlich gewollt
+        // war (z. B. /berichtsheft/) — dann genau die neu laden, sonst die App.
+        function inDieApp() {
+            if (weg) return; weg = true;
+            if (/^(\/en)?\/(pages\/)?offline\/?$/.test(location.pathname)) location.replace(location.pathname.indexOf('/en/') === 0 ? '/en/' : '/');
+            else location.reload();
+        }
+        function pruefen() {
+            if (weg || document.hidden) return;
+            fetch('/config/maintenance.json?t=' + Date.now(), { cache: 'no-store' })
+                .then(function (r) { if (r.ok) inDieApp(); })
+                .catch(function () {});
+        }
+        window.addEventListener('online', inDieApp);
+        document.addEventListener('visibilitychange', pruefen);
+        setInterval(pruefen, 4000);
+    })();
     </script>
 </body>
 </html>

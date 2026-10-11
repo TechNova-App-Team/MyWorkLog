@@ -26,6 +26,10 @@
 
         // Ein Fehler im Dashboard darf das Speichern nicht mitreissen.
         if (typeof dnRender === 'function') { try { dnRender(); } catch (e) { console.warn('dnRender', e); } }
+        // Erst jetzt stimmt alles, was das Dashboard zeigt (Einrichtungskarte,
+        // Begruessung, Raster) — vorher haelt dashboard-neu.css es unsichtbar.
+        const dv = document.getElementById('view-dashboard');
+        if (dv) dv.classList.add('dn-ready');
     }
 
     // Alte Namen, die ueber die ganze App verteilt gerufen werden (Einstellungen,

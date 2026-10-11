@@ -150,7 +150,9 @@ const ohneKommentar = QUELLE
   .replace(/\/\*[\s\S]*?\*\//g, '');
 
 const reloadStellen = [...ohneKommentar.matchAll(/cache:\s*'reload'/g)].length;
-ok(reloadStellen === 1, `cache:'reload' nur noch im navigate-Zweig (gefunden: ${reloadStellen})`);
+// Zwei Stellen, beide HTML: der navigate-Zweig und das Vorab-Ablegen der
+// App-Huelle im install. Ein drittes 'reload' waere ein Asset am HTTP-Cache vorbei.
+ok(reloadStellen === 2, `cache:'reload' nur im navigate-Zweig und im install (gefunden: ${reloadStellen})`);
 ok(/request\.mode === 'navigate'/.test(ohneKommentar), 'navigate-Zweig steht noch');
 ok(!/\(mp4\|webm\|m4v/.test(ohneKommentar), 'Medien-Ausnahme-Regex ist raus');
 // Gegenprobe zur Negativ-Behauptung: es gibt ueberhaupt etwas zu pruefen.
@@ -429,6 +431,38 @@ console.log('\n6. Navigation');
     cacheVorbelegt: { 'https://myworklog.de/': new FakeResponse('<html>alt</html>', { marke: 'cache' }) },
   });
   ok(a.res?.marke === 'cache', 'Navigation faellt offline auf den Cache zurueck');
+}
+// 6b: die installierte App startet ueber die start_url mit ?utm_…, die
+// Offline-Seite schickt auf '/'. Gegen den alten Stand (Schluessel = volle URL)
+// sind beide Pruefungen rot — offline kam man aus der Offline-Seite nie heraus.
+{
+  const start = 'https://myworklog.de/?utm_source=pwa&utm_medium=homescreen';
+  const a = await anfrage(start, { mode: 'navigate' });
+  await new Promise(r => setTimeout(r, 0));
+  ok(a.cache.eintraege.has('https://myworklog.de/') && !a.cache.eintraege.has(start),
+     '6b Seite wird ohne Query abgelegt (' + [...a.cache.eintraege.keys()].join(',') + ')');
+}
+{
+  const offline = { netz: async () => { throw new Error('offline'); },
+    cacheVorbelegt: { 'https://myworklog.de/': new FakeResponse('<html>app</html>', { marke: 'cache' }) } };
+  const a = await anfrage('https://myworklog.de/?utm_source=pwa&utm_medium=homescreen', { mode: 'navigate' }, offline);
+  ok(a.res?.marke === 'cache', '6b offline: start_url mit Query findet die App');
+  const b = await anfrage('https://myworklog.de/', { mode: 'navigate' }, offline);
+  ok(b.res?.marke === 'cache', '6b offline: "App oeffnen" (/) findet die App');
+}
+// 6c: install legt die App-Huelle mit ab, nicht nur die Offline-Seite.
+{
+  const benannt = new Map();
+  const sw = ladeSW({ netz: async () => new FakeResponse('x'), benannt });
+  const hinzu = [];
+  const orig = FakeCache.prototype.add;
+  FakeCache.prototype.add = async function (req) { hinzu.push(typeof req === 'string' ? req : req.url); };
+  let w;
+  sw.hoerer.install({ waitUntil: (x) => { w = x; } });
+  await w;
+  FakeCache.prototype.add = orig;
+  ok(hinzu.includes('./') && hinzu.includes('./offline/'),
+     '6c install legt App-Huelle und Offline-Seite ab (' + hinzu.join(',') + ')');
 }
 
 // ── 7. Gestempelte Dateien ueberleben den Release ───────────────────────────
