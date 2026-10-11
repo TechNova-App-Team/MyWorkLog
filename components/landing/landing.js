@@ -112,12 +112,41 @@
     });
 
     /* — Masse — */
-    var W,H,SCHMAL,scrollMax=1;
+    var W,H,SCHMAL,HOCH,scrollMax=1;
+    var stick=intro.querySelector('.vi-stick'), zeilenBox=intro.querySelector('.vi-lines');
+    var EINZUG=0, uhrLuecke=null;
     function messen(){
-      W=intro.clientWidth; H=intro.clientHeight; SCHMAL=W<=900;
+      W=intro.clientWidth; H=intro.clientHeight; SCHMAL=W<=900; HOCH=SCHMAL&&W<H;
       scrollMax=Math.max(1,intro.querySelector('.vi-scroll').offsetHeight-H);
+      zeilenEinpassen();
       chapters.forEach(function(ch){ if(ch.big) ch.bigW=ch.big.offsetWidth; });
       if(G) G.groesse();
+    }
+
+    /* Hochkant laufen die Hero-Zeilen sonst rechts aus dem Bild ("DEIN BERICHTS…",
+       gemessen 390 px: 17 Zeichen brauchen 10,5vw * 17 * 0,7 > Breite). Die Schrift
+       wird deshalb an der laengsten Zeile gemessen und eingepasst — per Range, nicht
+       scrollWidth: ein Block-span meldet mindestens die eigene Breite. EN hat andere
+       Zeilenlaengen, darum gerechnet statt fest im CSS. Breit bleibt der Ueberlauf
+       Absicht (noomo). Danach die Luecke zwischen Zeilen und Fuss fuer die Stoppuhr. */
+    function zeilenEinpassen(){
+      lines.forEach(function(l){ l.style.fontSize=''; });
+      EINZUG=HOCH?W*0.07:W*0.18;
+      uhrLuecke=null;
+      if(!HOCH) return;
+      var pad=parseFloat(getComputedStyle(lines[0]).paddingLeft)||24;
+      var fs=parseFloat(getComputedStyle(lines[0]).fontSize), faktor=Infinity, r=document.createRange();
+      lines.forEach(function(l,ix){
+        r.selectNodeContents(l);
+        var b=r.getBoundingClientRect().width;
+        if(b>0) faktor=Math.min(faktor,(W-2*pad-(ix===1?EINZUG:0))/b);
+      });
+      if(!isFinite(faktor)) return;
+      var neu=Math.min(fs*faktor, W*0.13);
+      lines.forEach(function(l){ l.style.fontSize=neu.toFixed(2)+'px'; });
+      var oben=function(el){ var y=0; while(el&&el!==stick){ y+=el.offsetTop; el=el.offsetParent; } return y; };
+      var a=oben(zeilenBox)+zeilenBox.offsetHeight, b=oben(heroFuss);
+      uhrLuecke={mitte:(a+b)/2, hoehe:Math.max(0,b-a)};
     }
 
     /* — Zeiger (nur Maus): Zielwert springt, der gezeigte laeuft nach — */
@@ -150,7 +179,7 @@
       heroLogo.style.transform='translate3d(0,'+(-k*H*0.25).toFixed(1)+'px,0)';
       var drift=REDUCE?0:(ps*H*1.6);
       lines.forEach(function(l,ix){
-        var r=ix%2?1:-1, basis=ix===1?W*0.18:0;
+        var r=ix%2?1:-1, basis=ix===1?EINZUG:0;
         l.style.transform='translate3d('+(basis+r*drift).toFixed(1)+'px,'+(-k*H*0.35).toFixed(1)+'px,0)';
         l.style.opacity=(1-k*1.2).toFixed(3);
       });
@@ -368,6 +397,8 @@
       })();
       scene.add(uhr);
       [[-15,7,-6],[15,8,-8],[-4,-9,-9],[-19,1,-12],[22,2,-16],[3,-9,-6],[11,11,-14],[-8,-11,-12]].forEach(function(q,i){ traube(q[0],Y_HERO+q[1],q[2],11+i*97); });
+      // Die unteren drei fallen hochkant genau auf den Textblock unten (gemessen 390x844)
+      var heroUnten=trauben.filter(function(g){ return g.userData.y0<Y_HERO-5; });
 
       /* ═══ STATIONEN ═══ Jede liefert {gruppe, dazu(t,T)}. t = Lage in der
          Station (0…1), dazu() treibt Drehung und Mechanik. Die Gruppe sitzt
@@ -642,6 +673,7 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, SCHMAL?1.6:2));
         renderer.setSize(W,H,false);
         cam.aspect=W/H; cam.updateProjectionMatrix();
+        heroUnten.forEach(function(g){ g.visible=!HOCH; });
       }
 
       var blick=new THREE.Vector3();
@@ -657,6 +689,11 @@
         var tief=SCHMAL?(W<H?1.9:1.25):1;
         // Breit ruecken die Objekte etwas nach links, weg vom Kapiteltext rechts unten
         var amRand=SCHMAL?0:seg(ps,B.hero[1]-0.03,B.hero[1])*(1-seg(ps,B.ende[0],B.ende[0]+0.03));
+        // Hochkant hebt die Kamera-Absenkung die Stationen ~40 px an: sonst stiess der
+        // Wuerfelsockel an den Kapiteltext (gemessen 390x844, Station Ausbilder). Im Hero
+        // nicht — dort rechnet die Stoppuhr mit Kamera auf Y_HERO+1.
+        var heben=HOCH?2*seg(ps,B.hero[1]-0.03,B.hero[1]):0;
+        y-=heben;
         var cx=(REDUCE?0:mx*1.8)+amRand*3.2, cy=y+(REDUCE?0:-my*1.2);
         cam.position.set(cx,cy,36*tief);
         blick.set(amRand*3.2+(cx-amRand*3.2)*0.3,y,0);
@@ -664,8 +701,18 @@
         cam.rotation.z=REDUCE?0:clamp(-vel*0.6,-0.04,0.04);
 
         /* — Hero — */
-        uhr.position.set(SCHMAL?3:8.5, Y_HERO+(SCHMAL?3.2:3.4)+(REDUCE?0:Math.sin(T*0.9)*0.35), 1);
-        uhr.scale.setScalar(SCHMAL?0.9:0.74);
+        var schweb=REDUCE?0:Math.sin(T*0.9)*0.35;
+        if(HOCH&&uhrLuecke){
+          // Hochkant in die Luecke zwischen Zeilen und Fuss: Pixel -> Welt in der Ebene z=1.
+          // Hoehe der Uhr 10,1 Einheiten (Gehaeuse -4,5 bis Knopf +5,6), Mitte damit +0,55.
+          var wpp=2*(cam.position.z-1)*Math.tan(cam.fov*Math.PI/360)/H;
+          var us=clamp(uhrLuecke.hoehe*0.86*wpp/10.1,0.42,0.9);
+          uhr.scale.setScalar(us);
+          uhr.position.set(0, Y_HERO+1-(uhrLuecke.mitte-H/2)*wpp-0.55*us+schweb*us, 1);
+        } else {
+          uhr.position.set(SCHMAL?3:8.5, Y_HERO+(SCHMAL?3.2:3.4)+schweb, 1);
+          uhr.scale.setScalar(SCHMAL?0.9:0.74);
+        }
         uhr.rotation.y=-0.45+mx*0.25+(REDUCE?0:Math.sin(T*0.5)*0.08);
         uhr.rotation.x=0.12+my*0.15;
         uhr.userData.zeiger.rotation.z=REDUCE?0:-T*1.2;
@@ -709,6 +756,8 @@
     document.addEventListener('visibilitychange',function(){ if(!document.hidden){ last=0; wecken(); } });
     messen(); schritt(); wecken();
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(messen);
+    // Martian Mono haengt landing.js erst oben ein — fonts.ready kann vorher aufloesen
+    if(document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone',messen);
 
     /* — Lader: drei Striche, bis Three.js da ist (hoechstens 4 s), dann
        steigt der Titel auf. Ohne WebGL / bei Fehler geht es ohne Szene weiter. — */
