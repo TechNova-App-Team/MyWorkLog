@@ -62,6 +62,7 @@ const DN_ICON = {
     grip: '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>',
     eyeoff: '<path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/>',
     width: '<path d="M21 12H3"/><path d="m7 8-4 4 4 4"/><path d="m17 8 4 4-4 4"/>',
+    nfc: '<path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 0 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/>',
     history: '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>'
 };
 function dnSvg(n) { return '<svg class="dn-i" viewBox="0 0 24 24" aria-hidden="true">' + (DN_ICON[n] || '') + '</svg>'; }
@@ -1197,6 +1198,9 @@ function dnFillMenu() {
     let html = '<p class="dn-menu__t">' + dnT('Anzeigen', 'Show') + '</p>' + (DN_OPTS[id] || []).map(function (o) {
         return '<button type="button" role="menuitemcheckbox" class="dn-menu__it" data-dn="opt" data-id="' + id + '" data-k="' + o[0] + '" aria-checked="' + !!dnOpt(id, o[0]) + '"><span>' + dnT(o[1], o[2]) + '</span><i class="dn-sw" aria-hidden="true"></i></button>';
     }).join('') + '<hr>';
+    // NFC gehoert zur Stempeluhr: in der Seitenleiste steht der Eintrag unterhalb des
+    // sichtbaren Bereichs (gemessen 1327 px bei 900 px Fensterhoehe) und wurde nicht gefunden
+    if (id === 'today' && typeof openNFCModal === 'function') html += '<button type="button" role="menuitem" class="dn-menu__it" data-dn="nfc"><span>' + dnT('NFC-Chip einrichten', 'Set up NFC chip') + '</span>' + dnSvg('nfc') + '</button>';
     if (id === 'week') html += '<button type="button" role="menuitem" class="dn-menu__it" data-dn="weekview"><span>' + dnT('Wochenansicht öffnen', 'Open week view') + '</span>' + dnSvg('arrow') + '</button>';
     if (DN_MODS[id].sizes.length > 1) html += '<button type="button" role="menuitem" class="dn-menu__it dn-menu__size" data-dn="mod-size" data-id="' + id + '"><span>' + dnT('Breite', 'Width') + '</span><em>' + sizeName[l.size[id]] + '</em></button>';
     html += '<button type="button" role="menuitem" class="dn-menu__it" data-dn="edit"><span>' + dnT('Module anordnen', 'Arrange modules') + '</span>' + dnSvg('grip') + '</button>' +
@@ -1275,6 +1279,7 @@ function dnClick(e) {
         case 'entry': dnOpenEntry(); break;
         case 'entry-day': dnOpenEntry(t.getAttribute('data-k')); break;
         case 'weekview': dnCloseMenu(false); dnOpenWeek(DN.wkOff); break;
+        case 'nfc': dnCloseMenu(false); if (typeof openNFCModal === 'function') openNFCModal(); break;
         case 'history': if (typeof switchTab === 'function') switchTab('history'); break;
         case 'vacplan': if (typeof switchTab === 'function') switchTab('urlaubsplaner'); break;
         case 'wk-prev': case 'wk-next': DN.wkOff += a === 'wk-prev' ? -1 : 1; DN._wkDir = a === 'wk-prev' ? -1 : 1; DN.sel = null; dnRenderWeek(true); break;
