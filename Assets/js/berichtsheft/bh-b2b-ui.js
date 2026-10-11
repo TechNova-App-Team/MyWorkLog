@@ -106,7 +106,7 @@
     function zeigeTeaser() {
         el().className = 'is-teaser';
         el().innerHTML =
-            '<button type="button" class="b2b-teaser" onclick="b2bAufklappen()">' +
+            '<button type="button" class="b2b-teaser" data-mess="betrieb_verbinden" onclick="b2bAufklappen()">' +
             '<svg class="icon"><use href="#i-tie"/></svg>' +
             '<span>' + b2bL('Mit dem Ausbildungsbetrieb verbinden', 'Connect to your training company') + '</span>' +
             EXP +

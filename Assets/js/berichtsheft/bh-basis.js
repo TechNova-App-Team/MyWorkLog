@@ -29,6 +29,17 @@ const THEME_KEY = 'berichtsheft_theme';
 const AUTOSAVE_KEY = 'berichtsheft_draft';
 const MODE_KEY = 'berichtsheft_mode';
 let reports = [];
+
+// Messpunkte des Berichtsheft-Trichters (PostHog ueber mwlEvent). Alles laeuft unter
+// EINEM Ereignis 'berichtsheft' mit 'aktion' — der Analytics-Proxy zeigt es als
+// "berichtsheft::<aktion>". Nur Kategorien, Zahlen, Booleans, NIE Text des Nutzers.
+// 'neu' = noch kein Bericht gespeichert: trennt Erstbesucher von Bestandsnutzern.
+function bhMess(aktion, props) {
+    if (typeof mwlEvent !== 'function') return;
+    const p = { aktion: aktion, neu: !reports.length };
+    if (props) for (const k in props) p[k] = props[k];
+    mwlEvent('berichtsheft', p);
+}
 let editingId = null;
 let bulkMode = false;
 let selectedIds = new Set();

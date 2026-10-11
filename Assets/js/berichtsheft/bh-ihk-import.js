@@ -13,6 +13,7 @@ let ihkPdfLoaded = false;
 // --- UI Steuerung ---
 
 function openIhkImport() {
+    bhMess('ihk_import_offen');
     const ov = document.getElementById('ihkImport');
     if (!ov) return;
     

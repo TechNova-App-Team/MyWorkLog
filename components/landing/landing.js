@@ -43,6 +43,15 @@
     document.body.style.overflow='hidden';
 
     var $=function(id){return document.getElementById(id);};
+    // Messpunkte (PostHog ueber mwlEvent): Ereignis 'intro', Aktion als Kategorie
+    var weitestes=-1, endeGemeldet=false;
+    function mess(aktion, props){
+      if(typeof mwlEvent!=='function') return;
+      var p={aktion:aktion, schmal:window.innerWidth<=900};
+      if(props) for(var k in props) p[k]=props[k];
+      mwlEvent('intro', p);
+    }
+    mess('gestartet');
     var heroLogo=$('viLogo'), lines=intro.querySelectorAll('.vi-line'), heroFuss=$('viHeroFoot');
     var end=$('viEnd'), rail=$('viRail'), hint=$('viHint');
     var bigWrap=$('viBig'), corner=$('viCorner'), cv=$('viGl');
@@ -193,6 +202,9 @@
         var C=chapters[n];
         if(ps>=C.s && ps<C.e){ ci=n; t=(ps-C.s)/(C.e-C.s); }
       }
+      // Messpunkt: wie weit der Rundgang gelesen wird — je Kapitel einmal, nur vorwaerts
+      if(ci>weitestes && t>0.3){ weitestes=ci; mess('kapitel_'+(ci+1)); }
+      if(amEnde && !endeGemeldet){ endeGemeldet=true; mess('ende_erreicht'); }
       for(n=0;n<N;n++){
         C=chapters[n];
         var tn=seg(ps,C.s,C.e);
@@ -783,10 +795,14 @@
       intro.scrollTo({top:p*scrollMax, behavior:REDUCE?'auto':'smooth'});
     }
     // Rundgang aus dem Hero: erste Station, Objekt steht schon.
-    window.viTour=function(){ springeZu(mix(chapters[0].s,chapters[0].e,0.4)); };
+    window.viTour=function(){ mess('rundgang'); springeZu(mix(chapters[0].s,chapters[0].e,0.4)); };
 
     /* — Ausgang — */
-    window.finishIntro=function(){
+    // weg: 'hero' (Direkt loslegen), 'ende' (Los geht's), 'skip' (Ueberspringen),
+    // 'escape'. Steht im Aktionsnamen, weil der Analytics-Proxy je Ereignis nur
+    // 'aktion' auswertet. Zusammen mit kapitel_N zeigt das, WO verlassen wird.
+    window.finishIntro=function(weg){
+      mess('verlassen_'+(weg||'sonst'), {kapitel: weitestes+1});
       localStorage.setItem('pro_intro_seen','true');
       // 3D sofort anhalten: die GPU gehoert ab jetzt der Blende
       laeuft=false;
@@ -807,6 +823,6 @@
 
     document.addEventListener('keydown',function(e){
       if(intro.style.display==='none') return;
-      if(e.key==='Escape') finishIntro();
+      if(e.key==='Escape') finishIntro('escape');
     });
   })();

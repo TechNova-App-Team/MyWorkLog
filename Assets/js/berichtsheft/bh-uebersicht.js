@@ -237,12 +237,17 @@ function renderNow() {
         .sort((a, b) => String(b.dateFrom || '').localeCompare(String(a.dateFrom || '')))[0];
 
     const ico = (n) => `<svg class="icon" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+    // data-mess: Klick-Messpunkt (bh-start.js). Der Name kommt aus dem Ziel, nicht
+    // aus dem Text — der wechselt je Lage und Sprache.
+    const messName = (onclick) => 'hero_' + (onclick === 'AISChat.oeffnen()' ? 'assistent'
+        : /^openWeek|^hfLuecke/.test(onclick) ? 'selbst' : /^editReport/.test(onclick) ? 'weiter'
+        : /^viewReport/.test(onclick) ? 'ansehen' : /PDF/i.test(onclick) ? 'pdf' : 'sonst');
     const cta = (text, onclick, icon) =>
         // Symbol links IM Knopf, ohne eigenen Kreis (Wunsch 09.10.2026: der
         // Kreis in der Theme-Farbe sah bei gedeckten Themen wie ein Fleck aus).
-        `<button type="button" class="hf-cta" onclick="${onclick}">${ico(icon)}<span>${escapeHtml(text)}</span></button>`;
+        `<button type="button" class="hf-cta" data-mess="${messName(onclick)}" onclick="${onclick}">${ico(icon)}<span>${escapeHtml(text)}</span></button>`;
     const chip = (text, onclick, icon) =>
-        `<button type="button" class="hf-chip hf-chip--gross" onclick="${onclick}">${icon ? ico(icon).replace('class="icon"', 'class="icon icon-sm"') : ''}<span>${escapeHtml(text)}</span></button>`;
+        `<button type="button" class="hf-chip hf-chip--gross" data-mess="${messName(onclick)}" onclick="${onclick}">${icon ? ico(icon).replace('class="icon"', 'class="icon icon-sm"') : ''}<span>${escapeHtml(text)}</span></button>`;
     const assistent = "AISChat.oeffnen()";
     // Titel mit EINEM hervorgehobenen Wort (em). Nur feste Texte — nichts vom Nutzer.
     const t = (vor, wort, nach) => escapeHtml(vor) + '<em>' + escapeHtml(wort) + '</em>' + escapeHtml(nach || '.');

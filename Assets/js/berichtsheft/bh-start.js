@@ -77,6 +77,25 @@ document.addEventListener('click', (e) => {
     if (overlay && e.target === overlay) closePDFModal();
 });
 
+// ═══ MESSPUNKTE ═══ Seitenstart (nach allen DOMContentLoaded-Rueckrufen, dann
+// sind die Berichte geladen) und jeder Klick auf ein Element mit data-mess.
+// 'erstbesuch' einmal je Browser und nur ohne Berichte: die Zahl, an der sich
+// alles Weitere im Trichter misst (Pageviews zaehlen Bestandsnutzer mit).
+window.addEventListener('load', () => {
+    const n = reports.length;
+    bhMess('geladen', { bestand: n === 0 ? '0' : n < 4 ? '1-3' : n < 11 ? '4-10' : '11+' });
+    try {
+        if (!n && !localStorage.getItem('bh_mess_erstbesuch')) {
+            localStorage.setItem('bh_mess_erstbesuch', '1');
+            bhMess('erstbesuch');
+        }
+    } catch (e) { /* Privatmodus: dann eben ohne */ }
+});
+document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('[data-mess]');
+    if (t) bhMess('klick_' + t.getAttribute('data-mess'));
+}, true);
+
 document.addEventListener('DOMContentLoaded', () => {
     // Character counter + quality meter
     const textarea = document.getElementById('reportActivities');

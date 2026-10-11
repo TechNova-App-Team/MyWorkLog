@@ -87,6 +87,7 @@ function fillDailyFromTracking() {
 }
 
 function autoFillFromTimeTracker() {
+    bhMess('zeiten_uebernehmen');
     const timeTrackerData = localStorage.getItem('tg_pro_data');
     if (!timeTrackerData) {
         showToast(L('Keine TimeTracker-Daten gefunden.', 'No TimeTracker data found.'), 'error');

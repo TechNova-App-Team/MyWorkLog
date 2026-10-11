@@ -24,6 +24,7 @@ function showTemplates() {
 function applyTemplate(templateId) {
     const template = templates.find(t => t.id === templateId);
     if (!template) return;
+    bhMess('vorlage_genutzt');
 
     closeTemplatesModal();
     openNewReportModal();

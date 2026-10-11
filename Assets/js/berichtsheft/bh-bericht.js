@@ -111,6 +111,8 @@ function getWeekDates(weekNum, year) {
 
 function openNewReportModal() {
     editingId = null;
+    bhFormularOffen = true;
+    bhMess('formular_offen');
     document.getElementById('modalTitle').textContent = L('Neuen Bericht erstellen', 'Create new report');
     document.getElementById('reportForm').reset();
 
@@ -141,7 +143,18 @@ function openNewReportModal() {
     updateQualityMeter(text);
 }
 
+// Ob das Formular ohne Speichern zugeht: der wichtigste Abbruchpunkt im Trichter.
+// saveReport() setzt bhFormularOffen vor dem Schliessen zurueck.
+let bhFormularOffen = false;
+function bhFormularHatText() {
+    const w = document.getElementById('reportActivities');
+    if (w && w.value.trim()) return true;
+    return [...document.querySelectorAll('#reportModal textarea')].some(t => t.value.trim());
+}
 function closeReportModal() {
+    // Leer oder mit Text steht im Namen: der Analytics-Proxy wertet nur 'aktion' aus
+    if (bhFormularOffen) bhMess(bhFormularHatText() ? 'formular_abgebrochen_mit_text' : 'formular_abgebrochen_leer');
+    bhFormularOffen = false;
     document.getElementById('reportModal').classList.remove('active');
     document.body.style.overflow = '';
     editingId = null;
@@ -164,6 +177,10 @@ function closeTemplatesModal() {
 
 async function saveReport(event) {
     event.preventDefault();
+    // closeReportModal() setzt editingId zurueck — bis 11.10.2026 wurde es DANACH
+    // gelesen: jedes Bearbeiten zaehlte als "bericht_erstellt", der Hinweis sagte
+    // "Bericht erstellt" und das Konfetti kam auch beim Bearbeiten.
+    const warNeu = !editingId;
 
     // Dieselbe Woche ein zweites Mal anlegen ist fast immer ein Versehen (Entwurf
     // vergessen, Import schon gelaufen) — und im Heft stehen dann zwei
@@ -239,18 +256,20 @@ async function saveReport(event) {
     // das Speichern nie stoeren — der Bericht ist zu diesem Zeitpunkt schon sicher.
     if (window.BHLernen) { try { BHLernen.berichtGespeichert(report); } catch (e) { } }
     updateUI();
+    bhFormularOffen = false;
     closeReportModal();
     clearDraft();
 
-    if (typeof mwlEvent === 'function') mwlEvent('berichtsheft', { aktion: editingId ? 'bericht_bearbeitet' : 'bericht_erstellt' });
-    showToast(editingId ? L('Bericht aktualisiert', 'Report updated') : L('Bericht erstellt', 'Report created'), 'success');
+    bhMess(warNeu ? 'bericht_erstellt' : 'bericht_bearbeitet', { modus: currentMode, status: report.status });
+    if (warNeu && reports.length === 1) bhMess('erster_bericht', { modus: currentMode });
+    showToast(warNeu ? L('Bericht erstellt', 'Report created') : L('Bericht aktualisiert', 'Report updated'), 'success');
 
     // B2B: bei einem Azubi den Bericht in die Betriebs-Tabelle spiegeln.
     // Guard, weil bh-b2b-ui.js nur mit geladenem Supabase-Config etwas tut.
     if (typeof b2bOnReportSaved === 'function') b2bOnReportSaved(report);
 
     // Confetti on new complete report
-    if (!editingId && (report.status === 'complete' || report.status === 'signed')) {
+    if (warNeu && (report.status === 'complete' || report.status === 'signed')) {
         launchConfetti();
     }
 }

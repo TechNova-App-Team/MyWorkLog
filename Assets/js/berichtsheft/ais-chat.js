@@ -1004,6 +1004,7 @@ async function senden(e, vorgabeText) {
     if (gespraech.erledigt) frischAnfangen();
     zuletztGeaendert = [];
     gespraech.nachrichten.push({ rolle: 'nutzer', text });
+    if (typeof bhMess === 'function') bhMess('assistent_nachricht', { nr: gespraech.nachrichten.filter(n => n.rolle === 'nutzer').length });
     beschaeftigt = 'denken';
     wartenBeginnen();
     speichern();
@@ -1025,7 +1026,10 @@ async function senden(e, vorgabeText) {
     beschaeftigt = false;
     wartenEnden();
 
-    if (!ergebnis) { ohneAntwort(grund); return; }
+    if (!ergebnis) {
+        if (typeof bhMess === 'function') bhMess('assistent_ohne_antwort_' + (grund === 'aus' || grund === 'limit' ? grund : 'fehler'));
+        ohneAntwort(grund); return;
+    }
 
     // Fuer die KW zaehlt auch "letzte Woche"; fuer erlaubteTage nur ein echtes
     // Datum (ein Montag aus wocheAusText ist kein genannter Tag).
@@ -1037,6 +1041,7 @@ async function senden(e, vorgabeText) {
     zus.entwurf.kw = kwDatum ? kwVon(kwDatum) : (geaendert.includes('kw') ? k.kw : (gespraech.entwurf.kw || k.kw));
     gespraech.entwurf = zus.entwurf;
     zuletztGeaendert = zus.geaendert;
+    if (typeof bhMess === 'function') bhMess('assistent_antwort', { tage: zus.geaendert.length });
     sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert) });
     knopfZustand();
 }
@@ -1079,6 +1084,7 @@ async function ohneKi() {
     beschaeftigt = false;
     wartenEnden();
     const w = AIStudio.woche();
+    if (typeof bhMess === 'function') bhMess(ok && w && w !== vorher ? 'assistent_ohne_ki' : 'assistent_ohne_ki_gescheitert');
     if (ok && w && w !== vorher) {
         const tage = (w.days || []).map(d => ({
             day: TAG_DE[d.index], entries: d.entries, schule: d.isSchoolDay, thema: d.schoolTopic, status: d.dayStatus || '',
@@ -1113,6 +1119,7 @@ function oeffnen() {
     if (!v || !studioDa()) return;
     offen = true;
     v.hidden = false;
+    if (typeof bhMess === 'function') bhMess('assistent_offen', { laufend: gespraech.nachrichten.length > 0 && !gespraech.erledigt });
     // Die Seite kann tagelang offen stehen — deshalb hier pruefen, nicht nur beim Laden.
     if (istAbgelaufen(gespraech, new Date())) { frischAnfangen(); speichern(); }
     document.body.classList.add('aic-offen');
@@ -1124,6 +1131,11 @@ function oeffnen() {
 function schliessen() {
     const v = $('aicView');
     if (!v) return;
+    // Zu ohne Uebernahme = Abbruch im Trichter; mit Entwurf = er war schon nah dran.
+    // Zustand im Namen (der Analytics-Proxy wertet nur 'aktion' aus)
+    if (offen && typeof bhMess === 'function') bhMess(gespraech.erledigt ? 'assistent_zu_uebernommen'
+        : entwurfHatInhalt(gespraech.entwurf) ? 'assistent_zu_mit_entwurf'
+        : gespraech.nachrichten.length ? 'assistent_zu_ohne_entwurf' : 'assistent_zu_ungenutzt');
     offen = false;
     v.hidden = true;
     v.classList.remove('rail-auf');
@@ -1142,6 +1154,7 @@ function einstellungen(tab) {
 
 function entwurfUebernehmen() {
     if (!entwurfHatInhalt(gespraech.entwurf)) return;
+    if (typeof bhMess === 'function') bhMess('assistent_uebernommen');
     AIStudio.wocheSetzen(entwurfAlsWoche(gespraech.entwurf, AIStudio.konfig()));
     // Uebernommen = diese Woche ist fertig; beim naechsten Oeffnen geht es frisch los.
     gespraech.erledigt = true;
@@ -1152,6 +1165,7 @@ function entwurfUebernehmen() {
 }
 function entwurfBearbeiten() {
     if (!entwurfHatInhalt(gespraech.entwurf)) return;
+    if (typeof bhMess === 'function') bhMess('assistent_bearbeiten');
     AIStudio.wocheSetzen(entwurfAlsWoche(gespraech.entwurf, AIStudio.konfig()));
     verlaufZeichnen();
     einstellungen('preview');
@@ -1453,6 +1467,7 @@ function alsAktuell(woche) {
 function uebernehmen(nr) {
     const n = gespraech.nachrichten[nr];
     if (!n || !n.woche || !alsAktuell(n.woche)) return;
+    if (typeof bhMess === 'function') bhMess('assistent_uebernommen', { aus_verlauf: true });
     schliessen();
     AIStudio.insertAll();
 }

@@ -29,6 +29,7 @@ const DAYS_MAP = {
 const DAYS_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
 function openPDFModal(id) {
+    bhMess('pdf_offen', { einzeln: !!id });
     _pdfCurrentId = id || null;
     const overlay = document.getElementById('pdfModal');
     const subtitle = document.getElementById('pdfModalSubtitle');
