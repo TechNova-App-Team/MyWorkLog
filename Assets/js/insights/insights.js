@@ -359,7 +359,7 @@ function humanize(s) {
 function subLabel(base, sub) {
     var l = SUB_LABELS[base + '::' + sub] || SUB_LABELS[sub];
     if (l) return T(l[0], l[1]);
-    return sub.slice(-3) === '.js' ? sub : humanize(sub).toLowerCase();   // Dateinamen bleiben, wie sie sind
+    return /\.js(:|$)/.test(sub) ? sub : humanize(sub).toLowerCase();   // Dateinamen (auch "datei.js:120 TypeError") bleiben, wie sie sind
 }
 // Reiter einer Zeile: 'views' (reine Ansicht), 'problems' (problem_*), sonst 'actions'.
 function eventGroup(name) {

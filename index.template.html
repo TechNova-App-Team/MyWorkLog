@@ -56,10 +56,15 @@
     function melde(art, err, datei, zeile) {
       if (n >= 5 || typeof window.mwlEvent !== 'function') return;
       n++;
+      var d = String(datei || '').split('?')[0].split('/').pop() || 'inline', typ = (err && err.name) || 'unbekannt';
+      // 'aktion' = Datei:Zeile Typ: der Analytics-Proxy zeigt je Ereignis nur aktion
+      // (sonst grund, datei) — mit dem nackten Dateinamen liess sich p2p-sync.js
+      // (9 Meldungen, Oktober 2026) keiner Stelle zuordnen. Kein Meldungstext.
       window.mwlEvent('problem_js_fehler', {
+        aktion: d + ':' + (zeile || 0) + ' ' + typ,
         art: art,
-        typ: (err && err.name) || 'unbekannt',
-        datei: String(datei || '').split('?')[0].split('/').pop() || 'inline',
+        typ: typ,
+        datei: d,
         zeile: zeile || 0
       });
     }
