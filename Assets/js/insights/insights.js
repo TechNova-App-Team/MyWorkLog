@@ -650,9 +650,16 @@ function renderSources() {
         rows = (d.channels || []).map(function (c) { return { label: channelLabel(c.channel), value: c.visitors }; });
         label = T('Kanal', 'Channel');
     } else if (tab === 'utm') {
-        rows = ((d.utm && d.utm.sources) || []).filter(function (u) { return u.value && u.value !== '(keine)'; })
+        // Einladungslinks (Lokales/einladung/einladung.py) tragen alle utm_source=einladung
+        // und unterscheiden sich nur in utm_campaign — ohne die Kampagnen stuenden zwei
+        // Aktionen (Vorstellung, Klasse) in EINER Zeile. Kampagnen zuerst, die Quelle
+        // "einladung" selbst faellt dann weg, sie waere nur die Summe darueber.
+        var mit = function (u) { return u.value && u.value !== '(keine)'; };
+        var kamp = ((d.utm && d.utm.campaigns) || []).filter(mit)
             .map(function (u) { return { label: u.value, value: u.visitors }; });
-        label = 'utm_source';
+        rows = kamp.concat(((d.utm && d.utm.sources) || []).filter(function (u) { return mit(u) && !(kamp.length && u.value === 'einladung'); })
+            .map(function (u) { return { label: u.value, value: u.visitors }; }));
+        label = T('Kampagne / Quelle', 'Campaign / source');
         empty = T('Im Zeitraum kam niemand über einen Link mit Kampagnen-Kennung.', 'Nobody arrived via a link with a campaign tag in this period.');
     } else {
         // "www.bing.com" und "bing.com" kommen getrennt — nach dem Kuerzen sind es
