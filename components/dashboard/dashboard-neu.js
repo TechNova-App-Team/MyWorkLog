@@ -557,6 +557,7 @@ function dnWeekDays(by) {
         let s;
         if (h > 0.004) s = (soll > 0 && h < soll - 0.05) ? 'part' : 'done';
         else if (!soll) s = 'free';
+        else if (past && dnFreeDays().indexOf(k) >= 0) s = 'free';
         else s = past ? ((first && k > first) ? 'miss' : 'open') : 'future';
         if (list.some(function (e) { return dnCat(e.type) === 'other'; })) s = 'done';
         out.push({ d: d, k: k, list: list, soll: soll, h: h, s: s, isToday: isToday, label: dnDayLabel(list) });
@@ -1100,18 +1101,42 @@ function dnCloseDay() {
     dnAnim(dn$('dnCalMonth'), [{ transform: 'translateX(-24px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 360, easing: 'cubic-bezier(.32,.72,0,1)' });
 }
 
-// ── Statuszeile: nur, wenn in dieser Woche ein Tag fehlt ──
+// ── Statuszeile: nur, wenn ein Arbeitstag ohne Eintrag ist ──
 // Kein Dauer-Lob und kein Leerzustand: den ersten Start fuehrt die Einrichtungs-
 // karte oben, und "alles gut" braucht keine eigene Zeile.
+// Bis 12.10.2026 sah sie nur die laufende Woche bis gestern — montags also gar
+// nichts, und zwei fehlende Tage der Vorwoche fielen nie auf. Deshalb 4 Wochen.
+// "War frei" legt Tage in data.settings.freeDays ab (geht mit dem Cloud-Sync mit);
+// die Woche zeigt sie dann als frei statt "Fehlt", nachgefragt wird nicht mehr.
+const DN_GAP_DAYS = 28;
+function dnFreeDays() { const f = data.settings && data.settings.freeDays; return Array.isArray(f) ? f : []; }
+function dnMissingDays(by, today) {
+    const out = [], first = dnFirstDate(), free = dnFreeDays();
+    if (!first) return out;
+    for (let i = DN_GAP_DAYS; i >= 1; i--) {
+        const d = dnAdd(today, -i), k = dnISO(d);
+        if (k > first && dnSoll(d) > 0 && !(by[k] || []).length && free.indexOf(k) < 0) out.push(d);
+    }
+    return out;
+}
 function dnRenderStatus(by, today) {
     const box = dn$('dnStatus');
-    const missing = [], mo = dnMonday(0), first = dnFirstDate();
-    for (let i = 0; i < 7; i++) { const d = dnAdd(mo, i); if (d >= today) break; if (first && dnISO(d) > first && dnSoll(d) > 0 && !(by[dnISO(d)] || []).length) missing.push(d); }
+    if (DN.freeUndo) {
+        const n = DN.freeUndo.length;
+        box.innerHTML = '<span class="dn-status__ic">' + dnSvg('check') + '</span><div class="dn-status__t"><b>' + (n === 1 ? dnT('Als frei markiert.', 'Marked as a day off.') : dnT(n + ' Tage als frei markiert.', n + ' days marked as days off.')) + '</b><span>' + dnT('Dafür kommt keine Erinnerung mehr.', 'You won’t be reminded about them again.') + '</span></div>' +
+            '<button type="button" class="dn-btn" data-dn="days-free-undo">' + dnT('Rückgängig', 'Undo') + '</button>';
+        return;
+    }
+    const missing = dnMissingDays(by, today);
     if (!missing.length) { box.innerHTML = ''; return; }
-    const names = missing.map(function (d) { return d.toLocaleDateString(dnLoc(), { weekday: 'short' }).replace('.', ''); }).join(', ');
-    const t = missing.length === 1 ? dnT('Ein Tag fehlt noch.', 'One day is missing.') : dnT(missing.length + ' Tage fehlen noch.', missing.length + ' days are missing.');
-    const s = dnT('Diese Woche ohne Eintrag: ', 'No entry this week: ') + names + '.';
-    box.innerHTML = '<span class="dn-status__ic">' + dnSvg('alert') + '</span><div class="dn-status__t"><b>' + t + '</b><span>' + s + '</span></div>' +
+    const mo = dnMonday(0), thisWeek = missing.every(function (d) { return d >= mo; });
+    const fmt = function (d) { return d.toLocaleDateString(dnLoc(), thisWeek ? { weekday: 'short' } : { weekday: 'short', day: 'numeric', month: 'numeric' }).replace(/^(\w+)\.,?/, '$1'); };
+    const shown = missing.slice(0, 5).map(fmt), rest = missing.length - shown.length;
+    const names = shown.join(', ') + (rest > 0 ? dnT(' und ' + rest + ' weitere', ' and ' + rest + ' more') : '');
+    const t = missing.length === 1 ? dnT('Ein Tag ohne Eintrag.', 'One day without an entry.') : dnT(missing.length + ' Tage ohne Eintrag.', missing.length + ' days without an entry.');
+    const s = names + (/\.$/.test(names) ? ' ' : '. ') + dnT('Nachtragen oder als frei markieren.', 'Add them or mark them as days off.');
+    box.innerHTML = '<span class="dn-status__ic">' + dnSvg('alert') + '</span><div class="dn-status__t"><b>' + t + '</b><span>' + dnEsc(s) + '</span></div>' +
+        '<button type="button" class="dn-btn dn-btn--quiet" data-dn="days-free" title="' + dnT('Keine Erinnerung mehr für diese Tage', 'No more reminders for these days') + '">' + (missing.length === 1 ? dnT('War frei', 'Was a day off') : dnT('Waren frei', 'Were days off')) + '</button>' +
         '<button type="button" class="dn-btn" data-dn="entry-day" data-k="' + dnISO(missing[0]) + '">' + dnT('Nachtragen', 'Add now') + dnSvg('arrow') + '</button>';
 }
 
@@ -1302,6 +1327,25 @@ function dnClick(e) {
         case 'drawer-close': dnCloseEntry(); break;
         case 'entry': dnOpenEntry(); break;
         case 'entry-day': dnOpenEntry(t.getAttribute('data-k')); break;
+        case 'days-free': {
+            const add = dnMissingDays(dnByDate(), dnToday()).map(dnISO);
+            if (!add.length) break;
+            const lim = dnISO(dnAdd(dnToday(), -90));   // aelter als 90 Tage fragt niemand mehr nach
+            data.settings.freeDays = dnFreeDays().filter(function (k) { return k >= lim && add.indexOf(k) < 0; }).concat(add).sort();
+            if (typeof save === 'function') save();
+            DN.freeUndo = add; clearTimeout(DN.freeUndoT);
+            DN.freeUndoT = setTimeout(function () { DN.freeUndo = null; dnRender(); }, 8000);
+            dnRender();
+            break;
+        }
+        case 'days-free-undo': {
+            const back = DN.freeUndo || [];
+            data.settings.freeDays = dnFreeDays().filter(function (k) { return back.indexOf(k) < 0; });
+            if (typeof save === 'function') save();
+            DN.freeUndo = null; clearTimeout(DN.freeUndoT);
+            dnRender();
+            break;
+        }
         case 'weekview': dnCloseMenu(false); dnOpenWeek(DN.wkOff); break;
         case 'nfc': dnCloseMenu(false); if (typeof openNFCModal === 'function') openNFCModal(); break;
         case 'history': if (typeof switchTab === 'function') switchTab('history'); break;
