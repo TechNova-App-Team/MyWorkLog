@@ -226,6 +226,12 @@ function dnBoot() {
     new ResizeObserver(function () { if (DN.lastKey && dnView() === 'week') dnRenderWeek(false); }).observe(dn$('dnTl'));
     new ResizeObserver(function () { if (DN._series) dnDrawChart(DN._series.vals, DN._series.lo, DN._series.hi); }).observe(dn$('dnChartSvg'));
     setInterval(dnTick, 1000);
+    DN.liveDay = dnISO(new Date());
+    setInterval(function () {
+        if (document.hidden) return;
+        const k = dnISO(new Date());
+        if (k !== DN.liveDay) { DN.liveDay = k; DN.sel = null; dnRender(); } else dnLive();
+    }, 60000);
 }
 
 // Nach einem erfolgreichen Speichern geht die Schublade zu. Erkannt am frischen
@@ -607,6 +613,15 @@ function dnRenderWeek(full, by) {
         return d;
     };
     const ext = [{ x: -10, y: pts[0].y }].concat(pts, [{ x: W + 10, y: pts[pts.length - 1].y }]);
+    // Live-Strecke: von heute zum naechsten sichtbaren Tag, dieselben Tangenten wie die Kurve
+    // (Index in ext = i + 1), damit sie exakt auf der gestrichelten Linie liegt.
+    const ti = DN.wkOff === 0 ? days.findIndex(function (x) { return x.isToday; }) : -1;
+    let live = '';
+    if (ti >= 0 && ti < n - 1) {
+        const a = ext[ti], b = ext[ti + 1], c = ext[ti + 2], e = ext[ti + 3] || c;
+        live = 'M' + b.x.toFixed(1) + ' ' + b.y.toFixed(1) + ' C' + (b.x + (c.x - a.x) / 6).toFixed(1) + ' ' + (b.y + (c.y - a.y) / 6).toFixed(1) + ' ' +
+            (c.x - (e.x - b.x) / 6).toFixed(1) + ' ' + (c.y - (e.y - b.y) / 6).toFixed(1) + ' ' + c.x.toFixed(1) + ' ' + c.y.toFixed(1);
+    }
     let lastDone = -1; days.forEach(function (x, i) { if (x.s === 'done' || x.s === 'part' || x.isToday) lastDone = i; });
     const solid = lastDone >= 0 ? path([{ x: -10, y: pts[0].y }].concat(pts.slice(0, lastDone + 1))) : '';
 
@@ -617,7 +632,8 @@ function dnRenderWeek(full, by) {
         let html = '<div class="dn-tl__track" style="top:' + top0 + 'px">';
         if (curve) {
             html += '<svg class="dn-tl__svg" style="height:' + curveH + 'px" viewBox="0 0 ' + W + ' ' + curveH + '" preserveAspectRatio="none" aria-hidden="true"><path class="dn-tl__base" d="' + path(ext) + '"/>' +
-                (solid ? '<path class="dn-tl__done" id="dnTlDone" d="' + solid + '"/>' : '') + '</svg>';
+                (solid ? '<path class="dn-tl__done" id="dnTlDone" d="' + solid + '"/>' : '') +
+                (live ? '<path class="dn-tl__live" id="dnTlLive" d="' + live + '"/><circle class="dn-tl__tip" id="dnTlTip" r="3.5" cx="-20" cy="-20"/>' : '') + '</svg>';
             days.forEach(function (x, i) {
                 if (x.isToday) html += '<span class="dn-node__lbl" style="left:' + pts[i].x + 'px;top:' + (pts[i].y - 26) + 'px">' + dnT('Heute', 'Today') + '</span>';
                 html += '<button type="button" class="dn-node' + (x.isToday ? ' is-today' : '') + '" data-s="' + x.s + '" data-dn-day="' + x.k + '" style="left:' + pts[i].x + 'px;top:' + pts[i].y + 'px" aria-label="' + dnEsc(x.d.toLocaleDateString(dnLoc(), { weekday: 'long', day: 'numeric', month: 'long' })) + '">' + (x.s === 'done' ? dnSvg('check') : '') + '</button>';
@@ -646,6 +662,34 @@ function dnRenderWeek(full, by) {
     }
     DN.lastKey = key;
     dnRenderGoal(days);
+    dnLive();
+    if (rebuild) dnArrive();
+}
+// Wie weit der heutige Tag ist: Mitternacht 0, Mittag 0,5. Die Strecke zum naechsten
+// Punkt waechst damit mit (Minutentakt, dnBoot); ist sie voll, ist der naechste Tag da.
+function dnLive() {
+    const p = dn$('dnTlLive'), tip = dn$('dnTlTip'); if (!p) return;
+    const now = new Date(), f = (now - dnToday()) / 864e5, L = p.getTotalLength();
+    p.style.strokeDasharray = (L * f).toFixed(1) + ' ' + Math.ceil(L + 2);
+    const pt = p.getPointAtLength(L * f);
+    tip.setAttribute('cx', pt.x.toFixed(1)); tip.setAttribute('cy', pt.y.toFixed(1));
+}
+// Ein neuer Tag ist da: der Heute-Punkt zieht einmal zwei Ringe. Einmal je Tag und Geraet
+// (beim ersten Blick morgens oder wenn das Dashboard ueber Mitternacht offen war).
+function dnArrive() {
+    if (DN.wkOff !== 0 || DN_RM.matches) return;
+    const node = document.querySelector('#dnTl .dn-node.is-today'); if (!node) return;
+    const k = dnISO(new Date());
+    let seen = null; try { seen = localStorage.getItem('mwl_dn_arrived'); } catch (e) { /* ohne Speicher: jedes Mal */ }
+    if (seen === k) return;
+    try { localStorage.setItem('mwl_dn_arrived', k); } catch (e) { /* egal */ }
+    // Beim Laden erst nach der Linienfahrt von dnIntro (1,5 s), sonst sofort. Den Punkt
+    // dann NEU suchen: beim Laden baut dnRender die Linie mehrmals neu, der alte haengt nicht mehr im DOM.
+    setTimeout(function () {
+        const node = document.querySelector('#dnTl .dn-node.is-today'); if (!node) return;
+        node.classList.add('is-arrive');
+        node.addEventListener('animationend', function f(e) { if (e.pseudoElement !== '::before') return; node.classList.remove('is-arrive'); node.removeEventListener('animationend', f); });
+    }, performance.now() < 8000 ? 1600 : 0);
 }
 function dnDrawLine(ms) {
     const p = dn$('dnTlDone'); if (!p || DN_RM.matches) return;
@@ -1152,6 +1196,7 @@ function dnIntro() {
         dnAnim(a, [{ strokeDashoffset: c }, { strokeDashoffset: to }], { duration: 1400, delay: 150, easing: 'cubic-bezier(.77,0,.175,1)', fill: 'backwards' });
     });
     dnDrawLine(1500);
+    [dn$('dnTlLive'), dn$('dnTlTip')].forEach(function (n) { if (n) dnAnim(n, [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 1400, easing: 'ease', fill: 'backwards' }); });
     document.querySelectorAll('#dnTl .dn-node').forEach(function (n, i, all) {
         dnAnim(n, [{ transform: 'scale(.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 520, delay: 250 + i * (1100 / Math.max(1, all.length)), easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'backwards' });
     });
