@@ -350,8 +350,13 @@ button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-of
     box-shadow: 0 16px 34px -18px rgba(var(--primary-rgb), .9); transition: transform .14s var(--dn-out), box-shadow .3s ease; }
 .dn-cta:hover { box-shadow: 0 20px 40px -18px rgba(var(--primary-rgb), 1); }
 .dn-cta:active { transform: scale(.975); }
-.dn-cta__plus { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--bg-deep) 88%, transparent); color: var(--text-main); transition: transform .3s var(--dn-out); }
-.dn-cta:hover .dn-cta__plus { transform: rotate(90deg); }
+.dn-cta__plus { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--bg-deep) 88%, transparent); color: var(--text-main); transition: transform .18s var(--dn-out), background-color .18s ease; }
+/* Kein Drehen mehr (90 Grad wirkte beim Nutzer "komisch", 12.10.2026): das Plus waechst nur
+   minimal (6 %). Hover nur mit echtem Zeiger, sonst bleibt es am Handy nach dem Tippen stehen. */
+@media (hover: hover) and (pointer: fine) {
+    .dn-cta:hover .dn-cta__plus { transform: scale(1.06); background: color-mix(in srgb, var(--bg-deep) 96%, transparent); }
+}
+.dn-cta:active .dn-cta__plus { transform: scale(.94); }
 
 /* ── Analysen (in der Wochenkarte) ──
    Zahlen ohne Kaesten: Kennzahl, darunter klein der Bezug. */
