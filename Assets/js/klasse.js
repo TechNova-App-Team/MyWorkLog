@@ -282,24 +282,46 @@
     }
     function landing() {
         modus('landing');
-        qrInto($('klDemoQr'), 'https://myworklog.de/klasse/#K7QPM2XD', 336);
+        qrInto($('klDemoQr'), 'https://myworklog.de/klasse/#K7QPM2XD', 272);
         sitzePlatz($('klDemoSeats'), 0);
         const demo = Object.assign({}, DEMO, { bloecke: demoBloecke() });
         $('klWhatDemo').innerHTML = '<div class="kl-join">' + karteHtml(demo, K.planen({}, demo), { interaktiv: true }) + '</div>';
         $('klWhatDemo').querySelectorAll('input').forEach(function (i) { i.tabIndex = -1; });
 
-        // Einmal hochzaehlen, sobald die Projektion zu sehen ist
+        // Die Handys der Klasse (Dekoration, deshalb hier gebaut statt im crawlbaren Markup).
+        // Sie springen bei diesen Zaehlerstaenden auf "eingerichtet" — so sieht man, wofuer
+        // die Zahl auf der Leinwand steht: jedes Geraet ist fertig, ohne Tippen.
+        const n1 = demo.bloecke[0];
+        const phoneHtml = function (i) {
+            return '<div class="kl-ph" style="--i:' + i + '"><div class="kl-ph__scr">' +
+                '<div class="kl-ph__scan"><span class="kl-ph__vf"></span><span>' + L('Code scannen', 'Scan code') + '</span></div>' +
+                '<div class="kl-ph__done"><span class="kl-ph__ok">' + svg('check') + '</span><p class="kl-ph__t">FI 25a</p>' +
+                    '<div class="kl-ph__row"><b>' + L('Berufsschule', 'School') + '</b>' + K.tageText([1, 3], EN) + '</div>' +
+                    '<div class="kl-ph__row"><b>' + L('Block', 'Block') + '</b>' + K.datum(n1.von) + '–' + K.datum(n1.bis) + '</div>' +
+                    '<div class="kl-ph__row"><b>' + L('Prüfung Teil 1', 'Exam part 1') + '</b>' + K.datum('2027-03-02', true) + '</div>' +
+                '</div></div></div>';
+        };
+        $('klPhones').innerHTML = [0, 1, 2, 3, 4].map(phoneHtml).join('');
+        // Reihenfolge, in der die Handys fertig werden (Mitte zuerst wirkt zufaellig genug)
+        const FOLGE = [2, 0, 3, 1, 4], SCHWELLE = [3, 8, 13, 18, 23];
+        const handys = [...$('klPhones').children];
+
+        // Einmal hochzaehlen, sobald die Buehne zu sehen ist
         const ZIEL = 23;
         let gelaufen = false;
+        const stand = function (n) {
+            $('klDemoNum').textContent = n; sitzePlatz($('klDemoSeats'), n);
+            SCHWELLE.forEach(function (sw, j) { if (n >= sw) handys[FOLGE[j]].classList.add('is-done'); });
+        };
         const los = function () {
             if (gelaufen) return; gelaufen = true;
-            if (RM.matches) { $('klDemoNum').textContent = ZIEL; sitzePlatz($('klDemoSeats'), ZIEL); return; }
+            if (RM.matches) { stand(ZIEL); return; }
             let n = 0;
             const tick = function () {
-                n++; $('klDemoNum').textContent = n; sitzePlatz($('klDemoSeats'), n);
-                if (n < ZIEL) setTimeout(tick, n < 5 ? 260 : n > ZIEL - 4 ? 420 : 110 + Math.random() * 160);
+                n++; stand(n);
+                if (n < ZIEL) setTimeout(tick, n < 4 ? 380 : n > ZIEL - 3 ? 460 : 150 + Math.random() * 170);
             };
-            setTimeout(tick, 500);
+            setTimeout(tick, 700);
         };
         if ('IntersectionObserver' in window) {
             const io = new IntersectionObserver(function (es) { if (es.some(function (e) { return e.isIntersecting; })) { io.disconnect(); los(); } }, { threshold: 0.35 });

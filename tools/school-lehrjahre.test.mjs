@@ -272,8 +272,11 @@ console.log('\nStatik — jede id hat ein Element, jede Klasse eine Regel');
 {
     // CLAUDE.md-Probe: getElementById ohne Element im Markup (dynamische ids gibt es hier nicht)
     const ids = [...new Set([...JS.matchAll(/getElementById\('([a-zA-Z][a-zA-Z0-9_]*)'\)/g)].map(m => m[1]))];
-    const fehlend = ids.filter(id => !new RegExp('id="' + id + '"').test(MARKUP) && !/^(sch_week_|biweeklyRulesList)/.test(id));
-    ok('alle ids aus school.js stehen in school.html (' + ids.length + ' geprueft)', fehlend.length === 0);
+    // Die Schul-Einstellungen (Turnus, Bloecke, Klasse) rendert school.js in den Einstellungs-Dialog,
+    // dessen Markup in modals.html steht — dort zaehlt das Element genauso.
+    const DIALOG = lf(readFileSync('components/modals/modals.html', 'utf8'));
+    const fehlend = ids.filter(id => !new RegExp('id="' + id + '"').test(MARKUP) && !new RegExp('id="' + id + '"').test(DIALOG));
+    ok('alle ids aus school.js stehen in school.html oder im Einstellungs-Dialog (' + ids.length + ' geprueft)', fehlend.length === 0);
     if (fehlend.length) console.log('        fehlend: ' + fehlend.join(', '));
     ok('es gibt ueberhaupt ids zu pruefen', ids.length >= 20);
 
