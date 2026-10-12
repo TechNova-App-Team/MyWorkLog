@@ -407,9 +407,16 @@ function dnRender() {
 }
 
 // Schrift auf dem Akzent: hell oder dunkel, je nachdem was mehr Kontrast hat.
+// Liest --primary-rgb aus dem Inline-Style am <html> (dort setzt es applyTheme). Ein
+// getComputedStyle(documentElement) erzwang bei JEDEM dnRender einen Style-Durchlauf ueber
+// das ganze Dokument (gemessen 11,5 ms beim Start, lcp-trace 12.10.2026). Unveraenderte
+// Farbe: gar nicht schreiben, auch setProperty macht die Styles ungueltig.
 function dnSetInk() {
-    const rgb = getComputedStyle(document.documentElement).getPropertyValue('--primary-rgb').split(',').map(function (x) { return parseFloat(x) / 255; });
+    const roh = document.documentElement.style.getPropertyValue('--primary-rgb') || getComputedStyle(document.documentElement).getPropertyValue('--primary-rgb');
+    if (DN._ink === roh) return;
+    const rgb = roh.split(',').map(function (x) { return parseFloat(x) / 255; });
     if (rgb.length < 3 || rgb.some(isNaN)) return;
+    DN._ink = roh;
     const lin = rgb.map(function (c) { return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
     const L = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
     const ink = ((L + 0.05) / 0.05) > (1.05 / (L + 0.05)) ? 'rgba(7, 9, 14, .92)' : '#fff';
