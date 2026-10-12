@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.3.3-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.4.0-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.3.3** · 2026-10-11
+Aktuelle Version: **v8.4.0** · 2026-10-12
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.3.3** | 2026-10-11 | Die App startet offline auch direkt nach der Installation |
+| **8.4.0** | 2026-10-12 | Das Dashboard erinnert an fehlende Tage und zeigt den Tagesfortschritt live |
+| 8.3.3 | 2026-10-11 | Die App startet offline auch direkt nach der Installation |
 | 8.3.2 | 2026-10-11 | Offline zurück in die App, ruhigerer Start, NFC wieder im Menü |
 | 8.3.1 | 2026-10-10 | Neuer Dialog zum Bearbeiten von Einträgen, die Wetteranzeige ist zurück |
 | 8.3.0 | 2026-10-10 | Das Dashboard ist neu: ruhiger aufgebaut, mit Analysen direkt in der Woche |
-| 8.2.5 | 2026-10-09 | Das Berichtsheft liegt jetzt auf einem ruhigen Schreibtisch |
 
 <!-- changelog:end -->
 
