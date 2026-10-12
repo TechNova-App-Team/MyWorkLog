@@ -300,7 +300,7 @@ button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-of
 /* Live-Strecke heute -> naechster Tag: gleiche Farbe wie die erledigte Linie, ohne Leuchten,
    damit sie als "laeuft noch" und nicht als "geschafft" liest. */
 .dn-tl__live { fill: none; stroke: var(--primary); stroke-width: 2; stroke-linecap: round; opacity: .55; transition: stroke-dasharray .8s cubic-bezier(.23,1,.32,1); }
-.dn-tl__tip { fill: var(--primary); transition: cx .8s cubic-bezier(.23,1,.32,1), cy .8s cubic-bezier(.23,1,.32,1); }
+.dn-tl__tip { fill: var(--primary); transition: cx .8s cubic-bezier(.23,1,.32,1), cy .8s cubic-bezier(.23,1,.32,1), opacity .3s ease; }
 .dn-node { position: absolute; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; display: grid; place-items: center; padding: 0; cursor: pointer;
     border: 1.5px dashed var(--dn-line-2); background: var(--bg-deep); color: var(--dn-on-primary); transition: transform .3s var(--dn-out), box-shadow .3s ease; }
 .dn-node svg.dn-i { width: 14px; height: 14px; stroke-width: 2.6; }
@@ -313,8 +313,8 @@ button.dn-card:focus-visible { outline: 2px solid var(--dn-acc-line); outline-of
     box-shadow: 0 0 0 6px rgba(var(--primary-rgb), .14), 0 0 26px 2px rgba(var(--primary-rgb), .45); }
 .dn-node.is-today::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: var(--primary); }
 .dn-node.is-today svg { display: none; }
-/* Ankunft eines neuen Tags (dnArrive): zwei Ringe laufen vom Punkt weg, sonst nichts. */
-.dn-node.is-today.is-arrive::before { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--primary); pointer-events: none;
+/* Soll erreicht (dnArrive): der naechste Punkt zieht zwei Ringe, sonst nichts. */
+.dn-node.is-arrive::before { content: ""; position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--primary); pointer-events: none;
     animation: dn-arrive 1s cubic-bezier(.23,1,.32,1) 2; }
 @keyframes dn-arrive { from { transform: scale(1); opacity: .7; } to { transform: scale(2.3); opacity: 0; } }
 .dn-node:hover { transform: scale(1.12); }

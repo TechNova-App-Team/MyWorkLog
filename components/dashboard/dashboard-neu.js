@@ -663,33 +663,54 @@ function dnRenderWeek(full, by) {
     DN.lastKey = key;
     dnRenderGoal(days);
     dnLive();
-    if (rebuild) dnArrive();
 }
-// Wie weit der heutige Tag ist: Mitternacht 0, Mittag 0,5. Die Strecke zum naechsten
-// Punkt waechst damit mit (Minutentakt, dnBoot); ist sie voll, ist der naechste Tag da.
+// Wie weit das heutige Soll erfuellt ist: gebuchte Stunden + laufende Stoppuhr, sonst die
+// Startzeit aus dem Formular-Entwurf ("Jetzt" morgens gedrueckt, noch nicht gebucht) bis
+// jetzt, mit der Pause laut Einstellungen ab deren Schwelle. Wunsch des Nutzers (12.10.2026):
+// voll = Arbeitszeit erreicht, NICHT Mitternacht. Ohne Soll heute keine Strecke.
+function dnLiveH() {
+    const today = dnToday(), k = dnISO(today), list = dnByDate()[k] || [];
+    let h = list.reduce(function (a, e) { return a + dnEntryH(e); }, 0) + dnTimerH();
+    if (!list.length && dnTimerState() === 'off') {
+        try {
+            const dr = JSON.parse(localStorage.getItem('mwl_entry_draft') || 'null');
+            const m = dr && (dr.date || dr.dateStr) === k && !dr.end && /^(\d{1,2}):(\d{2})$/.exec(dr.start || '');
+            if (m) {
+                const el = (Date.now() - (today.getTime() + (+m[1] * 60 + +m[2]) * 6e4)) / 3.6e6;
+                const br = (data.settings && data.settings.break) || {};
+                const pause = el > (+br.thresh || 6) ? ((br.min || [])[today.getDay()] || 0) / 60 : 0;
+                if (el > 0) h += Math.max(0, el - pause);
+            }
+        } catch (e) { /* ohne Entwurf */ }
+    }
+    return h;
+}
 function dnLive() {
     const p = dn$('dnTlLive'), tip = dn$('dnTlTip'); if (!p) return;
-    const now = new Date(), f = (now - dnToday()) / 864e5, L = p.getTotalLength();
+    const soll = dnSoll(dnToday()); if (!(soll > 0)) { p.style.display = tip.style.display = 'none'; return; }
+    const f = Math.min(1, dnLiveH() / soll), L = p.getTotalLength();
     p.style.strokeDasharray = (L * f).toFixed(1) + ' ' + Math.ceil(L + 2);
     const pt = p.getPointAtLength(L * f);
     tip.setAttribute('cx', pt.x.toFixed(1)); tip.setAttribute('cy', pt.y.toFixed(1));
+    tip.style.opacity = f >= 1 ? '0' : '';
+    if (f >= 1) dnArrive();
 }
-// Ein neuer Tag ist da: der Heute-Punkt zieht einmal zwei Ringe. Einmal je Tag und Geraet
-// (beim ersten Blick morgens oder wenn das Dashboard ueber Mitternacht offen war).
+// Soll erreicht: der NAECHSTE Punkt zieht einmal zwei Ringe — der naechste Eintrag ist dran.
+// Einmal je Tag und Geraet (live beim Erreichen oder beim ersten Blick danach).
 function dnArrive() {
     if (DN.wkOff !== 0 || DN_RM.matches) return;
-    const node = document.querySelector('#dnTl .dn-node.is-today'); if (!node) return;
     const k = dnISO(new Date());
-    let seen = null; try { seen = localStorage.getItem('mwl_dn_arrived'); } catch (e) { /* ohne Speicher: jedes Mal */ }
+    let seen = null; try { seen = localStorage.getItem('mwl_dn_full'); } catch (e) { /* ohne Speicher: jedes Mal */ }
     if (seen === k) return;
-    try { localStorage.setItem('mwl_dn_arrived', k); } catch (e) { /* egal */ }
-    // Beim Laden erst nach der Linienfahrt von dnIntro (1,5 s), sonst sofort. Den Punkt
-    // dann NEU suchen: beim Laden baut dnRender die Linie mehrmals neu, der alte haengt nicht mehr im DOM.
+    try { localStorage.setItem('mwl_dn_full', k); } catch (e) { /* egal */ }
+    // Beim Laden erst nach der Linienfahrt von dnIntro (1,5 s), sonst nach dem Fuellen der
+    // Strecke (0,8 s). Den Punkt dann NEU suchen: dnRender baut die Linie beim Laden mehrmals neu.
     setTimeout(function () {
-        const node = document.querySelector('#dnTl .dn-node.is-today'); if (!node) return;
+        const all = [...document.querySelectorAll('#dnTl .dn-node')], i = all.findIndex(function (n) { return n.classList.contains('is-today'); });
+        const node = i >= 0 ? all[i + 1] : null; if (!node) return;
         node.classList.add('is-arrive');
         node.addEventListener('animationend', function f(e) { if (e.pseudoElement !== '::before') return; node.classList.remove('is-arrive'); node.removeEventListener('animationend', f); });
-    }, performance.now() < 8000 ? 1600 : 0);
+    }, performance.now() < 8000 ? 1600 : 800);
 }
 function dnDrawLine(ms) {
     const p = dn$('dnTlDone'); if (!p || DN_RM.matches) return;
@@ -811,6 +832,7 @@ function dnTick() {
     const changed = ts !== DN._lastTs; DN._lastTs = ts;
     const today = dnToday(), by = dnByDate();
     dnRenderToday(by, today);
+    dnLive();
     DN.tick++;
     if (changed || DN.tick % 30 === 0) { dnRenderWeek(false, by); dnRenderHero(by, today); }
 }
