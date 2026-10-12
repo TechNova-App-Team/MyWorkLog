@@ -108,7 +108,13 @@
         const holidays = getGermanHolidays(year).concat(getGermanHolidays(year+1));
         if(holidays.find(h => h.date === dateISO)) return { isVocSchool:false, reason:'public-holiday' };
 
-        // 3) First check Biweekly / multi-week rules (they take priority!)
+        // 3) Blockunterricht (von der Klasse, /klasse/): jeder Werktag im Block ist Schule.
+        //    Steht vor den Rhythmus-Regeln, weil ein Block die Woche komplett belegt.
+        for (const b of (rules.blocks || [])) {
+            if (b && b.von && b.bis && dateISO >= b.von && dateISO <= b.bis && dayIndex >= 1 && dayIndex <= 5) return { isVocSchool: true, reason: 'block' };
+        }
+
+        // 4) Biweekly / multi-week rules (they take priority over weekly days)
         for(const r of (rules.biweekly||[])) {
             const wd = parseInt(r.weekday);
             if(wd !== dayIndex) continue;

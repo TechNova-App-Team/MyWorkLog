@@ -633,6 +633,42 @@
             container.appendChild(el);
             const sel = el.querySelector('.bi-weekday'); if(sel) sel.value = String(r.weekday||0);
         });
+        scRenderKlasseInfo();
+    }
+
+    // Bloecke (schoolRules.blocks) setzt nur eine Klasse; hier werden sie sichtbar und
+    // einzeln entfernbar. Dazu der Klassen-Status bzw. der Einstieg zum Code.
+    function scRenderKlasseInfo() {
+        const box = document.getElementById('schoolKlasseInfo');
+        if (!box) return;
+        const rules = data.settings.schoolRules || {};
+        const heute = new Date(); heute.setHours(0, 0, 0, 0);
+        const iso = function (x) { return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+        const fmt = function (s) { const p = String(s).split('-'); return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : s; };
+        const bloecke = (rules.blocks || []).filter(function (b) { return b && b.bis >= iso(heute); });
+        let k = null; try { k = JSON.parse(localStorage.getItem('mwl_klasse') || 'null'); } catch (e) { k = null; }
+        const pfad = (document.documentElement.lang === 'en' ? '/en' : '') + '/klasse/';
+        let html = bloecke.length
+            ? bloecke.map(function (b) {
+                return '<div class="bi-rule" style="grid-template-columns:1fr auto"><span>' + fmt(b.von) + ' – ' + fmt(b.bis) + '</span>' +
+                    '<button class="btn btn-ghost" type="button" data-blk="' + safeHTML(b.von + '|' + b.bis) + '" aria-label="' + scL('Block entfernen', 'Remove block') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>';
+            }).join('')
+            : '<p class="school-settings-hint">' + scL('Keine anstehenden Blöcke.', 'No upcoming blocks.') + '</p>';
+        html += k && k.code
+            ? '<p class="school-settings-hint">' + scL('Verbunden mit der Klasse ', 'Connected to the class ') + '<b>' + safeHTML(k.name || '') + '</b>. ' +
+                scL('Änderungen der Lehrkraft fragt die App beim Öffnen nach. ', 'The app asks about your teacher\u2019s changes when it opens. ') +
+                '<a href="' + pfad + '#' + safeHTML(k.code) + '">' + scL('Klasse ansehen', 'View class') + '</a></p>'
+            : '<p class="school-settings-hint">' + scL('Hat deine Lehrkraft einen Klassen-Code? Damit richtet sich die App mit Schultagen, Blöcken und Prüfungsterminen ein. ', 'Has your teacher given you a class code? It sets up school days, blocks and exam dates for you. ') +
+                '<a href="' + pfad + '#code">' + scL('Code eingeben', 'Enter code') + '</a></p>';
+        box.innerHTML = html;
+        box.querySelectorAll('[data-blk]').forEach(function (b) {
+            b.onclick = function () {
+                const t = b.getAttribute('data-blk').split('|');
+                data.settings.schoolRules.blocks = (data.settings.schoolRules.blocks || []).filter(function (x) { return !(x.von === t[0] && x.bis === t[1]); });
+                save();
+                scRenderKlasseInfo();
+            };
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════

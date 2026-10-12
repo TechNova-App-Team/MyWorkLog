@@ -22,7 +22,8 @@
         { key: 'weeklyOvertime', id: 'alertWeeklyOvertime' },
         { key: 'dailyReminders', id: 'alertDailyReminders' },
         { key: 'milestones',     id: 'alertMilestones' },
-        { key: 'exportReminder', id: 'alertExportReminder' }
+        { key: 'exportReminder', id: 'alertExportReminder' },
+        { key: 'klasse',         id: 'alertKlasse' }
     ];
 
     let alertSettings = {};
@@ -557,6 +558,9 @@
         return d.toLocaleDateString(mwlLocale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
     }
 
+    // Nur Pfade auf dieser Domain: genau ein fuehrender "/", kein "//", kein Schema.
+    function apSafeLink(l) { return typeof l === 'string' && /^\/(?!\/)[A-Za-z0-9\-._~\/?#=&%]*$/.test(l); }
+
     function apEntryHTML(alert) {
         const zeit = new Date(alert.timestamp || Date.now())
             .toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
@@ -569,6 +573,7 @@
              +     '<time class="ap-entry__time">' + apEscape(zeit) + '</time>'
              +   '</div>'
              +   '<p class="ap-entry__msg">' + apEscape(alert.message) + '</p>'
+             +   (apSafeLink(alert.link) ? '<a class="ap-entry__link" href="' + apEscape(alert.link) + '">' + apEscape(alert.linkLabel || mwlAlertL('Öffnen', 'Open')) + '</a>' : '')
              + '</div>'
              + '<button type="button" class="ap-entry__x" data-dismiss="' + apEscape(alert.id) + '" '
              +   'aria-label="' + mwlAlertL('Meldung entfernen', 'Dismiss notification') + '">'
@@ -652,6 +657,23 @@
             frage();
         }
     }
+
+    // Klassen-Meldung einreihen (Mitteilungen/Aenderungen aus klasse-profil.js).
+    // Der Torwaechter sitzt HIER, damit kein Aufrufer ihn vergessen kann;
+    // `key` dedupliziert ueber lastAlertCheck (dieselbe Tatsache meldet sich einmal).
+    function mwlKlassenMeldung(o) {
+        if (!o || !mwlAlertsOn('klasse')) return false;
+        if (o.key && lastAlertCheck[o.key]) return false;
+        const a = createAlert(o.title || '', o.message || '', o.type || 'info', '');
+        if (apSafeLink(o.link)) { a.link = o.link; a.linkLabel = o.linkLabel || ''; }
+        alertsHistory.unshift(a);
+        if (o.key) lastAlertCheck[o.key] = true;
+        persistAlerts();
+        try { updateAlertBadge(); renderAlertsList(); } catch (e) { /* Panel noch nicht da */ }
+        if (o.toast !== false) { try { showToastNotification(a); } catch (e) { /* ohne Toast */ } }
+        return true;
+    }
+    window.mwlKlassenMeldung = mwlKlassenMeldung;
 
     // Ein Klick-Empfaenger fuer die ganze Liste statt eines onclick je Zeile:
     // die Zeilen werden bei jedem Rendern neu gebaut, einzelne Handler waeren
