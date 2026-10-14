@@ -27,7 +27,7 @@ const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     UNIVERSAL_ACTIVITIES_EXTENDED, FORM_PATTERNS, partizipDoppelt, alsFliesstext,
     UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, schulSaetze, LERN_AKTIVITAETEN, UMFANG_COUNT,
     PLAN_TAG_INDEX, _parseWochenplan, _planEintrag } = window.AIS_SPRACHE;
-const { RateLimit, Kontingent, generateWithCloud } = window.AIS_CLOUD;
+const { RateLimit, Kontingent, generateWithCloud, _klassenPlanFuer, _planFaecher } = window.AIS_CLOUD;
 
 // ═══════════════════════════════════════
 // CONFIGURATION & STATE
@@ -387,7 +387,15 @@ function generateDayEntries(professionId, options = {}) {
     // — eigene Berufe bekamen an ihren Schultagen deshalb Betriebs-Floskeln aus
     // dem Universal-Pool, und der Tag kam mit isSchoolDay:false zurueck.
     if (isSchoolDay) {
-        return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang, planForDay);
+        // Hat der Nutzer fuer den Tag nichts genannt, nimmt die lokale Engine die
+        // Faecher aus dem Stundenplan der Klasse (ais-cloud.js, _klassenPlanFuer) —
+        // dieselbe Quelle wie die Cloud-KI, damit beide Wege dasselbe Fach schreiben.
+        // Bewusst OHNE typeof-Guard: der Name kommt aus window.AIS_CLOUD (oben ausgepackt);
+        // fehlte er, soll das hier laut scheitern statt den Plan still zu ueberspringen.
+        const _kp = (!Array.isArray(planForDay) || !planForDay.length) ? _klassenPlanFuer(dayIndex) : null;
+        const _schultag = generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang, _kp ? _planFaecher(_kp) : planForDay);
+        if (_kp) _schultag.schoolTopic = _planFaecher(_kp).join(', ');
+        return _schultag;
     }
 
     if (!prof) return generateGenericDayEntries(options);

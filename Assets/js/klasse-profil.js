@@ -100,6 +100,33 @@
     function blockSchluessel(b) { return JSON.stringify((b || []).map(function (x) { return [x.von, x.bis]; }).sort()); }
     function lehrjahrSchluessel(p) { return String(p && p.lehrjahr >= 1 && p.lehrjahr <= 4 ? p.lehrjahr : 1); }
 
+    // ── Stundenplan (seit v8.5.7) ─────────────────────────────────────
+    // {"<getDay 1-5>": [{s, b, f}]} — s/b erste/letzte Stunde, f Fach. Gilt an jedem
+    // Schultag dieses Wochentags (auch im Block). Zweck: die Berichtsheft-KI schreibt
+    // ueber das Fach, das wirklich war, statt eines zu raten.
+    function planNorm(sp) {
+        const out = {};
+        if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return out;
+        ['1', '2', '3', '4', '5'].forEach(function (t) {
+            const liste = (Array.isArray(sp[t]) ? sp[t] : []).map(function (e) {
+                const s = e && Number(e.s) | 0, b = e && Number(e.b) | 0, f = e && String(e.f || '').trim().slice(0, 60);
+                return (s >= 1 && s <= 12 && b >= s && b <= 12 && f) ? { s: s, b: b, f: f } : null;
+            }).filter(Boolean).sort(function (x, y) { return x.s - y.s || x.b - y.b; }).slice(0, 12);
+            if (liste.length) out[t] = liste;
+        });
+        return out;
+    }
+    function planSchluessel(sp) { return JSON.stringify(planNorm(sp)); }
+    function planLeer(sp) { return Object.keys(planNorm(sp)).length === 0; }
+    // "Di: LF5, PuG · Do: Englisch, LF3" — kurz fuer Karte und Meldung
+    function planText(sp, en) {
+        const n = planNorm(sp);
+        return Object.keys(n).map(function (t) {
+            const faecher = []; n[t].forEach(function (e) { if (faecher.indexOf(e.f) < 0) faecher.push(e.f); });
+            return TAGE[t][en ? 1 : 0] + ': ' + faecher.join(', ');
+        }).join(' · ');
+    }
+
     function planen(settings, p) {
         settings = settings || {};
         const en = istEn(), out = [];
@@ -144,6 +171,12 @@
             out.push({ id: 'faecher', icon: 'book', titel: L('Fächer & Lernfelder', 'Subjects'),
                 neu: p.faecher.length + ' ' + L('für das ' + y + '. Lehrjahr', 'for year ' + y) + (fehlen.length && fehlen.length < p.faecher.length ? L(' (' + fehlen.length + ' neu)', ' (' + fehlen.length + ' new)') : ''),
                 liste: p.faecher.slice(), alt: null, gleich: fehlen.length === 0 });
+        }
+        if (!planLeer(p.stundenplan)) {
+            const eigen = ((settings.school || {}).stundenplan);
+            const gleich = planSchluessel(eigen) === planSchluessel(p.stundenplan);
+            out.push({ id: 'stundenplan', icon: 'clock', titel: L('Stundenplan', 'Timetable'), neu: planText(p.stundenplan, en),
+                alt: !planLeer(eigen) && !gleich ? planText(eigen, en) : null, gleich: gleich });
         }
         return out;
     }
@@ -193,6 +226,11 @@
             });
             getan.push('faecher');
         }
+        if (will('stundenplan') && !planLeer(p.stundenplan)) {
+            if (!s.school || typeof s.school !== 'object') s.school = {};
+            s.school.stundenplan = planNorm(p.stundenplan);
+            getan.push('stundenplan');
+        }
         return getan;
     }
 
@@ -205,6 +243,7 @@
         if (alt.bundesland !== neu.bundesland) out.push(L('Bundesland', 'state'));
         if (JSON.stringify(alt.pruefungen || {}) !== JSON.stringify(neu.pruefungen || {})) out.push(L('Prüfungstermine', 'exam dates'));
         if (JSON.stringify(alt.faecher || []) !== JSON.stringify(neu.faecher || [])) out.push(L('Fächer', 'subjects'));
+        if (planSchluessel(alt.stundenplan) !== planSchluessel(neu.stundenplan)) out.push(L('Stundenplan', 'timetable'));
         if (alt.name !== neu.name || alt.schule !== neu.schule || alt.kontakt !== neu.kontakt) out.push(L('Angaben zur Klasse', 'class details'));
         return out;
     }
@@ -332,7 +371,7 @@
         codeNorm: codeNorm, codeFmt: codeFmt, codeAusAdresse: codeAusAdresse,
         zustand: zustand, zustandSetzen: zustandSetzen, vormerken: vormerken, austreten: austreten,
         planen: planen, anwenden: anwenden, unterschiede: unterschiede, naechsterBlock: naechsterBlock,
-        tageText: tageText, rhythmusText: rhythmusText, datum: datum, heuteIso: heuteIso,
+        tageText: tageText, rhythmusText: rhythmusText, planNorm: planNorm, planText: planText, planLeer: planLeer, datum: datum, heuteIso: heuteIso,
         rpc: rpc, laden: laden, beitreten: beitreten, geraetHash: geraetHash,
         appAbgleich: appAbgleich, mitteilungenMelden: mitteilungenMelden
     };

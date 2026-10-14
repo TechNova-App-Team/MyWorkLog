@@ -19,6 +19,7 @@
 
     // Lucide-Pfade (Originale), Strich aus dem Stylesheet
     const IC = {
+        clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
         calendar: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
         layers: '<path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
         map: '<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/>',
@@ -346,7 +347,7 @@
 
     // ══ COCKPIT (Lehrkraft) ═══════════════════════════════════════════
     const C = { klassen: [], sel: null, tab: 'profil', stand: {}, poll: 0, form: null, dirty: false, user: null };
-    const LEER = { name: '', schule: '', beruf: '', kontakt: '', lehrjahr: 1, bundesland: '', schultage: [], rhythmus: [], bloecke: [], faecher: [], pruefungen: {} };
+    const LEER = { name: '', schule: '', beruf: '', kontakt: '', lehrjahr: 1, bundesland: '', schultage: [], rhythmus: [], bloecke: [], faecher: [], pruefungen: {}, stundenplan: {} };
 
     async function cockpit(neu) {
         modus('cockpit');
@@ -445,7 +446,7 @@
     function profilAus(k) {
         return { name: k.name, schule: k.schule || '', beruf: k.beruf || '', kontakt: k.kontakt || '', lehrjahr: k.lehrjahr || 1, bundesland: k.bundesland || '',
             schultage: (k.schultage || []).slice(), rhythmus: JSON.parse(JSON.stringify(k.rhythmus || [])), bloecke: JSON.parse(JSON.stringify(k.bloecke || [])),
-            faecher: (k.faecher || []).slice(), pruefungen: Object.assign({}, k.pruefungen || {}) };
+            faecher: (k.faecher || []).slice(), pruefungen: Object.assign({}, k.pruefungen || {}), stundenplan: K.planNorm(k.stundenplan) };
     }
 
     async function standLaden(k) {
@@ -509,6 +510,11 @@
                 '<div class="kl-quick"><button class="kl-btn kl-btn--sm" type="button" data-quick="lf">' + L('Lernfelder LF1–LF12', 'Learning fields LF1–LF12') + '</button>' +
                     '<button class="kl-btn kl-btn--sm" type="button" data-quick="ab">' + L('Allgemeinbildung', 'General subjects') + '</button></div>' +
             '</fieldset>' +
+            '<fieldset class="kl-fs"><h3 class="kl-fs__h">' + L('Stundenplan', 'Timetable') + '</h3><p class="kl-fs__p">' +
+                L('Welches Fach in welcher Stunde? Die Berichtsheft-KI Ihrer Azubis schreibt dann über das Fach, das wirklich war, statt eines zu raten. Zählt nur an Schultagen, Doppelstunden sind einfach zwei Zellen.',
+                  'Which subject in which lesson? Your trainees’ report book AI then writes about the subject that actually took place instead of guessing. Only counts on school days; a double lesson is simply two cells.') + '</p>' +
+                '<div class="kl-plan" id="klPlan"></div>' +
+            '</fieldset>' +
             '<fieldset class="kl-fs"><h3 class="kl-fs__h">' + L('Prüfungstermine', 'Exam dates') + '</h3><p class="kl-fs__p">' + L('Erscheinen in der IHK-Ansicht der App mit Countdown.', 'Shown in the app’s IHK view with a countdown.') + '</p>' +
                 '<div class="kl-grid">' + dfld('ap1', L('Abschlussprüfung Teil 1', 'Final exam part 1'), m.pruefungen.ap1) + dfld('ap2', L('Abschlussprüfung Teil 2', 'Final exam part 2'), m.pruefungen.ap2) + dfld('anmeldung', L('Anmeldeschluss', 'Registration deadline'), m.pruefungen.anmeldung) + '</div>' +
             '</fieldset>' +
@@ -566,7 +572,7 @@
 
         // Faecher als Marken
         const tags = $('klTags'), tin = $('klTagIn');
-        const zeichneTags = function () {
+        let zeichneTags = function () {
             tags.querySelectorAll('.kl-tag').forEach(function (t) { t.remove(); });
             m.faecher.forEach(function (fa, i) {
                 const s = document.createElement('span'); s.className = 'kl-tag';
@@ -601,11 +607,71 @@
             };
         });
 
+        // Stundenplan als Raster: Zeile = Stunde, Spalte = Mo–Fr, Zelle = Fach aus der Liste oben.
+        // Gespeichert wird als Spannen {s, b, f}: gleiche Faecher in Folge werden zusammengezogen.
+        if (!m.stundenplan || typeof m.stundenplan !== 'object') m.stundenplan = {};
+        const plan = $('klPlan');
+        const zelle = function () {   // Raster aus m.stundenplan: z[t][h] = Fach
+            const z = {}; [1, 2, 3, 4, 5].forEach(function (t) { z[t] = {}; ((K.planNorm(m.stundenplan))[t] || []).forEach(function (e) { for (let h = e.s; h <= e.b; h++) z[t][h] = e.f; }); });
+            return z;
+        };
+        const ausRaster = function (z) {
+            const out = {};
+            [1, 2, 3, 4, 5].forEach(function (t) {
+                const liste = []; let lauf = null;
+                for (let h = 1; h <= 12; h++) {
+                    const fa = z[t][h] || '';
+                    if (lauf && fa === lauf.f) { lauf.b = h; continue; }
+                    if (lauf) liste.push(lauf);
+                    lauf = fa ? { s: h, b: h, f: fa } : null;
+                }
+                if (lauf) liste.push(lauf);
+                if (liste.length) out[t] = liste;
+            });
+            return out;
+        };
+        let reihen = Math.max(8, Object.values(K.planNorm(m.stundenplan)).reduce(function (mx, l) { return Math.max(mx, l[l.length - 1].b); }, 0));
+        const zeichnePlan = function () {
+            if (!m.faecher.length) {
+                plan.innerHTML = '<p class="kl-hint">' + L('Tragen Sie oben zuerst die Fächer ein, dann können Sie sie hier den Stunden zuordnen.', 'Add subjects above first, then you can assign them to lessons here.') + '</p>';
+                return;
+            }
+            const z = zelle();
+            const opt = function (wert) {
+                return '<option value=""></option>' + m.faecher.map(function (fa) { return '<option value="' + esc(fa) + '"' + (fa === wert ? ' selected' : '') + '>' + esc(fa) + '</option>'; }).join('') +
+                    (wert && m.faecher.indexOf(wert) < 0 ? '<option value="' + esc(wert) + '" selected>' + esc(wert) + '</option>' : '');
+            };
+            let html = '<div class="kl-plan__grid" role="table" aria-label="' + L('Stundenplan', 'Timetable') + '"><span></span>' +
+                [1, 2, 3, 4, 5].map(function (t) { return '<span class="kl-plan__kopf' + (m.schultage.indexOf(t) >= 0 ? ' is-schule' : '') + '">' + K.TAGE[t][EN ? 1 : 0] + '</span>'; }).join('');
+            for (let h = 1; h <= reihen; h++) {
+                html += '<span class="kl-plan__h">' + h + '.</span>';
+                [1, 2, 3, 4, 5].forEach(function (t) {
+                    html += '<select class="kl-plan__z' + (z[t][h] ? ' is-voll' : '') + '" data-t="' + t + '" data-h="' + h + '" aria-label="' + esc(K.TAGE_LANG[t][EN ? 1 : 0] + ', ' + h + '. ' + L('Stunde', 'lesson')) + '">' + opt(z[t][h] || '') + '</select>';
+                });
+            }
+            html += '</div>' + (reihen < 12 ? '<button class="kl-add" type="button" id="klPlanMehr">' + svg('plus') + L('Weitere Stunde', 'Another lesson') + '</button>' : '');
+            plan.innerHTML = html;
+            const mehr = $('klPlanMehr'); if (mehr) mehr.onclick = function () { reihen = Math.min(12, reihen + 1); zeichnePlan(); };
+        };
+        plan.addEventListener('change', function (e) {
+            const sel = e.target.closest('select[data-t]'); if (!sel) return;
+            const z = zelle(); z[+sel.getAttribute('data-t')][+sel.getAttribute('data-h')] = sel.value;
+            m.stundenplan = ausRaster(z);
+            sel.classList.toggle('is-voll', !!sel.value);
+            dirty();
+        });
+        zeichnePlan();
+        // Faecherliste aendert die Auswahl im Raster
+        const zeichneTagsAlt = zeichneTags;
+        zeichneTags = function () { zeichneTagsAlt(); zeichnePlan(); };
+        f.querySelector('[data-seg="tage"]').addEventListener('click', function () { setTimeout(zeichnePlan, 0); });
+
         f.onsubmit = async function (e) {
             e.preventDefault();
             const t = $('klSaveT'), btn = $('klSave');
             if (!String(m.name).trim()) { t.className = 'kl-savebar__t is-err'; t.textContent = fehlerText({ code: 'name_ungueltig' }); f.querySelector('[data-f="name"]').focus(); return; }
             const p = Object.assign({}, m, {
+                stundenplan: K.planNorm(m.stundenplan),
                 rhythmus: m.rhythmus.filter(function (r) { return r.startDate; }),
                 bloecke: m.bloecke.filter(function (b) { return b.von && b.bis; })
             });
@@ -848,6 +914,6 @@
         start();
     });
     // Test-Sichtfenster nur lokal (vgl. window.__abKonto auf /ausbilder/)
-    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__klasse = { C: C, B: B, beamer: beamer, setzeZahl: setzeZahl, zeigeBeitritt: zeigeBeitritt, landing: landing, karteHtml: karteHtml };
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) window.__klasse = { C: C, B: B, beamer: beamer, setzeZahl: setzeZahl, zeigeBeitritt: zeigeBeitritt, landing: landing, karteHtml: karteHtml, formular: formular };
     start();
 })();

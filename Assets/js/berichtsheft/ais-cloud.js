@@ -214,6 +214,30 @@ const CLOUD_UMFANG = {
     ausfuehrlich: { stichpunkte: '6-7 Einträge pro Tag', fliesstext: '5-6 Sätze im Absatz' },
 };
 
+// ═══ Stundenplan der Klasse (seit v8.5.7) ═══
+// Kommt ueber /klasse/ in die App-Daten (tg_pro_data.settings.school.stundenplan,
+// Schluessel = getDay 1..5). Wunsch des Nutzers: die KI soll ueber das Fach
+// schreiben, das wirklich war ("Mittwoch 2. Stunde PuG"), statt eines zu raten
+// und z. B. Englisch zu erfinden, obwohl keins war. dayIdx: 0 = Montag.
+function _klassenPlanFuer(dayIdx) {
+    try {
+        const d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
+        const sp = d && d.settings && d.settings.school && d.settings.school.stundenplan;
+        const l = sp && sp[String(dayIdx + 1)];
+        if (!Array.isArray(l)) return null;
+        const e = l.map(x => ({ s: Number(x && x.s) | 0, b: Number(x && x.b) | 0, f: String((x && x.f) || '').trim().slice(0, 60) }))
+            .filter(x => x.f && x.s >= 1 && x.b >= x.s);
+        return e.length ? e : null;
+    } catch (err) { return null; }
+}
+// Woerter, an denen man ein ANDERES Schulfach erkennt (klein, ganze Woerter).
+// Steht eines davon im Text eines Schultags, der laut Plan dieses Fach nicht
+// hatte, ist der Text erfunden.
+const FREMDE_FAECHER = ['englisch', 'deutsch', 'mathe', 'mathematik', 'politik', 'sport', 'religion', 'ethik',
+    'wiso', 'sozialkunde', 'geschichte', 'physik', 'chemie', 'biologie', 'pug', 'bwl', 'spanisch', 'französisch'];
+function _planFaecher(plan) { const u = []; plan.forEach(e => { if (!u.includes(e.f)) u.push(e.f); }); return u; }
+function _planZeile(plan) { return plan.map(e => (e.s === e.b ? e.s + '.' : e.s + '.–' + e.b + '.') + ' Std. ' + e.f).join(', '); }
+
 function _buildCloudPrompt(professionId, options) {
     const prof = PROFESSIONS[professionId];
     const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
@@ -329,9 +353,14 @@ ${lines.join('\n')}
         .filter(i => options.selectedDays.includes(i));
     const _hatSchule = _schulIdxs.length > 0;
     const _schulTagName = _hatSchule ? DAY_NAMES[_schulIdxs[0]] : '';
+    // Stundenplan je Schultag (null = kein Plan fuer diesen Tag → wie bisher raten lassen)
+    const _plaene = _schulIdxs.map(i => [i, _klassenPlanFuer(i)]).filter(x => x[1]);
+    const _ohnePlan = _schulIdxs.filter(i => !_plaene.some(x => x[0] === i));
+    // Das Beispiel-Fach steht im Formatblock und wiegt schwer: mit Plan das echte nehmen
+    const _beispielFach = (_plaene.length && _plaene[0][0] === _schulIdxs[0]) ? _planFaecher(_plaene[0][1]).join(', ') : 'Wirtschafts- und Sozialkunde';
     const _schulBeispielZeile = _hatSchule
         ? `,
-  {"day":"${_schulTagName}","entries":${F.schulBeispiel || F.beispiel},"hours":8,"isSchoolDay":true,"schoolTopic":"Wirtschafts- und Sozialkunde"}`
+  {"day":"${_schulTagName}","entries":${F.schulBeispiel || F.beispiel},"hours":8,"isSchoolDay":true,"schoolTopic":"${_beispielFach}"}`
         : '';
 
     const systemPrompt = `${retryPrefix}Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
@@ -375,7 +404,9 @@ ${F.stil.map(r => '- ' + r).join('\n')}
 
 [SCHULE] ${_hatSchule
             ? `Schultage sind EXAKT: ${_schulIdxs.map(i => DAY_NAMES[i]).join(', ')} — keine anderen Tage. Der User hat das selbst eingestellt; es ist keine Empfehlung.
-- An diesen Schultagen: isSchoolDay=true (boolean), schoolTopic="<EIN konkretes Fach aus dieser Liste: ${schoolTopicsHint}>", pro Schultag ein ANDERES Fach.
+${_plaene.length ? `- STUNDENPLAN DER KLASSE (verbindlich, von der Lehrkraft): ${_plaene.map(x => DAY_NAMES[x[0]] + ': ' + _planZeile(x[1])).join(' | ')}
+- An diesen Tagen: isSchoolDay=true, schoolTopic = genau die Fächer des Tages aus dem Stundenplan, kommagetrennt, in dieser Reihenfolge. entries behandeln NUR Stoff aus genau diesen Fächern, in der Reihenfolge der Stunden. ✗ Kein Fach nennen oder erfinden, das an diesem Tag nicht im Stundenplan steht.
+` : ''}${_ohnePlan.length ? `- ${_plaene.length ? 'Übrige Schultage (' + _ohnePlan.map(i => DAY_NAMES[i]).join(', ') + ')' : 'An diesen Schultagen'}: isSchoolDay=true (boolean), schoolTopic="<EIN konkretes Fach aus dieser Liste: ${schoolTopicsHint}>", pro Schultag ein ANDERES Fach.` : ''}
 - entries eines Schultages beschreiben ausschließlich UNTERRICHT: behandelter Lernstoff, Lernfelder, Übungsaufgaben, Fachrechnen, Gruppenarbeit, Referat, Klassenarbeitsvorbereitung, Nachbereitung im Berufsschulheft. Dieselbe Schreibform ${F.name} wie oben.
 - ✗ An einem Schultag verboten: Betrieb, Abteilung, Kunden, Aufträge, Werkstatt, Werkzeuge, Maschinen, Tickets, Kollegen, betriebliche Dokumentation. Wer im Betrieb war, war nicht in der Schule.
 - Alle anderen Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null, entries=[normale Betriebs-Tätigkeiten]`
@@ -835,6 +866,30 @@ async function generateWithCloud(professionId, options) {
             // Vorschau und das Wochenfeld, also lokal nachziehen statt leer lassen.
             schoolTopic = generateSchoolEntry(professionId, options.yearNum, options.form) || null;
         }
+        // Stundenplan gewinnt immer: das Modell haelt sich nicht zuverlaessig an
+        // Vorgaben (siehe oben bei den Schultagen). Das Fach im Bericht ist eine
+        // Tatsache aus dem Plan, kein Vorschlag des Modells.
+        const _plan = _sollSchule ? _klassenPlanFuer(dayIdx) : null;
+        if (_plan) {
+            // Nennt der Text ein Schulfach, das an diesem Tag NICHT im Plan steht
+            // (genau die Beschwerde: "schreibt Englisch, obwohl er nix hatte"), baut
+            // die lokale Engine den Tag aus dem Plan neu. Nur das Etikett zu
+            // korrigieren liesse "Englisch-Vokabeln gelernt" unter "LF5, PuG" stehen.
+            const _erlaubt = _planFaecher(_plan).map(f => f.toLowerCase().split(/[^a-zäöüß0-9]+/)).flat();
+            const _woerter = new Set(cloudEntries.join(' ').toLowerCase().split(/[^a-zäöüß0-9]+/));
+            const _fremd = FREMDE_FAECHER.filter(w => _woerter.has(w) && !_erlaubt.includes(w));
+            if (_fremd.length) {
+                const _neu = generateDayEntries(professionId, {
+                    yearNum: options.yearNum, umfang: options.umfang, form: options.form, dayIndex: dayIdx,
+                    isSchoolDay: true, season: getCurrentSeason(), excludePhrases: [], department: week.department,
+                    activeTheme: options.activeTheme || null, customPrompt: options.customPrompt || '',
+                    planForDay: _planFaecher(_plan),
+                });
+                cloudEntries = options.form === 'fliesstext' ? alsFliesstext(_neu.entries, dayName) : _neu.entries;
+                _schulKorrigiert++;
+            }
+            schoolTopic = _planFaecher(_plan).join(', ');
+        }
 
         const day = {
             index: dayIdx,
@@ -941,6 +996,7 @@ return {
     verbinde, GEBRAUCHT,
     CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId,
     CLOUD_FORM, CLOUD_UMFANG, _buildCloudPrompt,
+    _klassenPlanFuer, _planFaecher,
     _repairJSON, _sliceRootJSON, _deEscapeStructural,
     generateWithCloud,
 };

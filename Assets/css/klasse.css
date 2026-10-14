@@ -381,7 +381,10 @@ html.kl-gl .kl-st__text::before { content: ''; position: absolute; inset: -18% -
 
 /* Formular */
 .kl-form { margin-top: 26px; }
-.kl-fs { border: 0; margin: 0; padding: 0 0 30px; }
+/* min-width 0: ein fieldset ist per Voreinstellung so breit wie sein breitester Inhalt
+   (min-content) — das Stundenplan-Raster (470 px) machte die Seite am Handy breiter
+   als den Schirm, statt in seinem Kasten zu scrollen. */
+.kl-fs { border: 0; margin: 0; padding: 0 0 30px; min-width: 0; }
 .kl-fs + .kl-fs { padding-top: 28px; border-top: 1px solid var(--line); }
 .kl-fs__h { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
 .kl-fs__p { margin: 4px 0 18px; color: var(--text-dim); font-size: 14px; }
@@ -428,6 +431,21 @@ html.kl-gl .kl-st__text::before { content: ''; position: absolute; inset: -18% -
 .kl-tags input { flex: 1 1 140px; min-width: 120px; height: 32px; border: 0; background: none; color: var(--text-main); font-size: 15px; }
 .kl-tags input:focus { outline: none; }
 .kl-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+/* Stundenplan-Raster (seit v8.5.7): Stunde x Mo–Fr, Zelle = Fach aus der Liste.
+   Scrollt bei Platzmangel IN seinem Kasten — die Seite selbst darf nie breiter
+   werden als der Schirm (Layout-Viewport-Falle, siehe Landing). */
+.kl-plan { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.kl-plan__grid { display: grid; grid-template-columns: 28px repeat(5, minmax(84px, 1fr)); gap: 4px; min-width: 470px; }
+.kl-plan__kopf { padding: 6px 4px; text-align: center; font: 500 12px var(--mono); color: var(--text-dim); border-radius: 8px; }
+.kl-plan__kopf.is-schule { color: var(--text-main); background: rgba(var(--primary-rgb), .14); }
+.kl-plan__h { display: grid; place-items: center; font: 500 12px var(--mono); color: var(--text-dim); }
+.kl-plan__z {
+    width: 100%; min-width: 0; height: 34px; padding: 0 6px; border-radius: 8px; border: 1px dashed var(--line-2);
+    background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; text-overflow: ellipsis;
+}
+.kl-plan__z.is-voll { border-style: solid; border-color: rgba(var(--primary-rgb), .45); background: rgba(var(--primary-rgb), .12); color: var(--text-main); font-weight: 500; }
+.kl-plan__z:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.kl-plan .kl-add { margin-top: 10px; }
 
 /* Speichern-Leiste: klebt nur mit ungespeicherten Aenderungen (.is-dirty), sonst steht sie
    ruhig am Formularende — eine dauernd klebende Leiste lag ueber den Ueberschriften. */
@@ -573,3 +591,4 @@ html.kl-gl .kl-st__text::before { content: ''; position: absolute; inset: -18% -
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+@media (hover: none) and (pointer: coarse) { .kl-plan__z { font-size: 16px; } }

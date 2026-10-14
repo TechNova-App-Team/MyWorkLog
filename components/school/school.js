@@ -654,6 +654,13 @@
                     '<button class="btn btn-ghost" type="button" data-blk="' + safeHTML(b.von + '|' + b.bis) + '" aria-label="' + scL('Block entfernen', 'Remove block') + '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>';
             }).join('')
             : '<p class="school-settings-hint">' + scL('Keine anstehenden Blöcke.', 'No upcoming blocks.') + '</p>';
+        // Stundenplan der Klasse (seit v8.5.7): sichtbar machen, was die Berichtsheft-KI
+        // an Schultagen als Faecher nimmt — sonst wirkt das Fach im Bericht wie geraten.
+        const sp = (data.settings.school && data.settings.school.stundenplan) || null;
+        if (sp && typeof MWLKlasse !== 'undefined' && MWLKlasse.planText && !MWLKlasse.planLeer(sp)) {
+            html += '<p class="school-settings-hint">' + scL('Stundenplan: ', 'Timetable: ') + '<b>' + safeHTML(MWLKlasse.planText(sp, document.documentElement.lang === 'en')) + '</b>. ' +
+                scL('Das Berichtsheft schreibt an Schultagen über genau diese Fächer.', 'On school days the report book writes about exactly these subjects.') + '</p>';
+        }
         html += k && k.code
             ? '<p class="school-settings-hint">' + scL('Verbunden mit der Klasse ', 'Connected to the class ') + '<b>' + safeHTML(k.name || '') + '</b>. ' +
                 scL('Änderungen der Lehrkraft fragt die App beim Öffnen nach. ', 'The app asks about your teacher\u2019s changes when it opens. ') +
