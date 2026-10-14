@@ -50,10 +50,16 @@
         return weather;
     }
 
+    // Ohne Zeitlimit haengt der Abruf in einem WLAN mit Vorschaltseite (Messe,
+    // Schule, Hotel) beliebig lange, und das Wetter bleibt leer.
     async function fetchWeather(lat, lon) {
         try {
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=6`;
-            const response = await fetch(url);
+            const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+            const timer = ctrl ? setTimeout(() => ctrl.abort(), 10000) : null;
+            let response;
+            try { response = await fetch(url, ctrl ? { signal: ctrl.signal } : undefined); }
+            finally { if (timer) clearTimeout(timer); }
             if (!response.ok) throw new Error('Weather API Fehler');
             const data = await response.json();
             return data;
@@ -63,18 +69,42 @@
         }
     }
 
+    // Bis v8.5.0 zeigte ein einziger fehlgeschlagener Abruf bei abgelaufenem Cache
+    // GAR KEIN Wetter, bis zum naechsten 30-min-Takt — auf allen Geraeten zugleich,
+    // sobald Open-Meteo oder das Netz kurz hakte (gemeldet 13.10.2026). Jetzt: der
+    // alte Wert bleibt bis WEATHER_STALE_MAX stehen, und es wird nach 1/3/10 min
+    // erneut versucht (plus beim online-Ereignis).
+    const WEATHER_STALE_MAX = 6 * 60 * 60 * 1000;
+    const WEATHER_RETRY_MS = [60 * 1000, 3 * 60 * 1000, 10 * 60 * 1000];
+    let _weatherRetryNr = 0;
+    let _weatherRetryTimer = null;
+
+    function _weatherRetry() {
+        if (_weatherRetryTimer || _weatherRetryNr >= WEATHER_RETRY_MS.length) return;
+        _weatherRetryTimer = setTimeout(() => {
+            _weatherRetryTimer = null;
+            _weatherRetryNr++;
+            getLocationAndWeather();
+        }, WEATHER_RETRY_MS[_weatherRetryNr]);
+    }
+    window.addEventListener('online', () => {
+        if (weatherData && Date.now() - weatherLastFetch < WEATHER_CACHE_DURATION) return;
+        _weatherRetryNr = 0;
+        getLocationAndWeather();
+    });
+
     async function getLocationAndWeather() {
-        // Check cache first
-        const cached = localStorage.getItem('myworklog_weather');
-        if (cached) {
-            const parsed = JSON.parse(cached);
-            if (Date.now() - parsed.timestamp < WEATHER_CACHE_DURATION) {
+        let parsed = null;
+        try { parsed = JSON.parse(localStorage.getItem('myworklog_weather') || 'null'); } catch (e) { parsed = null; }
+        if (parsed && parsed.data && parsed.timestamp) {
+            const age = Date.now() - parsed.timestamp;
+            if (age < WEATHER_CACHE_DURATION || (!weatherData && age < WEATHER_STALE_MAX)) {
                 weatherData = parsed.data;
                 weatherLastFetch = parsed.timestamp;
                 updateWeatherUI();
                 updateGreetingWeather();
-                return;
             }
+            if (age < WEATHER_CACHE_DURATION) return;
         }
 
         // Check if we have saved coordinates
@@ -91,8 +121,11 @@
                     timestamp: Date.now()
                 }));
                 weatherLastFetch = Date.now();
+                _weatherRetryNr = 0;
                 updateWeatherUI();
                 updateGreetingWeather();
+            } else {
+                _weatherRetry();
             }
         } else {
             // Show location setup prompt in modal

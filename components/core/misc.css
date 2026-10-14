@@ -339,3 +339,96 @@
             .dc-root[data-state="open"] .dc-panel { opacity: 1; }
             .dc-root[data-state="closed"] .dc-panel { opacity: 0; }
         }
+
+        /* === ONBOARDING-TOUR (onboarding-tour.js) ===
+           Spot = ein Kasten mit riesigem Schatten als Abdunklung; Lage und Groesse
+           schreibt das JS je Bild (federnd), deshalb hier KEINE transition auf
+           transform/width/height — die wuerde gegen die Feder arbeiten. */
+        .tour-layer { position: fixed; inset: 0; z-index: 10000; opacity: 0; transition: opacity .22s ease-out; cursor: pointer; }
+        .tour-layer.is-on { opacity: 1; }
+        .tour-spot {
+            position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
+            box-shadow: 0 0 0 1.5px rgba(var(--primary-rgb), .9), 0 0 0 6px rgba(var(--primary-rgb), .16), 0 0 0 200vmax rgba(0, 0, 0, .66);
+            will-change: transform, width, height;
+        }
+        .tour-spot::after {
+            content: ""; position: absolute; inset: -2px; border-radius: inherit; pointer-events: none;
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), .7); opacity: 0;
+        }
+        .tour-spot.is-land::after { animation: tourLand .7s cubic-bezier(.23, 1, .32, 1) both; }
+        @keyframes tourLand { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(1.06); } }
+
+        .tour-tap {
+            position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
+        }
+        .tour-tap::before {
+            content: ""; position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(var(--primary-rgb), .35); border: 2px solid rgba(var(--primary-rgb), .9); opacity: 0;
+        }
+        .tour-tap.is-go::before { animation: tourTap .52s cubic-bezier(.23, 1, .32, 1) both; }
+        @keyframes tourTap { 0% { opacity: 1; transform: scale(.55); } 35% { opacity: 1; transform: scale(.8); } 100% { opacity: 0; transform: scale(1.6); } }
+
+        .tour-marks { position: absolute; inset: 0; pointer-events: none; }
+        .tour-mark {
+            position: absolute; left: 0; top: 0; white-space: nowrap;
+            padding: 3px 9px 3px 7px; border-radius: 7px; font-size: .74rem; font-weight: 650; line-height: 1.35;
+            background: var(--primary); color: var(--tour-ink, #fff);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+            display: inline-flex; align-items: center; gap: 6px;
+            opacity: 0; translate: 0 4px;
+            transition: opacity .2s ease-out var(--d, 0ms), translate .28s cubic-bezier(.23, 1, .32, 1) var(--d, 0ms);
+        }
+        .tour-mark::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .85; }
+        .tour-marks.is-in .tour-mark { opacity: 1; translate: 0 0; }
+        .tour-marks .tour-mark.is-off { opacity: 0; transition-delay: 0ms; }
+
+        .tour-tip {
+            position: absolute; left: 0; top: 0; width: 360px; max-width: calc(100vw - 24px); cursor: default;
+            background: linear-gradient(var(--bg-sidebar), var(--bg-sidebar)), var(--bg-deep);
+            border: 1px solid var(--border); border-radius: 16px; overflow: hidden; color: var(--text-main);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+            will-change: transform;
+        }
+        .tour-tip.is-sheet { width: calc(100vw - 16px); left: 8px; max-width: 520px; }
+        .tour-tip > * { transition: opacity .13s ease-out, filter .13s ease-out; }
+        .tour-tip.is-swap > * { opacity: 0; filter: blur(2px); }
+        .tour-tip__bar { height: 3px; background: var(--border); }
+        .tour-tip__bar i { display: block; height: 100%; background: var(--primary); transition: width .45s cubic-bezier(.23, 1, .32, 1); }
+        .tour-tip__body { padding: 1.1rem 1.25rem 1rem; }
+        .tour-tip__where {
+            display: inline-flex; align-items: center; gap: 7px; margin-bottom: .6rem;
+            padding: 4px 10px 4px 8px; border-radius: 999px; font-size: .76rem; color: var(--text-muted);
+            background: rgba(var(--primary-rgb), .1); border: 1px solid rgba(var(--primary-rgb), .25);
+        }
+        .tour-tip__where svg { color: var(--primary); flex-shrink: 0; }
+        .tour-tip__where b { color: var(--text-main); font-weight: 650; }
+        .tour-tip__where.is-going { animation: tourGoing 1s ease-in-out infinite; }
+        @keyframes tourGoing { 50% { border-color: rgba(var(--primary-rgb), .7); } }
+        .tour-tip__t { margin: 0 0 .35rem; font-size: 1.02rem; font-weight: 700; letter-spacing: -.01em; }
+        .tour-tip__p { margin: 0 0 1rem; font-size: .88rem; line-height: 1.6; color: var(--text-muted); }
+        .tour-tip__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .tour-tip__n { font-size: .78rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .tour-tip__btns { display: flex; gap: 8px; }
+        .tour-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px;
+            padding: 0 14px; border-radius: 9px; font-size: .85rem; font-weight: 650; cursor: pointer;
+            transition: background-color .15s ease, border-color .15s ease, transform .12s ease-out;
+        }
+        .tour-btn:active { transform: scale(.97); }
+        .tour-btn--main { background: var(--primary); color: var(--tour-ink, #fff); border: 1px solid transparent; }
+        .tour-btn--ghost { background: transparent; color: var(--text-main); border: 1px solid var(--border); padding: 0 10px; }
+        .tour-btn:focus-visible, .tour-skip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        @media (hover: hover) and (pointer: fine) {
+            .tour-btn--main:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); }
+            .tour-btn--ghost:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+            .tour-skip:hover { color: var(--text-main); }
+        }
+        .tour-tip__hint {
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+            padding: .55rem 1.25rem; border-top: 1px solid var(--border); font-size: .72rem; color: var(--text-muted);
+        }
+        .tour-skip { background: none; border: 0; color: var(--text-muted); font-size: .72rem; cursor: pointer; padding: 2px 4px; }
+        @media (prefers-reduced-motion: reduce) {
+            .tour-spot.is-land::after, .tour-tap.is-go::before, .tour-tip__where.is-going { animation: none; }
+            .tour-mark { translate: none; }
+        }

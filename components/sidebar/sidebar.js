@@ -77,19 +77,7 @@
         if (active) { active.classList.add('is-on'); active.setAttribute('aria-pressed', 'true'); }
     }
 
-    function startOnboardingTour() {
-        onboardingStep = 0;
-        onboardingActive = true;
-        // Close sidebar on mobile
-        const sidebar = document.querySelector('.sidebar');
-        if (sidebar && _isMobile()) sidebar.classList.remove('active');
-        document.addEventListener('keydown', tourKeyHandler);
-        document.addEventListener('touchstart', tourTouchStartHandler, { passive: true });
-        document.addEventListener('touchend', tourTouchEndHandler);
-        _tourResizeHandler = () => { if (onboardingActive) renderOnboardingStep(); };
-        window.addEventListener('resize', _tourResizeHandler);
-        renderOnboardingStep();
-    }
+    // startOnboardingTour() steht in components/core/onboarding-tour.js.
 
     // ═══ SIDEBAR COLLAPSE — Icon-Only Mode ═══
     (function initSidebarCollapse() {
