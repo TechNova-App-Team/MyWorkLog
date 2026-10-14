@@ -167,6 +167,21 @@ const APP_FILES = new Set([
   EN_DICT,
 ]);
 
+// Footer-Text "Zuletzt aktualisiert: …" (pages/footer/footer.html). Bis v8.5.1
+// stand dort wie am Versions-Badge nur "…" und wurde allein von
+// version-loader.js gefuellt — der holt dafuer die ganze version.json (577 KB,
+// no-store), und /analytics/, /ki-dashboard/, /tester/ laden ihn gar nicht.
+// Folge: "V…" im Footer, teils sekundenlang, dort fuer immer. Jetzt steht der
+// Wert schon im HTML; der Loader formatiert ihn auf /en/ nur noch um.
+// Nur die Form "<Zahl>. <Monat> <Jahr>" wird ersetzt — der Platzhalter "—" auf
+// /DSGVO/ (mit translate-Attribut) bleibt bewusst Sache des Loaders.
+const RELEASE_TEXT_RE = /(\sdata-release-date>)\d{1,2}\. [A-Za-zä]+ \d{4}(<)/g;
+const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+function deutschesDatum(iso) {
+  const [j, m, t] = iso.split('-').map(Number);
+  return `${t}. ${MONATE[m - 1]} ${j}`;
+}
+
 // Gibt null zurueck, wenn die Datei unveraendert bleibt, sonst die Zahl der
 // ?v=-Referenzen (beim Woerterbuch 0 — dort wird nur die Version gestempelt).
 function stampFile(file) {
@@ -185,6 +200,7 @@ function stampFile(file) {
   });
   for (const re of VERSION_RES) out = out.replace(re, (_m, pre, post) => pre + version + post);
   if (releaseDate && APP_FILES.has(file)) out = out.replace(DATE_RE, (_m, pre, post) => pre + releaseDate + post);
+  if (releaseDate) out = out.replace(RELEASE_TEXT_RE, (_m, pre, post) => pre + deutschesDatum(releaseDate) + post);
   if (out === raw) return null;
   atomarSchreiben(file, out);
   return n;
