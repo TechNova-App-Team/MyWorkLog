@@ -259,7 +259,7 @@
     // ══ LANDING ═══════════════════════════════════════════════════════
     const DEMO = {
         code: 'K7QPM2XD', name: 'FI 25a', schule: 'Berufsbildende Schule', beruf: 'Fachinformatik', lehrjahr: 1, kontakt: '',
-        bundesland: 'NI', schultage: [1, 3], rhythmus: [], bloecke: [], faecher: ['LF1', 'LF2', 'LF3', 'LF4', 'Deutsch', 'Englisch', 'Politik'],
+        bundesland: 'NI', schultage: [2, 4], rhythmus: [], bloecke: [], faecher: ['LF1', 'LF2', 'LF3', 'LF4', 'Deutsch', 'Englisch', 'Politik'],
         pruefungen: { ap1: '2027-03-02' }, mitteilungen: [], version: 1
     };
     function demoBloecke() {
@@ -296,7 +296,7 @@
             return '<div class="kl-ph" style="--i:' + i + '"><div class="kl-ph__scr">' +
                 '<div class="kl-ph__scan"><span class="kl-ph__vf"></span><span>' + L('Code scannen', 'Scan code') + '</span></div>' +
                 '<div class="kl-ph__done"><span class="kl-ph__ok">' + svg('check') + '</span><p class="kl-ph__t">FI 25a</p>' +
-                    '<div class="kl-ph__row"><b>' + L('Berufsschule', 'School') + '</b>' + K.tageText([1, 3], EN) + '</div>' +
+                    '<div class="kl-ph__row"><b>' + L('Berufsschule', 'School') + '</b>' + K.tageText([2, 4], EN) + '</div>' +
                     '<div class="kl-ph__row"><b>' + L('Block', 'Block') + '</b>' + K.datum(n1.von) + '–' + K.datum(n1.bis) + '</div>' +
                     '<div class="kl-ph__row"><b>' + L('Prüfung Teil 1', 'Exam part 1') + '</b>' + K.datum('2027-03-02', true) + '</div>' +
                 '</div></div></div>';

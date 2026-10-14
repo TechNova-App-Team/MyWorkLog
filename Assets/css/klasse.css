@@ -100,28 +100,94 @@ body[data-mode="join"] .kl-top__nav { display: none; }
 .kl-landing { max-width: 1240px; margin: 0 auto; padding: 0 28px 40px; }
 body:not([data-mode="landing"]) .kl-landing { display: none; }
 
-/* ── Buehne (Hero) ── wie das Berichtsheft: echter Gegenstand, Riesenschrift dahinter.
-   Gegenstand hier: Leinwand + Handys der Klasse. EIN Effekt: die Handys richten sich ein. */
-.kl-buehne { position: relative; display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr); gap: 48px; align-items: center; padding: 48px 0 112px; isolation: isolate; }
-.kl-buehne > * { min-width: 0; }
-.kl-riesen {
-    position: absolute; right: -0.03em; bottom: 0.02em; z-index: -1; margin: 0;
-    font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800;
-    font-size: clamp(9rem, 5rem + 15vw, 22rem); line-height: 0.8; letter-spacing: -0.06em;
-    color: var(--text-main); opacity: 0.05; white-space: nowrap; pointer-events: none; user-select: none;
+/* ── Landing: Kamerafahrt wie das Intro (seit v8.5.5) ──
+   Ebenen (alle im Wurzel-Stapelkontext, deshalb KEIN z-index/transform an
+   .kl-landing, .kl-hero, .kl-reise — sonst liegt die Riesenschrift ueber der Szene,
+   vgl. traum.md Falle 1):
+     Riesenschrift z0 → feste Leinwand z1 (Three.js) → Texte z2 →
+     deckende Abschnitte danach (Code, Vorschau, FAQ, Footer) z3.
+   Modus steht VOR dem ersten Bild am <html>: kl-gl (Fahrt) / kl-flat (kein WebGL,
+   "Bewegung reduzieren", kein JS). Ohne Klasse verhaelt sich alles wie kl-flat. */
+.kl-canvas {
+    position: fixed; inset: 0; z-index: 1; width: 100%; height: 100%;
+    display: none; pointer-events: none;
+    opacity: var(--kl-szene, 1); transition: opacity .5s var(--ease);
 }
+html.kl-gl body[data-mode="landing"] .kl-canvas { display: block; }
+html.kl-gl .kl-flatonly { display: none; }
+
+.kl-riesen {
+    /* NIE ueber den rechten Rand: 7 px Ueberstand liessen Chrome am Handy den
+       Layout-Viewport auf 752 statt 384 px aufziehen — die feste Leinwand wuchs mit,
+       man sah nur ihre linke obere Ecke (gemessen 14.10.2026, innerWidth 752). */
+    position: absolute; top: clamp(60px, 12vh, 140px); right: 0; z-index: 0; margin: 0; max-width: 100%; overflow: hidden;
+    font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800;
+    font-size: clamp(10rem, 5rem + 24vw, 30rem); line-height: 0.8; letter-spacing: -0.06em;
+    color: var(--text-main); opacity: 0.045; white-space: nowrap; pointer-events: none; user-select: none;
+}
+/* clip (nicht hidden): schneidet waagerecht ab, ohne Scroll-Container zu werden —
+   sticky bleibt intakt. Grund: jeder Zierrand ueber den Bildschirm hinaus (Hof hinter
+   den Stationstexten, 25a) liess Chrome am Handy den Layout-Viewport aufziehen
+   (gemessen 752 bzw. 468 statt 384 px) und die feste Leinwand wuchs mit. */
+.kl-landing { position: relative; overflow-x: clip; }
+
+.kl-hero { position: relative; z-index: 2; min-height: calc(100svh - 90px); display: flex; flex-direction: column; justify-content: center; padding: 24px 0 72px; }
+.kl-hero__text { max-width: 40rem; }
 .kl-kicker { margin: 0 0 22px; color: var(--text-muted); font: 500 13px/1 var(--mono); letter-spacing: 0.02em; }
 .kl-h1 {
-    margin: 0; max-width: 16ch; font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800;
-    font-size: clamp(42px, 2.2rem + 2.9vw, 84px); line-height: 0.95; letter-spacing: -0.055em; text-wrap: balance;
+    margin: 0; font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800;
+    font-size: clamp(44px, 2rem + 4.2vw, 104px); line-height: 0.92; letter-spacing: -0.055em; text-wrap: balance;
 }
 .kl-h1 span { display: block; }
-.kl-lede { margin: 28px 0 0; max-width: 33em; color: var(--text-muted); font-size: 18px; line-height: 1.6; }
+/* Zwei Satzhaelften, zwei Rollen: was es schon gibt (leiser), was MyWorkLog tut. */
+.kl-h1__a { color: var(--text-muted); }
+.kl-lede { margin: 28px 0 0; max-width: 31em; color: var(--text-muted); font-size: 19px; line-height: 1.55; }
 .kl-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
 .kl-note { margin: 18px 0 0; color: var(--text-dim); font-size: 14px; }
+.kl-scrollhint { position: absolute; left: 0; bottom: 28px; width: 22px; height: 36px; border: 1.5px solid var(--line-2); border-radius: 12px; display: none; }
+.kl-scrollhint i { position: absolute; left: 50%; top: 7px; width: 3px; height: 7px; margin-left: -1.5px; border-radius: 2px; background: var(--text-muted); animation: klHint 1.8s var(--ease) infinite; }
+@keyframes klHint { 0% { transform: translateY(0); opacity: 1; } 70% { transform: translateY(12px); opacity: 0; } 100% { opacity: 0; } }
+html.kl-gl .kl-scrollhint { display: block; }
 
-.kl-stage { position: relative; margin: 0; padding: 0 0 178px; perspective: 1600px; perspective-origin: 50% 30%; }
+/* Stationen. In der Fahrt ist jede ein hoher Abschnitt; der Text klebt, der
+   Scrollfortschritt durch den Abschnitt faehrt die Kamera (klasse-reise.js). */
+.kl-reise { position: relative; z-index: 2; }
+.kl-st { position: relative; padding: 72px 0; }
+.kl-st__text { max-width: 30rem; }
+.kl-st__h {
+    margin: 0; font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800;
+    font-size: clamp(34px, 1.6rem + 2.6vw, 64px); line-height: 0.98; letter-spacing: -0.05em; text-wrap: balance;
+}
+.kl-st__p { margin: 18px 0 0; color: var(--text-muted); font-size: 18px; line-height: 1.6; max-width: 28em; }
+html.kl-gl .kl-st { min-height: 190vh; padding: 0; }
+html.kl-gl .kl-st__text {
+    position: sticky; top: 30vh; padding: 0 0 40px;
+    opacity: var(--kl-sicht, 1); transform: translateY(calc((1 - var(--kl-sicht, 1)) * 18px));
+}
+/* Weicher dunkler Hof hinter dem Text, damit er ueber fernen Kaertchen lesbar bleibt.
+   Liegt im Stapelkontext des Textes (transform), also ueber der Leinwand, unter der Schrift. */
+html.kl-gl .kl-st__text::before { content: ''; position: absolute; inset: -18% -22% -10% -40%; z-index: -1; background: radial-gradient(closest-side, rgba(3, 3, 5, 0.86), rgba(3, 3, 5, 0.5) 60%, transparent); pointer-events: none; }
+
+/* Die Zahl der vierten Station (in der Fahrt zaehlt klasse-reise.js mit). */
+.kl-zahl { margin: 0 0 14px; display: flex; align-items: baseline; gap: 12px; font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800; font-size: clamp(64px, 3rem + 6vw, 148px); line-height: 0.85; letter-spacing: -0.06em; font-variant-numeric: tabular-nums; }
+.kl-zahl small { font-family: var(--font); font-size: 17px; font-weight: 500; letter-spacing: 0; color: var(--text-muted); }
+
+/* Ruhige Fassung: eine Woche als Streifen (Lücken vorher, Schultage nachher). */
+.kl-woche { display: grid; grid-template-columns: repeat(5, minmax(0, 72px)); gap: 8px; margin-top: 28px; }
+.kl-woche span { height: 84px; border-radius: 12px; border: 1px solid var(--line-2); background: var(--bg-panel); display: grid; place-items: start; padding: 10px; font: 500 13px var(--mono); color: var(--text-muted); }
+.kl-woche .is-luecke { border-style: dashed; border-color: rgba(var(--primary-rgb), .55); background: transparent; color: var(--text-main); }
+.kl-woche .is-schule { border-color: transparent; background: rgba(var(--primary-rgb), .9); color: #fff; }
+
+/* Alles nach der Fahrt liegt deckend ueber der Leinwand. */
+/* Volle Breite per Schatten statt ::before mit inset -100vw: das ragte 100vw ueber
+   den Rand, und Chrome zog am Handy den Layout-Viewport auf 752 statt 384 px auf
+   (feste Leinwand doppelt so gross, man sah nur ihre linke obere Ecke). Schatten
+   zaehlt nicht zum Scrollbereich; clip-path schneidet ihn oben/unten ab. */
+.kl-codebar, .kl-what, .kl-faq { position: relative; z-index: 3; background: var(--bg-deep); box-shadow: 0 0 0 100vmax var(--bg-deep); clip-path: inset(0 -100vmax); }
+
+.kl-stage { position: relative; margin: 40px 0 0; padding: 0 0 178px; perspective: 1600px; perspective-origin: 50% 30%; max-width: 640px; }
 .kl-stage__beam { position: absolute; inset: -60px -40px 40px; background: radial-gradient(55% 50% at 50% 30%, rgba(255, 252, 240, .10), transparent 70%); pointer-events: none; }
+
 .kl-screen {
     position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 30px; align-items: center;
     width: 88%; margin: 0 auto; padding: 28px 32px; border-radius: 6px; background: var(--screen); color: var(--screen-ink);
@@ -172,12 +238,6 @@ body:not([data-mode="landing"]) .kl-landing { display: none; }
 .kl-ph.is-done .kl-ph__scan .kl-ph__vf::after { animation: none; }
 
 /* Was es bringt: vier harte Aussagen, links gross, rechts der Satz dazu */
-.kl-warum { padding: 40px 0 24px; scroll-margin-top: 20px; }
-.kl-warum__list { list-style: none; margin: 34px 0 0; padding: 0; border-top: 1px solid var(--line); }
-.kl-warum__item { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 40px; align-items: baseline; padding: 34px 0; border-bottom: 1px solid var(--line); }
-.kl-warum__big { margin: 0; font-family: var(--display); font-variation-settings: 'opsz' 96; font-weight: 800; font-size: clamp(38px, 1.6rem + 3vw, 68px); line-height: 0.95; letter-spacing: -0.05em; }
-.kl-warum__h { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; }
-.kl-warum__p { margin: 10px 0 0; color: var(--text-muted); font-size: 16.5px; line-height: 1.65; max-width: 36em; }
 
 /* Code-Leiste fuer Azubis */
 .kl-codebar { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 28px 0; scroll-margin-top: 20px; }
@@ -198,13 +258,6 @@ body:not([data-mode="landing"]) .kl-landing { display: none; }
 .kl-p { margin: 16px 0 0; color: var(--text-muted); font-size: 17px; line-height: 1.65; max-width: 36em; }
 .kl-p--muted { color: var(--text-dim); font-size: 15.5px; }
 
-.kl-steps { padding: 104px 0 24px; scroll-margin-top: 20px; }
-.kl-steps__list { list-style: none; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1px solid var(--line); }
-.kl-step { padding: 28px 28px 8px 0; position: relative; }
-.kl-step + .kl-step { padding-left: 28px; border-left: 1px solid var(--line); }
-.kl-step__n { font: 500 14px var(--mono); color: var(--primary); }
-.kl-step__h { margin: 14px 0 0; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; }
-.kl-step__p { margin: 10px 0 0; color: var(--text-muted); font-size: 15.5px; line-height: 1.6; }
 
 .kl-what { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; align-items: start; padding: 104px 0 24px; }
 .kl-what__list { list-style: none; margin: 28px 0 0; padding: 0; }
@@ -454,9 +507,6 @@ body:not([data-mode="landing"]) .kl-landing { display: none; }
 
 /* ── Breakpoints ── */
 @media (max-width: 1024px) {
-    .kl-buehne { grid-template-columns: minmax(0, 1fr); gap: 40px; padding-bottom: 80px; }
-    .kl-stage { max-width: 640px; width: 100%; margin: 0 auto; }
-    .kl-riesen { font-size: clamp(7rem, 4rem + 18vw, 14rem); }
     .kl-what { grid-template-columns: minmax(0, 1fr); gap: 36px; }
     .kl-what__demo { position: static; }
     .kl-cock { grid-template-columns: minmax(0, 1fr); gap: 20px; }
@@ -468,10 +518,18 @@ body:not([data-mode="landing"]) .kl-landing { display: none; }
        die Eingabe steht dann ganz oben, der Teil fuer Lehrkraefte darunter. */
     .kl-landing { display: flex; flex-direction: column; }
     .kl-codebar { order: -1; margin-top: 4px; padding: 20px 0; border-top: 0; }
+    /* Fahrt am Handy: Text klebt oben auf dunklem Verlauf, die Szene steht darunter
+       (klasse-reise.js verschiebt die Kamera per setViewOffset nach unten). */
+    html.kl-gl .kl-st__text { top: 64px; margin: 0 -16px; padding: 14px 16px 56px; background: linear-gradient(var(--bg-deep) 62%, transparent); }
+    html.kl-gl .kl-st { min-height: 170vh; }
+    .kl-st__p { font-size: 16.5px; }
+    .kl-hero { min-height: auto; padding: 36px 0 56vh; }
+    /* Code-Leiste steht am Handy oben (order -1): die 25a darunter beginnen lassen. */
+    .kl-riesen { top: 230px; }
+    /* Die Code-Eingabe steht hier schon ganz oben — der zweite Knopf waere doppelt. */
+    .kl-cta .kl-btn--ghost[href="#code"] { display: none; }
     .kl-codebar__in { gap: 14px; }
     .kl-top__link[href="#code"] { display: none; }
-    .kl-buehne { padding-top: 24px; }
-    .kl-warum__item { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 26px 0; }
     .kl-lede { font-size: 17px; }
     .kl-screen { width: 94%; gap: 18px; padding: 18px; }
     .kl-qr { width: 92px; height: 92px; }
@@ -485,10 +543,7 @@ body:not([data-mode="landing"]) .kl-landing { display: none; }
     .kl-ph__t { font-size: 10px; }
     .kl-ph__row { font-size: 6.5px; padding: 3px 4px; }
     .kl-ph__done { padding: 18px 6px 6px; gap: 4px; }
-    .kl-steps__list { grid-template-columns: minmax(0, 1fr); }
-    .kl-step, .kl-step + .kl-step { padding: 22px 0 6px; border-left: 0; }
-    .kl-step + .kl-step { border-top: 1px solid var(--line); }
-    .kl-steps, .kl-what, .kl-faq { padding-top: 72px; }
+    .kl-what, .kl-faq { padding-top: 72px; }
     .kl-what__list li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
     .kl-codeform { width: 100%; }
     .kl-codeform__in { flex: 1; width: auto; min-width: 0; }

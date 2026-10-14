@@ -10,16 +10,19 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
+<!-- Modus VOR dem ersten Bild (vgl. /traum/): kl-gl = Kamerafahrt, kl-flat = ruhige
+     Fassung (kein WebGL oder "Bewegung reduzieren"). Ohne JS fehlt beides = ruhig. -->
+<script>(function(){var d=document.documentElement,gl=false;try{var c=document.createElement('canvas');gl=!!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){}var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;d.classList.add(gl&&!rm?'kl-gl':'kl-flat');})();</script>
     <title>Klasse starten: MyWorkLog für Berufsschulen und Ausbilder</title>
     <link rel="canonical" href="https://myworklog.de/klasse/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/klasse/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/klasse/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/klasse/">
-    <meta name="description" content="Eine ganze Klasse mit einem Code starten: Lehrkräfte und Ausbilder legen Schultage, Blockunterricht, Lernfelder und Prüfungstermine einmal an, die Azubis scannen den QR-Code und MyWorkLog ist eingerichtet. Kostenlos, ohne Konto für Azubis, ohne Schülerdaten auf dem Server.">
+    <meta name="description" content="Untis zeigt den Stundenplan, MyWorkLog rechnet damit: Lehrkräfte und Ausbilder legen Schultage, Blockwochen und Prüfungstermine einmal an, die Azubis scannen einen QR-Code, und ihre App erkennt jeden Berufsschultag. Kostenlos, ohne Konto für Azubis.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://myworklog.de/klasse/">
-    <meta property="og:title" content="Ein Code an der Wand. Die ganze Klasse startklar.">
-    <meta property="og:description" content="Schultage, Blockunterricht, Lernfelder und Prüfungstermine einmal anlegen, QR-Code zeigen, fertig. Für Berufsschulen und Ausbilder, kostenlos.">
+    <meta property="og:title" content="Untis zeigt den Stundenplan. MyWorkLog rechnet damit.">
+    <meta property="og:description" content="Ein Code an der Wand, und die App jedes Azubis kennt Schultage, Blockwochen und Prüfungstermine. Für Berufsschulen und Ausbilder, kostenlos.">
     <meta property="og:image" content="https://myworklog.de/Grafiken/og-image.png">
     <meta name="theme-color" content="#030305">
 
@@ -28,6 +31,7 @@
       "@context": "https://schema.org",
       "@type": "FAQPage",
       "mainEntity": [
+        {"@type":"Question","name":"Wir haben doch Untis. Wozu das?","acceptedAnswer":{"@type":"Answer","text":"Untis zeigt Lehrkräften und Azubis den Stundenplan. MyWorkLog ist die App, in der Azubis ihre Arbeitszeit und ihr Berichtsheft führen, und die muss wissen, wann Berufsschule ist. Der Klassen-Code bringt Schultage, Blockwochen und Prüfungstermine einmal in jede App, statt dass jeder sie selbst nachträgt. Beides ergänzt sich."}},
         {"@type":"Question","name":"Brauchen meine Azubis ein Konto?","acceptedAnswer":{"@type":"Answer","text":"Nein. Azubis scannen den QR-Code oder geben den achtstelligen Code ein. MyWorkLog richtet sich damit auf ihrem Gerät ein. Ein Konto braucht nur die Lehrkraft oder der Ausbilder, der die Klasse anlegt."}},
         {"@type":"Question","name":"Was sieht die Lehrkraft von den Azubis?","acceptedAnswer":{"@type":"Answer","text":"Nur eine Zahl: wie viele Geräte der Klasse beigetreten sind. Keine Namen, keine Arbeitszeiten, keine Berichtshefte. Gezählt wird über eine Zufallskennung des Geräts, die sich keiner Person zuordnen lässt."}},
         {"@type":"Question","name":"Was wird auf den Geräten eingerichtet?","acceptedAnswer":{"@type":"Answer","text":"Die Berufsschultage samt Rhythmus, Blockunterricht, das Bundesland für die Feiertage, die Termine der Abschlussprüfung Teil 1 und Teil 2 sowie die Fächer und Lernfelder des Lehrjahres. Vor dem Beitritt sieht jeder Azubi, was sich ändert, und kann einzelne Punkte abwählen."}},
@@ -58,7 +62,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap">
 
-    <link rel="stylesheet" href="/Assets/css/klasse.css?v=fe83506083">
+    <link rel="stylesheet" href="/Assets/css/klasse.css?v=28a6e8bf4d">
     <script defer src="/Assets/js/ph-init.js?v=907d4ab2b7"></script>
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
@@ -78,64 +82,79 @@
 
 <main class="kl-landing" id="klLanding">
 
-    <section class="kl-buehne">
-        <p class="kl-riesen" aria-hidden="true" translate="no">25a</p>
+    <!-- Kamerafahrt (Three.js, Assets/js/klasse-reise.js). EINE feste Leinwand hinter
+         den Texten; jede Station ist ein hoher Abschnitt mit klebendem Text, dessen
+         Scrollfortschritt die Kamera faehrt. Ohne WebGL oder mit "Bewegung reduzieren"
+         (html.kl-flat) sind es normale Abschnitte, Station 2 zeigt dann die alte Buehne
+         mit QR und Handys (#klStage — klasse.js zaehlt sie hoch, bitte nicht entfernen). -->
+    <canvas class="kl-canvas" id="klCanvas" aria-hidden="true"></canvas>
+    <p class="kl-riesen" aria-hidden="true" translate="no">25a</p>
+
+    <section class="kl-hero" id="klHero">
         <div class="kl-hero__text">
             <p class="kl-kicker">Für Berufsschulen und Ausbilder</p>
-            <h1 class="kl-h1" id="klH1"><span>Ein Code an der Wand.</span> <span>Die ganze Klasse startklar.</span></h1>
-            <p class="kl-lede">Schultage, Blockwochen, Prüfungstermine und Lernfelder landen auf jedem Handy, ohne dass jemand etwas eintippt. Und Ihre Mitteilungen erreichen die Klasse, ohne WhatsApp-Gruppe.</p>
+            <h1 class="kl-h1" id="klH1"><span class="kl-h1__a">Untis zeigt den Stundenplan.</span> <span class="kl-h1__b">MyWorkLog rechnet damit.</span></h1>
+            <p class="kl-lede">Ihre Azubis führen Arbeitszeit und Berichtsheft in MyWorkLog. Mit einem Code von Ihnen weiß jede App, wann Berufsschule ist.</p>
             <div class="kl-cta">
                 <a class="kl-btn kl-btn--primary" id="klHeroStart" href="/?cloud=login&amp;back=klasse"><span>Klasse anlegen</span><i class="kl-btn__ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></i></a>
-                <a class="kl-btn kl-btn--ghost" href="#warum"><span>Was es bringt</span></a>
+                <a class="kl-btn kl-btn--ghost" href="#code"><span>Ich habe einen Code</span></a>
             </div>
-            <p class="kl-note">Kostenlos und werbefrei. Sie brauchen ein MyWorkLog-Konto, Ihre Azubis nicht.</p>
+            <p class="kl-note">Kostenlos und werbefrei. Ein Konto brauchen nur Sie, Ihre Azubis nicht.</p>
         </div>
+        <span class="kl-scrollhint" aria-hidden="true"><i></i></span>
+    </section>
 
-        <!-- Die Bühne: Leinwand mit QR-Code, davor die Handys der Klasse. Sie springen
-             nacheinander von "scannen" auf "eingerichtet", der Zähler läuft mit
-             (klasse.js, klDemo). Einziges Effekt-Element der Seite. -->
-        <figure class="kl-stage" id="klStage" aria-label="Beispiel: Die Beamer-Ansicht zeigt den Code, die Handys der Klasse richten sich nacheinander ein.">
-            <div class="kl-stage__beam" aria-hidden="true"></div>
-            <div class="kl-screen">
-                <div class="kl-screen__qr">
-                    <div class="kl-qr" id="klDemoQr"></div>
-                    <p class="kl-screen__code" translate="no">K7QP-M2XD</p>
-                </div>
-                <div class="kl-screen__count">
-                    <p class="kl-screen__label">Beigetreten</p>
-                    <p class="kl-screen__num" id="klDemoNum">0</p>
-                    <div class="kl-seats" id="klDemoSeats" aria-hidden="true"></div>
-                </div>
+    <div class="kl-reise" id="klReise">
+        <section class="kl-st" data-st="1" aria-labelledby="klSt1">
+            <div class="kl-st__text">
+                <h2 class="kl-st__h" id="klSt1">Ohne Plan weiß die App nicht, wann Schule ist.</h2>
+                <p class="kl-st__p">Dann steht jeder Berufsschultag als offener Arbeitstag da, und jeder Azubi trägt ihn selbst nach. Jede Woche, die ganze Ausbildung lang.</p>
             </div>
-            <div class="kl-phones" id="klPhones" aria-hidden="true"></div>
-        </figure>
-    </section>
+            <div class="kl-woche kl-flatonly" aria-hidden="true">
+                <span>Mo</span><span class="is-luecke">Di</span><span>Mi</span><span class="is-luecke">Do</span><span>Fr</span>
+            </div>
+        </section>
 
-    <section class="kl-warum" id="warum" aria-labelledby="klWarumH">
-        <h2 class="kl-h2" id="klWarumH">Was es bringt</h2>
-        <ol class="kl-warum__list">
-            <li class="kl-warum__item">
-                <p class="kl-warum__big">Niemand tippt</p>
-                <div><h3 class="kl-warum__h">Einmal anlegen statt 30-mal erklären</h3>
-                <p class="kl-warum__p">Schultage, Rhythmus, Blockwochen, Bundesland, Prüfungstermine und Lernfelder kommen mit dem Code. Die Frage, ob Freitag Schule ist, beantwortet ab jetzt die App.</p></div>
-            </li>
-            <li class="kl-warum__item">
-                <p class="kl-warum__big">Alles stimmt</p>
-                <div><h3 class="kl-warum__h">Berichtsheft und Stunden rechnen richtig</h3>
-                <p class="kl-warum__p">Weil die Schultage stimmen, zählt Berufsschule im Berichtsheft und in der Zeiterfassung als Schule und nicht als fehlender Arbeitstag. Der Countdown zur Abschlussprüfung läuft bei allen auf dasselbe Datum.</p></div>
-            </li>
-            <li class="kl-warum__item">
-                <p class="kl-warum__big">Ohne Nummern</p>
-                <div><h3 class="kl-warum__h">Mitteilungen ohne WhatsApp-Gruppe</h3>
-                <p class="kl-warum__p">„Berichtsheft bis Freitag mitbringen“ erscheint in der App jedes Azubis. Keine privaten Handynummern, kein Gruppenchat, keine Antworten um Mitternacht.</p></div>
-            </li>
-            <li class="kl-warum__item">
-                <p class="kl-warum__big">Eine Zahl</p>
-                <div><h3 class="kl-warum__h">Sie sehen, wie viele dabei sind. Sonst nichts.</h3>
-                <p class="kl-warum__p">Keine Namen, keine Arbeitszeiten, keine Berichtshefte. Gezählt wird über eine Zufallskennung, die sich keiner Person zuordnen lässt. Die Daten der Azubis bleiben auf ihren Geräten.</p></div>
-            </li>
-        </ol>
-    </section>
+        <section class="kl-st" data-st="2" aria-labelledby="klSt2">
+            <div class="kl-st__text">
+                <h2 class="kl-st__h" id="klSt2">Ein Code. Jedes Handy.</h2>
+                <p class="kl-st__p">Sie zeigen den QR-Code an der Wand, die Klasse scannt. Niemand tippt etwas ab, und Schultage, Blockwochen und Prüfungstermine stehen in jeder App.</p>
+            </div>
+            <figure class="kl-stage kl-flatonly" id="klStage" aria-label="Beispiel: Die Beamer-Ansicht zeigt den Code, die Handys der Klasse richten sich nacheinander ein.">
+                <div class="kl-stage__beam" aria-hidden="true"></div>
+                <div class="kl-screen">
+                    <div class="kl-screen__qr">
+                        <div class="kl-qr" id="klDemoQr"></div>
+                        <p class="kl-screen__code" translate="no">K7QP-M2XD</p>
+                    </div>
+                    <div class="kl-screen__count">
+                        <p class="kl-screen__label">Beigetreten</p>
+                        <p class="kl-screen__num" id="klDemoNum">0</p>
+                        <div class="kl-seats" id="klDemoSeats" aria-hidden="true"></div>
+                    </div>
+                </div>
+                <div class="kl-phones" id="klPhones" aria-hidden="true"></div>
+            </figure>
+        </section>
+
+        <section class="kl-st" data-st="3" aria-labelledby="klSt3">
+            <div class="kl-st__text">
+                <h2 class="kl-st__h" id="klSt3">Danach erkennt die App jeden Schultag.</h2>
+                <p class="kl-st__p">Am Berufsschultag schlägt sie den Eintrag mit den richtigen Stunden vor, ein Tipp genügt. Ändert sich der Plan oder schreiben Sie der Klasse etwas, steht es in der App, ohne WhatsApp-Gruppe.</p>
+            </div>
+            <div class="kl-woche kl-flatonly" aria-hidden="true">
+                <span>Mo</span><span class="is-schule">Di</span><span>Mi</span><span class="is-schule">Do</span><span>Fr</span>
+            </div>
+        </section>
+
+        <section class="kl-st" data-st="4" aria-labelledby="klSt4">
+            <div class="kl-st__text">
+                <p class="kl-zahl" aria-hidden="true"><span id="klZahl">23</span><small>von 30</small></p>
+                <h2 class="kl-st__h" id="klSt4">Sie sehen eine Zahl. Sonst nichts.</h2>
+                <p class="kl-st__p">Wie viele beigetreten sind, mehr nicht. Keine Namen, keine Arbeitszeiten, keine Berichtshefte. Die Daten bleiben auf den Handys.</p>
+            </div>
+        </section>
+    </div>
 
     <section class="kl-codebar" id="code" aria-labelledby="klCodeH">
         <div class="kl-codebar__in">
@@ -150,27 +169,6 @@
             </form>
         </div>
         <p class="kl-codebar__err" id="klCodeErr" role="alert" hidden></p>
-    </section>
-
-    <section class="kl-steps" id="so-gehts" aria-labelledby="klStepsH">
-        <h2 class="kl-h2" id="klStepsH">So läuft die erste Stunde</h2>
-        <ol class="kl-steps__list">
-            <li class="kl-step">
-                <span class="kl-step__n" aria-hidden="true">1</span>
-                <h3 class="kl-step__h">Klasse anlegen</h3>
-                <p class="kl-step__p">Name, Schultage, Blockwochen, Lernfelder, Prüfungstermine. Was Sie nicht wissen, lassen Sie leer und tragen es später nach.</p>
-            </li>
-            <li class="kl-step">
-                <span class="kl-step__n" aria-hidden="true">2</span>
-                <h3 class="kl-step__h">QR-Code an die Wand</h3>
-                <p class="kl-step__p">Die Beamer-Ansicht zeigt den Code groß und zählt mit, wie viele schon drin sind. Für den Aushang gibt es ein Blatt zum Drucken.</p>
-            </li>
-            <li class="kl-step">
-                <span class="kl-step__n" aria-hidden="true">3</span>
-                <h3 class="kl-step__h">Alle sind eingerichtet</h3>
-                <p class="kl-step__p">Jeder sieht vorher, was sich auf seinem Handy ändert, und kann einzelne Punkte abwählen. Danach ist die App fertig.</p>
-            </li>
-        </ol>
     </section>
 
     <section class="kl-what" aria-labelledby="klWhatH">
@@ -191,6 +189,7 @@
 
     <section class="kl-faq" aria-labelledby="klFaqH">
         <h2 class="kl-h2" id="klFaqH">Häufige Fragen</h2>
+        <details class="kl-faq__item" open><summary>Wir haben doch Untis. Wozu das?</summary><p>Untis zeigt Lehrkräften und Azubis den Stundenplan. MyWorkLog ist die App, in der Azubis ihre Arbeitszeit und ihr Berichtsheft führen, und die muss wissen, wann Berufsschule ist. Der Klassen-Code bringt Schultage, Blockwochen und Prüfungstermine einmal in jede App, statt dass jeder sie selbst nachträgt. Beides ergänzt sich.</p></details>
         <details class="kl-faq__item"><summary>Brauchen meine Azubis ein Konto?</summary><p>Nein. Sie scannen den QR-Code oder geben den Code ein. Ein Konto braucht nur, wer die Klasse anlegt.</p></details>
         <details class="kl-faq__item"><summary>Was passiert, wenn sich der Stundenplan ändert?</summary><p>Sie ändern das Klassenprofil. Beim nächsten Öffnen der App erscheint ein Hinweis, und jeder Azubi entscheidet, ob er die Änderung übernimmt.</p></details>
         <details class="kl-faq__item"><summary>Kann ich der Klasse Nachrichten schicken?</summary><p>Ja, kurze Mitteilungen bis 500 Zeichen, auf Wunsch mit Ablaufdatum. Sie erscheinen in den Meldungen der App.</p></details>
@@ -247,7 +246,8 @@ fetch('/pages/footer/footer.html')
 <script defer src="/config/supabase-config.js"></script>
 <script defer src="/Assets/js/qrcode.min.js?v=c541ef0632"></script>
 <script defer src="/Assets/js/klasse-profil.js?v=9839cb7186"></script>
-<script defer src="/Assets/js/klasse.js?v=8ee7755cc0"></script>
+<script defer src="/Assets/js/klasse.js?v=a25bb70672"></script>
+<script defer src="/Assets/js/klasse-reise.js?v=2a9bef817d"></script>
 
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
