@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.5.2-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.5.3-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.5.2** · 2026-10-14
+Aktuelle Version: **v8.5.3** · 2026-10-14
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.5.2** | 2026-10-14 | Das Wetter bleibt oben stehen, auch bei schlechtem Netz |
+| **8.5.3** | 2026-10-14 | Wetter und Berichtsheft bleiben am Handy vollständig sichtbar |
+| 8.5.2 | 2026-10-14 | Das Wetter bleibt oben stehen, auch bei schlechtem Netz |
 | 8.5.1 | 2026-10-14 | Die Tour zeigt genau, wo was steht |
 | 8.5.0 | 2026-10-12 | Eine ganze Klasse mit einem Code einrichten |
 | 8.4.0 | 2026-10-12 | Das Dashboard erinnert an fehlende Tage und zeigt den Tagesfortschritt live |
-| 8.3.3 | 2026-10-11 | Die App startet offline auch direkt nach der Installation |
 
 <!-- changelog:end -->
 

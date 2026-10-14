@@ -276,9 +276,13 @@
     background: #fff;
 }
 /* Funkeln je Gruppe statt je Stern (weather.js, STERN_GRUPPEN): 6 GPU-Ebenen statt 140. */
+/* Nur die obere Haelfte: die Sterne stehen ohnehin nur in den oberen 45 % des
+   Himmels (buildStars). Mit inset:0 war jede Gruppe eine bildschirmhohe Ebene —
+   6 x ~7,5 MB Grafikspeicher fuer ein paar Punkte (gemessen 14.10.2026). */
 .weather-stars .star-gruppe {
     position: absolute;
-    inset: 0;
+    inset: 0 0 auto 0;
+    height: 50%;
     animation: starTwinkle var(--dur, 3s) ease-in-out infinite;
     animation-delay: var(--d, 0s);
 }
@@ -696,6 +700,11 @@
     pointer-events: none;
     overflow: hidden;
 }
+
+/* Blitze gibt es nur bei Gewitter. Ohne diese Zeile stand die leere Ebene bei
+   jeder Lage als eigene GPU-Ebene im Fenster (6,8 MB, gemessen 14.10.2026);
+   wl-aus greift hier nicht, weil die Ebene selbst auf Deckkraft 1 steht. */
+.weather-live:not([data-condition="storm"]) > .weather-lightning-bolts { display: none; }
 
 .weather-lightning-bolts .bolt {
     position: absolute;
@@ -1916,6 +1925,8 @@
     .weather-forecast-day-icon { font-size: 1rem; }
 }
 
+@keyframes wlVerdeckt { to { visibility: hidden; } }
+
 /* ───── RUHENDE EBENEN + TOUCH (v8.2.4, Flackern am Handy) ─────
    wl-ruht setzt weather.js (_ruhendeEbenen) an Animationen, deren Ebene im
    aktuellen Wetter auf Deckkraft 0 steht: ohne Animation keine GPU-Ebene.
@@ -1923,11 +1934,50 @@
    weich; auf Touch reicht eine deckendere Flaeche, der Unterschied ist bei
    dem dunklen Himmel kaum zu sehen. */
 .weather-live .wl-ruht { animation: none !important; will-change: auto !important; }
+/* Ganze Himmelsebene auf Deckkraft 0 → gar nicht zeichnen (Grund in weather.js
+   ueber _ruhendeEbenen). Nur nach dem Ausblenden gesetzt, nie waehrend. */
+.weather-live > .wl-aus { visibility: hidden !important; }
 @media (hover: none) {
     .weather-live .weather-stats,
     .weather-live .weather-action-btn {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
         background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.07)), rgba(10, 12, 24, 0.42);
+    }
+
+    /* ── Grafikspeicher (14.10.2026, „beim Wetter springt/verschwindet alles") ──
+       Gemessen im Emulator per CDP-Ebenenbaum, Wetterfenster offen: ~280 MB
+       Ebenenflaeche. Mit begrenztem GPU-Budget verwarf Chrome Kacheln — Mond,
+       „Bewoelkt", Werte und Vorhersage fehlten, Kachelkanten im Himmel. Die drei
+       groessten Posten waren reine Zierde: */
+
+    /* 1. Milchglas ueber dem GANZEN Dashboard: verlangt, dass alles darunter
+          weiter gezeichnet wird (.main allein 29 MB) und jedes Bild neu
+          weichgezeichnet. Deckender Grund statt Blur … */
+    .weather-experience {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(3, 4, 8, 0.94);
+    }
+    /* … und das Verdeckte ganz aus dem Zeichnen nehmen — verzoegert um die
+       Einblendzeit, damit es nicht vor dem Fenster wegblitzt. Das Fenster haengt
+       direkt am <body>, diese vier sind seine Geschwister. */
+    /* Animation statt `transition: visibility 0s 0.35s`: die Verzoegerung per
+       transition griff beim Wechsel ueber :has() nicht (gemessen: nach 100 ms
+       schon hidden — kurzes Schwarz hinter dem einblendenden Fenster). */
+    body:has(> #weatherModal.active) > :is(#sidebar, #ambientOrbs, #mainContent, #mobileBottomNav) {
+        animation: wlVerdeckt 0s linear 0.35s forwards;
+    }
+
+    /* 2. Zwei kaum sichtbare Lichtflecken, 180 % gross, drehen sich in 80 s
+          einmal: eigene Ebene 1694x3405 Geraetepixel = 22 MB. Stehend malt
+          Chrome sie in den Himmel mit. */
+    .weather-sky::before { animation: none; }
+
+    /* 3. 120 px weicher Schatten machte die Fensterebene fast doppelt so breit
+          wie das Fenster (1848 statt ~950 px). Auf dem deckenden Grund oben
+          ist er ohnehin kaum zu sehen. */
+    .weather-experience .weather-live--modal {
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, 0 1px 0 0 rgba(255, 255, 255, 0.08) inset;
     }
 }

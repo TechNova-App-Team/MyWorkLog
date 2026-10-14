@@ -13,12 +13,19 @@
     padding: 1rem;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease;
+    /* visibility erst NACH dem Ausblenden: mit nur opacity:0 blieb die Ebene samt
+       bildschirmfuellendem backdrop-filter angelegt — gemessen 13,6 MB Grafik-
+       speicher, dauerhaft, in der ganzen App. Am Handy fehlte der dann dem
+       Wetterfenster (Kacheln verworfen, Mond/Werte verschwanden, 14.10.2026). */
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
 }
 
 .nfc-overlay.active {
     opacity: 1;
     pointer-events: all;
+    visibility: visible;
+    transition: opacity 0.25s ease, visibility 0s linear 0s;
 }
 
 .nfc-modal {
@@ -557,7 +564,9 @@
     justify-content: center;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.4s ease;
+    /* Gleicher Grund wie .nfc-overlay: unsichtbar, aber angelegt = 9,1 MB. */
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0s linear 0.4s;
     padding: 2rem;
     text-align: center;
     overflow: hidden;
@@ -567,6 +576,8 @@
 .nfc-scan-overlay.show {
     opacity: 1;
     pointer-events: all;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0s linear 0s;
 }
 
 .nfc-scan-overlay.flash-checkin  { --fc: 34, 197, 94; }

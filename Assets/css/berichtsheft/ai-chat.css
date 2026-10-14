@@ -21,6 +21,14 @@
 }
 .aic[hidden] { display: none; }
 body.aic-offen { overflow: hidden; }
+/* Der Chat deckt alles (fixed, inset 0, deckender Grund). Darunter zeichnete
+   Chrome trotzdem die ganze Seite samt 3D-Papierstapel weiter — gemessen ~86 MB
+   Grafikspeicher fuer Unsichtbares (14.10.2026). Toasts und Dialoge haengen am
+   <body>, nicht in .page-wrap, und bleiben deshalb sichtbar. Verzoegert per
+   Animation (transition griff bei der Wetter-Variante ueber :has nicht), damit
+   beim Oeffnen nichts wegblitzt. */
+body.aic-offen > :is(.bg-mesh, .page-wrap, .site-footer) { animation: aicVerdeckt 0s linear 0.25s forwards; }
+@keyframes aicVerdeckt { to { visibility: hidden; } }
 
 /* ── Seitenleiste ─────────────────────────────────────────────── */
 .aic-rail {

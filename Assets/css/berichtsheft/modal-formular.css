@@ -4,6 +4,10 @@
    Herausgeloest aus pages/berichtsheft/index.html. */
 
 /* --- MODAL --- */
+/* Geschlossen nur auf Deckkraft 0 waren die sieben Dialoge der Seite je eine
+   eigene GPU-Ebene samt backdrop-filter — gemessen im Emulator ~135 MB von 232
+   (14.10.2026). Am Handy fehlte das dem Sichtbaren: Teile verschwanden/sprangen.
+   visibility faellt erst NACH dem Ausblenden, beim Oeffnen sofort. */
 .modal {
     position: fixed;
     inset: 0;
@@ -17,12 +21,15 @@
     overflow-y: auto;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s var(--ease);
+    visibility: hidden;
+    transition: opacity 0.2s var(--ease), visibility 0s linear 0.2s;
 }
 
 .modal.active {
     opacity: 1;
     pointer-events: all;
+    visibility: visible;
+    transition: opacity 0.2s var(--ease), visibility 0s linear 0s;
 }
 
 .modal-content {

@@ -973,13 +973,17 @@
     border-top: 1px solid var(--border-default);
     border-radius: 20px 20px 0 0;
     transform: translateY(100%);
-    transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
+    /* Geschlossen nur aus dem Bild geschoben war das Blatt eine dauerhafte
+       GPU-Ebene (5,4 MB, in der ganzen App). visibility faellt erst NACH dem
+       Wegschieben, beim Oeffnen sofort — die Bewegung bleibt. */
+    visibility: hidden;
+    transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.36s;
     max-height: 88vh;
     overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom, 16px);
     box-shadow: var(--shadow-lg);
 }
-.ed-sheet.active { transform: translateY(0); }
+.ed-sheet.active { transform: translateY(0); visibility: visible; transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0s; }
 @media (min-width: 720px) {
     /* Auf breiten Schirmen ist ein Vollbreiten-Blatt am unteren Rand verschenkt:
        es steht dann als Karte mittig über der Liste. */

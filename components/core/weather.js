@@ -387,7 +387,9 @@
         for (let i = 0; i < count; i++) {
             const tier = i < count * 0.45 ? 'back' : (i < count * 0.85 ? 'mid' : 'front');
             const x    = (Math.random() * 98).toFixed(1);
-            const y    = (Math.random() * 45).toFixed(1);
+            // % der GRUPPE, die nur die obere Haelfte deckt (weather-live.css) —
+            // 90 % davon = die bisherigen 45 % des Himmels.
+            const y    = (Math.random() * 90).toFixed(1);
             const s    = tier === 'back' ? 1.3 : tier === 'mid' ? 2.2 : 4.5;
             gruppen[i % STERN_GRUPPEN] += `<span class="star star--${tier}" style="left:${x}%;top:${y}%;--s:${s}px"></span>`;
         }
@@ -408,11 +410,24 @@
     // S25 Ultra; am PC unsichtbar). Hier bekommt jedes animierte Element, dessen
     // Vorfahren auf Deckkraft 0 stehen, `wl-ruht` (animation: none → keine
     // Ebene). 1,6 s Verzug, damit Ueberblendungen beim Wetterwechsel fertig sind.
+    // 🔴 Anhalten reicht nicht: eine Himmelsebene mit opacity 0 bleibt als eigene
+    // Compositing-Ebene angelegt und belegt Grafikspeicher (gemessen bei
+    // „bewoelkt, nachts“: Sonne, Polarlicht, Gewitterwolken, Regen, Blitze je
+    // 7–10 MB, zusammen ~44 MB fuer nichts). Am Handy reichte der Speicher dann
+    // nicht mehr fuer das Sichtbare — Mond, Werte und Vorhersage verschwanden,
+    // Kacheln sprangen (14.10.2026, im Emulator mit begrenztem GPU-Budget
+    // nachgestellt). Deshalb bekommen ganz ausgeblendete Ebenen zusaetzlich
+    // `wl-aus` (visibility: hidden) — Chrome zeichnet sie dann nicht. Bei jedem
+    // Lagewechsel faellt die Klasse SOFORT, damit das Einblenden sichtbar bleibt.
     function _ruhendeEbenen(widget) {
         widget.querySelectorAll('.wl-ruht').forEach(e => e.classList.remove('wl-ruht'));
+        widget.querySelectorAll(':scope > .wl-aus').forEach(e => e.classList.remove('wl-aus'));
         clearTimeout(widget._ruheUhr);
         widget._ruheUhr = setTimeout(() => {
             if (!widget.isConnected || !widget.getAnimations) return;
+            widget.querySelectorAll(':scope > [aria-hidden="true"]').forEach(e => {
+                if (parseFloat(getComputedStyle(e).opacity) === 0) e.classList.add('wl-aus');
+            });
             const ruhen = new Set();
             widget.getAnimations({ subtree: true }).forEach(a => {
                 const el = a.effect && a.effect.target;
