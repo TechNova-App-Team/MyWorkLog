@@ -125,7 +125,8 @@ function fenster() {
         const el = document.createElement('div');
         el.className = 'hf-schau-blatt hf-blatt';
         el.dataset.i = i;
-        el.innerHTML = hfBlattInnen(mo, r);
+        // Abdunkeln nach hinten ueber eine eigene Deckschicht (siehe stellen()).
+        el.innerHTML = hfBlattInnen(mo, r) + '<i class="hf-schau-dunkel" aria-hidden="true"></i>';
         buehne.appendChild(el);
         blaetter.set(i, el);
     }
@@ -188,7 +189,12 @@ function stellen() {
         const l = lage(d, e);
         el.style.transform = `translate(-50%, -50%) ${l.t}`;
         el.style.opacity = l.o;
-        el.style.filter = l.f < 0.999 ? `brightness(${l.f.toFixed(3)})` : '';
+        // 🔴 NICHT `filter: brightness()` je Bild: das liess Chrome fuer jedes Blatt
+        // die Effekt-Struktur neu aufbauen — PrePaint 2,9 s von 5 s beim Drehen,
+        // 8 fps mit Handy-CPU (gemessen 14.10.2026, `handy spur`). Schwarz mit
+        // Deckkraft 1-f darueber ist rechnerisch dasselbe wie brightness(f).
+        const dunkel = el.lastElementChild;
+        if (dunkel) dunkel.style.opacity = (1 - l.f).toFixed(3);
         el.style.zIndex = l.z;
         el.style.visibility = l.o <= 0.01 ? 'hidden' : '';
     });
