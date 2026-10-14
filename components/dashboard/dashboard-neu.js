@@ -57,6 +57,7 @@ const DN_ICON = {
     square: '<rect width="18" height="18" x="3" y="3" rx="2"/>',
     pencil: '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>',
     file: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+    cloud: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>',
     globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
     alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
     clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
@@ -456,6 +457,16 @@ function dnRenderTop() {
             // weather.js haelt die Stadt in weatherData.cityName; data.settings.weather schreibt niemand.
             const city = weatherData.cityName || '';
             w.innerHTML = ((typeof mwlIconFromEmoji === 'function') ? mwlIconFromEmoji(ic.icon, 20) : '') + '<b>' + Math.round(weatherData.current.temperature_2m) + '°</b>' + (city ? '<small>' + dnEsc(city) + '</small>' : '');
+            w.classList.remove('is-setup'); w.removeAttribute('title'); w.removeAttribute('aria-label');
+            w.hidden = false;
+        } else if (!localStorage.getItem('myworklog_weather_lat')) {
+            // 🔴 Ohne Standort ist dieser Chip der EINZIGE Weg zum Wetter-Dialog — das
+            // alte #userGreeting mit openWeatherModal() gibt es im neuen Dashboard nicht
+            // mehr. Versteckt blieb einem neuen Nutzer das Wetter fuer immer (gemessen
+            // im Emulator, 14.10.2026). Ein Einstieg ist keine Behauptung, ein Wert schon.
+            const t = dnT('Standort für das Wetter festlegen', 'Set a location for the weather');
+            w.innerHTML = dnSvg('cloud') + '<b>' + dnT('Wetter', 'Weather') + '</b>';
+            w.classList.add('is-setup'); w.title = t; w.setAttribute('aria-label', t);
             w.hidden = false;
         } else w.hidden = true;
     } catch (e) { w.hidden = true; }

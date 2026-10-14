@@ -54,7 +54,10 @@
     // Schule, Hotel) beliebig lange, und das Wetter bleibt leer.
     async function fetchWeather(lat, lon) {
         try {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=6`;
+            // hourly = dieselben Felder wie current, stundenweise fuer 6 Tage (~10 KB).
+            // Daraus lebt _ausVorhersage(), wenn der letzte Abruf alt ist.
+            const felder = 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m';
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=${felder}&hourly=${felder}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=6`;
             const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
             const timer = ctrl ? setTimeout(() => ctrl.abort(), 10000) : null;
             let response;
@@ -74,32 +77,66 @@
     // sobald Open-Meteo oder das Netz kurz hakte (gemeldet 13.10.2026). Jetzt: der
     // alte Wert bleibt bis WEATHER_STALE_MAX stehen, und es wird nach 1/3/10 min
     // erneut versucht (plus beim online-Ereignis).
+    //
+    // 🔴 Das reichte am Handy nicht (gemeldet 14.10.2026, „mal da, mal weg“,
+    // im Emulator nachgestellt): App morgens oeffnen, letzter Abruf vom Vorabend
+    // (> 6 h), Netz hakt in dem Moment → Chip weg. Drei Versuche, dann Ruhe bis
+    // zum 30-min-Takt — und das `online`-Ereignis kommt am Handy bei kurzem
+    // Abbruch oft gar nicht. Deshalb jetzt:
+    //  - Ist der Cache alt, gilt die STUNDENVORHERSAGE fuer jetzt (hourly, bis
+    //    6 Tage) — ein Wert fuer diese Stunde statt einer Temperatur von gestern
+    //    Abend. Aeltere Cache-Eintraege ohne hourly fallen auf WEATHER_STALE_MAX.
+    //  - Versuche hoeren nicht auf (danach alle 10 min), solange kein frischer
+    //    Abruf gelang, und die Rueckkehr in die App (visibilitychange) fragt neu.
     const WEATHER_STALE_MAX = 6 * 60 * 60 * 1000;
     const WEATHER_RETRY_MS = [60 * 1000, 3 * 60 * 1000, 10 * 60 * 1000];
     let _weatherRetryNr = 0;
     let _weatherRetryTimer = null;
 
     function _weatherRetry() {
-        if (_weatherRetryTimer || _weatherRetryNr >= WEATHER_RETRY_MS.length) return;
+        if (_weatherRetryTimer) return;
+        const ms = WEATHER_RETRY_MS[Math.min(_weatherRetryNr, WEATHER_RETRY_MS.length - 1)];
         _weatherRetryTimer = setTimeout(() => {
             _weatherRetryTimer = null;
             _weatherRetryNr++;
             getLocationAndWeather();
-        }, WEATHER_RETRY_MS[_weatherRetryNr]);
+        }, ms);
     }
-    window.addEventListener('online', () => {
-        if (weatherData && Date.now() - weatherLastFetch < WEATHER_CACHE_DURATION) return;
+    function _weatherNachholen() {
+        if (weatherLastFetch && Date.now() - weatherLastFetch < WEATHER_CACHE_DURATION) return;
         _weatherRetryNr = 0;
         getLocationAndWeather();
-    });
+    }
+    window.addEventListener('online', _weatherNachholen);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') _weatherNachholen(); });
+
+    // Werte der laufenden Stunde aus der Vorhersage, als waeren sie `current`.
+    // Die Zeiten liefert Open-Meteo in Europe/Berlin (timezone= im Abruf), also
+    // wird "jetzt" auch dort gerechnet, nicht in der Zone des Geraets.
+    function _ausVorhersage(d) {
+        const h = d && d.hourly;
+        if (!h || !Array.isArray(h.time)) return null;
+        let jetzt;
+        try {
+            jetzt = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false })
+                .format(new Date()).replace(' ', 'T') + ':00';
+        } catch (e) { return null; }
+        const i = h.time.indexOf(jetzt);
+        if (i < 0 || h.temperature_2m[i] == null || h.weather_code[i] == null) return null;
+        const current = { ...(d.current || {}), time: jetzt };
+        ['temperature_2m', 'relative_humidity_2m', 'apparent_temperature', 'weather_code', 'wind_speed_10m']
+            .forEach((k) => { if (Array.isArray(h[k]) && h[k][i] != null) current[k] = h[k][i]; });
+        return { ...d, current, ausVorhersage: true };
+    }
 
     async function getLocationAndWeather() {
         let parsed = null;
         try { parsed = JSON.parse(localStorage.getItem('myworklog_weather') || 'null'); } catch (e) { parsed = null; }
         if (parsed && parsed.data && parsed.timestamp) {
             const age = Date.now() - parsed.timestamp;
-            if (age < WEATHER_CACHE_DURATION || (!weatherData && age < WEATHER_STALE_MAX)) {
-                weatherData = parsed.data;
+            const vorhersage = age >= WEATHER_CACHE_DURATION ? _ausVorhersage(parsed.data) : null;
+            if (age < WEATHER_CACHE_DURATION || vorhersage || (!weatherData && age < WEATHER_STALE_MAX)) {
+                weatherData = vorhersage || parsed.data;
                 weatherLastFetch = parsed.timestamp;
                 updateWeatherUI();
                 updateGreetingWeather();
@@ -1098,7 +1135,7 @@
                         weatherData = { ...data, cityName: weatherData.cityName };
                         localStorage.setItem('myworklog_weather', JSON.stringify({ data: weatherData, timestamp: Date.now() }));
                         weatherLastFetch = Date.now();
-                        renderWeatherWidget();
+                        updateWeatherUI();
                         updateGreetingWeather();
                     }
                 }
@@ -1113,7 +1150,7 @@
                 widget.dataset.condition = '';
                 weatherData = null;
                 localStorage.removeItem('myworklog_weather');
-                renderWeatherWidget();
+                updateWeatherUI();
             });
         }
     }
@@ -1182,7 +1219,7 @@
                 weatherData = { ...data, cityName };
                 localStorage.setItem('myworklog_weather', JSON.stringify({ data: weatherData, timestamp: Date.now() }));
                 weatherLastFetch = Date.now();
-                renderWeatherWidget();
+                updateWeatherUI();
                 updateGreetingWeather();
                 startWeatherAutoRefresh();
             }
