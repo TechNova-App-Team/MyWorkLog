@@ -20,7 +20,11 @@
 
     const STATE_KEY = 'mwl_klasse';
     const GERAET_KEY = 'mwl_klasse_geraet';
-    const PRUEF_MS = 6 * 3600 * 1000;     // die App fragt hoechstens alle 6 h nach
+    // Wie oft die App beim Server nach Aenderungen und Mitteilungen fragt (ein kleiner
+    // RPC, keine Personendaten). Bis v8.5.5 waren es 6 h: eine Mitteilung der Lehrkraft
+    // kam erst Stunden spaeter an, ein Test direkt nach dem Senden fand nichts
+    // ("kam keine an", gemeldet 14.10.2026). Ausloeser sind Laden + Rueckkehr in die App.
+    const PRUEF_MS = 10 * 60 * 1000;
     const CODE_RE = /^[A-HJKMNP-Z2-9]{8}$/;
 
     const BUNDESLAENDER = {
@@ -265,6 +269,10 @@
     function melden(o) { return typeof root.mwlKlassenMeldung === 'function' ? root.mwlKlassenMeldung(o) : false; }
 
     function mitteilungenMelden(z, p) {
+        // Ohne Meldungs-Modul nichts als gesehen abhaken — sonst waere die Mitteilung
+        // still verloren und kaeme nie wieder. (Hat jemand die Klassen-Meldungen selbst
+        // abgeschaltet, liefert melden() false; das ist seine Wahl und zaehlt als gesehen.)
+        if (typeof root.mwlKlassenMeldung !== 'function') return 0;
         const neu = (p.mitteilungen || []).filter(function (m) { return (z.gesehen || []).indexOf(m.id) < 0; });
         neu.slice().reverse().forEach(function (m) {
             melden({ key: 'klasse_m_' + m.id, title: L('Mitteilung von ', 'Message from ') + p.name, message: m.text, type: 'info' });

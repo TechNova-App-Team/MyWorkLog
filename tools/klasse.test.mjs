@@ -108,7 +108,26 @@ eq('Version uebernommen', K.zustand().version, 3);
 eq('Mitteilung beim Beitritt gemeldet', meldungen.map(m => m.key), ['klasse_m_m1']);
 
 r = await K.appAbgleich(false);
-eq('innerhalb 6 h kein Netzabruf', aufrufe.length, 0);
+eq('innerhalb 10 min kein Netzabruf', aufrufe.length, 0);
+// Bis v8.5.5 fragte die App nur alle 6 h: eine Mitteilung kam Stunden spaeter an.
+{
+    const z = K.zustand(); z.geprueft = Date.now() - 11 * 60 * 1000; K.zustandSetzen(z);
+    antwort = JSON.parse(JSON.stringify(Object.assign({}, P, { version: 3 })));
+    await K.appAbgleich(false);
+    eq('nach 11 min fragt die App wieder (nicht erst nach 6 h)', aufrufe.length, 1);
+    aufrufe.length = 0;
+}
+// Ohne Meldungs-Modul darf nichts als gesehen abgehakt werden, sonst ist die Mitteilung weg.
+{
+    const melder = globalThis.mwlKlassenMeldung;
+    delete globalThis.mwlKlassenMeldung;
+    const z = { gesehen: [] };
+    const n = K.mitteilungenMelden(z, { name: 'X', mitteilungen: [{ id: 'mx', text: 'Test' }] });
+    eq('ohne Melder: nichts gemeldet', n, 0);
+    eq('ohne Melder: nichts als gesehen abgehakt', z.gesehen, []);
+    globalThis.mwlKlassenMeldung = melder;
+    ok('Gegenprobe: mit Melder wird abgehakt', K.mitteilungenMelden({ gesehen: [] }, { name: 'X', mitteilungen: [{ id: 'my', text: 'Test' }] }) === 1);
+}
 antwort = Object.assign({}, P, { version: 4, pruefungen: { ap1: '2027-03-09' }, mitteilungen: [{ id: 'm2', text: 'Neu' }, { id: 'm1', text: 'Hallo' }] });
 r = await K.appAbgleich(true);
 eq('ein Abruf von klasse_oeffentlich', aufrufe.map(a => a[0].split('/').pop()), ['klasse_oeffentlich']);
