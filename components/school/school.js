@@ -660,14 +660,53 @@
         if (sp && typeof MWLKlasse !== 'undefined' && MWLKlasse.planText && !MWLKlasse.planLeer(sp)) {
             html += '<p class="school-settings-hint">' + scL('Stundenplan: ', 'Timetable: ') + '<b>' + safeHTML(MWLKlasse.planText(sp, document.documentElement.lang === 'en')) + '</b>. ' +
                 scL('Das Berichtsheft schreibt an Schultagen über genau diese Fächer.', 'On school days the report book writes about exactly these subjects.') + '</p>';
+            // Naechster Schultag mit der Fassung, die an DIESEM Datum gilt (Woche B, Block,
+            // Sondertag) — so sieht der Azubi, dass der Wechsel wirklich ankommt.
+            if (MWLKlasse.planFuerDatum && typeof isVocSchoolForDate === 'function') {
+                for (let i = 0; i < 28; i++) {
+                    const d = new Date(heute); d.setDate(d.getDate() + i);
+                    let schule = false; try { schule = !!(isVocSchoolForDate(d) || {}).isVocSchool; } catch (e) { schule = false; }
+                    if (!schule) continue;
+                    const r = MWLKlasse.planFuerDatum(sp, iso(d), rules.blocks || []);
+                    if (!r) break;
+                    const en = document.documentElement.lang === 'en';
+                    const tag = d.toLocaleDateString(en ? 'en-GB' : 'de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' });
+                    const art = { b: scL(' (Woche B)', ' (week B)'), block: scL(' (Block)', ' (block)'), tag: scL(' (Sondertag)', ' (special day)') }[r.quelle] || '';
+                    html += '<p class="school-settings-hint">' + scL('Nächster Schultag ', 'Next school day ') + '<b>' + safeHTML(tag) + '</b>' + art + ': ' +
+                        safeHTML(r.liste.map(function (e) { return (e.s === e.b ? e.s + '.' : e.s + '.–' + e.b + '.') + ' ' + e.f + (e.von ? ' ' + e.von + '–' + e.bis : ''); }).join(', ')) + '</p>';
+                    break;
+                }
+            }
         }
         html += k && k.code
             ? '<p class="school-settings-hint">' + scL('Verbunden mit der Klasse ', 'Connected to the class ') + '<b>' + safeHTML(k.name || '') + '</b>. ' +
                 scL('Änderungen der Lehrkraft fragt die App beim Öffnen nach. ', 'The app asks about your teacher\u2019s changes when it opens. ') +
-                '<a href="' + pfad + '#' + safeHTML(k.code) + '">' + scL('Klasse ansehen', 'View class') + '</a></p>'
+                '<a href="' + pfad + '#' + safeHTML(k.code) + '">' + scL('Klasse ansehen', 'View class') + '</a></p>' +
+                '<div class="bi-rule" data-kl-push style="display:none;flex-wrap:wrap;align-items:center;gap:10px"></div>'
             : '<p class="school-settings-hint">' + scL('Hat deine Lehrkraft einen Klassen-Code? Damit richtet sich die App mit Schultagen, Blöcken und Prüfungsterminen ein. ', 'Has your teacher given you a class code? It sets up school days, blocks and exam dates for you. ') +
                 '<a href="' + pfad + '#code">' + scL('Code eingeben', 'Enter code') + '</a></p>';
         box.innerHTML = html;
+        // Mitteilungen der Lehrkraft als Benachrichtigung (seit v8.5.9) — ohne das kamen sie
+        // nur an, wenn die App gerade offen war.
+        const pz = box.querySelector('[data-kl-push]');
+        if (pz && k && k.code && typeof MWLKlasse !== 'undefined' && MWLKlasse.pushMoeglich && MWLKlasse.pushMoeglich()) {
+            MWLKlasse.pushStatus().then(function (st) {
+                const an = st === 'an';
+                pz.innerHTML = '<span style="flex:1 1 220px">' + (an ? scL('Mitteilungen der Lehrkraft kommen als Benachrichtigung aufs Handy.', 'Teacher messages arrive as phone notifications.')
+                    : st === 'gesperrt' ? scL('Benachrichtigungen sind blockiert. Erlaube sie in den Einstellungen, damit Mitteilungen der Lehrkraft sofort ankommen.', 'Notifications are blocked. Allow them in settings so teacher messages arrive right away.')
+                    : scL('Mitteilungen der Lehrkraft siehst du bisher nur beim Öffnen der App.', 'You only see teacher messages when you open the app.')) + '</span>' +
+                    (st === 'gesperrt' ? '' : '<button class="btn ' + (an ? 'btn-ghost' : 'btn-primary') + '" type="button" data-kl-push-btn>' + (an ? scL('Ausschalten', 'Turn off') : scL('Aufs Handy', 'To my phone')) + '</button>');
+                pz.style.display = 'flex';   // nicht [hidden]: .bi-rule setzt display:grid und schluege es
+                const b = pz.querySelector('[data-kl-push-btn]');
+                if (b) b.onclick = function () {
+                    b.disabled = true;
+                    (an ? MWLKlasse.pushAus() : MWLKlasse.pushAn(k.code)).then(function () {
+                        if (typeof mwlEvent === 'function') mwlEvent('klasse_push', { an: !an, ort: 'app' });
+                        scRenderKlasseInfo();
+                    }).catch(function () { scRenderKlasseInfo(); });
+                };
+            });
+        }
         box.querySelectorAll('[data-blk]').forEach(function (b) {
             b.onclick = function () {
                 const t = b.getAttribute('data-blk').split('|');

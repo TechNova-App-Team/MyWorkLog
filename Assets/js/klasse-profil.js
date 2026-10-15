@@ -100,31 +100,129 @@
     function blockSchluessel(b) { return JSON.stringify((b || []).map(function (x) { return [x.von, x.bis]; }).sort()); }
     function lehrjahrSchluessel(p) { return String(p && p.lehrjahr >= 1 && p.lehrjahr <= 4 ? p.lehrjahr : 1); }
 
-    // ── Stundenplan (seit v8.5.7) ─────────────────────────────────────
-    // {"<getDay 1-5>": [{s, b, f}]} — s/b erste/letzte Stunde, f Fach. Gilt an jedem
-    // Schultag dieses Wochentags (auch im Block). Zweck: die Berichtsheft-KI schreibt
-    // ueber das Fach, das wirklich war, statt eines zu raten.
+    // ── Stundenplan (seit v8.5.7, Varianten + Zeiten seit v8.5.9) ─────
+    // Form (abwaertskompatibel — die normale Woche steht wie in v8.5.7 oben):
+    //   "1".."5": [{s, b, f}]   normale Woche, Schluessel = getDay, s/b erste/letzte Stunde
+    //   raster:  {start:'07:45', dauer:45, pausen:[{nach:2, min:20}]}   Uhrzeiten der Stunden
+    //   b:       {wechsel:'<Montag einer B-Woche>', "1".."5": [...]}    Woche B im Wechsel
+    //   block:   {"1".."5": [...]}                                      in Blockwochen
+    //   tage:    {'2026-10-21': [...]}                                  einzelne Sondertage
+    // Anlass (15.10.2026, Nutzer): "einmal Mittwoch, naechste Woche Mi und Do", Block-
+    // wochen und Uhrzeiten/Pausen liessen sich nicht eintragen. App-Fassungen vor v8.5.9
+    // lesen nur die Wochentags-Schluessel und sehen damit weiter die normale Woche.
+    // Welcher Tag ueberhaupt Schule IST, entscheiden weiter die Schultage/Rhythmus/Bloecke;
+    // der Plan sagt nur, WAS an so einem Tag dran ist.
+    function listeNorm(l) {
+        return (Array.isArray(l) ? l : []).map(function (e) {
+            const s = e && Number(e.s) | 0, b = e && Number(e.b) | 0, f = e && String(e.f || '').trim().slice(0, 60);
+            return (s >= 1 && s <= 12 && b >= s && b <= 12 && f) ? { s: s, b: b, f: f } : null;
+        }).filter(Boolean).sort(function (x, y) { return x.s - y.s || x.b - y.b; }).slice(0, 12);
+    }
+    // Nur die Wochentags-Schluessel (eine Woche). Name aus v8.5.7 beibehalten.
     function planNorm(sp) {
         const out = {};
         if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return out;
-        ['1', '2', '3', '4', '5'].forEach(function (t) {
-            const liste = (Array.isArray(sp[t]) ? sp[t] : []).map(function (e) {
-                const s = e && Number(e.s) | 0, b = e && Number(e.b) | 0, f = e && String(e.f || '').trim().slice(0, 60);
-                return (s >= 1 && s <= 12 && b >= s && b <= 12 && f) ? { s: s, b: b, f: f } : null;
-            }).filter(Boolean).sort(function (x, y) { return x.s - y.s || x.b - y.b; }).slice(0, 12);
-            if (liste.length) out[t] = liste;
-        });
+        ['1', '2', '3', '4', '5'].forEach(function (t) { const l = listeNorm(sp[t]); if (l.length) out[t] = l; });
         return out;
     }
-    function planSchluessel(sp) { return JSON.stringify(planNorm(sp)); }
-    function planLeer(sp) { return Object.keys(planNorm(sp)).length === 0; }
-    // "Di: LF5, PuG · Do: Englisch, LF3" — kurz fuer Karte und Meldung
-    function planText(sp, en) {
-        const n = planNorm(sp);
-        return Object.keys(n).map(function (t) {
-            const faecher = []; n[t].forEach(function (e) { if (faecher.indexOf(e.f) < 0) faecher.push(e.f); });
+    function zeitOk(s) { return typeof s === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(s); }
+    function rasterNorm(r) {
+        if (!r || typeof r !== 'object' || !zeitOk(r.start)) return null;
+        const dauer = Number(r.dauer) | 0;
+        if (dauer < 30 || dauer > 90) return null;
+        const gesehen = {};
+        const pausen = (Array.isArray(r.pausen) ? r.pausen : []).map(function (p) {
+            const nach = p && Number(p.nach) | 0, min = p && Number(p.min) | 0;
+            return nach >= 1 && nach <= 11 && min >= 5 && min <= 90 ? { nach: nach, min: min } : null;
+        }).filter(function (p) { if (!p || gesehen[p.nach]) return false; gesehen[p.nach] = 1; return true; })
+            .sort(function (a, b) { return a.nach - b.nach; });
+        return { start: r.start, dauer: dauer, pausen: pausen };
+    }
+    function montagVon(iso) {
+        if (!isoOk(iso)) return null;
+        const p = iso.split('-').map(Number), d = new Date(p[0], p[1] - 1, p[2]);
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    // Ganzer Plan, normalisiert. Leere Teile fallen weg, damit "gleich" auch gleich ist.
+    function planVoll(sp) {
+        const out = planNorm(sp);
+        if (!sp || typeof sp !== 'object' || Array.isArray(sp)) return out;
+        const r = rasterNorm(sp.raster); if (r) out.raster = r;
+        if (sp.b && typeof sp.b === 'object' && montagVon(sp.b.wechsel)) {
+            const w = planNorm(sp.b);
+            if (Object.keys(w).length) out.b = Object.assign({ wechsel: montagVon(sp.b.wechsel) }, w);
+        }
+        const bl = planNorm(sp.block); if (Object.keys(bl).length) out.block = bl;
+        if (sp.tage && typeof sp.tage === 'object' && !Array.isArray(sp.tage)) {
+            const t = {};
+            Object.keys(sp.tage).filter(isoOk).sort().slice(0, 60).forEach(function (d) { const l = listeNorm(sp.tage[d]); if (l.length) t[d] = l; });
+            if (Object.keys(t).length) out.tage = t;
+        }
+        return out;
+    }
+    function planSchluessel(sp) { return JSON.stringify(planVoll(sp)); }
+    function planLeer(sp) { const v = planVoll(sp); return !Object.keys(v).some(function (k) { return k !== 'raster'; }); }
+
+    // Uhrzeit je Stunde aus dem Raster: [null, {von, bis}, … bis 12]
+    function stundenZeiten(raster) {
+        const r = rasterNorm(raster); if (!r) return null;
+        const p = r.start.split(':').map(Number);
+        let t = p[0] * 60 + p[1];
+        const hm = function (m) { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+        const out = [null];
+        for (let h = 1; h <= 12; h++) {
+            out.push({ von: hm(t), bis: hm(t + r.dauer) });
+            t += r.dauer;
+            const pa = r.pausen.filter(function (x) { return x.nach === h; })[0];
+            if (pa) t += pa.min;
+        }
+        return out;
+    }
+    // Ist die Woche von `iso` eine B-Woche? (gerade Anzahl Wochen Abstand zum Wechsel-Montag)
+    function istBWoche(sp, iso) {
+        const v = planVoll(sp); if (!v.b) return false;
+        const a = montagVon(iso), w = v.b.wechsel; if (!a) return false;
+        const tag = function (s) { const p = s.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2]) / 864e5; };
+        return Math.round(tag(a) - tag(w)) / 7 % 2 === 0;
+    }
+    // Was an einem Datum dran ist: Sondertag > Blockwoche > Woche B > normale Woche.
+    // bloecke = schoolRules.blocks bzw. Klassen-Bloecke ([{von, bis}]). Rueckgabe:
+    // {quelle, liste:[{s,b,f,von?,bis?}]} oder null.
+    function planFuerDatum(sp, iso, bloecke) {
+        if (!isoOk(iso)) return null;
+        const v = planVoll(sp);
+        const p = iso.split('-').map(Number), wt = String(new Date(p[0], p[1] - 1, p[2]).getDay());
+        let quelle = null, liste = null;
+        if (v.tage && v.tage[iso]) { quelle = 'tag'; liste = v.tage[iso]; }
+        else if (v.block && (bloecke || []).some(function (b) { return b && b.von <= iso && b.bis >= iso; })) {
+            if (v.block[wt]) { quelle = 'block'; liste = v.block[wt]; }
+        }
+        if (!liste && v.b && istBWoche(v, iso)) { if (v.b[wt]) { quelle = 'b'; liste = v.b[wt]; } else return null; }
+        if (!liste && v[wt]) { quelle = 'normal'; liste = v[wt]; }
+        if (!liste) return null;
+        const z = stundenZeiten(v.raster);
+        return { quelle: quelle, liste: liste.map(function (e) {
+            const o = { s: e.s, b: e.b, f: e.f };
+            if (z) { o.von = z[e.s].von; o.bis = z[e.b].bis; }
+            return o;
+        }) };
+    }
+    function wocheText(w, en) {
+        return Object.keys(w).filter(function (t) { return /^[1-5]$/.test(t); }).map(function (t) {
+            const faecher = []; w[t].forEach(function (e) { if (faecher.indexOf(e.f) < 0) faecher.push(e.f); });
             return TAGE[t][en ? 1 : 0] + ': ' + faecher.join(', ');
         }).join(' · ');
+    }
+    // "Di: LF5, PuG · Do: Englisch · Woche B · Blockwoche · ab 07:45" — kurz fuer Karte und Meldung
+    function planText(sp, en) {
+        const v = planVoll(sp), teile = [];
+        const n = wocheText(v, en); if (n) teile.push(n);
+        if (v.b) teile.push(en ? 'week B: ' + wocheText(v.b, en) : 'Woche B: ' + wocheText(v.b, en));
+        if (v.block) teile.push(en ? 'block weeks: ' + wocheText(v.block, en) : 'Blockwoche: ' + wocheText(v.block, en));
+        if (v.tage) { const k = Object.keys(v.tage).length; teile.push(k + (en ? (k === 1 ? ' special day' : ' special days') : (k === 1 ? ' Sondertag' : ' Sondertage'))); }
+        if (v.raster) teile.push((en ? 'from ' : 'ab ') + v.raster.start);
+        return teile.join(' · ');
     }
 
     function planen(settings, p) {
@@ -228,7 +326,7 @@
         }
         if (will('stundenplan') && !planLeer(p.stundenplan)) {
             if (!s.school || typeof s.school !== 'object') s.school = {};
-            s.school.stundenplan = planNorm(p.stundenplan);
+            s.school.stundenplan = planVoll(p.stundenplan);
             getan.push('stundenplan');
         }
         return getan;
@@ -292,17 +390,78 @@
     function laden(code) { return rpc('klasse_oeffentlich', { p_code: code }); }
     async function beitreten(code) { return rpc('klasse_beitreten', { p_code: code, p_geraet: await geraetHash(code) }); }
 
+    // ── Mitteilungen als Push (seit v8.5.9) ───────────────────────────
+    // Oeffentlicher VAPID-Schluessel. Das Paar hat die Edge Function klassen-push selbst
+    // erzeugt (private.push_schluessel); der private Teil liegt nur dort. Wechselt der
+    // Schluessel je, sind alle Abos ungueltig — deshalb setzt die Funktion ihn nur einmal.
+    const VAPID = 'BK1BX7ZLWkvdCKupgCXjfvr9U4SyeNLaClQ_BC9pnqjGXI3hi24h7vhpSOx9eq0SfkF6oh0fbQyLvt_650eU_CA';
+    function pushMoeglich() {
+        return !!(root.navigator && 'serviceWorker' in root.navigator && 'PushManager' in root && 'Notification' in root);
+    }
+    async function pushRegistrierung() {
+        const sw = root.navigator.serviceWorker;
+        let reg = await sw.getRegistration('/');
+        if (!reg) {
+            // Frisches Geraet, App nie geoeffnet: denselben Worker anmelden wie die App
+            // (onboarding.js), mit der Version als ?v= — sonst haette er keine Cache-Generation.
+            let v = 'dev';
+            try { v = (await (await root.fetch('/config/version.json', { cache: 'no-store' })).json()).version || v; } catch (e) { /* bleibt dev */ }
+            reg = await sw.register('/service-worker.js?v=' + v, { scope: '/' });
+        }
+        return sw.ready.then(function () { return reg; });
+    }
+    function schluesselBytes(s) {
+        const p = s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4);
+        return Uint8Array.from(root.atob(p), function (c) { return c.charCodeAt(0); });
+    }
+    // 'an' | 'aus' | 'gesperrt' | 'nicht' — gesperrt = im Browser abgelehnt, geht nur in den Einstellungen
+    async function pushStatus() {
+        if (!pushMoeglich()) return 'nicht';
+        if (root.Notification.permission === 'denied') return 'gesperrt';
+        try {
+            const reg = await root.navigator.serviceWorker.getRegistration('/');
+            const abo = reg && await reg.pushManager.getSubscription();
+            const z = zustand();
+            return abo && z && z.push === abo.endpoint ? 'an' : 'aus';
+        } catch (e) { return 'aus'; }
+    }
+    // Muss aus einem Klick heraus laufen (Berechtigungsfrage).
+    async function pushAn(code) {
+        if (!pushMoeglich()) { const e = new Error('push_nicht_moeglich'); e.code = 'push_nicht_moeglich'; throw e; }
+        const recht = await root.Notification.requestPermission();
+        if (recht !== 'granted') { const e = new Error('push_abgelehnt'); e.code = 'push_abgelehnt'; throw e; }
+        const reg = await pushRegistrierung();
+        let abo = await reg.pushManager.getSubscription();
+        if (!abo) abo = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: schluesselBytes(VAPID) });
+        await rpc('klasse_push_an', { p_code: code, p_abo: abo.toJSON(), p_sprache: istEn() ? 'en' : 'de' });
+        const z = zustand(); if (z) { z.push = abo.endpoint; zustandSetzen(z); }
+        return true;
+    }
+    async function pushAus() {
+        try {
+            const reg = await root.navigator.serviceWorker.getRegistration('/');
+            const abo = reg && await reg.pushManager.getSubscription();
+            if (abo) { await rpc('klasse_push_aus', { p_endpoint: abo.endpoint }).catch(function () {}); await abo.unsubscribe(); }
+        } finally { const z = zustand(); if (z) { delete z.push; zustandSetzen(z); } }
+        return true;
+    }
+
     // ── Beitritt vormerken (Seite) ────────────────────────────────────
     function vormerken(p, auswahl) {
         const alt = zustand();
         const gesehen = alt && alt.code === p.code ? (alt.gesehen || []) : [];
         return zustandSetzen({
+            push: alt && alt.code === p.code ? alt.push : undefined,
             code: p.code, name: p.name, version: alt && alt.code === p.code ? alt.version || 0 : 0,
             profil: p, auswahl: auswahl, ausstehend: true, beigetreten: (alt && alt.code === p.code && alt.beigetreten) || Date.now(),
             gesehen: gesehen, geprueft: Date.now()
         });
     }
-    function austreten() { try { root.localStorage.removeItem(STATE_KEY); } catch (e) { /* egal */ } }
+    function austreten() {
+        // Abo mit abmelden, sonst kaemen Mitteilungen der alten Klasse weiter aufs Handy
+        const z = zustand(); if (z && z.push && pushMoeglich()) pushAus().catch(function () {});
+        try { root.localStorage.removeItem(STATE_KEY); } catch (e) { /* egal */ }
+    }
 
     // ── App: ausstehendes anwenden + Abgleich ─────────────────────────
     function melden(o) { return typeof root.mwlKlassenMeldung === 'function' ? root.mwlKlassenMeldung(o) : false; }
@@ -371,8 +530,10 @@
         codeNorm: codeNorm, codeFmt: codeFmt, codeAusAdresse: codeAusAdresse,
         zustand: zustand, zustandSetzen: zustandSetzen, vormerken: vormerken, austreten: austreten,
         planen: planen, anwenden: anwenden, unterschiede: unterschiede, naechsterBlock: naechsterBlock,
-        tageText: tageText, rhythmusText: rhythmusText, planNorm: planNorm, planText: planText, planLeer: planLeer, datum: datum, heuteIso: heuteIso,
+        tageText: tageText, rhythmusText: rhythmusText, planNorm: planNorm, planVoll: planVoll, planText: planText, planLeer: planLeer,
+        planSchluessel: planSchluessel, rasterNorm: rasterNorm, stundenZeiten: stundenZeiten, istBWoche: istBWoche, planFuerDatum: planFuerDatum, montagVon: montagVon, datum: datum, heuteIso: heuteIso,
         rpc: rpc, laden: laden, beitreten: beitreten, geraetHash: geraetHash,
+        pushMoeglich: pushMoeglich, pushStatus: pushStatus, pushAn: pushAn, pushAus: pushAus,
         appAbgleich: appAbgleich, mitteilungenMelden: mitteilungenMelden
     };
     root.MWLKlasse = api;
@@ -383,5 +544,11 @@
         const inApp = function () { return !!root.document.getElementById('view-dashboard'); };
         root.addEventListener('load', function () { if (inApp()) setTimeout(function () { appAbgleich(false); }, 1500); });
         root.document.addEventListener('visibilitychange', function () { if (!root.document.hidden && inApp()) appAbgleich(false); });
+        // Push kam an (Service Worker meldet sich) oder die App wurde ueber die Benachrichtigung
+        // geoeffnet: sofort nachfragen statt auf das 10-Minuten-Fenster zu warten.
+        if (root.navigator && root.navigator.serviceWorker) root.navigator.serviceWorker.addEventListener('message', function (e) {
+            if (e.data && e.data.typ === 'klasse-mitteilung' && inApp()) appAbgleich(true);
+        });
+        if (/[?&]klasse=mitteilung/.test(root.location.search || '')) root.addEventListener('load', function () { if (inApp()) setTimeout(function () { appAbgleich(true); }, 3000); });
     }
 })(typeof window !== 'undefined' ? window : globalThis);

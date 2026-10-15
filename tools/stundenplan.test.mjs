@@ -97,4 +97,65 @@ ok(lokal.entries.some(e => /LF5|PuG/.test(e)), 'lokal: die Eintraege handeln von
 const lokalDo = X.generateDayEntries('sysadmin', { yearNum: 2, umfang: 'mittel', form: 'stichpunkte', dayIndex: 3, isSchoolDay: true });
 ok(lokalDo.schoolTopic && lokalDo.schoolTopic !== 'LF5, PuG', 'Gegenprobe: Donnerstag ohne Plan bekommt ein anderes Fach', lokalDo.schoolTopic);
 
+// ── 5. Varianten + Uhrzeiten (v8.5.9) ──────────────────────────────────
+// Anlass (15.10.2026): "einmal Mittwoch, naechste Woche Mi und Do", Blockwochen,
+// Uhrzeiten und Pausen liessen sich nicht eintragen.
+gruppe('Varianten: Woche B, Block, Sondertag, Uhrzeiten');
+const VOLL_ROH = {
+    '3': [{ s: 1, b: 2, f: 'LF5' }],
+    raster: { start: '07:45', dauer: 45, pausen: [{ nach: 4, min: 15 }, { nach: 2, min: 20 }, { nach: 2, min: 5 }] },
+    b: { wechsel: '2026-10-22', '3': [{ s: 1, b: 4, f: 'LF3' }], '4': [{ s: 1, b: 2, f: 'Englisch' }] },
+    block: { '1': [{ s: 1, b: 6, f: 'LF7' }] },
+    tage: { '2026-11-04': [{ s: 3, b: 4, f: 'Prüfungsvorbereitung' }] },
+};
+const V = K.planVoll(VOLL_ROH);
+// Gemessen am 15.10.2026: dieselbe Eingabe durch private.klasse_stundenplan() der
+// Live-Datenbank. Weichen beide ab, steigt die Klassen-Version bei JEDEM Speichern.
+const SERVER = { '3': [{ s: 1, b: 2, f: 'LF5' }], b: { wechsel: '2026-10-19', '3': [{ s: 1, b: 4, f: 'LF3' }], '4': [{ s: 1, b: 2, f: 'Englisch' }] },
+    tage: { '2026-11-04': [{ s: 3, b: 4, f: 'Prüfungsvorbereitung' }] }, block: { '1': [{ s: 1, b: 6, f: 'LF7' }] },
+    raster: { start: '07:45', dauer: 45, pausen: [{ nach: 2, min: 20 }, { nach: 4, min: 15 }] } };
+const kanon = (x) => JSON.stringify(x, (k, v) => (v && typeof v === 'object' && !Array.isArray(v)) ? Object.keys(v).sort().reduce((o, s) => (o[s] = v[s], o), {}) : v);
+ok(kanon(V) === kanon(SERVER), 'planVoll normalisiert genau wie der Server (Wechsel auf Montag, Pausen sortiert, doppelte raus)', kanon(V));
+ok(!K.planVoll({ b: { wechsel: '2026-10-19' } }).b, 'leere Woche B faellt beim Normalisieren weg');
+ok(!K.planVoll({ raster: { start: '25:00', dauer: 45 } }).raster && !K.planVoll({ raster: { start: '08:00', dauer: 200 } }).raster, 'kaputtes Zeitraster faellt weg');
+ok(K.planLeer({ raster: { start: '08:00', dauer: 45 } }), 'nur Uhrzeiten ohne Faecher zaehlt als leer');
+ok(!K.planLeer({ tage: { '2026-11-04': [{ s: 1, b: 1, f: 'X' }] } }), 'nur ein Sondertag zaehlt als Plan');
+
+const Z = K.stundenZeiten(V.raster);
+ok(Z[1].von === '07:45' && Z[1].bis === '08:30' && Z[2].bis === '09:15', 'Uhrzeiten: 1. 07:45–08:30, 2. bis 09:15', JSON.stringify(Z.slice(1, 4)));
+ok(Z[3].von === '09:35' && Z[5].von === '11:20', 'Pausen schieben die Folgestunden (20 min nach der 2., 15 nach der 4.)', JSON.stringify([Z[3], Z[5]]));
+
+const BL = [{ von: '2026-11-09', bis: '2026-11-13' }];
+const fuer = (iso) => K.planFuerDatum(V, iso, BL);
+ok(K.istBWoche(V, '2026-10-21') && !K.istBWoche(V, '2026-10-28') && K.istBWoche(V, '2026-11-04'), 'B-Wochen im Wechsel ab 19.10.');
+ok(fuer('2026-10-21').quelle === 'b' && fuer('2026-10-21').liste[0].f === 'LF3', 'Mi in Woche B: Plan B (LF3)');
+ok(fuer('2026-10-22').liste[0].f === 'Englisch', 'Do in Woche B: Englisch — genau der Fall "naechste Woche Mi und Do"');
+ok(fuer('2026-10-28').quelle === 'normal' && fuer('2026-10-28').liste[0].f === 'LF5', 'Mi in Woche A: normale Woche (LF5)');
+ok(fuer('2026-10-29') === null, 'Gegenprobe: Do in Woche A hat keinen Plan');
+ok(fuer('2026-11-09').quelle === 'block' && fuer('2026-11-09').liste[0].f === 'LF7', 'Mo im Block: Blockwochen-Plan');
+ok(fuer('2026-11-11').quelle !== 'block', 'Mi im Block ohne Block-Eintrag: faellt auf A/B zurueck');
+ok(fuer('2026-11-04').quelle === 'tag' && fuer('2026-11-04').liste[0].f === 'Prüfungsvorbereitung', 'Sondertag geht vor Woche B');
+ok(fuer('2026-10-21').liste[0].von === '07:45' && fuer('2026-10-21').liste[0].bis === '11:05', 'Eintrag traegt Uhrzeiten (1.–4. Std. 07:45–11:05, Pause eingerechnet)', JSON.stringify(fuer('2026-10-21').liste[0]));
+ok(K.planFuerDatum({ '3': [{ s: 1, b: 2, f: 'LF5' }] }, '2026-10-21', []).liste[0].von === undefined, 'Gegenprobe: ohne Raster keine erfundenen Uhrzeiten');
+
+const datenV = { settings: {} };
+K.anwenden(datenV, Object.assign({}, P, { stundenplan: VOLL_ROH }), null);
+ok(kanon(datenV.settings.school.stundenplan) === kanon(SERVER), 'anwenden: die App bekommt den ganzen Plan (nicht nur die normale Woche)');
+ok(K.unterschiede(Object.assign({}, P, { stundenplan: VOLL_ROH }), Object.assign({}, P, { stundenplan: Object.assign({}, VOLL_ROH, { block: {} }) })).includes('Stundenplan'),
+    'unterschiede: geaenderte Blockwoche wird gemeldet');
+ok(/Woche B/.test(K.planText(V)) && /Blockwoche/.test(K.planText(V)) && /ab 07:45/.test(K.planText(V)), 'planText nennt Woche B, Blockwoche und Beginn', K.planText(V));
+
+gruppe('Berichtsheft: Plan je Datum');
+const E2 = ladeEngine({ speicher: { tg_pro_data: JSON.stringify({ settings: { school: { stundenplan: V }, schoolRules: { blocks: BL } } }) }, globals: { MWLKlasse: K } });
+const X2 = { ...E2.CLOUD, ...E2.intern };
+const tagIso = X2._kwDatum(43, 2);
+ok(new Date(tagIso + 'T12:00:00').getDay() === 3, '_kwDatum(43, Mittwoch) ist ein Mittwoch', tagIso);
+const erwartet = K.planFuerDatum(V, tagIso, BL);
+const ausKI = X2._klassenPlanFuer(2, 43);
+ok(ausKI && erwartet && JSON.stringify(ausKI) === JSON.stringify(erwartet.liste), 'die KI nimmt die Fassung dieses Datums', JSON.stringify(ausKI));
+const pB = X2._buildCloudPrompt('sysadmin', { ...BASIS, calendarWeek: 43 });
+ok(pB.includes('(07:45–'), 'Prompt traegt die Uhrzeiten der Stunden');
+const andereKW = X2._klassenPlanFuer(2, 44), andereErw = K.planFuerDatum(V, X2._kwDatum(44, 2), BL);
+ok(JSON.stringify(andereKW) === JSON.stringify(andereErw && andereErw.liste) && JSON.stringify(andereKW) !== JSON.stringify(ausKI), 'Gegenprobe: die Nachbarwoche (A statt B) bekommt den anderen Plan');
+
 abschluss("Stundenplan");

@@ -219,10 +219,31 @@ const CLOUD_UMFANG = {
 // Schluessel = getDay 1..5). Wunsch des Nutzers: die KI soll ueber das Fach
 // schreiben, das wirklich war ("Mittwoch 2. Stunde PuG"), statt eines zu raten
 // und z. B. Englisch zu erfinden, obwohl keins war. dayIdx: 0 = Montag.
-function _klassenPlanFuer(dayIdx) {
+// Seit v8.5.9 kennt der Plan Woche B, Blockwochen, Sondertage und Uhrzeiten — welche
+// Fassung gilt, haengt am DATUM. Das Studio kennt nur die KW (ohne Jahr): genommen wird
+// die KW, die am naechsten an heute liegt. MWLKlasse kommt aus /Assets/js/klasse-profil.js
+// (auf /berichtsheft/ geladen); fehlt es, bleibt es bei der normalen Woche wie bis v8.5.8.
+function _kwDatum(kw, dayIdx) {
+    const heute = new Date();
+    const montagDer = (jahr) => { const j4 = new Date(jahr, 0, 4); const m = new Date(j4); m.setDate(j4.getDate() - ((j4.getDay() + 6) % 7) + (kw - 1) * 7 + dayIdx); return m; };
+    const kand = [heute.getFullYear() - 1, heute.getFullYear(), heute.getFullYear() + 1].map(montagDer);
+    const d = kand.sort((a, b) => Math.abs(a - heute) - Math.abs(b - heute))[0];
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function _kwHeute() {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+    const j4 = new Date(d.getFullYear(), 0, 4);
+    return 1 + Math.round(((d - j4) / 864e5 - 3 + ((j4.getDay() + 6) % 7)) / 7);
+}
+function _klassenPlanFuer(dayIdx, kw) {
     try {
         const d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
         const sp = d && d.settings && d.settings.school && d.settings.school.stundenplan;
+        if (!kw) kw = _kwHeute();
+        if (sp && kw >= 1 && kw <= 53 && typeof window !== 'undefined' && window.MWLKlasse && window.MWLKlasse.planFuerDatum) {
+            const r = window.MWLKlasse.planFuerDatum(sp, _kwDatum(kw, dayIdx), (d.settings.schoolRules || {}).blocks || []);
+            return r && r.liste.length ? r.liste : null;
+        }
         const l = sp && sp[String(dayIdx + 1)];
         if (!Array.isArray(l)) return null;
         const e = l.map(x => ({ s: Number(x && x.s) | 0, b: Number(x && x.b) | 0, f: String((x && x.f) || '').trim().slice(0, 60) }))
@@ -236,7 +257,7 @@ function _klassenPlanFuer(dayIdx) {
 const FREMDE_FAECHER = ['englisch', 'deutsch', 'mathe', 'mathematik', 'politik', 'sport', 'religion', 'ethik',
     'wiso', 'sozialkunde', 'geschichte', 'physik', 'chemie', 'biologie', 'pug', 'bwl', 'spanisch', 'französisch'];
 function _planFaecher(plan) { const u = []; plan.forEach(e => { if (!u.includes(e.f)) u.push(e.f); }); return u; }
-function _planZeile(plan) { return plan.map(e => (e.s === e.b ? e.s + '.' : e.s + '.–' + e.b + '.') + ' Std. ' + e.f).join(', '); }
+function _planZeile(plan) { return plan.map(e => (e.s === e.b ? e.s + '.' : e.s + '.–' + e.b + '.') + ' Std. ' + (e.von ? '(' + e.von + '–' + e.bis + ') ' : '') + e.f).join(', '); }
 
 function _buildCloudPrompt(professionId, options) {
     const prof = PROFESSIONS[professionId];
@@ -354,7 +375,7 @@ ${lines.join('\n')}
     const _hatSchule = _schulIdxs.length > 0;
     const _schulTagName = _hatSchule ? DAY_NAMES[_schulIdxs[0]] : '';
     // Stundenplan je Schultag (null = kein Plan fuer diesen Tag → wie bisher raten lassen)
-    const _plaene = _schulIdxs.map(i => [i, _klassenPlanFuer(i)]).filter(x => x[1]);
+    const _plaene = _schulIdxs.map(i => [i, _klassenPlanFuer(i, options.calendarWeek)]).filter(x => x[1]);
     const _ohnePlan = _schulIdxs.filter(i => !_plaene.some(x => x[0] === i));
     // Das Beispiel-Fach steht im Formatblock und wiegt schwer: mit Plan das echte nehmen
     const _beispielFach = (_plaene.length && _plaene[0][0] === _schulIdxs[0]) ? _planFaecher(_plaene[0][1]).join(', ') : 'Wirtschafts- und Sozialkunde';
@@ -849,6 +870,7 @@ async function generateWithCloud(professionId, options) {
                 umfang: options.umfang,
                 form: options.form,
                 dayIndex: dayIdx,
+                calendarWeek: options.calendarWeek,
                 isSchoolDay: _sollSchule,
                 season: getCurrentSeason(),
                 excludePhrases: [],
@@ -869,7 +891,7 @@ async function generateWithCloud(professionId, options) {
         // Stundenplan gewinnt immer: das Modell haelt sich nicht zuverlaessig an
         // Vorgaben (siehe oben bei den Schultagen). Das Fach im Bericht ist eine
         // Tatsache aus dem Plan, kein Vorschlag des Modells.
-        const _plan = _sollSchule ? _klassenPlanFuer(dayIdx) : null;
+        const _plan = _sollSchule ? _klassenPlanFuer(dayIdx, options.calendarWeek) : null;
         if (_plan) {
             // Nennt der Text ein Schulfach, das an diesem Tag NICHT im Plan steht
             // (genau die Beschwerde: "schreibt Englisch, obwohl er nix hatte"), baut
@@ -880,7 +902,7 @@ async function generateWithCloud(professionId, options) {
             const _fremd = FREMDE_FAECHER.filter(w => _woerter.has(w) && !_erlaubt.includes(w));
             if (_fremd.length) {
                 const _neu = generateDayEntries(professionId, {
-                    yearNum: options.yearNum, umfang: options.umfang, form: options.form, dayIndex: dayIdx,
+                    yearNum: options.yearNum, umfang: options.umfang, form: options.form, dayIndex: dayIdx, calendarWeek: options.calendarWeek,
                     isSchoolDay: true, season: getCurrentSeason(), excludePhrases: [], department: week.department,
                     activeTheme: options.activeTheme || null, customPrompt: options.customPrompt || '',
                     planForDay: _planFaecher(_plan),
@@ -933,6 +955,7 @@ async function generateWithCloud(professionId, options) {
                     umfang: options.umfang,
                     form: options.form,
                     dayIndex: dayIdx,
+                    calendarWeek: options.calendarWeek,
                     isSchoolDay: usedSchoolSet.has(dayIdx),
                     season,
                     excludePhrases: [],
@@ -996,7 +1019,7 @@ return {
     verbinde, GEBRAUCHT,
     CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId,
     CLOUD_FORM, CLOUD_UMFANG, _buildCloudPrompt,
-    _klassenPlanFuer, _planFaecher,
+    _klassenPlanFuer, _planFaecher, _kwDatum,
     _repairJSON, _sliceRootJSON, _deEscapeStructural,
     generateWithCloud,
 };

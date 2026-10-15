@@ -36,7 +36,8 @@
         shield: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
         arrow: '<path d="M5 12h14"/><path d="m13 6 6 6-6 6"/>',
         alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
-        users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
+        users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'
     };
     function svg(n) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + (IC[n] || '') + '</svg>'; }
 
@@ -78,6 +79,9 @@
         zu_viele_klassen: ['Sie haben schon 25 Klassen. Löschen Sie eine alte, um eine neue anzulegen.', 'You already have 25 classes. Delete an old one to create another.'],
         zu_schnell: ['Zu viele Änderungen in kurzer Zeit. Bitte in ein paar Minuten noch einmal.', 'Too many changes at once. Please try again in a few minutes.'],
         text_ungueltig: ['Die Mitteilung ist leer oder länger als 500 Zeichen.', 'The message is empty or longer than 500 characters.'],
+        push_abgelehnt: ['Benachrichtigungen sind für diese Seite blockiert. Erlaube sie in den Einstellungen des Browsers bzw. der App und tippe dann noch einmal.', 'Notifications are blocked for this site. Allow them in the browser or app settings, then tap again.'],
+        push_nicht_moeglich: ['Dieser Browser kann keine Benachrichtigungen empfangen. Mitteilungen erscheinen beim Öffnen der App.', 'This browser cannot receive notifications. Messages appear when you open the app.'],
+        push_ungueltig: ['Das Gerät hat keine gültige Push-Adresse geliefert.', 'The device did not provide a valid push address.'],
         bis_ungueltig: ['Das Ablaufdatum muss heute oder später sein.', 'The expiry date must be today or later.'],
         zu_viele_beitritte: ['Gerade treten sehr viele bei. Bitte in einer Minute noch einmal.', 'A lot of people are joining right now. Please try again in a minute.'],
         offline: ['Keine Verbindung. Bitte prüfen und noch einmal versuchen.', 'No connection. Please check and try again.'],
@@ -169,6 +173,32 @@
     }
     const APP_URL = EN ? '/en/' : '/';
 
+    // Mitteilungen der Lehrkraft als Benachrichtigung (seit v8.5.9). Ohne das kamen sie nur
+    // an, wenn die App gerade offen war — gemeldet als "kommen nie an".
+    function pushKasten(code, stand) {
+        const an = stand === 'an';
+        return '<div class="kl-push' + (an ? ' is-an' : '') + '" id="klPush"><div class="kl-push__ic">' + svg('bell') + '</div><div class="kl-push__t">' +
+            '<b>' + (an ? L('Mitteilungen kommen aufs Handy', 'Messages come to your phone') : L('Mitteilungen aufs Handy', 'Messages to your phone')) + '</b>' +
+            '<span>' + (an ? L('Schreibt deine Lehrkraft etwas, bekommst du eine Benachrichtigung, auch wenn die App zu ist.', 'When your teacher writes, you get a notification, even when the app is closed.')
+                           : L('Sonst siehst du Nachrichten deiner Lehrkraft erst, wenn du die App öffnest.', 'Otherwise you only see your teacher\u2019s messages when you open the app.')) + '</span>' +
+            '<p class="kl-codebar__err" id="klPushErr" role="alert" hidden></p></div>' +
+            '<button class="kl-btn' + (an ? '' : ' kl-btn--primary') + ' kl-btn--sm" type="button" id="klPushBtn">' + (an ? L('Ausschalten', 'Turn off') : L('Einschalten', 'Turn on')) + '</button></div>';
+    }
+    function pushKastenBinden(code) {
+        const b = $('klPushBtn'); if (!b) return;
+        b.onclick = async function () {
+            b.disabled = true;
+            const err = $('klPushErr'); err.hidden = true;
+            try {
+                const an = $('klPush').classList.contains('is-an');
+                if (an) await K.pushAus(); else await K.pushAn(code);
+                ev('klasse_push', { an: !an });
+                $('klPush').outerHTML = pushKasten(code, an ? 'aus' : 'an');
+                pushKastenBinden(code);
+            } catch (x) { b.disabled = false; err.textContent = fehlerText(x); err.hidden = false; }
+        };
+    }
+
     // ══ BEITRITT (Azubi) ══════════════════════════════════════════════
     async function zeigeBeitritt(code) {
         modus('join');
@@ -245,11 +275,18 @@
                 if (!update) await K.beitreten(p.code);
                 K.vormerken(p, auswahl);
                 ev('klasse_beitritt', { aktion: update ? 'update' : 'neu', bereiche: auswahl.length });
+                // Hat das Geraet Benachrichtigungen schon erlaubt (z. B. von einer frueheren Klasse),
+                // haengt das Abo ohne Rueckfrage an die neue Klasse um.
+                const pushVorher = K.pushMoeglich() && Notification.permission === 'granted';
+                if (pushVorher) { try { await K.pushAn(p.code); } catch (x) { /* bleibt beim Knopf */ } }
+                const pushStand = K.pushMoeglich() ? await K.pushStatus() : 'nicht';
                 app.innerHTML = zustandsBild('check',
                     update ? L('Übernommen', 'Applied') : L('Du bist dabei', 'You are in'),
                     auswahl.length ? L('Beim Öffnen richtet die App ' + auswahl.length + (auswahl.length === 1 ? ' Bereich' : ' Bereiche') + ' für dich ein.', 'The app sets up ' + auswahl.length + (auswahl.length === 1 ? ' area' : ' areas') + ' for you when it opens.')
                                    : L('Deine Einstellungen bleiben, wie sie sind.', 'Your settings stay as they are.'),
-                    '<a class="kl-btn kl-btn--primary" href="' + APP_URL + '" id="klOpen"><span>' + L('App öffnen', 'Open the app') + '</span><i class="kl-btn__ic">' + svg('arrow') + '</i></a>', true);
+                    '<a class="kl-btn kl-btn--primary" href="' + APP_URL + '" id="klOpen"><span>' + L('App öffnen', 'Open the app') + '</span><i class="kl-btn__ic">' + svg('arrow') + '</i></a>', true) +
+                    (pushStand === 'nicht' ? '' : pushKasten(p.code, pushStand));
+                pushKastenBinden(p.code);
             } catch (e) {
                 btn.disabled = false;
                 const er = $('klGoErr'); er.textContent = fehlerText(e); er.hidden = false;
@@ -446,7 +483,7 @@
     function profilAus(k) {
         return { name: k.name, schule: k.schule || '', beruf: k.beruf || '', kontakt: k.kontakt || '', lehrjahr: k.lehrjahr || 1, bundesland: k.bundesland || '',
             schultage: (k.schultage || []).slice(), rhythmus: JSON.parse(JSON.stringify(k.rhythmus || [])), bloecke: JSON.parse(JSON.stringify(k.bloecke || [])),
-            faecher: (k.faecher || []).slice(), pruefungen: Object.assign({}, k.pruefungen || {}), stundenplan: K.planNorm(k.stundenplan) };
+            faecher: (k.faecher || []).slice(), pruefungen: Object.assign({}, k.pruefungen || {}), stundenplan: JSON.parse(JSON.stringify(K.planVoll(k.stundenplan))) };
     }
 
     async function standLaden(k) {
@@ -607,17 +644,37 @@
             };
         });
 
-        // Stundenplan als Raster: Zeile = Stunde, Spalte = Mo–Fr, Zelle = Fach aus der Liste oben.
-        // Gespeichert wird als Spannen {s, b, f}: gleiche Faecher in Folge werden zusammengezogen.
+        // Stundenplan (seit v8.5.9): Zeiten + vier Ansichten auf EINEN Plan.
+        //   normal = Wochentags-Schluessel oben, b = Woche B im Wechsel, block = Blockwochen,
+        //   tage = einzelne Daten. Raster je Ansicht: Zeile = Stunde, Zelle = Fach.
+        // m.stundenplan bleibt waehrend der Bearbeitung ROH (eine frisch angelegte, noch leere
+        // Woche B muss stehen bleiben) — normalisiert wird erst beim Speichern (planVoll).
         if (!m.stundenplan || typeof m.stundenplan !== 'object') m.stundenplan = {};
+        const sp = m.stundenplan;
         const plan = $('klPlan');
-        const zelle = function () {   // Raster aus m.stundenplan: z[t][h] = Fach
-            const z = {}; [1, 2, 3, 4, 5].forEach(function (t) { z[t] = {}; ((K.planNorm(m.stundenplan))[t] || []).forEach(function (e) { for (let h = e.s; h <= e.b; h++) z[t][h] = e.f; }); });
+        let ansicht = 'normal', tagSel = null;
+        const TAGE5 = [1, 2, 3, 4, 5];
+        const woche = function () {   // Wochentags-Abbild der aktuellen Ansicht (nur lesen)
+            if (ansicht === 'b') return sp.b || {};
+            if (ansicht === 'block') return sp.block || {};
+            if (ansicht === 'tage') return { 1: (sp.tage || {})[tagSel] || [] };
+            return sp;
+        };
+        const wocheSetzen = function (w) {
+            if (ansicht === 'b') { sp.b = Object.assign({ wechsel: (sp.b && sp.b.wechsel) || '' }, w); return; }
+            if (ansicht === 'block') { sp.block = w; return; }
+            if (ansicht === 'tage') { sp.tage = sp.tage || {}; sp.tage[tagSel] = w[1] || []; return; }
+            TAGE5.forEach(function (t) { delete sp[t]; }); Object.assign(sp, w);
+        };
+        const spalten = function () { return ansicht === 'tage' ? [1] : TAGE5; };
+        const zelle = function () {   // z[t][h] = Fach
+            const w = K.planNorm(woche()), z = {};
+            spalten().forEach(function (t) { z[t] = {}; (w[t] || []).forEach(function (e) { for (let h = e.s; h <= e.b; h++) z[t][h] = e.f; }); });
             return z;
         };
         const ausRaster = function (z) {
             const out = {};
-            [1, 2, 3, 4, 5].forEach(function (t) {
+            spalten().forEach(function (t) {
                 const liste = []; let lauf = null;
                 for (let h = 1; h <= 12; h++) {
                     const fa = z[t][h] || '';
@@ -630,48 +687,164 @@
             });
             return out;
         };
-        let reihen = Math.max(8, Object.values(K.planNorm(m.stundenplan)).reduce(function (mx, l) { return Math.max(mx, l[l.length - 1].b); }, 0));
+        const hoechste = function () {
+            let mx = 0;
+            const sieh = function (w) { Object.keys(K.planNorm(w)).forEach(function (t) { K.planNorm(w)[t].forEach(function (e) { mx = Math.max(mx, e.b); }); }); };
+            sieh(sp); sieh(sp.b); sieh(sp.block); Object.keys(sp.tage || {}).forEach(function (d) { sieh({ 1: sp.tage[d] }); });
+            return mx;
+        };
+        let reihen = Math.max(8, hoechste());
+        const naechsterMontag = function () { const d = new Date(); d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7)); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+        // Welche Wochentage sind in dieser Ansicht Schultage? (nur fuer die Hervorhebung)
+        const schulSpalte = function (t) {
+            if (ansicht === 'block' || ansicht === 'tage') return true;
+            return m.schultage.indexOf(t) >= 0 || m.rhythmus.some(function (r) { return +r.weekday === t; });
+        };
+        const ANSICHTEN = [['normal', L('Normale Woche', 'Regular week')], ['b', L('Woche B', 'Week B')], ['block', L('Blockwoche', 'Block week')], ['tage', L('Sondertage', 'Special days')]];
+        const zeitZeile = function () {
+            const r = sp.raster || {};
+            const pausen = (r.pausen || []).map(function (p, i) {
+                return '<span class="kl-pz" data-pi="' + i + '"><select class="kl-sel kl-sel--sm" data-pz="nach" aria-label="' + L('Pause nach Stunde', 'Break after lesson') + '">' +
+                    Array.from({ length: 11 }, function (_, n) { return '<option value="' + (n + 1) + '"' + (+p.nach === n + 1 ? ' selected' : '') + '>' + L('nach ' + (n + 1) + '.', 'after ' + (n + 1)) + '</option>'; }).join('') + '</select>' +
+                    '<input class="kl-in kl-in--min" type="number" min="5" max="90" step="5" data-pz="min" value="' + (+p.min || 15) + '" aria-label="' + L('Minuten', 'minutes') + '"><span class="kl-pz__e">min</span>' +
+                    '<button class="kl-x kl-x--sm" type="button" data-pzx="' + i + '" aria-label="' + L('Pause entfernen', 'Remove break') + '">' + svg('x') + '</button></span>';
+            }).join('');
+            return '<div class="kl-zeit">' +
+                '<label class="kl-zeit__f"><span class="kl-label">' + L('1. Stunde beginnt', 'First lesson starts') + '</span><input class="kl-in" type="time" id="klZStart" value="' + esc(r.start || '') + '"></label>' +
+                '<label class="kl-zeit__f"><span class="kl-label">' + L('Stundenlänge', 'Lesson length') + '</span><span class="kl-zeit__min"><input class="kl-in kl-in--min" type="number" min="30" max="90" step="5" id="klZDauer" value="' + (r.dauer || 45) + '"' + (r.start ? '' : ' disabled') + '><span class="kl-pz__e">min</span></span></label>' +
+                '<div class="kl-zeit__f kl-zeit__p"><span class="kl-label">' + L('Pausen', 'Breaks') + '</span><div class="kl-zeit__pl">' + pausen +
+                    '<button class="kl-add kl-add--inline" type="button" id="klPauseAdd"' + (r.start ? '' : ' disabled') + '>' + svg('plus') + L('Pause', 'Break') + '</button></div></div>' +
+                '</div>';
+        };
+        const kopf = function () {
+            let h = '<div class="kl-seg kl-plan__ans" role="tablist">' + ANSICHTEN.map(function (a) {
+                const voll = a[0] === 'normal' ? !K.planLeer({ 1: sp[1], 2: sp[2], 3: sp[3], 4: sp[4], 5: sp[5] })
+                    : a[0] === 'tage' ? Object.keys(sp.tage || {}).some(function (d) { return (sp.tage[d] || []).length; })
+                    : Object.keys(K.planNorm(sp[a[0]])).length > 0;
+                return '<button type="button" role="tab" data-ans="' + a[0] + '" aria-pressed="' + (ansicht === a[0]) + '">' + a[1] + (voll && a[0] !== 'normal' ? '<i class="kl-plan__dot" aria-hidden="true"></i>' : '') + '</button>';
+            }).join('') + '</div>';
+            if (ansicht === 'normal') h += '<p class="kl-hint">' + L('Gilt an jedem Schultag dieses Wochentags. Hervorgehoben sind die Tage, die oben als Schultage eingetragen sind, auch die im Rhythmus.', 'Applies on every school day of that weekday. Highlighted are the days set as school days above, including rhythm days.') + '</p>';
+            if (ansicht === 'b') {
+                h += sp.b
+                    ? '<div class="kl-plan__info"><label class="kl-zeit__f"><span class="kl-label">' + L('Eine B-Woche beginnt am', 'A B week starts on') + '</span><input class="kl-in" type="date" id="klBWechsel" value="' + esc(sp.b.wechsel || '') + '"></label>' +
+                        '<p class="kl-hint">' + L('Ab dort wechseln sich A (normale Woche) und B jede Woche ab. In B-Wochen gilt nur dieser Plan, z. B. Mittwoch und Donnerstag statt nur Mittwoch.', 'From then on A (regular week) and B alternate weekly. In B weeks only this plan applies, e.g. Wednesday and Thursday instead of only Wednesday.') + '</p>' +
+                        '<button class="kl-btn kl-btn--sm" type="button" id="klBWeg">' + L('Woche B entfernen', 'Remove week B') + '</button></div>'
+                    : '<div class="kl-plan__leer"><p class="kl-hint">' + L('Für Klassen, deren Wochen sich abwechseln: eine Woche nur Mittwoch, die nächste Mittwoch und Donnerstag. Die normale Woche ist dann Woche A.', 'For classes whose weeks alternate: one week only Wednesday, the next Wednesday and Thursday. The regular week is then week A.') + '</p>' +
+                        '<div class="kl-quick"><button class="kl-btn kl-btn--sm" type="button" data-neu="kopie">' + L('Woche B aus der normalen Woche anlegen', 'Create week B from the regular week') + '</button><button class="kl-btn kl-btn--sm" type="button" data-neu="leer">' + L('Leer anlegen', 'Create empty') + '</button></div></div>';
+            }
+            if (ansicht === 'block') {
+                h += '<p class="kl-hint">' + (m.bloecke.length
+                    ? L('Gilt an den Tagen in Ihren Blöcken. Ein leerer Wochentag nimmt die normale Woche.', 'Applies on the days of your blocks. An empty weekday falls back to the regular week.')
+                    : L('Gilt in Blockwochen. Legen Sie oben unter „Blockunterricht“ die Zeiträume an.', 'Applies in block weeks. Add the periods above under “Block teaching”.')) + '</p>' +
+                    (Object.keys(K.planNorm(sp.block)).length ? '' : '<div class="kl-quick"><button class="kl-btn kl-btn--sm" type="button" data-neu="kopie">' + L('Normale Woche übernehmen', 'Copy the regular week') + '</button></div>');
+            }
+            if (ansicht === 'tage') {
+                const tage = Object.keys(sp.tage || {}).sort();
+                h += '<p class="kl-hint">' + L('Für einzelne Tage mit anderem Ablauf, z. B. Projekttag oder Prüfungsvorbereitung. Geht vor allen anderen Plänen.', 'For single days with a different schedule, e.g. a project day or exam preparation. Takes precedence over all other plans.') + '</p>' +
+                    '<div class="kl-plan__tage">' + tage.map(function (d) {
+                        return '<span class="kl-tag' + (d === tagSel ? ' is-an' : '') + '"><button type="button" class="kl-tag__w" data-tag-d="' + d + '">' + K.datum(d, true) + '</button><button type="button" data-tag-x="' + d + '" aria-label="' + L('Tag entfernen', 'Remove day') + '">' + svg('x') + '</button></span>';
+                    }).join('') +
+                    '<label class="kl-plan__neu"><span class="kl-sr">' + L('Tag hinzufügen', 'Add day') + '</span><input class="kl-in" type="date" id="klTagNeu" min="' + K.heuteIso() + '"></label></div>';
+            }
+            return h;
+        };
+        const rasterHtml = function () {
+            const z = zelle(), zeiten = K.stundenZeiten(sp.raster), pausen = ((K.rasterNorm(sp.raster) || {}).pausen || []);
+            const cols = spalten();
+            const opt = function (wert) {
+                return '<option value=""></option>' + m.faecher.map(function (fa) { return '<option value="' + esc(fa) + '"' + (fa === wert ? ' selected' : '') + '>' + esc(fa) + '</option>'; }).join('') +
+                    (wert && m.faecher.indexOf(wert) < 0 ? '<option value="' + esc(wert) + '" selected>' + esc(wert) + '</option>' : '');
+            };
+            let html = '<div class="kl-plan__grid' + (cols.length === 1 ? ' kl-plan__grid--1' : '') + (zeiten ? ' mit-zeit' : '') + '" role="table" aria-label="' + L('Stundenplan', 'Timetable') + '"><span></span>' +
+                cols.map(function (t) {
+                    const titel = ansicht === 'tage' ? K.datum(tagSel, true) : K.TAGE[t][EN ? 1 : 0];
+                    return '<span class="kl-plan__kopf' + (schulSpalte(t) ? ' is-schule' : '') + '">' + titel + '</span>';
+                }).join('');
+            for (let h = 1; h <= reihen; h++) {
+                html += '<span class="kl-plan__h">' + h + '.' + (zeiten ? '<small>' + zeiten[h].von + '–' + zeiten[h].bis + '</small>' : '') + '</span>';
+                cols.forEach(function (t) {
+                    const lab = (ansicht === 'tage' ? K.datum(tagSel, true) : K.TAGE_LANG[t][EN ? 1 : 0]) + ', ' + h + '. ' + L('Stunde', 'lesson');
+                    html += '<select class="kl-plan__z' + (z[t][h] ? ' is-voll' : '') + '" data-t="' + t + '" data-h="' + h + '" aria-label="' + esc(lab) + '">' + opt(z[t][h] || '') + '</select>';
+                });
+                const pa = h < reihen && pausen.filter(function (p) { return p.nach === h; })[0];
+                if (pa) html += '<span class="kl-plan__pause">' + L('Pause', 'Break') + ' · ' + pa.min + ' min</span>';
+            }
+            return html + '</div>' + (reihen < 12 ? '<button class="kl-add" type="button" id="klPlanMehr">' + svg('plus') + L('Weitere Stunde', 'Another lesson') + '</button>' : '');
+        };
         const zeichnePlan = function () {
             if (!m.faecher.length) {
                 plan.innerHTML = '<p class="kl-hint">' + L('Tragen Sie oben zuerst die Fächer ein, dann können Sie sie hier den Stunden zuordnen.', 'Add subjects above first, then you can assign them to lessons here.') + '</p>';
                 return;
             }
-            const z = zelle();
-            const opt = function (wert) {
-                return '<option value=""></option>' + m.faecher.map(function (fa) { return '<option value="' + esc(fa) + '"' + (fa === wert ? ' selected' : '') + '>' + esc(fa) + '</option>'; }).join('') +
-                    (wert && m.faecher.indexOf(wert) < 0 ? '<option value="' + esc(wert) + '" selected>' + esc(wert) + '</option>' : '');
-            };
-            let html = '<div class="kl-plan__grid" role="table" aria-label="' + L('Stundenplan', 'Timetable') + '"><span></span>' +
-                [1, 2, 3, 4, 5].map(function (t) { return '<span class="kl-plan__kopf' + (m.schultage.indexOf(t) >= 0 ? ' is-schule' : '') + '">' + K.TAGE[t][EN ? 1 : 0] + '</span>'; }).join('');
-            for (let h = 1; h <= reihen; h++) {
-                html += '<span class="kl-plan__h">' + h + '.</span>';
-                [1, 2, 3, 4, 5].forEach(function (t) {
-                    html += '<select class="kl-plan__z' + (z[t][h] ? ' is-voll' : '') + '" data-t="' + t + '" data-h="' + h + '" aria-label="' + esc(K.TAGE_LANG[t][EN ? 1 : 0] + ', ' + h + '. ' + L('Stunde', 'lesson')) + '">' + opt(z[t][h] || '') + '</select>';
-                });
-            }
-            html += '</div>' + (reihen < 12 ? '<button class="kl-add" type="button" id="klPlanMehr">' + svg('plus') + L('Weitere Stunde', 'Another lesson') + '</button>' : '');
-            plan.innerHTML = html;
-            const mehr = $('klPlanMehr'); if (mehr) mehr.onclick = function () { reihen = Math.min(12, reihen + 1); zeichnePlan(); };
+            if (ansicht === 'tage' && tagSel && !(sp.tage && tagSel in sp.tage)) tagSel = null;
+            if (ansicht === 'tage' && !tagSel) tagSel = Object.keys(sp.tage || {}).sort()[0] || null;
+            const zeigeRaster = ansicht === 'normal' || ansicht === 'block' || (ansicht === 'b' && sp.b) || (ansicht === 'tage' && tagSel);
+            plan.innerHTML = zeitZeile() + kopf() + (zeigeRaster ? '<div class="kl-plan__scroll">' + rasterHtml() + '</div>' : '');
+        };
+        const zeitSetzen = function () {
+            const st = $('klZStart').value;
+            if (!st) { delete sp.raster; return; }
+            const alt = sp.raster || {};
+            sp.raster = { start: st, dauer: Math.min(90, Math.max(30, +$('klZDauer').value || 45)), pausen: alt.pausen || [] };
         };
         plan.addEventListener('change', function (e) {
-            const sel = e.target.closest('select[data-t]'); if (!sel) return;
-            const z = zelle(); z[+sel.getAttribute('data-t')][+sel.getAttribute('data-h')] = sel.value;
-            m.stundenplan = ausRaster(z);
-            sel.classList.toggle('is-voll', !!sel.value);
-            dirty();
+            const sel = e.target.closest('select[data-t]');
+            if (sel) {
+                const z = zelle(); z[+sel.getAttribute('data-t')][+sel.getAttribute('data-h')] = sel.value;
+                wocheSetzen(ausRaster(z));
+                sel.classList.toggle('is-voll', !!sel.value);
+                dirty(); return;
+            }
+            if (e.target.id === 'klZStart' || e.target.id === 'klZDauer') { zeitSetzen(); zeichnePlan(); dirty(); return; }
+            const pz = e.target.closest('[data-pi]');
+            if (pz && sp.raster) {
+                const p = sp.raster.pausen[+pz.getAttribute('data-pi')];
+                if (e.target.getAttribute('data-pz') === 'nach') p.nach = +e.target.value;
+                else p.min = Math.min(90, Math.max(5, +e.target.value || 15));
+                zeichnePlan(); dirty(); return;
+            }
+            if (e.target.id === 'klBWechsel' && sp.b) { sp.b.wechsel = e.target.value; dirty(); return; }
+            if (e.target.id === 'klTagNeu' && e.target.value) {
+                sp.tage = sp.tage || {};
+                if (!(e.target.value in sp.tage)) sp.tage[e.target.value] = [];
+                tagSel = e.target.value; zeichnePlan(); dirty();
+            }
+        });
+        plan.addEventListener('click', function (e) {
+            const b = e.target.closest('button'); if (!b) return;
+            if (b.hasAttribute('data-ans')) { ansicht = b.getAttribute('data-ans'); zeichnePlan(); return; }
+            if (b.id === 'klPlanMehr') { reihen = Math.min(12, reihen + 1); zeichnePlan(); return; }
+            if (b.id === 'klPauseAdd' && sp.raster) {
+                const belegt = sp.raster.pausen.map(function (p) { return +p.nach; });
+                let n = 2; while (belegt.indexOf(n) >= 0 && n < 11) n++;
+                if (belegt.indexOf(n) < 0) sp.raster.pausen.push({ nach: n, min: 15 });
+                zeichnePlan(); dirty(); return;
+            }
+            if (b.hasAttribute('data-pzx') && sp.raster) { sp.raster.pausen.splice(+b.getAttribute('data-pzx'), 1); zeichnePlan(); dirty(); return; }
+            if (b.hasAttribute('data-neu')) {
+                const kopie = b.getAttribute('data-neu') === 'kopie' ? JSON.parse(JSON.stringify(K.planNorm(sp))) : {};
+                if (ansicht === 'b') sp.b = Object.assign({ wechsel: naechsterMontag() }, kopie);
+                else if (ansicht === 'block') sp.block = kopie;
+                zeichnePlan(); dirty(); return;
+            }
+            if (b.id === 'klBWeg') { delete sp.b; zeichnePlan(); dirty(); return; }
+            if (b.hasAttribute('data-tag-d')) { tagSel = b.getAttribute('data-tag-d'); zeichnePlan(); return; }
+            if (b.hasAttribute('data-tag-x')) { delete sp.tage[b.getAttribute('data-tag-x')]; zeichnePlan(); dirty(); }
         });
         zeichnePlan();
-        // Faecherliste aendert die Auswahl im Raster
+        // Faecherliste, Schultage, Rhythmus und Bloecke aendern Auswahl bzw. Hervorhebung im Raster
         const zeichneTagsAlt = zeichneTags;
         zeichneTags = function () { zeichneTagsAlt(); zeichnePlan(); };
         f.querySelector('[data-seg="tage"]').addEventListener('click', function () { setTimeout(zeichnePlan, 0); });
+        rh.addEventListener('input', function () { setTimeout(zeichnePlan, 0); });
+        f.addEventListener('click', function (e) { if (e.target.closest('#klRhAdd, #klBlAdd, [data-rm]')) setTimeout(zeichnePlan, 0); });
 
         f.onsubmit = async function (e) {
             e.preventDefault();
             const t = $('klSaveT'), btn = $('klSave');
             if (!String(m.name).trim()) { t.className = 'kl-savebar__t is-err'; t.textContent = fehlerText({ code: 'name_ungueltig' }); f.querySelector('[data-f="name"]').focus(); return; }
             const p = Object.assign({}, m, {
-                stundenplan: K.planNorm(m.stundenplan),
+                stundenplan: K.planVoll(m.stundenplan),
                 rhythmus: m.rhythmus.filter(function (r) { return r.startDate; }),
                 bloecke: m.bloecke.filter(function (b) { return b.von && b.bis; })
             });
@@ -711,7 +884,7 @@
             '<div class="kl-compose__row"><label class="kl-field" style="grid-auto-flow:column;align-items:center;gap:10px"><span class="kl-label">' + L('Sichtbar bis (optional)', 'Visible until (optional)') + '</span><input class="kl-in" type="date" id="klBis" min="' + K.heuteIso() + '" style="width:auto"></label>' +
                 '<span class="kl-compose__count" id="klMsgN">0 / 500</span>' +
                 '<button class="kl-btn kl-btn--primary" type="submit" id="klSend"><span>' + L('Senden', 'Send') + '</span></button></div>' +
-            '<p class="kl-hint">' + L('Erscheint bei allen Azubis der Klasse in den Meldungen der App, beim nächsten Öffnen.', 'Appears in the app notifications of everyone in the class, next time they open it.') + '</p>' +
+            '<p class="kl-hint" id="klPushHint">' + L('Kommt als Benachrichtigung aufs Handy, wenn der Azubi das eingeschaltet hat, sonst beim nächsten Öffnen der App.', 'Arrives as a phone notification if the trainee turned that on, otherwise next time they open the app.') + '</p>' +
             '<p class="kl-codebar__err" id="klSendErr" role="alert" hidden></p></form><ul class="kl-sent" id="klSent"><li><p class="kl-hint">' + L('Wird geladen …', 'Loading …') + '</p></li></ul>';
         const ta = $('klMsg');
         ta.addEventListener('input', function () { $('klMsgN').textContent = ta.value.length + ' / 500'; });
@@ -736,6 +909,13 @@
             } catch (e) { $('klSent').innerHTML = '<li><p class="kl-hint">' + fehlerText(e) + '</p></li>'; }
         };
         liste();
+        // Wie viele Geraete Mitteilungen als Benachrichtigung bekommen (nur die Zahl, wie beim Beitritt)
+        call('klasse_push_zahl', { p_id: k.id }).then(function (n) {
+            const h = $('klPushHint'); if (!h) return;
+            h.textContent = n > 0
+                ? L(n + (n === 1 ? ' Gerät bekommt' : ' Geräte bekommen') + ' Mitteilungen sofort als Benachrichtigung, alle anderen beim nächsten Öffnen der App.', n + (n === 1 ? ' device gets' : ' devices get') + ' messages right away as a notification, everyone else next time they open the app.')
+                : L('Noch hat niemand Benachrichtigungen eingeschaltet: Mitteilungen erscheinen beim nächsten Öffnen der App. Azubis schalten sie beim Beitritt ein.', 'Nobody has turned on notifications yet: messages appear next time the app opens. Trainees turn them on when joining.');
+        }).catch(function () { /* Hinweis bleibt allgemein */ });
         $('klCompose').onsubmit = async function (e) {
             e.preventDefault();
             const err = $('klSendErr'), btn = $('klSend');
@@ -743,10 +923,16 @@
             btn.disabled = true; err.hidden = true;
             const mitAblauf = !!$('klBis').value;
             try {
-                await call('klasse_mitteilung', { p_id: k.id, p_text: ta.value, p_bis: $('klBis').value || null });
+                const neu = await call('klasse_mitteilung', { p_id: k.id, p_text: ta.value, p_bis: $('klBis').value || null });
+                // Sofort aufs Handy (Edge Function klassen-push). Scheitert das, ist die Mitteilung
+                // trotzdem gespeichert und kommt beim naechsten Oeffnen der App an.
+                let gepusht = null;
+                try { const c = await sb(); const r = await c.functions.invoke('klassen-push', { body: { mitteilung_id: neu && neu.id } }); if (!r.error) gepusht = r.data; } catch (x) { gepusht = null; }
                 ta.value = ''; $('klBis').value = ''; $('klMsgN').textContent = '0 / 500';
                 ev('klasse_mitteilung', { mit_ablauf: mitAblauf });
-                toast(L('Mitteilung gesendet', 'Message sent'));
+                toast(gepusht && gepusht.gesendet > 0
+                    ? L('Gesendet, ' + gepusht.gesendet + (gepusht.gesendet === 1 ? ' Benachrichtigung' : ' Benachrichtigungen') + ' raus', 'Sent, ' + gepusht.gesendet + (gepusht.gesendet === 1 ? ' notification' : ' notifications') + ' delivered')
+                    : L('Mitteilung gesendet', 'Message sent'));
                 await liste();
                 const tab = document.querySelector('[data-tab="mitteilungen"]'); if (tab) tab.innerHTML = L('Mitteilungen', 'Messages') + (k.mitteilungen.length ? '<small>' + k.mitteilungen.length + '</small>' : '');
             } catch (x) { err.textContent = fehlerText(x); err.hidden = false; }

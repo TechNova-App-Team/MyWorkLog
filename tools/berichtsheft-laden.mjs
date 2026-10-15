@@ -53,6 +53,9 @@ export function ladeEngine(opts = {}) {
         showNotification: () => { },
         bhIcon: () => '',
         escapeHtml: (t) => String(t ?? ''),
+        // Zusaetzliche Globale, die die Seite aus anderen Dateien bekommt (z. B. MWLKlasse
+        // aus klasse-profil.js fuer den Stundenplan je Datum).
+        ...(opts.globals || {}),
     };
     sandbox.window = sandbox;
     sandbox.globalThis = sandbox;

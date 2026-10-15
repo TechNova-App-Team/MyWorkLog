@@ -253,7 +253,8 @@ var EVENT_LABELS = {
     'problem_p2p':            ['Geräte-Sync ohne Verbindung', 'Device sync could not connect'],
     'problem_ki':             ['KI nicht verfügbar', 'AI unavailable'],
     'problem_route':          ['Route nicht berechnet', 'Route not calculated'],
-    'problem_suche_ohne_treffer': ['Suche ohne Treffer', 'Search without results']
+    'problem_suche_ohne_treffer': ['Suche ohne Treffer', 'Search without results'],
+    'klasse_push':            ['Klassen-Mitteilungen aufs Handy geschaltet', 'Class messages to phone toggled']
 };
 // Unterart (Property 'aktion'/'grund', vom Worker als '<event>::<unterart>' angehaengt).
 // Erst '<event>::<unterart>', dann die Unterart allein; sonst wird der Schluessel lesbar gemacht.

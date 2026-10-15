@@ -364,6 +364,7 @@ function generateDayEntries(professionId, options = {}) {
         aufgabenForDay = null,  // ✦ Aufgaben-Pipe: ["Switch konfigurieren", ...] für diesen Tag
         trackingForDay = null,  // ✦ Tracking-Pipe: ["Projekt: Alpha", "Notiz: Bugfix …"] für diesen Tag
         planForDay = null,      // ✦ Wochenplan: was der Nutzer FÜR DIESEN TAG geschrieben hat
+        calendarWeek = null,    // KW des Berichts: entscheidet, welche Fassung des Stundenplans gilt (Woche B, Block …)
     } = options;
 
     // Nur Stichpunkte tragen ein Aufzaehlungszeichen; ein Satz mit "• " davor
@@ -392,7 +393,7 @@ function generateDayEntries(professionId, options = {}) {
         // dieselbe Quelle wie die Cloud-KI, damit beide Wege dasselbe Fach schreiben.
         // Bewusst OHNE typeof-Guard: der Name kommt aus window.AIS_CLOUD (oben ausgepackt);
         // fehlte er, soll das hier laut scheitern statt den Plan still zu ueberspringen.
-        const _kp = (!Array.isArray(planForDay) || !planForDay.length) ? _klassenPlanFuer(dayIndex) : null;
+        const _kp = (!Array.isArray(planForDay) || !planForDay.length) ? _klassenPlanFuer(dayIndex, calendarWeek) : null;
         const _schultag = generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang, _kp ? _planFaecher(_kp) : planForDay);
         if (_kp) _schultag.schoolTopic = _planFaecher(_kp).join(', ');
         return _schultag;
@@ -735,6 +736,7 @@ function generateWeek(professionId, options = {}) {
             umfang,
             form,
             dayIndex: dayIdx,
+            calendarWeek: week.calendarWeek,
             isSchoolDay,
             season,
             excludePhrases: allExcludePhrases,

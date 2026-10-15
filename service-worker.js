@@ -538,25 +538,36 @@ self.addEventListener('message', event => {
 // PUSH NOTIFICATIONS
 // ─────────────────────────────────────────────
 
+// Einziger Absender bisher: Klassen-Mitteilungen (Edge Function klassen-push, seit v8.5.9).
+// Eine offene App bekommt zusaetzlich eine Nachricht und holt die Mitteilung sofort in
+// ihre Glocke (klasse-profil.js), statt bis zum naechsten Abgleich zu warten.
 self.addEventListener('push', event => {
   let data = {};
   try { data = event.data?.json() ?? {}; } catch { data = { body: event.data?.text() }; }
+  const ziel = typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/';
 
-  event.waitUntil(
-    self.registration.showNotification(data.title ?? 'TimeTracker', {
-      body:               data.body ?? 'Neue Benachrichtigung',
-      icon:               './Grafiken/icon-192.png',
-      tag:                data.tag  ?? 'timetracker',
-      requireInteraction: false,
-    })
-  );
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(data.title ?? 'MyWorkLog', {
+      body:  data.body ?? '',
+      icon:  '/Grafiken/icon-192.png',
+      badge: '/Grafiken/badge-96.png',   // nur Maske: weisses Zeichen auf transparent (Statusleiste)
+      tag:   data.tag ?? 'myworklog',
+      data:  { url: ziel },
+    }),
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(list => list.forEach(c => c.postMessage({ typ: 'klasse-mitteilung' }))),
+  ]));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+  const ziel = event.notification.data?.url || '/';
   event.waitUntil(
-    self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then(list => list[0] ? list[0].focus() : self.clients.openWindow('/'))
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      // Laeuft die App schon, nach vorn holen (die Nachricht oben hat sie schon abgeglichen);
+      // sonst neu oeffnen — ?klasse=mitteilung loest dort den Abgleich sofort aus.
+      const offen = list.find(c => new URL(c.url).pathname === '/' || new URL(c.url).pathname === '/en/') || list[0];
+      return offen ? offen.focus() : self.clients.openWindow(ziel);
+    })
   );
 });
