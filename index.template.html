@@ -174,13 +174,42 @@
 <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
 <meta name="author" content="TechNova App Team">
 <meta name="color-scheme" content="dark light">
+<!-- App-Start: Übergabe vom Android-Startbildschirm an die Seite. Die TWA zeigt beim
+     Kaltstart das Zeichen auf #030305 (Bilder aus Tools/myworklog-android/bauen.mjs);
+     hier liegt DASSELBE Zeichen in derselben Größe darüber, bis die Ansicht gebaut ist,
+     und blendet dann aus — sonst sieht man nach dem Splash erst das halb gebaute
+     Dashboard. Fester Farbwert, weil er zur Android-Fläche passen muss, nicht zum Theme.
+     Nur installierte App und nur einmal je Sitzung: Rückwege von Standalone-Seiten auf
+     "/" sollen nicht jedes Mal das Zeichen zeigen. -->
+<style>
+html.mwl-start::after{content:"";position:fixed;inset:0;z-index:2147483647;pointer-events:none;
+  background:#030305 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='2 2 60 60'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='10' y1='6' x2='54' y2='58' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.5' stop-color='%23d4d4d8'/%3E%3Cstop offset='1' stop-color='%239a9aa3'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M32 9.5A22.5 22.5 0 1 1 9.5 32' fill='none' stroke='url(%23g)' stroke-width='12' stroke-linecap='round'/%3E%3Ccircle cx='16.1' cy='16.1' r='6.6' fill='url(%23g)'/%3E%3C/svg%3E") 50% 50%/var(--mwl-start-gr,72px) no-repeat;
+  transition:opacity 420ms cubic-bezier(.23,1,.32,1),transform 420ms cubic-bezier(.23,1,.32,1)}
+html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
+@media (prefers-reduced-motion:reduce){html.mwl-start.mwl-start-aus::after{transform:none}}
+</style>
+<script>(function(){try{
+  var h=document.documentElement;
+  if(!(matchMedia('(display-mode: standalone)').matches||document.referrer.indexOf('android-app://')===0))return;
+  if(sessionStorage.getItem('mwl_start'))return;
+  sessionStorage.setItem('mwl_start','1');
+  h.classList.add('mwl-start');
+  var fertig=false;
+  function weg(){if(fertig)return;fertig=true;
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      h.classList.add('mwl-start-aus');
+      setTimeout(function(){h.classList.remove('mwl-start','mwl-start-aus');},480);});});}
+  document.addEventListener('DOMContentLoaded',weg,{once:true});
+  /* Obergrenze: ein haengendes Skript darf die App nicht hinter dem Zeichen festhalten. */
+  setTimeout(weg,1600);
+}catch(e){}})();</script>
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1">
 <meta name="bingbot" content="index, follow">
 <meta name="rating" content="general">
 <meta name="referrer" content="origin-when-cross-origin">
 <meta name="format-detection" content="telephone=no">
-<meta name="generator" content="MyWorkLog v8.5.7">
+<meta name="generator" content="MyWorkLog v8.5.8">
 
 <!-- ===== CANONICAL & ALTERNATE ===== -->
 <link rel="canonical" href="https://myworklog.de/">
@@ -270,9 +299,9 @@
       "applicationSubCategory": "Zeiterfassung",
       "operatingSystem": "Web, Windows, macOS, Linux, iOS, Android",
       "browserRequirements": "Requires Chrome 90+, Firefox 88+, Safari 14+ or Edge 90+",
-      "softwareVersion": "8.5.7",
+      "softwareVersion": "8.5.8",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-10-14",
+      "dateModified": "2026-10-15",
       "inLanguage": "de",
       "isAccessibleForFree": true,
       "license": "https://opensource.org/licenses/MIT",
@@ -358,7 +387,7 @@
       "about": { "@id": "https://myworklog.de/#app" },
       "inLanguage": "de",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-10-14",
+      "dateModified": "2026-10-15",
       "breadcrumb": {
         "@type": "BreadcrumbList",
         "itemListElement": [
@@ -565,6 +594,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..700&display=swap"></noscript>
 
+<link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
+<script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
 </head>
 <body>
     <!-- Fallback-Ladescreen: erscheint NUR bei spürbarer Verzögerung (> 3000ms).
@@ -749,7 +780,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
           </button>
           <!-- Zweiter Weg fuer die zweite Zielgruppe (Ausbilder aus der Suche). -->
           <a class="vi-alt" href="/ausbilder/" onclick="if(typeof mwlEvent==='function')mwlEvent('intro',{aktion:'ausbilder'})">Ich bin Ausbilder</a>
-          <span class="vi-ver" data-app-version translate="no">v8.5.7</span>
+          <span class="vi-ver" data-app-version translate="no">v8.5.8</span>
         </div>
       </div>
 

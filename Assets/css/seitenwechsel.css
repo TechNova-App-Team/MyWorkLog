@@ -1,0 +1,29 @@
+/* ═══ SEITENWECHSEL ═══
+   Weicher Übergang zwischen zwei Dokumenten (App ↔ Standalone-Seiten), per
+   Cross-Document View Transitions. Wirkt nur, wenn ALTE und NEUE Seite diese
+   Datei laden — deshalb steht der Link in index.template.html und in jeder Seite
+   unter pages/. Browser ohne Unterstützung laden einfach normal.
+   Ausgelassen: archflow/graph und repo-report (generiert), offline/maintenance
+   (Notfallseiten), legal/ (fremde Produkte).
+   Anlass (15.10.2026): In der Android-App wirkte jeder Seitenwechsel wie ein
+   Neustart. Die neue Seite blendet deshalb aus 8 px Versatz ein, die alte geht
+   schneller aus — Austritt kürzer als Eintritt. */
+@view-transition { navigation: auto; }
+
+::view-transition-old(root) {
+  animation: mwl-sw-aus 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+::view-transition-new(root) {
+  animation: mwl-sw-ein 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes mwl-sw-aus { to { opacity: 0; } }
+@keyframes mwl-sw-ein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-new(root) { animation-name: mwl-sw-blende; animation-duration: 160ms; }
+  @keyframes mwl-sw-blende { from { opacity: 0; } }
+}
