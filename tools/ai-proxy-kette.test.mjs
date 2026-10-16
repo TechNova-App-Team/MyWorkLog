@@ -143,6 +143,21 @@ const rg = await worker.fetch(neueAnfrage(), env);
 pruefe(aufrufe.length === MODELS.length && rg.headers.get('X-MWL-Salvage') === '1',
   `Gegenprobe: ohne days alle ${MODELS.length} Modelle probiert (${aufrufe.length})`);
 
+// ── v4.8: Rettung nur mit Wochen-Spur ─────────────────────────────────
+// Ohne die Sperre gab der Proxy JEDE Antwort zurueck — mit gefaelschtem Origin ein
+// freier Chatbot. Ein Gedicht ohne days/entries/antwort darf nicht durchkommen.
+console.log('\nRettung: nur wenn es nach einer Woche aussieht');
+aufrufe.length = 0;
+globalThis.fetch = async (url, init) => {
+  aufrufe.push(JSON.parse(init.body).model);
+  return new Response(antwort('Rosen sind rot, Veilchen sind blau, hier ist dein Gedicht, ganz ohne Bericht.'), { status: 200 });
+};
+const rx = await worker.fetch(neueAnfrage(), env);
+pruefe(rx.status === 503 && !rx.headers.get('X-MWL-Salvage'), `Fremdtext ohne Wochen-Spur → 503, keine Rettung (${rx.status})`);
+const bx = JSON.stringify(await rx.json());
+pruefe(!bx.includes('Rosen'), 'der Fremdtext kommt beim Aufrufer nicht an');
+pruefe(aufrufe.length === MODELS.length, `Gegenprobe: alle ${MODELS.length} Modelle wurden gefragt (${aufrufe.length})`);
+
 // ── /verstehen ist raus (v4.3) ────────────────────────────────────────
 // 410 sofort, ohne ein Modell anzufassen: eine alte, gecachte App faellt so
 // auf ihren Notweg, statt jede Nachricht durch die ganze Kette zu schicken.
