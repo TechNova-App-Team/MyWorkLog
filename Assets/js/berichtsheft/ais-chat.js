@@ -627,8 +627,8 @@ function werHatGeschrieben() {
     return z === 'frei-kontingent'
         ? Lx(stufeName('schnell') + ' ist für heute aufgebraucht, deshalb hat ' + stufeName('frei') + ' geschrieben.',
              stufeName('schnell') + ' is used up for today, so ' + stufeName('frei') + ' wrote this.')
-        : Lx(stufeName('schnell') + ' war gerade nicht erreichbar, deshalb hat ' + stufeName('frei') + ' geschrieben.',
-             stufeName('schnell') + ' was not reachable just now, so ' + stufeName('frei') + ' wrote this.');
+        : Lx(stufeName('schnell') + ' hat diesmal keine Antwort geliefert, deshalb hat ' + stufeName('frei') + ' geschrieben.',
+             stufeName('schnell') + ' did not deliver an answer this time, so ' + stufeName('frei') + ' wrote this.');
 }
 // Einmalige Ankuendigung im Chat, ersetzt den Dialog "Wir sind von Gemini zu
 // OpenRouter gewechselt" (cv2-hinweis, bis v8.5.11). Kein Countdown, kein Dialog
