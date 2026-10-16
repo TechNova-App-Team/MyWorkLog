@@ -270,6 +270,67 @@ function profilTeile(k) {
     if (k.vorgabe) t.push(Lx('Vorgabe: ', 'Rule: ') + (k.vorgabe.length > 40 ? k.vorgabe.slice(0, 39) + '…' : k.vorgabe));
     return t;
 }
+// ── "Dein Stil" sichtbar (seit v8.5.13) ──────────────────────────────
+// Umfrage 16.10.2026: "KI schreibt wie du" war mit 6/10 der meistgewuenschte
+// Punkt — obwohl es das Lernprofil (bh-lernen.js) seit v7.x gibt. Es war nur als
+// unterstrichenes "Lernt mit" zu sehen. Hier steht es mit ECHTEN Zahlen.
+// 🔴 Kein Prozentwert: wie "aehnlich" ein Text klingt, misst niemand. Die Stufe
+// haengt allein an dem, was tatsaechlich in den Prompt geht (gelesene Wochen,
+// gemerkte Korrekturen, Ausbilder-Anmerkungen) — siehe stilStufe().
+function stilStand() {
+    if (!lernDa()) return null;
+    const an_ = BHLernen.an();
+    const p = lernProfil() || { wochen: 0 };
+    const z = BHLernen.lesen ? BHLernen.lesen() : { korrekturen: [], ausbilder: [] };
+    const st = { an: an_, wochen: an_ ? (p.wochen | 0) : 0, korrekturen: an_ ? (z.korrekturen || []).length : 0, ausbilder: an_ ? (z.ausbilder || []).length : 0 };
+    st.stufe = stilStufe(st);
+    return st;
+}
+// 0 kennt dich nicht · 1 lernt dich kennen · 2 kennt deinen Stil · 3 schreibt wie du
+// Schwellen: ab 3 Wochen gibt es zwei Vorlagen UND typische Taetigkeiten (MIN_WOCHEN 2,
+// VORLAGEN 2 in bh-lernen.js); "schreibt wie du" verlangt zusaetzlich Korrekturen —
+// erst die zeigen der KI, was DU an ihren Saetzen aenderst.
+function stilStufe(st) {
+    if (!st || !st.an) return -1;
+    const w = st.wochen, k = st.korrekturen + st.ausbilder;
+    if (w >= 8 && k >= 3) return 3;
+    if (w >= 3 || k >= 1) return 2;
+    if (w >= 1) return 1;
+    return 0;
+}
+const STIL_NAME = [['Kennt dich noch nicht', 'Does not know you yet'], ['Lernt dich kennen', 'Getting to know you'], ['Kennt deinen Stil', 'Knows your style'], ['Schreibt wie du', 'Writes like you']];
+function stilName(stufe) { return stufe < 0 ? Lx('Lernen aus', 'Learning off') : Lx(STIL_NAME[stufe][0], STIL_NAME[stufe][1]); }
+function stilBalken(stufe) {
+    return '<span class="aic-stil-balken" aria-hidden="true">' + [0, 1, 2].map(i => '<i' + (stufe > i ? ' class="is-an"' : '') + '></i>').join('') + '</span>';
+}
+function stilNaechster(st) {
+    if (st.stufe === 0) return Lx('Speichere deinen ersten Bericht, dann lese ich ihn mit.', 'Save your first report and I will read it.');
+    if (st.stufe === 1) return Lx('Noch ' + Math.max(1, 3 - st.wochen) + ' ' + (3 - st.wochen === 1 ? 'Woche' : 'Wochen') + ', dann kenne ich deinen Stil.', Math.max(1, 3 - st.wochen) + ' more ' + (3 - st.wochen === 1 ? 'week' : 'weeks') + ' and I know your style.');
+    if (st.stufe === 2) {
+        const fw = Math.max(0, 8 - st.wochen), fk = Math.max(0, 3 - st.korrekturen - st.ausbilder);
+        const teile = [];
+        if (fw) teile.push(Lx(fw + ' ' + (fw === 1 ? 'Woche' : 'Wochen'), fw + ' ' + (fw === 1 ? 'week' : 'weeks')));
+        if (fk) teile.push(Lx(fk + ' ' + (fk === 1 ? 'Korrektur' : 'Korrekturen') + ' an meinen Entwürfen', fk + ' ' + (fk === 1 ? 'correction' : 'corrections') + ' to my drafts'));
+        return Lx('Noch ' + teile.join(' und ') + ', dann schreibe ich wie du.', teile.join(' and ') + ' more and I write like you.');
+    }
+    return Lx('Was du an meinen Entwürfen änderst, merke ich mir weiter.', 'I keep remembering what you change in my drafts.');
+}
+function stilKarteHTML() {
+    const st = stilStand();
+    if (!st) return '';
+    const zahl = (n, e, m) => '<span><b>' + n + '</b> ' + esc(n === 1 ? e : m) + '</span>';
+    return '<button type="button" class="aic-stil" onclick="AISChat.gelernt()">' +
+        '<span class="aic-stil-kopf"><span class="aic-stil-t">' + esc(Lx('Dein Schreibstil', 'Your writing style')) + '</span>' + stilBalken(st.stufe) + '</span>' +
+        '<span class="aic-stil-name">' + esc(stilName(st.stufe)) + '</span>' +
+        (st.an ? '<span class="aic-stil-zahlen">' +
+            zahl(st.wochen, Lx('Woche gelesen', 'week read'), Lx('Wochen gelesen', 'weeks read')) +
+            zahl(st.korrekturen, Lx('Korrektur gemerkt', 'correction kept'), Lx('Korrekturen gemerkt', 'corrections kept')) +
+            (st.ausbilder ? zahl(st.ausbilder, Lx('Anmerkung vom Ausbilder', 'note from your trainer'), Lx('Anmerkungen vom Ausbilder', 'notes from your trainer')) : '') +
+            '</span>' : '') +
+        '<span class="aic-stil-weiter">' + esc(st.an ? stilNaechster(st) : Lx('Eingeschaltet lerne ich aus deinen Berichten, wie du schreibst.', 'Switched on, I learn from your reports how you write.')) + '</span>' +
+        '</button>';
+}
+
 function profilZeichnen() {
     const el = $('aicProfil');
     if (!el || !studioDa()) return;
@@ -279,19 +340,20 @@ function profilZeichnen() {
     if (feld) feld.placeholder = entwurfHatInhalt(gespraech.entwurf)
         ? Lx('Noch was? Oder etwas ändern …', 'Anything else, or a change …')
         : Lx('Erzähl, was diese Woche los war …', 'Tell me what happened this week …');
-    el.innerHTML = (k.bereit ? '' : '<span class="aic-profil-fehlt">' + Lx('Noch kein Beruf', 'No occupation yet') + '</span>') +
-        teile.map(t => '<span class="aic-profil-teil">' + esc(t) + '</span>').join('') +
-        '<button type="button" class="aic-profil-knopf" onclick="AISChat.einstellungen()">' +
-        Lx('Anpassen', 'Adjust') + '</button>' +
+    // Die Marken SIND der Weg in die Einstellungen (Rueckmeldung 16.10.2026: "Anpassen"
+    // unten und das Zahnrad oben fand niemand). Jede Marke oeffnet das Sheet.
+    el.innerHTML = (k.bereit ? '' : '<button type="button" class="aic-profil-fehlt" onclick="AISChat.einstellungen()">' + Lx('Noch kein Beruf', 'No occupation yet') + '</button>') +
+        teile.map(t => '<button type="button" class="aic-profil-teil" onclick="AISChat.einstellungen()" title="' + esc(Lx('In den Einstellungen ändern', 'Change in settings')) + '">' + esc(t) + '</button>').join('') +
+        '<button type="button" class="aic-profil-einst" onclick="AISChat.einstellungen()"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>' +
+        Lx('Einstellungen', 'Settings') + '</button>' +
         '<button type="button" class="aic-profil-knopf' + (vorwissenText() ? ' is-an' : '') + '" onclick="AISChat.vorwissen()">' +
         (vorwissenText() ? Lx('Vorwissen an', 'Background on') : Lx('Vorwissen hinterlegen', 'Add background')) + '</button>' +
         // "is-an" nur, wenn das Profil auch etwas an die KI gibt — sonst
         // behauptete die Marke eine Wirkung, die es nicht gibt.
         (lernDa() ? (() => {
-            const an_ = BHLernen.an();
-            const voll = an_ && BHLernen.hatInhalt(lernProfil());
-            return '<button type="button" class="aic-profil-knopf' + (voll ? ' is-an' : '') + '" onclick="AISChat.gelernt()">' +
-                (!an_ ? Lx('Lernen aus', 'Learning off') : voll ? Lx('Gelernt', 'Learned') : Lx('Lernt mit', 'Learning')) + '</button>';
+            const st = stilStand();
+            return '<button type="button" class="aic-profil-knopf aic-profil-stil" onclick="AISChat.gelernt()" title="' + esc(stilName(st.stufe)) + '">' +
+                stilBalken(st.stufe) + Lx('Dein Stil', 'Your style') + '</button>';
         })() : '');
 }
 
@@ -482,7 +544,7 @@ function leerHTML() {
         '<p class="aic-leer-s">' + esc(text) + '</p>' +
         '<div class="aic-vorschlaege">' + vorschlaege.map(v =>
             '<button type="button" class="aic-vorschlag" data-text="' + esc(v) + '" onclick="AISChat.vorschlag(this)">' + esc(v) + '</button>').join('') +
-        '</div>' + vwHinweis + '</div>';
+        '</div>' + stilKarteHTML() + vwHinweis + '</div>';
 }
 
 // ── Modellwahl + Ankuendigung (seit v8.5.12) ─────────────────────────
@@ -1681,7 +1743,7 @@ return {
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
-        leererEntwurf, entwurfLesen, werHatGeschrieben, hinweisHTML, HINWEIS_KEY,
+        leererEntwurf, entwurfLesen, werHatGeschrieben, hinweisHTML, HINWEIS_KEY, stilStufe, stilNaechster,
         gespraech: () => gespraech, setzeEntwurf: (e) => { gespraech.entwurf = e; },
     },
 };

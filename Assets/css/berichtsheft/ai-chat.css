@@ -707,6 +707,70 @@ body.aic-offen .ai-studio-fab { display: none; }
 .aic-knopf.is-leise { border-color: transparent; color: var(--text-secondary); }
 .aic-knopf.is-leise:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.08); border-color: transparent; }
 
+/* ── Einstellungen findbar + "Dein Stil" (seit v8.5.13) ───────────────
+   Steht HINTER .aic-profil-knopf und seinen Modifikatoren: die Marken sind jetzt
+   Knoepfe (oeffnen die Einstellungen), der Einstellungen-Knopf traegt Text. */
+.aic-profil-teil, .aic-profil-fehlt { border: 0; font: inherit; font-size: 0.76rem; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; }
+.aic-profil-teil:hover { background: color-mix(in srgb, var(--text-main) 10%, var(--bg-hover)); color: var(--text-main); }
+.aic-profil-fehlt:hover { background: rgba(var(--warning-rgb), 0.2); }
+.aic-profil-einst {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px 3px 8px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 0.76rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.aic-profil-einst:hover { background: var(--bg-hover); border-color: var(--border-hover); }
+.aic-profil-einst .icon { width: 13px; height: 13px; }
+.aic-profil-einst + .aic-profil-knopf { margin-left: 0; }
+.aic-profil-teil:focus-visible, .aic-profil-fehlt:focus-visible, .aic-profil-einst:focus-visible, .aic-stil:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: 2px;
+}
+.aic-profil-knopf.aic-profil-stil { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.aic-kopf-knopf.aic-kopf-einst { width: auto; gap: 7px; padding: 0 12px 0 10px; display: inline-flex; align-items: center; font: inherit; font-size: 0.84rem; font-weight: 500; }
+
+/* Stufen-Balken: drei Striche fuer die drei Schritte nach "kennt dich nicht" */
+.aic-stil-balken { display: inline-flex; gap: 2px; }
+.aic-stil-balken i { width: 9px; height: 4px; border-radius: 2px; background: var(--border-light); }
+.aic-stil-balken i.is-an { background: var(--primary); }
+.aic-stil {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+.aic-stil:hover { border-color: var(--border-hover); }
+.aic-stil-kopf { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.aic-stil-t { font-size: 0.76rem; color: var(--text-muted); }
+.aic-stil .aic-stil-balken i { width: 22px; height: 5px; }
+.aic-stil-name { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; letter-spacing: -0.01em; }
+.aic-stil-zahlen { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.82rem; color: var(--text-secondary); }
+.aic-stil-zahlen b { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
+.aic-stil-weiter { font-size: 0.8rem; line-height: 1.5; color: var(--text-muted); }
+@media (max-width: 560px) {
+    /* Nur das Symbol, der Name bleibt fuer Screenreader (nicht display:none) */
+    .aic-kopf-knopf.aic-kopf-einst { width: 36px; padding: 0; justify-content: center; }
+    .aic-kopf-einst-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
 .aic-leer-vw {
     display: flex;
     align-items: center;
