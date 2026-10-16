@@ -581,12 +581,12 @@ function hinweisHTML() {
     return '<div class="aic-n is-assistent aic-ankuendigung"><span class="aic-avatar">' + MARKE + '</span><div class="aic-inhalt">' +
         '<p class="aic-ankuendigung-t">' + esc(Lx('Schnelle Antworten sind zurück', 'Fast answers are back')) + '</p>' +
         '<p class="aic-text">' + esc(Lx(
-            'Viele von euch haben sich schnellere Antworten gewünscht. Deshalb schreibt ab jetzt ' + stufeName('schnell') + ': ein bezahltes Modell, für dich kostenlos. Die Antwort kommt in wenigen Sekunden, dafür ist das Tageskontingent kleiner.',
-            'Many of you asked for faster answers. That is why ' + stufeName('schnell') + ' now writes for you: a paid model, free for you. Answers arrive in a few seconds; in return the daily quota is smaller.')) + '</p>' +
+            'In der Umfrage habt ihr euch vor allem eine stärkere KI und mehr Spielraum beim Tageslimit gewünscht. Für das Erste schreibt ab jetzt ' + stufeName('schnell') + ': ein bezahltes Modell, für dich kostenlos. Die Antwort kommt in wenigen Sekunden, dafür ist das Tageskontingent kleiner.',
+            'In the survey you mostly asked for a stronger AI and more room in the daily limit. For the first, ' + stufeName('schnell') + ' now writes for you: a paid model, free for you. Answers arrive in a few seconds; in return the daily quota is smaller.')) + '</p>' +
         '<p class="aic-text">' + esc(Lx(
-            'Brauchst du mehr, wechsle oben auf ' + stufeName('frei') + ': weiter kostenlos und mit großem Kontingent, aber mit 20 bis 40 Sekunden Wartezeit.',
-            'Need more? Switch to ' + stufeName('frei') + ' at the top: still free and with a large quota, but with a 20 to 40 second wait.')) + '</p>' +
-        '<div class="aic-knoepfe"><button type="button" class="aic-knopf" onclick="AISChat.modellMenue(true)">' + esc(Lx('Modell wählen', 'Choose model')) + '</button>' +
+            'Für das Zweite gibt es ' + stufeName('frei') + ': oben umschalten, weiter kostenlos und mit großem Kontingent, aber mit 20 bis 40 Sekunden Wartezeit.',
+            'For the second there is ' + stufeName('frei') + ': switch at the top, still free and with a large quota, but with a 20 to 40 second wait.')) + '</p>' +
+        '<div class="aic-knoepfe"><button type="button" class="aic-knopf" data-modell-auf onclick="AISChat.modellMenue(true)">' + esc(Lx('Modell wählen', 'Choose model')) + '</button>' +
         '<button type="button" class="aic-knopf is-ruhig" onclick="AISChat.hinweisWeg()">' + esc(Lx('Alles klar', 'Got it')) + '</button></div>' +
         '</div></div>';
 }
@@ -1634,7 +1634,9 @@ function init() {
     if (mm) mm.addEventListener('click', (e) => { const b = e.target.closest('[data-stufe]'); if (b) modellWaehlen(b.getAttribute('data-stufe')); });
     document.addEventListener('click', (e) => {
         const m = $('aicModellMenue');
-        if (m && !m.hidden && !e.target.closest('#aicModellMenue, #aicModell')) modellMenue(false);
+        // [data-modell-auf]: Knoepfe, die das Menue OEFFNEN (Ankuendigung). Ohne die Ausnahme schloss
+        // derselbe Klick das Menue sofort wieder — der Knopf tat scheinbar nichts (gemeldet 16.10.2026).
+        if (m && !m.hidden && !e.target.closest('#aicModellMenue, #aicModell, [data-modell-auf]')) modellMenue(false);
     });
     const f = $('aicText');
     if (f) {

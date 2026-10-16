@@ -373,4 +373,15 @@ t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeld
     t.ok(!profilTeile(e.AIStudio.konfig()).some(x => x.startsWith('Vorgabe')), 'Vorgabe per Chat geloescht → Marke weg');
 }
 
+// ── Modellwahl (v8.5.12): ein Knopf, der das Menue OEFFNET, darf nicht vom
+// "Klick ausserhalb schliesst"-Handler erfasst werden — sonst schliesst derselbe
+// Klick das Menue sofort wieder (gemeldet 16.10.2026: "Modell waehlen macht nix").
+{
+    const oeffner = [...CHAT.matchAll(/<button[^>]*onclick="AISChat\.modellMenue\(true\)"[^>]*>/g)].map(m => m[0]);
+    t.ok(oeffner.length > 0, 'es gibt ueberhaupt Knoepfe, die das Modellmenue oeffnen', oeffner.length);
+    t.ok(oeffner.every(b => b.includes('data-modell-auf')), 'jeder Oeffner traegt data-modell-auf', oeffner.join(' '));
+    const aussen = /closest\('([^']*#aicModellMenue[^']*)'\)\) modellMenue\(false\)/.exec(CHAT);
+    t.ok(!!aussen && aussen[1].includes('[data-modell-auf]'), 'der Aussen-Klick-Handler nimmt [data-modell-auf] aus', aussen && aussen[1]);
+}
+
 t.abschluss('ais-chat');
