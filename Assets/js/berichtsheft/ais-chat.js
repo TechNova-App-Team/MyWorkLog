@@ -627,8 +627,18 @@ function werHatGeschrieben() {
     return z === 'frei-kontingent'
         ? Lx(stufeName('schnell') + ' ist für heute aufgebraucht, deshalb hat ' + stufeName('frei') + ' geschrieben.',
              stufeName('schnell') + ' is used up for today, so ' + stufeName('frei') + ' wrote this.')
-        : Lx(stufeName('schnell') + ' hat diesmal keine Antwort geliefert, deshalb hat ' + stufeName('frei') + ' geschrieben.',
-             stufeName('schnell') + ' did not deliver an answer this time, so ' + stufeName('frei') + ' wrote this.');
+        : Lx(stufeName('schnell') + ' ' + turboGrundText(K.Stufe.grund)[0] + ', deshalb hat ' + stufeName('frei') + ' geschrieben.',
+             stufeName('schnell') + ' ' + turboGrundText(K.Stufe.grund)[1] + ', so ' + stufeName('frei') + ' wrote this.');
+}
+// Der Grund kommt vom Worker (X-MWL-Turbo-Grund, v4.9) — nichts raten: ohne Grund der
+// neutrale Satz. 402 = Guthaben bei OpenRouter leer, 4xx/5xx = Anbieter ausgelastet.
+function turboGrundText(g) {
+    if (g === '402') return ['ist gerade nicht verfügbar', 'is not available right now'];
+    if (/^(429|5\d\d|netz)$/.test(g || '')) return ['war gerade ausgelastet', 'was busy just now'];
+    if (g === 'zeit') return ['hat zu lange gebraucht', 'took too long'];
+    if (g === 'langsamer') return ['war diesmal langsamer', 'was slower this time'];
+    if (/^(form|leer|json)$/.test(g || '')) return ['hat keine brauchbare Antwort geliefert', 'did not deliver a usable answer'];
+    return ['hat diesmal keine Antwort geliefert', 'did not deliver an answer this time'];
 }
 // Einmalige Ankuendigung im Chat, ersetzt den Dialog "Wir sind von Gemini zu
 // OpenRouter gewechselt" (cv2-hinweis, bis v8.5.11). Kein Countdown, kein Dialog
@@ -983,6 +993,9 @@ function systemPrompt() {
         '- "nur X", "sonst nur X", "den Rest der Woche X", "ansonsten X", "die anderen Tage X": X gilt für ALLE Arbeitstage, die im Entwurf noch leer sind. Sofort eintragen, NICHT zurückfragen. Beispiel: im Entwurf steht nur Mittwoch (Schule), der Azubi schreibt "nur PCs ausgepustet" → Montag, Dienstag, Donnerstag und Freitag bekommen das Reinigen der PCs.',
         '- Im Zweifel trägst du ein, statt zu fragen. Ändern kann er es danach mit einem Satz.',
         '- ERFINDE NICHTS. Keine Tätigkeit, die der Azubi nicht genannt hat. Eine genannte Tätigkeit darfst du in ihre üblichen Teilschritte zerlegen (z. B. "PCs ausgepustet" → Gehäuse geöffnet, Staub mit Druckluft entfernt, Lüfter geprüft). Ein Tag ohne Angabe bleibt leer: "entries": [].',
+        // Gemessen 16.10.2026 live: "schreib mir einen py code für einen randomizer" landete
+        // bei Ling 1 von 3 Mal als Eintrag "Python-Code für Randomizer geschrieben" in der Woche.
+        '- KEIN BERICHT, KEIN EINTRAG: Bittet er um etwas, das kein Bericht über seine Ausbildung ist (Code schreiben, Hausaufgaben lösen, ein Gedicht, eine Wissensfrage, Rechnen), erfüllst du die Bitte NICHT und trägst sie NICHT ein. Alle Tage bleiben wörtlich wie im AKTUELLEN ENTWURF. In "antwort" sagst du in einem Satz, dass du nur beim Berichtsheft hilfst, und fragst, was er diese Woche gemacht hat. Erzählt er dagegen, dass er so etwas in der Ausbildung GEMACHT hat ("habe heute einen Zufallsgenerator in Python programmiert"), ist das eine Tätigkeit und wird eingetragen.',
         '- Steht dieselbe Tätigkeit an mehreren Tagen, schreib NICHT jeden Tag denselben Satz: formuliere je Tag anders und nimm je Tag andere Teilschritte derselben Tätigkeit.',
         '- AUSNAHME: bittet er ausdrücklich ums Auffüllen oder darum, dass du die Woche für ihn schreibst ("füll den Rest", "denk dir was aus", "mach die Woche voll", "die leeren Tage füllen", "ich weiß nicht mehr, was ich gemacht habe", "schreib mir eine Woche"), füllst du NUR die leeren Arbeitstage' +
             ((vw || eb) ? ' – und zwar ZUERST mit seinen typischen, wiederkehrenden Tätigkeiten aus ' + quellenName + ' unten, über die Tage verteilt und je Tag anders formuliert; erst wenn dort nichts Passendes steht, mit typischen Tätigkeiten für seinen Beruf und sein Lehrjahr. Schulthemen daraus NUR an einem Tag, der laut Einstellung regelmäßig Schultag ist oder im Vorwissen ausdrücklich als fester Schultag genannt wird – sonst ist kein Tag Schule.'

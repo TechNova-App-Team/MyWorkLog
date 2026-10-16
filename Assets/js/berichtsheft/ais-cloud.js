@@ -172,6 +172,8 @@ const Stufe = {
         const v = response && response.headers && response.headers.get('X-MWL-Stufe');
         if (!v) return;
         this.zuletzt = v;
+        // Warum nicht Turbo (Worker v4.9): '402', '429', 'zeit', 'form', 'langsamer' …
+        this.grund = response.headers.get('X-MWL-Turbo-Grund') || '';
         try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: this.get(), geantwortet: v } })); } catch (e) { }
     },
 };
