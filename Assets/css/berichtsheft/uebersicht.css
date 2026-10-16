@@ -790,7 +790,7 @@
    gegen die Feder arbeiten). Hier: Buehne, Licht, Boden, Riesen-KW, Zeitstrahl.
    Ebenen: Riesen-KW (z 0) → Buehne mit Blaettern (z 1) → Kopf/Fuss (z 2). */
 .is-neu #hfSchauKnopf { display: none; }
-body.hf-schau-offen { overflow: hidden; }
+body.hf-schau-offen { overflow: hidden; }   /* 🔴 nur body selbst: eine Regel auf Nachfahren dieser Klasse liess beim Oeffnen alle ~7.500 Elemente neu rechnen (1,6 s bei CPU x4, gemessen 16.10.2026) */
 .hf-schau {
     position: fixed;
     inset: 0;
@@ -920,7 +920,10 @@ body.hf-schau-offen { overflow: hidden; }
 }
 .hf-schau-blatt[aria-hidden="false"] { cursor: pointer; }
 /* Abdunkeln nach hinten: Deckkraft setzt bh-wochenschau.js (stellen()) je Bild.
-   Ersetzt filter: brightness(), das die Trommel am Handy auf 8 fps drueckte. */
+   Ersetzt filter: brightness(), das die Trommel am Handy auf 8 fps drueckte.
+   🔴 will-change ist tragend: ohne eigene Ebene malt jede Deckkraft-Aenderung
+   das GANZE Blatt neu — beim Drehen ~13 Raster-Auftraege je Bild, alle Blaetter
+   in Geraetepixeln (DPR 2,8). Mit eigener Ebene: 0 (gemessen 16.10.2026, `handy spur`). */
 .hf-schau-dunkel {
     position: absolute;
     inset: 0;
@@ -928,6 +931,7 @@ body.hf-schau-offen { overflow: hidden; }
     opacity: 0;
     pointer-events: none;
     border-radius: inherit;
+    will-change: opacity;
 }
 /* Gelandet auf einer freigegebenen Woche: der Stempel schlaegt auf */
 .hf-schau-blatt.is-angekommen .hf-stempel { animation: hfStempelAuf 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both; }

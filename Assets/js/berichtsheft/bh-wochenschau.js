@@ -21,7 +21,7 @@
 window.BHWochenschau = (function () {
 'use strict';
 
-const FENSTER = 6;              // Blaetter links/rechts der Mitte im DOM
+const FENSTER = 4;              // Blaetter links/rechts der Mitte im DOM — ab Abstand 3,6 ist ein Blatt ohnehin ausgeblendet (lage())
 const WINKEL = 30;              // Grad zwischen zwei Blaettern auf der Trommel
 const FEDER = 140, DAEMPF = 2 * Math.sqrt(140) * 0.86;   // leicht unterdaempft: ein Hauch Nachschwingen
 const SCHRITT = 1 / 60;         // feste Schritte (dt als Faktor schaukelt sich auf, Lehre aus dem Intro)
@@ -151,7 +151,9 @@ function kopf(c) {
     const runter = vorher > c;
     ri.innerHTML = String(r.week).split('').map((z, k) =>
         `<span style="--k:${k}" class="${runter ? 'is-runter' : ''}">${z}</span>`).join('');
-    document.querySelectorAll('#hfSchauStriche .hf-strich').forEach((s, i) => s.classList.toggle('is-jetzt', i === c));
+    const striche = $('hfSchauStriche').children;
+    if (vorher >= 0 && striche[vorher]) striche[vorher].classList.remove('is-jetzt');
+    if (striche[c]) striche[c].classList.add('is-jetzt');
 }
 
 // ── Lage eines Blatts: d = i - pos (gebrochen), Trommel um die Hochachse
@@ -187,16 +189,23 @@ function stellen() {
             e = 1 - Math.pow(1 - x, 4);
         }
         const l = lage(d, e);
-        el.style.transform = `translate(-50%, -50%) ${l.t}`;
-        el.style.opacity = l.o;
+        // Nur schreiben, was sich geaendert hat: jede Zuweisung markiert das Blatt
+        // fuer Stil + PrePaint, auch bei gleichem Wert aus einer anderen Rechnung.
+        const alt = el._lage || (el._lage = {});
+        const t = `translate(-50%, -50%) ${l.t}`;
+        if (alt.t !== t) el.style.transform = alt.t = t;
+        const o = l.o.toFixed(3);
+        if (alt.o !== o) el.style.opacity = alt.o = o;
         // 🔴 NICHT `filter: brightness()` je Bild: das liess Chrome fuer jedes Blatt
         // die Effekt-Struktur neu aufbauen — PrePaint 2,9 s von 5 s beim Drehen,
         // 8 fps mit Handy-CPU (gemessen 14.10.2026, `handy spur`). Schwarz mit
         // Deckkraft 1-f darueber ist rechnerisch dasselbe wie brightness(f).
         const dunkel = el.lastElementChild;
-        if (dunkel) dunkel.style.opacity = (1 - l.f).toFixed(3);
-        el.style.zIndex = l.z;
-        el.style.visibility = l.o <= 0.01 ? 'hidden' : '';
+        const f = (1 - l.f).toFixed(3);
+        if (dunkel && alt.f !== f) dunkel.style.opacity = alt.f = f;
+        if (alt.z !== l.z) el.style.zIndex = alt.z = l.z;
+        const v = l.o <= 0.01 ? 'hidden' : '';
+        if (alt.v !== v) el.style.visibility = alt.v = v;
     });
     const marke = $('hfSchauMarke');
     if (marke && liste.length > 1) marke.style.left = (klemm(pos, 0, liste.length - 1) / (liste.length - 1) * 100).toFixed(3) + '%';
