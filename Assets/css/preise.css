@@ -1,0 +1,330 @@
+/* ═══ PREISE (/preise/) ═══
+   Entwurf vom 16.10.2026: inaktive Paywall. Bildsprache des Berichtshefts (Wunsch des
+   Nutzers: Papier, Kuli-Blau, Rotstift, Stempel auf dunkler Buehne — generischer
+   SaaS-Look war dort abgelehnt). Die Bezahl-Tarife sind versiegelte Blaetter: lesbar,
+   aber ausgegraut, Preis geschwaerzt. EIN Effekt (Stapel faechert beim Laden auf),
+   sonst nur Reaktionen auf Zeiger und Fokus.
+   Laedt KEIN core.css: eigener Reset, eigener :root — Werte wie in
+   Assets/css/berichtsheft/basis.css, damit beide Seiten gleich aussehen. */
+
+:root {
+    --buehne-1: #131428;
+    --buehne-2: #1a1830;
+    --buehne-3: #23182b;
+    --primary: #6d7fd1;
+    --primary-rgb: 109, 127, 209;
+    --text-main: #f1f0f7;
+    --text-2: #b9b6cb;
+    --text-3: #8b87a2;
+    --linie: rgba(255, 255, 255, 0.1);
+    --papier: #ecebf4;
+    --papier-2: #dedcea;
+    --papier-tinte: #15131d;
+    --papier-tinte-2: rgba(21, 19, 29, 0.55);
+    --papier-linie: rgba(var(--primary-rgb), 0.24);
+    --papier-rand: rgba(214, 86, 86, 0.5);
+    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
+    --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
+    --rotstift: #c8463c;
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --font-vordruck: 'Martian Mono', ui-monospace, monospace;
+    --font-hand: 'Caveat', 'Segoe Script', cursive;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea, optgroup { font-family: inherit; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+}
+a { color: inherit; }
+
+/* ── Kopf ─────────────────────────────────────────────────────────── */
+.pr-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 28px;
+}
+.pr-marke { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
+.pr-marke svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.pr-top-link { font-size: 0.92rem; color: var(--text-2); text-decoration: none; }
+.pr-top-link:hover { color: var(--text-main); }
+
+/* ── Knoepfe ─────────────────────────────────────────────────────── */
+.pr-knopf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 22px;
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.97rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.14s ease;
+}
+.pr-knopf:hover { border-color: rgba(255, 255, 255, 0.28); }
+.pr-knopf:active { transform: scale(0.97); }
+.pr-knopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 3px; }
+/* Papierweiss auf der Buehne — der Hauptweg sieht aus wie ein Blatt */
+.pr-knopf.is-haupt { background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
+.pr-knopf.is-haupt:hover { background: #fff; border-color: #fff; }
+.pr-knopf.is-voll { width: 100%; }
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.pr-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: center;
+    gap: 40px;
+    max-width: 1180px;
+    min-height: min(66svh, 620px);
+    margin: 0 auto;
+    padding: 24px 28px 64px;
+}
+.pr-titel {
+    margin: 0;
+    max-width: 12ch;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 96;
+    font-size: clamp(2.5rem, 1.3rem + 4.4vw, 4.75rem);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+}
+.pr-lede { margin: 24px 0 0; max-width: 50ch; font-size: 1.08rem; color: var(--text-2); text-wrap: pretty; }
+.pr-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+
+/* Stapel: drei kleine Blaetter. Grundzustand = aufeinander, .is-auf = gefaechert.
+   Das vordere (Kostenlos) liegt offen, die zwei dahinter tragen das Siegel. */
+.pr-stapel { position: relative; height: 440px; perspective: 1400px; }
+.pr-mini {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 250px;
+    height: 330px;
+    margin: -165px 0 0 -125px;
+    padding: 22px 20px 20px 40px;
+    border-radius: 5px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    transition: transform 0.9s var(--spring);
+}
+.pr-mini::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--papier-rand);
+}
+.pr-mini.is-2, .pr-mini.is-3 { background: var(--papier-2); color: var(--papier-tinte-2); }
+.pr-mini-kopf { display: block; padding-bottom: 12px; border-bottom: 1px solid rgba(21, 19, 29, 0.18); font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+.pr-mini i { display: block; height: 30px; border-bottom: 1px solid var(--papier-linie); }
+.pr-mini.is-1 { z-index: 3; transform: rotate(-1.5deg); }
+.pr-mini.is-2 { z-index: 2; transform: rotate(1deg); }
+.pr-mini.is-3 { z-index: 1; transform: rotate(2.5deg); }
+.pr-stapel.is-auf .pr-mini.is-1 { transform: translate(-22%, 9%) rotate(-7deg); }
+.pr-stapel.is-auf .pr-mini.is-2 { transform: translate(6%, -2%) rotate(3deg); transition-delay: 0.08s; }
+.pr-stapel.is-auf .pr-mini.is-3 { transform: translate(30%, -12%) rotate(11deg); transition-delay: 0.16s; }
+.pr-hand { position: absolute; right: 22px; bottom: 26px; font-family: var(--font-hand); font-size: 2rem; font-weight: 600; color: var(--kuli); transform: rotate(-6deg); }
+
+/* Das Siegel: Stempelform wie im Berichtsheft (doppelter Ring, Rotstift) */
+.pr-siegel {
+    position: absolute;
+    right: 18px;
+    bottom: 34px;
+    display: grid;
+    place-items: center;
+    width: 84px;
+    height: 84px;
+    border: 3px double var(--rotstift);
+    border-radius: 50%;
+    color: var(--rotstift);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transform: rotate(-14deg);
+    opacity: 0;
+}
+.pr-stapel.is-auf .pr-siegel { animation: prStempel 0.5s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
+.pr-stapel.is-auf .is-2 .pr-siegel { animation-delay: 0.75s; }
+.pr-stapel.is-auf .is-3 .pr-siegel { animation-delay: 0.9s; }
+@keyframes prStempel {
+    0% { opacity: 0; transform: rotate(-30deg) scale(1.9); }
+    60% { opacity: 0.95; }
+    100% { opacity: 0.88; transform: rotate(-14deg) scale(1); }
+}
+
+/* ── Abschnitts-Ueberschriften ─────────────────────────────────── */
+.pr-hefte, .pr-wunsch, .pr-fragen { max-width: 1180px; margin: 0 auto; padding: 72px 28px; }
+.pr-h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.8rem, 1.2rem + 1.8vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
+.pr-h2-unter { margin: 12px 0 0; max-width: 60ch; color: var(--text-2); }
+
+/* ── Die Hefte ────────────────────────────────────────────────── */
+.pr-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; margin-top: 40px; align-items: stretch; }
+.pr-blatt {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px 24px 24px 50px;
+    border-radius: 5px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    overflow: hidden;
+}
+.pr-blatt::before { content: ''; position: absolute; left: 34px; top: 0; bottom: 0; width: 1.5px; background: var(--papier-rand); }
+.pr-vk {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(21, 19, 29, 0.2);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.6rem;
+    color: var(--papier-tinte-2);
+}
+.pr-blatt-t { margin: 4px 0 0; font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
+.pr-preis { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0; }
+.pr-preis b { font-family: var(--font-display); font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.pr-preis > span { font-size: 0.86rem; color: var(--papier-tinte-2); }
+/* Geschwaerzt wie in einer Akte: es gibt noch keinen Preis, also steht keiner da. */
+.pr-schwarz { position: relative; display: inline-block; border-radius: 2px; background: var(--papier-tinte); color: transparent; }
+.pr-liste { list-style: none; margin: 4px 0 8px; padding: 0; flex: 1 1 auto; }
+/* Platz fuer Band + Siegel zwischen Liste und Knopf */
+.pr-blatt.is-zu .pr-liste { margin-bottom: 118px; }
+.pr-liste li { position: relative; padding: 9px 0 9px 22px; border-bottom: 1px solid var(--papier-linie); font-size: 0.95rem; line-height: 1.4; }
+.pr-liste li::before { content: ''; position: absolute; left: 2px; top: 15px; width: 10px; height: 6px; border-left: 2px solid var(--kuli); border-bottom: 2px solid var(--kuli); transform: rotate(-45deg); }
+
+/* Versiegelt: ausgegraut, Liste lesbar, Band + Siegel darueber. Das Band hebt sich bei
+   Zeiger oder Fokus ein Stueck an (Kind-Element — das Blatt selbst bleibt liegen). */
+.pr-blatt.is-zu { background: var(--papier-2); color: var(--papier-tinte-2); }
+.pr-blatt.is-zu .pr-liste li::before { border-color: rgba(21, 19, 29, 0.35); }
+.pr-band {
+    position: absolute;
+    left: -12%;
+    right: -12%;
+    bottom: 92px;
+    height: 38px;
+    background:
+        linear-gradient(90deg, transparent 0 1px, rgba(255, 255, 255, 0.25) 1px 2px, transparent 2px) 0 0 / 7px 100%,
+        color-mix(in srgb, var(--rotstift) 22%, var(--papier-2));
+    box-shadow: 0 6px 14px -8px rgba(21, 19, 29, 0.5);
+    opacity: 0.92;
+    transform: rotate(-7deg);
+    transform-origin: 0 50%;
+    transition: transform 0.45s var(--spring);
+    pointer-events: none;
+}
+.pr-blatt.is-zu:hover .pr-band, .pr-blatt.is-zu:focus-within .pr-band { transform: rotate(-11deg) translateY(-10px); }
+@media (hover: none) { .pr-band { transform: rotate(-9deg) translateY(-6px); } }
+/* Siegel AUF dem Band, im freien Raum ueber dem Knopf: Liste und Titel bleiben lesbar
+   (erste Fassung: Band ueber einer Funktionszeile, Siegel ueber dem Titel). */
+.pr-siegel.is-gross { top: auto; right: 22px; bottom: 64px; width: 92px; height: 92px; opacity: 0.9; background: color-mix(in srgb, var(--rotstift) 8%, var(--papier-2)); }
+/* Hauptweg AUF Papier: Kuli-Blau, nicht Papierweiss (das verschwand auf dem Blatt). */
+.pr-blatt .pr-knopf.is-haupt { background: var(--kuli); border-color: var(--kuli); color: #fff; }
+.pr-blatt .pr-knopf.is-haupt:hover { background: color-mix(in srgb, var(--kuli) 88%, #000); border-color: transparent; }
+.pr-vormerken { background: var(--papier-tinte); border-color: var(--papier-tinte); color: var(--papier); position: relative; }
+.pr-vormerken:hover { background: #000; border-color: #000; }
+.pr-vormerken.is-gemerkt { background: transparent; border-color: var(--kuli); color: var(--kuli); cursor: default; }
+.pr-vormerken svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pr-fuss-hinweis { margin: 22px 0 0; font-size: 0.86rem; color: var(--text-3); }
+
+/* ── Wuensche ────────────────────────────────────────────────── */
+.pr-balken { list-style: none; margin: 34px 0 0; padding: 0; display: grid; gap: 4px; max-width: 900px; }
+.pr-balken li {
+    display: grid;
+    grid-template-columns: minmax(0, 15rem) 4.5rem minmax(0, 1fr) minmax(0, 11rem);
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--linie);
+}
+.pr-b-t { font-weight: 500; }
+.pr-b-z { font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.72rem; color: var(--text-3); white-space: nowrap; }
+.pr-balken i { position: relative; display: block; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.07); overflow: hidden; }
+.pr-balken i::after { content: ''; position: absolute; inset: 0 auto 0 0; width: calc(var(--anteil) * 100%); border-radius: 4px; background: var(--text-2); }
+.pr-b-wo { font-size: 0.86rem; color: var(--text-2); }
+.pr-b-wo.is-da { color: color-mix(in srgb, var(--primary) 70%, #fff); }
+
+/* ── Fragen ──────────────────────────────────────────────────── */
+.pr-fragen { padding-bottom: 96px; }
+.pr-frage { max-width: 760px; border-bottom: 1px solid var(--linie); }
+.pr-fragen .pr-h2 + .pr-frage { margin-top: 26px; border-top: 1px solid var(--linie); }
+.pr-frage summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 0;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    list-style: none;
+}
+.pr-frage summary::-webkit-details-marker { display: none; }
+.pr-frage summary::after { content: '+'; flex: none; font-family: var(--font-main); font-weight: 400; color: var(--text-3); transition: transform 0.2s ease; }
+.pr-frage[open] summary::after { transform: rotate(45deg); }
+.pr-frage summary:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 4px; }
+.pr-frage p { margin: 0 0 20px; max-width: 62ch; color: var(--text-2); }
+
+/* ── Breakpoints ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .pr-hero { grid-template-columns: 1fr; gap: 8px; min-height: 0; padding-bottom: 32px; }
+    .pr-stapel { height: 380px; }
+    .pr-reihe { grid-template-columns: 1fr; max-width: 520px; }
+    .pr-balken li { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+    .pr-balken i { grid-column: 1 / -1; }
+    .pr-b-wo { grid-column: 1 / -1; }
+}
+@media (max-width: 480px) {
+    .pr-top { padding: 16px; }
+    .pr-hero, .pr-hefte, .pr-wunsch, .pr-fragen { padding-left: 16px; padding-right: 16px; }
+    .pr-hefte, .pr-wunsch, .pr-fragen { padding-top: 52px; padding-bottom: 52px; }
+    .pr-stapel { height: 330px; }
+    .pr-mini { width: 200px; height: 270px; margin: -135px 0 0 -100px; }
+    .pr-blatt { padding: 22px 18px 22px 40px; }
+    .pr-blatt::before { left: 26px; }
+    .pr-cta .pr-knopf { flex: 1 1 100%; }
+}
+@media (max-width: 360px) {
+    .pr-titel { font-size: 2.2rem; }
+    .pr-stapel { height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pr-mini, .pr-band { transition: none; }
+    .pr-stapel.is-auf .pr-siegel { animation: none; opacity: 0.88; }
+}
