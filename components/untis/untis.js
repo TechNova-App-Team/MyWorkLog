@@ -725,7 +725,8 @@
             const body = await resp.text().catch(() => '');
             let msg = `HTTP ${resp.status}`;
             try { const j = JSON.parse(body); msg = j.error || msg; } catch {}
-            if (resp.status === 401 || resp.status === 403)
+            // Der Proxy reicht eine Ablehnung von WebUntis als 502 mit "WebUntis returned HTTP 401/403" weiter.
+            if (resp.status === 401 || resp.status === 403 || (resp.status === 502 && /HTTP 40[13]/.test(body)))
                 throw new Error(uT('WebUntis verweigert den Zugriff. Eventuell hat deine Schule den Kalender-Export abgeschaltet.', 'WebUntis denied access. Your school may have turned off the calendar export.'));
             throw new Error(msg);
         }

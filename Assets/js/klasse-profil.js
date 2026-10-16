@@ -525,7 +525,177 @@
         } finally { laeuft = false; }
     }
 
+    // ── WebUntis → Klassenprofil (seit v8.5.11) ─────────────────────────
+    // Wunsch des Nutzers (16.10.2026): die Lehrkraft soll den Stundenplan nicht doppelt
+    // eintragen. Aus dem iCal-Export einer Klasse wird abgeleitet, was das Cockpit sonst von
+    // Hand verlangt: Stundenraster (Beginn, Laenge, Pausen), Faecher je Stunde, Schultage,
+    // Woche B (Wechsel nach Paritaet der Kalenderwoche), Blockwochen und Bloecke.
+    // Regel: lieber eine Luecke lassen als etwas erfinden — ein Platz, der in weniger als
+    // der Haelfte der Wochen belegt ist, bleibt leer (Vertretung, Ausfall, Pruefung).
+    // Rueckgabe {stundenplan, faecher, schultage, rhythmus, bloecke, info} oder {fehler}.
+    function untisLink(roh) {
+        const url = String(roh || '').trim().replace(/^webcal:\/\//i, 'https://');
+        let u; try { u = new URL(url); } catch (e) { return null; }
+        if (!/(^|\.)webuntis\.com$/i.test(u.hostname)) return null;
+        if (/\/ical/i.test(u.pathname)) return u.href;
+        // Seitenadresse aus dem Browser (#/basic/timetable…?entityType=1&entityId=123):
+        // daraus den Kalender-Link bauen. entityType 1 = Klasse, 5 = Schueler/in.
+        const h = u.hash || '', q = h.indexOf('?'), hp = new URLSearchParams(q >= 0 ? h.slice(q + 1) : '');
+        const id = hp.get('entityId') || u.searchParams.get('entityId');
+        if (!id) return null;
+        const typ = hp.get('entityType') || (/class|klasse/i.test(h) ? '1' : '5');
+        const schule = u.searchParams.get('school') || u.hostname.split('.')[0];
+        return 'https://' + u.hostname + '/WebUntis/ical?school=' + encodeURIComponent(schule) + '&elementType=' + encodeURIComponent(typ) + '&elementId=' + encodeURIComponent(id);
+    }
+    function icalTermine(text) {
+        const zeilen = [];
+        String(text || '').replace(/\r\n?/g, '\n').split('\n').forEach(function (z) {
+            if ((z[0] === ' ' || z[0] === '\t') && zeilen.length) zeilen[zeilen.length - 1] += z.slice(1); else zeilen.push(z);
+        });
+        const out = []; let cur = null;
+        const wert = function (s) { return s.replace(/\\n/gi, ' ').replace(/\\([,;\\])/g, '$1').trim(); };
+        const zeit = function (s) {
+            const m = /(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(Z)?/.exec(s || '');
+            if (!m) return null;
+            return m[7] ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5])) : new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
+        };
+        zeilen.forEach(function (z) {
+            if (z === 'BEGIN:VEVENT') { cur = {}; return; }
+            if (z === 'END:VEVENT') { if (cur) out.push(cur); cur = null; return; }
+            if (!cur) return;
+            const i = z.indexOf(':'); if (i < 0) return;
+            cur[z.slice(0, i).split(';')[0].toUpperCase()] = wert(z.slice(i + 1));
+        });
+        return out.map(function (e) {
+            const von = zeit(e.DTSTART), bis = zeit(e.DTEND);
+            if (!von || !bis || bis <= von) return null;
+            const iso = von.getFullYear() + '-' + String(von.getMonth() + 1).padStart(2, '0') + '-' + String(von.getDate()).padStart(2, '0');
+            return { iso: iso, wt: von.getDay(), von: von.getHours() * 60 + von.getMinutes(), bis: bis.getHours() * 60 + bis.getMinutes(),
+                f: String(e.SUMMARY || '').trim().slice(0, 60), abgesagt: /CANCEL/i.test(e.STATUS || '') };
+        }).filter(Boolean);
+    }
+    function ausUntis(text, heute) {
+        if (!/BEGIN:VCALENDAR/.test(String(text || ''))) return { fehler: 'kein_kalender' };
+        const alle = icalTermine(text);
+        const ev = alle.filter(function (e) { return !e.abgesagt && e.f && e.wt >= 1 && e.wt <= 5; });
+        if (!ev.length) return { fehler: 'keine_stunden' };
+        const tagNr = function (iso) { const p = iso.split('-').map(Number); return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / 864e5); };
+        const isoAus = function (n) { const d = new Date(n * 864e5); return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); };
+        const hm = function (m) { return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+
+        // Stundenraster: Beginnzeiten, die an mindestens zwei Tagen vorkommen (eine einmalige
+        // Pruefung um 08:10 ist keine eigene Stunde). Laenge = haeufigste Dauer, hoechstens
+        // der kleinste Abstand zweier Beginnzeiten (sonst ueberlappen die Stunden).
+        const tageJeBeginn = {};
+        ev.forEach(function (e) { (tageJeBeginn[e.von] = tageJeBeginn[e.von] || {})[e.iso] = 1; });
+        const datumZahl = Object.keys(ev.reduce(function (a, e) { a[e.iso] = 1; return a; }, {})).length;
+        let P = Object.keys(tageJeBeginn).map(Number).filter(function (m) { return datumZahl < 3 || Object.keys(tageJeBeginn[m]).length >= 2; }).sort(function (a, b) { return a - b; });
+        if (!P.length) P = Object.keys(tageJeBeginn).map(Number).sort(function (a, b) { return a - b; });
+        P = P.slice(0, 12);
+        const dauern = {};
+        ev.forEach(function (e) { const d = e.bis - e.von; if (P.indexOf(e.von) >= 0 && d >= 30 && d <= 90) dauern[d] = (dauern[d] || 0) + 1; });
+        let dauer = +Object.keys(dauern).sort(function (a, b) { return dauern[b] - dauern[a] || a - b; })[0] || 45;
+        for (let i = 1; i < P.length; i++) dauer = Math.min(dauer, P[i] - P[i - 1]);
+        const pausen = [];
+        for (let i = 1; i < P.length; i++) { const g = P[i] - P[i - 1] - dauer; if (g >= 5) pausen.push({ nach: i, min: Math.min(90, g) }); }
+        const raster = dauer >= 30 ? rasterNorm({ start: hm(P[0]), dauer: dauer, pausen: pausen }) : null;
+        const stunde = function (min, ende) {   // 1-basiert; ende: letzte Stunde, die VOR min beginnt
+            let s = 0; for (let i = 0; i < P.length; i++) if (ende ? P[i] < min : P[i] <= min) s = i + 1;
+            return Math.max(1, s);
+        };
+
+        // Je Woche: welche Wochentage hatten Unterricht?
+        const wochen = {};
+        ev.forEach(function (e) {
+            const mo = montagVon(e.iso), w = wochen[mo] = wochen[mo] || { mo: mo, tage: {}, termine: [] };
+            w.tage[e.wt] = 1; w.termine.push(e);
+        });
+        const liste = Object.keys(wochen).sort().map(function (k) { const w = wochen[k]; w.n = Object.keys(w.tage).length; return w; });
+        const zahlen = liste.map(function (w) { return w.n; }).sort(function (a, b) { return a - b; });
+        const median = zahlen[Math.floor((zahlen.length - 1) / 2)];
+        // Blockwoche = deutlich mehr Schultage als ueblich (Teilzeitklasse mit 1–3 Tagen)
+        const istBlock = function (w) { return median <= 3 && w.n >= 4; };
+        const normal = liste.filter(function (w) { return !istBlock(w); }), block = liste.filter(istBlock);
+
+        // Bloecke: aufeinanderfolgende Blockwochen zusammenziehen, Grenzen = erster/letzter Unterrichtstag
+        const bloecke = [];
+        block.forEach(function (w) {
+            const daten = w.termine.map(function (e) { return e.iso; }).sort();
+            const letzter = bloecke[bloecke.length - 1];
+            if (letzter && tagNr(w.mo) - tagNr(montagVon(letzter.bis)) === 7 && tagNr(daten[daten.length - 1]) - tagNr(letzter.von) < 60) letzter.bis = daten[daten.length - 1];
+            else bloecke.push({ von: daten[0], bis: daten[daten.length - 1] });
+        });
+
+        // Woche B: getrennt nach gerader/ungerader Woche zaehlen. Nur wenn beide Seiten mindestens
+        // zwei Wochen haben UND andere Tage ergeben — sonst ist es eine normale Woche mit Ausfaellen.
+        const paritaet = function (mo) { return ((Math.round((tagNr(mo) - 4) / 7) % 2) + 2) % 2; };   // 1970-01-05 war ein Montag
+        const tageVon = function (ws) {
+            const z = {}; ws.forEach(function (w) { Object.keys(w.tage).forEach(function (t) { z[t] = (z[t] || 0) + 1; }); });
+            return [1, 2, 3, 4, 5].filter(function (t) { return (z[t] || 0) * 2 > ws.length; });
+        };
+        const seiten = [normal.filter(function (w) { return paritaet(w.mo) === 0; }), normal.filter(function (w) { return paritaet(w.mo) === 1; })];
+        const tg = [tageVon(seiten[0]), tageVon(seiten[1])];
+        const mitB = seiten[0].length >= 2 && seiten[1].length >= 2 && tg[0].join() !== tg[1].join();
+        const heuteMo = montagVon(heute || heuteIso());
+        // A = die Seite mit weniger Tagen ("nur Mittwoch"), B = die mit mehr ("Mi und Do")
+        const a = mitB ? (tg[0].length < tg[1].length || (tg[0].length === tg[1].length && paritaet(heuteMo) === 0) ? 0 : 1) : -1;
+
+        // Inhalt einer Variante: je Wochentag und Stunde das Fach, das in mehr als der Haelfte
+        // der Unterrichtstage dort stand.
+        const woche = function (ws, tage) {
+            const out = {};
+            tage.forEach(function (t) {
+                const daten = {}, platz = {};
+                ws.forEach(function (w) {
+                    w.termine.filter(function (e) { return e.wt === t; }).forEach(function (e) {
+                        daten[e.iso] = 1;
+                        for (let h = stunde(e.von, false); h <= Math.max(stunde(e.von, false), stunde(e.bis, true)); h++) {
+                            const p = platz[h] = platz[h] || {}; p[e.f] = p[e.f] || {}; p[e.f][e.iso] = 1;
+                        }
+                    });
+                });
+                const n = Object.keys(daten).length, l = [];
+                for (let h = 1; h <= 12; h++) {
+                    const p = platz[h] || {};
+                    const best = Object.keys(p).map(function (f) { return [f, Object.keys(p[f]).length]; }).sort(function (x, y) { return y[1] - x[1]; })[0];
+                    const f = best && best[1] * 2 > n ? best[0] : '';
+                    const vor = l[l.length - 1];
+                    if (f && vor && vor.f === f && vor.b === h - 1) vor.b = h; else if (f) l.push({ s: h, b: h, f: f });
+                }
+                if (l.length) out[t] = l;
+            });
+            return out;
+        };
+        const sp = mitB ? woche(seiten[a], tg[a]) : woche(normal, tageVon(normal));
+        if (raster) sp.raster = raster;
+        // Erste B-Woche ab dieser Woche (Wechsel-Montag)
+        const naechste = function (par) { let n = tagNr(heuteMo); if (paritaet(isoAus(n)) !== par) n += 7; return isoAus(n); };
+        if (mitB) sp.b = Object.assign({ wechsel: naechste(1 - a) }, woche(seiten[1 - a], tg[1 - a]));
+        if (block.length) { const bw = woche(block, tageVon(block)); if (Object.keys(bw).length) sp.block = bw; }
+        const plan = planVoll(sp);
+
+        // Schultage: in beiden Wochen = jede Woche; nur in einer = alle 2 Wochen ab dem
+        // naechsten passenden Tag (Rhythmus der App, so wie ihn das Cockpit sonst von Hand anlegt).
+        const tageA = mitB ? tg[a] : tageVon(normal), tageB = mitB ? tg[1 - a] : tageA;
+        const schultage = tageA.filter(function (t) { return tageB.indexOf(t) >= 0; });
+        const rhythmus = [];
+        if (mitB) [[tageA, a], [tageB, 1 - a]].forEach(function (x) {
+            x[0].filter(function (t) { return schultage.indexOf(t) < 0; }).forEach(function (t) {
+                rhythmus.push({ weekday: t, interval: 2, startDate: isoAus(tagNr(naechste(x[1])) + t - 1) });
+            });
+        });
+        const faecher = [];
+        const sammle = function (w) { Object.keys(planNorm(w)).forEach(function (t) { planNorm(w)[t].forEach(function (e) { if (faecher.indexOf(e.f) < 0) faecher.push(e.f); }); }); };
+        sammle(plan); sammle(plan.b); sammle(plan.block);
+        const daten = ev.map(function (e) { return e.iso; }).sort();
+        return {
+            stundenplan: plan, faecher: faecher.slice(0, 30), schultage: schultage, rhythmus: rhythmus, bloecke: bloecke.slice(0, 40),
+            info: { wochen: liste.length, von: daten[0], bis: daten[daten.length - 1], stunden: P.length, abgesagt: alle.filter(function (e) { return e.abgesagt; }).length, mitB: mitB, zeiten: !!raster }
+        };
+    }
+
     const api = {
+        untisLink: untisLink, ausUntis: ausUntis,
         STATE_KEY: STATE_KEY, BUNDESLAENDER: BUNDESLAENDER, TAGE: TAGE, TAGE_LANG: TAGE_LANG,
         codeNorm: codeNorm, codeFmt: codeFmt, codeAusAdresse: codeAusAdresse,
         zustand: zustand, zustandSetzen: zustandSetzen, vormerken: vormerken, austreten: austreten,

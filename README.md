@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.5.10-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.5.11-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.5.10** · 2026-10-16
+Aktuelle Version: **v8.5.11** · 2026-10-16
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.5.10** | 2026-10-16 | „Alle Wochen“ im Berichtsheft dreht sich am Handy deutlich leichter |
+| **8.5.11** | 2026-10-16 | Lehrkräfte übernehmen den Stundenplan ihrer Klasse direkt aus WebUntis |
+| 8.5.10 | 2026-10-16 | „Alle Wochen“ im Berichtsheft dreht sich am Handy deutlich leichter |
 | 8.5.9 | 2026-10-15 | Mitteilungen kommen aufs Handy, der Stundenplan kennt Zeiten und Wechselwochen |
 | 8.5.8 | 2026-10-15 | Die App startet ruhiger und wechselt Seiten ohne Neustart-Bild |
 | 8.5.7 | 2026-10-14 | Mit dem Stundenplan der Klasse schreibt das Berichtsheft über die richtigen Fächer |
-| 8.5.6 | 2026-10-14 | Mitteilungen der Lehrkraft kommen nach Minuten statt nach Stunden an |
 
 <!-- changelog:end -->
 

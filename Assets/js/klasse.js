@@ -521,7 +521,7 @@
     const BERUFE = ['Fachinformatiker/in Anwendungsentwicklung', 'Fachinformatiker/in Systemintegration', 'Fachinformatiker/in Daten- und Prozessanalyse',
         'Fachinformatiker/in Digitale Vernetzung', 'Kaufmann/-frau für Büromanagement', 'Industriekaufmann/-frau', 'Kaufmann/-frau im Einzelhandel',
         'Elektroniker/in', 'Mechatroniker/in', 'Industriemechaniker/in', 'Kfz-Mechatroniker/in', 'Medizinische/r Fachangestellte/r'];
-    function formular(f, m, neu) {
+    function formular(f, m, neu, opts) {
         const bl = Object.keys(K.BUNDESLAENDER).sort(function (a, b) { return K.BUNDESLAENDER[a].localeCompare(K.BUNDESLAENDER[b], 'de'); });
         const tagBtns = [1, 2, 3, 4, 5, 6].map(function (i) { return '<button type="button" data-tag="' + i + '" aria-pressed="' + (m.schultage.indexOf(i) >= 0) + '">' + K.TAGE[i][EN ? 1 : 0] + '</button>'; }).join('');
         f.innerHTML =
@@ -550,6 +550,7 @@
             '<fieldset class="kl-fs"><h3 class="kl-fs__h">' + L('Stundenplan', 'Timetable') + '</h3><p class="kl-fs__p">' +
                 L('Welches Fach in welcher Stunde? Die Berichtsheft-KI Ihrer Azubis schreibt dann über das Fach, das wirklich war, statt eines zu raten. Zählt nur an Schultagen, Doppelstunden sind einfach zwei Zellen.',
                   'Which subject in which lesson? Your trainees’ report book AI then writes about the subject that actually took place instead of guessing. Only counts on school days; a double lesson is simply two cells.') + '</p>' +
+                '<div class="kl-untis" id="klUntis"></div>' +
                 '<div class="kl-plan" id="klPlan"></div>' +
             '</fieldset>' +
             '<fieldset class="kl-fs"><h3 class="kl-fs__h">' + L('Prüfungstermine', 'Exam dates') + '</h3><p class="kl-fs__p">' + L('Erscheinen in der IHK-Ansicht der App mit Countdown.', 'Shown in the app’s IHK view with a countdown.') + '</p>' +
@@ -839,6 +840,9 @@
         rh.addEventListener('input', function () { setTimeout(zeichnePlan, 0); });
         f.addEventListener('click', function (e) { if (e.target.closest('#klRhAdd, #klBlAdd, [data-rm]')) setTimeout(zeichnePlan, 0); });
 
+        untisKasten(f, m, neu, opts && opts.untis);
+        if (opts && opts.dirty) dirty();
+
         f.onsubmit = async function (e) {
             e.preventDefault();
             const t = $('klSaveT'), btn = $('klSave');
@@ -871,6 +875,113 @@
             }
         };
     }
+    // ── WebUntis-Import (seit v8.5.11) ─────────────────────────────────
+    // Die Lehrkraft fuegt den Kalender-Link der Klasse ein; ausUntis() (klasse-profil.js)
+    // leitet Raster, Plan, Schultage, Woche B und Bloecke ab. Erst Vorschau, dann
+    // Uebernehmen — gespeichert wird wie immer erst mit "Speichern". Der Link bleibt nur
+    // in diesem Browser (localStorage), nicht in der Datenbank: er ist ein Schluessel zum
+    // Stundenplan der Schule, und die Azubis brauchen ihn nicht.
+    const UNTIS_PROXY = 'https://untis-proxy.myworklog.workers.dev/?url=';
+    function untisSchluessel() { return 'kl_untis_link_' + (C.sel || 'neu'); }
+    function untisKasten(f, m, neu, hinweis) {
+        const box = $('klUntis'); if (!box) return;
+        let link = ''; try { link = localStorage.getItem(untisSchluessel()) || ''; } catch (e) { }
+        let ergebnis = null;
+        const zu = function (meldung) {
+            box.className = 'kl-untis';
+            box.innerHTML = '<div class="kl-untis__zeile"><p class="kl-untis__t">' + (meldung
+                ? svg('check') + '<span>' + esc(meldung) + '</span>'
+                : '<span>' + L('Steht der Plan schon in WebUntis? Dann müssen Sie ihn hier nicht abtippen.', 'Is the timetable already in WebUntis? Then you don’t need to type it here.') + '</span>') + '</p>' +
+                '<button class="kl-btn kl-btn--sm" type="button" data-u="auf">' + svg('download') + '<span>' + (link ? L('Erneut aus WebUntis laden', 'Load from WebUntis again') : L('Aus WebUntis übernehmen', 'Import from WebUntis')) + '</span></button></div>';
+        };
+        const auf = function (fehler) {
+            box.className = 'kl-untis is-offen';
+            box.innerHTML = '<p class="kl-untis__h">' + L('Kalender-Link der Klasse aus WebUntis', 'The class’s calendar link from WebUntis') + '</p>' +
+                '<ol class="kl-untis__schritte">' +
+                    '<li>' + L('In WebUntis den Stundenplan Ihrer <b>Klasse</b> öffnen (nicht Ihren eigenen).', 'In WebUntis, open the timetable of your <b>class</b> (not your own).') + '</li>' +
+                    '<li>' + L('Oben rechts auf das Teilen-Symbol, dann „Öffentlichen Link kopieren“ oder „iCal-Link“.', 'Top right, click the share icon, then “Copy public link” or “iCal link”.') + '</li>' +
+                    '<li>' + L('Den Link hier einfügen. Die Adresse aus der Browserzeile geht auch.', 'Paste the link here. The address from the browser bar works too.') + '</li>' +
+                '</ol>' +
+                '<div class="kl-untis__ein"><input class="kl-in" type="url" id="klUntisIn" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://….webuntis.com/WebUntis/…" value="' + esc(link) + '" aria-label="' + L('WebUntis-Link', 'WebUntis link') + '">' +
+                    '<button class="kl-btn kl-btn--primary kl-btn--sm" type="button" data-u="laden"><span>' + L('Laden', 'Load') + '</span></button>' +
+                    '<button class="kl-btn kl-btn--sm" type="button" data-u="zu"><span>' + L('Abbrechen', 'Cancel') + '</span></button></div>' +
+                (fehler ? '<p class="kl-untis__err" role="alert">' + svg('alert') + '<span>' + esc(fehler) + '</span></p>' : '');
+            const i = $('klUntisIn'); if (i) i.focus();
+        };
+        const zeile = function (k, v) { return '<dt>' + k + '</dt><dd>' + v + '</dd>'; };
+        const vorschau = function () {
+            const r = ergebnis, sp = r.stundenplan, z = K.stundenZeiten(sp.raster);
+            const tage = K.tageText(r.schultage, EN) + (r.rhythmus.length ? ' ' + L('und ', 'and ') + K.rhythmusText(r.rhythmus) : '');
+            const neueBl = r.bloecke.filter(function (b) { return !m.bloecke.some(function (x) { return x.von === b.von && x.bis === b.bis; }); });
+            box.className = 'kl-untis is-offen';
+            box.innerHTML = '<p class="kl-untis__h">' + L('Gefunden in ' + r.info.wochen + ' Wochen Unterricht', 'Found in ' + r.info.wochen + ' weeks of lessons') + ' <small>' + K.datum(r.info.von, true) + ' – ' + K.datum(r.info.bis, true) + '</small></p>' +
+                '<dl class="kl-untis__dl">' +
+                    zeile(L('Schultage', 'School days'), esc(tage || '—')) +
+                    zeile(L('Stunden', 'Lessons'), r.info.zeiten && z ? esc(r.info.stunden + ' ' + L('ab', 'from') + ' ' + z[1].von + ', ' + sp.raster.dauer + ' min' + (sp.raster.pausen.length ? ', ' + sp.raster.pausen.length + ' ' + L(sp.raster.pausen.length === 1 ? 'Pause' : 'Pausen', sp.raster.pausen.length === 1 ? 'break' : 'breaks') : '')) : esc(String(r.info.stunden))) +
+                    zeile(L('Fächer', 'Subjects'), esc(r.faecher.join(', ') || '—')) +
+                    (r.info.mitB ? zeile(L('Woche B', 'Week B'), esc(L('ab ', 'from ') + K.datum(sp.b.wechsel, true) + L(', danach im Wechsel', ', then alternating'))) : '') +
+                    (r.bloecke.length ? zeile(L('Blöcke', 'Blocks'), esc(r.bloecke.map(function (b) { return K.datum(b.von, false) + '–' + K.datum(b.bis, true); }).join(', '))) : '') +
+                '</dl>' +
+                '<p class="kl-hint">' + L('Übernehmen ersetzt Schultage, Rhythmus und Stundenplan. Fächer und ' + (neueBl.length === 1 ? 'der neue Block' : neueBl.length ? neueBl.length + ' neue Blöcke' : 'Blöcke') + ' kommen dazu, Vorhandenes bleibt. Einzelne Ausfälle und Vertretungen zählen nicht' + (r.info.abgesagt ? ' (' + r.info.abgesagt + ' abgesagte Stunden übersprungen)' : '') + '. Gespeichert wird erst mit „Speichern“.',
+                    'Importing replaces school days, rhythm and timetable. Subjects and ' + (neueBl.length === 1 ? 'the new block' : neueBl.length ? neueBl.length + ' new blocks' : 'blocks') + ' are added, existing ones stay. Single cancellations and substitutions don’t count' + (r.info.abgesagt ? ' (' + r.info.abgesagt + ' cancelled lessons skipped)' : '') + '. Nothing is saved until you press “Save”.') + '</p>' +
+                '<div class="kl-quick"><button class="kl-btn kl-btn--primary kl-btn--sm" type="button" data-u="nehmen"><span>' + L('Übernehmen', 'Import') + '</span></button>' +
+                    '<button class="kl-btn kl-btn--sm" type="button" data-u="zu"><span>' + L('Verwerfen', 'Discard') + '</span></button></div>';
+        };
+        const laden = async function (btn) {
+            const roh = ($('klUntisIn') || {}).value || '';
+            const url = K.untisLink(roh);
+            if (!url) { auf(L('Das ist kein WebUntis-Link. Er beginnt mit https:// und enthält webuntis.com.', 'That is not a WebUntis link. It starts with https:// and contains webuntis.com.')); return; }
+            btn.disabled = true; btn.querySelector('span').textContent = L('Lädt …', 'Loading …');
+            let text = '', status = 0;
+            try { const r = await fetch(UNTIS_PROXY + encodeURIComponent(url), { cache: 'no-store' }); status = r.status; text = await r.text(); }
+            catch (e) { link = roh; auf(L('WebUntis war nicht erreichbar. Sind Sie online?', 'WebUntis could not be reached. Are you online?')); return; }
+            link = roh;
+            // Der Proxy reicht eine Ablehnung von WebUntis als 502 mit "WebUntis returned HTTP 401/403" weiter.
+            if (status === 401 || status === 403 || (status === 502 && /HTTP 40[13]/.test(text))) { auf(L('WebUntis verweigert den Zugriff. Die Schule hat den Kalender-Export womöglich abgeschaltet, dann bleibt nur das Eintragen von Hand.', 'WebUntis refused access. The school may have turned off the calendar export; then only manual entry is left.')); return; }
+            const r = status >= 200 && status < 300 ? K.ausUntis(text) : { fehler: 'kein_kalender' };
+            if (r.fehler) {
+                auf(r.fehler === 'keine_stunden'
+                    ? L('Der Kalender ist leer. Steht im gewählten Zeitraum Unterricht drin?', 'The calendar is empty. Are there lessons in it?')
+                    : L('Unter dem Link liegt kein Kalender. Nehmen Sie den Link aus dem Teilen-Symbol des Klassen-Stundenplans.', 'There is no calendar behind that link. Use the link from the share icon of the class timetable.'));
+                ev('klasse_untis', { ok: false, grund: r.fehler || 'http_' + status });
+                return;
+            }
+            try { localStorage.setItem(untisSchluessel(), roh); } catch (e) { }
+            ergebnis = r; vorschau();
+            ev('klasse_untis', { ok: true, wochen: r.info.wochen, b: r.info.mitB, bloecke: r.bloecke.length });
+        };
+        const nehmen = function () {
+            const r = ergebnis;
+            m.stundenplan = JSON.parse(JSON.stringify(r.stundenplan));
+            m.schultage = r.schultage.slice();
+            m.rhythmus = r.rhythmus.map(function (x) { return Object.assign({}, x); });
+            r.bloecke.forEach(function (b) {
+                if (m.bloecke.length < 40 && !m.bloecke.some(function (x) { return x.von === b.von && x.bis === b.bis; })) m.bloecke.push({ von: b.von, bis: b.bis });
+            });
+            m.bloecke.sort(function (a, b) { return (a.von || '') < (b.von || '') ? -1 : 1; });
+            r.faecher.forEach(function (fa) {
+                if (m.faecher.length < 30 && !m.faecher.some(function (x) { return x.toLowerCase() === fa.toLowerCase(); })) m.faecher.push(fa);
+            });
+            // Neu zeichnen auf einem frischen Formular-Element: formular() haengt Listener an f
+            // selbst, ein zweiter Aufruf auf DEMSELBEN f wuerde jeden Klick doppelt ausfuehren.
+            const g = f.cloneNode(false); f.replaceWith(g);
+            formular(g, m, neu, { dirty: true, untis: L('Aus WebUntis übernommen. Prüfen Sie den Plan und speichern Sie.', 'Imported from WebUntis. Check the timetable and save.') });
+            const ziel = $('klUntis'); if (ziel && ziel.scrollIntoView) ziel.scrollIntoView({ block: 'start', behavior: RM.matches ? 'auto' : 'smooth' });
+        };
+        box.addEventListener('click', function (e) {
+            const b = e.target.closest('[data-u]'); if (!b) return;
+            const was = b.getAttribute('data-u');
+            if (was === 'auf') auf();
+            else if (was === 'zu') { ergebnis = null; zu(); }
+            else if (was === 'laden') laden(b);
+            else if (was === 'nehmen' && ergebnis) nehmen();
+        });
+        box.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && e.target.id === 'klUntisIn') { e.preventDefault(); const b = box.querySelector('[data-u="laden"]'); if (b && !b.disabled) laden(b); }
+        });
+        zu(hinweis);
+    }
+
     function fld(k, label, v, ph, max, pflicht) {
         return '<label class="kl-field"><span class="kl-label">' + label + (pflicht ? ' *' : '') + '</span><input class="kl-in" data-f="' + k + '" maxlength="' + max + '" value="' + esc(v) + '" placeholder="' + esc(ph) + '"' + (pflicht ? ' required' : '') + '></label>';
     }
