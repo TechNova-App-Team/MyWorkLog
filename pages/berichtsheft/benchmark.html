@@ -360,15 +360,22 @@ const STORAGE_KEY = 'mwlbench_or_key';
 // ("free-models-per-min"): im Lauf 22:19 bekamen die letzten Modelle der Liste
 // nur noch 429 in unter 100 ms — auch die Gegenprobe. Eine Nullzeile weit unten
 // ist deshalb erst mal ein Limit, kein Urteil; `fehler` in der JSON lesen.
+// 16.10.2026: Apodex ist seit 13.10. ~23 Uhr weg (404 in jedem Live-Aufruf, nicht mehr
+// in der Live-Liste). Seitdem schreibt meist Super (Median 21,5 s), Gesamtmedian 20,5 s
+// statt ~8 s. Fuer EINEN Lauf wieder dabei: die Kandidaten ausserhalb der Kette —
+// Super VL ist neu in der Live-Liste und nie gemessen.
 const MODELS = [
-  { id: 'apodex/apodex-1.1-mini:free',                        label: 'Apodex 1.1 Mini',      role: 'Primary'     },
-  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Fallback 1'  },
-  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Fallback 2'  },
-  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 3'  },
-  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 4'  },
-  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Fallback 5'  },
-  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 6'  },
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',         role: 'Primary'     },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',     role: 'Fallback 1'  },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',      role: 'Fallback 2'  },
+  { id: 'poolside/laguna-xs-2.1:free',                        label: 'Laguna XS 2.1',        role: 'Fallback 3'  },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',     role: 'Fallback 4'  },
+  { id: 'dots-studio/dots-3-note-preview:free',               label: 'Dots 3 Note',          role: 'Fallback 5'  },
   { id: 'openrouter/free',                                    label: 'OpenRouter Free',      role: 'Last Resort' },
+  { id: 'nvidia/nemotron-3.5-super-vl:free',                  label: 'Nemotron 3.5 Super VL', role: 'Kandidat (neu)' },
+  { id: 'nvidia/nemotron-3.5-lightning:free',                 label: 'Nemotron 3.5 Lightning', role: 'Kandidat' },
+  { id: 'google/gemma-4-31b-it:free',                         label: 'Gemma 4 31B',          role: 'Kandidat'    },
+  { id: 'google/gemma-4-26b-a4b-it:free',                     label: 'Gemma 4 26B A4B',      role: 'Kandidat'    },
   // Gegenprobe, nicht in der Kette: ein Moderations-Klassifikator muss hier 0
   // holen. Holt er Punkte, wertet der Benchmark falsch (so war es vor dem 19.09.).
   { id: 'nvidia/nemotron-3.5-content-safety:free',            label: 'Nemotron Safety',      role: 'Gegenprobe'  },

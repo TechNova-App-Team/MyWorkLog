@@ -108,5 +108,30 @@ console.log('── Abruf beim Oeffnen ──');
   ok(await e2.CLOUD.Kontingent.abrufen() === null, 'offline → null, kein Wurf');
 }
 
+// ── Stufen (v8.5.12, Worker v4.7): Turbo = ?stufe=schnell, Marathon = ohne ──
+console.log('── Stufen ──');
+{
+  let url = null;
+  const e = engine(async (u) => { url = u; return antwort(200, geminiOk, { 'X-MWL-Kontingent': '4000/100000', 'X-MWL-Schnell': '4000/40000', 'X-MWL-Stufe': 'schnell' }); });
+  ok(e.CLOUD.Stufe.get() === 'schnell', 'ohne Wahl: Turbo (schnell) ist voreingestellt');
+  await e.CLOUD.generateWithCloud('software', optionen);
+  ok(/\?stufe=schnell$/.test(url || ''), `Generator schickt ?stufe=schnell: ${url}`);
+  const ts = e.CLOUD.Kontingent.schnell();
+  ok(ts && ts.verbraucht === 4000 && ts.limit === 40000, `Turbo-Stand aus X-MWL-Schnell: ${JSON.stringify(ts)}`);
+  ok(e.CLOUD.Stufe.zuletzt === 'schnell', `X-MWL-Stufe gemerkt: ${e.CLOUD.Stufe.zuletzt}`);
+  e.CLOUD.Stufe.set('frei');
+  ok(e.sandbox.localStorage.getItem('bh_ki_stufe') === 'frei', 'Wahl bleibt gespeichert');
+  await e.CLOUD.generateWithCloud('software', optionen);
+  ok(!/stufe=/.test(url || '') && /\/$/.test(url || ''), `Marathon schickt KEINEN Parameter: ${url}`);
+  ok(Object.keys(e.CLOUD.STUFEN).join() === 'schnell,frei' && e.CLOUD.STUFEN.schnell.name && e.CLOUD.STUFEN.frei.name, 'zwei benannte Stufen');
+  // Keine fremden Markennamen fuer unsere Stufen (Taeuschung, siehe Kommentar in ais-cloud.js)
+  const namen = Object.values(e.CLOUD.STUFEN).map((s) => s.name).join(' ');
+  ok(!/gemini|gpt|claude|opus|sonnet|llama|mistral|ling|nemotron/i.test(namen), `eigene Namen, keine fremden Marken: ${namen}`);
+}
+{
+  const e = engine(async () => antwort(200, geminiOk), { bh_ki_stufe: 'quatsch' });
+  ok(e.CLOUD.Stufe.get() === 'schnell', 'unbekannter gespeicherter Wert → Turbo');
+}
+
 console.log(`\nKI-Kontingent (Browser): ${pass} ok, ${fail} fehlgeschlagen`);
 process.exit(fail ? 1 : 0);

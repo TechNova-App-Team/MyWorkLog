@@ -1353,11 +1353,19 @@ function _renderKontingent() {
         `${zahl(Math.min(k.verbraucht, k.limit))} of ${zahl(k.limit)} tokens used`));
     setz('aisKontReset', reset);
     const wochen = Math.floor(rest / KONT_WOCHE_TOKENS);
-    setz('aisKontReicht', s.erschoepft
+    // Turbo (seit v8.5.12): eigener, kleinerer Topf fuer das bezahlte Modell,
+    // der zusaetzlich zum Tageskontingent zaehlt (Worker v4.7, X-MWL-Schnell).
+    const ts = typeof Kontingent.schnell === 'function' ? Kontingent.schnell() : null;
+    const turbo = ts && !s.erschoepft
+        ? ' ' + (ts.erschoepft || ts.verbraucht >= ts.limit
+            ? L('Turbo ist für heute aufgebraucht, es schreibt das kostenlose Modell.', 'Turbo is used up for today; the free model writes.')
+            : L(`Davon Turbo: ${Math.floor((1 - ts.verbraucht / ts.limit) * 100)} % übrig.`, `Turbo: ${Math.floor((1 - ts.verbraucht / ts.limit) * 100)}% left.`))
+        : '';
+    setz('aisKontReicht', (s.erschoepft
         ? L('Bis dahin schreibt die lokale Engine.', 'Until then, the local engine writes.')
         : wochen >= 1
             ? L(`Reicht heute noch für etwa ${wochen} ${wochen === 1 ? 'Woche' : 'Wochen'}.`, `Enough for about ${wochen} more ${wochen === 1 ? 'week' : 'weeks'} today.`)
-            : L('Reicht noch für kurze Fragen an den Assistenten.', 'Enough for short questions to the assistant.'));
+            : L('Reicht noch für kurze Fragen an den Assistenten.', 'Enough for short questions to the assistant.')) + turbo);
 }
 
 function selectProfession(id) {

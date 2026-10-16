@@ -1,5 +1,4 @@
-// Prueft die Nutzungs-Schwelle, ab der die Preis-Umfrage und die Cloud-KI-
-// Ankuendigung ueberhaupt erscheinen duerfen.
+// Prueft die Nutzungs-Schwelle, ab der die Preis-Umfrage ueberhaupt erscheinen darf.
 //
 // WARUM DAS EINEN TEST BRAUCHT: beides ist eine Regel ueber ABWESENHEIT — die
 // richtige Fassung zeigt nichts. Faellt die Schwelle irgendwann weg, sieht die
@@ -15,7 +14,6 @@ import { JSDOM } from 'jsdom';
 const UMFRAGE = 'components/umfrage/umfrage.js';
 // Seit v6.5.0 liegt die Logik der Berichtsheft-Seite in eigenen Dateien; vorher
 // stand alles inline in pages/berichtsheft/index.html.
-const HINWEIS = 'Assets/js/berichtsheft/cv2-hinweis.js';
 const UEBERSICHT = 'Assets/js/berichtsheft/bh-uebersicht.js';
 
 let ok = 0;
@@ -65,26 +63,9 @@ pruefe('wer abgelehnt hat, sieht ihn trotz Nutzung nicht',
 pruefe('wer abgestimmt hat, sieht ihn trotz Nutzung nicht',
   bannerBei({ berichtsheft_reports: '[{"id":"x"}]', mwl_umfrage_voted: '2026-08-30' }) === 'none');
 
-// ── Teil 2: die Ankuendigung auf der Berichtsheft-Seite ──────────────────────
-// Der Block ist ein IIFE; hier wird die Bedingung geprueft, nicht das Rendern —
-// es genuegt, dass die Schwelle VOR dem Aufbau steht.
-const hinweis = fs.readFileSync(HINWEIS, 'utf8');
-const block = hinweis.slice(hinweis.indexOf("const KEY = 'ais_cloud_v2_announcement_dismissed'"));
-const bisInit = block.slice(0, block.indexOf('function init('));
-pruefe('die Ankuendigungs-Datei enthaelt ueberhaupt den Block (sonst prueft alles darunter nichts)',
-  block.length > 200 && bisInit.length > 100);
-
-console.log('\nCloud-KI-Ankuendigung');
-pruefe('liest den Berichtsbestand, bevor sie etwas anzeigt',
-  /berichtsheft_reports/.test(bisInit),
-  'kein Zugriff auf berichtsheft_reports vor init()');
-pruefe('steigt ohne Berichte aus',
-  /if \(!hatBerichte && !force\) return;/.test(bisInit));
-pruefe('?showAnnouncement=1 umgeht die Schwelle weiterhin (zum Testen)',
-  /!force/.test(bisInit) && /showAnnouncement=1/.test(bisInit));
-pruefe('liest den Speicher direkt, nicht das reports-Global',
-  /localStorage\.getItem\('berichtsheft_reports'\)/.test(bisInit),
-  'haengt sonst an der Ladereihenfolge zweier <script>-Bloecke');
+// Teil 2 (Cloud-KI-Ankuendigung, cv2-hinweis.js) ist seit v8.5.12 weg: der Dialog wurde
+// durch eine Ankuendigung im Chat ersetzt (ais-chat.js hinweisHTML), die nur dort steht,
+// wo jemand die KI schon benutzt — eine Schwelle braucht sie nicht.
 
 // ── Teil 3: der Nachzieher ───────────────────────────────────────────────────
 // Der Banner wird sonst nur beim Laden ausgewertet. Wer seinen ersten Bericht in

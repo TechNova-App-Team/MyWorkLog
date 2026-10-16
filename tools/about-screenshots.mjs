@@ -145,7 +145,6 @@ const seed = {
     tg_pro_data: data, tg_pro_data_backups: backups,
     berichtsheft_reports: reports,
     pdf_personal_cfg: { name: 'Anna Beispiel', beruf: 'Fachinformatikerin für Systemintegration', betrieb: 'Musterwerk GmbH', beginn: `01.08.${heute.getFullYear() - 2}`, ende: `31.07.${heute.getFullYear() + 1}`, ausbilder: 'M. Weber' },
-    ais_cloud_v2_announcement_dismissed: '1',
     pro_intro_seen: 'true', privacy_acknowledged: '1',
     mwl_last_export: new Date(now - 86400000).toISOString(), mwl_last_backup_kind: 'full',
     mwl_setup_hint_dismissed: '1', mwl_lang_promo_dismissed: '1', tg_school_dismissed: '1',

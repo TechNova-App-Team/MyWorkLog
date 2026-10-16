@@ -216,6 +216,92 @@ body.aic-offen > :is(.bg-mesh, .page-wrap, .site-footer) { animation: aicVerdeck
 .aic-kopf-knopf svg { width: 18px; height: 18px; }
 .aic-menue { display: none; }
 
+/* ── Modellwahl im Titel (seit v8.5.12, ais-chat.js menueZeichnen) ──
+   Der Titel IST der Schalter, wie bei einem Chatbot. Das Menue haengt am Kopf
+   (position: relative) und liegt ueber dem Verlauf, nicht in ihm. */
+.aic-kopf { position: relative; }
+/* Ausgleich fuer das Polster des Knopfs an der UEBERSCHRIFT, nicht am Knopf: ein negativer
+   Rand am Knopf in einem inhaltsbreiten h2 schnitt den Namen ab ("Kestrel 3.1 Tu..."). */
+.aic-kopf .aic-titel { min-width: 0; margin-left: -10px; }
+.aic-modell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+.aic-modell:hover, .aic-modell[aria-expanded="true"] { background: var(--bg-hover); }
+.aic-modell:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: 1px; }
+.aic-modell-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.aic-modell svg { flex: none; width: 16px; height: 16px; color: var(--text-secondary); transition: transform 0.2s var(--ease-out); }
+.aic-modell[aria-expanded="true"] svg { transform: rotate(180deg); }
+.aic-modell-menue {
+    position: absolute;
+    top: 50px;
+    left: 12px;
+    z-index: 20;
+    display: grid;
+    gap: 2px;
+    width: min(360px, calc(100vw - 24px));
+    padding: 6px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-lg);
+    transform-origin: top left;
+    animation: aicMenueAuf 0.16s var(--ease-out);
+}
+.aic-modell-menue[hidden] { display: none; }
+@keyframes aicMenueAuf { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+.aic-modell-opt {
+    position: relative;
+    display: grid;
+    gap: 3px;
+    padding: 10px 40px 11px 12px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+.aic-modell-opt:hover { background: var(--bg-hover); }
+.aic-modell-opt:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: -2px; }
+.aic-modell-opt[aria-checked="true"] { background: rgba(var(--primary-rgb), 0.1); }
+.aic-modell-opt-kopf { display: flex; align-items: center; gap: 8px; }
+.aic-modell-opt-name { font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+.aic-modell-marke {
+    padding: 1px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border-light);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+.aic-modell-marke.is-turbo { border-color: rgba(var(--primary-rgb), 0.45); background: rgba(var(--primary-rgb), 0.14); color: var(--text-main); }
+.aic-modell-opt-unter { font-size: 0.84rem; line-height: 1.45; color: var(--text-secondary); }
+.aic-modell-opt-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); }
+.aic-modell-haken { position: absolute; top: 12px; right: 12px; width: 16px; height: 16px; color: var(--primary); opacity: 0; }
+.aic-modell-opt[aria-checked="true"] .aic-modell-haken { opacity: 1; }
+
+/* Einmalige Ankuendigung (ersetzt den Gemini-Dialog cv2-hinweis) und die Zeile
+   "X hat geschrieben", wenn nicht die gewaehlte Stufe geantwortet hat. */
+.aic-ankuendigung .aic-inhalt { padding: 12px 16px 14px; border: 1px solid rgba(var(--primary-rgb), 0.28); border-radius: var(--radius); background: rgba(var(--primary-rgb), 0.06); }
+.aic-ankuendigung .aic-text + .aic-text { margin-top: 8px; }
+.aic-ankuendigung-t { margin: 0 0 6px; font-family: var(--font-display); font-weight: 600; font-size: 1rem; letter-spacing: -0.01em; }
+.aic-knopf.is-ruhig { border-color: transparent; color: var(--text-secondary); }
+.aic-knopf.is-ruhig:hover { color: var(--text-main); }
+.aic-wer { margin: 8px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+
 .aic-scroll { overflow-y: auto; overscroll-behavior: contain; }
 .aic-spalte {
     display: flex;

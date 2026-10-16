@@ -59,6 +59,7 @@ const CLOUD_PROXY = 'https://ai-proxy.myworklog.de';
 // Generator UND Chat ziehen aus demselben Kontingent.
 const RATE_LIMIT_COOLDOWN_MS = 10000;  // Doppelklick-Schutz, kein Kontingent
 const KONTINGENT_SPEICHER = 'mwl_ki_kontingent';
+const SCHNELL_SPEICHER = 'mwl_ki_schnell';
 const GERAET_SPEICHER = 'mwl_ki_geraet';
 
 // Altbestand der browserseitigen Zaehler — wird nirgends mehr gelesen.
@@ -98,8 +99,25 @@ const Kontingent = {
         try { localStorage.setItem(KONTINGENT_SPEICHER, JSON.stringify(d)); } catch (e) { }
         try { window.dispatchEvent(new CustomEvent('mwl-kontingent', { detail: d })); } catch (e) { }
     },
+    // Stand des Turbo-Kontingents (Worker v4.7, Kopf X-MWL-Schnell) — eigener Speicher,
+    // weil eine schnelle Antwort BEIDE Zaehler belastet.
+    schnell() {
+        try {
+            const d = JSON.parse(localStorage.getItem(SCHNELL_SPEICHER) || 'null');
+            return d && d.tag === this._tag() && d.limit > 0 ? d : null;
+        } catch (e) { return null; }
+    },
+    _schnellSchreib(verbraucht, limit, erschoepft) {
+        const d = { tag: this._tag(), verbraucht, limit, erschoepft: !!erschoepft || verbraucht >= limit };
+        try { localStorage.setItem(SCHNELL_SPEICHER, JSON.stringify(d)); } catch (e) { }
+    },
     ausKopf(response) {
-        const v = response && response.headers && response.headers.get('X-MWL-Kontingent');
+        const h = response && response.headers;
+        const s = h && h.get('X-MWL-Schnell'), sm = s && /^(\d+)\/(\d+)$/.exec(s);
+        if (sm) this._schnellSchreib(+sm[1], +sm[2], false);
+        Stufe.ausKopf(response);
+        // Zuletzt: _schreib loest 'mwl-kontingent' aus, dann stehen beide Staende schon.
+        const v = h && h.get('X-MWL-Kontingent');
         const m = v && /^(\d+)\/(\d+)$/.exec(v);
         if (m) this._schreib(+m[1], +m[2], false);
     },
@@ -112,12 +130,51 @@ const Kontingent = {
             const r = await fetch(CLOUD_PROXY + '/kontingent', { headers: { 'X-MWL-Geraet': geraetId() }, cache: 'no-store' });
             if (!r.ok) return null;
             const j = await r.json();
+            if (j && j.schnell && j.schnell.limit > 0) this._schnellSchreib(j.schnell.verbraucht | 0, j.schnell.limit, j.schnell.erschoepft);
             if (j && j.limit > 0) this._schreib(j.verbraucht | 0, j.limit, j.erschoepft);
             return this.stand();
         } catch (e) { return null; }
     },
 };
 
+// ═══════════════════════════════════════
+// STUFEN — Modellwahl (seit v8.5.12, Worker v4.7)
+// ═══════════════════════════════════════
+// Wunsch des Nutzers (16.10.2026): wie bei einem Chatbot das Modell waehlen.
+// "schnell" = zuerst ein BEZAHLTES Modell (Worker: MODELS_SCHNELL), kleineres
+// Tageskontingent; "frei" = nur die Gratis-Kette, grosses Kontingent, Wartezeit.
+// Die Namen sind eigene Produktnamen — bewusst KEINE echten Modellnamen: die
+// Modelle dahinter wechseln alle paar Wochen (Gratis-Modelle verschwinden ohne
+// Ankuendigung), der Name, den der Nutzer kennt, bleibt. Und ein fremder
+// Markenname ("Gemini …") fuer ein anderes Modell waere eine Taeuschung.
+const STUFE_SPEICHER = 'bh_ki_stufe';
+const STUFEN = {
+    schnell: { name: 'Kestrel 3.1 Turbo' },
+    frei:    { name: 'Albatros 2.5 Marathon' },
+};
+const Stufe = {
+    get() { try { return localStorage.getItem(STUFE_SPEICHER) === 'frei' ? 'frei' : 'schnell'; } catch (e) { return 'schnell'; } },
+    set(s) {
+        const neu = s === 'frei' ? 'frei' : 'schnell';
+        try { localStorage.setItem(STUFE_SPEICHER, neu); } catch (e) { }
+        try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: neu } })); } catch (e) { }
+    },
+    // Als Query-Parameter, nicht als Kopf: braucht keine CORS-Freigabe, und ein
+    // Worker vor v4.7 ignoriert ihn einfach (= Gratis-Kette wie bisher).
+    url(basis) {
+        const b = String(basis || CLOUD_PROXY).replace(/\/$/, '') + '/';
+        return this.get() === 'schnell' ? b + '?stufe=schnell' : b;
+    },
+    // Was WIRKLICH geantwortet hat (Kopf X-MWL-Stufe): "schnell", "frei" (z. B.
+    // ohne Guthaben ausgewichen) oder "frei-kontingent" (Turbo fuer heute leer).
+    zuletzt: null,
+    ausKopf(response) {
+        const v = response && response.headers && response.headers.get('X-MWL-Stufe');
+        if (!v) return;
+        this.zuletzt = v;
+        try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: this.get(), geantwortet: v } })); } catch (e) { }
+    },
+};
 const RateLimit = {
     _lastTs: 0,
     status() {
@@ -598,7 +655,7 @@ async function generateWithCloud(professionId, options) {
         'X-MWL-Art': options && options.art === 'tag' ? 'tag' : 'woche',
     };
 
-    const response = await fetch(CLOUD_PROXY, {
+    const response = await fetch(Stufe.url(CLOUD_PROXY), {
         method: 'POST',
         headers: fetchHeaders,
         body: JSON.stringify(requestBody),
@@ -1017,7 +1074,7 @@ async function generateWithCloud(professionId, options) {
 
 return {
     verbinde, GEBRAUCHT,
-    CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId,
+    CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId, Stufe, STUFEN,
     CLOUD_FORM, CLOUD_UMFANG, _buildCloudPrompt,
     _klassenPlanFuer, _planFaecher, _kwDatum,
     _repairJSON, _sliceRootJSON, _deEscapeStructural,

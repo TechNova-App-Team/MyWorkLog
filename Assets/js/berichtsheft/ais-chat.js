@@ -446,6 +446,7 @@ function nachrichtHTML(n, nr) {
         knoepfe.push('<button type="button" class="aic-knopf" onclick="AISChat.einstellungen()">' + Lx('Einstellungen öffnen', 'Open settings') + '</button>');
     return '<div class="aic-n is-assistent"><span class="aic-avatar">' + MARKE + '</span><div class="aic-inhalt">' +
         (n.text ? '<p class="aic-text">' + esc(n.text) + '</p>' : '') + chips +
+        (n.wer ? '<p class="aic-wer">' + esc(n.wer) + '</p>' : '') +
         (knoepfe.length ? '<div class="aic-knoepfe">' + knoepfe.join('') + '</div>' : '') +
         (n.woche ? wocheHTML(n.woche, nr) : '') + '</div></div>';
 }
@@ -484,6 +485,112 @@ function leerHTML() {
         '</div>' + vwHinweis + '</div>';
 }
 
+// ── Modellwahl + Ankuendigung (seit v8.5.12) ─────────────────────────
+// Zwei Stufen aus AIS_CLOUD (Stufe/STUFEN): Turbo = bezahltes Modell zuerst,
+// kleineres Tageskontingent; Marathon = Gratis-Kette, grosses Kontingent.
+// Die Zeiten im Menue sind GEMESSEN (KI-Dashboard 13.-16.10.2026: Gratis-Kette
+// Median 20,5 s, p90 54 s; Ling 3.0 Flash im September 2-6 s) — wer die Kette
+// im Worker aendert, prueft die Saetze hier.
+const NACHRICHT_TOKENS = 3900;   // gemessen: ein Chat-Aufruf ~2.700 ein + ~1.200 aus
+const WOCHE_TOKENS = 3433;       // wie KONT_WOCHE_TOKENS in ais-studio.js
+const HINWEIS_KEY = 'bh_ki_stufen_hinweis_v1';
+const kc = () => window.AIS_CLOUD;
+function stufeName(s) { const K = kc(); return K && K.STUFEN ? K.STUFEN[s].name : ''; }
+function modellZeichnen() {
+    const n = $('aicModellName'), K = kc();
+    if (n && K && K.Stufe) n.textContent = stufeName(K.Stufe.get());
+    const m = $('aicModellMenue');
+    if (m && !m.hidden) menueZeichnen();
+}
+function restText(stand, jeEinheit, eins, mehr) {
+    if (!stand) return '';
+    const rest = stand.erschoepft ? 0 : Math.max(0, stand.limit - stand.verbraucht);
+    const n = Math.floor(rest / jeEinheit);
+    if (n < 1) return Lx('Für heute aufgebraucht', 'Used up for today');
+    return Lx('Heute noch etwa ' + n + ' ' + (n === 1 ? eins[0] : mehr[0]), 'About ' + n + ' more ' + (n === 1 ? eins[1] : mehr[1]) + ' today');
+}
+function menueZeichnen() {
+    const m = $('aicModellMenue'), K = kc();
+    if (!m || !K) return;
+    // Neu zeichnen ersetzt die Knoepfe: der Fokus muss auf denselben Eintrag zurueck,
+    // sonst faellt er nach dem Kontingent-Abruf auf <body> (gemessen headless).
+    const fokus = m.contains(document.activeElement) && document.activeElement.getAttribute('data-stufe');
+    const jetzt = K.Stufe.get();
+    const eintrag = (s, unter, zeit, rest, marke) =>
+        '<button type="button" class="aic-modell-opt" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
+        '<span class="aic-modell-opt-kopf"><span class="aic-modell-opt-name">' + esc(stufeName(s)) + '</span>' +
+        '<span class="aic-modell-marke' + (s === 'schnell' ? ' is-turbo' : '') + '">' + esc(marke) + '</span></span>' +
+        '<span class="aic-modell-opt-unter">' + esc(unter) + '</span>' +
+        '<span class="aic-modell-opt-meta"><span>' + esc(zeit) + '</span>' + (rest ? '<span>' + esc(rest) + '</span>' : '') + '</span>' +
+        '<svg class="aic-modell-haken" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
+        '</button>';
+    m.innerHTML =
+        eintrag('schnell', Lx('Schnell und präzise. Kleineres Tageskontingent.', 'Fast and precise. Smaller daily quota.'),
+            Lx('Antwort in wenigen Sekunden', 'Answers in a few seconds'),
+            restText(K.Kontingent.schnell(), NACHRICHT_TOKENS, ['Nachricht', 'message'], ['Nachrichten', 'messages']), 'Turbo') +
+        eintrag('frei', Lx('Kostenlos und ausdauernd. Großes Tageskontingent.', 'Free and enduring. Large daily quota.'),
+            Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
+            restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free'));
+    if (fokus) { const b = m.querySelector('[data-stufe="' + fokus + '"]'); if (b) b.focus(); }
+}
+function modellMenue(auf) {
+    const m = $('aicModellMenue'), b = $('aicModell');
+    if (!m || !b) return;
+    const zeigen = auf === undefined ? m.hidden : !!auf;
+    if (zeigen) {
+        menueZeichnen();
+        const K = kc();
+        if (K && K.Kontingent && K.Kontingent.abrufen) K.Kontingent.abrufen().then(() => { if (!m.hidden) menueZeichnen(); });
+    }
+    m.hidden = !zeigen;
+    b.setAttribute('aria-expanded', String(zeigen));
+    if (zeigen) { const a = m.querySelector('[aria-checked="true"]') || m.querySelector('button'); if (a) a.focus(); }
+}
+function modellWaehlen(s) {
+    const K = kc(); if (!K) return;
+    K.Stufe.set(s);
+    if (typeof bhMess === 'function') bhMess('modell_gewaehlt', { stufe: s === 'frei' ? 'frei' : 'schnell' });
+    modellMenue(false);
+    hinweisGelesen();
+    if (offen) zeichnen();
+    const b = $('aicModell'); if (b) b.focus();
+}
+// Wer hat die Antwort WIRKLICH geschrieben? Nur erwaehnen, wenn es nicht die
+// gewaehlte Stufe war (ohne Guthaben ausgewichen, Turbo fuer heute leer).
+function werHatGeschrieben() {
+    const K = kc();
+    if (!K || !K.Stufe || K.Stufe.get() !== 'schnell') return '';
+    const z = K.Stufe.zuletzt;
+    if (!z || z === 'schnell') return '';
+    return z === 'frei-kontingent'
+        ? Lx(stufeName('schnell') + ' ist für heute aufgebraucht, deshalb hat ' + stufeName('frei') + ' geschrieben.',
+             stufeName('schnell') + ' is used up for today, so ' + stufeName('frei') + ' wrote this.')
+        : Lx(stufeName('schnell') + ' war gerade nicht erreichbar, deshalb hat ' + stufeName('frei') + ' geschrieben.',
+             stufeName('schnell') + ' was not reachable just now, so ' + stufeName('frei') + ' wrote this.');
+}
+// Einmalige Ankuendigung im Chat, ersetzt den Dialog "Wir sind von Gemini zu
+// OpenRouter gewechselt" (cv2-hinweis, bis v8.5.11). Kein Countdown, kein Dialog
+// ueber der Seite: sie steht dort, wo die KI benutzt wird, und geht mit der
+// ersten Nachricht, einer Modellwahl oder "Alles klar" weg.
+function hinweisOffen() { try { return !localStorage.getItem(HINWEIS_KEY); } catch (e) { return false; } }
+function hinweisGelesen() { try { localStorage.setItem(HINWEIS_KEY, new Date().toISOString().slice(0, 10)); } catch (e) { } }
+function hinweisWeg() { hinweisGelesen(); if (offen) zeichnen(); }
+function hinweisHTML() {
+    const K = kc();
+    if (!hinweisOffen() || !K || !K.STUFEN) return '';
+    return '<div class="aic-n is-assistent aic-ankuendigung"><span class="aic-avatar">' + MARKE + '</span><div class="aic-inhalt">' +
+        '<p class="aic-ankuendigung-t">' + esc(Lx('Schnelle Antworten sind zurück', 'Fast answers are back')) + '</p>' +
+        '<p class="aic-text">' + esc(Lx(
+            'Viele von euch haben sich schnellere Antworten gewünscht. Deshalb schreibt ab jetzt ' + stufeName('schnell') + ': ein bezahltes Modell, für dich kostenlos. Die Antwort kommt in wenigen Sekunden, dafür ist das Tageskontingent kleiner.',
+            'Many of you asked for faster answers. That is why ' + stufeName('schnell') + ' now writes for you: a paid model, free for you. Answers arrive in a few seconds; in return the daily quota is smaller.')) + '</p>' +
+        '<p class="aic-text">' + esc(Lx(
+            'Brauchst du mehr, wechsle oben auf ' + stufeName('frei') + ': weiter kostenlos und mit großem Kontingent, aber mit 20 bis 40 Sekunden Wartezeit.',
+            'Need more? Switch to ' + stufeName('frei') + ' at the top: still free and with a large quota, but with a 20 to 40 second wait.')) + '</p>' +
+        '<div class="aic-knoepfe"><button type="button" class="aic-knopf" onclick="AISChat.modellMenue(true)">' + esc(Lx('Modell wählen', 'Choose model')) + '</button>' +
+        '<button type="button" class="aic-knopf is-ruhig" onclick="AISChat.hinweisWeg()">' + esc(Lx('Alles klar', 'Got it')) + '</button></div>' +
+        '</div></div>';
+}
+
 // Der Entwurf steht hinter der LETZTEN Antwort des Assistenten — dort, wo er
 // zuletzt geaendert wurde. Eine neue Frage des Nutzers steht darunter.
 function zeichnen() {
@@ -491,7 +598,7 @@ function zeichnen() {
     if (!box) return;
     const n = gespraech.nachrichten;
     if (!n.length && !entwurfHatInhalt(gespraech.entwurf)) {
-        box.innerHTML = leerHTML();
+        box.innerHTML = hinweisHTML() + leerHTML();
     } else {
         let letzte = -1;
         n.forEach((x, i) => { if (x.rolle === 'assistent' && !x.woche) letzte = i; });
@@ -502,11 +609,13 @@ function zeichnen() {
             if (i === letzte && karte) html += '<div class="aic-n is-karte">' + karte + '</div>';
         });
         if (letzte === -1 && karte) html += '<div class="aic-n is-karte">' + karte + '</div>';
-        box.innerHTML = html + (beschaeftigt ? tippenHTML() : '');
+        box.innerHTML = hinweisHTML() + html + (beschaeftigt ? tippenHTML() : '');
         if (beschaeftigt) warteAnimieren();
     }
     profilZeichnen();
-    nachUnten();
+    // Leerer Chat mit Ankuendigung: oben bleiben, sonst ist ihr Kopf weggescrollt.
+    if (!n.length && hinweisOffen()) { const s = $('aicScroll'); if (s) requestAnimationFrame(() => { s.scrollTop = 0; }); }
+    else nachUnten();
 }
 // ── Warten: ein Wochenblatt, das sich beschreibt ─────────────────────
 // Statt "Schreibt …" (Wunsch 09.10.2026). Bewusst EHRLICH: der Kopf zeigt nur,
@@ -927,7 +1036,7 @@ async function denken(nachricht, hinweis) {
     const ctrl = new AbortController();
     const uhr = setTimeout(() => ctrl.abort(), 95000);
     try {
-        const res = await fetch(proxy.replace(/\/$/, '') + '/', {
+        const res = await fetch(KC && KC.Stufe ? KC.Stufe.url(proxy) : proxy.replace(/\/$/, '') + '/', {
             method: 'POST',
             signal: ctrl.signal,
             headers: { 'Content-Type': 'application/json', 'X-MWL-Art': 'chat', ...(KC ? { 'X-MWL-Geraet': KC.geraetId() } : {}) },
@@ -1003,6 +1112,7 @@ async function senden(e, vorgabeText) {
     // Die Woche war schon uebernommen und die Seite stand offen: frisch anfangen.
     if (gespraech.erledigt) frischAnfangen();
     zuletztGeaendert = [];
+    hinweisGelesen();
     gespraech.nachrichten.push({ rolle: 'nutzer', text });
     if (typeof bhMess === 'function') bhMess('assistent_nachricht', { nr: gespraech.nachrichten.filter(n => n.rolle === 'nutzer').length });
     beschaeftigt = 'denken';
@@ -1042,7 +1152,7 @@ async function senden(e, vorgabeText) {
     gespraech.entwurf = zus.entwurf;
     zuletztGeaendert = zus.geaendert;
     if (typeof bhMess === 'function') bhMess('assistent_antwort', { tage: zus.geaendert.length });
-    sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert) });
+    sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert), wer: werHatGeschrieben() });
     knopfZustand();
 }
 
@@ -1515,6 +1625,17 @@ function rail() {
 
 function init() {
     laden();
+    modellZeichnen();
+    if (typeof window.addEventListener === 'function') {
+        window.addEventListener('mwl-stufe', modellZeichnen);
+        window.addEventListener('mwl-kontingent', () => { const m = $('aicModellMenue'); if (m && !m.hidden) menueZeichnen(); });
+    }
+    const mm = $('aicModellMenue');
+    if (mm) mm.addEventListener('click', (e) => { const b = e.target.closest('[data-stufe]'); if (b) modellWaehlen(b.getAttribute('data-stufe')); });
+    document.addEventListener('click', (e) => {
+        const m = $('aicModellMenue');
+        if (m && !m.hidden && !e.target.closest('#aicModellMenue, #aicModell')) modellMenue(false);
+    });
     const f = $('aicText');
     if (f) {
         f.addEventListener('input', () => { feldGroesse(); knopfZustand(); });
@@ -1525,6 +1646,8 @@ function init() {
     }
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || !offen) return;
+        const menue = $('aicModellMenue');
+        if (menue && !menue.hidden) { modellMenue(false); const b = $('aicModell'); if (b) b.focus(); return; }
         if (vorwissenOffen()) { vorwissenZu(); return; }
         if (gelerntOffen()) { gelerntZu(); return; }
         // Liegt das Einstellungs-Sheet darueber, schliesst Escape zuerst das.
@@ -1547,6 +1670,7 @@ return {
     oeffnen, schliessen, senden, einstellungen, uebernehmen, bearbeiten,
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
+    modellMenue, modellWaehlen, hinweisWeg,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
@@ -1555,7 +1679,7 @@ return {
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
-        leererEntwurf, entwurfLesen,
+        leererEntwurf, entwurfLesen, werHatGeschrieben, hinweisHTML, HINWEIS_KEY,
         gespraech: () => gespraech, setzeEntwurf: (e) => { gespraech.entwurf = e; },
     },
 };
