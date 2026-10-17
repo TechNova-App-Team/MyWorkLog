@@ -57,7 +57,13 @@
         heartbeatInterval: null,
         lastSyncTime: null,
         deviceId: localStorage.getItem('p2p_deviceId') || (() => {
-            const id = 'dev_' + crypto.randomUUID().substring(0, 8);
+            // randomUUID fehlt in Safari < 15.4 / Chrome < 92. Ohne Rueckfall warf diese
+            // Zeile beim Laden, p2pSync blieb uninitialisiert, und jeder spaetere Zugriff
+            // (z. B. p2pRenderCryptoState beim Oeffnen der Einstellungen) endete im
+            // ReferenceError — gemessen in den Analytics, 17.10.2026.
+            const id = 'dev_' + (crypto.randomUUID
+                ? crypto.randomUUID().substring(0, 8)
+                : Array.from(crypto.getRandomValues(new Uint8Array(4)), b => b.toString(16).padStart(2, '0')).join(''));
             localStorage.setItem('p2p_deviceId', id);
             return id;
         })()
