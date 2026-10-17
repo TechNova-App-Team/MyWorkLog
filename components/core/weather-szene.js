@@ -622,6 +622,11 @@
             maleSzene(st, st.L, wolkenTextur(st, st.L, true));
             maleNaheWolken(st, st.L);
             st.blitz.hidden = !st.L.blitz;
+            // Figur im selben Licht: nachts dunkler, bei Bedeckung matter, abends waermer.
+            const L = st.L, w = st.root.parentElement, grau = (LAGE[p.cond] || LAGE.cloudy).grau;
+            w.style.setProperty('--figur-hell', (1 - L.nacht * 0.55 - grau * 0.12).toFixed(3));
+            w.style.setProperty('--figur-satt', (1 - L.nacht * 0.45 - grau * 0.2).toFixed(3));
+            w.style.setProperty('--figur-warm', (L.abend * 0.3).toFixed(3));
             lebenStarten(st);
         } catch (e) { console.warn('[WetterSzene]', e); }
     }

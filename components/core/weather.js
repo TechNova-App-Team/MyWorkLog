@@ -364,136 +364,128 @@
         return `
             <div class="weather-landscape" aria-hidden="true">
 
+                <!-- Rueckenfigur (seit v8.5.16): schaut in die Landschaft wie die Szene darunter
+                     gemalt ist. Klassen char-* und data-* bleiben — _applyCharacterReactions
+                     schaltet daran Schirm, Muetze, Hut, Schal, Mantel, Sonnenbrille, Zittern. -->
                 <div class="weather-character" data-umbrella="0" data-sunglasses="0" data-sunscreen="0" data-scarf="0" data-hat="0" data-sunhat="0" data-coat="0" data-shiver="0">
                     <svg viewBox="0 0 200 320" class="char-svg" preserveAspectRatio="xMidYMax meet">
-                        <!-- Drop shadow on ground -->
-                        <ellipse class="char-shadow" cx="100" cy="305" rx="40" ry="5" />
+                        <defs>
+                            <linearGradient id="wf-hoodie" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#5b7787"/><stop offset="1" stop-color="#3c5462"/>
+                            </linearGradient>
+                            <linearGradient id="wf-jeans" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#34495f"/><stop offset="1" stop-color="#26364a"/>
+                            </linearGradient>
+                            <linearGradient id="wf-haar" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#4a3528"/><stop offset="1" stop-color="#2b1e17"/>
+                            </linearGradient>
+                            <linearGradient id="wf-mantel" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#3b4250"/><stop offset="1" stop-color="#272c36"/>
+                            </linearGradient>
+                            <linearGradient id="wf-schirm" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0" stop-color="#34507e"/><stop offset="1" stop-color="#1f3254"/>
+                            </linearGradient>
+                            <radialGradient id="wf-schatten" cx="0.5" cy="0.5" r="0.5">
+                                <stop offset="0" stop-color="#000" stop-opacity="0.45"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+                            </radialGradient>
+                        </defs>
 
-                        <!-- BODY (silhouette base + colored fills) -->
+                        <ellipse class="char-shadow" cx="100" cy="300" rx="34" ry="5" fill="url(#wf-schatten)" />
+
                         <g class="char-body">
-                            <!-- Legs (pants) -->
-                            <path class="char-pants char-pants--left"  d="M 80 215 Q 78 240 76 270 L 75 290 L 88 290 L 90 270 Q 92 240 92 215 Z" />
-                            <path class="char-pants char-pants--right" d="M 108 215 Q 108 240 110 270 L 112 290 L 125 290 L 124 270 Q 122 240 120 215 Z" />
+                            <!-- Beine (Jeans) und Schuhe von hinten -->
+                            <path class="wf-jeans" d="M 82 184 L 99 184 Q 98 214 97 240 L 95 291 L 85 291 L 84 240 Q 82 214 82 184 Z" />
+                            <path class="wf-jeans" d="M 101 184 L 118 184 Q 118 214 116 240 L 115 291 L 105 291 L 103 240 Q 102 214 101 184 Z" />
+                            <path class="wf-volumen" d="M 92 186 L 99 184 Q 98 214 97 240 L 95 291 L 91 291 Q 92 240 92 186 Z" />
+                            <path class="wf-volumen" d="M 112 186 L 118 184 Q 118 214 116 240 L 115 291 L 111 291 Q 112 240 112 186 Z" />
+                            <path class="wf-schuh" d="M 83 288 Q 90 285 97 288 L 97 297 Q 90 300 83 297 Z" />
+                            <path class="wf-schuh" d="M 103 288 Q 110 285 117 288 L 117 297 Q 110 300 103 297 Z" />
+                            <path class="wf-sohle" d="M 83 296 Q 90 299 97 296 L 97 299 Q 90 302 83 299 Z" />
+                            <path class="wf-sohle" d="M 103 296 Q 110 299 117 296 L 117 299 Q 110 302 103 299 Z" />
 
-                            <!-- Shoes -->
-                            <ellipse class="char-shoe" cx="82" cy="293" rx="9" ry="4" />
-                            <ellipse class="char-shoe" cx="118" cy="293" rx="9" ry="4" />
-
-                            <!-- Torso / shirt -->
-                            <path class="char-shirt" d="M 70 130 Q 65 138 65 150 L 70 215 Q 75 222 100 222 Q 125 222 130 215 L 135 150 Q 135 138 130 130 Q 122 124 100 124 Q 78 124 70 130 Z" />
-
-                            <!-- Shirt collar detail -->
-                            <path class="char-shirt-collar" d="M 88 124 Q 100 132 112 124 L 110 130 Q 100 138 90 130 Z" />
-
-                            <!-- Left arm (shoulder + arm) -->
-                            <g class="char-arm-left">
-                                <path class="char-shirt-sleeve" d="M 70 130 Q 60 138 56 158 L 62 170 Q 68 152 75 142 Z" />
-                                <path class="char-skin char-forearm-left" d="M 56 158 Q 52 172 50 195 L 60 198 Q 62 182 62 170 Z" />
-                                <circle class="char-skin char-hand-left" cx="56" cy="200" r="6" />
+                            <!-- Linker Arm (haengt) -->
+                            <path class="wf-aermel" d="M 74 110 Q 67 116 66 140 L 65 170 L 73 171 L 75 142 Q 77 124 80 116 Z" />
+                            <ellipse class="wf-haut" cx="69" cy="176" rx="4.2" ry="6" />
+                            <!-- Rechter Arm: haengend, oder gehoben, wenn der Schirm offen ist -->
+                            <g class="wf-arm-haengt">
+                                <path class="wf-aermel" d="M 126 110 Q 133 116 134 140 L 135 170 L 127 171 L 125 142 Q 123 124 120 116 Z" />
+                                <ellipse class="wf-haut" cx="131" cy="176" rx="4.2" ry="6" />
+                            </g>
+                            <g class="wf-arm-hoch">
+                                <path class="wf-aermel" d="M 124 108 Q 137 112 141 128 L 145 148 L 137 151 L 133 133 Q 130 122 120 117 Z" />
+                                <path class="wf-aermel" d="M 137 150 L 147 122 L 154 125 L 145 152 Z" />
+                                <ellipse class="wf-haut" cx="151" cy="119" rx="4.6" ry="5.4" />
                             </g>
 
-                            <!-- Right arm -->
-                            <g class="char-arm-right">
-                                <path class="char-shirt-sleeve" d="M 130 130 Q 140 138 144 158 L 138 170 Q 132 152 125 142 Z" />
-                                <path class="char-skin char-forearm-right" d="M 144 158 Q 148 172 150 195 L 140 198 Q 138 182 138 170 Z" />
-                                <circle class="char-skin char-hand-right" cx="144" cy="200" r="6" />
-                            </g>
+                            <!-- Kapuzenpulli von hinten: Rumpf, Kapuze, Saum, Schattenseite -->
+                            <path class="wf-hoodie" d="M 72 110 Q 76 104 92 102 L 108 102 Q 124 104 128 110 L 126 150 Q 124 172 121 189 L 79 189 Q 76 172 74 150 Z" />
+                            <path class="wf-volumen" d="M 111 104 Q 124 105 128 110 L 126 150 Q 124 172 121 189 L 110 189 Q 114 150 111 104 Z" />
+                            <path class="wf-saum" d="M 79 183 L 121 183 L 121 189 L 79 189 Z" />
+                            <path class="wf-kapuze" d="M 85 100 Q 100 95 115 100 Q 119 113 110 125 Q 100 131 90 125 Q 81 113 85 100 Z" />
+                            <path class="wf-kapuze-innen" d="M 90 103 Q 100 100 110 103 Q 112 112 106 119 Q 100 122 94 119 Q 88 112 90 103 Z" />
 
-                            <!-- Neck -->
-                            <path class="char-skin" d="M 92 110 L 92 126 Q 100 130 108 126 L 108 110 Z" />
-
-                            <!-- HEAD GROUP: head + hair + all face features.
-                                 Animated via CSS to gently turn / look around. Pivot at chin via fill-box + 50% 95%. -->
+                            <!-- Kopf von hinten: Nacken, Ohren, Haar -->
                             <g class="char-head-group">
-                                <ellipse class="char-skin char-head" cx="100" cy="78" rx="32" ry="36" />
-                                <path class="char-hair" d="M 68 75 Q 65 50 90 40 Q 110 35 125 45 Q 135 55 134 75 Q 132 70 122 72 Q 110 70 100 73 Q 88 70 78 73 Q 72 75 68 75 Z" />
-                                <path class="char-hair-shadow" d="M 70 70 Q 100 80 132 72 L 132 78 Q 100 84 70 78 Z" />
-                                <g class="char-eyes">
-                                    <ellipse cx="88" cy="80" rx="2.5" ry="3" />
-                                    <ellipse cx="112" cy="80" rx="2.5" ry="3" />
-                                </g>
-                                <g class="char-eyebrows">
-                                    <path d="M 82 73 Q 88 70 94 73" />
-                                    <path d="M 106 73 Q 112 70 118 73" />
-                                </g>
-                                <path class="char-mouth" d="M 92 95 Q 100 100 108 95" />
-                                <circle class="char-cheek" cx="80" cy="92" r="4" />
-                                <circle class="char-cheek" cx="120" cy="92" r="4" />
+                                <rect class="wf-haut" x="95" y="88" width="10" height="14" rx="3" />
+                                <ellipse class="wf-haut" cx="86.6" cy="80" rx="2.3" ry="4.2" />
+                                <ellipse class="wf-haut" cx="113.4" cy="80" rx="2.3" ry="4.2" />
+                                <path class="wf-haar" d="M 86 77 Q 85 60 100 59 Q 115 60 114 77 Q 114 89 108 94 Q 100 97 92 94 Q 86 89 86 77 Z" />
+                                <path class="wf-haar-licht" d="M 90 66 Q 100 61 110 66 Q 106 64 100 64 Q 94 64 90 66 Z" />
                             </g>
                         </g>
 
-                        <!-- COAT overlay (worn over shirt when cold) -->
+                        <!-- MANTEL: lang, ueber Pulli und Oberschenkel; Aermel faerbt das CSS mit -->
                         <g class="char-coat">
-                            <path class="char-coat-body" d="M 65 130 Q 58 138 58 152 L 64 220 Q 75 226 100 226 Q 125 226 136 220 L 142 152 Q 142 138 135 130 Q 122 122 100 122 Q 78 122 65 130 Z" />
-                            <path class="char-coat-button" d="M 100 145 L 100 148" />
-                            <path class="char-coat-button" d="M 100 165 L 100 168" />
-                            <path class="char-coat-button" d="M 100 185 L 100 188" />
-                            <path class="char-coat-button" d="M 100 205 L 100 208" />
+                            <path class="wf-mantel" d="M 70 108 Q 76 101 92 99 L 108 99 Q 124 101 130 108 L 132 150 Q 133 200 136 250 L 64 250 Q 67 200 68 150 Z" />
+                            <path class="wf-volumen" d="M 112 101 Q 124 102 130 108 L 132 150 Q 133 200 136 250 L 114 250 Q 116 170 112 101 Z" />
+                            <path class="wf-mantel-naht" d="M 100 206 L 100 250" />
+                            <path class="wf-mantel-guertel" d="M 69 168 L 131 168 L 131 175 L 69 175 Z" />
                         </g>
 
-                        <!-- SCARF (knit, wraps around neck with tail) -->
+                        <!-- SCHAL: um den Hals, ein Ende haengt ueber den Ruecken -->
                         <g class="char-scarf">
-                            <path class="char-scarf-wrap" d="M 75 118 Q 100 130 125 118 L 128 135 Q 100 142 72 135 Z" />
-                            <path class="char-scarf-tail" d="M 86 132 L 80 165 L 92 167 L 96 134 Z" />
-                            <!-- Stripes on scarf -->
-                            <path class="char-scarf-stripe" d="M 78 125 Q 100 132 122 125 L 122 128 Q 100 135 78 128 Z" />
+                            <path class="wf-schal" d="M 87 97 Q 100 103 113 97 L 114 106 Q 100 112 86 106 Z" />
+                            <path class="wf-schal" d="M 103 104 L 110 104 L 112 140 L 104 141 Z" />
+                            <path class="wf-schal-rippe" d="M 104 115 L 111 115 M 104 124 L 111 124 M 104 133 L 112 133" />
+                            <path class="wf-schal-fransen" d="M 105 141 L 105 146 M 108 141 L 108 146 M 111 140 L 111 145" />
                         </g>
 
-                        <!-- SUNGLASSES -->
+                        <!-- SONNENBRILLE: hochgeschoben auf dem Kopf (von hinten nur der Rahmen) -->
                         <g class="char-sunglasses">
-                            <ellipse cx="86" cy="80" rx="10" ry="6" />
-                            <ellipse cx="114" cy="80" rx="10" ry="6" />
-                            <line x1="96" y1="80" x2="104" y2="80" stroke-width="2" />
-                            <!-- Lens highlight -->
-                            <ellipse class="lens-highlight" cx="82" cy="77" rx="3" ry="1.5" />
-                            <ellipse class="lens-highlight" cx="110" cy="77" rx="3" ry="1.5" />
+                            <path class="wf-brille" d="M 88 67 Q 100 61 112 67 L 112 70.5 Q 100 64.5 88 70.5 Z" />
+                            <path class="wf-brille-buegel" d="M 88 69 Q 86.5 74 87 78 M 112 69 Q 113.5 74 113 78" />
                         </g>
 
-                        <!-- WINTER HAT (beanie with cuff + pompom) -->
+                        <!-- STRICKMUETZE mit Bommel -->
                         <g class="char-hat">
-                            <path class="char-hat-crown" d="M 64 60 Q 65 28 100 25 Q 135 28 136 60 L 130 58 Q 100 52 70 58 Z" />
-                            <path class="char-hat-cuff"  d="M 64 56 Q 100 62 136 56 L 136 65 Q 100 71 64 65 Z" />
-                            <circle class="char-hat-pompom" cx="100" cy="22" r="7" />
-                            <!-- pompom detail dots -->
-                            <circle class="char-hat-pompom-dot" cx="97" cy="20" r="0.8" />
-                            <circle class="char-hat-pompom-dot" cx="102" cy="19" r="0.8" />
-                            <circle class="char-hat-pompom-dot" cx="100" cy="24" r="0.8" />
+                            <path class="wf-muetze" d="M 85 75 Q 84 56 100 54 Q 116 56 115 75 Q 100 71 85 75 Z" />
+                            <path class="wf-muetze-rand" d="M 85 70 Q 100 66 115 70 L 115.5 78 Q 100 74 84.5 78 Z" />
+                            <path class="wf-muetze-rippe" d="M 92 58 L 91 70 M 100 55 L 100 68 M 108 58 L 109 70" />
+                            <circle class="wf-bommel" cx="100" cy="51" r="5.5" />
                         </g>
 
-                        <!-- SUN HAT (wide brim) -->
+                        <!-- STROHHUT, leicht von oben gesehen -->
                         <g class="char-sunhat">
-                            <ellipse class="char-sunhat-brim" cx="100" cy="55" rx="58" ry="9" />
-                            <path class="char-sunhat-crown" d="M 76 55 Q 76 32 100 30 Q 124 32 124 55 Z" />
-                            <ellipse class="char-sunhat-band" cx="100" cy="50" rx="24" ry="3" />
+                            <ellipse class="wf-strohhut" cx="100" cy="69" rx="30" ry="7.5" />
+                            <path class="wf-strohhut" d="M 87 69 Q 87 54 100 53 Q 113 54 113 69 Z" />
+                            <path class="wf-hutband" d="M 87.5 64 Q 100 61 112.5 64 L 112.8 68 Q 100 65 87.2 68 Z" />
                         </g>
 
-                        <!-- UMBRELLA: realistic proportions (130w × 45h, ratio 0.35) — bezier control points
-                             tuned so the actual canopy peak is at y=-12, ribs end EXACTLY on the underside curve,
-                             tip sits at the visible peak (no floating dot) -->
+                        <!-- SCHIRM: in der gehobenen rechten Hand, Bahnen abwechselnd heller -->
                         <g class="char-umbrella">
-                            <!-- Canopy: top dome + slight underside curve -->
-                            <path class="umbrella-canopy" d="M 35 33 Q 100 -57 165 33 Q 100 25 35 33 Z" />
-                            <!-- Ribs curve along the dome and land on the canopy bottom edge -->
-                            <path class="umbrella-rib" d="M 100 -12 Q 78 5 35 33" />
-                            <path class="umbrella-rib" d="M 100 -12 Q 89 0 67 30" />
-                            <path class="umbrella-rib" d="M 100 -12 L 100 29" />
-                            <path class="umbrella-rib" d="M 100 -12 Q 111 0 133 30" />
-                            <path class="umbrella-rib" d="M 100 -12 Q 122 5 165 33" />
-                            <!-- Tip at the actual visible canopy peak -->
-                            <circle class="umbrella-tip" cx="100" cy="-12" r="3" />
-                            <!-- Pole from canopy underside center to the right hand -->
-                            <line class="umbrella-pole" x1="100" y1="29" x2="138" y2="196" stroke-width="3" stroke-linecap="round" />
-                            <!-- J-shaped handle -->
-                            <path class="umbrella-handle"
-                                d="M 138 196 Q 152 199 152 211 Q 152 222 140 222 Q 130 220 131 213"
-                                fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                            <line class="wf-schirm-stock" x1="151" y1="122" x2="128" y2="42" />
+                            <path class="wf-schirm" d="M 60 44 Q 128 -30 196 44 Q 179 50 162 44 Q 145 50 128 44 Q 111 50 94 44 Q 77 50 60 44 Z" />
+                            <path class="wf-schirm-bahn" d="M 128 7 L 94 44 Q 111 50 128 44 Z" />
+                            <path class="wf-schirm-bahn" d="M 128 7 L 162 44 Q 179 50 196 44 Z" />
+                            <path class="wf-schirm-rippe" d="M 128 7 L 60 44 M 128 7 L 94 44 M 128 7 L 128 44 M 128 7 L 162 44 M 128 7 L 196 44" />
+                            <circle class="wf-schirm-spitze" cx="128" cy="6" r="2.4" />
                         </g>
 
-                        <!-- SUNSCREEN sparkles -->
+                        <!-- SONNENCREME: Glitzern an Nacken und Schultern -->
                         <g class="char-sunscreen-spark">
-                            <path d="M 70 85 L 78 85 M 74 81 L 74 89" stroke-width="1.8" />
-                            <path d="M 122 92 L 130 92 M 126 88 L 126 96" stroke-width="1.8" />
-                            <path d="M 90 105 L 96 105 M 93 102 L 93 108" stroke-width="1.4" />
+                            <path d="M 80 104 L 86 104 M 83 101 L 83 107" stroke-width="1.6" />
+                            <path d="M 116 106 L 122 106 M 119 103 L 119 109" stroke-width="1.6" />
+                            <path d="M 97 92 L 102 92 M 99.5 89.5 L 99.5 94.5" stroke-width="1.3" />
                         </g>
                     </svg>
                 </div>
