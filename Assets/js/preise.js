@@ -1,5 +1,5 @@
 // ═══ PREISE MODULE ═══
-// /preise/ (Entwurf 16.10.2026): Stapel auffaechern + "Vormerken".
+// /preise/: Stapel auffaechern + "Vormerken".
 // Vormerken misst die Nachfrage je Tarif OHNE Personendaten: ein mwlEvent mit
 // der Tarif-Kategorie, sonst nichts (Regel aus CLAUDE.md: nur Kategorien). Der
 // Merker im localStorage verhindert nur, dass dasselbe Geraet doppelt zaehlt.

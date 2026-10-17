@@ -592,7 +592,11 @@ function menueZeichnen() {
             restText(K.Kontingent.schnell(), NACHRICHT_TOKENS, ['Nachricht', 'message'], ['Nachrichten', 'messages']), 'Turbo') +
         eintrag('frei', Lx('Kostenlos und ausdauernd. Großes Tageskontingent.', 'Free and enduring. Large daily quota.'),
             Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
-            restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free'));
+            restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free')) +
+        // Einziger Weg aus dem Assistenten zur Preisseite: hier sieht man das Tageslimit,
+        // und genau das hebt der Ausbildungs-Pass auf.
+        '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#hefte', '/en/preise/#hefte') + '">' +
+        esc(Lx('Ohne Tageslimit? Ausbildungs-Pass vormerken', 'No daily limit? Count me in for the Pass')) + '</a>';
     if (fokus) { const b = m.querySelector('[data-stufe="' + fokus + '"]'); if (b) b.focus(); }
 }
 function modellMenue(auf) {

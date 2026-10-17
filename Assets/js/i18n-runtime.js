@@ -306,6 +306,7 @@
     'So funktioniert MyWorkLog': 'How MyWorkLog works',
     'Mein Reisetraum': 'My travel dream',
     'Für Schulen & Ausbilder': 'For schools & trainers',
+    'Preise': 'Pricing',
     'Was ist MyWorkLog?': 'What is MyWorkLog?',
     'Datenschutz': 'Privacy',
     'Impressum': 'Legal notice',
