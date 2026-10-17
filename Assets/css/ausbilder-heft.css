@@ -1,0 +1,288 @@
+/* ausbilder-heft.css — Stilschicht fuer /ausbilder/ (seit v8.5.17)
+   Laedt NACH dem Inline-<style> der Seite und gewinnt bei gleicher Spezifitaet.
+   Sprache wie das Berichtsheft (Assets/css/berichtsheft/basis.css, vom Nutzer am
+   04.10.2026 abgenommen): Buehne bei Nacht, Papier in BEIDEN Themen hell,
+   Kuli-Blau = was der Azubi schreibt, Rotstift = was der Ausbilder anmerkt,
+   Stempel = freigegeben. Diese drei Rollen nicht vermischen.
+   Bewusst NUR EIN Effekt: der Stempel beim Bestaetigen (Wunsch "eine Stufe
+   ruhiger", Cloud-Login v8.2.3). Kein Lila — vom Nutzer abgelehnt; bis hierher
+   stand --primary auf #a855f7.
+   Formregel wie im Berichtsheft: Bedienelemente rund (999px), Behaelter 16px,
+   Papier 4-6px. */
+
+:root {
+    --bg-deep: #131428;
+    --bg-card: #1b1a31;
+    --bg-raise: #24223d;
+    --primary: #5578a8;
+    --primary-rgb: 85, 120, 168;
+    --primary-dim: rgba(85, 120, 168, 0.14);
+    --text-main: #eeedf5;
+    --text-muted: #aeabc3;
+    --text-faint: #7d7a96;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.13);
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'Menlo', monospace;
+    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --font-vordruck: 'Martian Mono', 'Geist Mono', ui-monospace, monospace;
+    --font-hand: 'Caveat', 'Segoe Script', cursive;
+
+    --papier: #ecebf4;
+    --papier-tinte: #15131d;
+    --papier-tinte-2: rgba(21, 19, 29, 0.58);
+    --papier-linie: rgba(var(--primary-rgb), 0.16);
+    --papier-rand: rgba(214, 86, 86, 0.45);
+    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
+    --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
+    --rotstift: #c8463c;
+    --rot-hell: #f0857a;
+    /* Hauptknopf wie im Intro und im Berichtsheft: Tinte auf Grund — im Dunkeln hell. */
+    --ink: #eeedf5;
+    --on-ink: #15131d;
+}
+[data-theme="light"] {
+    --bg-deep: #e6e6f4;
+    --bg-card: #ffffff;
+    --bg-raise: #efeff7;
+    --text-main: #15131d;
+    --text-muted: rgba(21, 19, 29, 0.7);
+    --text-faint: rgba(21, 19, 29, 0.5);
+    --border: rgba(21, 19, 29, 0.1);
+    --border-strong: rgba(21, 19, 29, 0.17);
+    --papier: #fbfbfd;
+    --papier-schatten: 0 1px 0 rgba(21, 19, 29, 0.04), 0 26px 50px -24px rgba(21, 19, 29, 0.4);
+    --ink: #15131d;
+    --on-ink: #ffffff;
+}
+
+/* ── Buehne ─────────────────────────────────────────────────── */
+body {
+    background:
+        radial-gradient(1100px 620px at 12% -12%, rgba(var(--primary-rgb), 0.16), transparent 62%),
+        radial-gradient(900px 520px at 100% -6%, rgba(170, 120, 150, 0.08), transparent 60%),
+        var(--bg-deep);
+    background-repeat: no-repeat;
+}
+.ab-head { background: color-mix(in srgb, var(--bg-deep) 86%, transparent); }
+.ab-head svg { color: var(--text-main); }
+
+/* Titel in der Intro-Schrift, Etiketten ohne Grossbuchstaben (Markenregel 04.10.2026) */
+.ab-title, .abq-d-t, .ab-way-t, .ab-result-title, .abk-kopf h1, .abk-kopf h2 {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+}
+.ab-eyebrow {
+    text-transform: none; letter-spacing: 0; font-size: 0.86rem; font-weight: 500;
+    color: var(--text-muted);
+}
+
+/* ── Knoepfe: Tinte statt Gruen, rund ───────────────────────── */
+.ab-btn, .ab-cta { border-radius: 999px; }
+.ab-btn-primary, .ab-cta {
+    background: var(--ink); color: var(--on-ink); border-color: transparent;
+}
+.ab-btn-primary:hover, .ab-cta:hover {
+    filter: none;
+    background: color-mix(in srgb, var(--ink) 88%, var(--primary));
+}
+.ab-btn-ghost { color: var(--text-main); border-color: var(--border-strong); }
+/* Zurueckgeben = der Rotstift des Ausbilders */
+.ab-btn-ghost:hover { border-color: rgba(240, 133, 122, 0.45); color: var(--rot-hell); }
+.ab-btn:active, .ab-cta:active { transform: scale(0.98); }
+.ab-btn, .ab-cta { transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1); }
+
+/* ── Das Blatt ──────────────────────────────────────────────────
+   Die Woche liegt als Papier auf dem Pult: linker Rotrand, leise Linien,
+   der Text des Azubis in Kuli. Auf dem Papier gelten eigene Tokens — alles,
+   was darin gezeichnet wird (Verlauf, Vergleich, Hinweise), liest sie mit. */
+.abq-detail .abq-dbody,
+.ab-wk-card,
+#abWeekList > .ab-rule + .ab-chips,
+#abWeekList:not(:has(.ab-wk)) {
+    --text-main: var(--papier-tinte);
+    --text-muted: rgba(21, 19, 29, 0.72);
+    --text-faint: rgba(21, 19, 29, 0.52);
+    --border: rgba(21, 19, 29, 0.12);
+    --border-strong: rgba(21, 19, 29, 0.2);
+    --bg-card: transparent;
+    --bg-raise: rgba(21, 19, 29, 0.05);
+    --bg-deep: var(--papier);
+    color: var(--papier-tinte);
+}
+.abq-detail .abq-dbody,
+.ab-wk-card,
+#abWeekList:not(:has(.ab-wk)) {
+    position: relative;
+    background:
+        linear-gradient(to right, transparent 33px, var(--papier-rand) 33px, var(--papier-rand) 34px, transparent 34px),
+        var(--papier);
+    border: 0;
+    border-radius: 5px;
+    box-shadow: var(--papier-schatten);
+}
+.abq-detail .abq-dbody { margin: 0 18px; padding: 8px 24px 16px 52px; }
+.abq-detail .ab-wk-body.abq-dbody { display: block; }
+.ab-wk-card { padding: 16px 20px 16px 52px; }
+/* Eine einzelne Woche ueber den Link: das ganze Blatt ist Papier. */
+#abWeekList:not(:has(.ab-wk)) { padding: 6px 24px 18px 52px; margin-top: 18px; }
+#abWeekList:not(:has(.ab-wk)) > .ab-rule { display: none; }
+
+/* Stapel: mehrere Wochen liegen leicht versetzt uebereinander */
+.ab-wk + .ab-wk { margin-top: 14px; }
+.ab-wk-kw { font-family: var(--font-display); font-size: 1.08rem; color: var(--papier-tinte); }
+.ab-wk-sub { color: var(--papier-tinte-2); }
+.ab-wk-chev { color: var(--papier-tinte-2); }
+.ab-wk-card .ab-wk-state.s-open { color: var(--papier-tinte-2); border-color: rgba(21, 19, 29, 0.22); }
+.ab-wk-card.is-approved, .ab-wk-card.is-rejected,
+.ab-wk-card.is-geaendert, .ab-wk-card.is-nachgebessert { border: 0; }
+.ab-wk-card.is-rejected { box-shadow: var(--papier-schatten), inset 3px 0 0 var(--rotstift); }
+
+/* Kopf einer Woche im Cockpit auf dem Pult, darunter das Blatt */
+.abq-detail { background: var(--bg-card); }
+.abq-dkopf { border-bottom: 0; padding-bottom: 14px; }
+.abq-dfuss { border-top: 0; margin-top: 14px; }
+
+/* Formularkaestchen statt Pillen (Vordruck) */
+.ab-chips { gap: 0; margin-top: 14px; }
+.ab-chip {
+    border-radius: 0; border: 1px solid rgba(21, 19, 29, 0.16); background: transparent;
+    padding: 6px 12px 7px; margin: 0 -1px -1px 0;
+    flex-direction: column; align-items: flex-start; gap: 1px;
+    font-family: var(--font-vordruck); font-size: 0.6rem; letter-spacing: 0.02em;
+    color: var(--papier-tinte-2);
+}
+.ab-chip svg { display: none; }
+.ab-chip-val { font-family: var(--font-main); font-size: 0.92rem; letter-spacing: 0; color: var(--kuli); font-weight: 600; }
+
+/* Tage wie Zeilen im Vordruck, der Text in Kuli */
+.ab-day::before { background: rgba(21, 19, 29, 0.12); }
+[data-theme="light"] .ab-day::before { background: rgba(21, 19, 29, 0.12); }
+.ab-dot { background: var(--papier); box-shadow: inset 0 0 0 1.5px rgba(21, 19, 29, 0.3); }
+.ab-day-filled .ab-dot { box-shadow: inset 0 0 0 5.5px var(--kuli); }
+.ab-day-name { font-family: var(--font-vordruck); font-size: 0.68rem; font-weight: 500; letter-spacing: 0.02em; color: var(--papier-tinte-2); }
+.ab-day-h { color: var(--papier-tinte-2); }
+.ab-day-text, .ab-block-text { color: var(--kuli); font-size: 0.95rem; }
+.ab-day-empty { color: rgba(21, 19, 29, 0.42); }
+.ab-block { background: transparent; border: 0; border-top: 1px solid var(--papier-linie); border-radius: 0; padding: 14px 0 4px; }
+.ab-block-label { font-family: var(--font-vordruck); text-transform: none; letter-spacing: 0.02em; font-size: 0.66rem; color: var(--papier-tinte-2); }
+
+/* Anmerkung des Ausbilders = Rotstift, in Handschrift. Nur hier und auf dem
+   Stempel steht Handschrift — nie im Berichtstext. */
+.ab-wk-note {
+    background: none; border-left: 0; padding: 4px 0 0;
+    font-family: var(--font-hand); font-size: 1.3rem; line-height: 1.25;
+    color: var(--rotstift);
+}
+
+/* ── Der Stempel ────────────────────────────────────────────────
+   Rot wie im Berichtsheft (gestempelt = roter Doppelring). Er landet beim
+   Bestaetigen auf dem Blatt; bei ruhiger Bewegung liegt er einfach da. */
+.ab-stempel {
+    position: absolute; top: 14px; right: 18px; z-index: 2;
+    display: grid; justify-items: center; gap: 1px;
+    padding: 7px 14px 6px;
+    border: 3px double rgba(200, 70, 60, 0.82);
+    border-radius: 8px;
+    color: rgba(200, 70, 60, 0.86);
+    font-family: var(--font-vordruck);
+    transform: rotate(-8deg);
+    pointer-events: none;
+    mix-blend-mode: multiply;
+}
+.ab-stempel b { font-size: 0.86rem; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; }
+.ab-stempel small { font-size: 0.56rem; letter-spacing: 0.04em; }
+.ab-stempel.is-neu { animation: abStempel 0.42s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes abStempel {
+    0%   { opacity: 0; transform: rotate(-14deg) scale(1.7); }
+    55%  { opacity: 1; transform: rotate(-7deg) scale(0.94); }
+    100% { opacity: 1; transform: rotate(-8deg) scale(1); }
+}
+/* Das Blatt gibt beim Aufsetzen einen Hauch nach */
+.abq-dbody.is-gestempelt-jetzt { animation: abBlatt 0.32s ease-out 0.18s; }
+@keyframes abBlatt { 0%, 100% { transform: none; } 40% { transform: translateY(1.5px) scale(0.997); } }
+
+/* Klein in der Kopfzeile einer zugeklappten Woche (Link-Ansicht) */
+.ab-stempel.is-klein {
+    position: static; margin-left: auto; padding: 2px 9px 1px; border-width: 3px; border-radius: 6px;
+}
+.ab-stempel.is-klein b { font-size: 0.66rem; letter-spacing: 0.14em; }
+
+/* ── Cockpit auf dem Pult ───────────────────────────────────── */
+.abk-wert { font-family: var(--font-display); letter-spacing: -0.02em; }
+.abq-row.is-aktiv { background: rgba(255, 255, 255, 0.06); }
+[data-theme="light"] .abq-row.is-aktiv { background: rgba(21, 19, 29, 0.06); }
+/* Das aktive Blatt bekommt den Rotrand des Papiers */
+.abq-row.is-aktiv::before { background: var(--rot-hell); }
+.abk-reiter.is-an::after { background: var(--text-main); }
+.abk-firma-mono { background: rgba(var(--primary-rgb), 0.16); border-color: rgba(var(--primary-rgb), 0.3); color: var(--text-main); }
+
+/* ── Ergebnis nach dem Abzeichnen (Link-Ansicht) ────────────── */
+.ab-seal-ok {
+    background: none; color: var(--rot-hell);
+    border: 3px double rgba(240, 133, 122, 0.8); border-radius: 14px;
+    transform: rotate(-8deg);
+    animation: abStempel 0.42s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+/* Einladung zum Betriebskonto unter dem Ergebnis — ruhig, kein Verkaufsblock */
+.ab-weiter {
+    margin: 28px auto 0; max-width: 440px; padding: 18px 20px;
+    border: 1px solid var(--border-strong); border-radius: 16px;
+    background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+    text-align: left;
+}
+.ab-weiter-t { font-family: var(--font-display); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.015em; }
+.ab-weiter-s { margin-top: 6px; font-size: 0.86rem; line-height: 1.55; color: var(--text-muted); }
+.ab-weiter .ab-cta { margin-top: 14px; padding: 10px 18px; font-size: 0.88rem; }
+
+/* ── Einstieg (#abIntro) ────────────────────────────────────── */
+#abIntro .ab-title { font-size: clamp(2.2rem, 5.6vw, 3.6rem); line-height: 1.04; }
+.abi-frame { box-shadow: inset 0 1px 0 var(--edge, rgba(255,255,255,0.06)), var(--shadow-deep, 0 30px 80px -30px rgba(0,0,0,0.7)); }
+
+/* Merkmale: Haken in Kuli statt gruener Kaestchen. Maske, damit die Farbe aus
+   dem Token kommt (Theme-Sync setzt --primary) statt fest im SVG zu stehen. */
+#abIntro .ab-feats:not(.ab-roles) li::before {
+    top: 16px; width: 16px; height: 16px; border-radius: 0;
+    background: color-mix(in srgb, var(--primary) 62%, var(--text-main));
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 14px no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 14px no-repeat;
+}
+
+/* Schritte: Kaestchen wie im Vordruck */
+#abIntro .ab-step-n {
+    border-radius: 4px; background: transparent; border: 1px solid var(--border-strong);
+    color: var(--text-main); font-family: var(--font-vordruck); font-size: 0.78rem;
+}
+#abIntro .ab-note { border-color: var(--border-strong); background: color-mix(in srgb, var(--bg-card) 60%, transparent); }
+
+/* Rollen und Nachweiswege: Karteikarten aus Papier mit rotem Kopfstrich. Ohne
+   Linienraster: das lag je nach Schriftmass mitten im Text statt darunter. */
+#abIntro .ab-roles li {
+    border: 0; border-radius: 4px;
+    background:
+        linear-gradient(to bottom, transparent 52px, var(--papier-rand) 52px, var(--papier-rand) 53px, transparent 53px),
+        var(--papier);
+    box-shadow: var(--papier-schatten);
+    color: rgba(21, 19, 29, 0.74);
+    padding: 16px 22px 22px;
+}
+#abIntro .ab-roles li .ab-role { color: var(--papier-tinte); font-size: 1.25rem; margin-bottom: 22px; }
+#abIntro .ab-roles li > span:not(.ab-role) { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ab-stempel.is-neu, .ab-seal-ok, .abq-dbody.is-gestempelt-jetzt { animation: none; }
+}
+
+@media (max-width: 760px) {
+    .abq-detail .abq-dbody { margin: 0 10px; padding: 6px 14px 14px 40px; }
+    .abq-detail .abq-dbody,
+    .ab-wk-card,
+    #abWeekList:not(:has(.ab-wk)) {
+        background:
+            linear-gradient(to right, transparent 25px, var(--papier-rand) 25px, var(--papier-rand) 26px, transparent 26px),
+            var(--papier);
+    }
+    .ab-wk-card { padding: 14px 14px 14px 40px; }
+    #abWeekList:not(:has(.ab-wk)) { padding: 4px 14px 16px 40px; }
+}

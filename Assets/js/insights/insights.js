@@ -242,6 +242,8 @@ var EVENT_LABELS = {
     'geburtstag_wunsch': ['Geburtstag: Wunsch geschickt', 'Birthday: wish sent'],
     'traum_antwort':    ['Reisetraum: Frage beantwortet', 'Travel dream: question answered'],
     'traum_teilen':     ['Reisetraum: Seite geteilt', 'Travel dream: page shared'],
+    // aktion: gezeigt | geklickt — Einladung zum Betriebskonto nach dem Abzeichnen per Link
+    'ausbilder_einladung': ['Ausbilder: Einladung zum Betriebskonto', 'Trainer: company account invite'],
     'ghost_mode_on':    ['Ghost Mode (seit v7.5.4 entfernt)', 'Ghost mode (removed in v7.5.4)'],
     // Probleme — alles mit 'problem_' landet im eigenen Reiter.
     'problem_js_fehler':      ['Skriptfehler', 'Script error'],
@@ -260,6 +262,7 @@ var EVENT_LABELS = {
 // Erst '<event>::<unterart>', dann die Unterart allein; sonst wird der Schluessel lesbar gemacht.
 var SUB_LABELS = {
     'konto::geloescht': ['gelöscht', 'deleted'],
+    'ausbilder_einladung::gezeigt': ['gezeigt', 'shown'], 'ausbilder_einladung::geklickt': ['geklickt', 'clicked'],
     'timer_action::start': ['gestartet', 'started'], 'timer_action::pause': ['pausiert', 'paused'],
     'timer_action::stop': ['gestoppt', 'stopped'], 'timer_action::resume': ['fortgesetzt', 'resumed'],
     'theme_gewechselt::light': ['hell', 'light'], 'theme_gewechselt::dark': ['dunkel', 'dark'],

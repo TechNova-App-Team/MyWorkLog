@@ -18,7 +18,7 @@
     document.documentElement.className += ' js';</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Martian+Mono:wdth,wght@112.5,400..500&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
     <script defer src="/Assets/js/ph-init.js?v=fdd6df24b6"></script>
     <title>Ausbilder: Berichtshefte prüfen und abzeichnen | MyWorkLog</title>
@@ -1627,6 +1627,9 @@
             .abk-kachel.is-knopf:active { transform: none; }
         }
     </style>
+    <!-- Heft-Stilschicht (Papier, Kuli, Rotstift, Stempel). Muss NACH dem Inline-Style
+         stehen: sie ueberschreibt dessen Tokens und Bauteile bei gleicher Spezifitaet. -->
+    <link rel="stylesheet" href="/Assets/css/ausbilder-heft.css?v=35708a2e32">
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
 </head>
@@ -1662,7 +1665,7 @@
                 <div class="tilt-in">
                     <figure class="abi-frame">
                         <div class="abi-frame-in">
-                            <img src="/Grafiken/ausbilder/cockpit.webp?v=e580d771ae" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: oben Kennzahlen, links die offenen Wochen aller Azubis als Liste, rechts die gewählte Woche mit Tagen, Stunden und den Knöpfen Zurückgeben und Bestätigen">
+                            <img src="/Grafiken/ausbilder/cockpit.webp?v=97b31c44ba" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Übersicht eines Ausbildungsbetriebs in MyWorkLog: oben Kennzahlen, links die offenen Wochen aller Azubis als Liste, rechts die gewählte Woche mit Tagen, Stunden und den Knöpfen Zurückgeben und Bestätigen">
                         </div>
                     </figure>
                 </div>
@@ -1672,7 +1675,7 @@
             <div class="abi-split">
                 <figure class="abi-frame" data-reveal>
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/azubi.webp?v=0c85971e3f" width="2880" height="1800" loading="lazy" decoding="async" alt="Reiter Azubis: je Azubi eine Karte mit abgezeichneten und offenen Wochen als Balken und Wochenstreifen und einem Knopf zu seinen offenen Wochen">
+                        <img src="/Grafiken/ausbilder/azubi.webp?v=817d7ae27d" width="2880" height="1800" loading="lazy" decoding="async" alt="Reiter Azubis: je Azubi eine Karte mit abgezeichneten und offenen Wochen als Balken und Wochenstreifen und einem Knopf zu seinen offenen Wochen">
                     </div>
                 </figure>
 
@@ -1724,7 +1727,7 @@
             </section>
                 <figure class="abi-frame" data-reveal style="--i:1">
                     <div class="abi-frame-in">
-                        <img src="/Grafiken/ausbilder/woche.webp?v=2f1a8cb453" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
+                        <img src="/Grafiken/ausbilder/woche.webp?v=7bb42d08df" width="2880" height="1800" loading="lazy" decoding="async" alt="Link-Ansicht einer Woche: Zeitraum, Name und Betrieb des Azubis, darunter die Tage mit Tätigkeiten und Stunden, unten die Leiste zum Antworten">
                     </div>
                 </figure>
             </div>
@@ -2035,6 +2038,17 @@
                 '</span>';
         }
 
+        // Stempel = freigegeben (ausbilder-heft.css). Unter dem Wort klein Datum und
+        // Name, wie auf einem echten Pruefstempel; in der Kopfzeile nur das Wort.
+        function stempelHTML(iso, name, klein, neu) {
+            var d = iso ? String(iso).slice(0, 10).split('-') : null;
+            var datum = d && d.length === 3 ? d[2] + '.' + d[1] + '.' + d[0].slice(2) : '';
+            var unter = [datum, name || ''].filter(Boolean).join(', ');
+            return '<span class="ab-stempel' + (klein ? ' is-klein' : '') + (neu ? ' is-neu' : '') + '" aria-hidden="true">' +
+                '<b>' + abL('Geprüft', 'Approved') + '</b>' +
+                (unter && !klein ? '<small>' + esc(unter) + '</small>' : '') + '</span>';
+        }
+
         // Inhalt EINER Woche (Chips, Tage bzw. Fliesstext, Berufsschule)
         function weekBodyHTML(w) {
             var out = '';
@@ -2095,6 +2109,10 @@
             return ['s-open', abL('Offen', 'Open')];
         }
 
+        // Index der eben bestaetigten Woche: nur deren Stempel landet animiert,
+        // die schon gestempelten liegen beim Neuzeichnen einfach da.
+        var frischGestempelt = -1;
+
         function renderWeeks() {
             var mehrere = weeks.length > 1;
 
@@ -2131,12 +2149,14 @@
                 $('abWeekList').innerHTML = '<hr class="ab-rule">' + weeks.map(function (w, i) {
                     var st = stateLabel(decisions[i] && decisions[i].s);
                     var offen = !decisions[i];
+                    var gestempelt = decisions[i] && decisions[i].s === 'approved';
                     return '<div class="ab-wk' + (offen && i === naechsteOffene() ? ' is-open' : '') + '" data-i="' + i + '">' +
                         '<div class="ab-wk-card' + (decisions[i] ? ' is-' + decisions[i].s : '') + '">' +
                         '<div class="ab-wk-head" data-toggle="' + i + '" role="button" tabindex="0" aria-expanded="' + (offen && i === naechsteOffene()) + '">' +
                         '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + w.w + '</span>' +
                         '<span class="ab-wk-sub">' + esc(fmtRange(w.df, w.dt)) + '</span>' +
-                        '<span class="ab-wk-state ' + st[0] + '">' + st[1] + '</span>' +
+                        (gestempelt ? stempelHTML(null, null, true, i === frischGestempelt)
+                                    : '<span class="ab-wk-state ' + st[0] + '">' + st[1] + '</span>') +
                         '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
                         '</div>' +
                         '<div class="ab-wk-body">' +
@@ -2354,6 +2374,35 @@
             el.scrollIntoView({ block: 'start', behavior: 'smooth' });
         }
 
+        // Genau jetzt hat der Ausbilder erlebt, wie umstaendlich Link + QR je Woche
+        // ist — und genau hier stand bis v8.5.17 nichts davon, dass es das
+        // Betriebskonto gibt, bei dem jede Woche von selbst kommt.
+        function zeigeEinladung() {
+            var alt = document.getElementById('abWeiter');
+            if (alt) alt.remove();
+            var b2b = b2bDa();
+            if (b2b && typeof b2b.angemeldet === 'function' && b2b.angemeldet()) return;
+            var wer = azubi.az ? esc(azubi.az) : abL('Ihres Azubis', 'your apprentice');
+            var box = document.createElement('div');
+            box.className = 'ab-weiter'; box.id = 'abWeiter';
+            box.innerHTML = '<p class="ab-weiter-t">' + abL('Nächstes Mal ohne Link und QR-Code', 'Next time without link or QR code') + '</p>' +
+                '<p class="ab-weiter-s">' + (azubi.az
+                    ? abL('Mit einem Betriebskonto erscheinen die Wochen von ' + wer + ' von selbst bei Ihnen. Sie bestätigen mit einem Klick, ' + wer + ' sieht es sofort.',
+                          'With a company account, ' + wer + '\'s weeks show up for you on their own. You approve with one click and ' + wer + ' sees it right away.')
+                    : abL('Mit einem Betriebskonto erscheinen die Wochen Ihrer Azubis von selbst bei Ihnen. Sie bestätigen mit einem Klick, der Azubi sieht es sofort.',
+                          'With a company account, your apprentices\' weeks show up for you on their own. You approve with one click and they see it right away.')) +
+                ' ' + abL('Kostenlos.', 'Free.') + '</p>' +
+                '<a class="ab-cta" href="' + abL('/?cloud=login&back=ausbilder', '/en/?cloud=login&back=ausbilder') + '" data-weiter="1">' +
+                '<span>' + abL('Betriebskonto anlegen', 'Create a company account') + '</span></a>';
+            var ziel = document.querySelector('#abDone .ab-result');
+            if (!ziel) return;
+            ziel.appendChild(box);
+            if (typeof mwlEvent === 'function') mwlEvent('ausbilder_einladung', { aktion: 'gezeigt' });
+            box.querySelector('[data-weiter]').addEventListener('click', function () {
+                if (typeof mwlEvent === 'function') mwlEvent('ausbilder_einladung', { aktion: 'geklickt' });
+            });
+        }
+
         async function showResult(antwort, code) {
             var ok = antwort.ds.filter(function (d) { return d.s === 'approved'; }).length;
             var no = antwort.ds.length - ok;
@@ -2388,6 +2437,7 @@
                 'Scan with a phone camera, then the decision appears in the training record.');
             $('abCode').textContent = link;
 
+            zeigeEinladung();
             show('abWeek', false);
             show('abBar', false);
             show('abDone', true);
@@ -2712,6 +2762,7 @@
                 nav +
                 '</header>' +
                 '<div class="ab-wk-body abq-dbody">' +
+                (st === 'approved' ? stempelHTML(f && f.erstellt_at, f && f.ausbilder_name) : '') +
                 weekBodyHTML(zeileZuWoche(b)) +
                 (f && f.anmerkung ? '<p class="ab-wk-note">' + esc(f.anmerkung) + '</p>' : '') +
                 // Der Vergleich steht direkt unter der eigenen Anmerkung: die
@@ -4254,6 +4305,18 @@
             delete auswahl[bericht.id];
         }
 
+        // Ohne diesen Moment sah der Ausbilder nach "Bestätigen" nur, dass die
+        // naechste Woche da war — dass die alte abgezeichnet ist, stand nirgends.
+        function stempelAufsetzen(card, zeile) {
+            var blatt = card && card.querySelector('.abq-dbody');
+            if (!blatt || blatt.querySelector('.ab-stempel')) return Promise.resolve();
+            blatt.insertAdjacentHTML('afterbegin', stempelHTML((zeile && zeile.erstellt_at) || new Date().toISOString(),
+                (zeile && zeile.ausbilder_name) || kontoIch.name, false, true));
+            blatt.classList.add('is-gestempelt-jetzt');
+            var ruhig = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+            return new Promise(function (ok) { setTimeout(ok, ruhig ? 350 : 750); });
+        }
+
         async function kontoEntscheiden(bid, entscheidung, note, card, widerruft) {
             var bericht = findeBericht(bid);
             if (!bericht) return;
@@ -4263,6 +4326,7 @@
             try {
                 var zeile = await BHB2B.freigabeSchreiben(bid, entscheidung, note || '', bericht, widerruft);
                 vermerkeFreigabe(bericht, entscheidung, note, zeile, widerruft);
+                if (entscheidung === 'approved' && !widerruft) await stempelAufsetzen(card, zeile);
                 // Weiter mit der naechsten Woche, statt zurueck an den Anfang:
                 // faellt die entschiedene aus der Sicht (Zu prüfen), rueckt die
                 // naechste an ihren Platz; bleibt sie (Alle), geht es eins weiter.
@@ -4755,7 +4819,9 @@
                         // ein Dialog pro Woche eine Zumutung. Die Anmerkung
                         // kommt am Ende fuer alle.
                         decisions[i] = { s: 'approved', n: '' };
+                        frischGestempelt = i;
                         renderWeeks();
+                        frischGestempelt = -1;
                         oeffneWoche(naechsteOffene());
                     } else {
                         openSheet('rejected', i);
