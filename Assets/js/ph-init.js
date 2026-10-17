@@ -26,7 +26,7 @@ window.mwlEvent = function (name, props) {
    Kurz: keine Fehlermeldung (kann Nutzerdaten zitieren), nur Typ/Datei/Zeile, max. 5. */
 (function () {
     var n = 0;
-    function melde(art, err, datei, zeile) {
+    function melde(art, err, datei, zeile, fehlt) {
         if (n >= 5 || typeof window.mwlEvent !== 'function') return;
         n++;
         var d = String(datei || '').split('?')[0].split('/').pop() || 'inline', typ = (err && err.name) || 'unbekannt';
@@ -34,19 +34,31 @@ window.mwlEvent = function (name, props) {
         // (sonst grund, datei) — mit dem nackten Dateinamen liess sich p2p-sync.js
         // (9 Meldungen, Oktober 2026) keiner Stelle zuordnen. Kein Meldungstext.
         window.mwlEvent('problem_js_fehler', {
-            aktion: d + ':' + (zeile || 0) + ' ' + typ,
+            aktion: d + ':' + (zeile || 0) + ' ' + typ + (fehlt ? ' ' + fehlt : ''),
             art: art,
             typ: typ,
             datei: d,
             zeile: zeile || 0
         });
     }
+    function fehlenderName(err, m) {
+        if (!err || err.name !== 'ReferenceError') return '';
+        var w = m.split('ReferenceError: ').pop().split("Can't find variable: ").join('')
+            .split('Cannot access ').join('').split(' ')[0].split("'").join('');
+        return w.length <= 40 && /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(w) ? w : '';
+    }
     window.addEventListener('error', function (e) {
         if (!e || (e.target && e.target !== window && e.target.tagName)) return;   // Ladefehler von <img>/<script>, kein JS-Fehler
         var m = String(e.message || '');
         if (m === 'Script error.' || m.indexOf('ResizeObserver') !== -1) return;
-        melde('fehler', e.error, e.filename, e.lineno);
+        melde('fehler', e.error, e.filename, e.lineno, fehlenderName(e.error, m));
     });
+    // Hier (defer) sieht der Lauscher nur Skripte, die NACH ph-init.js scheitern.
+    window.addEventListener('error', function (e) {
+        var t = e && e.target;
+        if (!t || t === window || t.tagName !== 'SCRIPT' || !t.src || t.src.indexOf(location.origin + '/') !== 0) return;
+        melde('laden', { name: 'Ladefehler' }, t.src, 0);
+    }, true);
     window.addEventListener('unhandledrejection', function (e) {
         var r = e && e.reason;
         // Erste Stack-Zeile mit Adresse: "…(https://host/pfad.js?v=1:120:7)" → Datei + Zeile.

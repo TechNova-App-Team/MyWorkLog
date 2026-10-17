@@ -40,7 +40,7 @@
     // --- TIMER LOGIC (Mit Korrektur) ---
     
     function logTimerAction(action, time = Date.now()) {
-        const lastAction = timer.log.at(-1);
+        const lastAction = timer.log[timer.log.length - 1];   // .at() erst ab Chrome 92
         
         const today = new Date().toISOString().split('T')[0];
         
@@ -118,7 +118,7 @@
         }
 
         const firstStart = relevantLog.find(l => l.action === 'start')?.time || timer.start || Date.now();
-        const totalTimeMs = (timer.running ? Date.now() : relevantLog.at(-1)?.time || firstStart) - firstStart;
+        const totalTimeMs = (timer.running ? Date.now() : relevantLog[relevantLog.length - 1]?.time || firstStart) - firstStart;
         
         if (totalTimeMs <= 0) return;
 

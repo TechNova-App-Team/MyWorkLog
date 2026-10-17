@@ -145,7 +145,7 @@
                  });
                  
                  // Füge die letzte Phase hinzu (bis zum Ende der Schicht)
-                 const lastShiftTime = timePoints.at(-1);
+                 const lastShiftTime = timePoints[timePoints.length - 1];   // .at() erst ab Chrome 92
                  
                  // Wir müssen den Netto-Arbeitszeitwert E.Worked nutzen, da die Zeitpunkte unvollständig sein können.
                  // Als Ersatz nehmen wir die Gesamt-Arbeitszeit.

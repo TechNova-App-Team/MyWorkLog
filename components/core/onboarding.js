@@ -637,7 +637,12 @@ const networkMonitor = (() => {
     async function checkNow() {
         const t0 = performance.now();
         try {
-            await fetch(PING_URL, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(5000) });
+            // AbortSignal.timeout gibt es erst ab Chrome 103 / Safari 16; ohne Rueckfall warf
+            // die Zeile, und der catch meldete bei jedem Ping Qualitaet "unbekannt".
+            let signal;
+            if (typeof AbortSignal.timeout === 'function') signal = AbortSignal.timeout(5000);
+            else { const ac = new AbortController(); setTimeout(() => ac.abort(), 5000); signal = ac.signal; }
+            await fetch(PING_URL, { method: 'HEAD', cache: 'no-store', signal });
             const ms = Math.round(performance.now() - t0);
             s.latency = ms;
             s.lastCheck = Date.now();
