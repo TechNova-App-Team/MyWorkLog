@@ -279,6 +279,13 @@
     'Daten beschädigt': 'Data corrupted',
     'Deine lokal gespeicherten Daten konnten nicht gelesen werden und es war kein lokales Backup verfügbar. Lade deine Daten aus der Cloud, um sie wiederherzustellen.': 'Your locally stored data could not be read and no local backup was available. Load your data from the cloud to restore it.',
     'Speicher voll': 'Storage full',
+    // Import-Menue (modals.js showBackupMenu) — die Fehlermeldung unten verweist auf „Full backup“
+    'Vollständiges Backup': 'Full backup',
+    'JSON-Datei (v2 oder Legacy)': 'JSON file (v2 or legacy)',
+    'Verschlüsseltes Backup': 'Encrypted backup',
+    'Mit Passwort geschützt': 'Protected with a password',
+    'Aus Excel oder CSV übernehmen': 'Import from Excel or CSV',
+    'Zeiten aus einer Tabelle oder anderen App': 'Times from a spreadsheet or another app',
     // Import eines verschluesselten Backups (encrypted-backup.js)
     'Falsches Passwort': 'Wrong password',
     'Import fehlgeschlagen': 'Import failed',
