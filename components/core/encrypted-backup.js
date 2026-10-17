@@ -102,14 +102,20 @@
     }
     
     // Decrypt Backup Data
+    // Fehler mit .grund ('passwort' | 'keine_datei') — der Aufrufer zaehlt sie getrennt.
+    function backupFehler(text, grund) { const e = new Error(text); e.grund = grund; return e; }
+
     async function decryptBackupData(encryptedJson, password) {
+        let encryptedData = null;
+        try { encryptedData = JSON.parse(encryptedJson); } catch (e) { /* unten gemeldet */ }
+        if (!encryptedData || !encryptedData.salt || !encryptedData.iv || !encryptedData.data) {
+            throw backupFehler('Diese Datei ist kein verschlüsseltes MyWorkLog-Backup. Ein normales Backup spielst du unter Import über „Vollständiges Backup“ ein.', 'keine_datei');
+        }
         try {
-            const encryptedData = JSON.parse(encryptedJson);
-            
             if (encryptedData.v !== ENCRYPTION_VERSION) {
                 throw new Error('Unbekannte Verschlüsselungsversion');
             }
-            
+
             const salt = base64ToUint8Array(encryptedData.salt);
             const iv = base64ToUint8Array(encryptedData.iv);
             const ciphertext = base64ToUint8Array(encryptedData.data);
@@ -129,8 +135,12 @@
             return new TextDecoder().decode(plaintext);
         } catch (e) {
             console.error('Decryption Error:', e);
-            if (e.message.includes('Decryption failed')) {
-                throw new Error('Falsches Passwort oder beschädigte Datei!');
+            // Ein falsches Passwort wirft bei AES-GCM einen OperationError mit dem Text
+            // "The operation failed for an operation-specific reason" — bis 10/2026 wurde
+            // hier auf 'Decryption failed' geprueft, das traf nie, und der Nutzer las die
+            // englische Meldung statt eines Hinweises aufs Passwort (20x in den Analytics).
+            if (e && e.name === 'OperationError') {
+                throw backupFehler('Das Passwort passt nicht zu dieser Datei. Achte auf Groß- und Kleinschreibung.', 'passwort');
             }
             throw new Error('Entschlüsselung fehlgeschlagen: ' + e.message);
         }
@@ -292,9 +302,11 @@
             if (typeof mwlEvent === 'function') mwlEvent('backup', { aktion: 'verschluesselt_importiert' });
             setTimeout(() => location.reload(), 1500);
         } catch (e) {
-            // Meist ein falsches Passwort — gezaehlt wird nur DASS es scheiterte.
-            if (typeof mwlEvent === 'function') mwlEvent('problem_backup', { grund: 'entschluesseln' });
-            showCustomMessage('❌ Import fehlgeschlagen', e.message, 'error');
+            // Gezaehlt wird nur DASS und WARUM es scheiterte. 'entschluesseln' bleibt der Name
+            // fuer das falsche Passwort, damit die Zahl in /analytics/ vergleichbar bleibt.
+            const grund = e.grund === 'passwort' ? 'entschluesseln' : (e.grund || 'entschluesseln_sonst');
+            if (typeof mwlEvent === 'function') mwlEvent('problem_backup', { grund });
+            showCustomMessage(e.grund === 'passwort' ? '❌ Falsches Passwort' : '❌ Import fehlgeschlagen', e.message, 'error');
         } finally {
             decryptBtn.disabled = false;
             decryptBtn.textContent = originalText;

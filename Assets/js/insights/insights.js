@@ -325,7 +325,9 @@ var SUB_LABELS = {
     'google': ['Google', 'Google'], 'github': ['GitHub', 'GitHub'], 'discord': ['Discord', 'Discord'],
     'rueckkehr': ['Rückkehr vom Anbieter', 'return from provider'],
     'hochladen': ['Hochladen', 'upload'], 'herunterladen': ['Herunterladen', 'download'],
-    'verschluesseln': ['Verschlüsseln', 'encrypting'], 'entschluesseln': ['Entschlüsseln (Passwort?)', 'decrypting (password?)'],
+    'verschluesseln': ['Verschlüsseln', 'encrypting'], 'entschluesseln': ['Entschlüsseln: falsches Passwort', 'decrypting: wrong password'],
+    'keine_datei': ['keine verschlüsselte Backup-Datei', 'not an encrypted backup file'],
+    'entschluesseln_sonst': ['Entschlüsseln: anderer Fehler', 'decrypting: other error'],
     'datei_import': ['Datei einspielen', 'file restore'],
     'abbruch': ['Gegenstelle nicht erreicht', 'peer not reached'], 'keine_kandidaten': ['WebRTC blockiert', 'WebRTC blocked'],
     'ice_fehlgeschlagen': ['Netzwerkweg gescheitert', 'network path failed'],
@@ -637,9 +639,9 @@ function renderList(id, rows, opts) {
     var html = shown.map(function (r) {
         var w = max ? (r.value / max * 100) : 0;
         var lead = r.icon ? '<span class="row-icon">' + r.icon + '</span>' : r.flag ? r.flag : '';
-        var text = r.href
+        var text = (r.href
             ? '<a href="' + esc(r.href) + '"><span>' + esc(r.label) + '</span></a>'
-            : '<span>' + esc(r.label) + '</span>';
+            : '<span>' + esc(r.label) + '</span>') + (r.tag || '');
         return '<div class="row"' + (r.title ? ' title="' + esc(r.title) + '"' : '') + '>' +
             '<span class="row-bar" style="width:' + w.toFixed(2) + '%"></span>' +
             '<span class="row-label' + (r.path ? ' is-path' : '') + '">' + lead + text + '</span>' +
@@ -908,7 +910,8 @@ function renderEvents(events) {
         if (g !== tab) return;
         // Bei Problemen ist "wie viele Leute" wichtiger als "wie oft" — eine Schleife
         // bei EINEM Nutzer sieht sonst aus wie ein Flaechenbrand.
-        rows.push({ label: eventLabel(e.name), value: n,
+        var fix = g === 'problems' ? fixFuer(e.name) : null;
+        rows.push({ label: eventLabel(e.name), value: n, tag: fix ? fixTag(fix) : '',
                     title: fmtInt(e.visitors || 0) + ' ' + T('verschiedene Besucher', 'distinct visitors') });
     });
     rows.sort(function (a, b) { return b.value - a.value; });
@@ -920,6 +923,88 @@ function renderEvents(events) {
     if (meta) meta.textContent = total ? fmtInt(total) + ' ' + T('Ereignisse', 'events') : '';
     var empty = EVENT_EMPTY[tab] || EVENT_EMPTY.actions;
     renderList('eventsList', rows, { key: 'events-' + tab, limit: 12, noShare: true, empty: T(empty[0], empty[1]) });
+    renderFixes(tab === 'problems');
+}
+
+// ─── Behobene Probleme ───────────────────────────────────────
+// Liste: Assets/js/insights/behoben.js. Vergleich ueber problemHours (Proxy, je Stunde,
+// immer 90 Tage): "davor" = die 7 Tage vor dem Fix, "seitdem" = alles danach. Die
+// Stunde, in der der Fix liegt, zaehlt zu KEINER Seite — sie enthaelt beides.
+var FIX_VORHER_TAGE = 7;
+var ICON_OK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.8 10A10 10 0 1 1 17 3.3"/><path d="m9 11 3 3L22 4"/></svg>';
+var ICON_WIEDER = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+
+function fixListe() { return Array.isArray(window.MWL_BEHOBEN) ? window.MWL_BEHOBEN : []; }
+function fixPasst(fix, name) {
+    return (fix.namen || []).some(function (m) {
+        return m.charAt(m.length - 1) === '*' ? name.indexOf(m.slice(0, -1)) === 0 : name === m;
+    });
+}
+function fixFuer(name) {
+    var l = fixListe();
+    for (var i = 0; i < l.length; i++) if (fixPasst(l[i], name)) return l[i];
+    return null;
+}
+// null, solange der Proxy keine Stundenreihe liefert (alte Fassung) — dann wird
+// nichts behauptet, weder "ruhig" noch "wieder da".
+function fixStand(fix) {
+    var hours = view.data && view.data.problemHours;
+    if (!Array.isArray(hours)) return null;
+    var s = Date.parse(fix.seit) / 1000, ab = s - FIX_VORHER_TAGE * 86400;
+    var davor = 0, seit = 0, zuletzt = 0;
+    hours.forEach(function (h) {
+        if (!fixPasst(fix, String(h[0]))) return;
+        var t = Number(h[1]) || 0, n = Number(h[2]) || 0;
+        if (t + 3600 <= s) { if (t >= ab) davor += n; }
+        else if (t > s) { seit += n; zuletzt = Math.max(zuletzt, t); }
+    });
+    // Liegt der Fix mehr als 90 - 7 Tage zurueck, ist "davor" abgeschnitten.
+    var voll = ab >= Date.now() / 1000 - 90 * 86400;
+    return { davor: voll ? davor : null, seit: seit, zuletzt: zuletzt };
+}
+function fixDatum(sek, mitZeit) {
+    var o = { day: '2-digit', month: '2-digit' };
+    if (mitZeit) { o.hour = '2-digit'; o.minute = '2-digit'; }
+    return new Date(sek * 1000).toLocaleString(mwlLocale(), o);
+}
+function fixTag(fix) {
+    var st = fixStand(fix);
+    var wieder = st && st.seit > 0;
+    var text = wieder ? T('nach Fix wieder da', 'back after fix')
+                      : T('behoben', 'fixed') + ' ' + fixDatum(Date.parse(fix.seit) / 1000);
+    return '<span class="row-tag' + (wieder ? ' is-wieder' : '') + '">' + (wieder ? ICON_WIEDER : ICON_OK) +
+        '<span>' + esc(text) + '</span></span>';
+}
+function renderFixes(zeigen) {
+    var box = document.getElementById('fixesBox');
+    if (!box) return;
+    var l = fixListe().slice().sort(function (a, b) { return Date.parse(b.seit) - Date.parse(a.seit); });
+    if (!zeigen || !l.length) { box.hidden = true; return; }
+    var jetzt = Date.now() / 1000;
+    var zeilen = l.map(function (fix) {
+        var s = Date.parse(fix.seit) / 1000, st = fixStand(fix);
+        var tage = Math.max(0, Math.floor((jetzt - s) / 86400));
+        var vor = tage < 1 ? T('heute', 'today')
+            : T('vor ' + tage + (tage === 1 ? ' Tag' : ' Tagen'), tage + (tage === 1 ? ' day' : ' days') + ' ago');
+        var zustand, cls = '';
+        if (!st) zustand = '<span class="fix-zustand">' + esc(T('noch keine Stundenwerte', 'no hourly data yet')) + '</span>';
+        else if (st.seit > 0) {
+            cls = ' is-wieder';
+            zustand = '<span class="fix-zustand">' + ICON_WIEDER + '<span>' +
+                esc(T('wieder da, zuletzt ', 'back, last ') + fixDatum(st.zuletzt, true)) + '</span></span>';
+        } else zustand = '<span class="fix-zustand">' + ICON_OK + '<span>' + esc(T('ruhig', 'quiet')) + '</span></span>';
+        var t = fix.titel || [];
+        return '<li class="fix' + cls + '">' +
+            '<span class="fix-titel">' + esc(T(t[0] || '', t[1] || t[0] || '')) +
+                '<small>' + esc(T('behoben ', 'fixed ') + fixDatum(s, true) + ', ' + vor) + '</small></span>' +
+            '<span class="fix-zahl"><b>' + (st && st.davor !== null ? esc(fmtInt(st.davor)) : '—') + '</b>' +
+                '<small>' + esc(T(FIX_VORHER_TAGE + ' Tage davor', FIX_VORHER_TAGE + ' days before')) + '</small></span>' +
+            '<span class="fix-zahl is-seit"><b>' + (st ? esc(fmtInt(st.seit)) : '—') + '</b>' +
+                '<small>' + esc(T('seit dem Fix', 'since the fix')) + '</small></span>' +
+            zustand + '</li>';
+    }).join('');
+    box.innerHTML = '<h3 class="fixes-titel">' + esc(T('Behoben', 'Fixed')) + '</h3><ul class="fixes-liste">' + zeilen + '</ul>';
+    box.hidden = false;
 }
 
 // ─── Cloudflare ──────────────────────────────────────────────

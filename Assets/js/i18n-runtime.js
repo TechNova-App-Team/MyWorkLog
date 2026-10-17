@@ -279,6 +279,11 @@
     'Daten beschädigt': 'Data corrupted',
     'Deine lokal gespeicherten Daten konnten nicht gelesen werden und es war kein lokales Backup verfügbar. Lade deine Daten aus der Cloud, um sie wiederherzustellen.': 'Your locally stored data could not be read and no local backup was available. Load your data from the cloud to restore it.',
     'Speicher voll': 'Storage full',
+    // Import eines verschluesselten Backups (encrypted-backup.js)
+    'Falsches Passwort': 'Wrong password',
+    'Import fehlgeschlagen': 'Import failed',
+    'Das Passwort passt nicht zu dieser Datei. Achte auf Groß- und Kleinschreibung.': 'The password does not match this file. Check upper and lower case.',
+    'Diese Datei ist kein verschlüsseltes MyWorkLog-Backup. Ein normales Backup spielst du unter Import über „Vollständiges Backup“ ein.': 'This file is not an encrypted MyWorkLog backup. Restore a normal backup under Import via “Full backup”.',
     'Deine Änderung konnte nicht gespeichert werden — der lokale Speicher ist voll. Bitte exportiere ein Backup und leere den Papierkorb.': 'Your change could not be saved — local storage is full. Please export a backup and empty the trash.',
 
     // ─── View-Titel (tab-navigation.js `titles` → .page-title + document.title) ───
