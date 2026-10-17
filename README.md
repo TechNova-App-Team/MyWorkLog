@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.5.15-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.5.16-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -249,15 +249,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.5.15** · 2026-10-17
+Aktuelle Version: **v8.5.16** · 2026-10-17
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.5.15** | 2026-10-17 | Die Preisseite ist online: das Berichtsheft bleibt kostenlos |
+| **8.5.16** | 2026-10-17 | Das Wetterfenster zeigt Himmel und Landschaft deutlich echter |
+| 8.5.15 | 2026-10-17 | Die Preisseite ist online: das Berichtsheft bleibt kostenlos |
 | 8.5.14 | 2026-10-17 | Der Assistent bleibt beim Berichtsheft und sagt genau, warum Turbo einmal nicht geschrieben hat |
 | 8.5.13 | 2026-10-16 | Der Assistent zeigt, wie gut er deinen Schreibstil schon kennt, und die Einstellungen sind leichter zu finden |
 | 8.5.12 | 2026-10-16 | Der Assistent im Berichtsheft hat eine Modellwahl, und schnelle Antworten sind zurück |
-| 8.5.11 | 2026-10-16 | Lehrkräfte übernehmen den Stundenplan ihrer Klasse direkt aus WebUntis |
 
 <!-- changelog:end -->
 
