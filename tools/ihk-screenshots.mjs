@@ -58,7 +58,17 @@ var r=reports.filter(function(x){return x.status==='signed';}).sort(function(a,b
 openPDFModal(r.id);
 setTimeout(function(){done('Vorlage '+_pdfCurrentStyle);},700);`;
 
+// Schritt 1 auf /ihk-berichtsheft/: wo der Import sitzt. Seit dem Heft-Design liegt
+// er im Menue "Importieren" (details#hfImport), nicht mehr als eigener Knopf — das
+// /about/-Bild des Berichtshefts zeigt ihn deshalb nicht mehr (bis 18.10.2026 nutzte
+// die Seite genau dieses Bild). Menue auf und in die Bildmitte scrollen.
+const MENUE = `
+var m=document.getElementById('hfImport');m.open=true;
+var r=m.getBoundingClientRect();window.scrollTo(0,Math.max(0,r.top+scrollY-260));
+setTimeout(function(){done('Menue offen: '+m.open);},400);`;
+
 const shots = [
+    ['import-menue.webp', warte(MENUE)],
     ['import-start.webp', warte("openIhkImport();setTimeout(function(){done('Dialog offen: '+document.getElementById('ihkImport').classList.contains('active'));},500);")],
     ['import-wochen.webp', warte(WOCHEN)],
     ['vordruck.webp', warte(VORDRUCK)],
@@ -71,5 +81,5 @@ for (const [datei, js] of shots) {
     process.stdout.write(r.stdout); process.stderr.write(r.stderr);
     if (r.status !== 0) fehler++;
 }
-console.log(fehler ? `${fehler} Aufnahme(n) fehlgeschlagen` : 'Drei Aufnahmen unter Grafiken/ihk/ — danach bumpen, damit die ?v= wechseln.');
+console.log(fehler ? `${fehler} Aufnahme(n) fehlgeschlagen` : 'Vier Aufnahmen unter Grafiken/ihk/ — danach bumpen, damit die ?v= wechseln.');
 process.exit(fehler ? 1 : 0);

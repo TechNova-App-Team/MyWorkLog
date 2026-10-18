@@ -72,7 +72,9 @@ for (let d = new Date(start); d <= ende; d.setDate(d.getDate() + 1)) {
 const data = {
     entries, trash: [], customEntryTypes: [], customFields: [], workflowRules: [], untis: null,
     settings: {
-        name: 'Anna', avatarInitials: 'AB', theme: '#a855f7', themeMode: 'dark',
+        // Theme = Voreinstellung der App (state-config.js). Bis 18.10.2026 stand hier
+        // noch das Lila von vor v8.1.8 — die Bilder zeigten damit eine Marke, die es nicht mehr gibt.
+        name: 'Anna', avatarInitials: 'AB', theme: '#5578a8', themeMode: 'dark',
         hours, break: { thresh: 6, min: [0, 30, 30, 30, 30, 30, 0] },
         vacation: { total: 30, used: 5, usedManual: 0, carriedOver: 2, mode: 'days', carryOverMax: null, lastRolloverYear: heute.getFullYear(), yearHistory: {} },
         ihk: { start: `${heute.getFullYear() - 2}-08-01`, end: `${heute.getFullYear() + 1}-07-31`, exam_zwischen: `${heute.getFullYear()}-03-12`, note_zwischen: '2', note_abschluss: '' },
@@ -162,9 +164,9 @@ const shots = [
     ['dashboard.webp', ['--w', '1440', '--h', '900'], `(function(){${CLEAN}return 'ok'})()`],
     ['recovery.webp', ['--w', '1440', '--h', '900'], `(function(){${CLEAN}openRecoveryModal();return new Promise(r=>setTimeout(()=>r('modal='+document.getElementById('recoveryModal').classList.contains('active')),600))})()`],
     ['handy.webp', ['--w', '390', '--h', '844'], `(function(){${CLEAN}return 'ok'})()`],
-    // Berichtsheft: Kopf abgeschnitten (Statistik, Wochen-Uebersicht, Liste), der
-    // B2B-Teaser raus — er ist fuer Nicht-Mitglieder ein Hinweis, kein Inhalt.
-    ['berichtsheft.webp', ['--w', '1440', '--h', '900'], `(function(){return new Promise(r=>setTimeout(function(){var c=document.getElementById('b2bCard');if(c)c.remove();window.scrollTo(0,215);setTimeout(function(){r('ok')},400)},600))})()`, 'http://localhost:5001/berichtsheft/'],
+    // Berichtsheft: seit dem Heft-Design (v8.1.12) ist der Seitenanfang selbst die
+    // Buehne mit dem Heft — kein Wegscrollen und kein b2bCard-Entfernen mehr noetig.
+    ['berichtsheft.webp', ['--w', '1440', '--h', '900'], `(function(){return new Promise(r=>setTimeout(function(){window.scrollTo(0,0);r('ok')},600))})()`, 'http://localhost:5001/berichtsheft/'],
 ];
 let fehler = 0;
 for (const [datei, masse, js, url] of shots) {
