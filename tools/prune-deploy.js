@@ -57,10 +57,12 @@ if (!onCF && !forced && !dryRun) {
 }
 
 // Einzelne Dateien / ganze Verzeichnisse, die NICHT ins Deploy gehoeren.
-// NICHT hier rein: config/ (version.json + maintenance.json werden zur Laufzeit
-// gefetcht), Assets/, Grafiken/, pages/ (inkl. pages/footer/footer.html!),
-// components/**/*.{css,js} — die sind alle live verlinkt.
+// NICHT hier rein: config/ (version.json, changelog.json, maintenance.json werden
+// zur Laufzeit gefetcht), Assets/ (ausser i18n), Grafiken/, pages/ (inkl.
+// pages/footer/footer.html!), components/**/*.{css,js} — die sind alle live verlinkt.
 const REMOVE = [
+  'Assets/i18n',           // Zwischenstaende der i18n-Pipeline (500 KB); zur Laufzeit liest sie niemand,
+                           // gemessen 18.10.2026: kein fetch in Assets/js, components, pages
   'index.template.html',   // Quelle der generierten index.html
   'tools',                 // Build-Tooling
   'supabase',              // Quelltext der Edge Functions — laeuft bei Supabase, nicht hier
