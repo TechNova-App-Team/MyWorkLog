@@ -1051,9 +1051,9 @@ document.documentElement.className += ' js';</script>
         }
 
         /* ═══ WER DAHINTERSTECKT — eine Person, und das ist der Punkt.
-               Die Zahl der Releases kommt live aus config/version.json (der
-               Footer laedt sie ohnehin ueber loadAppVersion); hier steht
-               bewusst keine feste Zahl. ═══ */
+               Die Zahl der Releases stempelt der Build (stamp-assets,
+               data-release-count) aus config/changelog.json — nie von Hand
+               pflegen. ═══ */
         .maker {
             position: relative; overflow: hidden;
             padding: clamp(2rem, 5vw, 4rem); border-radius: var(--r-xl);
@@ -1217,7 +1217,7 @@ document.documentElement.className += ' js';</script>
     <div class="shell hero-top">
         <div class="hero-badge" data-reveal style="--i:5">
             <span class="hero-badge-dot"></span>
-            <span>Version <span data-version translate="no">8.5.17</span> — Live</span>
+            <span>Version <span data-version translate="no">8.5.18</span> — Live</span>
         </div>
         <h1 class="hero-title">
             <span class="tl-line" style="--i:0"><span>Zeiterfassung &amp; Berichtsheft</span></span>
@@ -1888,8 +1888,7 @@ document.documentElement.className += ' js';</script>
 </section>
 
 <!-- ═══ TEAM ═══
-     Die Releases zaehlt JS aus config/version.json (Block 13), sobald der
-     Footer sie geladen hat. Bis dahin — und ohne Netz — steht der Strich. -->
+     Die Releases stempelt der Build ins Markup (Block 13 zaehlt nur hoch). -->
 <section class="section tight" id="team">
     <div class="shell">
         <div class="section-header" data-reveal>
@@ -1907,8 +1906,8 @@ document.documentElement.className += ' js';</script>
                     </div>
                 </div>
                 <dl class="maker-facts">
-                    <div><dt>Releases</dt><dd id="makerReleases" translate="no">—</dd></div>
-                    <div><dt>aktuelle Version</dt><dd data-version translate="no">8.5.17</dd></div>
+                    <div><dt>Releases</dt><dd id="makerReleases" data-release-count translate="no">337</dd></div>
+                    <div><dt>aktuelle Version</dt><dd data-version translate="no">8.5.18</dd></div>
                     <div><dt>Personen im Team</dt><dd translate="no">1</dd></div>
                 </dl>
             </div>
@@ -2298,22 +2297,12 @@ document.documentElement.className += ' js';</script>
     setTimeout(startStats, 2500);
 
     /* ── 13. Releases: gezaehlt, nicht geschrieben ────────────────────── */
-    /* APP_CONFIG ist ein let-Global aus version-loader.js (nicht auf window)
-       und wird erst gefuellt, wenn der Footer loadAppVersion() aufruft. Kein
-       zweiter Abruf der 334-KB-Datei: warten, bis sie da ist. */
+    /* Die Zahl steht schon im Markup (stamp-assets); hier nur die Zaehlfahrt. */
     (function releases() {
         var el = document.getElementById('makerReleases');
         if (!el) return;
-        var tries = 0;
-        (function poll() {
-            var cfg = (typeof APP_CONFIG !== 'undefined') ? APP_CONFIG : null;
-            if (cfg && cfg.changelog && typeof cfg.changelog === 'object') {
-                var n = Object.keys(cfg.changelog).length;
-                if (n > 0) animateCount(el, n, 1400);
-                return;
-            }
-            if (++tries < 40) setTimeout(poll, 250);
-        })();
+        var n = parseInt(el.textContent, 10);
+        if (n > 0) animateCount(el, n, 1400);
     })();
 
     /* ══════════════════════════════════════════════════════════════════

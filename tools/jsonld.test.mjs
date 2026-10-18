@@ -26,7 +26,7 @@ const ok = (name, b, detail = '') => {
 
 const versionJson = JSON.parse(lies('config/version.json'));
 const version = versionJson.version;
-const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1);
+const releaseDate = Object.values(JSON.parse(lies('config/changelog.json')).changelogDates || {}).sort().at(-1);
 ok('version.json hat ein Release-Datum', /^\d{4}-\d{2}-\d{2}$/.test(releaseDate || ''), String(releaseDate));
 
 // Alle Bloecke einer Datei parsen. Ein Block, der nicht parst, ist fuer Google

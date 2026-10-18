@@ -9,7 +9,7 @@
  *   ?v=<inhalts-hash> (tools/stamp-assets.js), eine geänderte Datei ist also eine
  *   neue URL und zwangsläufig ein Miss; unveränderte überleben den Release in
  *   ASSET_CACHE.
- * → Die vier Dateien ohne ?v= (version.json, supabase-config.js, footer.html,
+ * → Die fuenf Dateien ohne ?v= (version.json, changelog.json, supabase-config.js, footer.html,
  *   manifest.json): Stale-While-Revalidate — sofort aus dem Cache, Auffrischung
  *   im Hintergrund. Damit sind auch sie offline da.
  * → maintenance.json (Wartungs-Schalter) und der Rest von /pages/: nie aus dem Cache
@@ -86,17 +86,18 @@ function isCacheable(url) {
 }
 
 // ─────────────────────────────────────────────
-// STALE-WHILE-REVALIDATE — die vier Dateien ohne ?v=
+// STALE-WHILE-REVALIDATE — die fuenf Dateien ohne ?v=
 // ─────────────────────────────────────────────
 //
 // Alles andere traegt ?v=<version> (stamp-assets.js): neue Fassung = neue Adresse,
-// Cache-First kann dort nichts Veraltetes liefern. Diese vier aendern ihren Inhalt
+// Cache-First kann dort nichts Veraltetes liefern. Diese fuenf aendern ihren Inhalt
 // unter GLEICHER Adresse. Sie hart auszunehmen hiesse: bei jedem Seitenaufruf ans
 // Netz, und offline gar nicht da. Deshalb SWR — sofort aus dem Cache antworten und
 // im Hintergrund auffrischen. Preis ist eine Runde Verzoegerung, die hier nichts
 // kostet (Begruendung am SWR-Zweig unten).
 const SWR_PFADE = new Set([
-  '/config/version.json',        // Versionsnummer + Changelog, 3 Abrufe je Seitenaufruf
+  '/config/version.json',        // Versionsnummer, 3 Abrufe je Seitenaufruf
+  '/config/changelog.json',      // Release-Ansicht auf /support/ (600 KB, nur dort geladen)
   '/config/supabase-config.js',  // ohne die Datei startet die Cloud-Anbindung offline nicht
   '/pages/footer/footer.html',   // gemeinsamer Footer aller Standalone-Seiten
   '/manifest.json',              // PWA-Manifest
@@ -363,7 +364,7 @@ self.addEventListener('fetch', event => {
 
   // ── Stale-While-Revalidate ─────────────────────────────────────────────────
   // Sofort aus dem Cache antworten, im Hintergrund auffrischen. Damit sind diese
-  // vier Dateien offline verfuegbar UND kosten im Normalfall keine blockierende
+  // fuenf Dateien offline verfuegbar UND kosten im Normalfall keine blockierende
   // Anfrage. Sie rufen teils mit cache:'no-store' — das gilt dem HTTP-Cache des
   // Browsers, der SW sitzt davor und entscheidet hier selbst.
   //

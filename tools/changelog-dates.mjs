@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // ═══ CHANGELOG-DATES ═══
 //
-// Fuellt `changelogDates` in config/version.json auf: je Changelog-Version das
+// Fuellt `changelogDates` in config/changelog.json auf: je Changelog-Version das
 // Datum, an dem sie erstmals in config/version.json stand.
 //
 // 🔴 Warum ueberhaupt aus git und nicht von Hand: die 174 Eintraege hatten nie ein
@@ -21,10 +21,14 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 
+// Die Daten stehen seit v8.5.18 in changelog.json; die Versionsgeschichte, aus
+// der sie gelesen werden, bleibt die von version.json (dort stand `version`
+// schon immer).
 const FILE = 'config/version.json';
+const CL_FILE = 'config/changelog.json';
 const dry = process.argv.includes('--dry-run');
 
-const cfg = JSON.parse(readFileSync(FILE, 'utf8'));
+const cfg = JSON.parse(readFileSync(CL_FILE, 'utf8'));
 const changelog = cfg.changelog || {};
 const dates = { ...(cfg.changelogDates || {}) };
 
@@ -87,5 +91,5 @@ if (notFound.length) {
 if (dry) { console.log('  --dry-run: nichts geschrieben.'); process.exit(0); }
 
 cfg.changelogDates = sorted;
-writeFileSync(FILE, JSON.stringify(cfg, null, 2) + '\n', 'utf8');
-console.log('  ' + FILE + ' geschrieben (' + Object.keys(sorted).length + ' Datumsangaben).');
+writeFileSync(CL_FILE, JSON.stringify(cfg, null, 2) + '\n', 'utf8');
+console.log('  ' + CL_FILE + ' geschrieben (' + Object.keys(sorted).length + ' Datumsangaben).');

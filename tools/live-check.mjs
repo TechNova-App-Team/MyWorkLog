@@ -29,7 +29,8 @@ const TIMEOUT_MS = 20000;
 const ASSETS = [
   ['/Assets/js/archflow-data.js', 'ArchFlow-Karte (lag bis v6.4.1 auf 404)'],
   ['/pages/footer/footer.html',   'Shared Footer, von jeder Standalone-Seite gefetcht'],
-  ['/config/version.json',        'Version + Changelog, steuert SW-Update'],
+  ['/config/version.json',        'Versionsnummer, steuert SW-Update'],
+  ['/config/changelog.json',      'Release-Ansicht auf /support/'],
   ['/service-worker.js',          'Offline-Faehigkeit'],
   ['/manifest.json',              'PWA-Installation'],
   ['/sitemap.xml',                'Grundlage dieses Tests'],

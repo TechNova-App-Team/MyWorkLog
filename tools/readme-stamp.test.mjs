@@ -93,10 +93,13 @@ const out = readmeStempeln(attrappe, vj);
   ok(ohneMarker.includes('version-7.3.0-x') && ohneMarker.endsWith('kein Block'), 'ohne Marker: nur das Badge, kein Block eingefuegt');
 }
 
-console.log('── echte README.md gegen config/version.json');
+console.log('── echte README.md gegen config/version.json + changelog.json');
 {
   const readme = readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-  const echt = JSON.parse(readFileSync(path.join(ROOT, 'config', 'version.json'), 'utf8'));
+  const echt = {
+    ...JSON.parse(readFileSync(path.join(ROOT, 'config', 'version.json'), 'utf8')),
+    ...JSON.parse(readFileSync(path.join(ROOT, 'config', 'changelog.json'), 'utf8')),
+  };
   ok(/img\.shields\.io\/badge\/version-\d+\.\d+\.\d+-/.test(readme), 'README traegt ein Versions-Badge (Gegenprobe)');
   ok(readme.includes(README_ANFANG) && readme.includes(README_ENDE), 'README traegt beide Marker (Gegenprobe)');
   ok(readme.includes('version-' + echt.version + '-'), `Badge zeigt v${echt.version}`);

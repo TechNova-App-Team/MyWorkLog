@@ -456,7 +456,8 @@
         else if (art === 'fehler' || art === 'bug') setKind('bug');
     }
 
-    // ═══ CHANGELOG — Release-Ledger aus config/version.json ═══
+    // ═══ CHANGELOG — Release-Ledger aus config/changelog.json ═══
+    // (aktuelle Version aus config/version.json)
     // Einzige Quelle: `changelog`, `changelog_en` (wo gepflegt) und
     // `changelogDates` (tools/changelog-dates.mjs). Nichts wird geschaetzt.
     function clCmpVer(a, b) {
@@ -504,9 +505,10 @@
         var ICON_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
         var ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
-        fetch('/config/version.json', { cache: 'no-cache' })
-            .then(function (r) { return r.json(); })
-            .then(function (cfg) {
+        var holen = function (u) { return fetch(u, { cache: 'no-cache' }).then(function (r) { return r.json(); }); };
+        Promise.all([holen('/config/version.json'), holen('/config/changelog.json')])
+            .then(function (teile) {
+                var cfg = Object.assign({}, teile[0], teile[1]);
                 var cl = cfg && cfg.changelog;
                 if (!cl || typeof cl !== 'object') { fail(L('Keine Änderungshistorie verfügbar.', 'No change history available.')); return; }
                 // Fehlt die Uebersetzung, faellt der EINZELNE Eintrag auf Deutsch zurueck.

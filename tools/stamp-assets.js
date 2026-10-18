@@ -29,8 +29,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 const ROOT = path.resolve(__dirname, '..');
-const versionJson = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'), 'utf8'));
+// Changelog liegt seit v8.5.18 in config/changelog.json (version.json war auf
+// 606 KB gewachsen und wurde auf fast jeder Seite nur fuer die Versionsnummer
+// geholt). Fuer README und Release-Datum hier wieder zusammengefuehrt.
+const versionJson = {
+  ...JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'), 'utf8')),
+  ...JSON.parse(fs.readFileSync(path.join(ROOT, 'config/changelog.json'), 'utf8')),
+};
 const version = versionJson.version;
+const releaseCount = Object.keys(versionJson.changelog || {}).length;
 // Juengstes Datum aus changelogDates = Tag des letzten Release. Beim Bump traegt
 // der Eintrag der neuen Version genau dieses Datum, also stimmt es auch dann.
 const releaseDate = Object.values(versionJson.changelogDates || {}).sort().at(-1) || '';
@@ -176,6 +183,9 @@ const APP_FILES = new Set([
 // Nur die Form "<Zahl>. <Monat> <Jahr>" wird ersetzt — der Platzhalter "—" auf
 // /DSGVO/ (mit translate-Attribut) bleibt bewusst Sache des Loaders.
 const RELEASE_TEXT_RE = /(\sdata-release-date>)\d{1,2}\. [A-Za-zä]+ \d{4}(<)/g;
+// Release-Zaehler auf /about/: steht im HTML, damit die Seite dafuer nicht den
+// ganzen Changelog laden muss.
+const RELEASE_COUNT_RE = /(\sdata-release-count[^>]*>)(?:\d+|—)(<)/g;
 const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 function deutschesDatum(iso) {
   const [j, m, t] = iso.split('-').map(Number);
@@ -201,6 +211,7 @@ function stampFile(file) {
   for (const re of VERSION_RES) out = out.replace(re, (_m, pre, post) => pre + version + post);
   if (releaseDate && APP_FILES.has(file)) out = out.replace(DATE_RE, (_m, pre, post) => pre + releaseDate + post);
   if (releaseDate) out = out.replace(RELEASE_TEXT_RE, (_m, pre, post) => pre + deutschesDatum(releaseDate) + post);
+  if (releaseCount) out = out.replace(RELEASE_COUNT_RE, (_m, pre, post) => pre + releaseCount + post);
   if (out === raw) return null;
   atomarSchreiben(file, out);
   return n;
@@ -360,7 +371,9 @@ function nurStempelDiff(rel) {
   // Versionsnummern und Daten zaehlen mit: die setzt dieses Skript beim Bump
   // selbst (VERSION_RES, DATE_RE).
   const ohne = (z) => z.slice(1).replace(/\r$/, '').replace(/\?v=[^"'`\s]*/g, '?v=')
-    .replace(/\d+\.\d+\.\d+/g, 'X.Y.Z').replace(/\d{4}-\d{2}-\d{2}/g, 'JJJJ-MM-TT');
+    .replace(/\d+\.\d+\.\d+/g, 'X.Y.Z').replace(/\d{4}-\d{2}-\d{2}/g, 'JJJJ-MM-TT')
+    .replace(/(data-release-date>)\d{1,2}\. [A-Za-zä]+ \d{4}/g, '$1D')
+    .replace(/(data-release-count[^>]*>)(?:\d+|—)/g, '$1N');
   const weg = [], dazu = [];
   for (const z of diff.split('\n')) {
     if (z.startsWith('---') || z.startsWith('+++')) continue;
