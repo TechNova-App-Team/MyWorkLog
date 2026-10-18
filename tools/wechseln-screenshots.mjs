@@ -66,7 +66,7 @@ const IMPORT_EINTRAG = "document.querySelector('.nav-item[onclick=\"showBackupMe
 
 const shots = [
     ['seitenleiste.webp', warte(`${MISS}var n=${IMPORT_EINTRAG};n.scrollIntoView({block:'center'});setTimeout(function(){done('Import-Eintrag: '+miss(n));},500);`)],
-    ['menue.webp', warte(`${MISS}showBackupMenu();setTimeout(function(){var b=document.querySelector('button[onclick*="openImportWizard"]');done('Excel-Knopf: '+miss(b));},600);`)],
+    ['menue.webp', warte(`${MISS}showBackupMenu();setTimeout(function(){var b=[].find.call(document.querySelectorAll('button'),function(x){return /Excel oder CSV/.test(x.textContent);});done('Excel-Knopf: '+miss(b));},600);`)],
     ['einfuegen.webp', warte(`${MISS}${EINFUEGEN}var t=document.getElementById('impPasteArea');t.scrollTop=0;setTimeout(function(){done('Einfuegefeld: '+miss(t));},500);`)],
     ['spalten.webp', warte(`${MISS}${EINFUEGEN}mwlImportPaste();setTimeout(function(){done('Zuordnung: '+miss(document.getElementById('impMapRows'))+' · '+_mwlImport.body.length+' Zeilen');},500);`)],
     ['vorschau.webp', warte(`${MISS}${EINFUEGEN}mwlImportPaste();mwlImportBuildPreview();setTimeout(function(){done('Saldo-Zeile: '+miss(document.getElementById('impSummary'))+' · '+document.querySelectorAll('.imp-badge.warn').length+' vorhanden');},500);`)],
