@@ -185,7 +185,7 @@ a { color: inherit; }
 }
 
 /* ── Abschnitts-Ueberschriften ─────────────────────────────────── */
-.pr-hefte, .pr-wunsch, .pr-fragen { max-width: 1180px; margin: 0 auto; padding: 72px 28px; }
+.pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { max-width: 1180px; margin: 0 auto; padding: 72px 28px; }
 .pr-h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.8rem, 1.2rem + 1.8vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
 .pr-h2-unter { margin: 12px 0 0; max-width: 60ch; color: var(--text-2); }
 
@@ -262,6 +262,66 @@ a { color: inherit; }
 .pr-vormerken svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .pr-fuss-hinweis { margin: 22px 0 0; font-size: 0.86rem; color: var(--text-3); }
 
+/* ── Alles nebeneinander ─────────────────────────────────────────
+   EIN Bogen Papier wie die Hefte darueber: Rand links, Linien in Kuli-Blau, Haken
+   in derselben Form wie in .pr-liste. Die Bezahl-Spalten liegen leicht ausgegraut
+   (wie .pr-blatt.is-zu), "neu" ist ein Rotstift-Vermerk. Kein Effekt. */
+.pr-bogen {
+    position: relative;
+    margin-top: 36px;
+    max-width: 920px;
+    padding: 14px 18px 10px 50px;
+    border-radius: 5px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    overflow-x: auto;
+}
+.pr-bogen::before { content: ''; position: absolute; left: 34px; top: 0; bottom: 0; width: 1.5px; background: var(--papier-rand); }
+.pr-vgl { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+.pr-vgl th, .pr-vgl td { padding: 11px 10px; border-bottom: 1px solid var(--papier-linie); text-align: left; vertical-align: middle; font-weight: 400; }
+.pr-vgl tbody th { line-height: 1.35; }
+.pr-vgl thead th { padding-top: 6px; padding-bottom: 12px; border-bottom: 1px solid rgba(21, 19, 29, 0.2); vertical-align: bottom; }
+.pr-vgl thead th > span { display: block; font-family: var(--font-display); font-size: 1.12rem; font-weight: 700; letter-spacing: -0.02em; }
+.pr-vgl thead th:first-child > span { font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.6rem; font-weight: 300; letter-spacing: 0; color: var(--papier-tinte-2); }
+.pr-vgl thead small { display: block; margin-top: 2px; font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.58rem; font-weight: 300; color: var(--papier-tinte-2); }
+.pr-vgl thead th.is-zu small { color: var(--rotstift); }
+.pr-vgl th:not(:first-child), .pr-vgl td { width: 7.5rem; text-align: center; }
+.pr-vgl td { font-size: 0.84rem; color: var(--papier-tinte); }
+/* Bezahl-Spalten ausgegraut — Zeile 2 und 3 der Spalten, ueber nth-child, damit
+   das Markup jeder Zelle schlank bleibt. */
+.pr-vgl td:nth-child(3), .pr-vgl td:nth-child(4),
+.pr-vgl thead th:nth-child(3), .pr-vgl thead th:nth-child(4) { background: rgba(21, 19, 29, 0.035); }
+.pr-vgl-gruppe th {
+    padding-top: 22px;
+    padding-bottom: 8px;
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.62rem;
+    font-weight: 500;
+    color: var(--papier-tinte-2);
+    text-align: left !important;
+    background: none !important;
+}
+/* Haken wie .pr-liste li::before, Strich fuer "nicht drin" */
+.pr-vgl td.is-ja::before, .pr-vgl td.is-nein::before { content: ''; display: inline-block; vertical-align: middle; }
+.pr-vgl td.is-ja::before { width: 11px; height: 6px; margin-top: -4px; border-left: 2px solid var(--kuli); border-bottom: 2px solid var(--kuli); transform: rotate(-45deg); }
+.pr-vgl td.is-nein::before { width: 12px; height: 1.5px; background: rgba(21, 19, 29, 0.3); }
+.pr-vgl td:nth-child(3).is-ja::before, .pr-vgl td:nth-child(4).is-ja::before { border-color: color-mix(in srgb, var(--kuli) 70%, var(--papier-2)); }
+.pr-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pr-neu {
+    display: inline-block;
+    margin-left: 8px;
+    font-family: var(--font-hand);
+    font-size: 1.4rem;   /* Caveat hat eine kleine x-Hoehe: bei 18 px las es sich wie 10 px */
+    font-style: normal;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--rotstift);
+    transform: rotate(-4deg);
+    white-space: nowrap;
+}
+
 /* ── Wuensche ────────────────────────────────────────────────── */
 .pr-balken { list-style: none; margin: 34px 0 0; padding: 0; display: grid; gap: 4px; max-width: 900px; }
 .pr-balken li {
@@ -312,8 +372,19 @@ a { color: inherit; }
 }
 @media (max-width: 480px) {
     .pr-top { padding: 16px; }
-    .pr-hero, .pr-hefte, .pr-wunsch, .pr-fragen { padding-left: 16px; padding-right: 16px; }
-    .pr-hefte, .pr-wunsch, .pr-fragen { padding-top: 52px; padding-bottom: 52px; }
+    .pr-hero, .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { padding-left: 16px; padding-right: 16px; }
+    .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { padding-top: 52px; padding-bottom: 52px; }
+    /* Am Handy (375 px) ragte der Bogen 74 px ueber: "versiegelt" in der breiten
+       Vordruck-Schrift setzte die Spaltenbreite. Der Zusatz faellt weg — die Toenung
+       der Spalten und der Satz ueber der Tabelle sagen dasselbe. */
+    .pr-vgl thead small { display: none; }
+    .pr-bogen { padding: 10px 8px 6px 28px; }
+    .pr-bogen::before { left: 18px; }
+    .pr-vgl { font-size: 0.86rem; }
+    .pr-vgl th, .pr-vgl td { padding: 10px 5px; }
+    .pr-vgl th:not(:first-child), .pr-vgl td { width: 3.9rem; }
+    .pr-vgl thead th > span { font-size: 0.8rem; }
+    .pr-vgl td { font-size: 0.74rem; }
     .pr-stapel { height: 330px; }
     .pr-mini { width: 200px; height: 270px; margin: -135px 0 0 -100px; }
     .pr-blatt { padding: 22px 18px 22px 40px; }

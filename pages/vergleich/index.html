@@ -259,6 +259,34 @@
         .st-yes svg { color: var(--success); }
         .st-no svg, .st-na svg { color: var(--text-dim); }
         td > .st-na:first-child, .st-na { color: var(--text-dim); }
+
+        /* Plaene-Tabelle (#vgPlaene): vier Spalten statt fuenf, deshalb schmaler als
+           die 900 px der Gegenueberstellung. Haken/Strich als CSS statt SVG je Zelle —
+           54 Zellen, der Text "ja"/"nein" steht fuer Screenreader in .vh daneben. */
+        .tbl-plaene { margin-top: 18px; }
+        /* Ohne das haengen die absolut positionierten .vh-Texte am Seitenrand statt im
+           scrollbaren Rahmen — die ganze Seite lief bei 500 px 87 px quer (gemessen). */
+        .tbl-plaene .tbl-wrap { position: relative; }
+        .tbl-plaene table { min-width: 620px; }
+        .tbl-plaene td { text-align: center; vertical-align: middle; width: 150px; }
+        .tbl-plaene tbody th { vertical-align: middle; }
+        .tbl-plaene thead th:not(:first-child) { text-align: center; }
+        .tbl-plaene td.j::before, .tbl-plaene td.n::before { content: ''; display: inline-block; vertical-align: middle; }
+        .tbl-plaene td.j::before { width: 11px; height: 6px; margin-top: -4px; border-left: 2px solid var(--success); border-bottom: 2px solid var(--success); transform: rotate(-45deg); }
+        .tbl-plaene td.n::before { width: 12px; height: 2px; border-radius: 1px; background: var(--text-dim); opacity: 0.6; }
+        .tbl-plaene tr.gruppe th {
+            padding-top: 20px; padding-bottom: 8px; width: auto;
+            font-size: 0.74rem; font-weight: 500; color: var(--text-dim);
+            border-right: none;
+        }
+        .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+        .neu-tag {
+            display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+            border: 1px solid rgba(var(--primary-rgb), 0.45); color: var(--primary);
+            font-size: 0.68rem; font-weight: 600; line-height: 1.5; vertical-align: 1px; white-space: nowrap;
+        }
+        .legend .neu-tag { margin-left: 0; }
+        .legend-t { color: var(--text-dim); margin-left: -2px; }
         .fn { color: var(--text-dim); text-decoration: none; font-size: 0.68rem; vertical-align: super; margin-left: 3px; font-weight: 600; }
         .fn:hover { color: var(--primary); }
 
@@ -648,7 +676,7 @@
                 <tbody>
                     <tr>
                         <th scope="row"><span>Kosten für Azubis</span></th>
-                        <td><span>0 €</span></td>
+                        <td><span>0 €</span><small>Zusatzhefte geplant, Tabelle weiter unten</small></td>
                         <td><span>0 € — „dauerhaft kostenlos"</span><a class="fn" href="#q1">1</a></td>
                         <td><span>0 € — „Azubi (ohne verbundenes Unternehmen)"</span><a class="fn" href="#q4">4</a></td>
                         <td><span>0 €, wenn die eigene Kammer eine Lizenz hat</span><a class="fn" href="#q7">7</a><small>sonst zahlt der Betrieb</small></td>
@@ -768,6 +796,66 @@
             </p>
         </div>
 
+        <!-- Plaene von MyWorkLog (Plan des Nutzers, 18.10.2026), dieselbe Tabelle wie auf
+             /preise/. 🔴 Hier gilt dieselbe Regel wie in der Gegenueberstellung: was ohne
+             "neu" steht, gibt es heute (im Code geprueft, siehe Kommentar auf /preise/).
+             Preise bleiben weg, bis es sie gibt. Wer eine Zeile aendert, aendert beide Seiten. -->
+        <h2 id="plaene" data-reveal>Was kostenlos bleibt und was dazukommt</h2>
+        <p class="prose" id="plaeneText" data-reveal>
+            <span>Heute ist in MyWorkLog alles kostenlos, für Azubis wie für Betriebe. Geplant
+            sind zwei Zusatzhefte für Azubis: der Ausbildungs-Pass, einmal bezahlt für die ganze
+            Ausbildung, und Plus, monatlich kündbar. Was heute kostenlos ist, wandert nicht hinein.
+            Preise und Termin stehen noch nicht fest, den Stand zeigt die Seite</span>
+            <a class="inl" href="/preise/">Preise</a><span>.</span>
+        </p>
+        <div class="meta-row" data-reveal>
+            <span class="legend">
+                <span class="st st-yes"><svg><use href="#i-check"/></svg><span>enthalten</span></span>
+                <span class="st st-na"><svg><use href="#i-minus"/></svg><span>nicht enthalten</span></span>
+                <span class="neu-tag">neu</span><span class="legend-t">gibt es noch nicht</span>
+            </span>
+        </div>
+        <div class="tbl-frame tbl-plaene" id="vgPlaene" data-reveal>
+        <div class="tbl-wrap">
+            <table>
+                <colgroup><col><col class="mine"><col><col></colgroup>
+                <thead>
+                    <tr>
+                        <th scope="col"><span>Funktion</span></th>
+                        <th scope="col" class="mine"><span>Kostenlos</span><small>heute</small></th>
+                        <th scope="col"><span>Ausbildungs-Pass</span><small>geplant, einmalig</small></th>
+                        <th scope="col"><span>Plus</span><small>geplant, monatlich</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="gruppe"><th colspan="4" scope="colgroup"><span>Schreiben und abgeben</span></th></tr>
+                    <tr><th scope="row"><span>Berichtsheft je Tag oder Woche, ohne Grenze</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>PDF im IHK-Vordruck, einzeln oder als Mappe</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Ausbilder-Freigabe mit Unterschrift</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Schreibt auch offline</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Foto vom Papierheft einlesen</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Findet Wochen, die noch fehlen</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr class="gruppe"><th colspan="4" scope="colgroup"><span>KI-Assistent</span></th></tr>
+                    <tr><th scope="row"><span>Kestrel Turbo und Albatros Marathon</span></th><td><span>mit Tageslimit</span></td><td><span>ohne Tageslimit</span></td><td><span>ohne Tageslimit</span></td></tr>
+                    <tr><th scope="row"><span>Lernt, wie du schreibst</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Mehrere Wochen auf einmal</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Diktieren statt tippen</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Woche aus Stundenplan und Kalender vorschlagen</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Stärkstes KI-Modell</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr class="gruppe"><th colspan="4" scope="colgroup"><span>Prüfung und Zulassung</span></th></tr>
+                    <tr><th scope="row"><span>Prüfungs-Check vor der Abgabe</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Welche Lernziele des Rahmenplans noch fehlen</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Fachgespräch üben, mit Prüferfragen zu deinen Berichten</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Hilfe bei der Projektdoku für die Abschlussprüfung</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr class="gruppe"><th colspan="4" scope="colgroup"><span>Dazu</span></th></tr>
+                    <tr><th scope="row"><span>Erinnerung am Freitag aufs Handy</span><span class="neu-tag">neu</span></th><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                    <tr><th scope="row"><span>Neue Funktionen zuerst ausprobieren</span><span class="neu-tag">neu</span></th><td class="n"><span class="vh">nein</span></td><td class="n"><span class="vh">nein</span></td><td class="j"><span class="vh">ja</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+        </div>
+        <p class="scroll-hint">Die Tabelle lässt sich seitlich schieben.</p>
+
         <h2 id="wofuer" data-reveal>Wofür welches Werkzeug</h2>
         <p class="prose" data-reveal>
             Die Tabelle hat keinen Sieger, weil die Frage nicht dieselbe ist. Vier Situationen,
@@ -821,9 +909,10 @@
             <details class="faq-item">
                 <summary>Ist MyWorkLog auch für Betriebe kostenlos?</summary>
                 <p>
-                    Ja. Es gibt keine Tarife. Der Ausbilder legt ein Konto an, verbindet sich mit
-                    dem Azubi und gibt Wochen frei — mit digitaler Signatur, ohne Rechnung. Der
-                    Quellcode steht unter MIT-Lizenz offen.
+                    Ja. Für Betriebe gibt es keine Tarife: Der Ausbilder legt ein Konto an,
+                    verbindet sich mit dem Azubi und gibt Wochen frei — mit digitaler Signatur,
+                    ohne Rechnung. Für Azubis sind zwei Zusatzhefte geplant; was heute kostenlos
+                    ist, bleibt kostenlos. Der Quellcode steht unter MIT-Lizenz offen.
                 </p>
             </details>
             <details class="faq-item">
@@ -900,7 +989,7 @@
       "@type": "FAQPage",
       "mainEntity": [
         {"@type":"Question","name":"Warum steht bei manchen Feldern „nicht genannt“ statt „nein“?","acceptedAnswer":{"@type":"Answer","text":"Weil nur zählt, was der Anbieter selbst schreibt. Eine Funktion, die auf der Seite nicht steht, kann es trotzdem geben. „Nein“ steht nur dort, wo die Anbieterseite es belegt."}},
-        {"@type":"Question","name":"Ist MyWorkLog auch für Betriebe kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Ja. Es gibt keine Tarife. Der Ausbilder legt ein Konto an, verbindet sich mit dem Azubi und gibt Wochen mit digitaler Signatur frei. Der Quellcode steht unter MIT-Lizenz offen."}},
+        {"@type":"Question","name":"Ist MyWorkLog auch für Betriebe kostenlos?","acceptedAnswer":{"@type":"Answer","text":"Ja. Für Betriebe gibt es keine Tarife: Der Ausbilder legt ein Konto an, verbindet sich mit dem Azubi und gibt Wochen mit digitaler Signatur frei. Für Azubis sind zwei Zusatzhefte geplant; was heute kostenlos ist, bleibt kostenlos. Der Quellcode steht unter MIT-Lizenz offen."}},
         {"@type":"Question","name":"Erkennt die IHK ein Berichtsheft aus MyWorkLog an?","acceptedAnswer":{"@type":"Answer","text":"Ob ein Heft elektronisch geführt werden darf, steht im Ausbildungsvertrag. Zur Prüfung verlangen die Kammern in der Regel ein PDF; MyWorkLog erzeugt es auf dem Vordruck der jeweiligen IHK. Im Zweifel die eigene IHK fragen."}},
         {"@type":"Question","name":"Kann ich meine Einträge von einem der anderen Anbieter übernehmen?","acceptedAnswer":{"@type":"Answer","text":"Arbeitszeiten ja, als Excel oder CSV. Berichtsheft-Texte kommen bei allen dreien als PDF heraus und lassen sich nicht automatisch einlesen."}},
         {"@type":"Question","name":"Warum fehlen andere Anbieter?","acceptedAnswer":{"@type":"Answer","text":"Die vier hier sind die, nach denen am häufigsten gesucht wird. Fehlt einer, reicht ein Hinweis an info@myworklog.de mit Kriterium und Beleg."}},
@@ -916,8 +1005,11 @@
        und ist per :empty ausgeblendet, statt halb gefuellt dazustehen. */
     (function () {
         var box = document.getElementById('glance');
-        var heads = document.querySelectorAll('thead th');
-        var rows = document.querySelectorAll('tbody tr');
+        // Nur die Gegenueberstellung (erste .tbl-frame) — seit 18.10.2026 steht darunter
+        // die Plaene-Tabelle, und ein seitenweites 'thead th' mischte deren Spalten ein.
+        var vg = document.querySelector('.tbl-frame table');
+        var heads = vg ? vg.querySelectorAll('thead th') : [];
+        var rows = vg ? vg.querySelectorAll('tbody tr') : [];
         function ready() { requestAnimationFrame(function () { document.documentElement.classList.add('ready'); }); }
         if (!box || heads.length < 2 || rows.length < 2) { ready(); return; }
         function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
@@ -953,8 +1045,11 @@
        anders ist". Eine rAF-Schleife, die nur bei Scroll/Resize laeuft; erst
        messen, dann schreiben. */
     (function () {
-        var rows = document.querySelectorAll('.tbl-frame tbody tr');
-        for (var r = 0; r < rows.length; r++) rows[r].style.setProperty('--r', r);
+        // --r je Tabelle ab 0, sonst startet die zweite erst nach 19 Zeilen Verzoegerung.
+        document.querySelectorAll('.tbl-frame').forEach(function (frame) {
+            var rows = frame.querySelectorAll('tbody tr');
+            for (var r = 0; r < rows.length; r++) rows[r].style.setProperty('--r', r);
+        });
 
         var els = document.querySelectorAll('[data-reveal]');
         if ('IntersectionObserver' in window) {
