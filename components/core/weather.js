@@ -367,7 +367,7 @@
                 <!-- Rueckenfigur (seit v8.5.16): schaut in die Landschaft wie die Szene darunter
                      gemalt ist. Klassen char-* und data-* bleiben — _applyCharacterReactions
                      schaltet daran Schirm, Muetze, Hut, Schal, Mantel, Sonnenbrille, Zittern. -->
-                <div class="weather-character" data-umbrella="0" data-sunglasses="0" data-sunscreen="0" data-scarf="0" data-hat="0" data-sunhat="0" data-coat="0" data-shiver="0">
+                <div class="weather-character" data-umbrella="0" data-sunglasses="0" data-sweat="0" data-scarf="0" data-hat="0" data-sunhat="0" data-coat="0" data-shiver="0">
                     <svg viewBox="0 0 200 320" class="char-svg" preserveAspectRatio="xMidYMax meet">
                         <defs>
                             <linearGradient id="wf-hoodie" x1="0" y1="0" x2="0" y2="1">
@@ -431,6 +431,13 @@
                                 <ellipse class="wf-haut" cx="113.4" cy="80" rx="2.3" ry="4.2" />
                                 <path class="wf-haar" d="M 86 77 Q 85 60 100 59 Q 115 60 114 77 Q 114 89 108 94 Q 100 97 92 94 Q 86 89 86 77 Z" />
                                 <path class="wf-haar-licht" d="M 90 66 Q 100 61 110 66 Q 106 64 100 64 Q 94 64 90 66 Z" />
+                                <!-- SCHWEISS (ab 28°): Tropfen am Nacken und hinter dem Ohr, im Kopf,
+                                     damit sie mitwippen. Ersetzt seit v8.5.19 das Sonnencreme-Glitzern
+                                     (drei weisse Kreuze), das an der Rueckenfigur wie Sterne aussah. -->
+                                <g class="char-sweat">
+                                    <g transform="translate(98 96)"><path class="wf-tropfen" d="M 0 -2.6 Q 1.8 -0.2 1.8 0.9 A 1.8 1.8 0 0 1 -1.8 0.9 Q -1.8 -0.2 0 -2.6 Z" /></g>
+                                    <g transform="translate(115.2 83)"><path class="wf-tropfen wf-tropfen--2" d="M 0 -2.2 Q 1.5 -0.2 1.5 0.8 A 1.5 1.5 0 0 1 -1.5 0.8 Q -1.5 -0.2 0 -2.2 Z" /></g>
+                                </g>
                             </g>
                         </g>
 
@@ -481,12 +488,6 @@
                             <circle class="wf-schirm-spitze" cx="128" cy="6" r="2.4" />
                         </g>
 
-                        <!-- SONNENCREME: Glitzern an Nacken und Schultern -->
-                        <g class="char-sunscreen-spark">
-                            <path d="M 80 104 L 86 104 M 83 101 L 83 107" stroke-width="1.6" />
-                            <path d="M 116 106 L 122 106 M 119 103 L 119 109" stroke-width="1.6" />
-                            <path d="M 97 92 L 102 92 M 99.5 89.5 L 99.5 94.5" stroke-width="1.3" />
-                        </g>
                     </svg>
                 </div>
             </div>
@@ -556,7 +557,7 @@
 
         _ruhendeEbenen(widget);
 
-        // Character reactions to weather (umbrella, sunscreen, scarf, shiver, etc).
+        // Character reactions to weather (umbrella, sweat, scarf, shiver, etc).
         _applyCharacterReactions(widget, cond, temp);
 
         // 5-day forecast strip
@@ -778,7 +779,7 @@
     function _applyCharacterReactions(widget, condition, tempC) {
         const char = widget.querySelector('.weather-character');
         if (!char) return;
-        const reset = { umbrella: '0', sunglasses: '0', sunscreen: '0', scarf: '0', hat: '0', sunhat: '0', coat: '0', shiver: '0' };
+        const reset = { umbrella: '0', sunglasses: '0', sweat: '0', scarf: '0', hat: '0', sunhat: '0', coat: '0', shiver: '0' };
 
         // Rain/Storm → umbrella opens
         if (condition === 'rain' || condition === 'storm') reset.umbrella = '1';
@@ -791,10 +792,10 @@
             if (tempC !== undefined && tempC <= -3) reset.shiver = '1';
         }
 
-        // Sunny + warm → sunglasses; very hot → sunscreen + sun hat (no glasses needed under big hat)
+        // Sunny + warm → sunglasses; very hot → sweat + sun hat (no glasses needed under big hat)
         if ((condition === 'clear-day' || condition === 'partly-day') && tempC !== undefined) {
             if (tempC >= 28) {
-                reset.sunscreen = '1';
+                reset.sweat     = '1';
                 reset.sunhat    = '1';
             } else if (tempC >= 20) {
                 reset.sunglasses = '1';
@@ -863,7 +864,7 @@
     window.weatherDemo = {
         // ── Wetter-Conditions ──
         sunny:     () => _demoApply('clear-day',    5, 22,  720,  'Sonnig'),
-        hot:       () => _demoApply('clear-day',    3, 34,  720,  'Heiß (Sonnenhut + Sonnencreme)'),
+        hot:       () => _demoApply('clear-day',    3, 34,  720,  'Heiß (Sonnenhut + Schweißtropfen)'),
         cool:      () => _demoApply('clear-day',    8, 18,  720,  'Mild (Sonnenbrille)'),
         partly:    () => _demoApply('partly-day',   8, 22,  720,  'Heiter bis wolkig'),
         cloudy:    () => _demoApply('cloudy',      15, 16,  720,  'Bewölkt'),
@@ -900,7 +901,7 @@
                 '%c🌤️ Weather Demo Commands\n\n' +
                 '%cWETTER:\n' +
                 '  weatherDemo.sunny()       Sonnig\n' +
-                '  weatherDemo.hot()         Heiß (≥28° → Sonnenhut + Sunscreen-Sparkles)\n' +
+                '  weatherDemo.hot()         Heiß (≥28° → Sonnenhut + Schweißtropfen)\n' +
                 '  weatherDemo.cool()        Mild (≥20° → Sonnenbrille)\n' +
                 '  weatherDemo.partly()      Heiter bis wolkig\n' +
                 '  weatherDemo.cloudy()      Bewölkt\n' +

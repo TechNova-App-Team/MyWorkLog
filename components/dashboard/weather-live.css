@@ -439,7 +439,7 @@
 /* ───── REDUCED MOTION ───── */
 @media (prefers-reduced-motion: reduce) {
     .weather-character .char-body,
-    .weather-character .char-sunscreen-spark,
+    .weather-character .wf-tropfen,
     .weather-character[data-shiver="1"] .char-body,
     .weather-character .char-head-group {
         animation: none !important;
@@ -538,7 +538,7 @@
 .weather-character .char-sunhat,
 .weather-character .char-umbrella,
 .weather-character .char-coat,
-.weather-character .char-sunscreen-spark {
+.weather-character .char-sweat {
     opacity: 0;
     transform: translateY(-6px);
     transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.23, 1, 0.32, 1);
@@ -584,22 +584,27 @@
 .weather-character .wf-brille         { fill: #17171b; }
 .weather-character .wf-brille-buegel  { fill: none; stroke: #17171b; stroke-width: 1.3; stroke-linecap: round; }
 
-/* Sonnencreme: kurzes Glitzern */
-.weather-character .char-sunscreen-spark path {
-    fill: none;
-    stroke: #fff;
-    stroke-linecap: round;
+/* Schweiss: zwei Tropfen laufen versetzt herab. Die Animation haengt NUR am
+   Zustand data-sweat="1" — ausgeblendet rechnet sie nicht (GPU-Lehre v8.2.4). */
+.weather-character .wf-tropfen {
+    fill: rgba(225, 240, 255, 0.9);
+    stroke: rgba(40, 60, 80, 0.35);
+    stroke-width: 0.4;
+    transform-box: fill-box;
 }
-.weather-character[data-sunscreen="1"] .char-sunscreen-spark {
+.weather-character[data-sweat="1"] .char-sweat {
     opacity: 1;
     transform: none;
-    animation: sunscreenSparkle 2s ease-in-out infinite;
 }
-@keyframes sunscreenSparkle {
-    0%, 100% { opacity: 0; }
-    25%      { opacity: 1; }
-    55%      { opacity: 0.4; }
-    75%      { opacity: 0; }
+.weather-character[data-sweat="1"] .wf-tropfen {
+    animation: wfTropfen 3.4s cubic-bezier(0.55, 0, 0.75, 0.5) infinite;
+}
+.weather-character[data-sweat="1"] .wf-tropfen--2 { animation-delay: -1.7s; }
+@keyframes wfTropfen {
+    0%   { opacity: 0; transform: translateY(-1px) scale(0.6); }
+    18%  { opacity: 1; transform: translateY(0) scale(1); }
+    70%  { opacity: 1; transform: translateY(4px) scale(1, 1.1); }
+    100% { opacity: 0; transform: translateY(7px) scale(0.9, 1.15); }
 }
 
 /* ───── MODAL MODE — larger temp, more breathing room ───── */
@@ -643,7 +648,7 @@
 
 /* ───── PAUSED (off-screen / modal closed) ───── */
 .weather-live.is-paused .weather-character .char-body,
-.weather-live.is-paused .weather-character .char-sunscreen-spark,
+.weather-live.is-paused .weather-character .wf-tropfen,
 .weather-live.is-paused .weather-character .char-head-group {
     animation-play-state: paused !important;
 }
