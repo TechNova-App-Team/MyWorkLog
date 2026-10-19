@@ -224,8 +224,13 @@ const CLOUD_FORM = {
             'Form: "<Substantiv/Objekt> <Partizip>" — z.B. "<Komponente> konfiguriert", "<Dokument> erstellt".',
             'KEIN Satzzeichen am Ende. Keine Ich-Form. Keine Artikel am Satzanfang nötig.',
             '✗ Verboten: "Ich habe…", "Heute war ich…", ganze Sätze, Bewertungen ("viel gelernt").',
+            // Wunsch des Nutzers (19.10.2026): gegliedert wie im IHK-Portal. Die
+            // Unterpunkte bleiben eigene Array-Elemente mit "- " davor (bhGliederung
+            // in bh-basis.js) — ein verschachteltes Array wuerde der Worker verwerfen.
+            'GLIEDERUNG: Gehören mindestens ZWEI Tätigkeiten zu EINEM Oberthema (System, Projekt, Vorgang), steht zuerst der Oberpunkt als eigener Eintrag, danach jede Teilaufgabe als eigener Eintrag mit "- " davor. Beispiel: "Dokumentenmanagement in ELO betreut", "- Eingangsrechnungen erfasst und verschlagwortet", "- Lieferscheine den Bestellungen zugeordnet".',
+            'Ein Unterpunkt gehört immer zum Oberpunkt direkt darüber. Höchstens eine Ebene. Einzelne Tätigkeiten ohne gemeinsames Thema bleiben normale Einträge OHNE "- ". Kein Oberpunkt mit nur einem Unterpunkt.',
         ],
-        beispiel: '["Wartungsprotokolle der Vorwoche gesichtet","Defekte Baugruppe ausgetauscht","Ergebnisse im Prüfbericht dokumentiert"]',
+        beispiel: '["Wartung der Prüfstände durchgeführt","- Wartungsprotokolle der Vorwoche gesichtet","- Defekte Baugruppe ausgetauscht","Ergebnisse im Prüfbericht dokumentiert"]',
         schulBeispiel: '["Rechtsformen von Unternehmen im Unterricht behandelt","Übungsaufgaben zur Kaufvertragsstörung bearbeitet","Zusammenfassung für die Klassenarbeit erstellt"]',
         proTag: '3-5 Stichpunkte',
     },
@@ -846,8 +851,8 @@ async function generateWithCloud(professionId, options) {
     // liefern ("…", "...", "Tätigkeit 1"). Als Woche wertlos → wie Struktur-Fehler
     // behandeln und den Retry mit explizitem Hinweis fahren.
     const _isPlaceholder = (s) => typeof s !== 'string' ||
-        s.replace(/[.…\s]/g, '') === '' ||
-        /^(t[äa]tigkeit|aufgabe|eintrag|todo|tbd)\s*\d*$/i.test(s.trim());
+        bhUnterpunktText(s).replace(/[.…\s]/g, '') === '' ||
+        /^(t[äa]tigkeit|aufgabe|eintrag|todo|tbd)\s*\d*$/i.test(bhUnterpunktText(s));
     const _hasPlaceholders = daysData.some(d =>
         d && Array.isArray(d.entries) && d.entries.some(_isPlaceholder));
 
@@ -910,9 +915,9 @@ async function generateWithCloud(professionId, options) {
         // Fliesstext ist EIN Absatz. Liefert das Modell trotz Prompt mehrere
         // Elemente, werden sie zusammengezogen statt als Liste durchgereicht —
         // sonst steht im Berichtsheft eine Aufzaehlung, wo Fliesstext gewaehlt war.
-        let cloudEntries = Array.isArray(dayData.entries) ? dayData.entries.map(e => String(e).trim()).filter(Boolean) : [];
+        let cloudEntries = Array.isArray(dayData.entries) ? bhGliederung(dayData.entries) : [];
         if (options.form === 'fliesstext' && cloudEntries.length > 1) {
-            cloudEntries = [cloudEntries.map(e => /[.!?]$/.test(e) ? e : e + '.').join(' ')];
+            cloudEntries = [cloudEntries.map(bhUnterpunktText).map(e =>/[.!?]$/.test(e) ? e : e + '.').join(' ')];
         }
 
         const _sollSchule = _schulGewollt.has(dayIdx);

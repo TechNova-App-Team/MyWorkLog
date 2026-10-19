@@ -204,6 +204,34 @@ function bhSollStunden(i) {
     return (typeof h === 'number' && h > 0) ? h : 8;
 }
 
+// ═══ Unterpunkte (seit v8.6.3) ═══
+// Ein Eintrag, der mit "- " beginnt, ist ein Unterpunkt des Eintrags davor —
+// gegliedert wie im IHK-Portal ("ELO betreut" / "- Rechnungen erfasst").
+// Die entries bleiben dafuer bewusst ein FLACHES String-Array: die Pruefung im
+// Worker verwirft alles, was kein String ist, und Lernprofil, Tagesfeld und
+// PDF kennen nur Zeilen. Eine Zeile mit Spiegelstrich versteht jedes davon.
+const BH_UNTERPUNKT = /^\s*[-–◦]\s+/;
+function bhIstUnterpunkt(e) { return BH_UNTERPUNKT.test(String(e)); }
+function bhUnterpunktText(e) { return String(e).replace(BH_UNTERPUNKT, '').trim(); }
+// Zwei Faelle, in denen ein "- " KEIN Unterpunkt sein kann: das Modell setzt
+// vor JEDEN Eintrag einen Spiegelstrich (flache Liste in Markdown-Gewohnheit),
+// oder ueber dem Unterpunkt steht kein Oberpunkt. Dann faellt der Marker weg.
+function bhGliederung(entries) {
+    const liste = (entries || []).map(e => String(e).trim()).filter(Boolean);
+    const alleMarkiert = liste.length > 0 && liste.every(bhIstUnterpunkt);
+    let oberpunkt = false;
+    return liste.map(e => {
+        if (!bhIstUnterpunkt(e)) { oberpunkt = true; return e; }
+        return oberpunkt && !alleMarkiert ? '- ' + bhUnterpunktText(e) : bhUnterpunktText(e);
+    });
+}
+// Fuers Tagesfeld: Unterpunkte eingerueckt, damit sie beim Kopieren ins
+// IHK-Portal und im PDF (ihk-formulare.js laesst fuehrende Leerzeichen stehen)
+// als Unterpunkte erkennbar bleiben.
+function bhEntriesAlsText(entries) {
+    return (entries || []).map(e => bhIstUnterpunkt(e) ? '   - ' + bhUnterpunktText(e) : e).join('\n');
+}
+
 function bhAusbildungsZeitraum() {
     let beginn = null, ende = null;
     try {

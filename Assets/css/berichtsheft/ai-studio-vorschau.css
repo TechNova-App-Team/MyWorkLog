@@ -435,6 +435,27 @@
     flex-shrink: 0;
 }
 
+/* Unterpunkt (Eintrag mit "- ", bhGliederung in bh-basis.js): ohne eigene
+   Flaeche, hohler Punkt wie im IHK-Portal, eine Linie links haelt die Gruppe
+   am Oberpunkt — ohne sie standen die Unterpunkte lose zwischen den Kaesten.
+   Spezifitaet 0,2,1 schlaegt auch die Breakpoint-Regeln in druck-responsive.css. */
+.ais-day-entries li.is-unterpunkt {
+    margin-left: 14px;
+    margin-top: -4px;
+    background: transparent;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border-radius: 0;
+    border-left-color: rgba(var(--primary-rgb), 0.28);
+}
+/* Folgende Unterpunkte schliessen luecklos an (das Flex-gap betraegt 8px), sonst bricht die Linie. */
+.ais-day-entries li.is-unterpunkt + li.is-unterpunkt { margin-top: -8px; }
+.ais-day-entries li.is-unterpunkt::before {
+    content: "◦";
+    color: var(--text-dim);
+    font-weight: normal;
+}
+
 .ais-day-entries li:hover {
     background: rgba(var(--primary-rgb), 0.05);
     border-color: var(--primary-dim);

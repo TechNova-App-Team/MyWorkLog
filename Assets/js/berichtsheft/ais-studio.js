@@ -954,8 +954,8 @@ function renderPreview(week) {
                     ${day.isSchoolDay && day.schoolTopic ? `<div class="ais-day-school"><strong><svg class="icon"><use href="#i-bookopen"/></svg></strong> ${escapeHtml(day.schoolTopic)}</div>` : ''}
                     <ul class="ais-day-entries">
                         ${day.entries.map((entry, j) => `
-                            <li>
-                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, this.textContent)">${escapeHtml(entry.replace('• ', ''))}</span>
+                            <li${bhIstUnterpunkt(entry) ? ' class="is-unterpunkt"' : ''}>
+                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, this.textContent)">${escapeHtml(bhUnterpunktText(entry.replace('• ', '')))}</span>
                             </li>
                         `).join('')}
                     </ul>
@@ -1108,7 +1108,7 @@ function _doFillForm(week) {
                     const st = DAY_STATUS_LABELS[day.dayStatus];
                     text = `${st.short} — keine Tätigkeiten`;
                 } else {
-                    text = day.entries.join('\n');
+                    text = bhEntriesAlsText(day.entries);
                 }
                 textarea.value = text;
                 textarea.dispatchEvent(new Event('input'));
@@ -1165,7 +1165,7 @@ function _fillSingleDay(dayData, dayIndex) {
                 const st = DAY_STATUS_LABELS[dayData.dayStatus];
                 textarea.value = `${st.short} — keine Tätigkeiten`;
             } else {
-                textarea.value = dayData.entries.join('\n');
+                textarea.value = bhEntriesAlsText(dayData.entries);
             }
             textarea.dispatchEvent(new Event('input'));
         } else {
@@ -2718,13 +2718,22 @@ async function regenerateDayCloud(dayIdx) {
 function updateEntry(dayIdx, entryIdx, newText) {
     const day = state.generatedEntries?.days?.find(d => d.index === dayIdx);
     if (!day?.entries?.[entryIdx]) return;
-    day.entries[entryIdx] = '• ' + newText.trim();
+    // Die Karte zeigt den Text ohne Marker — beim Zurueckschreiben gehoert der
+    // Unterpunkt-Marker wieder davor, sonst rutscht er nach dem Bearbeiten nach oben.
+    day.entries[entryIdx] = (bhIstUnterpunkt(day.entries[entryIdx]) ? '- ' : '• ') + newText.trim();
 }
 
 function shuffleEntries() {
     if (!state.generatedEntries) return;
+    // Gemischt werden Gruppen (Oberpunkt + seine Unterpunkte), nicht Zeilen —
+    // sonst landet ein Unterpunkt unter einem fremden Oberpunkt.
     for (const day of state.generatedEntries.days) {
-        day.entries = shuffleArray(day.entries);
+        const gruppen = [];
+        for (const e of day.entries) {
+            if (bhIstUnterpunkt(e) && gruppen.length) gruppen[gruppen.length - 1].push(e);
+            else gruppen.push([e]);
+        }
+        day.entries = shuffleArray(gruppen).flat();
     }
     renderPreview(state.generatedEntries);
     showToast(L('Einträge gemischt', 'Entries shuffled'), 'info');

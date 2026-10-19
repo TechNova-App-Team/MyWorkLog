@@ -123,13 +123,16 @@ function entwurfZusammenfuehren(alt, tage, form, erlaubt) {
         const vorher = JSON.stringify(neu.tage[i]);
         const status = STATUS.includes(d.status) ? d.status : '';
         let entries = Array.isArray(d.entries) ? d.entries : [];
-        entries = entries
+        // "- " bleibt stehen: das ist der Unterpunkt-Marker (bhGliederung in
+        // bh-basis.js entscheidet, ob er einer ist). Nur •, * und Nummern fliegen.
+        // 14 statt 10: mit Oberpunkten hat ein ausfuehrlicher Tag mehr Zeilen.
+        entries = bhGliederung(entries
             .filter(x => typeof x === 'string')
-            .map(x => x.replace(/^\s*(?:[-–•*]|\d+[.)])\s+/, '').trim())
-            .filter(x => x && x.replace(/[.…\s]/g, ''))
+            .map(x => x.replace(/^\s*(?:[•*]|\d+[.)])\s+/, '').trim())
+            .filter(x => x && bhUnterpunktText(x).replace(/[.…\s]/g, ''))
             .map(x => x.slice(0, 600))
-            .slice(0, 10);
-        if (form === 'fliesstext' && entries.length > 1) entries = [entries.join(' ')];
+            .slice(0, 14));
+        if (form === 'fliesstext' && entries.length > 1) entries = [entries.map(bhUnterpunktText).join(' ')];
         const tag = neu.tage[i];
         tag.dayStatus = status;
         tag.entries = status ? [] : entries;
@@ -449,7 +452,9 @@ function tagHTML(t, opt) {
     if (t.dayStatus) rumpf = '<p class="aic-tag-status">' + esc(statusText(t.dayStatus)) + '</p>';
     else if (!t.entries.length) rumpf = '<p class="aic-tag-leer">' + Lx('Noch nichts eingetragen', 'Nothing entered yet') + '</p>';
     else rumpf = (t.isSchoolDay && t.schoolTopic ? '<p class="aic-tag-thema">' + esc(t.schoolTopic) + '</p>' : '') +
-        '<ul class="aic-tag-liste">' + t.entries.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>';
+        '<ul class="aic-tag-liste">' + t.entries.map(x => bhIstUnterpunkt(x)
+            ? '<li class="is-unterpunkt">' + esc(bhUnterpunktText(x)) + '</li>'
+            : '<li>' + esc(x) + '</li>').join('') + '</ul>';
     const kl = 'aic-tag' + (hatInhalt ? '' : ' is-leer') + (opt.neu && opt.neu.includes(t.index) ? ' is-neu' : '');
     return '<div class="' + kl + '">' + kopf + '<div class="aic-tag-rumpf">' + rumpf + '</div></div>';
 }
