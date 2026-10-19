@@ -63,10 +63,13 @@
         walk: 'https://routing.openstreetmap.de/routed-foot'
     };
 
-    /* Pendlerpauschale § 9 EStG. Aendert der Gesetzgeber die Staffel, ist
-       das hier EIN Eingriff — und der Satz im Kleingedruckten von
-       pages/fahrtkosten/index.html muss mit. */
-    const PAUSCHALE = { tier1Ct: 30, tier1Km: 20, tier2Ct: 38 };
+    /* Pendlerpauschale § 9 Abs. 1 Nr. 4 EStG. Seit 1.1.2026 einheitlich 38 ct
+       ab dem ersten Kilometer (Steueraenderungsgesetz 2025); bis 2025 galten
+       30 ct bis km 20 und 38 ct ab km 21 — die Seite rechnete noch im Oktober
+       2026 mit der alten Staffel. Aendert sich der Satz, ist das hier EIN
+       Eingriff — und der Satz im Kleingedruckten von pages/fahrtkosten/index.html
+       sowie die Ueberschrift der Pauschale-Sektion muessen mit. */
+    const PAUSCHALE = { ct: 38 };
 
     // CO₂ g/km, Durchschnitt Deutschland (Umweltbundesamt)
     const CO2 = { car: 154, ecar: 53, bus: 75, train: 29, bike: 0 };
@@ -853,11 +856,7 @@
 
     /* Pauschale je Tag in Euro. Gilt fuer die EINFACHE Strecke. */
     function pauschalePerDay(distKm) {
-        var ct = distKm <= PAUSCHALE.tier1Km
-            ? distKm * PAUSCHALE.tier1Ct
-            : PAUSCHALE.tier1Km * PAUSCHALE.tier1Ct +
-              (distKm - PAUSCHALE.tier1Km) * PAUSCHALE.tier2Ct;
-        return ct / 100;
+        return distKm * PAUSCHALE.ct / 100;
     }
 
     // ===== RECHNEN + AUSGEBEN =====
@@ -1064,31 +1063,26 @@
         );
     }
 
-    /* Signature: die gesetzliche Staffel als Bild. Nenner ist die 20-km-Grenze
-       aus § 9 EStG — eine echte Zahl, keine gegriffene Obergrenze. */
+    /* Signature: die Pauschale als Bild. Nenner ist die eigene einfache Strecke —
+       eine echte Zahl, keine gegriffene Obergrenze (bis 2025 die 20-km-Staffel). */
     function renderTier(dist, pDay, pMonth, totalKm) {
         var bar   = document.getElementById('fkTierBar');
         var empty = document.getElementById('fkTierEmpty');
         var s1    = document.getElementById('fkTier1');
-        var s2    = document.getElementById('fkTier2');
         var c1    = document.getElementById('fkTier1Cap');
-        var c2    = document.getElementById('fkTier2Cap');
-        var mark  = document.getElementById('fkTierMark');
         var end   = document.getElementById('fkTierEnd');
         var note  = document.getElementById('fkTierNote');
-        if (!bar || !s1 || !s2) return;
+        if (!bar || !s1) return;
 
         var has = dist > 0;
         if (empty) empty.style.display = has ? 'none' : '';
         s1.style.display = has ? '' : 'none';
-        s2.style.display = has ? '' : 'none';
 
         setText('fkPauschaleDay',   has ? eur(pDay) : '—');
         setText('fkPauschaleMonth', has && pMonth > 0 ? eur(pMonth) : '—');
         setText('fkTotalKm',        totalKm > 0 ? km(totalKm, 0) : '—');
 
         if (!has) {
-            if (mark) mark.classList.add('is-off');
             if (end)  end.textContent = '—';
             if (note) note.textContent = t(
                 'Die Pauschale ist ein Abzug vom zu versteuernden Einkommen, keine Auszahlung. Was am Ende zurückkommt, hängt vom Steuersatz ab.',
@@ -1096,41 +1090,17 @@
             return;
         }
 
-        var km1 = Math.min(dist, PAUSCHALE.tier1Km);
-        var km2 = Math.max(0, dist - PAUSCHALE.tier1Km);
-        var eu1 = km1 * PAUSCHALE.tier1Ct / 100;
-        var eu2 = km2 * PAUSCHALE.tier2Ct / 100;
-        var p1  = (km1 / dist) * 100;
-        var p2  = (km2 / dist) * 100;
-
-        /* flex-basis, nicht width: die 2px-Fuge kommt zusaetzlich zu den
-           Basen, und flex-shrink verteilt den Ueberlauf gewichtet. */
-        s1.style.flexBasis = p1 + '%';
-        s2.style.flexBasis = p2 + '%';
-        s2.style.display   = km2 > 0 ? '' : 'none';
-
-        // Unter ~18 % ist die Beschriftung nur noch ein abgeschnittener Rest.
-        if (c1) c1.textContent = p1 >= 18 ? eur(eu1) : '';
-        if (c2) c2.textContent = p2 >= 18 ? eur(eu2) : '';
-
-        if (mark) {
-            mark.classList.toggle('is-off', km2 <= 0);
-            mark.style.left = p1 + '%';
-        }
+        // Ein Satz fuer die ganze Strecke: der Balken ist voll, die Skala reicht
+        // von 0 bis zu deiner einfachen Strecke.
+        s1.style.flexBasis = '100%';
+        if (c1) c1.textContent = eur(pDay);
         if (end) end.textContent = km(dist);
 
         if (note) {
-            note.innerHTML = km2 > 0
-                ? t('Von ' + km(dist) + ' einfach fallen <strong>' + km(km1, 0) + ' zu ' + PAUSCHALE.tier1Ct +
-                    ' ct</strong> und <strong>' + km(km2) + ' zu ' + PAUSCHALE.tier2Ct +
-                    ' ct</strong>. Der Abzug mindert das zu versteuernde Einkommen, er wird nicht ausgezahlt.',
-                    'Of ' + km(dist) + ' one way, <strong>' + km(km1, 0) + ' count at ' + PAUSCHALE.tier1Ct +
-                    ' ¢</strong> and <strong>' + km(km2) + ' at ' + PAUSCHALE.tier2Ct +
-                    ' ¢</strong>. The deduction reduces taxable income, it is not paid out.')
-                : t('Deine Strecke bleibt unter ' + PAUSCHALE.tier1Km + ' km, es gilt durchgehend der Satz von <strong>' +
-                    PAUSCHALE.tier1Ct + ' ct/km</strong>. Der Abzug mindert das zu versteuernde Einkommen, er wird nicht ausgezahlt.',
-                    'Your commute stays under ' + PAUSCHALE.tier1Km + ' km, so the flat rate of <strong>' +
-                    PAUSCHALE.tier1Ct + ' ¢/km</strong> applies throughout. The deduction reduces taxable income, it is not paid out.');
+            note.innerHTML = t('Alle ' + km(dist) + ' der einfachen Strecke zählen zu <strong>' + PAUSCHALE.ct +
+                ' ct</strong>, seit 2026 schon ab dem ersten Kilometer. Der Abzug mindert das zu versteuernde Einkommen, er wird nicht ausgezahlt.',
+                'All ' + km(dist) + ' of the one-way distance count at <strong>' + PAUSCHALE.ct +
+                ' ¢</strong>, from the first kilometre since 2026. The deduction reduces taxable income, it is not paid out.');
         }
     }
 

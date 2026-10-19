@@ -199,7 +199,6 @@
     'Aufgaben Manager': 'Task manager',
     'Skill-Baum': 'Skill tree',
     'Rechte-Checker': 'Rights checker',
-    'Vertrags-Manager': 'Contract manager',
     'Repo-Analyse': 'Repo analysis',
     'Backup / Export': 'Backup / export',
     'Schatten-Berichtsheft': 'Shadow logbook',
@@ -241,11 +240,10 @@
     // ─── Fahrtkosten ───
     'Route mit allen Verkehrsmitteln': 'Route with all modes of transport',
 
-    // ─── Vertrags-Manager ───
+    // ─── Allgemeine Statuswörter (u. a. Einstellungen, Leistung, Datenschutz) ───
     'Läuft': 'Active',
     'Gehalt / Monat': 'Salary / month',
     '1. Jahr': 'Year 1', '2. Jahr': 'Year 2', '3. Jahr': 'Year 3', '4. Jahr': 'Year 4',
-    'Busvergütung': 'Bus allowance',
     'Position': 'Position',
 
     // ─── Berichtsheft ───

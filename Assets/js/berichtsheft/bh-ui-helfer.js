@@ -255,7 +255,7 @@ function showNotification(message, type) {
 // ═══════════════════════════════════════
 //
 // Der Dialog selbst steht in /Assets/js/mwl-dialog.js (window.mwlConfirm) —
-// er wird auch vom Schatten-Berichtsheft und vom Vertrags-Manager benutzt.
+// er wird auch vom Schatten-Berichtsheft benutzt.
 // Hier bleiben nur die zwei Namen, unter denen ihn diese Seite kennt.
 //
 // 🔴 Der Torwaechter in bh-start.js prueft auf ".modal.active"; der Dialog aus

@@ -34,7 +34,7 @@
             width: 100%; max-width: 460px;
             /* 🔴 Zwei Ebenen, und die untere ist der einzige deckende Anteil.
                Die Flaechen-Tokens der Seiten sind teils DURCHSICHTIG gedacht
-               (--bg-card ist im Vertrags-Manager rgba(255,255,255,0.024)) — sie
+               (--bg-card war im inzwischen entfernten Vertrags-Manager rgba(255,255,255,0.024)) — sie
                sitzen dort auf dem Seitenhintergrund. Als alleinige Flaeche
                eines Dialogs ueber abgedunkeltem Inhalt waeren sie unsichtbar. */
             background: var(--bg-deep, var(--bg-0, #0a0a12));

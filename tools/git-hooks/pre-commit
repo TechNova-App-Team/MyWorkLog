@@ -50,6 +50,18 @@ if ! node tools/build-index.js; then
   exit 1
 fi
 
+# ═══ 1b. RECHTE-CHECKER: Fallseiten + Sitemap aus den Daten ═══
+# Vor dem Stempeln, damit neue Fallseiten ihre ?v= gleich mitbekommen.
+# Gestaged werden nur die generierten Fallseiten und die Sitemap — die
+# Hauptseite pages/rechte-checker/index.html ist Handarbeit und bleibt beim Autor.
+if echo "$changed" | grep -qE '^(Assets/js/rechte-checker/|tools/rechte-seiten\.mjs)'; then
+  if ! node tools/rechte-seiten.mjs > /dev/null; then
+    echo "[rechte-seiten] ✗ Fallseiten konnten nicht gebaut werden — Commit abgebrochen."
+    exit 1
+  fi
+  git add -A -- 'pages/rechte-checker/*/index.html' sitemap.xml 2>/dev/null
+fi
+
 # ═══ 2. ASSET-STAMPING ═══
 # Cloudflare liefert /Assets/* mit max-age=86400 aus (Dashboard-Regel, NICHT _headers).
 # Ohne Versions-Query im HTML sehen Nutzer nach einem Deploy bis zu 24h altes JS/CSS.

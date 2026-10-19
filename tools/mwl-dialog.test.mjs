@@ -102,8 +102,6 @@ assert.strictEqual(await lauf(ov => ov.dispatchEvent(new w.MouseEvent('click', {
     assert.ok(seite.includes('/Assets/js/mwl-dialog.js'), 'Berichtsheft laedt mwl-dialog.js');
     const schatten = readFileSync('pages/schatten-berichtsheft/index.html', 'utf8');
     assert.ok(schatten.includes('/Assets/js/mwl-dialog.js'), 'Schatten-Berichtsheft laedt mwl-dialog.js');
-    const vm = readFileSync('pages/vertrags-manager/index.html', 'utf8');
-    assert.ok(vm.includes('/Assets/js/mwl-dialog.js'), 'Vertrags-Manager laedt mwl-dialog.js');
 }
 
 console.log('alle Pruefungen bestanden');
