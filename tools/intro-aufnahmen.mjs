@@ -63,6 +63,14 @@ async function browser(w, h, dpr, url, nachLaden) {
   const src = 'try{' + Object.entries(SEED).map(([k, v]) =>
     `localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(typeof v === 'string' ? v : JSON.stringify(v))});`).join('') + '}catch(e){}';
   await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: src });
+  // Die Uhr der Seite steht auf dem letzten Freitag des Seeds, 17:30. Der Seed
+  // endet dort (about-screenshots.mjs); an einem Montag aufgenommen zeigte der
+  // Film sonst eine leere Woche "0,0 / 39,5 h" (gemessen 19.10.2026). Die Zeit
+  // laeuft ab da normal weiter, nur der Ausgangspunkt ist verschoben.
+  const fr = new Date(); fr.setHours(17, 30, 0, 0); while (fr.getDay() !== 5) fr.setDate(fr.getDate() - 1);
+  await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: `(()=>{const D=Date,off=${fr.getTime()}-D.now();
+    class F extends D{constructor(...a){a.length?super(...a):super(D.now()+off);}static now(){return D.now()+off;}}
+    globalThis.Date=F;})();` });
   const geladen = new Promise(r => cdp.on('Page.loadEventFired', r));
   await cdp.send('Page.navigate', { url });
   await geladen; await sleep(3500);
@@ -81,7 +89,10 @@ async function browser(w, h, dpr, url, nachLaden) {
 // Weg mit allem, was beim ersten Besuch ueber der Seite liegt
 // Der schwebende Menueknopf liegt am Handy ueber dem Seitenkopf — im Film
 // verdeckte er die Ueberschrift der obersten Karte ("URL" von "Urlaub uebrig").
-const AUFRAEUMEN = "var b=document.getElementById('localhostWarningBanner');if(b)b.remove();var mt=document.getElementById('mobileMenuToggle');if(mt)mt.style.display='none';document.querySelectorAll('.toast,.smart-notification').forEach(e=>e.remove());";
+// Der Hinweis "Deine Daten liegen nur auf diesem Geraet" (.data-note-page) steht
+// unter den Karten; der Film wendete bis 18.10.2026 genau dort — als Schluss-
+// bild eines Intros die falsche Botschaft (Nutzer, 19.10.2026).
+const AUFRAEUMEN = "var b=document.getElementById('localhostWarningBanner');if(b)b.remove();var mt=document.getElementById('mobileMenuToggle');if(mt)mt.style.display='none';document.querySelectorAll('.toast,.smart-notification,.data-note-page').forEach(e=>e.remove());";
 
 async function film(name, w, h, dpr, url, vorbereiten, sekunden) {
   const b = await browser(w, h, dpr, url, vorbereiten);
