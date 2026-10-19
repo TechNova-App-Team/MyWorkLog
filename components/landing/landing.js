@@ -379,7 +379,7 @@
       var filme=[];
       function film(src){
         var v=document.createElement('video');
-        v.src=src+Q; v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline',''); v.preload='auto'; v.crossOrigin='anonymous';
+        v.src=src+(src.indexOf('?')<0?Q:''); v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline',''); v.preload='auto'; v.crossOrigin='anonymous';
         var t=new THREE.VideoTexture(v); t.colorSpace=THREE.SRGBColorSpace;
         filme.push(v); return {video:v, tex:t};
       }
@@ -420,7 +420,7 @@
         // Glas. Erste Fassung (dicker Silberrahmen, Insel mitten im App-Kopf)
         // fand der Nutzer "naja".
         handy:function(ch){
-          var g=new THREE.Group(), f=film('/Grafiken/intro/handy.mp4');
+          var g=new THREE.Group(), f=film('/Grafiken/intro/handy.mp4?v=70cfcc2dbe');
           // Masse eines heutigen Handys: 0,26 Rand rundum, Bildschirmecken =
           // Gehaeuseecken minus Rand, damit die Linien parallel laufen.
           var W2=7.5, H2=15.6, D2=0.66, R2=1.3, RAND=0.26, Z=D2/2;
@@ -450,7 +450,7 @@
         // Gehaeuse als platte() (rundQuader kappte die Ecken, wie beim Handy),
         // echte Einzeltasten in einer Mulde, Trackpad, Notch, Scharnierrolle.
         laptop:function(){
-          var g=new THREE.Group(), f=film('/Grafiken/intro/vorlagen.mp4');
+          var g=new THREE.Group(), f=film('/Grafiken/intro/vorlagen.mp4?v=4f4d872783');
           var B=17, T=11.4, D=0.55, OBEN=D/2;
           var unten=new THREE.Mesh(platte(B,T,D,0.85,0.18).rotateX(-Math.PI/2), M.alu); g.add(unten);
           function liegend(geo){ return geo.rotateX(-Math.PI/2); }

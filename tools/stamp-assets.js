@@ -71,7 +71,10 @@ const RE = /(\s(?:data-src|src|href)=")((?:\/(?:Assets|components)\/[^"?]+\.(?:j
 // Bis v8.1.10 schauten diese Lader den ?v= eines fremden <script> ab; mit
 // Inhalts-Hashes ergaebe das den Hash der FALSCHEN Datei, also eine Adresse,
 // die sich nicht aendert, wenn sich das Nachgeladene aendert.
-const JS_RE = /(['"`])(\/(?:Assets|components)\/[^'"`?\s]+\.(?:js|css))\?v=[^'"`]*\1/g;
+// Seit 19.10.2026 auch Medien unter /Grafiken/: die Intro-Filme in landing.js
+// trugen den ?v= von landing.js selbst — ein neu aufgenommener handy.mp4 behielt
+// damit seine Adresse, und der SW lieferte Cache-First weiter den alten Film.
+const JS_RE = /(['"`])(\/(?:(?:Assets|components)\/[^'"`?\s]+\.(?:js|css)|Grafiken\/[^'"`?\s]+\.(?:mp4|webm|webp|png)))\?v=[^'"`]*\1/g;
 
 const TEXT_EXT = new Set(['.js', '.css', '.html', '.json', '.svg']);
 
