@@ -171,11 +171,11 @@
     // ── Kasten + Startansicht ─────────────────────────────────────────
     function renderKasten() {
         var karten = alle(), h = heute();
-        var zahl = [0, 0, 0, 0, 0, 0], dran = [false, false, false, false, false, false];
+        var zahl = [0, 0, 0, 0, 0, 0], dran = [false, false, false, false, false, false], faellig = [0, 0, 0, 0, 0, 0];
         karten.forEach(function (k) {
             var f = Math.max(0, Math.min(5, k.fach | 0));
             zahl[f]++;
-            if (k.faellig <= h) dran[f] = true;
+            if (k.faellig <= h) { dran[f] = true; faellig[f]++; }
         });
 
         var faecher = '', wand = '';
@@ -198,24 +198,28 @@
 
         var gesamt = karten.length;
         if (!gesamt) {
-            el.kastenCap.textContent = L('Leer. Lade den Beispielstapel, um es auszuprobieren.', 'Empty. Load the sample deck to try it out.');
+            el.kastenCap.textContent = L('Leer. Leg den Beispielstapel ein, um es auszuprobieren.', 'Empty. Add the sample deck to try it out.');
         } else {
             var hinten = zahl[3] + zahl[4] + zahl[5];
             el.kastenCap.textContent = gesamt + ' ' + (gesamt === 1 ? L('Karte', 'card') : L('Karten', 'cards')) + L(' im Kasten, ', ' in the box, ') +
                 hinten + L(' davon sitzen schon gut (Fach 3 bis 5).', ' of them already stick well (box 3 to 5).');
         }
         el.kasten.setAttribute('aria-label', el.kastenCap.textContent);
+        // Die Leinwand (karteikasten-szene.js) zeichnet denselben Stand in 3D
+        document.dispatchEvent(new CustomEvent('kk:stand', { detail: { zahl: zahl, faellig: faellig } }));
     }
 
     function renderHeute() {
         var dran = faellige().length, runde = Math.min(dran, MAX_JE_RUNDE);
         el.heuteZahl.textContent = String(dran);
+        el.endeZahl.textContent = String(dran);
         el.heuteText.textContent = dran === 1 ? L('Karte ist heute dran', 'card is due today') : L('Karten sind heute dran', 'cards are due today');
-        el.los.disabled = dran === 0;
-        el.los.textContent = dran > MAX_JE_RUNDE
+        var losText = dran > MAX_JE_RUNDE
             ? L(runde + ' Karten abfragen', 'Quiz ' + runde + ' cards')
             : L('Abfrage starten', 'Start quiz');
-        el.beispiel.hidden = BEISPIEL.every(function (b) { return stand.karten[b.id]; });
+        el.los.disabled = el.los2.disabled = dran === 0;
+        el.losT.textContent = el.los2T.textContent = losText;
+        el.beispiel.hidden = el.beispiel2.hidden = BEISPIEL.every(function (b) { return stand.karten[b.id]; });
 
         var naechste = alle().map(function (k) { return k.faellig; }).filter(function (d) { return d > heute(); }).sort()[0];
         if (!dran && naechste) {
@@ -256,11 +260,17 @@
     }
 
     // ── Ansichten ─────────────────────────────────────────────────────
+    // Abfrage und Ergebnis liegen in einer eigenen Ebene ueber der Seite — die Fahrt
+    // darunter bleibt stehen, wo sie war (kein scrollTo, sonst landet man nach der
+    // Runde wieder ganz oben).
     function zeigeAnsicht(name) {
-        el.start.hidden = name !== 'start';
+        var offen = name !== 'start';
+        el.ebene.hidden = !offen;
         el.abfrage.hidden = name !== 'abfrage';
         el.ergebnis.hidden = name !== 'ergebnis';
-        window.scrollTo(0, 0);
+        document.documentElement.classList.toggle('kk-ebene-offen', offen);
+        if (offen) el.ebene.scrollTop = 0;
+        document.dispatchEvent(new CustomEvent('kk:ebene', { detail: { offen: offen } }));
     }
 
     var toastUhr = 0;
@@ -291,6 +301,7 @@
         });
         schreiben();
         renderStart();
+        document.dispatchEvent(new CustomEvent('kk:eingelegt', { detail: { anzahl: neu } }));
         ev('karteikasten_beispiel', { karten: neu });
         toast(neu + L(' Karten liegen jetzt im Fach Neu.', ' cards are now in the New box.'));
     }
@@ -315,9 +326,11 @@
         pos = 0;
         ergebnis = [];
         el.toast.hidden = true;
-        zeigeAnsicht('abfrage');
         ev('karteikasten_start', { karten: runde.length });
-        zeigeKarte();
+        var los = function () { zeigeAnsicht('abfrage'); zeigeKarte(); };
+        // Im Fahrt-Modus fliegt die vorderste Karte erst aus dem Kasten auf die Kamera zu
+        if (window.KKSzene && typeof window.KKSzene.abflug === 'function') window.KKSzene.abflug(runde[0].fach, los);
+        else los();
     }
 
     function knopf(text, cls, fn) {
@@ -341,13 +354,22 @@
         el.karteFrage.textContent = k.frage;
         el.fortText.textContent = L((pos + 1) + ' von ' + runde.length, (pos + 1) + ' of ' + runde.length);
         el.fortBalken.style.width = (pos / runde.length * 100) + '%';
+        el.rest.dataset.rest = String(Math.min(3, runde.length - pos - 1));
+        el.karte.classList.remove('is-neu');
+        void el.karte.offsetWidth;   // Animation neu starten
+        el.karte.classList.add('is-neu');
 
         if (k.typ === 'wahl') baueWahl(k);
         else if (k.typ === 'reihe') baueReihe(k);
         else baueAufdecken(k);
         el.karteFrage.setAttribute('tabindex', '-1');
         el.karteFrage.focus({ preventScroll: true });
+        restAnpassen();
     }
+
+    // Der Reststapel liegt absolut unter der Karte und muss ihre Hoehe haben — die
+    // waechst mit dem Inhalt (Reihenfolge, Aufloesung), eine feste Hoehe stand sonst heraus.
+    function restAnpassen() { el.rest.style.height = el.karte.offsetHeight + 'px'; }
 
     function baueWahl(k) {
         var ul = document.createElement('ul');
@@ -487,6 +509,7 @@
         el.aktionen.appendChild(weiter);
         el.fortBalken.style.width = ((pos + 1) / runde.length * 100) + '%';
         weiter.focus({ preventScroll: true });
+        restAnpassen();
     }
 
     function herkunftText(k) {
@@ -512,6 +535,9 @@
         var gut = ergebnis.filter(function (e) { return e.richtig; }).length, n = ergebnis.length;
         var falsch = n - gut;
         el.ergebnisT.textContent = L(gut + ' von ' + n + ' gewusst.', gut + ' of ' + n + ' known.');
+        el.note.textContent = gut + '/' + n;
+        var kreis = el.ergebnis.querySelector('.kk-note-kreis path');
+        if (kreis) { kreis.style.animation = 'none'; void kreis.getBoundingClientRect(); kreis.style.animation = ''; }
         el.ergebnisP.textContent = !gut
             ? L('Alle kommen morgen wieder. Das ist kein schlechtes Zeichen: genau dafür ist Fach 1 da.', 'All of them are due again tomorrow. That is what box 1 is for.')
             : falsch
@@ -569,12 +595,36 @@
         toast(L('Der Kasten ist leer.', 'The box is empty.'));
     }
 
+    // Die Karte neigt sich leicht zum Zeiger, gefedert (lerp je Bild). Nur mit Maus —
+    // auf Touch gibt es keinen ruhenden Zeiger, die Karte wuerde bei jedem Tipp springen.
+    function kippen() {
+        if (!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches)) return;
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var zx = 0, zy = 0, x = 0, y = 0, laeuft = false;
+        function schritt() {
+            x += (zx - x) * 0.12; y += (zy - y) * 0.12;
+            el.karte.style.setProperty('--kx', x.toFixed(2) + 'deg');
+            el.karte.style.setProperty('--ky', y.toFixed(2) + 'deg');
+            if (Math.abs(zx - x) > 0.01 || Math.abs(zy - y) > 0.01) requestAnimationFrame(schritt); else laeuft = false;
+        }
+        function weiter() { if (!laeuft) { laeuft = true; requestAnimationFrame(schritt); } }
+        el.ebene.addEventListener('pointermove', function (e) {
+            var r = el.karte.getBoundingClientRect();
+            zy = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / r.width)) * 5;
+            zx = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / r.height)) * -4;
+            weiter();
+        });
+        el.ebene.addEventListener('pointerleave', function () { zx = zy = 0; weiter(); });
+    }
+
     // ── Start ─────────────────────────────────────────────────────────
     function init() {
-        [['start', 'kkStart'], ['abfrage', 'kkAbfrage'], ['ergebnis', 'kkErgebnis'],
+        [['start', 'kkFahrt'], ['abfrage', 'kkAbfrage'], ['ergebnis', 'kkErgebnis'],
          ['kasten', 'kkKasten'], ['kastenInnen', 'kkKastenInnen'], ['kastenCap', 'kkKastenCap'],
          ['heuteZahl', 'kkHeuteZahl'], ['heuteText', 'kkHeuteText'], ['los', 'kkLos'], ['beispiel', 'kkBeispiel'],
-         ['nachsatz', 'kkNachsatz'], ['q1Stand', 'kkQ1Stand'], ['stoff', 'kkStoff'], ['stoffLos', 'kkStoffLos'],
+         ['nachsatz', 'kkNachsatz'], ['ebene', 'kkEbene'], ['endeZahl', 'kkEndeZahl'],
+         ['los2', 'kkLos2'], ['losT', 'kkLosT'], ['los2T', 'kkLos2T'], ['beispiel2', 'kkBeispiel2'],
+         ['rest', 'kkRest'], ['note', 'kkNote'], ['q1Stand', 'kkQ1Stand'], ['stoff', 'kkStoff'], ['stoffLos', 'kkStoffLos'],
          ['stoffMeldung', 'kkStoffMeldung'], ['leeren', 'kkLeeren'], ['abbrechen', 'kkAbbrechen'],
          ['fortText', 'kkFortschrittText'], ['fortBalken', 'kkFortschrittBalken'], ['karte', 'kkKarte'],
          ['karteFach', 'kkKarteFach'], ['karteFrage', 'kkKarteFrage'], ['karteArbeit', 'kkKarteArbeit'],
@@ -586,7 +636,10 @@
         if (!el.start) return;
 
         el.los.addEventListener('click', starten);
+        el.los2.addEventListener('click', starten);
         el.beispiel.addEventListener('click', beispielLaden);
+        el.beispiel2.addEventListener('click', beispielLaden);
+        kippen();
         el.stoffLos.addEventListener('click', stoffLos);
         el.leeren.addEventListener('click', leeren);
         el.abbrechen.addEventListener('click', zurueck);
@@ -598,6 +651,8 @@
 
         renderHeftStand();
         renderStart();
+        // Die Szene laedt Three.js nach und fragt den Stand dann selbst ab
+        window.KK = { stand: renderKasten };
 
         // Die eigentliche Messfrage des Plans: kommt jemand an einem SPAETEREN Tag
         // als seiner letzten Abfrage wieder? Nur Zahlen.

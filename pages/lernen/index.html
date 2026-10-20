@@ -10,8 +10,13 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
+<!-- Modus VOR dem ersten Bild (Muster /traum/):
+     kk-gl   = Kamerafahrt durch den 3D-Kasten (karteikasten-szene.js)
+     kk-flat = ruhige Fassung (kein WebGL oder "Bewegung reduzieren"); der Kasten ist dann CSS.
+     Ohne JS fehlen beide Klassen; das CSS behandelt das wie kk-flat. -->
+<script>(function(){var d=document.documentElement,gl=false;try{var c=document.createElement('canvas');gl=!!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){}var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;d.classList.add('kk-js',gl&&!rm?'kk-gl':'kk-flat');})();</script>
     <title>Karteikasten: abgefragt wird, was du eingetragen hast · MyWorkLog</title>
-    <!-- Vorschau (20.10.2026): nur Oberflaeche + lokales Wiederholsystem mit Beispielstapel.
+    <!-- Vorschau (20.10.2026): Oberflaeche + lokales Wiederholsystem mit Beispielstapel.
          Die KI-Anbindung fehlt bewusst noch. Bauplan: .claude/notes/karteikasten.md.
          noindex, nicht in der Sitemap, von nirgends verlinkt — bis zum Start (Plan, Abschnitt "Start"). -->
     <meta name="robots" content="noindex,follow">
@@ -25,13 +30,13 @@
     <meta property="og:title" content="Abgefragt wird, was du eingetragen hast.">
     <meta property="og:description" content="Karten aus deinem Berichtsheft, die wiederkommen, bevor du sie vergisst.">
     <meta property="og:image" content="https://myworklog.de/Grafiken/og-image.png">
-    <meta name="theme-color" content="#131428">
+    <meta name="theme-color" content="#0e0f1f">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Martian+Mono:wdth,wght@112.5,300..500&family=Caveat:wght@500;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Martian+Mono:wdth,wght@112.5,300..500&family=Caveat:wght@500;600;700&display=swap">
 
-    <link rel="stylesheet" href="/Assets/css/karteikasten.css?v=ca9e6a4292">
+    <link rel="stylesheet" href="/Assets/css/karteikasten.css?v=2d4aa695db">
     <script defer src="/Assets/js/ph-init.js?v=fdd6df24b6"></script>
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
@@ -40,114 +45,156 @@
 </head>
 <body class="kk">
 
-<header class="kk-top">
+<!-- Ebenen (Kopf von karteikasten.css): Himmel z -1 → Riesenschrift z 0 → Leinwand z 1
+     → Texte der Fahrt z 2 → deckender Boden z 3 → Kopf z 10 → Abfrage-Ebene z 20 -->
+<div class="kk-himmel" aria-hidden="true"></div>
+<div class="kk-korn" aria-hidden="true"></div>
+<canvas class="kk-canvas" id="kkCanvas" aria-hidden="true"></canvas>
+
+<header class="kk-insel">
     <a class="kk-marke" href="/" translate="no">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         <span>MyWorkLog</span>
     </a>
-    <div class="kk-top-rechts">
-        <span class="kk-stempel" id="kkStempel" title="Diese Seite ist eine Vorschau">Vorschau</span>
-        <a class="kk-top-link" href="/berichtsheft/" id="kkZumHeft">Zum Berichtsheft</a>
-    </div>
+    <span class="kk-stempel" id="kkStempel" title="Diese Seite ist eine Vorschau">Vorschau</span>
+    <a class="kk-insel-link" href="/berichtsheft/" id="kkZumHeft">Zum Berichtsheft</a>
 </header>
 
 <main id="kkMain">
 
-    <!-- ═══ START ═══ -->
-    <div id="kkStart">
+    <!-- ═══ FAHRT ═══ Vier Stationen. Im Fahrt-Modus liegen Riesenschrift und Texte fix
+         uebereinander und die Scrollposition blendet sie (karteikasten-szene.js); in der
+         ruhigen Fassung stehen sie einfach untereinander. -->
+    <div class="kk-fahrt" id="kkFahrt">
 
-        <section class="kk-hero" aria-labelledby="kkTitel">
-            <div class="kk-hero-text">
-                <h1 class="kk-titel" id="kkTitel">Abgefragt wird, was du eingetragen hast.</h1>
+        <section class="kk-station is-0" data-st="0" aria-labelledby="kkTitel">
+            <h1 class="kk-riesig kk-titel" id="kkTitel">Abgefragt wird, was du eingetragen hast.</h1>
+            <div class="kk-vorn">
                 <p class="kk-lede" id="kkLede">Kurze Karten aus deinem Berichtsheft und aus dem, was im Rahmenplan noch fehlt. Was du nicht wusstest, kommt wieder, bevor du es vergisst.</p>
-                <div class="kk-heute" id="kkHeute" aria-live="polite">
+                <div class="kk-heute" aria-live="polite">
                     <span class="kk-heute-zahl" id="kkHeuteZahl">0</span>
                     <span class="kk-heute-text" id="kkHeuteText">Karten sind heute dran</span>
                 </div>
                 <div class="kk-cta">
-                    <button type="button" class="kk-knopf is-haupt" id="kkLos">Abfrage starten</button>
-                    <button type="button" class="kk-knopf" id="kkBeispiel">Beispielstapel laden</button>
+                    <button type="button" class="kk-knopf is-haupt" id="kkLos">
+                        <span id="kkLosT">Abfrage starten</span>
+                        <span class="kk-knopf-kreis" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </button>
+                    <button type="button" class="kk-knopf" id="kkBeispiel">Beispielstapel einlegen</button>
                 </div>
                 <p class="kk-nachsatz" id="kkNachsatz" hidden></p>
             </div>
-
-            <!-- Der Kasten zeigt den echten Stand: je Fach so viele Karten, wie dort liegen.
-                 Fach 1 = taeglich, Fach 5 = in einem Monat (Abstaende in karteikasten.js). -->
+            <!-- Nur in der ruhigen Fassung: der Kasten als CSS. Im Fahrt-Modus zeichnet ihn die Leinwand. -->
             <figure class="kk-kasten" id="kkKasten" aria-labelledby="kkKastenCap">
                 <div class="kk-kasten-innen" id="kkKastenInnen"></div>
-                <figcaption class="kk-kasten-cap" id="kkKastenCap">Leer. Lade den Beispielstapel, um es auszuprobieren.</figcaption>
+                <figcaption class="kk-kasten-cap" id="kkKastenCap">Leer. Leg den Beispielstapel ein, um es auszuprobieren.</figcaption>
             </figure>
+            <div class="kk-scrollhinweis" aria-hidden="true"><span id="kkScrollT">Scrollen</span><i></i></div>
         </section>
 
-        <section class="kk-quellen" aria-labelledby="kkQuellenT">
-            <h2 class="kk-h2" id="kkQuellenT">Woher die Karten kommen</h2>
-            <p class="kk-h2-unter" id="kkQuellenU">In dieser Reihenfolge. Die KI denkt sich das Thema nicht aus, sie bekommt es vorgegeben.</p>
+        <section class="kk-station is-1" data-st="1" aria-labelledby="kkQuellenT">
+            <p class="kk-riesig kk-riesig-wort" id="kkR1" aria-hidden="true">Woher?</p>
+            <div class="kk-vorn">
+                <h2 class="kk-h2" id="kkQuellenT">Die Karten kommen aus deinem Heft, nicht aus dem Nichts.</h2>
+                <p class="kk-vorn-p" id="kkQuellenU">In dieser Reihenfolge. Die KI denkt sich kein Thema aus, sie bekommt es vorgegeben.</p>
+                <!-- Die drei Quellen stehen im Fahrt-Modus auf den Karten in der Leinwand;
+                     die Liste bleibt fuer Screenreader und die ruhige Fassung. -->
+                <ul class="kk-quellen-liste">
+                    <li><b id="kkQ1T">Dein Berichtsheft</b> <span id="kkQ1P">Was du eingetragen hast, Betrieb und Berufsschule. Das ist Wiederholen.</span></li>
+                    <li><b id="kkQ2T">Lücken im Rahmenplan</b> <span id="kkQ2P">Lernziele deines Berufs, zu denen im Heft noch nichts steht. Das ist Aufholen.</span></li>
+                    <li><b id="kkQ3T">Dein eigener Stoff</b> <span id="kkQ3P">Für Fächer ohne Rahmenplan: Text einfügen oder die Heftseite fotografieren.</span></li>
+                </ul>
+                <p class="kk-stand" id="kkQ1Stand">Wird gezählt …</p>
+            </div>
+        </section>
 
-            <div class="kk-quellen-reihe">
-                <article class="kk-quelle" id="kkQ1">
-                    <div class="kk-quelle-kopf">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                        <h3 class="kk-quelle-t" id="kkQ1T">Dein Berichtsheft</h3>
-                    </div>
-                    <p class="kk-quelle-p" id="kkQ1P">Was du eingetragen hast, Betrieb und Berufsschule. Das ist Wiederholen.</p>
-                    <p class="kk-quelle-stand" id="kkQ1Stand">Wird gezählt …</p>
+        <section class="kk-station is-2" data-st="2" aria-labelledby="kkWiederT">
+            <p class="kk-riesig kk-riesig-wort" aria-hidden="true"><span id="kkR2Zahl">30</span> <span class="kk-riesig-klein" id="kkR2Wort">Tage</span></p>
+            <div class="kk-vorn">
+                <h2 class="kk-h2" id="kkWiederT">Was du nicht wusstest, kommt morgen wieder.</h2>
+                <p class="kk-vorn-p" id="kkWiederP">Richtig heißt: ein Fach weiter nach hinten. Falsch heißt: zurück nach vorn. Ganz hinten ist eine Karte nur noch einmal im Monat dran.</p>
+                <ol class="kk-takt" aria-label="Abstände je Fach">
+                    <li><b>1</b><span id="kkT1">1 Tag</span></li>
+                    <li><b>2</b><span id="kkT2">3 Tage</span></li>
+                    <li><b>3</b><span id="kkT3">1 Woche</span></li>
+                    <li><b>4</b><span id="kkT4">2 Wochen</span></li>
+                    <li><b>5</b><span id="kkT5">1 Monat</span></li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="kk-station is-3" data-st="3" aria-labelledby="kkEndeT">
+            <p class="kk-riesig kk-riesig-zahl" id="kkEndeZahl" aria-hidden="true">0</p>
+            <div class="kk-vorn">
+                <h2 class="kk-h2" id="kkEndeT">Du machst den Kasten auf. Der Stapel für heute liegt schon da.</h2>
+                <p class="kk-vorn-p" id="kkEndeP">Kein Eingabefeld für Fragen, keine Prompts, kein Chat.</p>
+                <div class="kk-cta">
+                    <button type="button" class="kk-knopf is-haupt" id="kkLos2">
+                        <span id="kkLos2T">Abfrage starten</span>
+                        <span class="kk-knopf-kreis" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+                    </button>
+                    <button type="button" class="kk-knopf" id="kkBeispiel2">Beispielstapel einlegen</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ═══ BODEN ═══ deckend ueber der Leinwand -->
+    <div class="kk-boden" id="kkBoden">
+
+        <section class="kk-anders" aria-labelledby="kkAndersT">
+            <h2 class="kk-boden-t" id="kkAndersT">Warum das kein Chat ist</h2>
+            <!-- Drei Karteikarten, leicht verdreht uebereinandergelegt. Keine Nummern: das ist keine Reihenfolge. -->
+            <div class="kk-blaetter">
+                <article class="kk-blatt is-a">
+                    <h3 id="kkA1T">Es merkt sich, was du nicht wusstest</h3>
+                    <p id="kkA1P">Eine falsche Karte rutscht zurück ins erste Fach und kommt morgen wieder. Eine richtige wandert nach hinten, bis sie nur noch einmal im Monat dran ist.</p>
                 </article>
-                <article class="kk-quelle" id="kkQ2">
-                    <div class="kk-quelle-kopf">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
-                        <h3 class="kk-quelle-t" id="kkQ2T">Lücken im Rahmenplan</h3>
-                    </div>
-                    <p class="kk-quelle-p" id="kkQ2P">Lernziele deines Berufs, zu denen im Heft noch nichts steht. Das ist Aufholen, und genau das tut in der Prüfung weh.</p>
-                    <p class="kk-quelle-stand" id="kkQ2Stand">Kommt mit der KI-Anbindung</p>
+                <article class="kk-blatt is-b">
+                    <h3 id="kkA2T">Du musst nichts fragen</h3>
+                    <p id="kkA2P">Kein Eingabefeld für Fragen, keine Prompts. Du machst den Kasten auf, und der Stapel für heute liegt schon da.</p>
                 </article>
-                <article class="kk-quelle" id="kkQ3">
-                    <div class="kk-quelle-kopf">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                        <h3 class="kk-quelle-t" id="kkQ3T">Dein eigener Stoff</h3>
-                    </div>
-                    <p class="kk-quelle-p" id="kkQ3P">Für Fächer, die in keinem Rahmenplan stehen: Text einfügen oder die Heftseite fotografieren.</p>
-                    <label class="kk-feld">
-                        <span class="kk-feld-t" id="kkStoffT">Stoff einfügen</span>
-                        <textarea id="kkStoff" rows="4" maxlength="6000" placeholder="Zum Beispiel deine Mitschrift aus Politik und Gesellschaft"></textarea>
-                    </label>
-                    <div class="kk-quelle-knoepfe">
-                        <button type="button" class="kk-knopf is-klein" id="kkStoffLos">Karten daraus bauen</button>
-                        <button type="button" class="kk-knopf is-klein" id="kkFoto" disabled>
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                            <span id="kkFotoT">Heftseite fotografieren</span>
-                        </button>
-                    </div>
-                    <p class="kk-quelle-meldung" id="kkStoffMeldung" role="status" hidden></p>
+                <article class="kk-blatt is-c">
+                    <h3 id="kkA3T">Jede Karte sagt, woher sie kommt</h3>
+                    <p id="kkA3P">Unter jeder Antwort steht die Quelle: deine Woche im Heft, das Lernziel oder dein Stoff. Stimmt etwas nicht, meldest du die Karte mit einem Tipp.</p>
                 </article>
             </div>
         </section>
 
-        <section class="kk-anders" aria-labelledby="kkAndersT">
-            <h2 class="kk-h2" id="kkAndersT">Warum das kein Chat ist</h2>
-            <div class="kk-anders-reihe">
-                <div class="kk-anders-punkt">
-                    <h3 id="kkA1T">Es merkt sich, was du nicht wusstest</h3>
-                    <p id="kkA1P">Eine falsche Karte rutscht zurück ins erste Fach und kommt morgen wieder. Eine richtige wandert weiter nach hinten, bis sie nur noch einmal im Monat dran ist.</p>
+        <section class="kk-stoff" aria-labelledby="kkStoffH">
+            <div class="kk-stoff-text">
+                <h2 class="kk-boden-t" id="kkStoffH">Für alles, was in keinem Rahmenplan steht</h2>
+                <p id="kkStoffU">Politik, Deutsch, Wirtschaft: Füg deine Mitschrift ein oder fotografiere die Heftseite. Daraus werden Karten für denselben Kasten.</p>
+            </div>
+            <div class="kk-heftseite">
+                <label class="kk-feld">
+                    <span class="kk-feld-t" id="kkStoffT">Stoff einfügen</span>
+                    <textarea id="kkStoff" rows="7" maxlength="6000" placeholder="Zum Beispiel deine Mitschrift aus Politik und Gesellschaft"></textarea>
+                </label>
+                <div class="kk-heftseite-fuss">
+                    <button type="button" class="kk-knopf is-tinte" id="kkStoffLos">Karten daraus bauen</button>
+                    <button type="button" class="kk-knopf is-tinte-leise" id="kkFoto" disabled>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <span id="kkFotoT">Heftseite fotografieren</span>
+                    </button>
                 </div>
-                <div class="kk-anders-punkt">
-                    <h3 id="kkA2T">Du musst nichts fragen</h3>
-                    <p id="kkA2P">Kein Eingabefeld für Fragen, keine Prompts. Du machst den Kasten auf, und der Stapel für heute liegt schon da.</p>
-                </div>
-                <div class="kk-anders-punkt">
-                    <h3 id="kkA3T">Jede Karte sagt, woher sie kommt</h3>
-                    <p id="kkA3P">Unter jeder Antwort steht die Quelle: deine Woche im Heft, das Lernziel oder dein Stoff. Stimmt etwas nicht, meldest du die Karte mit einem Tipp.</p>
-                </div>
+                <p class="kk-quelle-meldung" id="kkStoffMeldung" role="status" hidden></p>
             </div>
         </section>
 
         <section class="kk-vorschau" aria-labelledby="kkVorschauT">
+            <span class="kk-vorschau-stempel" aria-hidden="true" id="kkVorschauStempel">Vorschau</span>
             <h2 class="kk-vorschau-t" id="kkVorschauT">Das ist eine Vorschau</h2>
             <p id="kkVorschauP">Der Kasten selbst funktioniert schon: Fächer, Abstände und Abfrage laufen auf deinem Gerät. Die Karten aus Berichtsheft, Rahmenplan und eigenem Stoff baut später eine KI. Bis der Ausbildungs-Pass startet, ist die Vorschau kostenlos. Danach gehört der Karteikasten zum Pass, das steht schon jetzt so da.</p>
             <button type="button" class="kk-textknopf" id="kkLeeren">Kasten auf diesem Gerät leeren</button>
         </section>
-    </div>
 
-    <!-- ═══ ABFRAGE ═══ -->
+        <div id="page-footer"></div>
+    </div>
+</main>
+
+<!-- ═══ ABFRAGE-EBENE ═══ liegt ueber allem; die Seite darunter bleibt, wo sie war -->
+<div class="kk-ebene" id="kkEbene" hidden>
     <section class="kk-abfrage" id="kkAbfrage" aria-labelledby="kkAbfrageT" hidden>
         <h2 class="kk-sr" id="kkAbfrageT">Abfrage</h2>
         <div class="kk-abfrage-kopf">
@@ -159,7 +206,9 @@
         </div>
         <div class="kk-fortschritt" aria-hidden="true"><i id="kkFortschrittBalken"></i></div>
 
-        <div class="kk-buehne">
+        <div class="kk-buehne" id="kkBuehne">
+            <!-- Rest des Stapels unter der Karte: zeigt, wie viele noch kommen (JS setzt data-rest) -->
+            <div class="kk-reststapel" id="kkRest" aria-hidden="true"><i></i><i></i><i></i></div>
             <article class="kk-karte" id="kkKarte" aria-live="polite">
                 <div class="kk-karte-seite is-vorne">
                     <span class="kk-karte-fach" id="kkKarteFach">Neu</span>
@@ -186,21 +235,25 @@
         </div>
     </section>
 
-    <!-- ═══ ERGEBNIS ═══ -->
     <section class="kk-ergebnis" id="kkErgebnis" aria-labelledby="kkErgebnisT" hidden>
+        <!-- Die Note wie unter einer Klassenarbeit: Rotstift-Kreis um die Zahl, wird einmal gezogen -->
+        <div class="kk-note" aria-hidden="true">
+            <svg class="kk-note-kreis" viewBox="0 0 220 160"><path d="M112 14c-52 2-96 26-98 62-2 38 46 66 102 64 54-2 92-30 90-64-2-30-36-54-84-58-20-2-40 2-56 8"/></svg>
+            <span class="kk-note-zahl" id="kkNote">0/0</span>
+        </div>
         <h2 class="kk-ergebnis-t" id="kkErgebnisT"></h2>
         <p class="kk-ergebnis-p" id="kkErgebnisP"></p>
         <ul class="kk-ergebnis-liste" id="kkErgebnisListe"></ul>
         <div class="kk-cta">
-            <button type="button" class="kk-knopf is-haupt" id="kkZurueck">Zum Kasten</button>
+            <button type="button" class="kk-knopf is-haupt" id="kkZurueck">
+                <span id="kkZurueckT">Zum Kasten</span>
+                <span class="kk-knopf-kreis" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+            </button>
         </div>
     </section>
-
-</main>
+</div>
 
 <div class="kk-toast" id="kkToast" role="status" aria-live="polite" hidden></div>
-
-<div id="page-footer"></div>
 
 <!-- Theme-Farbe der App nachziehen (Pflicht fuer Standalone-Seiten, Muster pages/fahrtkosten/) -->
 <script>
@@ -238,7 +291,8 @@ fetch('/pages/footer/footer.html')
     .catch(function () {});
 </script>
 
-<script defer src="/Assets/js/karteikasten.js?v=209ad80db0"></script>
+<script defer src="/Assets/js/karteikasten.js?v=1a92b0cf03"></script>
+<script defer src="/Assets/js/karteikasten-szene.js?v=7a3874071b"></script>
 
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>

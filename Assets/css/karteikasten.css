@@ -1,15 +1,32 @@
 /* ═══ KARTEIKASTEN (/lernen/) ═══
    Vorschau vom 20.10.2026, Bauplan in .claude/notes/karteikasten.md.
-   Bildsprache des Berichtshefts (Papier, Kuli-Blau, Rotstift auf dunkler Buehne —
-   generischer SaaS-Look war dort abgelehnt). Tokens wie preise.css / berichtsheft/basis.css.
-   Laedt KEIN core.css: eigener Reset, eigener :root.
-   Bewegung gibt es nur als Antwort auf eine Handlung (Karte umdrehen, Rotstift-Haken);
-   beim Laden bewegt sich nichts. */
+   Zweite Fassung am selben Tag: die erste (Hero + drei Karten nebeneinander) war dem
+   Nutzer "viel zu standard designt, ich will maximum an design". Jetzt Bauweise wie
+   /traum/ und das Intro (Memory feedback_showcase_wie_intro): EINE feste Three.js-
+   Leinwand, die Scrollposition faehrt die Kamera um einen echten 3D-Karteikasten,
+   Riesenschrift liegt HINTER dem Kasten. Bildsprache des Berichtshefts (Papier,
+   Kuli-Blau, Rotstift, Stempel auf dunkler Buehne).
+
+   EBENEN (z-index), und warum so:
+     .kk-himmel  -1  fester Verlauf, wandert je Station (html[data-st])
+     .kk-riesig   0  Riesenschrift, fix
+     .kk-canvas   1  Three.js, transparent — der Kasten liegt VOR der Schrift
+     .kk-vorn     2  Texte und Knoepfe der Station, fix
+     .kk-boden    3  deckend, normaler Fluss nach der Fahrt
+     .kk-insel   10  Kopf
+     .kk-ebene   20  Abfrage
+   🔴 .kk-station darf im Fahrt-Modus KEINEN Stapelkontext bilden (display: contents),
+   sonst sortieren sich Riesenschrift und Text gemeinsam ein und der Kasten liegt nicht
+   mehr dazwischen. Dieselbe Falle wie /traum/ (Notiz traum.md, Falle 1).
+
+   Modi am <html>: kk-gl (Fahrt) / kk-flat (kein WebGL, "Bewegung reduzieren", ohne JS).
+   Laedt KEIN core.css: eigener Reset, eigener :root. */
 
 :root {
-    --buehne-1: #131428;
-    --buehne-2: #1a1830;
-    --buehne-3: #23182b;
+    --buehne-0: #0b0c1a;
+    --buehne-1: #11122a;
+    --buehne-2: #181830;
+    --buehne-3: #20172a;
     --primary: #6d7fd1;
     --primary-rgb: 109, 127, 209;
     --text-main: #f1f0f7;
@@ -22,31 +39,28 @@
     --papier-tinte: #15131d;
     --papier-tinte-2: rgba(21, 19, 29, 0.6);
     --papier-linie: rgba(var(--primary-rgb), 0.22);
-    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
+    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 30px 70px -28px rgba(5, 4, 18, 0.85);
     --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
     --rotstift: #c8463c;
-    /* Pappe des Kastens: aus der Buehne abgeleitet, damit er zum Akzent passt */
-    /* Anteile muessen 100 % ergeben — 70 % + 12 % ergab eine Wand mit Alpha 0.82,
-       durch die die Karten dahinter durchschienen. */
     --pappe: color-mix(in srgb, var(--buehne-2) 86%, var(--primary));
-    --pappe-kante: color-mix(in srgb, var(--pappe) 80%, #fff 10%);
+    --pappe-kante: color-mix(in srgb, var(--pappe) 88%, #fff);
     --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
     --font-vordruck: 'Martian Mono', ui-monospace, monospace;
     --font-hand: 'Caveat', 'Segoe Script', cursive;
-    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --spring: cubic-bezier(0.32, 0.72, 0, 1);
+    --rand: max(20px, 4vw);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
 button, input, select, textarea, optgroup { font-family: inherit; }
 [hidden] { display: none !important; }
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html { overflow-x: clip; background: var(--buehne-0); }
 body {
     margin: 0;
-    min-height: 100vh;
-    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    min-height: 100dvh;
+    background: transparent;
     color: var(--text-main);
     font-family: var(--font-main);
     font-size: 16px;
@@ -54,70 +68,145 @@ body {
     -webkit-font-smoothing: antialiased;
     overflow-x: clip;
 }
+html.kk-ebene-offen, html.kk-ebene-offen body { overflow: hidden; }
 a { color: inherit; }
 .kk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* ── Kopf ─────────────────────────────────────────────────────────── */
-.kk-top {
+/* ── Himmel + Korn ────────────────────────────────────────────────── */
+.kk-himmel { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: radial-gradient(120% 90% at 50% 0%, var(--buehne-1) 0%, var(--buehne-0) 70%); }
+.kk-himmel::before,
+.kk-himmel::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    transition: transform 1.6s var(--spring), opacity 1.6s var(--spring);
+}
+/* Kuli-Leuchten hinter dem Kasten */
+.kk-himmel::before {
+    width: 80vmax; height: 80vmax; left: 50%; top: 50%;
+    margin: -40vmax 0 0 -40vmax;
+    background: radial-gradient(closest-side, rgba(var(--primary-rgb), 0.34), rgba(var(--primary-rgb), 0.08) 55%, transparent 72%);
+    transform: translate(18vw, 6vh);
+}
+/* Rotstift-Glimmen, schwach, unten links */
+.kk-himmel::after {
+    width: 60vmax; height: 60vmax; left: 0; bottom: 0;
+    margin: 0 0 -30vmax -30vmax;
+    background: radial-gradient(closest-side, rgba(200, 70, 60, 0.16), transparent 70%);
+}
+html[data-st="1"] .kk-himmel::before { transform: translate(0, -14vh) scale(1.15); }
+html[data-st="2"] .kk-himmel::before { transform: translate(-12vw, 4vh) scale(0.95); }
+html[data-st="2"] .kk-himmel::after { transform: translate(55vw, -20vh); opacity: 0.7; }
+html[data-st="3"] .kk-himmel::before { transform: translate(0, 10vh) scale(1.3); }
+.kk-flat .kk-himmel::before { transform: translate(14vw, -10vh); }
+
+/* Papierkorn, fix und ohne Zeiger — auf einem scrollenden Kasten kostete es bei jedem Bild */
+.kk-korn {
+    position: fixed; inset: 0; z-index: 9; pointer-events: none; opacity: 0.07;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── Leinwand ─────────────────────────────────────────────────────── */
+.kk-canvas { position: fixed; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; pointer-events: none; opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.kk-canvas.is-bereit { opacity: 1; }
+.kk-flat .kk-canvas, html:not(.kk-js) .kk-canvas { display: none; }
+
+/* ── Kopf: schwebende Insel ───────────────────────────────────────── */
+.kk-insel {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: 50%;
+    z-index: 10;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 22px 28px;
+    gap: 14px;
+    padding: 6px 6px 6px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 999px;
+    background: rgba(11, 12, 26, 0.55);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 18px 40px -20px rgba(4, 4, 14, 0.9);
+    transform: translateX(-50%);
+    white-space: nowrap;
 }
-.kk-marke { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
-.kk-marke svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-.kk-top-rechts { display: flex; align-items: center; gap: 18px; }
-.kk-top-link { font-size: 0.92rem; color: var(--text-2); text-decoration: none; }
-.kk-top-link:hover { color: var(--text-main); }
-/* Stempel statt Pille: dieselbe Sprache wie das Siegel auf /preise/ */
+.kk-marke { display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; font-weight: 600; text-decoration: none; }
+.kk-marke svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .kk-stempel {
     display: inline-block;
-    padding: 3px 10px 2px;
+    padding: 2px 9px 1px;
     border: 1.5px solid var(--rotstift);
     border-radius: 4px;
     color: var(--rotstift);
     font-family: var(--font-vordruck);
-    font-size: 0.72rem;
+    font-size: 0.66rem;
     font-weight: 500;
     letter-spacing: 0.04em;
-    transform: rotate(-3deg);
+    transform: rotate(-4deg);
 }
+.kk-insel-link {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: var(--text-2);
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.kk-insel-link:hover { background: rgba(255, 255, 255, 0.11); color: var(--text-main); }
 
 /* ── Knoepfe ─────────────────────────────────────────────────────── */
 .kk-knopf {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    min-height: 46px;
-    padding: 0 22px;
-    border: 1px solid var(--linie);
+    gap: 12px;
+    min-height: 50px;
+    padding: 0 24px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text-main);
-    font-size: 0.97rem;
+    font-size: 0.98rem;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.14s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.16s var(--ease-out);
 }
-.kk-knopf:hover { border-color: rgba(255, 255, 255, 0.28); }
 .kk-knopf:active { transform: scale(0.97); }
 .kk-knopf:focus-visible,
 .kk-textknopf:focus-visible,
 .kk-wahl:focus-visible,
-.kk-teil:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 3px; }
-.kk-knopf:disabled { opacity: 0.45; cursor: not-allowed; }
+.kk-teil:focus-visible,
+.kk-insel-link:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.95); outline-offset: 3px; }
+.kk-knopf:disabled { opacity: 0.4; cursor: not-allowed; }
 .kk-knopf:disabled:active { transform: none; }
 .kk-knopf svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-/* Papierweiss auf der Buehne — der Hauptweg sieht aus wie ein Blatt */
-.kk-knopf.is-haupt { background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
-.kk-knopf.is-haupt:hover { background: #fff; border-color: #fff; }
-.kk-knopf.is-haupt:disabled:hover { background: var(--papier); border-color: var(--papier); }
-.kk-knopf.is-klein { min-height: 40px; padding: 0 16px; font-size: 0.9rem; }
+/* Papierweiss auf der Buehne, Pfeil im eigenen Kreis */
+.kk-knopf.is-haupt { padding: 0 6px 0 26px; background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
+.kk-knopf-kreis {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--papier-tinte);
+    color: var(--papier);
+    transition: transform 0.35s var(--spring);
+}
+.kk-knopf-kreis svg { width: 16px; height: 16px; }
+@media (hover: hover) and (pointer: fine) {
+    .kk-knopf:hover { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.06); }
+    .kk-knopf.is-haupt:hover { background: #fff; border-color: #fff; }
+    .kk-knopf.is-haupt:hover .kk-knopf-kreis { transform: translateX(3px) scale(1.06); }
+    .kk-knopf:disabled:hover { border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.03); }
+    .kk-knopf.is-haupt:disabled:hover { background: var(--papier); }
+    .kk-knopf.is-haupt:disabled:hover .kk-knopf-kreis { transform: none; }
+}
+/* Tinte auf Papier (im Heftblatt) */
+.kk-knopf.is-tinte { background: var(--papier-tinte); border-color: var(--papier-tinte); color: var(--papier); }
+.kk-knopf.is-tinte-leise { background: transparent; border-color: rgba(21, 19, 29, 0.22); color: var(--papier-tinte); }
 
 .kk-textknopf {
     display: inline-flex;
@@ -139,119 +228,144 @@ a { color: inherit; }
 .kk-textknopf:hover { color: var(--text-main); text-decoration-color: currentColor; }
 .kk-textknopf svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ── Hero ─────────────────────────────────────────────────────────── */
-.kk-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
-    gap: 48px;
-    max-width: 1180px;
-    min-height: min(64svh, 600px);
-    margin: 0 auto;
-    padding: 24px 28px 72px;
+/* ── Stationen: gemeinsame Typografie ─────────────────────────────── */
+.kk-riesig { margin: 0; font-family: var(--font-display); font-variation-settings: 'opsz' 96; font-weight: 800; letter-spacing: -0.045em; line-height: 0.9; }
+.kk-titel { text-wrap: balance; }
+.kk-riesig-wort, .kk-riesig-zahl {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(236, 235, 244, 0.32);
+    white-space: nowrap;
 }
-.kk-titel {
-    margin: 0;
-    max-width: 13ch;
-    font-family: var(--font-display);
-    font-variation-settings: 'opsz' 96;
-    font-size: clamp(2.4rem, 1.3rem + 4vw, 4.4rem);
-    font-weight: 800;
-    line-height: 0.98;
-    letter-spacing: -0.035em;
-    text-wrap: balance;
-}
-.kk-lede { margin: 24px 0 0; max-width: 48ch; font-size: 1.08rem; color: var(--text-2); text-wrap: pretty; }
-.kk-heute { display: flex; align-items: baseline; gap: 12px; margin-top: 30px; }
-.kk-heute-zahl {
-    font-family: var(--font-display);
-    font-size: 2.6rem;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
+.kk-riesig-klein { font-size: 0.42em; letter-spacing: -0.03em; vertical-align: 0.9em; -webkit-text-stroke-width: 1.2px; }
+.kk-lede { margin: 0; max-width: 40ch; font-size: 1.1rem; color: var(--text-2); text-wrap: pretty; }
+.kk-h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.7rem, 1.1rem + 1.8vw, 3rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.04; text-wrap: balance; }
+.kk-vorn-p { margin: 14px 0 0; max-width: 46ch; color: var(--text-2); text-wrap: pretty; }
+.kk-heute { display: flex; align-items: baseline; gap: 12px; margin-top: 26px; }
+.kk-heute-zahl { font-family: var(--font-display); font-size: 3rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
 .kk-heute-text { color: var(--text-2); }
 .kk-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-.kk-nachsatz { margin: 14px 0 0; font-size: 0.9rem; color: var(--text-3); }
+.kk-nachsatz { margin: 14px 0 0; font-size: 0.9rem; color: var(--text-3); max-width: 44ch; }
+.kk-stand { margin: 18px 0 0; padding-left: 12px; border-left: 2px solid rgba(var(--primary-rgb), 0.7); font-size: 0.9rem; color: var(--text-2); max-width: 44ch; }
+.kk-stand.is-da { color: var(--text-main); }
 
-/* ── Der Kasten ───────────────────────────────────────────────────── */
-/* Frontansicht: hinten stehen die Karten je Fach, davor die Pappwand mit den Zahlen.
-   Die Faecher sind Spalten eines Rasters; die Karten darin sind absolut gestapelt
-   (JS setzt --i je Karte), deshalb traegt jede Spalte eine feste Hoehe. */
-.kk-kasten { margin: 0; }
-.kk-kasten-innen {
-    position: relative;
+.kk-quellen-liste { margin: 18px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; max-width: 46ch; }
+.kk-quellen-liste b { display: block; font-weight: 600; }
+.kk-quellen-liste span { color: var(--text-2); font-size: 0.95rem; }
+
+.kk-takt { display: flex; gap: 6px; margin: 22px 0 0; padding: 0; list-style: none; }
+.kk-takt li {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 6px;
-    padding: 0 14px;
+    gap: 2px;
+    min-width: 62px;
+    padding: 8px 10px 9px;
+    border-radius: 8px 8px 3px 3px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: inset 0 -2px 0 var(--papier-3);
 }
+.kk-takt b { font-family: var(--font-display); font-size: 1.15rem; line-height: 1; }
+.kk-takt span { font-size: 0.74rem; color: var(--papier-tinte-2); white-space: nowrap; }
+.kk-takt li:first-child { box-shadow: inset 0 -2px 0 var(--rotstift); }
+
+.kk-scrollhinweis { display: none; }
+
+/* ── Fahrt-Modus ─────────────────────────────────────────────────── */
+.kk-gl .kk-fahrt { height: 460svh; }
+.kk-gl .kk-station { display: contents; }
+.kk-gl .kk-riesig,
+.kk-gl .kk-vorn { position: fixed; opacity: 0; visibility: hidden; will-change: opacity, transform; }
+.kk-gl .kk-riesig { z-index: 0; pointer-events: none; }
+.kk-gl .kk-vorn { z-index: 2; }
+.kk-gl .kk-kasten { display: none; }
+
+/* Station 0: Titel quer ueber die Buehne, der Kasten steht davor */
+.kk-gl .kk-titel {
+    left: var(--rand);
+    right: var(--rand);
+    top: 15vh;
+    font-size: clamp(3.4rem, min(9.4vw, 19vh), 24rem);
+    color: var(--text-main);
+}
+.kk-gl .is-0 .kk-vorn { left: var(--rand); bottom: max(7vh, 40px); max-width: 32rem; }
+.kk-gl .kk-scrollhinweis {
+    left: 50%; margin-left: -30px; width: 60px;
+    position: fixed;
+
+    bottom: max(7vh, 40px);
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--text-3);
+    transition: opacity 0.4s ease;
+}
+.kk-gl .kk-scrollhinweis i { width: 1px; height: 48px; background: linear-gradient(var(--text-3), transparent); transform-origin: top; animation: kkHinweis 2.2s var(--ease-out) infinite; }
+@keyframes kkHinweis { 0% { transform: scaleY(0); opacity: 1; } 70% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+html[data-st]:not([data-st="0"]) .kk-scrollhinweis { opacity: 0; }
+
+.kk-gl .kk-riesig-wort,
+.kk-gl .kk-riesig-zahl { left: 50%; top: 50%; font-size: clamp(6rem, min(26vw, 46vh), 40rem); transform: translate(-50%, -54%); }
+/* Die Zahl der faelligen Karten steht rechts neben dem Kasten, halb dahinter —
+   mittig lag sie komplett unter dem Kasten und war nur als Bogen zu sehen */
+.kk-gl .is-3 .kk-riesig-zahl { left: auto; right: 2vw; top: 38%; transform: translate(0, -50%); }
+.kk-gl .is-2 .kk-riesig-wort { left: auto; right: 2vw; top: 30%; transform: translate(0, -50%); font-size: clamp(5rem, min(17vw, 32vh), 28rem); }
+html:not(.kk-gl) .kk-anders { padding-top: 120px; }
+.kk-gl .is-1 .kk-vorn { left: var(--rand); bottom: max(6vh, 36px); max-width: 34rem; }
+.kk-gl .is-1 .kk-quellen-liste { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.kk-gl .is-2 .kk-vorn { right: var(--rand); bottom: max(6vh, 36px); max-width: 34rem; }
+.kk-gl .is-3 .kk-vorn { left: 50%; bottom: max(6vh, 36px); width: min(40rem, calc(100vw - 2 * var(--rand))); text-align: center; transform: translateX(-50%); }
+.kk-gl .is-3 .kk-cta { justify-content: center; }
+.kk-gl .is-3 .kk-vorn-p { margin-left: auto; margin-right: auto; }
+/* Weicher Grund unter den Texten — kein Blur, die Leinwand malt jedes Bild neu */
+.kk-gl .kk-vorn::before {
+    content: '';
+    position: absolute;
+    inset: -60px -80px -50px -80px;
+    z-index: -1;
+    background: radial-gradient(closest-side, rgba(11, 12, 26, 0.72), rgba(11, 12, 26, 0) 100%);
+    pointer-events: none;
+}
+
+/* ── Ruhige Fassung (und ohne JS) ─────────────────────────────────── */
+html:not(.kk-gl) .kk-station { max-width: 1240px; margin: 0 auto; padding: 120px var(--rand) 40px; }
+html:not(.kk-gl) .kk-station.is-0 { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: 48px; min-height: min(92dvh, 820px); }
+html:not(.kk-gl) .kk-station.is-0 .kk-titel { grid-column: 1; font-size: clamp(2.6rem, 1.2rem + 4.6vw, 5.4rem); }
+html:not(.kk-gl) .kk-station.is-0 .kk-vorn { grid-column: 1; margin-top: -24px; }
+html:not(.kk-gl) .kk-station.is-0 .kk-kasten { grid-column: 2; grid-row: 1 / span 2; }
+html:not(.kk-gl) .kk-riesig-wort,
+html:not(.kk-gl) .kk-riesig-zahl { display: none; }
+
+/* Der CSS-Kasten (nur ruhige Fassung): Frontansicht, Karten hinter der Pappwand */
+.kk-kasten { margin: 0; }
+.kk-kasten-innen { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; padding: 0 14px; }
 .kk-fach { position: relative; min-width: 0; }
 .kk-fach-stapel { position: relative; height: 190px; }
 .kk-fach-karte {
-    position: absolute;
-    left: 6%;
-    right: 6%;
-    bottom: 0;
-    height: 150px;
-    border-radius: 3px 3px 0 0;
-    background: var(--papier);
+    position: absolute; left: 6%; right: 6%; bottom: 0; height: 150px;
+    border-radius: 3px 3px 0 0; background: var(--papier);
     border-top: 1px solid var(--papier-3);
     box-shadow: 0 -2px 4px -2px rgba(5, 4, 10, 0.35);
     transform: translateY(calc(var(--i, 0) * -6px));
 }
 .kk-fach-karte:nth-child(even) { background: var(--papier-2); }
-/* Leeres Fach: nur die Trennplatte, damit der Kasten auch leer als Kasten lesbar ist */
+.kk-fach-karte::before { content: ''; position: absolute; left: 10%; right: 10%; top: 14px; height: 1.5px; background: var(--rotstift); opacity: 0.7; }
 .kk-fach.is-leer .kk-fach-stapel::after {
-    content: '';
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    bottom: 0;
-    height: 120px;
-    border-radius: 4px 4px 0 0;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-bottom: 0;
-}
-/* Rote Kopflinie wie auf einer echten Karteikarte */
-.kk-fach-karte::before {
-    content: '';
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    top: 14px;
-    height: 1.5px;
-    background: var(--rotstift);
-    opacity: 0.7;
+    content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 120px;
+    border-radius: 4px 4px 0 0; background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07); border-bottom: 0;
 }
 .kk-fach-reiter {
-    position: absolute;
-    left: 50%;
-    bottom: 150px;
-    z-index: 2;
-    min-width: 34px;
-    padding: 3px 8px 4px;
-    border-radius: 6px 6px 0 0;
-    background: var(--papier-3);
-    color: var(--papier-tinte);
-    font-size: 0.74rem;
-    font-weight: 600;
-    text-align: center;
-    white-space: nowrap;
-    transform: translate(-50%, calc(var(--hoehe, 0) * -5px));
+    position: absolute; left: 50%; bottom: 150px; z-index: 2; min-width: 34px; padding: 3px 8px 4px;
+    border-radius: 6px 6px 0 0; background: var(--papier-3); color: var(--papier-tinte);
+    font-size: 0.74rem; font-weight: 600; text-align: center; white-space: nowrap;
+    transform: translate(-50%, calc(var(--hoehe, 0) * -6px));
 }
 .kk-fach.is-leer .kk-fach-reiter { background: rgba(255, 255, 255, 0.1); color: var(--text-3); transform: translate(-50%, 0); bottom: 120px; }
 .kk-fach.is-faellig .kk-fach-reiter { background: var(--papier); box-shadow: inset 0 -2px 0 var(--rotstift); }
 .kk-wand {
-    position: relative;
-    z-index: 3;
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 6px;
-    margin-top: -64px;
-    padding: 16px 14px 18px;
-    border-radius: 6px 6px 12px 12px;
+    position: relative; z-index: 3; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px;
+    margin-top: -64px; padding: 16px 14px 18px; border-radius: 6px 6px 12px 12px;
     background: linear-gradient(180deg, var(--pappe-kante) 0, var(--pappe) 10px);
     box-shadow: 0 30px 60px -30px rgba(5, 4, 10, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
@@ -260,135 +374,157 @@ a { color: inherit; }
 .kk-wand-zahl small { display: block; font-size: 0.72rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kk-kasten-cap { margin-top: 14px; font-size: 0.88rem; color: var(--text-3); text-align: center; text-wrap: balance; }
 
-/* ── Abschnitte ───────────────────────────────────────────────────── */
-.kk-quellen, .kk-anders, .kk-vorschau { max-width: 1180px; margin: 0 auto; padding: 0 28px 88px; }
-.kk-h2 {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.3rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-}
-.kk-h2-unter { margin: 12px 0 0; max-width: 60ch; color: var(--text-2); }
+/* ── Boden ────────────────────────────────────────────────────────── */
+/* Uebergang von der Buehne in den Boden: Verlauf INNERHALB des Bodens. Ein Verlauf
+   oberhalb (bottom: 100%) lag am Ende der Fahrt ueber dem Text der letzten Station
+   und machte ihn grau, obwohl dessen Deckkraft 1 war (gemessen). */
+.kk-boden { position: relative; z-index: 3; background: linear-gradient(to bottom, rgba(11, 12, 26, 0) 0, var(--buehne-0) 34vh); }
+.kk-boden-t { margin: 0; font-family: var(--font-display); font-size: clamp(2rem, 1.2rem + 2.8vw, 4.2rem); font-weight: 800; letter-spacing: -0.04em; line-height: 0.98; text-wrap: balance; }
 
-.kk-quellen-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
-/* Die Reihenfolge ist Inhalt (erst Heft, dann Luecken, dann eigener Stoff) —
-   deshalb wird die Rangfolge ueber die Deckkraft der Kante gezeigt, nicht ueber Nummern. */
-.kk-quelle {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    padding: 22px 22px 20px;
-    border: 1px solid var(--linie);
-    border-top: 2px solid rgba(var(--primary-rgb), 0.85);
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.025);
+.kk-anders { max-width: 1320px; margin: 0 auto; padding: 34vh var(--rand) 40px; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 56px; align-items: start; }
+.kk-anders .kk-boden-t { position: sticky; top: 110px; max-width: 10ch; }
+/* Drei Karteikarten, verdreht uebereinander — wie auf dem Schreibtisch hingelegt */
+.kk-blaetter { display: grid; }
+.kk-blatt {
+    position: relative;
+    width: min(100%, 560px);
+    padding: 54px 34px 30px;
+    border-radius: 6px;
+    background:
+        repeating-linear-gradient(180deg, transparent 0 31px, var(--papier-linie) 31px 32px) 0 86px / 100% calc(100% - 86px) no-repeat,
+        var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    transition: transform 0.5s var(--spring);
 }
-.kk-quelle + .kk-quelle { border-top-color: rgba(var(--primary-rgb), 0.55); }
-.kk-quelle + .kk-quelle + .kk-quelle { border-top-color: rgba(var(--primary-rgb), 0.3); }
-.kk-quelle-kopf { display: flex; align-items: center; gap: 10px; }
-.kk-quelle-kopf svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--text-2); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.kk-quelle-t { margin: 0; font-size: 1.05rem; font-weight: 600; }
-.kk-quelle-p { margin: 10px 0 0; color: var(--text-2); font-size: 0.95rem; }
-.kk-quelle-stand { margin: auto 0 0; padding-top: 16px; font-size: 0.86rem; color: var(--text-3); }
-.kk-quelle-stand.is-da { color: var(--text-main); }
+.kk-blatt::before { content: ''; position: absolute; left: 0; right: 0; top: 38px; height: 1.5px; background: var(--rotstift); opacity: 0.75; }
+.kk-blatt h3 { margin: 0; font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+.kk-blatt p { margin: 12px 0 0; font-size: 1.02rem; line-height: 32px; color: var(--kuli); }
+.kk-blatt.is-a { transform: rotate(-2.4deg); z-index: 1; }
+.kk-blatt.is-b { margin: -28px 0 0 auto; transform: rotate(1.8deg); z-index: 2; }
+.kk-blatt.is-c { margin: -24px 0 0 6%; transform: rotate(-1deg); z-index: 3; }
+@media (hover: hover) and (pointer: fine) {
+    .kk-blatt:hover { transform: rotate(0deg) translateY(-8px); z-index: 4; }
+}
 
-.kk-feld { display: block; margin-top: 16px; }
-.kk-feld-t { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 500; color: var(--text-2); }
+.kk-stoff { max-width: 1320px; margin: 0 auto; padding: 140px var(--rand) 40px; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 56px; align-items: center; }
+.kk-stoff-text p { margin: 18px 0 0; max-width: 40ch; color: var(--text-2); font-size: 1.06rem; }
+/* Ein Heftblatt: rote Randlinie, Lineatur im Zeilenabstand des Textfelds */
+.kk-heftseite {
+    position: relative;
+    padding: 30px 30px 26px 74px;
+    border-radius: 6px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    transform: rotate(0.6deg);
+}
+.kk-heftseite::before { content: ''; position: absolute; top: 0; bottom: 0; left: 52px; width: 1.5px; background: rgba(200, 70, 60, 0.55); }
+.kk-feld { display: block; }
+.kk-feld-t { display: block; margin-bottom: 8px; font-size: 0.82rem; font-weight: 600; color: var(--papier-tinte-2); }
 .kk-feld textarea {
     display: block;
     width: 100%;
-    min-height: 96px;
-    padding: 10px 12px;
-    border: 1px solid var(--linie);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.18);
-    color: var(--text-main);
-    font-size: 16px;   /* unter 16 px zoomt iOS beim Fokus in die Seite */
-    line-height: 1.5;
+    min-height: 224px;
+    padding: 0;
+    border: 0;
+    background: repeating-linear-gradient(180deg, transparent 0 31px, var(--papier-linie) 31px 32px);
+    background-attachment: local;
+    color: var(--kuli);
+    font-size: 17px;   /* unter 16 px zoomt iOS beim Fokus in die Seite */
+    font-weight: 500;
+    line-height: 32px;
     resize: vertical;
-    transition: border-color 0.2s ease;
 }
-.kk-feld textarea::placeholder { color: var(--text-3); }
-.kk-feld textarea:focus { outline: none; border-color: rgba(var(--primary-rgb), 0.8); }
-.kk-quelle-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.kk-quelle-meldung { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: rgba(var(--primary-rgb), 0.12); font-size: 0.88rem; color: var(--text-main); }
+.kk-feld textarea::placeholder { color: rgba(21, 19, 29, 0.38); }
+.kk-feld textarea:focus { outline: none; }
+.kk-heftseite:focus-within { box-shadow: var(--papier-schatten), 0 0 0 2px rgba(var(--primary-rgb), 0.85); }
+.kk-heftseite-fuss { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.kk-quelle-meldung { margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: rgba(var(--primary-rgb), 0.14); font-size: 0.9rem; color: var(--papier-tinte); }
 
-.kk-anders-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 28px; }
-.kk-anders-punkt h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
-.kk-anders-punkt p { margin: 8px 0 0; color: var(--text-2); font-size: 0.95rem; max-width: 42ch; }
-
-.kk-vorschau {
-    padding-top: 28px;
-    border-top: 1px solid var(--linie);
+.kk-vorschau { position: relative; max-width: 760px; margin: 0 auto; padding: 140px var(--rand) 120px; }
+.kk-vorschau-stempel {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 6px 16px 4px;
+    border: 2.5px solid var(--rotstift);
+    border-radius: 6px;
+    color: var(--rotstift);
+    font-family: var(--font-vordruck);
+    font-size: 1.1rem;
+    font-weight: 500;
+    transform: rotate(-6deg);
+    mix-blend-mode: screen;
 }
-.kk-vorschau-t { margin: 0; font-size: 1rem; font-weight: 600; }
-.kk-vorschau p { margin: 8px 0 0; max-width: 70ch; color: var(--text-2); font-size: 0.93rem; }
-.kk-vorschau .kk-textknopf { margin-top: 10px; color: var(--text-3); }
+.kk-vorschau-t { margin: 0; font-family: var(--font-display); font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
+.kk-vorschau p { margin: 12px 0 0; color: var(--text-2); max-width: 62ch; }
+.kk-vorschau .kk-textknopf { margin-top: 14px; color: var(--text-3); }
 
-/* ── Abfrage ──────────────────────────────────────────────────────── */
-.kk-abfrage, .kk-ergebnis { max-width: 640px; margin: 0 auto; padding: 8px 20px 96px; }
+/* ── Abfrage-Ebene ────────────────────────────────────────────────── */
+.kk-ebene {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: radial-gradient(90% 70% at 50% 30%, var(--buehne-2) 0%, var(--buehne-0) 75%);
+    animation: kkEbeneEin 0.32s var(--ease-out);
+}
+@keyframes kkEbeneEin { from { opacity: 0; } to { opacity: 1; } }
+.kk-abfrage, .kk-ergebnis { max-width: 700px; margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 20px 96px; }
 .kk-abfrage-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.kk-fortschritt-text { font-size: 0.88rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
-.kk-fortschritt { height: 3px; margin-top: 8px; border-radius: 3px; background: var(--linie); overflow: hidden; }
-.kk-fortschritt i { display: block; width: 0; height: 100%; background: var(--papier); transition: width 0.4s var(--ease-out); }
+.kk-fortschritt-text { font-family: var(--font-vordruck); font-size: 0.8rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.kk-fortschritt { height: 2px; margin-top: 10px; border-radius: 2px; background: var(--linie); overflow: hidden; }
+.kk-fortschritt i { display: block; width: 0; height: 100%; background: var(--papier); transition: width 0.5s var(--ease-out); }
 
-.kk-buehne { margin-top: 28px; perspective: 1600px; }
+.kk-buehne { position: relative; margin-top: 44px; perspective: 1400px; }
+/* Was vom Stapel noch kommt: Kanten unter der Karte */
+.kk-reststapel { position: absolute; left: 0; right: 0; top: 0; height: 240px; pointer-events: none; }
+.kk-reststapel i {
+    position: absolute; left: 0; right: 0; top: 0; height: 100%;
+    border-radius: 6px; background: var(--papier-2);
+    box-shadow: 0 20px 40px -24px rgba(4, 4, 14, 0.9);
+}
+.kk-reststapel i:nth-child(1) { transform: translateY(12px) scale(0.965); opacity: 0.85; }
+.kk-reststapel i:nth-child(2) { transform: translateY(22px) scale(0.93); opacity: 0.6; }
+.kk-reststapel i:nth-child(3) { transform: translateY(31px) scale(0.895); opacity: 0.35; }
+.kk-reststapel[data-rest="0"] i, .kk-reststapel[data-rest="1"] i:nth-child(n+2), .kk-reststapel[data-rest="2"] i:nth-child(n+3) { display: none; }
+
 .kk-karte {
+    --kx: 0deg;
+    --ky: 0deg;
+    --dreh: 0deg;
     position: relative;
     display: grid;
-    min-height: 260px;
+    min-height: 280px;
     transform-style: preserve-3d;
-    transition: transform 0.6s var(--spring);
+    transform: rotateX(var(--kx)) rotateY(calc(var(--ky) + var(--dreh)));
+    transition: transform 0.7s var(--spring);
 }
-.kk-karte.is-umgedreht { transform: rotateY(180deg); }
+.kk-karte.is-umgedreht { --dreh: 180deg; }
+.kk-karte.is-neu { animation: kkKarteEin 0.55s var(--spring); }
+@keyframes kkKarteEin { from { opacity: 0; translate: 0 36px; rotate: -2deg; } to { opacity: 1; translate: 0 0; rotate: 0deg; } }
 .kk-karte-seite {
     grid-area: 1 / 1;
     position: relative;
-    padding: 46px 28px 26px;
+    padding: 54px 34px 30px;
     border-radius: 6px;
     background:
-        repeating-linear-gradient(180deg, transparent 0 29px, var(--papier-linie) 29px 30px) 0 74px / 100% calc(100% - 74px) no-repeat,
+        repeating-linear-gradient(180deg, transparent 0 31px, var(--papier-linie) 31px 32px) 0 86px / 100% calc(100% - 86px) no-repeat,
         var(--papier);
     color: var(--papier-tinte);
     box-shadow: var(--papier-schatten);
     backface-visibility: hidden;
 }
-/* Rote Kopflinie */
-.kk-karte-seite::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 34px;
-    height: 1.5px;
-    background: var(--rotstift);
-    opacity: 0.75;
-}
+.kk-karte-seite::before { content: ''; position: absolute; left: 0; right: 0; top: 38px; height: 1.5px; background: var(--rotstift); opacity: 0.75; }
 .kk-karte-seite.is-hinten { transform: rotateY(180deg); }
-.kk-karte-frage-klein { margin: 0 0 14px; font-size: 0.9rem; font-weight: 500; color: var(--papier-tinte-2); }
-.kk-karte-fach {
-    position: absolute;
-    top: 10px;
-    right: 16px;
-    font-family: var(--font-vordruck);
-    font-size: 0.7rem;
-    color: var(--papier-tinte-2);
-}
-.kk-karte-frage {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(1.2rem, 1rem + 0.8vw, 1.5rem);
-    font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    text-wrap: pretty;
-}
-.kk-karte-antwort { margin: 0; font-size: 1.08rem; line-height: 1.6; color: var(--kuli); font-weight: 500; }
-.kk-karte-arbeit { margin-top: 18px; }
+.kk-karte-fach { position: absolute; top: 12px; right: 18px; font-family: var(--font-vordruck); font-size: 0.7rem; color: var(--papier-tinte-2); }
+.kk-karte-frage { margin: 0; font-family: var(--font-display); font-size: clamp(1.3rem, 1rem + 1vw, 1.75rem); font-weight: 650; line-height: 1.25; letter-spacing: -0.015em; text-wrap: pretty; }
+.kk-karte-frage:focus { outline: none; }
+.kk-karte-frage-klein { margin: 0 0 14px; font-size: 0.92rem; font-weight: 500; color: var(--papier-tinte-2); }
+.kk-karte-antwort { margin: 0; font-size: 1.12rem; line-height: 32px; color: var(--kuli); font-weight: 500; }
+.kk-karte-arbeit { margin-top: 22px; }
 
-/* Auswahl: Antworten liegen auf der Karte, gestrichelte Lineatur dazwischen */
 .kk-wahlen { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .kk-wahl {
     position: relative;
@@ -396,130 +532,110 @@ a { color: inherit; }
     align-items: center;
     gap: 12px;
     width: 100%;
-    min-height: 48px;
-    padding: 10px 14px;
-    border: 1px solid rgba(21, 19, 29, 0.16);
-    border-radius: 8px;
+    min-height: 52px;
+    padding: 10px 46px 10px 14px;
+    border: 1px solid rgba(21, 19, 29, 0.14);
+    border-radius: 10px;
     /* deckend: durch eine halbtransparente Flaeche liefe die Lineatur der Karte quer durch den Text */
     background: color-mix(in srgb, var(--papier) 45%, #fff);
     color: var(--papier-tinte);
-    font-size: 0.98rem;
+    font-size: 1rem;
     text-align: left;
     cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.16s var(--ease-out);
 }
-.kk-wahl:hover:not(:disabled) { border-color: rgba(var(--primary-rgb), 0.7); background: #fff; }
-.kk-wahl:active:not(:disabled) { transform: scale(0.99); }
+@media (hover: hover) and (pointer: fine) { .kk-wahl:hover:not(:disabled) { border-color: rgba(var(--primary-rgb), 0.75); background: #fff; } }
+.kk-wahl:active:not(:disabled) { transform: scale(0.985); }
 .kk-wahl:disabled { cursor: default; }
-.kk-wahl-buchstabe {
-    flex: none;
-    width: 26px;
-    height: 26px;
-    display: grid;
-    place-items: center;
-    border: 1px solid rgba(21, 19, 29, 0.25);
-    border-radius: 50%;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
+.kk-wahl-buchstabe { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid rgba(21, 19, 29, 0.25); border-radius: 50%; font-size: 0.8rem; font-weight: 600; }
 .kk-wahl.is-richtig { border-color: var(--rotstift); background: #fff; }
 .kk-wahl.is-falsch { color: var(--papier-tinte-2); }
 .kk-wahl.is-falsch .kk-wahl-text { text-decoration: line-through; text-decoration-color: var(--rotstift); text-decoration-thickness: 2px; }
-.kk-wahl.is-andere { opacity: 0.55; }
+.kk-wahl.is-andere { opacity: 0.5; }
 
-/* Rotstift-Zeichen: wird beim Aufloesen einmal gezogen */
-.kk-marke-rot { position: absolute; right: 10px; top: 50%; width: 28px; height: 28px; margin-top: -14px; fill: none; stroke: var(--rotstift); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.kk-marke-rot { position: absolute; right: 12px; top: 50%; width: 30px; height: 30px; margin-top: -15px; fill: none; stroke: var(--rotstift); stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
 .kk-marke-rot path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: kkZiehen 0.42s var(--ease-out) forwards; }
 @keyframes kkZiehen { to { stroke-dashoffset: 0; } }
 
-/* Reihenfolge: Teile antippen, sie wandern in nummerierte Zeilen */
-.kk-reihe-ziel { display: grid; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; counter-reset: kkzeile; }
-.kk-reihe-ziel li {
-    counter-increment: kkzeile;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 40px;
-    padding: 6px 10px;
-    border-bottom: 1px dashed rgba(21, 19, 29, 0.22);
-    font-size: 0.96rem;
-    color: var(--kuli);
-}
+.kk-reihe-ziel { display: grid; gap: 0; margin: 0 0 14px; padding: 0; list-style: none; counter-reset: kkzeile; }
+.kk-reihe-ziel li { counter-increment: kkzeile; display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 0 4px; font-size: 1rem; line-height: 32px; color: var(--kuli); font-weight: 500; }
 .kk-reihe-ziel li::before { content: counter(kkzeile) '.'; flex: none; width: 22px; font-weight: 600; color: var(--papier-tinte-2); }
-.kk-reihe-ziel li.is-leer { color: var(--papier-tinte-2); font-style: italic; }
+.kk-reihe-ziel li.is-leer { color: var(--papier-tinte-2); font-style: italic; font-weight: 400; }
 .kk-reihe-ziel li.is-falsch { color: var(--rotstift); }
-.kk-reihe-ziel li .kk-soll { margin-left: auto; font-family: var(--font-hand); font-size: 1.15rem; color: var(--rotstift); white-space: nowrap; }
+.kk-reihe-ziel li .kk-soll { margin-left: auto; font-family: var(--font-hand); font-size: 1.25rem; color: var(--rotstift); white-space: nowrap; }
 .kk-teile { display: flex; flex-wrap: wrap; gap: 8px; }
 .kk-teil {
-    min-height: 40px;
-    padding: 6px 14px;
-    border: 1px solid rgba(21, 19, 29, 0.2);
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--papier) 45%, #fff);
-    color: var(--papier-tinte);
-    font-size: 0.92rem;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+    min-height: 42px; padding: 6px 16px;
+    border: 1px solid rgba(21, 19, 29, 0.18); border-radius: 999px;
+    background: color-mix(in srgb, var(--papier) 45%, #fff); color: var(--papier-tinte);
+    font-size: 0.94rem; cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.16s var(--ease-out);
 }
-.kk-teil:hover { border-color: rgba(var(--primary-rgb), 0.7); background: #fff; }
+.kk-teil:active { transform: scale(0.96); }
+@media (hover: hover) and (pointer: fine) { .kk-teil:hover { border-color: rgba(var(--primary-rgb), 0.75); background: #fff; } }
+.kk-karte-arbeit .kk-textknopf { color: var(--papier-tinte-2); }
 
-.kk-aufloesung { margin-top: 22px; }
-.kk-urteil { margin: 0; font-family: var(--font-hand); font-size: 1.9rem; line-height: 1; color: var(--rotstift); transform: rotate(-2deg); transform-origin: left center; }
+.kk-aufloesung { margin-top: 30px; }
+.kk-urteil { margin: 0; font-family: var(--font-hand); font-size: 2.4rem; font-weight: 700; line-height: 1; color: var(--rotstift); transform: rotate(-2.5deg); transform-origin: left center; }
 .kk-urteil.is-gut { color: var(--papier); }
-.kk-erklaerung { margin: 12px 0 0; color: var(--text-main); }
-.kk-herkunft { margin: 10px 0 0; font-size: 0.86rem; color: var(--text-3); }
-
-.kk-aktionen { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
-.kk-aktionen .kk-knopf { flex: 1 1 180px; }
+.kk-erklaerung { margin: 12px 0 0; font-size: 1.04rem; color: var(--text-main); }
+.kk-herkunft { margin: 12px 0 0; font-size: 0.86rem; color: var(--text-3); }
+.kk-aktionen { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+.kk-aktionen .kk-knopf { flex: 1 1 200px; }
+.kk-aktionen .kk-knopf.is-haupt { padding: 0 24px; }
 .kk-melden { margin-top: 10px; color: var(--text-3); }
 
 /* ── Ergebnis ─────────────────────────────────────────────────────── */
-.kk-ergebnis { padding-top: 40px; }
-.kk-ergebnis-t {
-    margin: 0;
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1.02;
-    text-wrap: balance;
-}
-.kk-ergebnis-p { margin: 14px 0 0; color: var(--text-2); }
-.kk-ergebnis-liste { margin: 26px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--linie); }
-.kk-ergebnis-liste li { display: flex; gap: 14px; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--linie); font-size: 0.95rem; }
+.kk-ergebnis { padding-top: 56px; }
+.kk-note { position: relative; width: 220px; height: 160px; margin: 0 0 18px -18px; }
+.kk-note-kreis { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: var(--rotstift); stroke-width: 4; stroke-linecap: round; }
+.kk-note-kreis path { stroke-dasharray: 640; stroke-dashoffset: 640; animation: kkKreis 0.9s 0.15s var(--ease-out) forwards; }
+@keyframes kkKreis { to { stroke-dashoffset: 0; } }
+.kk-note-zahl { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-hand); font-size: 4.6rem; font-weight: 700; color: var(--rotstift); transform: rotate(-6deg); }
+.kk-ergebnis-t { margin: 0; font-family: var(--font-display); font-size: clamp(2.2rem, 1.4rem + 2.8vw, 3.6rem); font-weight: 800; letter-spacing: -0.04em; line-height: 1; text-wrap: balance; }
+.kk-ergebnis-p { margin: 14px 0 0; color: var(--text-2); font-size: 1.05rem; }
+.kk-ergebnis-liste { margin: 30px 0 0; padding: 0; list-style: none; }
+.kk-ergebnis-liste li { display: flex; gap: 14px; justify-content: space-between; align-items: baseline; padding: 13px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.12); font-size: 0.98rem; }
 .kk-ergebnis-liste li span:first-child { min-width: 0; }
-.kk-ergebnis-liste li span:last-child { flex: none; color: var(--text-3); white-space: nowrap; }
-.kk-ergebnis-liste li.is-falsch span:last-child { color: var(--rotstift); }
+.kk-ergebnis-liste li span:last-child { flex: none; color: var(--text-3); white-space: nowrap; font-size: 0.9rem; }
+.kk-ergebnis-liste li.is-falsch span:last-child { color: var(--rotstift); font-family: var(--font-hand); font-size: 1.25rem; }
 
 /* ── Toast ────────────────────────────────────────────────────────── */
 .kk-toast {
-    position: fixed;
-    left: 50%;
-    bottom: max(20px, env(safe-area-inset-bottom));
-    z-index: 50;
-    max-width: calc(100vw - 32px);
-    padding: 12px 18px;
-    border-radius: 10px;
-    background: linear-gradient(var(--papier), var(--papier));
-    color: var(--papier-tinte);
-    font-size: 0.92rem;
-    box-shadow: var(--papier-schatten);
-    transform: translateX(-50%);
+    position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom)); z-index: 30;
+    max-width: calc(100vw - 32px); padding: 12px 20px; border-radius: 999px;
+    background: var(--papier); color: var(--papier-tinte); font-size: 0.92rem; font-weight: 500;
+    box-shadow: var(--papier-schatten); transform: translateX(-50%);
+    animation: kkToast 0.35s var(--spring);
 }
+@keyframes kkToast { from { opacity: 0; translate: 0 14px; } to { opacity: 1; translate: 0 0; } }
 
 /* ── Schmal ───────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-    .kk-hero { grid-template-columns: minmax(0, 1fr); gap: 40px; min-height: 0; padding-bottom: 64px; }
-    .kk-quellen-reihe, .kk-anders-reihe { grid-template-columns: minmax(0, 1fr); }
-    .kk-anders-reihe { gap: 22px; }
+    html:not(.kk-gl) .kk-station.is-0 { grid-template-columns: minmax(0, 1fr); gap: 36px; min-height: 0; }
+    html:not(.kk-gl) .kk-station.is-0 .kk-kasten { grid-column: 1; grid-row: auto; }
+    .kk-anders, .kk-stoff { grid-template-columns: minmax(0, 1fr); gap: 36px; padding-top: 96px; }
+    .kk-anders .kk-boden-t { position: static; max-width: 14ch; }
+    .kk-gl .kk-titel { top: 13vh; font-size: clamp(3rem, 13.5vw, 7rem); }
+    .kk-gl .is-2 .kk-vorn { left: var(--rand); right: var(--rand); }
 }
-@media (max-width: 480px) {
-    .kk-top { padding: 16px; }
-    .kk-top-rechts { gap: 12px; }
-    .kk-hero { padding: 12px 16px 56px; }
-    .kk-quellen, .kk-anders, .kk-vorschau { padding-left: 16px; padding-right: 16px; padding-bottom: 64px; }
-    .kk-abfrage, .kk-ergebnis { padding-left: 16px; padding-right: 16px; }
+@media (max-width: 600px) {
+    .kk-insel { gap: 10px; padding-left: 14px; }
+    .kk-insel-link { display: none; }
+    .kk-gl .is-0 .kk-vorn, .kk-gl .is-1 .kk-vorn, .kk-gl .is-2 .kk-vorn { left: 16px; right: 16px; bottom: max(4vh, 24px); max-width: none; }
+    .kk-gl .kk-scrollhinweis { display: none; }
+    .kk-lede { font-size: 1rem; }
+    .kk-heute { margin-top: 16px; }
+    .kk-heute-zahl { font-size: 2.4rem; }
     .kk-cta .kk-knopf { flex: 1 1 100%; }
+    .kk-gl .kk-vorn::before { inset: -40px -30px -30px -30px; }
+    .kk-takt li { min-width: 0; flex: 1; padding: 7px 6px 8px; }
+    .kk-takt span { font-size: 0.66rem; }
+    .kk-blatt { padding: 50px 22px 24px; }
+    .kk-blatt.is-a, .kk-blatt.is-b, .kk-blatt.is-c { transform: none; margin: 0 0 14px; width: 100%; }
+    .kk-heftseite { padding: 24px 18px 22px 48px; transform: none; }
+    .kk-heftseite::before { left: 32px; }
+    .kk-karte-seite { padding: 50px 20px 24px; }
     .kk-kasten-innen, .kk-wand { gap: 3px; padding-left: 8px; padding-right: 8px; }
     .kk-fach-stapel { height: 150px; }
     .kk-fach-karte { height: 116px; }
@@ -529,19 +645,17 @@ a { color: inherit; }
     .kk-wand { margin-top: -48px; padding-top: 12px; padding-bottom: 14px; }
     .kk-wand-zahl b { font-size: 1.05rem; }
     .kk-wand-zahl small { font-size: 0.64rem; }
-    .kk-karte-seite { padding: 44px 18px 22px; }
-}
-@media (max-width: 520px) {
-    /* bricht sonst zweizeilig um; das Berichtsheft ist ueber den Fussbereich erreichbar */
-    .kk-top-link { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .kk-himmel::before, .kk-himmel::after { transition: none; }
     .kk-karte { transition: none; }
-    .kk-karte.is-umgedreht { transform: none; }
+    .kk-karte.is-neu, .kk-ebene, .kk-toast { animation: none; }
+    .kk-karte.is-umgedreht { --dreh: 0deg; }
     .kk-karte.is-umgedreht .is-vorne { visibility: hidden; }
     .kk-karte-seite.is-hinten { transform: none; visibility: hidden; }
     .kk-karte.is-umgedreht .is-hinten { visibility: visible; }
-    .kk-marke-rot path { animation: none; stroke-dashoffset: 0; }
+    .kk-marke-rot path, .kk-note-kreis path { animation: none; stroke-dashoffset: 0; }
     .kk-fortschritt i { transition: none; }
+    .kk-blatt { transition: none; }
 }
