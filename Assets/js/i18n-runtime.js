@@ -197,7 +197,6 @@
     'Untis Import': 'Untis import',
     'NFC-Chip einrichten': 'Set up NFC chip',
     'Aufgaben Manager': 'Task manager',
-    'Skill-Baum': 'Skill tree',
     'Rechte-Checker': 'Rights checker',
     'Repo-Analyse': 'Repo analysis',
     'Backup / Export': 'Backup / export',

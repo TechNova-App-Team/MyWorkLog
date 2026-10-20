@@ -90,7 +90,6 @@ Die App ist reines HTML, CSS und JavaScript und läuft vollständig im Browser. 
 - **Urlaubsplaner** — Brückentage nach Bundesland, Ausbeute-Ranking, Ein-Klick-Buchung
 - **Vertrags-Manager** — Gehalt, Benefits, Zuschläge
 - **Fahrtkosten** — Routing je Verkehrsmittel, eigene Strecke einzeichnen, Pendlerpauschale
-- **Skill-Baum** — IT-Wissen der Ausbildung üben, Fragenbank mit Wiederholung
 - **IT-Deep-Dives** — bedienbare Diagramme zu LED, SSD, Arbeitsspeicher, Qubit
 
 ### Sicherheit & Datenschutz
@@ -125,8 +124,7 @@ Die App unter `/` ist eine Single-Page-App aus Komponenten. Daneben gibt es eige
 | [/rechte-checker/](https://myworklog.de/rechte-checker/) | Ausbildungsrechte interaktiv prüfen |
 | [/vertrags-manager/](https://myworklog.de/vertrags-manager/) | Vertrag, Gehalt, Zuschläge |
 | [/fahrtkosten/](https://myworklog.de/fahrtkosten/) | Fahrtkosten mit echter Route und Karte |
-| [/skill-tree/](https://myworklog.de/skill-tree/) | Lernstrecke mit Fragenbank |
-| [/it-landing/](https://myworklog.de/it-landing/) | Einstieg zu Skill-Baum und Deep-Dives |
+| [/it-landing/](https://myworklog.de/it-landing/) | Einstieg zu den Deep-Dives |
 | [/it-stories/…](https://myworklog.de/it-landing/) | Deep-Dives: blaue LED, SSD, Arbeitsspeicher, Qubit |
 | [/wechseln/](https://myworklog.de/wechseln/) | Umzug aus anderen Zeiterfassungen |
 | [/vergleich/](https://myworklog.de/vergleich/) | MyWorkLog neben Zubido, Azubiheft und BLok |
@@ -175,7 +173,7 @@ MyWorkLog/
 │
 ├─ pages/                   Eigenständige Seiten, je pages/<name>/index.html
 │  ├─ berichtsheft/         Markup — die Logik liegt in Assets/js/berichtsheft/
-│  ├─ ausbilder/ aufgaben/ rechte-checker/ fahrtkosten/ skill-tree/ …
+│  ├─ ausbilder/ aufgaben/ rechte-checker/ fahrtkosten/ …
 │  └─ it-stories/<slug>/    Deep-Dives mit bedienbaren Diagrammen
 │
 ├─ Assets/

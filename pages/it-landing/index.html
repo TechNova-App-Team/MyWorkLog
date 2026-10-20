@@ -11,7 +11,7 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-    <meta name="description" content="IT Professional Hub — Skill-Baum und Technik-Deep-Dives. Dein Portal für Skill-Entwicklung in MyWorkLog.">
+    <meta name="description" content="IT Professional Hub — Technik-Deep-Dives mit Diagrammen zum Ausprobieren, in MyWorkLog.">
     <title>MyWorkLog | IT Professional Hub</title>
     <link rel="canonical" href="https://myworklog.de/it-landing/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/it-landing/">
@@ -40,7 +40,6 @@
             --primary-dim:  rgba(85, 120, 168, 0.15);
             --success:      #10b981;
             --success-rgb:  16, 185, 129;
-            --amber:        #f59e0b;
             --radius:       16px;
             --radius-sm:    10px;
             --font-main:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -121,129 +120,9 @@
             max-width: 560px;
         }
 
-        /* ── Live stat row ── */
-        .stats {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-            margin-bottom: 40px;
-            animation: fadeUp 0.55s 0.12s ease-out both;
-        }
-        .stat {
-            background: var(--bg-surface); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 18px 18px;
-        }
-        .stat-val {
-            font-size: 27px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
-            margin-bottom: 7px; font-variant-numeric: tabular-nums;
-        }
-        .stat-val.primary { color: var(--primary); }
-        .stat-val.amber { color: var(--amber); }
-        .stat-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
-        /* Drei Kacheln bleiben auch schmal in EINER Zeile — bei zwei Spalten
-           staende die dritte allein darunter. */
-        @media (max-width: 620px) {
-            .stats { gap: 8px; }
-            .stat { padding: 15px 12px; }
-            .stat-label { font-size: 11px; }
-        }
-
-        /* ── Path cards ── */
-        .paths {
-            display: grid; grid-template-columns: 1fr; gap: 16px;
-            margin-bottom: 44px;
-        }
-
-        .path {
-            position: relative; display: flex; flex-direction: column;
-            border: 1px solid var(--border); border-radius: var(--radius);
-            background: var(--bg-card); overflow: hidden;
-            text-decoration: none; color: inherit;
-            padding: 26px 26px 22px;
-            transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
-            animation: fadeUp 0.55s ease-out both;
-        }
-        .path:nth-child(1) { animation-delay: 0.18s; }
-        @media (min-width: 761px) {
-            .path {
-                display: grid;
-                grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-                column-gap: 48px; align-items: start;
-                padding: 30px 30px 24px;
-            }
-            .path-head     { grid-area: 1 / 1; }
-            .path-desc     { grid-area: 2 / 1; margin-bottom: 20px; }
-            .path-progress { grid-area: 3 / 1; margin-bottom: 0; }
-            .path-features { grid-area: 1 / 2 / 4 / 3; margin-bottom: 0; align-self: center; }
-            .path-cta      { grid-area: 4 / 1 / 5 / 3; margin-top: 26px; }
-        }
-        .path:hover {
-            border-color: var(--border-hover); transform: translateY(-3px);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-        }
-        .path::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, var(--pc, var(--primary)), transparent 85%);
-            opacity: 0.8;
-        }
-        .path-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
-        .path-icon {
-            width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: var(--pc-dim, var(--primary-dim));
-            border: 1px solid var(--pc-border, rgba(var(--primary-rgb), 0.25));
-        }
-        .path-icon svg { width: 23px; height: 23px; color: var(--pc, var(--primary)); }
-        .path-tag {
-            font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
-            color: var(--pc, var(--primary)); margin-bottom: 4px;
-        }
-        .path-name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
-        .path-desc { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin-bottom: 18px; }
-
-        /* live progress bar inside card */
-        .path-progress { margin-bottom: 18px; }
-        .path-progress-top {
-            display: flex; align-items: baseline; justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        .path-progress-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
-        .path-progress-val {
-            font-size: 13px; font-weight: 700; color: var(--pc, var(--primary));
-            font-variant-numeric: tabular-nums;
-        }
-        .path-bar { height: 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
-        .path-bar-fill {
-            height: 100%; border-radius: 6px; width: 0%;
-            background: linear-gradient(90deg, var(--pc, var(--primary)), rgba(var(--pc-rgb, var(--primary-rgb)), 0.6));
-            transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .path-features { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 9px; }
-        .path-features li { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
-        .path-features svg { width: 15px; height: 15px; color: var(--pc, var(--primary)); flex-shrink: 0; }
-
-        .path-cta {
-            margin-top: auto; display: flex; align-items: center; justify-content: space-between;
-            padding-top: 16px; border-top: 1px solid var(--border);
-        }
-        .path-cta-text {
-            display: inline-flex; align-items: center; gap: 8px;
-            font-size: 14px; font-weight: 600; color: var(--pc, var(--primary));
-            transition: gap 0.2s ease;
-        }
-        .path:hover .path-cta-text { gap: 12px; }
-        .path-cta-text svg { width: 16px; height: 16px; }
-        .path-status {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 11px; color: var(--text-dim); font-weight: 500;
-        }
-        .path-status .pip {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: var(--success); box-shadow: 0 0 7px rgba(var(--success-rgb), 0.7);
-        }
-
         /* ── Feature strip ── */
         .strip {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
             background: var(--border); border: 1px solid var(--border);
             border-radius: var(--radius); overflow: hidden;
             animation: fadeUp 0.55s 0.34s ease-out both;
@@ -312,8 +191,6 @@
             .page { padding: 40px 16px 44px; }
             .top { margin-bottom: 36px; }
             .hero { margin-bottom: 32px; }
-            .stat-val { font-size: 22px; }
-            .path { padding: 22px 20px 18px; }
         }
     </style>
     <script defer src="/Assets/js/ph-init.js?v=fdd6df24b6"></script>
@@ -343,63 +220,7 @@
         <section class="hero">
             <span class="eyebrow"><span class="eyebrow-dot"></span>Lernplattform</span>
             <h1>Dein <span class="accent">IT-Entwicklungspfad</span><br>an einem Ort.</h1>
-            <p>Skill-Tracking, das aus deinem Berichtsheft wächst, und Technik-Deep-Dives zum Nachlesen — vollständig in dein MyWorkLog-Ökosystem integriert und offline nutzbar.</p>
-        </section>
-
-        <!-- Live stats -->
-        <section class="stats">
-            <div class="stat">
-                <div class="stat-val primary" id="stSkillLvl">1</div>
-                <div class="stat-label">Skill-Level</div>
-            </div>
-            <div class="stat">
-                <div class="stat-val" id="stSkillXp">0</div>
-                <div class="stat-label">Gesammelte XP</div>
-            </div>
-            <div class="stat">
-                <div class="stat-val amber" id="stStreak">0</div>
-                <div class="stat-label">Tage Lernserie</div>
-            </div>
-        </section>
-
-        <!-- Path cards -->
-        <section class="paths">
-
-            <!-- Skill Tree -->
-            <a href="/skill-tree/" class="path" style="--pc: var(--primary); --pc-dim: var(--primary-dim); --pc-border: rgba(var(--primary-rgb),0.25); --pc-rgb: var(--primary-rgb);">
-                <div class="path-head">
-                    <span class="path-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M10.5 13.5 6.8 16.6M13.5 13.5l3.7 3.1"/></svg>
-                    </span>
-                    <div>
-                        <div class="path-tag">Skill-Tracking</div>
-                        <div class="path-name">Skill-Baum</div>
-                    </div>
-                </div>
-                <p class="path-desc">Verfolge deine technischen Kompetenzen in einem übersichtlichen Baum. Sammle XP aus deinem Berichtsheft und steige Level für Level auf.</p>
-
-                <div class="path-progress">
-                    <div class="path-progress-top">
-                        <span class="path-progress-label">Nächstes Level</span>
-                        <span class="path-progress-val" id="skillPct">0%</span>
-                    </div>
-                    <div class="path-bar"><div class="path-bar-fill" id="skillBar"></div></div>
-                </div>
-
-                <ul class="path-features">
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>6 Kompetenz-Zweige mit Level-Tracking</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Automatische XP aus dem Berichtsheft</li>
-                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Detail-Ansicht mit XP-Verlauf</li>
-                </ul>
-
-                <div class="path-cta">
-                    <span class="path-cta-text">Skill-Baum öffnen
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-                    </span>
-                    <span class="path-status"><span class="pip"></span>Aktiv</span>
-                </div>
-            </a>
-
+            <p>Technik-Deep-Dives zum Nachlesen, mit Diagrammen zum Ausprobieren — offline nutzbar und Teil von MyWorkLog.</p>
         </section>
 
         <!-- Feature strip -->
@@ -407,10 +228,6 @@
             <div class="strip-item">
                 <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span>
                 <div><div class="strip-title">Voll offline</div><div class="strip-sub">Läuft als PWA komplett ohne Internet — deine Daten bleiben lokal im Browser, Cloud-Sync nur auf Wunsch.</div></div>
-            </div>
-            <div class="strip-item">
-                <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
-                <div><div class="strip-title">Synchron</div><div class="strip-sub">Fortschritt und XP fließen aus deinem Berichtsheft und der Zeiterfassung ein.</div></div>
             </div>
             <div class="strip-item">
                 <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
@@ -508,51 +325,6 @@
         syncTheme();
         window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
         document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
-    })();
-    </script>
-
-    <!-- Live progress from localStorage -->
-    <script>
-    (function() {
-        function xpForLevel(lvl) { return Math.floor(100 * Math.pow(1.25, lvl - 1)); }
-        function levelFromXp(xp) {
-            var lvl = 1, needed = 100;
-            while (xp >= needed) { xp -= needed; lvl++; needed = xpForLevel(lvl); }
-            return { level: lvl, currentXp: xp, nextXp: needed };
-        }
-        function animateCount(el, to, duration, suffix) {
-            var start = performance.now(), from = 0;
-            function step(now) {
-                var t = Math.min((now - start) / duration, 1);
-                var eased = 1 - Math.pow(1 - t, 3);
-                el.textContent = Math.round(from + (to - from) * eased) + (suffix || '');
-                if (t < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
-
-        // Alles aus EINEM Speicherplatz: mwl_skill_tree. Die Lernserie stand
-        // hier frueher in fia_summary/fia_streak (FI Academy) — der Skill-Baum
-        // fuehrt seine eigene unter streak.days, und das ist die Serie, auf die
-        // sich diese Seite jetzt beruft.
-        var skillLvl = 1, skillTotal = 0, skillPct = 0, streak = 0;
-        try {
-            var st = JSON.parse(localStorage.getItem('mwl_skill_tree') || '{}');
-            if (st && st.skills) { for (var k in st.skills) skillTotal += (st.skills[k].xp || 0); }
-            if (st && st.streak) streak = st.streak.days || 0;
-            var info = levelFromXp(skillTotal);
-            skillLvl = info.level;
-            skillPct = info.nextXp ? Math.round((info.currentXp / info.nextXp) * 100) : 0;
-        } catch (e) {}
-
-        animateCount(document.getElementById('stSkillLvl'), skillLvl, 700);
-        animateCount(document.getElementById('stSkillXp'), skillTotal, 900);
-        animateCount(document.getElementById('stStreak'), streak, 700);
-
-        document.getElementById('skillPct').textContent = skillPct + '%';
-        setTimeout(function() {
-            document.getElementById('skillBar').style.width = skillPct + '%';
-        }, 150);
     })();
     </script>
 
