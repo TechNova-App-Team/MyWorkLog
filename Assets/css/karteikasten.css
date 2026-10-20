@@ -1,0 +1,547 @@
+/* ═══ KARTEIKASTEN (/lernen/) ═══
+   Vorschau vom 20.10.2026, Bauplan in .claude/notes/karteikasten.md.
+   Bildsprache des Berichtshefts (Papier, Kuli-Blau, Rotstift auf dunkler Buehne —
+   generischer SaaS-Look war dort abgelehnt). Tokens wie preise.css / berichtsheft/basis.css.
+   Laedt KEIN core.css: eigener Reset, eigener :root.
+   Bewegung gibt es nur als Antwort auf eine Handlung (Karte umdrehen, Rotstift-Haken);
+   beim Laden bewegt sich nichts. */
+
+:root {
+    --buehne-1: #131428;
+    --buehne-2: #1a1830;
+    --buehne-3: #23182b;
+    --primary: #6d7fd1;
+    --primary-rgb: 109, 127, 209;
+    --text-main: #f1f0f7;
+    --text-2: #b9b6cb;
+    --text-3: #8b87a2;
+    --linie: rgba(255, 255, 255, 0.1);
+    --papier: #ecebf4;
+    --papier-2: #dedcea;
+    --papier-3: #cfccdf;
+    --papier-tinte: #15131d;
+    --papier-tinte-2: rgba(21, 19, 29, 0.6);
+    --papier-linie: rgba(var(--primary-rgb), 0.22);
+    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
+    --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
+    --rotstift: #c8463c;
+    /* Pappe des Kastens: aus der Buehne abgeleitet, damit er zum Akzent passt */
+    /* Anteile muessen 100 % ergeben — 70 % + 12 % ergab eine Wand mit Alpha 0.82,
+       durch die die Karten dahinter durchschienen. */
+    --pappe: color-mix(in srgb, var(--buehne-2) 86%, var(--primary));
+    --pappe-kante: color-mix(in srgb, var(--pappe) 80%, #fff 10%);
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --font-vordruck: 'Martian Mono', ui-monospace, monospace;
+    --font-hand: 'Caveat', 'Segoe Script', cursive;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea, optgroup { font-family: inherit; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+}
+a { color: inherit; }
+.kk-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── Kopf ─────────────────────────────────────────────────────────── */
+.kk-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 28px;
+}
+.kk-marke { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
+.kk-marke svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.kk-top-rechts { display: flex; align-items: center; gap: 18px; }
+.kk-top-link { font-size: 0.92rem; color: var(--text-2); text-decoration: none; }
+.kk-top-link:hover { color: var(--text-main); }
+/* Stempel statt Pille: dieselbe Sprache wie das Siegel auf /preise/ */
+.kk-stempel {
+    display: inline-block;
+    padding: 3px 10px 2px;
+    border: 1.5px solid var(--rotstift);
+    border-radius: 4px;
+    color: var(--rotstift);
+    font-family: var(--font-vordruck);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transform: rotate(-3deg);
+}
+
+/* ── Knoepfe ─────────────────────────────────────────────────────── */
+.kk-knopf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 22px;
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.97rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.14s ease;
+}
+.kk-knopf:hover { border-color: rgba(255, 255, 255, 0.28); }
+.kk-knopf:active { transform: scale(0.97); }
+.kk-knopf:focus-visible,
+.kk-textknopf:focus-visible,
+.kk-wahl:focus-visible,
+.kk-teil:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 3px; }
+.kk-knopf:disabled { opacity: 0.45; cursor: not-allowed; }
+.kk-knopf:disabled:active { transform: none; }
+.kk-knopf svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+/* Papierweiss auf der Buehne — der Hauptweg sieht aus wie ein Blatt */
+.kk-knopf.is-haupt { background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
+.kk-knopf.is-haupt:hover { background: #fff; border-color: #fff; }
+.kk-knopf.is-haupt:disabled:hover { background: var(--papier); border-color: var(--papier); }
+.kk-knopf.is-klein { min-height: 40px; padding: 0 16px; font-size: 0.9rem; }
+
+.kk-textknopf {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--text-2);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+.kk-textknopf:hover { color: var(--text-main); text-decoration-color: currentColor; }
+.kk-textknopf svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.kk-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 48px;
+    max-width: 1180px;
+    min-height: min(64svh, 600px);
+    margin: 0 auto;
+    padding: 24px 28px 72px;
+}
+.kk-titel {
+    margin: 0;
+    max-width: 13ch;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 96;
+    font-size: clamp(2.4rem, 1.3rem + 4vw, 4.4rem);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+}
+.kk-lede { margin: 24px 0 0; max-width: 48ch; font-size: 1.08rem; color: var(--text-2); text-wrap: pretty; }
+.kk-heute { display: flex; align-items: baseline; gap: 12px; margin-top: 30px; }
+.kk-heute-zahl {
+    font-family: var(--font-display);
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.kk-heute-text { color: var(--text-2); }
+.kk-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.kk-nachsatz { margin: 14px 0 0; font-size: 0.9rem; color: var(--text-3); }
+
+/* ── Der Kasten ───────────────────────────────────────────────────── */
+/* Frontansicht: hinten stehen die Karten je Fach, davor die Pappwand mit den Zahlen.
+   Die Faecher sind Spalten eines Rasters; die Karten darin sind absolut gestapelt
+   (JS setzt --i je Karte), deshalb traegt jede Spalte eine feste Hoehe. */
+.kk-kasten { margin: 0; }
+.kk-kasten-innen {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    padding: 0 14px;
+}
+.kk-fach { position: relative; min-width: 0; }
+.kk-fach-stapel { position: relative; height: 190px; }
+.kk-fach-karte {
+    position: absolute;
+    left: 6%;
+    right: 6%;
+    bottom: 0;
+    height: 150px;
+    border-radius: 3px 3px 0 0;
+    background: var(--papier);
+    border-top: 1px solid var(--papier-3);
+    box-shadow: 0 -2px 4px -2px rgba(5, 4, 10, 0.35);
+    transform: translateY(calc(var(--i, 0) * -6px));
+}
+.kk-fach-karte:nth-child(even) { background: var(--papier-2); }
+/* Leeres Fach: nur die Trennplatte, damit der Kasten auch leer als Kasten lesbar ist */
+.kk-fach.is-leer .kk-fach-stapel::after {
+    content: '';
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    bottom: 0;
+    height: 120px;
+    border-radius: 4px 4px 0 0;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 0;
+}
+/* Rote Kopflinie wie auf einer echten Karteikarte */
+.kk-fach-karte::before {
+    content: '';
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    top: 14px;
+    height: 1.5px;
+    background: var(--rotstift);
+    opacity: 0.7;
+}
+.kk-fach-reiter {
+    position: absolute;
+    left: 50%;
+    bottom: 150px;
+    z-index: 2;
+    min-width: 34px;
+    padding: 3px 8px 4px;
+    border-radius: 6px 6px 0 0;
+    background: var(--papier-3);
+    color: var(--papier-tinte);
+    font-size: 0.74rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    transform: translate(-50%, calc(var(--hoehe, 0) * -5px));
+}
+.kk-fach.is-leer .kk-fach-reiter { background: rgba(255, 255, 255, 0.1); color: var(--text-3); transform: translate(-50%, 0); bottom: 120px; }
+.kk-fach.is-faellig .kk-fach-reiter { background: var(--papier); box-shadow: inset 0 -2px 0 var(--rotstift); }
+.kk-wand {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: -64px;
+    padding: 16px 14px 18px;
+    border-radius: 6px 6px 12px 12px;
+    background: linear-gradient(180deg, var(--pappe-kante) 0, var(--pappe) 10px);
+    box-shadow: 0 30px 60px -30px rgba(5, 4, 10, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.kk-wand-zahl { text-align: center; min-width: 0; }
+.kk-wand-zahl b { display: block; font-size: 1.25rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kk-wand-zahl small { display: block; font-size: 0.72rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kk-kasten-cap { margin-top: 14px; font-size: 0.88rem; color: var(--text-3); text-align: center; text-wrap: balance; }
+
+/* ── Abschnitte ───────────────────────────────────────────────────── */
+.kk-quellen, .kk-anders, .kk-vorschau { max-width: 1180px; margin: 0 auto; padding: 0 28px 88px; }
+.kk-h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.3rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+.kk-h2-unter { margin: 12px 0 0; max-width: 60ch; color: var(--text-2); }
+
+.kk-quellen-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
+/* Die Reihenfolge ist Inhalt (erst Heft, dann Luecken, dann eigener Stoff) —
+   deshalb wird die Rangfolge ueber die Deckkraft der Kante gezeigt, nicht ueber Nummern. */
+.kk-quelle {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 22px 22px 20px;
+    border: 1px solid var(--linie);
+    border-top: 2px solid rgba(var(--primary-rgb), 0.85);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.025);
+}
+.kk-quelle + .kk-quelle { border-top-color: rgba(var(--primary-rgb), 0.55); }
+.kk-quelle + .kk-quelle + .kk-quelle { border-top-color: rgba(var(--primary-rgb), 0.3); }
+.kk-quelle-kopf { display: flex; align-items: center; gap: 10px; }
+.kk-quelle-kopf svg { flex: none; width: 20px; height: 20px; fill: none; stroke: var(--text-2); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.kk-quelle-t { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.kk-quelle-p { margin: 10px 0 0; color: var(--text-2); font-size: 0.95rem; }
+.kk-quelle-stand { margin: auto 0 0; padding-top: 16px; font-size: 0.86rem; color: var(--text-3); }
+.kk-quelle-stand.is-da { color: var(--text-main); }
+
+.kk-feld { display: block; margin-top: 16px; }
+.kk-feld-t { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 500; color: var(--text-2); }
+.kk-feld textarea {
+    display: block;
+    width: 100%;
+    min-height: 96px;
+    padding: 10px 12px;
+    border: 1px solid var(--linie);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.18);
+    color: var(--text-main);
+    font-size: 16px;   /* unter 16 px zoomt iOS beim Fokus in die Seite */
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+.kk-feld textarea::placeholder { color: var(--text-3); }
+.kk-feld textarea:focus { outline: none; border-color: rgba(var(--primary-rgb), 0.8); }
+.kk-quelle-knoepfe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.kk-quelle-meldung { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: rgba(var(--primary-rgb), 0.12); font-size: 0.88rem; color: var(--text-main); }
+
+.kk-anders-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 28px; }
+.kk-anders-punkt h3 { margin: 0; font-size: 1.05rem; font-weight: 600; }
+.kk-anders-punkt p { margin: 8px 0 0; color: var(--text-2); font-size: 0.95rem; max-width: 42ch; }
+
+.kk-vorschau {
+    padding-top: 28px;
+    border-top: 1px solid var(--linie);
+}
+.kk-vorschau-t { margin: 0; font-size: 1rem; font-weight: 600; }
+.kk-vorschau p { margin: 8px 0 0; max-width: 70ch; color: var(--text-2); font-size: 0.93rem; }
+.kk-vorschau .kk-textknopf { margin-top: 10px; color: var(--text-3); }
+
+/* ── Abfrage ──────────────────────────────────────────────────────── */
+.kk-abfrage, .kk-ergebnis { max-width: 640px; margin: 0 auto; padding: 8px 20px 96px; }
+.kk-abfrage-kopf { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.kk-fortschritt-text { font-size: 0.88rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.kk-fortschritt { height: 3px; margin-top: 8px; border-radius: 3px; background: var(--linie); overflow: hidden; }
+.kk-fortschritt i { display: block; width: 0; height: 100%; background: var(--papier); transition: width 0.4s var(--ease-out); }
+
+.kk-buehne { margin-top: 28px; perspective: 1600px; }
+.kk-karte {
+    position: relative;
+    display: grid;
+    min-height: 260px;
+    transform-style: preserve-3d;
+    transition: transform 0.6s var(--spring);
+}
+.kk-karte.is-umgedreht { transform: rotateY(180deg); }
+.kk-karte-seite {
+    grid-area: 1 / 1;
+    position: relative;
+    padding: 46px 28px 26px;
+    border-radius: 6px;
+    background:
+        repeating-linear-gradient(180deg, transparent 0 29px, var(--papier-linie) 29px 30px) 0 74px / 100% calc(100% - 74px) no-repeat,
+        var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    backface-visibility: hidden;
+}
+/* Rote Kopflinie */
+.kk-karte-seite::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 34px;
+    height: 1.5px;
+    background: var(--rotstift);
+    opacity: 0.75;
+}
+.kk-karte-seite.is-hinten { transform: rotateY(180deg); }
+.kk-karte-frage-klein { margin: 0 0 14px; font-size: 0.9rem; font-weight: 500; color: var(--papier-tinte-2); }
+.kk-karte-fach {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    font-family: var(--font-vordruck);
+    font-size: 0.7rem;
+    color: var(--papier-tinte-2);
+}
+.kk-karte-frage {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 1rem + 0.8vw, 1.5rem);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-wrap: pretty;
+}
+.kk-karte-antwort { margin: 0; font-size: 1.08rem; line-height: 1.6; color: var(--kuli); font-weight: 500; }
+.kk-karte-arbeit { margin-top: 18px; }
+
+/* Auswahl: Antworten liegen auf der Karte, gestrichelte Lineatur dazwischen */
+.kk-wahlen { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.kk-wahl {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 1px solid rgba(21, 19, 29, 0.16);
+    border-radius: 8px;
+    /* deckend: durch eine halbtransparente Flaeche liefe die Lineatur der Karte quer durch den Text */
+    background: color-mix(in srgb, var(--papier) 45%, #fff);
+    color: var(--papier-tinte);
+    font-size: 0.98rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.kk-wahl:hover:not(:disabled) { border-color: rgba(var(--primary-rgb), 0.7); background: #fff; }
+.kk-wahl:active:not(:disabled) { transform: scale(0.99); }
+.kk-wahl:disabled { cursor: default; }
+.kk-wahl-buchstabe {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(21, 19, 29, 0.25);
+    border-radius: 50%;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.kk-wahl.is-richtig { border-color: var(--rotstift); background: #fff; }
+.kk-wahl.is-falsch { color: var(--papier-tinte-2); }
+.kk-wahl.is-falsch .kk-wahl-text { text-decoration: line-through; text-decoration-color: var(--rotstift); text-decoration-thickness: 2px; }
+.kk-wahl.is-andere { opacity: 0.55; }
+
+/* Rotstift-Zeichen: wird beim Aufloesen einmal gezogen */
+.kk-marke-rot { position: absolute; right: 10px; top: 50%; width: 28px; height: 28px; margin-top: -14px; fill: none; stroke: var(--rotstift); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.kk-marke-rot path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: kkZiehen 0.42s var(--ease-out) forwards; }
+@keyframes kkZiehen { to { stroke-dashoffset: 0; } }
+
+/* Reihenfolge: Teile antippen, sie wandern in nummerierte Zeilen */
+.kk-reihe-ziel { display: grid; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; counter-reset: kkzeile; }
+.kk-reihe-ziel li {
+    counter-increment: kkzeile;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 6px 10px;
+    border-bottom: 1px dashed rgba(21, 19, 29, 0.22);
+    font-size: 0.96rem;
+    color: var(--kuli);
+}
+.kk-reihe-ziel li::before { content: counter(kkzeile) '.'; flex: none; width: 22px; font-weight: 600; color: var(--papier-tinte-2); }
+.kk-reihe-ziel li.is-leer { color: var(--papier-tinte-2); font-style: italic; }
+.kk-reihe-ziel li.is-falsch { color: var(--rotstift); }
+.kk-reihe-ziel li .kk-soll { margin-left: auto; font-family: var(--font-hand); font-size: 1.15rem; color: var(--rotstift); white-space: nowrap; }
+.kk-teile { display: flex; flex-wrap: wrap; gap: 8px; }
+.kk-teil {
+    min-height: 40px;
+    padding: 6px 14px;
+    border: 1px solid rgba(21, 19, 29, 0.2);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--papier) 45%, #fff);
+    color: var(--papier-tinte);
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.kk-teil:hover { border-color: rgba(var(--primary-rgb), 0.7); background: #fff; }
+
+.kk-aufloesung { margin-top: 22px; }
+.kk-urteil { margin: 0; font-family: var(--font-hand); font-size: 1.9rem; line-height: 1; color: var(--rotstift); transform: rotate(-2deg); transform-origin: left center; }
+.kk-urteil.is-gut { color: var(--papier); }
+.kk-erklaerung { margin: 12px 0 0; color: var(--text-main); }
+.kk-herkunft { margin: 10px 0 0; font-size: 0.86rem; color: var(--text-3); }
+
+.kk-aktionen { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.kk-aktionen .kk-knopf { flex: 1 1 180px; }
+.kk-melden { margin-top: 10px; color: var(--text-3); }
+
+/* ── Ergebnis ─────────────────────────────────────────────────────── */
+.kk-ergebnis { padding-top: 40px; }
+.kk-ergebnis-t {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    text-wrap: balance;
+}
+.kk-ergebnis-p { margin: 14px 0 0; color: var(--text-2); }
+.kk-ergebnis-liste { margin: 26px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--linie); }
+.kk-ergebnis-liste li { display: flex; gap: 14px; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--linie); font-size: 0.95rem; }
+.kk-ergebnis-liste li span:first-child { min-width: 0; }
+.kk-ergebnis-liste li span:last-child { flex: none; color: var(--text-3); white-space: nowrap; }
+.kk-ergebnis-liste li.is-falsch span:last-child { color: var(--rotstift); }
+
+/* ── Toast ────────────────────────────────────────────────────────── */
+.kk-toast {
+    position: fixed;
+    left: 50%;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    z-index: 50;
+    max-width: calc(100vw - 32px);
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: linear-gradient(var(--papier), var(--papier));
+    color: var(--papier-tinte);
+    font-size: 0.92rem;
+    box-shadow: var(--papier-schatten);
+    transform: translateX(-50%);
+}
+
+/* ── Schmal ───────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .kk-hero { grid-template-columns: minmax(0, 1fr); gap: 40px; min-height: 0; padding-bottom: 64px; }
+    .kk-quellen-reihe, .kk-anders-reihe { grid-template-columns: minmax(0, 1fr); }
+    .kk-anders-reihe { gap: 22px; }
+}
+@media (max-width: 480px) {
+    .kk-top { padding: 16px; }
+    .kk-top-rechts { gap: 12px; }
+    .kk-hero { padding: 12px 16px 56px; }
+    .kk-quellen, .kk-anders, .kk-vorschau { padding-left: 16px; padding-right: 16px; padding-bottom: 64px; }
+    .kk-abfrage, .kk-ergebnis { padding-left: 16px; padding-right: 16px; }
+    .kk-cta .kk-knopf { flex: 1 1 100%; }
+    .kk-kasten-innen, .kk-wand { gap: 3px; padding-left: 8px; padding-right: 8px; }
+    .kk-fach-stapel { height: 150px; }
+    .kk-fach-karte { height: 116px; }
+    .kk-fach-reiter { bottom: 116px; min-width: 0; padding: 2px 5px 3px; font-size: 0.68rem; }
+    .kk-fach.is-leer .kk-fach-stapel::after { height: 92px; }
+    .kk-fach.is-leer .kk-fach-reiter { bottom: 92px; }
+    .kk-wand { margin-top: -48px; padding-top: 12px; padding-bottom: 14px; }
+    .kk-wand-zahl b { font-size: 1.05rem; }
+    .kk-wand-zahl small { font-size: 0.64rem; }
+    .kk-karte-seite { padding: 44px 18px 22px; }
+}
+@media (max-width: 520px) {
+    /* bricht sonst zweizeilig um; das Berichtsheft ist ueber den Fussbereich erreichbar */
+    .kk-top-link { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kk-karte { transition: none; }
+    .kk-karte.is-umgedreht { transform: none; }
+    .kk-karte.is-umgedreht .is-vorne { visibility: hidden; }
+    .kk-karte-seite.is-hinten { transform: none; visibility: hidden; }
+    .kk-karte.is-umgedreht .is-hinten { visibility: visible; }
+    .kk-marke-rot path { animation: none; stroke-dashoffset: 0; }
+    .kk-fortschritt i { transition: none; }
+}
