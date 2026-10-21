@@ -10,7 +10,8 @@
 //
 // Werdegang (21.10.2026, alles an einem Abend): ruhige Stadt -> „Standard-Three.js“;
 // Nachtstadt mit Fensterklotzen -> „Shader so naja, viel krasser, absurder“. Dies ist
-// Fassung drei. Bewusst VIEL Effekt (Bloom, Fluss, Atmosphaere, Sterne, Korn,
+// Fassung drei; Fassung vier bekam Boden (Meer, Gradnetz, Kontinente) und eine
+// Globus-Kamera (seitlicher Blick moeglich). Bewusst VIEL Effekt (Bloom, Fluss, Atmosphaere, Sterne, Korn,
 // Farbsaum) — Wunsch des Nutzers, hier gilt die sonstige Ein-Effekt-Regel nicht.
 // prefers-reduced-motion: kein Anflug, kein Fluss, kein Drehen, kein Funkeln.
 //
@@ -51,7 +52,6 @@
     function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
     function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
     function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
-    function winkelNah(a, b) { var d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return a + d; }
 
     function baue(THREE) {
         var V = THREE.Vector3;
@@ -153,16 +153,58 @@
             sterne.frustumCulled = false; scene.add(sterne);
         })();
 
-        // ── Planetenkern: dunkle Kugel mit innerem Randlicht ───────────
-        var kern = new THREE.Mesh(new THREE.SphereGeometry(R - 0.04, 128, 96), new THREE.ShaderMaterial({
-            uniforms: { uAkz: { value: akzentHell } },
-            vertexShader: `varying vec3 vN;
-                void main() { vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `uniform vec3 uAkz; varying vec3 vN;
+        var uGrp = { value: -1 };
+        // ── Planetenboden: Meer, Gradnetz, Kontinente mit Umriss, Tag- und Nachtseite ──
+        // Ohne Boden sah der Planet aus der Naehe „nicht fertig“ aus (Meldung des Nutzers):
+        // Kaesten ueber schwarzem Nichts. Erst Meer + Gradnetz + Kuestenlinie lesen sich als Welt.
+        var NK = gruppen.length;
+        var kontRicht = [], kontFarbe = [];
+        gruppen.forEach(function (b) {
+            var zaehl = {}; b.files.forEach(function (f) { var t = RAW.nodes[f].type; zaehl[t] = (zaehl[t] || 0) + 1; });
+            var top = Object.keys(zaehl).sort(function (x, y) { return zaehl[y] - zaehl[x]; })[0];
+            kontRicht.push(new THREE.Vector4(b.mitte.x, b.mitte.y, b.mitte.z, b.winkel));
+            kontFarbe.push(new THREE.Color(TC[top] || TC.other));
+        });
+        var uSonne = { value: new V(0.55, 0.6, 0.58).normalize() };
+        var kern = new THREE.Mesh(new THREE.SphereGeometry(R - 0.03, 160, 120), new THREE.ShaderMaterial({
+            defines: { NK: NK },
+            uniforms: { uAkz: { value: akzentHell }, uK: { value: kontRicht }, uKF: { value: kontFarbe }, uSonne: uSonne, uIntro: uIntro, uGrp: uGrp },
+            vertexShader: `varying vec3 vP; varying vec3 vN;
+                void main() { vP = normalize(position); vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `uniform vec3 uAkz; uniform vec4 uK[NK]; uniform vec3 uKF[NK]; uniform vec3 uSonne; uniform float uIntro; uniform float uGrp;
+                varying vec3 vP; varying vec3 vN;
+                float linie(float x, float breite) { float w = fwidth(x) * breite; float f = abs(fract(x + 0.5) - 0.5); return 1.0 - smoothstep(0.0, w, f); }
                 void main() {
+                    vec3 d = normalize(vP);
+                    float tag = smoothstep(-0.35, 0.6, dot(d, uSonne));
+                    // Meer: tiefes Blau, auf der Tagseite heller
+                    vec3 c = mix(vec3(0.006, 0.009, 0.02), vec3(0.016, 0.026, 0.06), tag);
+                    // Gradnetz alle 10 Grad, zum Pol hin ausgeduennt
+                    float lat = asin(clamp(d.y, -1.0, 1.0)), lon = atan(d.z, d.x);
+                    float netz = max(linie(lat * 18.0 / 3.14159265, 1.2), linie(lon * 18.0 / 3.14159265, 1.2) * smoothstep(0.995, 0.9, abs(d.y)));
+                    c += uAkz * netz * (0.035 + 0.04 * tag);
+                    float sicht = smoothstep(acos(clamp(d.y, -1.0, 1.0)) * 0.75, acos(clamp(d.y, -1.0, 1.0)) * 0.75 + 0.6, uIntro);
+                    for (int k = 0; k < NK; k++) {
+                        float cw = dot(d, uK[k].xyz);
+                        float w = uK[k].w;
+                        if (cw < cos(w + 0.04)) continue;
+                        float ang = acos(clamp(cw, -1.0, 1.0));
+                        float aa = fwidth(ang) * 1.2;
+                        float innen = 1.0 - smoothstep(w - aa, w + aa, ang);
+                        float kueste = 1.0 - smoothstep(0.0, aa * 1.8 + 0.0015, abs(ang - w));
+                        float hell = (uGrp > -0.5 && abs(float(k) - uGrp) < 0.5) ? 1.8 : 1.0;
+                        vec3 land = mix(vec3(0.028, 0.032, 0.05), uKF[k] * 0.11, 0.5) * (0.55 + 0.45 * tag);
+                        // Innenleben: feines Strassenraster wie eine Leiterplatte
+                        float raster = max(linie(lat * 260.0 / 3.14159265, 0.9), linie(lon * 260.0 / 3.14159265, 0.9)) * 0.5;
+                        land += uKF[k] * raster * 0.06;
+                        c = mix(c, land * hell, innen * sicht);
+                        c += uKF[k] * kueste * 1.1 * hell * sicht;
+                    }
+                    // Randlicht der Kugel
                     float f = pow(1.0 - max(dot(normalize(vN), vec3(0.0, 0.0, 1.0)), 0.0), 2.6);
-                    vec3 c = vec3(0.006, 0.008, 0.016) + uAkz * f * 0.18;
-                    gl_FragColor = vec4(c, 1.0); }`
+                    c += uAkz * f * 0.22;
+                    gl_FragColor = vec4(c, 1.0);
+                }`
         }));
         scene.add(kern);
         // Atmosphaere: Ruecklicht um die Kugel
@@ -176,10 +218,9 @@
         scene.add(atmo);
 
         // ── Oberflaeche: Fibonacci-Lichtpunkte, Kontinente = Viertel ───
-        var uGrp = { value: -1 };
         (function () {
             var n = schmal ? 26000 : 52000, P = new Float32Array(n * 3), IN = new Float32Array(n), G = new Float32Array(n), D = new Float32Array(n);
-            var gold = Math.PI * (3 - Math.sqrt(5)), d = new V();
+            var gold = Math.PI * (3 - Math.sqrt(5)), d = new V(), m = 0;
             for (var i = 0; i < n; i++) {
                 var y = 1 - (i / (n - 1)) * 2, q = Math.sqrt(1 - y * y), a = i * gold;
                 d.set(Math.cos(a) * q, y, Math.sin(a) * q);
@@ -188,9 +229,11 @@
                     var b = gruppen[k], ang = b.mitte.angleTo(d);
                     if (ang < b.winkel) { var s = 1 - ang / b.winkel; if (s > best) { best = s; gi = k; } }
                 }
-                P.set([d.x * R, d.y * R, d.z * R], i * 3);
-                IN[i] = gi >= 0 ? Math.min(1, 0.35 + best * 1.6) : 0; G[i] = gi; D[i] = Math.acos(clamp(d.y, -1, 1)) * 0.75;
+                if (gi < 0) continue;
+                P.set([d.x * R, d.y * R, d.z * R], m * 3);
+                IN[m] = Math.min(1, 0.35 + best * 1.6); G[m] = gi; D[m] = Math.acos(clamp(d.y, -1, 1)) * 0.75; m++;
             }
+            P = P.subarray(0, m * 3); IN = IN.subarray(0, m); G = G.subarray(0, m); D = D.subarray(0, m);
             var g = new THREE.BufferGeometry();
             g.setAttribute('position', new THREE.BufferAttribute(P, 3));
             g.setAttribute('aIn', new THREE.BufferAttribute(IN, 1)); g.setAttribute('aG', new THREE.BufferAttribute(G, 1)); g.setAttribute('aD', new THREE.BufferAttribute(D, 1));
@@ -206,7 +249,7 @@
                         vFace = dot(nV, normalize(-mv.xyz));
                         vIn = aIn; vSel = (uGrp >= 0.0 && abs(aG - uGrp) < 0.5) ? 1.0 : 0.0;
                         vA = smoothstep(aD, aD + 0.5, uIntro);
-                        float s = aIn > 0.0 ? 2.3 : 1.35;
+                        float s = 1.8;
                         gl_PointSize = min(s * uPx * (uR * 2.6) / -mv.z, 2.6 * uPx);   // gedeckelt: aus der Naehe wurde die Oberflaeche ein grobes Raster
                         gl_Position = projectionMatrix * mv;
                     }`,
@@ -473,7 +516,7 @@
                 void main() {
                     vec2 m = vUv - 0.5; float r2 = dot(m, m);
                     // Farbsaum: nur zum Rand hin, in der Mitte bleibt das Bild scharf
-                    vec2 off = m * r2 * 0.028;
+                    vec2 off = m * r2 * 0.012;
                     vec3 c = vec3(texture2D(tS, vUv + off).r, texture2D(tS, vUv).g, texture2D(tS, vUv - off).b);
                     vec3 b = texture2D(tB0, vUv).rgb * 0.8 + texture2D(tB1, vUv).rgb * 0.9 + texture2D(tB2, vUv).rgb * 1.0 + texture2D(tB3, vUv).rgb * 1.1;
                     c += b * 0.9;
@@ -536,29 +579,49 @@
             gleisZiel = sel ? 0.02 : (hov || gefiltert) ? 0.045 : 0.09;
         }
 
-        // ── Kamera: Umlaufbahn um den Planeten ────────────────────────
-        var HEIM_T = 0.6, HEIM_P = 0.5;
-        var theta = HEIM_T, thetaSoll = theta, phi = HEIM_P, phiSoll = phi, dist = 1, distSoll = 1, heimDist = 1;
-        var flug = null, letzteEingabe = 0, intro = null;
+        // ── Kamera wie in einem Globus-Programm: Blickpunkt auf der Oberflaeche, Abstand,
+        // Neigung, Blickrichtung. Bis 21.10. zielte sie immer auf den Kugelmittelpunkt —
+        // dann kann man nie seitlich auf die Tuerme schauen (Meldung des Nutzers).
+        // Zoomen neigt den Blick automatisch Richtung Horizont; rechte Maustaste/Umschalt
+        // kippt und dreht von Hand, zwei Finger verschieben senkrecht = kippen.
+        var HEIM_F = new V(0.33, 0.9, 0.28).normalize(), YA = new V(0, 1, 0);
+        var fokus = HEIM_F.clone(), fokusSoll = HEIM_F.clone(), vorn = new V();
+        var abst = 1, abstSoll = 1, heimAbst = 1, neigX = 0, neigXSoll = 0;
+        var flug = null, letzteEingabe = 0, intro = null, qTmp = new THREE.Quaternion(), tmpA = new V(), tmpB = new V();
+        function tangente(f, v) {
+            v.addScaledVector(f, -v.dot(f));
+            if (v.lengthSq() < 1e-8) v.set(1, 0, 0).addScaledVector(f, -f.x);
+            return v.normalize();
+        }
+        function slerp(a, b, t, out) {
+            var om = a.angleTo(b);
+            if (om < 1e-5) return out.copy(b);
+            var s = Math.sin(om);
+            return out.copy(a).multiplyScalar(Math.sin((1 - t) * om) / s).addScaledVector(b, Math.sin(t * om) / s).normalize();
+        }
+        tangente(fokus, vorn.copy(YA));
         function heimWerte() {
             var asp = Math.max(0.5, (wrap.clientWidth || 1) / (wrap.clientHeight || 1));
-            heimDist = R * (asp < 1 ? 7.2 : 4.7); return heimDist;
+            heimAbst = R * (asp < 1 ? 6.2 : 3.7); return heimAbst;
         }
+        function autoNeig(a) { var t = clamp((R * 2.4 - a) / (R * 2.15), 0, 1); return 0.1 + (1 - Math.pow(1 - t, 2)) * 1.08; }
         function kameraSetzen() {
-            var sp = Math.sin(phi);
-            camera.position.set(dist * sp * Math.sin(theta), dist * Math.cos(phi), dist * sp * Math.cos(theta));
-            camera.lookAt(0, 0, 0);
-            var zl = document.getElementById('zLvl'); if (zl) zl.textContent = Math.round(heimDist / dist * 100) + '%';
+            var ne = clamp(autoNeig(abst) + neigX, 0, 1.4), c = Math.cos(ne), s = Math.sin(ne);
+            tmpA.copy(fokus).multiplyScalar(R);
+            camera.position.copy(tmpA).addScaledVector(fokus, c * abst).addScaledVector(vorn, -s * abst);
+            camera.up.copy(vorn).multiplyScalar(c).addScaledVector(fokus, s);
+            camera.lookAt(tmpA);
+            var zl = document.getElementById('zLvl'); if (zl) zl.textContent = Math.round(heimAbst / abst * 100) + '%';
         }
         function introStarten() {
             heimWerte(); intro = { t0: performance.now(), dauer: 4600 };
-            thetaSoll = HEIM_T; phiSoll = HEIM_P; distSoll = heimDist;
-            theta = HEIM_T - 2.2; phi = 1.45; dist = heimDist * 5.5;
+            fokusSoll.copy(HEIM_F); abstSoll = heimAbst; neigXSoll = neigX = 0;
         }
         function introBeenden() {
             if (!intro) return; intro = null; uIntro.value = 99; uFluss.value = 1;
-            theta = thetaSoll; phi = phiSoll; dist = distSoll;
+            fokus.copy(fokusSoll); tangente(fokus, vorn.copy(YA)); abst = abstSoll;
         }
+        function drehUmY(w) { qTmp.setFromAxisAngle(YA, w); fokusSoll.applyQuaternion(qTmp); fokus.applyQuaternion(qTmp); vorn.applyQuaternion(qTmp); }
 
         // ── Bildschleife ───────────────────────────────────────────────
         var aktiv = false, raf = 0, letzt = 0, kamRicht = new V();
@@ -568,22 +631,24 @@
             uZeit.value += dt;
             if (intro) {
                 var f = clamp((jetzt - intro.t0) / intro.dauer, 0, 1), k = easeInOut(f);
-                theta = (HEIM_T - 2.2) + 2.2 * k; phi = 1.45 + (HEIM_P - 1.45) * k;
-                dist = heimDist * 5.5 + (heimDist - heimDist * 5.5) * (1 - Math.pow(1 - f, 3));
+                qTmp.setFromAxisAngle(YA, -(1 - k) * 2.2);
+                fokus.copy(fokusSoll).applyQuaternion(qTmp); tangente(fokus, vorn.copy(YA));
+                abst = heimAbst * 5 + (heimAbst - heimAbst * 5) * (1 - Math.pow(1 - f, 3));
                 uIntro.value = (jetzt - intro.t0) / 1000 * 1.05;
                 uFluss.value = clamp((f - 0.7) / 0.3, 0, 1);
-                if (f >= 1) { intro = null; uIntro.value = 99; uFluss.value = 1; }
+                if (f >= 1) introBeenden();
             } else if (flug) {
                 var g = clamp((jetzt - flug.t0) / flug.dauer, 0, 1), kk = easeInOut(g);
-                theta = flug.t0w + (flug.t1w - flug.t0w) * kk; phi = flug.p0 + (flug.p1 - flug.p0) * kk;
-                // Bogen nach aussen: beim Flug um die Kugel kurz Abstand gewinnen
-                dist = flug.d0 + (flug.d1 - flug.d0) * kk + Math.sin(Math.PI * g) * flug.hub;
-                thetaSoll = theta; phiSoll = phi; distSoll = flug.d1;
-                if (g >= 1) { flug = null; dist = distSoll; }
+                slerp(flug.f0, flug.f1, kk, fokus); tangente(fokus, vorn);
+                // Beim Flug ueber die Kugel kurz Hoehe gewinnen, sonst schrammt die Kamera durch die Tuerme
+                abst = flug.a0 + (flug.a1 - flug.a0) * kk + Math.sin(Math.PI * g) * flug.hub;
+                fokusSoll.copy(fokus); abstSoll = flug.a1;
+                if (g >= 1) flug = null;
             } else {
-                if (!RM && !sel && jetzt - letzteEingabe > 6000) thetaSoll += dt * 0.05;
+                if (!RM && !sel && jetzt - letzteEingabe > 6000) drehUmY(dt * 0.05);
                 var d = 1 - Math.pow(0.00008, dt);
-                theta += (thetaSoll - theta) * d; phi += (phiSoll - phi) * d; dist += (distSoll - dist) * d;
+                fokus.lerp(fokusSoll, d).normalize(); tangente(fokus, vorn);
+                abst += (abstSoll - abst) * d; neigX += (neigXSoll - neigX) * d;
             }
             gleisMat.opacity += ((intro ? 0 : gleisZiel) - gleisMat.opacity) * 0.08;
 
@@ -616,22 +681,22 @@
             for (var i = 0; i < 4; i++) { var f = 2 << i; stufen[i].setSize(Math.max(1, W / f | 0), Math.max(1, H / f | 0)); hilf[i].setSize(Math.max(1, W / f | 0), Math.max(1, H / f | 0)); }
             uPx.value = pr; camera.aspect = w / h; camera.updateProjectionMatrix(); heimWerte(); bitte();
         }
-        function heim() { flug = null; introBeenden(); thetaSoll = winkelNah(theta, HEIM_T); phiSoll = HEIM_P; distSoll = heimWerte(); letzteEingabe = performance.now(); }
-        function zoom(f) { introBeenden(); flug = null; distSoll = clamp(distSoll / f, R * 1.22, heimDist * 3); letzteEingabe = performance.now(); }
+        function heim() {
+            flug = null; introBeenden();
+            fokusSoll.copy(HEIM_F); abstSoll = heimWerte(); neigXSoll = 0; letzteEingabe = performance.now();
+        }
+        function zoom(f) { introBeenden(); flug = null; abstSoll = clamp(abstSoll / f, R * 0.2, heimAbst * 2.6); letzteEingabe = performance.now(); }
         function flieg(id) {
             var nv = richt[id]; if (!nv) return;
             introBeenden();
-            // Blick leicht von "oben" (Richtung Pol) auf den Turm, damit Horizont und Routen im Bild sind
-            var pZiel = clamp(Math.acos(clamp(nv.y, -1, 1)) - 0.32, 0.12, Math.PI - 0.12);
-            var tZiel = Math.atan2(nv.x, nv.z);
             var weit = 0;
             nachbarn(id).set.forEach(function (o) { if (richt[o]) weit = Math.max(weit, richt[o].angleTo(nv)); });
-            var d1 = clamp(R * (1.75 + weit * 1.25), R * 1.6, heimDist * 1.05);
-            letzteEingabe = performance.now();
-            if (RM) { theta = thetaSoll = tZiel; phi = phiSoll = pZiel; dist = distSoll = d1; return; }
-            var t1 = winkelNah(theta, tZiel);
-            var weg = Math.hypot(t1 - theta, pZiel - phi);
-            flug = { t0: performance.now(), dauer: 1100 + weg * 380, t0w: theta, t1w: t1, p0: phi, p1: pZiel, d0: dist, d1: d1, hub: Math.min(weg, 2) * R * 0.45 };
+            // Abstand nach der Streuung der Nachbarn: liegen sie weit weg, muss die Kamera hoeher
+            var a1 = clamp(R * (0.32 + weit * 1.5), R * 0.3, heimAbst * 0.95);
+            neigXSoll = 0; letzteEingabe = performance.now();
+            if (RM) { fokus.copy(nv); fokusSoll.copy(nv); tangente(fokus, vorn); abst = abstSoll = a1; return; }
+            var weg = fokus.angleTo(nv);
+            flug = { t0: performance.now(), dauer: 1100 + weg * 650, f0: fokus.clone(), f1: nv.clone(), a0: abst, a1: a1, hub: Math.min(weg, 1.6) * R * 0.85 };
         }
 
         // ── Zeiger ─────────────────────────────────────────────────────
@@ -643,13 +708,24 @@
             var t = ray.intersectObject(tuerme, false);
             return t.length ? liste[t[0].instanceId] : null;
         }
-        var zeiger = new Map(), start = null, bewegt = false, pinch = 0;
+        function schieben(dx, dy) {
+            // Karte folgt dem Finger: nach rechts ziehen = Blickpunkt wandert nach links
+            var k = 0.0021 * clamp(abst / R, 0.12, 4);
+            tmpB.crossVectors(vorn, fokus);
+            fokusSoll.addScaledVector(tmpB, -dx * k).addScaledVector(vorn, dy * k).normalize();
+        }
+        function kippen(dx, dy) {
+            qTmp.setFromAxisAngle(fokus, -dx * 0.006); vorn.applyQuaternion(qTmp);
+            neigXSoll = clamp(neigXSoll + dy * 0.005, -0.6, 1.0);
+        }
+        var zeiger = new Map(), start = null, bewegt = false, pinch = 0, mitteY = 0, mitteX = 0;
+        function mitte() { var a = Array.from(zeiger.values()); return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) }; }
         canvas.addEventListener('pointerdown', function (e) {
             canvas.setPointerCapture(e.pointerId);
             zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            if (zeiger.size === 1) { start = { x: e.clientX, y: e.clientY }; bewegt = false; }
-            if (zeiger.size === 2) { var a = Array.from(zeiger.values()); pinch = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
-            letzteEingabe = performance.now(); if (intro) introBeenden();
+            if (zeiger.size === 1) { start = { x: e.clientX, y: e.clientY, kipp: e.button === 2 || e.shiftKey || e.ctrlKey || e.metaKey }; bewegt = false; }
+            if (zeiger.size === 2) { var m = mitte(); pinch = m.d; mitteX = m.x; mitteY = m.y; bewegt = true; }
+            letzteEingabe = performance.now(); flug = null; if (intro) introBeenden();
         });
         canvas.addEventListener('pointermove', function (e) {
             var alt = zeiger.get(e.pointerId);
@@ -667,14 +743,14 @@
             letzteEingabe = performance.now();
             if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 5) bewegt = true;
             if (zeiger.size === 2) {
-                var a = Array.from(zeiger.values()), nd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-                if (pinch) zoom(nd / pinch); pinch = nd; return;
+                var m = mitte();
+                if (pinch) zoom(m.d / pinch);
+                kippen(0, (m.y - mitteY) * 0.6);
+                pinch = m.d; mitteX = m.x; mitteY = m.y; return;
             }
             if (!bewegt) return;
-            hideTT(); flug = null;
-            // Drehtempo mit dem Abstand: nah an der Oberflaeche feiner
-            var tempo = 0.0042 * clamp((dist - R) / (heimDist - R), 0.18, 1.4);
-            thetaSoll -= dx * tempo; phiSoll = clamp(phiSoll - dy * tempo, 0.08, Math.PI - 0.08);
+            hideTT();
+            if (start && start.kipp) kippen(dx, dy); else schieben(dx, dy);
             canvas.style.cursor = 'grabbing';
         });
         function los(e) {
@@ -714,7 +790,7 @@
                 aktiv = true; canvas.classList.add('on'); groesse();
                 if (ersterStart) {
                     ersterStart = false;
-                    if (RM) { heim(); theta = thetaSoll; phi = phiSoll; dist = distSoll; }
+                    if (RM) { heim(); fokus.copy(fokusSoll); tangente(fokus, vorn.copy(YA)); abst = abstSoll; }
                     else introStarten();
                 }
                 letzteEingabe = performance.now(); sync(); bitte();
