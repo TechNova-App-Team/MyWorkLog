@@ -5,11 +5,13 @@
     border-top: 1px solid rgba(255,255,255,.06);
     background: linear-gradient(180deg, transparent, rgba(0,0,0,.14));
     padding: 4.5rem 6% 0;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    /* Erbt die Schrift der Seite. Bis 21.10.2026 stand hier 'Inter', das nur 3 von
+       ~30 Seiten laden — ueberall sonst fiel der Footer auf Arial zurueck. */
+    font-family: inherit;
   }
   .footer-inner {
     max-width: 1000px; margin: 0 auto;
-    display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 3rem;
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 2.5rem;
     padding-bottom: 3rem; align-items: start;
   }
 
@@ -92,9 +94,10 @@
   .footer-nav { display: flex; flex-direction: column; gap: .5rem; }
   .footer-nav a {
     color: rgba(255,255,255,.5); text-decoration: none; font-size: .84rem; font-weight: 500;
-    transition: color .2s, padding-left .2s; padding-left: 0; display: block;
+    transition: color .2s; display: block;
   }
-  .footer-nav a:hover { color: var(--primary, #5578a8); padding-left: .3rem; }
+  /* Nur Farbe: das fruehere padding-left beim Hover hat die Zeile verschoben (Layout statt Signal). */
+  .footer-nav a:hover { color: var(--primary, #5578a8); }
 
   /* ── CONTACT LINKS ────────────────────────────────── */
   .footer-contacts { display: flex; flex-direction: column; gap: .55rem; }
@@ -177,11 +180,19 @@
   [data-theme="light"] .footer-lang a:hover { color: rgba(7,16,35,.9); background: rgba(7,16,35,.05); }
 
   /* ── RESPONSIVE ───────────────────────────────────── */
-  @media (max-width: 680px) {
-    .footer-inner { grid-template-columns: 1fr; gap: 2.25rem; }
+  /* Unter 900 px bekommt die Marke eine eigene Zeile, die drei Linkspalten
+     bleiben nebeneinander. Am Handy zwei Spalten statt einer: als eine Spalte
+     waren es 13 Links untereinander, gut ein Bildschirm nur Footer. */
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2.25rem 1.5rem; }
+    .footer-brand { grid-column: 1 / -1; }
+    .footer-tagline { max-width: 420px; }
+  }
+  @media (max-width: 560px) {
+    .footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .footer-col--kontakt { grid-column: 1 / -1; }
     .footer-bottom { flex-direction: column; align-items: flex-start; gap: .9rem; }
     .footer-bottom-end { gap: .9rem; }
-    .footer-tagline { max-width: 100%; }
   }
 </style>
 
@@ -202,28 +213,37 @@
       </div>
     </div>
 
+    <!-- Datenschutz + Impressum stehen NUR unten in der Leiste: bis 21.10.2026
+         standen sie zusaetzlich hier, doppelt auf jeder Seite.
+         /ausbilder/ hat sonst keinen Einstieg aus der Site (CLAUDE.md, Crawler-Falle). -->
     <div class="footer-col">
-      <div class="footer-col-title">Navigation</div>
+      <div class="footer-col-title">Produkt</div>
       <div class="footer-nav">
         <a href="/">App öffnen</a>
-        <a href="/wechseln/">Daten übernehmen</a>
-        <a href="/vergleich/">Anbieter-Vergleich</a>
+        <a href="/berichtsheft/">Berichtsheft</a>
         <a href="/rechte-checker/">Rechte-Checker</a>
-        <a href="/klasse/">Für Schulen &amp; Ausbilder</a>
         <a href="/preise/">Preise</a>
-        <a href="/about/">So funktioniert MyWorkLog</a>
-        <a href="/traum/">Mein Reisetraum</a>
-        <a href="/DSGVO/">Datenschutz</a>
-        <a href="/Impressum/">Impressum</a>
+        <a href="/vergleich/">Anbieter-Vergleich</a>
+        <a href="/wechseln/">Daten übernehmen</a>
       </div>
     </div>
 
     <div class="footer-col">
+      <div class="footer-col-title">Ressourcen</div>
+      <div class="footer-nav">
+        <a href="/about/">So funktioniert MyWorkLog</a>
+        <a href="/klasse/">Für Berufsschulen</a>
+        <a href="/ausbilder/">Für Ausbilder</a>
+        <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener">GitHub</a>
+        <a href="/traum/">Mein Reisetraum</a>
+      </div>
+    </div>
+
+    <div class="footer-col footer-col--kontakt">
       <div class="footer-col-title">Kontakt</div>
       <div class="footer-contacts">
         <a href="mailto:info@myworklog.de" class="footer-contact-link">info@myworklog.de</a>
-        <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener" class="footer-contact-link">GitHub</a>
-        <a href="https://myworklog.de" class="footer-contact-link">myworklog.de</a>
+        <a href="/support/" class="footer-contact-link">Feedback &amp; Support</a>
       </div>
     </div>
 
