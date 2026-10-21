@@ -1,7 +1,7 @@
 // ═══ ARCHFLOW 3D MODULE ═══
 // /archflow/ Ansicht „3D“: der Quellcode als Planet. Gruppe = leuchtender Kontinent
-// aus Lichtpunkten, Datei = Glasturm, der aus der Kugel ragt (Hoehe = sqrt(ein+aus),
-// Fenster brennen nach Aktivitaet), Farbe = Dateiart (TC der Seite), Verbindung =
+// aus Lichtpunkten, Datei = Lichthalm mit Energiekugel (Hoehe = sqrt(ein+aus),
+// Kugelgroesse = Funktionen), Farbe = Dateiart (TC der Seite), Verbindung =
 // Flugroute ueber die Kugel mit wanderndem Lichtpaket vom Lader zur geladenen Datei.
 //
 // Haengt an den Globals des Hauptskripts der Seite (NODES, EDGES, GROUPS, RAW, sel,
@@ -266,96 +266,118 @@
             punkte.frustumCulled = false; punkte.renderOrder = 1; scene.add(punkte);
         })();
 
-        // ── Tuerme: Glasprismen mit feinem Fensterraster und Neonkanten ──
-        var geoTurm = new THREE.BoxGeometry(FUSS, 1, FUSS); geoTurm.translate(0, 0.5, 0);
+        // ── Datenwald: je Datei ein Lichthalm mit Energiekugel ─────────
+        // Halmhoehe = Verbindungen (ein + aus), Kugelgroesse = Zahl der Funktionen (archflow.js
+        // kappt bei 40). Ersetzt die Glastuerme (21.10.): Kaesten zeigten von oben zwei helle und
+        // zwei schwarze Seiten und lasen sich als „Dreiecke und schwarze Kaestchen“ (Nutzer).
+        // Halme und Kugeln haben keine Flaechen, die vom Licht abgewandt schwarz werden koennen.
         var N = liste.length;
         var aSeed = new Float32Array(N), aDelay = new Float32Array(N), aAkt = new Float32Array(N), aDim = new Float32Array(N), aHi = new Float32Array(N);
+        var aRad = new Float32Array(N), aHoch = new Float32Array(N), radius = {};
         liste.forEach(function (fid, i) {
-            var n = RAW.nodes[fid];
+            var n = RAW.nodes[fid], fn = (n.info && n.info.functions ? n.info.functions.length : 0);
             aSeed[i] = (i * 0.61803) % 1 * 97 + 3;
             aDelay[i] = Math.acos(clamp(richt[fid].y, -1, 1)) * 0.75 + 0.35 + ((i * 7) % 11) * 0.02;
             aAkt[i] = Math.sqrt(((n.inDegree || 0) + (n.outDegree || 0)) / maxGrad);
+            radius[fid] = aRad[i] = 0.12 + Math.sqrt(fn) * 0.05;
+            aHoch[i] = hoehe[fid];
         });
-        geoTurm.setAttribute('aSeed', new THREE.InstancedBufferAttribute(aSeed, 1));
-        geoTurm.setAttribute('aDelay', new THREE.InstancedBufferAttribute(aDelay, 1));
-        geoTurm.setAttribute('aAkt', new THREE.InstancedBufferAttribute(aAkt, 1));
         var attrDim = new THREE.InstancedBufferAttribute(aDim, 1); attrDim.setUsage(THREE.DynamicDrawUsage);
         var attrHi = new THREE.InstancedBufferAttribute(aHi, 1); attrHi.setUsage(THREE.DynamicDrawUsage);
-        geoTurm.setAttribute('aDim', attrDim); geoTurm.setAttribute('aHi', attrHi);
+        function attribute(geo) {
+            geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(aSeed, 1));
+            geo.setAttribute('aDelay', new THREE.InstancedBufferAttribute(aDelay, 1));
+            geo.setAttribute('aAkt', new THREE.InstancedBufferAttribute(aAkt, 1));
+            geo.setAttribute('aRad', new THREE.InstancedBufferAttribute(aRad, 1));
+            geo.setAttribute('aHoch', new THREE.InstancedBufferAttribute(aHoch, 1));
+            geo.setAttribute('aDim', attrDim); geo.setAttribute('aHi', attrHi);
+        }
+        // Wiegen: Auslenkung waechst quadratisch mit der Hoehe, Fuss bleibt stehen. Halm und Kugel
+        // rechnen DIESELBE Formel, sonst schwebt die Kugel neben ihrem Halm.
+        var wiegen = `
+            vec2 wiege(float seed, float t, float ruhe) {
+                if (ruhe > 0.5) return vec2(0.0);
+                return vec2(sin(t * 0.9 + seed), cos(t * 0.71 + seed * 1.37)) * 0.11;
+            }`;
+        var gemeinsam = `
+            attribute float aSeed; attribute float aDelay; attribute float aAkt; attribute float aRad; attribute float aHoch; attribute float aDim; attribute float aHi;
+            uniform float uIntro; uniform float uZeit; uniform float uRuhe;
+            varying vec3 vCol; varying float vDim; varying float vHi; varying float vAkt; varying float vSeed; varying float vLicht;` + wiegen;
 
-        var turmMat = new THREE.ShaderMaterial({
-            uniforms: { uZeit: uZeit, uIntro: uIntro, uAkz: { value: akzentHell }, uFuss: { value: FUSS } },
-            vertexShader: `
-                attribute float aSeed; attribute float aDelay; attribute float aAkt; attribute float aDim; attribute float aHi;
-                uniform float uIntro;
-                varying vec3 vN; varying vec3 vW; varying vec3 vL; varying vec3 vLN; varying vec3 vCol;
-                varying float vY; varying float vH; varying float vSeed; varying float vAkt; varying float vDim; varying float vHi; varying float vLicht;
+        // Halm: duenner Kegel, unten fast schwarz, oben hell
+        var geoHalm = new THREE.CylinderGeometry(0.028, 0.075, 1, 7, 12, true); geoHalm.translate(0, 0.5, 0);
+        attribute(geoHalm);
+        var halmMat = new THREE.ShaderMaterial({
+            uniforms: { uIntro: uIntro, uZeit: uZeit, uRuhe: uRuhe },
+            vertexShader: gemeinsam + `
+                varying float vY;
                 void main() {
-                    float t = clamp((uIntro - aDelay) / 0.9, 0.0, 1.0);
-                    float wachs = 1.0 - pow(1.0 - t, 4.0);
-                    vec3 p = position; p.y *= max(wachs, 0.0005);
-                    vec4 w = modelMatrix * instanceMatrix * vec4(p, 1.0);
-                    float hs = length(instanceMatrix[1].xyz);
-                    vY = p.y * hs; vH = hs * wachs;
-                    vN = normalize(mat3(instanceMatrix) * normal); vLN = normal;
-                    vW = w.xyz; vL = position; vCol = instanceColor;
-                    vSeed = aSeed; vAkt = aAkt; vDim = aDim; vHi = aHi;
-                    vLicht = clamp((uIntro - aDelay - 0.6) / 0.7, 0.0, 1.0);
-                    gl_Position = projectionMatrix * viewMatrix * w;
+                    float wachs = 1.0 - pow(1.0 - clamp((uIntro - aDelay) / 0.9, 0.0, 1.0), 3.0);
+                    vec3 p = position;
+                    vY = p.y;
+                    p.y *= max(wachs, 0.0005);
+                    p.xz += wiege(aSeed, uZeit, uRuhe) * p.y * p.y * aHoch;
+                    vCol = instanceColor; vDim = aDim; vHi = aHi; vAkt = aAkt; vSeed = aSeed;
+                    vLicht = clamp((uIntro - aDelay - 0.5) / 0.7, 0.0, 1.0);
+                    gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(p, 1.0);
                 }`,
             fragmentShader: `
-                uniform float uZeit; uniform vec3 uAkz; uniform float uFuss;
-                varying vec3 vN; varying vec3 vW; varying vec3 vL; varying vec3 vLN; varying vec3 vCol;
-                varying float vY; varying float vH; varying float vSeed; varying float vAkt; varying float vDim; varying float vHi; varying float vLicht;
-                float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
-                float kasten(float x, float a, float b) { float w = fwidth(x) * 0.75; return smoothstep(a - w, a + w, x) * (1.0 - smoothstep(b - w, b + w, x)); }
+                varying vec3 vCol; varying float vDim; varying float vHi; varying float vAkt; varying float vSeed; varying float vLicht; varying float vY;
                 void main() {
-                    vec3 n = normalize(vN), v = normalize(cameraPosition - vW);
-                    float fres = pow(1.0 - clamp(abs(dot(n, v)), 0.0, 1.0), 2.5);
-                    float halb = uFuss * 0.5;
-                    vec3 c;
-                    if (vLN.y > 0.5) {
-                        // Dach: dunkles Glas, Lichtrahmen in Dateifarbe
-                        vec2 q = abs(vL.xz) / halb;
-                        float rahmen = smoothstep(0.80, 0.94, max(q.x, q.y));
-                        c = vCol * (0.12 + rahmen * 3.2) * (0.25 + 0.75 * vLicht);
-                    } else if (vLN.y < -0.5) {
-                        c = vec3(0.0);
-                    } else {
-                        float u = abs(vLN.x) > 0.5 ? vL.z : vL.x;
-                        float seite = abs(vLN.x) > 0.5 ? (vLN.x > 0.0 ? 1.0 : 2.0) : (vLN.z > 0.0 ? 3.0 : 4.0);
-                        // Glas: tiefdunkel, spiegelt den Akzenthimmel am Rand, wird nach oben heller
-                        float hoch = clamp(vY / max(vH, 0.001), 0.0, 1.0);
-                        c = vCol * 0.04 + uAkz * fres * 0.08 + vCol * 0.10 * hoch * hoch;
-                        // Fensterraster: 5 Spalten, Stockwerk 0.11 — fein genug, um als Glasfassade zu lesen
-                        float sx = (u / uFuss + 0.5) * 5.0, sy = vY / 0.11;
-                        float spalte = floor(sx), stock = floor(sy);
-                        float fenster = kasten(fract(sx), 0.16, 0.84) * kasten(fract(sy), 0.24, 0.76) * step(1.0, sy) * step(sy, vH / 0.11 - 0.6);
-                        float takt = floor(uZeit * 0.09 + hash(vec3(vSeed, stock, spalte)) * 9.0);
-                        float zufall = hash(vec3(vSeed + seite * 13.0, stock * 1.7 + takt * 0.37, spalte));
-                        float an = step(zufall, 0.10 + 0.70 * vAkt);
-                        float glanz = 0.55 + 0.45 * hash(vec3(spalte, stock, vSeed + 7.0));
-                        vec3 licht = mix(vec3(1.0, 0.94, 0.86), vCol, 0.38);
-                        c += licht * fenster * an * glanz * (1.9 + vHi * 1.6) * vLicht;
-                        // Neonkanten: senkrechte Gratlinien und ein Kranz unter dem Dach
-                        float grat = 1.0 - smoothstep(0.0, fwidth(u) * 1.6 + 0.004, halb - abs(u));
-                        float kranz = kasten(vH - vY, 0.03, 0.075);
-                        c += vCol * (grat * 0.55 + kranz * 1.8) * vLicht;
-                        // Abtaststrahl: ein Lichtband laeuft langsam an den Tuermen hoch
-                        float band = exp(-pow((fract(uZeit * 0.07 + vSeed * 0.013) * (vH + 3.0) - vY) * 3.0, 2.0));
-                        c += vCol * band * 0.6 * vLicht * (0.4 + vAkt);
-                    }
-                    c += vec3(0.9, 0.95, 1.0) * vHi * 0.10;
-                    c = mix(c, vec3(0.002, 0.002, 0.006), vDim);
+                    vec3 c = vCol * (0.03 + 1.25 * pow(vY, 2.4) * (0.35 + 0.65 * vLicht)) * (1.0 + vHi * 0.8);
+                    c = mix(c, vec3(0.002, 0.003, 0.008), vDim);
                     gl_FragColor = vec4(c, 1.0);
                 }`
         });
-        var tuerme = new THREE.InstancedMesh(geoTurm, turmMat, N);
+
+        // Energiekugel: heller Rand, gluehender Kern, leises Pulsieren
+        var geoKugel = new THREE.IcosahedronGeometry(1, 4);
+        attribute(geoKugel);
+        var kugelMat = new THREE.ShaderMaterial({
+            uniforms: { uIntro: uIntro, uZeit: uZeit, uRuhe: uRuhe },
+            vertexShader: gemeinsam + `
+                varying vec3 vN; varying vec3 vV;
+                void main() {
+                    float wachs = 1.0 - pow(1.0 - clamp((uIntro - aDelay) / 0.9, 0.0, 1.0), 3.0);
+                    vLicht = clamp((uIntro - aDelay - 0.5) / 0.7, 0.0, 1.0);
+                    float auf = 1.0 - pow(1.0 - vLicht, 3.0);
+                    float gross = (0.15 + 0.85 * auf) * (1.0 + aHi * 0.45);
+                    vec3 p = position * gross;
+                    // Kugel sitzt auf der Halmspitze: mitwachsen und mitwiegen (Einheiten / aRad, weil die
+                    // Instanzmatrix um aRad skaliert)
+                    p.y -= (1.0 - wachs) * aHoch / aRad;
+                    p.xz += wiege(aSeed, uZeit, uRuhe) * wachs * wachs * aHoch / aRad;
+                    vec4 w = modelMatrix * instanceMatrix * vec4(p, 1.0);
+                    vN = normalize(mat3(modelMatrix * instanceMatrix) * normal);
+                    vV = cameraPosition - w.xyz;
+                    vCol = instanceColor; vDim = aDim; vHi = aHi; vAkt = aAkt; vSeed = aSeed;
+                    gl_Position = projectionMatrix * viewMatrix * w;
+                }`,
+            fragmentShader: `
+                uniform float uZeit; uniform float uRuhe;
+                varying vec3 vCol; varying float vDim; varying float vHi; varying float vAkt; varying float vSeed; varying float vLicht;
+                varying vec3 vN; varying vec3 vV;
+                void main() {
+                    float nv = clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0);   // ohne clamp: 1.0000001 -> pow(negativ) = NaN -> schwarze Bloecke im Bloom
+                    float rand = pow(1.0 - nv, 2.2);
+                    float kern = pow(nv, 4.0);
+                    float puls = uRuhe > 0.5 ? 1.0 : 0.88 + 0.12 * sin(uZeit * (1.2 + vAkt * 2.0) + vSeed);
+                    vec3 c = vCol * (0.35 + rand * 2.8) + mix(vCol, vec3(1.0), 0.6) * kern * (0.7 + vAkt * 1.3);
+                    c *= puls * (0.2 + 0.8 * vLicht) * (1.0 + vHi * 1.1);
+                    c = mix(c, vec3(0.003, 0.004, 0.01), vDim);
+                    gl_FragColor = vec4(c, 1.0);
+                }`
+        });
+
         var grund = liste.map(function (fid) { return new THREE.Color(TC[RAW.nodes[fid].type] || TC.other); });
+        var halme = new THREE.InstancedMesh(geoHalm, halmMat, N);
+        var tuerme = new THREE.InstancedMesh(geoKugel, kugelMat, N);   // Name bleibt: Treffer-Test und Zustand haengen daran
         var tmpM = new THREE.Matrix4(), OBEN = new V(0, 1, 0), XA = new V(1, 0, 0);
         function rahmen(nv, ost, nord) {
             ost.crossVectors(OBEN, nv); if (ost.lengthSq() < 1e-6) ost.copy(XA); ost.normalize();
-            nord.crossVectors(nv, ost).normalize();
+            // ost x oben = nord ergibt ein RECHTShaendiges System. Mit oben x ost war es gespiegelt:
+            // die Grafikkarte schnitt die Vorderseiten weg, man sah Innenwaende (die „Dreiecke“ der Tuerme).
+            nord.crossVectors(ost, nv).normalize();
         }
         (function () {
             var ost = new V(), nord = new V(), s = new V();
@@ -363,10 +385,15 @@
                 var nv = richt[fid]; rahmen(nv, ost, nord);
                 tmpM.makeBasis(ost, nv, nord); tmpM.scale(s.set(1, hoehe[fid], 1));
                 tmpM.setPosition(nv.x * R, nv.y * R, nv.z * R);
+                halme.setMatrixAt(i, tmpM); halme.setColorAt(i, grund[i]);
+                var r = radius[fid];
+                tmpM.makeBasis(ost, nv, nord); tmpM.scale(s.set(r, r, r));
+                tmpM.setPosition(nv.x * (R + hoehe[fid]), nv.y * (R + hoehe[fid]), nv.z * (R + hoehe[fid]));
                 tuerme.setMatrixAt(i, tmpM); tuerme.setColorAt(i, grund[i]);
             });
         })();
-        tuerme.renderOrder = 2; scene.add(tuerme);
+        halme.renderOrder = 2; tuerme.renderOrder = 2;
+        scene.add(halme); scene.add(tuerme);
 
         // ── Flugrouten: Grosskreis + Hoehenbuckel, CPU (Linien) und GPU (Pakete) gleich ──
         var kanten = EDGES.filter(function (e) { return richt[e.from] && richt[e.to] && e.from !== e.to; });
@@ -501,7 +528,7 @@
         var rtSzene = rt(4), rtHell = rt(), stufen = [rt(), rt(), rt(), rt()], hilf = [rt(), rt(), rt(), rt()];
         var vsQuad = `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
         var matHell = new THREE.ShaderMaterial({ uniforms: { tS: { value: null } }, vertexShader: vsQuad, depthTest: false,
-            fragmentShader: `uniform sampler2D tS; varying vec2 vUv; void main() { vec3 c = texture2D(tS, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.62, 1.5, l), 1.0); }` });
+            fragmentShader: `uniform sampler2D tS; varying vec2 vUv; void main() { vec3 c = texture2D(tS, vUv).rgb; if (!(c.r == c.r && c.g == c.g && c.b == c.b)) c = vec3(0.0); c = clamp(c, 0.0, 60.0); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.62, 1.5, l), 1.0); }` });
         var matBlur = new THREE.ShaderMaterial({ uniforms: { tQ: { value: null }, uRicht: { value: new THREE.Vector2() } }, vertexShader: vsQuad, depthTest: false,
             fragmentShader: `uniform sampler2D tQ; uniform vec2 uRicht; varying vec2 vUv;
                 void main() { vec3 c = texture2D(tQ, vUv).rgb * 0.227027;
@@ -518,6 +545,7 @@
                     // Farbsaum: nur zum Rand hin, in der Mitte bleibt das Bild scharf
                     vec2 off = m * r2 * 0.012;
                     vec3 c = vec3(texture2D(tS, vUv + off).r, texture2D(tS, vUv).g, texture2D(tS, vUv - off).b);
+                    if (!(c.r == c.r && c.g == c.g && c.b == c.b)) c = vec3(0.0);
                     vec3 b = texture2D(tB0, vUv).rgb * 0.8 + texture2D(tB1, vUv).rgb * 0.9 + texture2D(tB2, vUv).rgb * 1.0 + texture2D(tB3, vUv).rgb * 1.1;
                     c += b * 0.9;
                     c *= mix(0.42, 1.0, smoothstep(0.62, 0.08, r2 * 1.9));
@@ -705,7 +733,7 @@
             var r = canvas.getBoundingClientRect();
             maus.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
             ray.setFromCamera(maus, camera);
-            var t = ray.intersectObject(tuerme, false);
+            var t = ray.intersectObjects([tuerme, halme], false);
             return t.length ? liste[t[0].instanceId] : null;
         }
         function schieben(dx, dy) {
