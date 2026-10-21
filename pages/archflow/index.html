@@ -166,6 +166,11 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
 #cvs{width:100%;height:100%;display:block;cursor:grab;opacity:0;transition:opacity .3s ease;touch-action:none}
 #cvs:active{cursor:grabbing}
 #cvs.on{opacity:1}
+/* 3D-Ansicht (Assets/js/archflow-3d.js): eigene WebGL-Leinwand, die 2D-Leinwand ist dann aus. */
+#cvs3{position:absolute;inset:0;width:100%;height:100%;display:none;cursor:grab;touch-action:none;opacity:0;transition:opacity .4s ease}
+#cvs3.on{display:block;opacity:1}
+.cv.is-3d #cvs{display:none}
+.cv.is-3d::before{display:none}
 .zc{position:absolute;bottom:18px;right:18px;display:flex;align-items:center;gap:6px;z-index:10}
 .zl{height:32px;padding:0 10px;background:var(--bg-2);border:1px solid var(--border);border-radius:var(--r-ctl);
   font-size:11.5px;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--t3);display:flex;align-items:center}
@@ -321,7 +326,8 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
     </div>
     <div class="h-actions">
       <div class="seg" role="group" aria-label="Anordnung">
-        <button id="btnG" class="on" onclick="setLayout('group')" aria-pressed="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Gruppen</span></button>
+        <button id="btn3" onclick="setLayout('3d')" aria-pressed="false" hidden><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5"/><path d="M12 12v9"/></svg><span>3D</span></button>
+        <button id="btnG" onclick="setLayout('group')" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Gruppen</span></button>
         <button id="btnH" onclick="setLayout('hier')" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v5m0 0H6.5A1.5 1.5 0 0 0 5 10.5V14m7-5h5.5A1.5 1.5 0 0 1 19 10.5V14M5 14v2m7-2v2m7-2v2"/><circle cx="12" cy="3" r="1.4"/></svg><span>Hierarchie</span></button>
       </div>
       <button class="ib" onclick="fitView()" title="Alles einpassen (0)" aria-label="Alles einpassen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9m6 0h3.5A1.5 1.5 0 0 1 20 5.5V9m0 6v3.5a1.5 1.5 0 0 1-1.5 1.5H15m-6 0H5.5A1.5 1.5 0 0 1 4 18.5V15"/></svg></button>
@@ -359,6 +365,7 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
 
     <div class="cv" id="cvWrap">
       <canvas id="cvs" aria-label="Architektur-Graph"></canvas>
+      <canvas id="cvs3" aria-label="Architektur als 3D-Stadt"></canvas>
       <div class="zc">
         <div class="zl" id="zLvl">100%</div>
         <button class="ib" onclick="doZoom(.8)" title="Verkleinern (-)" aria-label="Verkleinern"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
@@ -390,6 +397,7 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
         <li><i class="ring"></i><span>Konfiguration und Daten (JSON)</span></li>
       </ul>
       <p>Eine Verbindungslinie trägt die Farbe dessen, was sie lädt. Die Rahmen fassen zusammen, was fachlich zusammengehört — Dashboard, Historie, Berichtsheft und so weiter.</p>
+      <p id="ab3d">In der 3D-Ansicht ist jede Gruppe ein Viertel und jede Datei ein Turm. Je höher der Turm, desto mehr Verbindungen hat die Datei. Ziehen dreht die Stadt, mit rechter Maustaste oder Umschalt verschiebst du sie.</p>
       <h3>Bedienung</h3>
       <p>Ziehen verschiebt, Scrollen zoomt. In der Übersicht bleiben die Namen aus, weil sie dort nur wenige Pixel hoch wären; hineinzoomen bringt sie zurück. Ein Klick auf eine Kachel zeigt, was sie lädt und wer sie lädt.</p>
       <ul class="ab-k">
@@ -500,7 +508,12 @@ async function init(){
     document.getElementById('hStats').innerHTML=[
       {v:NODES.length,l:L('Dateien','files')},{v:EDGES.length,l:L('Verbindungen','links')},{v:GROUPS.length,l:L('Gruppen','groups')}
     ].map(s=>'<div class="h-s"><b>'+s.v+'</b><span>'+s.l+'</span></div>').join('');
-    buildFilters();buildList();buildLegend();resize();setLayout('group');
+    buildFilters();buildList();buildLegend();resize();
+    /* archflow-3d.js ist defer — das laeuft vor DOMContentLoaded, die Daten koennen aber schneller da sein. */
+    if(!window.AF3D&&document.readyState==='loading')await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
+    let start='3d';try{start=localStorage.getItem('af_layout')||'3d';}catch(e){}
+    if(window.AF3D&&AF3D.verfuegbar)document.getElementById('btn3').hidden=false;
+    setLayout(start);
     document.getElementById('loader').classList.add('out');
     document.getElementById('app').classList.add('on');cvs.classList.add('on');
     setTimeout(()=>{const l=document.getElementById('loader');if(l)l.style.display='none';},350);
@@ -513,6 +526,7 @@ function resize(){
   const W=wrap.clientWidth,H=wrap.clientHeight;
   cvs.width=Math.round(W*DPR);cvs.height=Math.round(H*DPR);cvs.style.width=W+'px';cvs.style.height=H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);render();
+  if(window.AF3D)AF3D.resize();
 }
 window.addEventListener('resize',resize);
 
@@ -578,8 +592,8 @@ function s2w(sx,sy){return{x:(sx-tx)/sc,y:(sy-ty)/sc};}
    Zoomen liefen so drei bis fuenf komplette Durchlaeufe in EIN Frame. render()
    merkt nur noch vor, renderNow() malt sofort (nur der PNG-Export braucht das). */
 let _raf=0;
-function render(){if(_raf)return;_raf=requestAnimationFrame(()=>{_raf=0;draw();});}
-function renderNow(){if(_raf){cancelAnimationFrame(_raf);_raf=0;}draw();}
+function render(){if(layout==='3d'){if(window.AF3D)AF3D.sync();return;}if(_raf)return;_raf=requestAnimationFrame(()=>{_raf=0;draw();});}
+function renderNow(){if(layout==='3d')return;if(_raf){cancelAnimationFrame(_raf);_raf=0;}draw();}
 
 /* Nachbarn des gewaehlten Knotens einmal je Auswahl statt je Knoten und Bild.
    Vorher stand in der Knotenschleife ein EDGES.some(...) — bei 542 Knoten x 336
@@ -749,14 +763,23 @@ function draw(){
 }
 
 function setLayout(l){
+  if(l==='3d'&&!(window.AF3D&&AF3D.verfuegbar))l='group';
   layout=l;
-  const g=document.getElementById('btnG'),h=document.getElementById('btnH');
-  g.classList.toggle('on',l==='group');g.setAttribute('aria-pressed',l==='group');
-  h.classList.toggle('on',l==='hier');h.setAttribute('aria-pressed',l==='hier');
+  [['btn3','3d'],['btnG','group'],['btnH','hier']].forEach(([id,v])=>{const b=document.getElementById(id);b.classList.toggle('on',l===v);b.setAttribute('aria-pressed',l===v);});
+  try{localStorage.setItem('af_layout',l);}catch(e){}
+  wrap.classList.toggle('is-3d',l==='3d');
+  hideTT();hov=null;
+  if(l==='3d'){
+    /* Scheitert der Aufbau (Modul fehlt, Kontext verloren), bleibt die 2D-Karte benutzbar. */
+    AF3D.start().catch(err=>{console.error(err);AF3D.verfuegbar=false;document.getElementById('btn3').hidden=true;setLayout('group');});
+    return;
+  }
+  if(window.AF3D)AF3D.pause();
   positions=l==='hier'?computeHier():computeGroup();fitView();
 }
 function setZoomLabel(){document.getElementById('zLvl').textContent=Math.round(sc*100)+'%';}
 function fitView(){
+  if(layout==='3d'){AF3D.home();return;}
   const pts=Object.values(positions);if(!pts.length)return;
   const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
   let minX=Math.min(...xs)-NW,maxX=Math.max(...xs)+NW;
@@ -773,6 +796,7 @@ function fitView(){
   setZoomLabel();render();
 }
 function doZoom(f){
+  if(layout==='3d'){AF3D.zoom(f);return;}
   const W=wrap.clientWidth,H=wrap.clientHeight;
   const{x:wx,y:wy}=s2w(W/2,H/2);
   sc=Math.max(.05,Math.min(5,sc*f));tx=W/2-wx*sc;ty=H/2-wy*sc;setZoomLabel();render();
@@ -786,6 +810,7 @@ cvs.addEventListener('mousedown',e=>{
   drag=true;moved=false;ds={x:e.clientX-tx,y:e.clientY-ty};
 });
 window.addEventListener('mousemove',e=>{
+  if(layout==='3d')return;
   if(drag){tx=e.clientX-ds.x;ty=e.clientY-ds.y;moved=true;render();return;}
   const rect=cvs.getBoundingClientRect();
   if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom){
@@ -860,7 +885,7 @@ function closeDetail(){
   sel=null;document.getElementById('dp').classList.remove('o');
   document.querySelectorAll('.fi').forEach(el=>el.classList.remove('sel'));render();
 }
-function centerOn(id){const p=positions[id];if(!p)return;const W=wrap.clientWidth,H=wrap.clientHeight;tx=W/2-p.x*sc;ty=H/2-p.y*sc;render();}
+function centerOn(id){if(layout==='3d'){AF3D.fly(id);return;}const p=positions[id];if(!p)return;const W=wrap.clientWidth,H=wrap.clientHeight;tx=W/2-p.x*sc;ty=H/2-p.y*sc;render();}
 
 function buildDetail(id){
   const n=RAW.nodes[id];if(!n)return'';
@@ -1035,6 +1060,7 @@ function buildList(){
     });
     div.appendChild(hdr);div.appendChild(fEl);list.appendChild(div);
   });
+  if(layout==='3d')render();
   if(!shown){
     const d=document.createElement('div');d.className='sb-empty';
     d.textContent=searchQ
@@ -1044,6 +1070,12 @@ function buildList(){
   }
 }
 function exportPNG(){
+  if(layout==='3d'){
+    const url=AF3D.png();if(!url)return;
+    const im=new Image();im.onload=()=>{const t=document.createElement('canvas');t.width=im.width;t.height=im.height;
+      const c=t.getContext('2d');c.fillStyle='#030305';c.fillRect(0,0,t.width,t.height);c.drawImage(im,0,0);
+      const a=document.createElement('a');a.href=t.toDataURL('image/png');a.download='archflow-3d.png';a.click();};im.src=url;return;
+  }
   /* render() malt erst im naechsten Frame — vor dem Abgreifen also erzwingen,
      sonst liegt im PNG der Stand von vor der letzten Bewegung. */
   renderNow();
@@ -1054,6 +1086,7 @@ function exportPNG(){
 }
 init();
 </script>
+<script defer src="/Assets/js/archflow-3d.js?v=316d61e6d8"></script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
 </html>
