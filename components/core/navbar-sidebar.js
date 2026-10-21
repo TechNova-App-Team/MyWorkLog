@@ -136,8 +136,6 @@
             {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
             {id:'weekview', label:'Wochenansicht', icon:getIconSvgById('weekview'), visible:true},
             {id:'urlaubsplaner', label:'Urlaubsplaner', icon:getIconSvgById('urlaubsplaner'), visible:true},
-            {id:'school', label:'Berufsschule', icon:getIconSvgById('school'), visible:true},
-            {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
             {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'/aufgaben/'},
         ];
@@ -148,7 +146,9 @@
         // Sidebar-Reihenfolge steckt in den Nutzerdaten (data.settings.nav).
         // 7: Fahrtkosten war fest in Ausbildung & Lernen (seit v8.7.1 entfernt).
         // Entfernte Ansichten (Diagramme, v8.7.1) brauchen KEINEN Bump: der
-        // else-Zweig unten filtert unbekannte ids aus data.settings.nav.
+        // else-Zweig unten filtert unbekannte ids aus data.settings.nav. Dasselbe gilt
+        // fuer Berufsschule + IHK (seit 21.10.2026): die stehen fest in sidebar.html unter
+        // „Ausbildung & Lernen“, nicht mehr in dieser sortierbaren Liste.
         // Nur hochzaehlen, wenn sich die Liste OBEN wirklich aendert: ein Bump
         // ueberschreibt jedem Bestandsnutzer seine selbst sortierte Sidebar.
         // 🔴 Gegenbeispiel aus v6.4.9: beim Entfernen der FI Academy war der

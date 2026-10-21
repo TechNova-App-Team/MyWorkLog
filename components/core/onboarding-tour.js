@@ -181,12 +181,12 @@
         }
         const sb = document.getElementById('sidebar');
         if (!sb || sb.classList.contains('hidden')) return null;
-        const el = _q('#sidebarNavList .nav-item[data-nav-id="' + tab + '"]');
+        const el = _q('#sidebar .nav-item[data-nav-id="' + tab + '"]');
         return _visible(el) ? el : null;
     }
 
     function _areaName(tab) {
-        const nav = _q('#sidebarNavList .nav-item[data-nav-id="' + tab + '"] .nav-label');
+        const nav = _q('#sidebar .nav-item[data-nav-id="' + tab + '"] .nav-label');
         const t = nav && nav.textContent.trim();
         if (t) return t;
         const a = TOUR_AREA[tab];
