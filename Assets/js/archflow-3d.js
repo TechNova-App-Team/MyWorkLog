@@ -1,19 +1,18 @@
 // ═══ ARCHFLOW 3D MODULE ═══
-// /archflow/ Ansicht „3D“: der Quellcode als Planet. Gruppe = leuchtender Kontinent
-// aus Lichtpunkten, Datei = Lichthalm mit Energiekugel (Hoehe = sqrt(ein+aus),
-// Kugelgroesse = Funktionen), Farbe = Dateiart (TC der Seite), Verbindung =
-// Flugroute ueber die Kugel mit wanderndem Lichtpaket vom Lader zur geladenen Datei.
+// /archflow/ Ansicht „3D“: der Quellcode als neuronales Netz im Raum. Gruppe =
+// Hirnareal (kugeliger Cluster mit Nebelschimmer), Datei = Neuron (Kern + Dendriten,
+// Groesse = Verbindungen), Farbe = Dateiart (TC der Seite), Verbindung = gebuendelte
+// Nervenbahn mit Lichtimpuls vom Lader zur geladenen Datei.
 //
 // Haengt an den Globals des Hauptskripts der Seite (NODES, EDGES, GROUPS, RAW, sel,
 // hov, filterType, searchQ, TC, selectNode, closeDetail, showTT, hideTT, nachbarn).
 // Das Hauptskript ruft window.AF3D nur, solange layout === '3d'.
 //
-// Werdegang (21.10.2026, alles an einem Abend): ruhige Stadt -> „Standard-Three.js“;
-// Nachtstadt mit Fensterklotzen -> „Shader so naja, viel krasser, absurder“. Dies ist
-// Fassung drei; Fassung vier bekam Boden (Meer, Gradnetz, Kontinente) und eine
-// Globus-Kamera (seitlicher Blick moeglich). Bewusst VIEL Effekt (Bloom, Fluss, Atmosphaere, Sterne, Korn,
-// Farbsaum) — Wunsch des Nutzers, hier gilt die sonstige Ein-Effekt-Regel nicht.
-// prefers-reduced-motion: kein Anflug, kein Fluss, kein Drehen, kein Funkeln.
+// Werdegang 21.10.2026 (ein Abend, sechs Fassungen): ruhige Stadt -> Nachtstadt ->
+// Planet mit Glastuermen -> Planet mit Boden -> Datenwald -> dieses Netz. Der Nutzer
+// wollte ausdruecklich „3D, nichts Flaches“ und keine Haeuser/Baeume. Nicht zu einer
+// der Vorfassungen zurueckbauen. Bewusst viel Effekt (Bloom, Impulse, Nebel, Staub);
+// prefers-reduced-motion: kein Anflug, keine Impulse, kein Drehen, kein Flackern.
 //
 // Bloom ist selbst gebaut, weil im Repo nur three.module.js liegt (keine examples/jsm).
 (function () {
@@ -52,6 +51,8 @@
     function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
     function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
     function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    // Deterministischer Zufall: dieselbe Datei sieht bei jedem Laden gleich aus
+    function zufall(s) { var x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
 
     function baue(THREE) {
         var V = THREE.Vector3;
@@ -64,359 +65,234 @@
         renderer.setClearColor(0x010103, 1);
 
         var scene = new THREE.Scene();
-        var camera = new THREE.PerspectiveCamera(36, 1, 0.1, 2000);
+        var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 3000);
         var akzent = new THREE.Color((getComputedStyle(document.documentElement).getPropertyValue('--primary') || '').trim() || '#5578a8');
         var akzentHell = akzent.clone().lerp(new THREE.Color('#bcd2ff'), 0.55);
+        var uZeit = { value: 0 }, uIntro = { value: RM ? 99 : 0 }, uFluss = { value: RM ? 1 : 0 }, uRuhe = { value: RM ? 1 : 0 };
+        var uPx = { value: renderer.getPixelRatio() };
 
-        var uZeit = { value: 0 }, uIntro = { value: RM ? 99 : 0 }, uFluss = { value: RM ? 1 : 0 };
-        var uRuhe = { value: RM ? 1 : 0 };
-
-        // ── Layout: Viertel erst flach packen (wie die 2D-Karte), dann auf die Kugel legen ──
-        var ZELLE = 1.05, FUSS = 0.58, RAND = 0.6, LUECKE = 2.4;
+        // ── Layout: Areale auf einer 3D-Spirale, grosse innen; Neuronen als Fibonacci-Ball ──
         var gruppen = GROUPS.map(function (g) {
             var files = g.files.filter(function (f) { return RAW.nodes[f]; });
-            var k = Math.max(1, Math.ceil(Math.sqrt(files.length)));
-            var reihen = Math.ceil(files.length / k);
-            return { g: g, files: files, k: k, w: k * ZELLE + RAND * 2, d: reihen * ZELLE + RAND * 2 };
+            return { g: g, files: files, rc: 1.6 + Math.cbrt(files.length) * 2.15 };
         }).filter(function (b) { return b.files.length; }).sort(function (a, b) { return b.files.length - a.files.length; });
-        var platziert = [];
-        function frei(x, z, b) {
-            for (var i = 0; i < platziert.length; i++) {
-                var p = platziert[i];
-                if (Math.abs(x - p.x) < (b.w + p.b.w) / 2 + LUECKE && Math.abs(z - p.z) < (b.d + p.b.d) / 2 + LUECKE) return false;
-            }
-            return true;
-        }
+        var NG = gruppen.length, gold = Math.PI * (3 - Math.sqrt(5));
         gruppen.forEach(function (b, i) {
-            if (!i) { platziert.push({ x: 0, z: 0, b: b }); b.x = 0; b.z = 0; return; }
-            for (var s = 1; s < 30000; s++) {
-                var r = 1.35 * Math.sqrt(s), a = s * 2.39996;
-                var x = Math.cos(a) * r, z = Math.sin(a) * r;
-                if (frei(x, z, b)) { b.x = x; b.z = z; platziert.push({ x: x, z: z, b: b }); return; }
+            var y = 1 - (i + 0.5) / NG * 2, q = Math.sqrt(1 - y * y), a = i * gold;
+            var r = 6 + 52 * Math.sqrt((i + 0.5) / NG);
+            b.c = new V(Math.cos(a) * q * r, y * r * 0.62, Math.sin(a) * q * r);
+        });
+        // Entzerren: Areale duerfen sich nicht durchdringen
+        for (var it = 0; it < 80; it++) {
+            for (var i = 0; i < NG; i++) for (var k = i + 1; k < NG; k++) {
+                var A = gruppen[i], B = gruppen[k], d = A.c.distanceTo(B.c), soll = A.rc + B.rc + 3.5;
+                if (d < soll) {
+                    var schub = new V().subVectors(B.c, A.c).normalize().multiplyScalar((soll - d) * 0.5);
+                    if (!isFinite(schub.x)) schub.set(0.1, 0, 0);
+                    A.c.sub(schub); B.c.add(schub);
+                }
             }
-        });
-        var flach = {}, rMax = 1;
+        }
+        var pos = {}, gross = {}, liste = [], index = {}, gruppeVon = {}, maxGrad = 1, weltR = 1;
+        NODES.forEach(function (n) { maxGrad = Math.max(maxGrad, (n.inDegree || 0) + (n.outDegree || 0)); });
         gruppen.forEach(function (b, gi) {
-            b.files.forEach(function (fid, fi) {
-                var c = fi % b.k, r = Math.floor(fi / b.k);
-                var x = b.x - b.w / 2 + RAND + (c + 0.5) * ZELLE, z = b.z - b.d / 2 + RAND + (r + 0.5) * ZELLE;
-                flach[fid] = { x: x, z: z, g: gi };
-                rMax = Math.max(rMax, Math.hypot(x, z));
+            var n = b.files.length;
+            // Die meistvernetzten Dateien in die Mitte des Areals
+            var sortiert = b.files.slice().sort(function (x, y) {
+                var nx = RAW.nodes[x], ny = RAW.nodes[y];
+                return ((ny.inDegree || 0) + (ny.outDegree || 0)) - ((nx.inDegree || 0) + (nx.outDegree || 0));
             });
+            sortiert.forEach(function (fid, fi) {
+                var yy = 1 - (fi + 0.5) / n * 2, qq = Math.sqrt(1 - yy * yy), aa = fi * gold;
+                var rr = n === 1 ? 0 : b.rc * Math.cbrt((fi + 0.5) / n);
+                var p = new V(Math.cos(aa) * qq * rr, yy * rr, Math.sin(aa) * qq * rr).add(b.c);
+                var nd = RAW.nodes[fid], grad = (nd.inDegree || 0) + (nd.outDegree || 0);
+                pos[fid] = p; gross[fid] = 0.55 + Math.sqrt(grad) * 0.42;
+                gruppeVon[fid] = gi; index[fid] = liste.length; liste.push(fid);
+                weltR = Math.max(weltR, p.length());
+            });
+            var m = 0; b.files.forEach(function (f) { m = Math.max(m, pos[f].distanceTo(b.c)); }); b.ausdehnung = m;
         });
-        // Flaechentreue Azimutalprojektion (Lambert): der Mittelpunkt wird der Nordpol,
-        // aussen reicht die Stadt bis ~112 Grad. Flaechentreu, damit die vielen kleinen
-        // Viertel am Rand nicht zusammengequetscht werden.
-        var MAXW = Math.PI * 0.62;
-        var R = (rMax + 1.5) / (2 * Math.sin(MAXW / 2));
-        function aufKugel(x, z) {
-            var r = Math.hypot(x, z), w = 2 * Math.asin(clamp(r / (2 * R), 0, 1)), az = Math.atan2(z, x);
-            return new V(Math.sin(w) * Math.cos(az), Math.cos(w), Math.sin(w) * Math.sin(az));
+        var N = liste.length;
+        var grund = liste.map(function (fid) { return new THREE.Color(TC[RAW.nodes[fid].type] || TC.other); });
+
+        function kreisTextur(malen) {
+            var c = document.createElement('canvas'); c.width = c.height = 128;
+            var g = c.getContext('2d'); malen(g, 64);
+            var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
         }
 
-        var richt = {}, hoehe = {}, liste = [], index = {}, maxGrad = 1;
-        NODES.forEach(function (n) { maxGrad = Math.max(maxGrad, (n.inDegree || 0) + (n.outDegree || 0)); });
-        gruppen.forEach(function (b) {
-            b.files.forEach(function (fid) {
-                var n = RAW.nodes[fid], f = flach[fid];
-                richt[fid] = aufKugel(f.x, f.z);
-                hoehe[fid] = 0.3 + Math.sqrt((n.inDegree || 0) + (n.outDegree || 0)) * 0.55;
-                index[fid] = liste.length; liste.push(fid);
-            });
-            var m = new V(); b.files.forEach(function (f) { m.add(richt[f]); }); b.mitte = m.normalize();
-            var wMax = 0; b.files.forEach(function (f) { wMax = Math.max(wMax, b.mitte.angleTo(richt[f])); });
-            b.winkel = wMax + 0.55 / R + 0.02;
-            var hmax = 0; b.files.forEach(function (f) { hmax = Math.max(hmax, hoehe[f]); }); b.hmax = hmax;
-        });
-        function spitze(fid) { return richt[fid].clone().multiplyScalar(R + hoehe[fid]); }
-
-        // ── Sterne: zwei Schichten, funkeln leise ──────────────────────
-        (function () {
-            var n = schmal ? 1800 : 3600, P = new Float32Array(n * 3), S = new Float32Array(n), K = new Float32Array(n);
+        // ── Raum: Sterne fern, Staub nah (Tiefe beim Fliegen) ──────────
+        function punktwolke(n, rMin, rMax, groesse, farbe, staerke) {
+            var P = new Float32Array(n * 3), S = new Float32Array(n), K = new Float32Array(n);
             for (var i = 0; i < n; i++) {
-                var u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, rr = 420 + Math.random() * 380, q = Math.sqrt(1 - u * u);
+                var u = zufall(i * 3.1 + rMin) * 2 - 1, a = zufall(i * 7.3 + rMax) * Math.PI * 2, q = Math.sqrt(1 - u * u);
+                var rr = rMin + (rMax - rMin) * Math.cbrt(zufall(i * 1.7 + 9));
                 P.set([q * Math.cos(a) * rr, u * rr, q * Math.sin(a) * rr], i * 3);
-                S[i] = Math.pow(Math.random(), 6) * 2.6 + 0.6; K[i] = Math.random() * 100;
+                S[i] = groesse * (0.4 + Math.pow(zufall(i * 5.9), 5) * 2.4); K[i] = zufall(i * 2.3) * 100;
             }
             var g = new THREE.BufferGeometry();
             g.setAttribute('position', new THREE.BufferAttribute(P, 3));
             g.setAttribute('aS', new THREE.BufferAttribute(S, 1)); g.setAttribute('aK', new THREE.BufferAttribute(K, 1));
-            var sterne = new THREE.Points(g, new THREE.ShaderMaterial({
+            var p = new THREE.Points(g, new THREE.ShaderMaterial({
                 transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-                uniforms: { uZeit: uZeit, uRuhe: uRuhe, uPx: { value: renderer.getPixelRatio() } },
+                uniforms: { uZeit: uZeit, uRuhe: uRuhe, uPx: uPx, uF: { value: farbe }, uSt: { value: staerke } },
                 vertexShader: `attribute float aS; attribute float aK; uniform float uZeit; uniform float uRuhe; uniform float uPx; varying float vA;
-                    void main() { vA = 0.45 + 0.55 * (uRuhe > 0.5 ? 1.0 : 0.5 + 0.5 * sin(uZeit * (0.6 + fract(aK) * 1.4) + aK));
-                        gl_PointSize = aS * uPx; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-                fragmentShader: `varying float vA; void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d);
-                    gl_FragColor = vec4(vec3(0.75, 0.82, 1.0) * a * a * vA * 1.4, 1.0); }`
+                    void main() { vA = uRuhe > 0.5 ? 1.0 : 0.55 + 0.45 * sin(uZeit * (0.5 + fract(aK) * 1.3) + aK);
+                        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = clamp(aS * uPx * 60.0 / -mv.z, 1.0, 6.0 * uPx); gl_Position = projectionMatrix * mv; }`,
+                fragmentShader: `uniform vec3 uF; uniform float uSt; varying float vA;
+                    void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d); gl_FragColor = vec4(uF * a * a * vA * uSt, 1.0); }`
             }));
-            sterne.frustumCulled = false; scene.add(sterne);
-        })();
+            p.frustumCulled = false; scene.add(p); return p;
+        }
+        punktwolke(schmal ? 1800 : 3500, 700, 1300, 22, new THREE.Color(0.75, 0.82, 1.0), 1.3);
+        punktwolke(schmal ? 1500 : 3000, weltR * 0.2, weltR * 2.2, 0.35, akzentHell.clone().lerp(new THREE.Color(1, 1, 1), 0.3), 0.55);
 
-        var uGrp = { value: -1 };
-        // ── Planetenboden: Meer, Gradnetz, Kontinente mit Umriss, Tag- und Nachtseite ──
-        // Ohne Boden sah der Planet aus der Naehe „nicht fertig“ aus (Meldung des Nutzers):
-        // Kaesten ueber schwarzem Nichts. Erst Meer + Gradnetz + Kuestenlinie lesen sich als Welt.
-        var NK = gruppen.length;
-        var kontRicht = [], kontFarbe = [];
-        gruppen.forEach(function (b) {
+        // ── Areale: Nebel aus weichen Billboards in der Hauptfarbe ─────
+        var nebelTex = kreisTextur(function (g, r) {
+            var v = g.createRadialGradient(r, r, 0, r, r, r);
+            v.addColorStop(0, 'rgba(255,255,255,0.9)'); v.addColorStop(0.35, 'rgba(255,255,255,0.28)'); v.addColorStop(1, 'rgba(255,255,255,0)');
+            g.fillStyle = v; g.fillRect(0, 0, 2 * r, 2 * r);
+        });
+        var nebel = [];
+        gruppen.forEach(function (b, gi) {
             var zaehl = {}; b.files.forEach(function (f) { var t = RAW.nodes[f].type; zaehl[t] = (zaehl[t] || 0) + 1; });
             var top = Object.keys(zaehl).sort(function (x, y) { return zaehl[y] - zaehl[x]; })[0];
-            kontRicht.push(new THREE.Vector4(b.mitte.x, b.mitte.y, b.mitte.z, b.winkel));
-            kontFarbe.push(new THREE.Color(TC[top] || TC.other));
-        });
-        var uSonne = { value: new V(0.55, 0.6, 0.58).normalize() };
-        var kern = new THREE.Mesh(new THREE.SphereGeometry(R - 0.03, 160, 120), new THREE.ShaderMaterial({
-            defines: { NK: NK },
-            uniforms: { uAkz: { value: akzentHell }, uK: { value: kontRicht }, uKF: { value: kontFarbe }, uSonne: uSonne, uIntro: uIntro, uGrp: uGrp },
-            vertexShader: `varying vec3 vP; varying vec3 vN;
-                void main() { vP = normalize(position); vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `uniform vec3 uAkz; uniform vec4 uK[NK]; uniform vec3 uKF[NK]; uniform vec3 uSonne; uniform float uIntro; uniform float uGrp;
-                varying vec3 vP; varying vec3 vN;
-                float linie(float x, float breite) { float w = fwidth(x) * breite; float f = abs(fract(x + 0.5) - 0.5); return 1.0 - smoothstep(0.0, w, f); }
-                void main() {
-                    vec3 d = normalize(vP);
-                    float tag = smoothstep(-0.35, 0.6, dot(d, uSonne));
-                    // Meer: tiefes Blau, auf der Tagseite heller
-                    vec3 c = mix(vec3(0.006, 0.009, 0.02), vec3(0.016, 0.026, 0.06), tag);
-                    // Gradnetz alle 10 Grad, zum Pol hin ausgeduennt
-                    float lat = asin(clamp(d.y, -1.0, 1.0)), lon = atan(d.z, d.x);
-                    float netz = max(linie(lat * 18.0 / 3.14159265, 1.2), linie(lon * 18.0 / 3.14159265, 1.2) * smoothstep(0.995, 0.9, abs(d.y)));
-                    c += uAkz * netz * (0.035 + 0.04 * tag);
-                    float sicht = smoothstep(acos(clamp(d.y, -1.0, 1.0)) * 0.75, acos(clamp(d.y, -1.0, 1.0)) * 0.75 + 0.6, uIntro);
-                    for (int k = 0; k < NK; k++) {
-                        float cw = dot(d, uK[k].xyz);
-                        float w = uK[k].w;
-                        if (cw < cos(w + 0.04)) continue;
-                        float ang = acos(clamp(cw, -1.0, 1.0));
-                        float aa = fwidth(ang) * 1.2;
-                        float innen = 1.0 - smoothstep(w - aa, w + aa, ang);
-                        float kueste = 1.0 - smoothstep(0.0, aa * 1.8 + 0.0015, abs(ang - w));
-                        float hell = (uGrp > -0.5 && abs(float(k) - uGrp) < 0.5) ? 1.8 : 1.0;
-                        vec3 land = mix(vec3(0.028, 0.032, 0.05), uKF[k] * 0.11, 0.5) * (0.55 + 0.45 * tag);
-                        // Innenleben: feines Strassenraster wie eine Leiterplatte
-                        float raster = max(linie(lat * 260.0 / 3.14159265, 0.9), linie(lon * 260.0 / 3.14159265, 0.9)) * 0.5;
-                        land += uKF[k] * raster * 0.06;
-                        c = mix(c, land * hell, innen * sicht);
-                        c += uKF[k] * kueste * 1.1 * hell * sicht;
-                    }
-                    // Randlicht der Kugel
-                    float f = pow(1.0 - max(dot(normalize(vN), vec3(0.0, 0.0, 1.0)), 0.0), 2.6);
-                    c += uAkz * f * 0.22;
-                    gl_FragColor = vec4(c, 1.0);
-                }`
-        }));
-        scene.add(kern);
-        // Atmosphaere: Ruecklicht um die Kugel
-        var atmo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.16, 96, 64), new THREE.ShaderMaterial({
-            side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-            uniforms: { uAkz: { value: akzentHell } },
-            vertexShader: `varying vec3 vN; void main() { vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `uniform vec3 uAkz; varying vec3 vN;
-                void main() { float i = pow(clamp(0.68 - dot(vN, vec3(0.0, 0.0, 1.0)), 0.0, 1.0), 4.0); gl_FragColor = vec4(uAkz * i * 0.34, 1.0); }`
-        }));
-        scene.add(atmo);
-
-        // ── Oberflaeche: Fibonacci-Lichtpunkte, Kontinente = Viertel ───
-        (function () {
-            var n = schmal ? 26000 : 52000, P = new Float32Array(n * 3), IN = new Float32Array(n), G = new Float32Array(n), D = new Float32Array(n);
-            var gold = Math.PI * (3 - Math.sqrt(5)), d = new V(), m = 0;
-            for (var i = 0; i < n; i++) {
-                var y = 1 - (i / (n - 1)) * 2, q = Math.sqrt(1 - y * y), a = i * gold;
-                d.set(Math.cos(a) * q, y, Math.sin(a) * q);
-                var gi = -1, best = 0;
-                for (var k = 0; k < gruppen.length; k++) {
-                    var b = gruppen[k], ang = b.mitte.angleTo(d);
-                    if (ang < b.winkel) { var s = 1 - ang / b.winkel; if (s > best) { best = s; gi = k; } }
-                }
-                if (gi < 0) continue;
-                P.set([d.x * R, d.y * R, d.z * R], m * 3);
-                IN[m] = Math.min(1, 0.35 + best * 1.6); G[m] = gi; D[m] = Math.acos(clamp(d.y, -1, 1)) * 0.75; m++;
+            b.farbe = new THREE.Color(TC[top] || TC.other);
+            // Drei versetzte Schichten, damit der Nebel beim Drehen nicht wie eine Scheibe wirkt
+            for (var s = 0; s < 3; s++) {
+                var m = new THREE.Sprite(new THREE.SpriteMaterial({ map: nebelTex, color: b.farbe, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+                var w = (b.ausdehnung + 2.5) * (2.6 + s * 0.7);
+                m.scale.set(w, w, 1);
+                m.position.copy(b.c).add(new V(zufall(gi * 9 + s) - 0.5, zufall(gi * 4 + s * 3) - 0.5, zufall(gi * 2 + s * 7) - 0.5).multiplyScalar(b.ausdehnung * 0.6));
+                m.userData = { gi: gi, basis: 0.055 - s * 0.012 }; m.renderOrder = 0;
+                scene.add(m); nebel.push(m);
             }
-            P = P.subarray(0, m * 3); IN = IN.subarray(0, m); G = G.subarray(0, m); D = D.subarray(0, m);
+        });
+
+        // ── Dendriten: je Neuron einige kurze, leicht gekruemmte Faeden ──
+        (function () {
+            var P = [], C = [], D = [];
+            liste.forEach(function (fid, i) {
+                var p = pos[fid], col = grund[i], g = gross[fid], arme = 3 + Math.floor(zufall(i * 3.3) * 4);
+                var verz = p.length() / weltR * 2.0 + 0.4;
+                for (var a = 0; a < arme; a++) {
+                    var dir = new V(zufall(i * 11 + a) - 0.5, zufall(i * 13 + a * 2) - 0.5, zufall(i * 17 + a * 5) - 0.5).normalize();
+                    var knick = new V(zufall(i * 19 + a) - 0.5, zufall(i * 23 + a) - 0.5, zufall(i * 29 + a) - 0.5).multiplyScalar(0.8);
+                    var len = g * (1.4 + zufall(i * 31 + a) * 1.6), vor = p.clone();
+                    for (var s = 1; s <= 5; s++) {
+                        var t = s / 5;
+                        var nach = p.clone().addScaledVector(dir, len * t).addScaledVector(knick, len * t * t);
+                        P.push(vor.x, vor.y, vor.z, nach.x, nach.y, nach.z);
+                        var k0 = 0.9 * (1 - (s - 1) / 5), k1 = 0.9 * (1 - t);
+                        C.push(col.r * k0, col.g * k0, col.b * k0, col.r * k1, col.g * k1, col.b * k1);
+                        D.push(verz, verz);
+                        vor = nach;
+                    }
+                }
+            });
+            var g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+            g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+            g.setAttribute('aD', new THREE.Float32BufferAttribute(D, 1));
+            var l = new THREE.LineSegments(g, new THREE.ShaderMaterial({
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, vertexColors: true,
+                uniforms: { uIntro: uIntro, uDim: { value: 1 } },
+                vertexShader: `attribute float aD; uniform float uIntro; varying vec3 vC; varying float vA;
+                    void main() { vC = color; vA = smoothstep(aD, aD + 0.8, uIntro); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `uniform float uDim; varying vec3 vC; varying float vA; void main() { gl_FragColor = vec4(vC * 0.55 * vA * uDim, 1.0); }`
+            }));
+            l.renderOrder = 2; scene.add(l); dendritMat = l.material;
+        })();
+        var dendritMat;
+
+        // ── Neuronen: heller Kern + weicher Hof, als Punkte (immer rund, nie Kanten) ──
+        var aDim = new Float32Array(N), aHi = new Float32Array(N);
+        var attrDim = new THREE.BufferAttribute(aDim, 1); attrDim.setUsage(THREE.DynamicDrawUsage);
+        var attrHi = new THREE.BufferAttribute(aHi, 1); attrHi.setUsage(THREE.DynamicDrawUsage);
+        (function () {
+            var P = new Float32Array(N * 3), C = new Float32Array(N * 3), G = new Float32Array(N), Dl = new Float32Array(N), Sd = new Float32Array(N), Ak = new Float32Array(N);
+            liste.forEach(function (fid, i) {
+                var p = pos[fid], n = RAW.nodes[fid];
+                P.set([p.x, p.y, p.z], i * 3); C.set([grund[i].r, grund[i].g, grund[i].b], i * 3);
+                G[i] = gross[fid]; Dl[i] = p.length() / weltR * 2.0 + 0.2; Sd[i] = zufall(i * 1.37) * 100;
+                Ak[i] = Math.sqrt(((n.inDegree || 0) + (n.outDegree || 0)) / maxGrad);
+            });
             var g = new THREE.BufferGeometry();
             g.setAttribute('position', new THREE.BufferAttribute(P, 3));
-            g.setAttribute('aIn', new THREE.BufferAttribute(IN, 1)); g.setAttribute('aG', new THREE.BufferAttribute(G, 1)); g.setAttribute('aD', new THREE.BufferAttribute(D, 1));
-            var punkte = new THREE.Points(g, new THREE.ShaderMaterial({
+            g.setAttribute('aC', new THREE.BufferAttribute(C, 3)); g.setAttribute('aG', new THREE.BufferAttribute(G, 1));
+            g.setAttribute('aDl', new THREE.BufferAttribute(Dl, 1)); g.setAttribute('aSd', new THREE.BufferAttribute(Sd, 1)); g.setAttribute('aAk', new THREE.BufferAttribute(Ak, 1));
+            g.setAttribute('aDim', attrDim); g.setAttribute('aHi', attrHi);
+            var p = new THREE.Points(g, new THREE.ShaderMaterial({
                 transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-                uniforms: { uZeit: uZeit, uIntro: uIntro, uPx: { value: renderer.getPixelRatio() }, uAkz: { value: akzentHell }, uGrp: uGrp, uR: { value: R } },
-                vertexShader: `attribute float aIn; attribute float aG; attribute float aD;
-                    uniform float uIntro; uniform float uPx; uniform float uGrp; uniform float uR;
-                    varying float vIn; varying float vA; varying float vSel; varying float vFace;
+                uniforms: { uZeit: uZeit, uIntro: uIntro, uPx: uPx, uRuhe: uRuhe },
+                vertexShader: `attribute vec3 aC; attribute float aG; attribute float aDl; attribute float aSd; attribute float aAk; attribute float aDim; attribute float aHi;
+                    uniform float uZeit; uniform float uIntro; uniform float uPx; uniform float uRuhe;
+                    varying vec3 vC; varying float vA; varying float vHi; varying float vK;
                     void main() {
                         vec4 mv = modelViewMatrix * vec4(position, 1.0);
-                        vec3 nV = normalize(normalMatrix * normalize(position));
-                        vFace = dot(nV, normalize(-mv.xyz));
-                        vIn = aIn; vSel = (uGrp >= 0.0 && abs(aG - uGrp) < 0.5) ? 1.0 : 0.0;
-                        vA = smoothstep(aD, aD + 0.5, uIntro);
-                        float s = 1.8;
-                        gl_PointSize = min(s * uPx * (uR * 2.6) / -mv.z, 2.6 * uPx);   // gedeckelt: aus der Naehe wurde die Oberflaeche ein grobes Raster
+                        float an = smoothstep(aDl, aDl + 0.6, uIntro);
+                        // Feuern: kurze Helligkeitsspitzen, haeufiger bei stark vernetzten Dateien
+                        float f = uRuhe > 0.5 ? 0.0 : pow(max(0.0, sin(uZeit * (0.7 + aAk * 2.2) + aSd)), 24.0);
+                        vC = aC; vHi = aHi; vK = f;
+                        vA = an * (1.0 - aDim * 0.9);
+                        float s = aG * (1.0 + aHi * 0.9 + f * 0.35) * (0.6 + 0.4 * an);
+                        gl_PointSize = clamp(s * 16.0 * uPx * 18.0 / -mv.z, 2.0 * uPx, 140.0 * uPx);
                         gl_Position = projectionMatrix * mv;
                     }`,
-                fragmentShader: `uniform vec3 uAkz; varying float vIn; varying float vA; varying float vSel; varying float vFace;
+                fragmentShader: `varying vec3 vC; varying float vA; varying float vHi; varying float vK;
                     void main() {
-                        float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard;
-                        float a = smoothstep(0.5, 0.15, d) * vA * smoothstep(-0.05, 0.25, vFace);
-                        vec3 aus = vec3(0.10, 0.12, 0.2) * 0.55;
-                        vec3 an = mix(vec3(0.85, 0.9, 1.0), uAkz, 0.35) * (0.55 + vIn * 0.55);
-                        vec3 c = mix(aus, an, step(0.01, vIn)) * (1.0 + vSel * 0.5);
-                        gl_FragColor = vec4(c * a, 1.0);
+                        vec2 q = gl_PointCoord - 0.5; float d = length(q);
+                        if (d > 0.5) discard;
+                        float kern = smoothstep(0.11, 0.0, d);
+                        float hof = exp(-d * d * 38.0);
+                        float ring = smoothstep(0.02, 0.0, abs(d - 0.2)) * 0.35;
+                        vec3 c = mix(vC, vec3(1.0), 0.65) * kern * 3.4 + vC * hof * (1.1 + vK * 2.5) + vC * ring;
+                        c *= (1.0 + vHi * 1.3);
+                        gl_FragColor = vec4(c * vA, 1.0);
                     }`
             }));
-            punkte.frustumCulled = false; punkte.renderOrder = 1; scene.add(punkte);
+            p.frustumCulled = false; p.renderOrder = 5; scene.add(p);
         })();
 
-        // ── Datenwald: je Datei ein Lichthalm mit Energiekugel ─────────
-        // Halmhoehe = Verbindungen (ein + aus), Kugelgroesse = Zahl der Funktionen (archflow.js
-        // kappt bei 40). Ersetzt die Glastuerme (21.10.): Kaesten zeigten von oben zwei helle und
-        // zwei schwarze Seiten und lasen sich als „Dreiecke und schwarze Kaestchen“ (Nutzer).
-        // Halme und Kugeln haben keine Flaechen, die vom Licht abgewandt schwarz werden koennen.
-        var N = liste.length;
-        var aSeed = new Float32Array(N), aDelay = new Float32Array(N), aAkt = new Float32Array(N), aDim = new Float32Array(N), aHi = new Float32Array(N);
-        var aRad = new Float32Array(N), aHoch = new Float32Array(N), radius = {};
-        liste.forEach(function (fid, i) {
-            var n = RAW.nodes[fid], fn = (n.info && n.info.functions ? n.info.functions.length : 0);
-            aSeed[i] = (i * 0.61803) % 1 * 97 + 3;
-            aDelay[i] = Math.acos(clamp(richt[fid].y, -1, 1)) * 0.75 + 0.35 + ((i * 7) % 11) * 0.02;
-            aAkt[i] = Math.sqrt(((n.inDegree || 0) + (n.outDegree || 0)) / maxGrad);
-            radius[fid] = aRad[i] = 0.12 + Math.sqrt(fn) * 0.05;
-            aHoch[i] = hoehe[fid];
-        });
-        var attrDim = new THREE.InstancedBufferAttribute(aDim, 1); attrDim.setUsage(THREE.DynamicDrawUsage);
-        var attrHi = new THREE.InstancedBufferAttribute(aHi, 1); attrHi.setUsage(THREE.DynamicDrawUsage);
-        function attribute(geo) {
-            geo.setAttribute('aSeed', new THREE.InstancedBufferAttribute(aSeed, 1));
-            geo.setAttribute('aDelay', new THREE.InstancedBufferAttribute(aDelay, 1));
-            geo.setAttribute('aAkt', new THREE.InstancedBufferAttribute(aAkt, 1));
-            geo.setAttribute('aRad', new THREE.InstancedBufferAttribute(aRad, 1));
-            geo.setAttribute('aHoch', new THREE.InstancedBufferAttribute(aHoch, 1));
-            geo.setAttribute('aDim', attrDim); geo.setAttribute('aHi', attrHi);
-        }
-        // Wiegen: Auslenkung waechst quadratisch mit der Hoehe, Fuss bleibt stehen. Halm und Kugel
-        // rechnen DIESELBE Formel, sonst schwebt die Kugel neben ihrem Halm.
-        var wiegen = `
-            vec2 wiege(float seed, float t, float ruhe) {
-                if (ruhe > 0.5) return vec2(0.0);
-                return vec2(sin(t * 0.9 + seed), cos(t * 0.71 + seed * 1.37)) * 0.11;
-            }`;
-        var gemeinsam = `
-            attribute float aSeed; attribute float aDelay; attribute float aAkt; attribute float aRad; attribute float aHoch; attribute float aDim; attribute float aHi;
-            uniform float uIntro; uniform float uZeit; uniform float uRuhe;
-            varying vec3 vCol; varying float vDim; varying float vHi; varying float vAkt; varying float vSeed; varying float vLicht;` + wiegen;
-
-        // Halm: duenner Kegel, unten fast schwarz, oben hell
-        var geoHalm = new THREE.CylinderGeometry(0.028, 0.075, 1, 7, 12, true); geoHalm.translate(0, 0.5, 0);
-        attribute(geoHalm);
-        var halmMat = new THREE.ShaderMaterial({
-            uniforms: { uIntro: uIntro, uZeit: uZeit, uRuhe: uRuhe },
-            vertexShader: gemeinsam + `
-                varying float vY;
-                void main() {
-                    float wachs = 1.0 - pow(1.0 - clamp((uIntro - aDelay) / 0.9, 0.0, 1.0), 3.0);
-                    vec3 p = position;
-                    vY = p.y;
-                    p.y *= max(wachs, 0.0005);
-                    p.xz += wiege(aSeed, uZeit, uRuhe) * p.y * p.y * aHoch;
-                    vCol = instanceColor; vDim = aDim; vHi = aHi; vAkt = aAkt; vSeed = aSeed;
-                    vLicht = clamp((uIntro - aDelay - 0.5) / 0.7, 0.0, 1.0);
-                    gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(p, 1.0);
-                }`,
-            fragmentShader: `
-                varying vec3 vCol; varying float vDim; varying float vHi; varying float vAkt; varying float vSeed; varying float vLicht; varying float vY;
-                void main() {
-                    vec3 c = vCol * (0.03 + 1.25 * pow(vY, 2.4) * (0.35 + 0.65 * vLicht)) * (1.0 + vHi * 0.8);
-                    c = mix(c, vec3(0.002, 0.003, 0.008), vDim);
-                    gl_FragColor = vec4(c, 1.0);
-                }`
-        });
-
-        // Energiekugel: heller Rand, gluehender Kern, leises Pulsieren
-        var geoKugel = new THREE.IcosahedronGeometry(1, 4);
-        attribute(geoKugel);
-        var kugelMat = new THREE.ShaderMaterial({
-            uniforms: { uIntro: uIntro, uZeit: uZeit, uRuhe: uRuhe },
-            vertexShader: gemeinsam + `
-                varying vec3 vN; varying vec3 vV;
-                void main() {
-                    float wachs = 1.0 - pow(1.0 - clamp((uIntro - aDelay) / 0.9, 0.0, 1.0), 3.0);
-                    vLicht = clamp((uIntro - aDelay - 0.5) / 0.7, 0.0, 1.0);
-                    float auf = 1.0 - pow(1.0 - vLicht, 3.0);
-                    float gross = (0.15 + 0.85 * auf) * (1.0 + aHi * 0.45);
-                    vec3 p = position * gross;
-                    // Kugel sitzt auf der Halmspitze: mitwachsen und mitwiegen (Einheiten / aRad, weil die
-                    // Instanzmatrix um aRad skaliert)
-                    p.y -= (1.0 - wachs) * aHoch / aRad;
-                    p.xz += wiege(aSeed, uZeit, uRuhe) * wachs * wachs * aHoch / aRad;
-                    vec4 w = modelMatrix * instanceMatrix * vec4(p, 1.0);
-                    vN = normalize(mat3(modelMatrix * instanceMatrix) * normal);
-                    vV = cameraPosition - w.xyz;
-                    vCol = instanceColor; vDim = aDim; vHi = aHi; vAkt = aAkt; vSeed = aSeed;
-                    gl_Position = projectionMatrix * viewMatrix * w;
-                }`,
-            fragmentShader: `
-                uniform float uZeit; uniform float uRuhe;
-                varying vec3 vCol; varying float vDim; varying float vHi; varying float vAkt; varying float vSeed; varying float vLicht;
-                varying vec3 vN; varying vec3 vV;
-                void main() {
-                    float nv = clamp(abs(dot(normalize(vN), normalize(vV))), 0.0, 1.0);   // ohne clamp: 1.0000001 -> pow(negativ) = NaN -> schwarze Bloecke im Bloom
-                    float rand = pow(1.0 - nv, 2.2);
-                    float kern = pow(nv, 4.0);
-                    float puls = uRuhe > 0.5 ? 1.0 : 0.88 + 0.12 * sin(uZeit * (1.2 + vAkt * 2.0) + vSeed);
-                    vec3 c = vCol * (0.35 + rand * 2.8) + mix(vCol, vec3(1.0), 0.6) * kern * (0.7 + vAkt * 1.3);
-                    c *= puls * (0.2 + 0.8 * vLicht) * (1.0 + vHi * 1.1);
-                    c = mix(c, vec3(0.003, 0.004, 0.01), vDim);
-                    gl_FragColor = vec4(c, 1.0);
-                }`
-        });
-
-        var grund = liste.map(function (fid) { return new THREE.Color(TC[RAW.nodes[fid].type] || TC.other); });
-        var halme = new THREE.InstancedMesh(geoHalm, halmMat, N);
-        var tuerme = new THREE.InstancedMesh(geoKugel, kugelMat, N);   // Name bleibt: Treffer-Test und Zustand haengen daran
-        var tmpM = new THREE.Matrix4(), OBEN = new V(0, 1, 0), XA = new V(1, 0, 0);
-        function rahmen(nv, ost, nord) {
-            ost.crossVectors(OBEN, nv); if (ost.lengthSq() < 1e-6) ost.copy(XA); ost.normalize();
-            // ost x oben = nord ergibt ein RECHTShaendiges System. Mit oben x ost war es gespiegelt:
-            // die Grafikkarte schnitt die Vorderseiten weg, man sah Innenwaende (die „Dreiecke“ der Tuerme).
-            nord.crossVectors(ost, nv).normalize();
-        }
+        // Unsichtbare Kugeln nur fuer den Treffer-Test (Punkte lassen sich schlecht genau treffen)
+        var trefferKugeln = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false }), N);
         (function () {
-            var ost = new V(), nord = new V(), s = new V();
-            liste.forEach(function (fid, i) {
-                var nv = richt[fid]; rahmen(nv, ost, nord);
-                tmpM.makeBasis(ost, nv, nord); tmpM.scale(s.set(1, hoehe[fid], 1));
-                tmpM.setPosition(nv.x * R, nv.y * R, nv.z * R);
-                halme.setMatrixAt(i, tmpM); halme.setColorAt(i, grund[i]);
-                var r = radius[fid];
-                tmpM.makeBasis(ost, nv, nord); tmpM.scale(s.set(r, r, r));
-                tmpM.setPosition(nv.x * (R + hoehe[fid]), nv.y * (R + hoehe[fid]), nv.z * (R + hoehe[fid]));
-                tuerme.setMatrixAt(i, tmpM); tuerme.setColorAt(i, grund[i]);
-            });
+            var m = new THREE.Matrix4();
+            liste.forEach(function (fid, i) { var r = gross[fid] * 0.9 + 0.35; m.makeScale(r, r, r); m.setPosition(pos[fid]); trefferKugeln.setMatrixAt(i, m); });
+            trefferKugeln.computeBoundingSphere(); scene.add(trefferKugeln);
         })();
-        halme.renderOrder = 2; tuerme.renderOrder = 2;
-        scene.add(halme); scene.add(tuerme);
 
-        // ── Flugrouten: Grosskreis + Hoehenbuckel, CPU (Linien) und GPU (Pakete) gleich ──
-        var kanten = EDGES.filter(function (e) { return richt[e.from] && richt[e.to] && e.from !== e.to; });
-        var bez = kanten.map(function (e) {
-            var a = richt[e.from], b = richt[e.to], om = a.angleTo(b);
-            return { e: e, a: a, b: b, ha: hoehe[e.from], hb: hoehe[e.to], buckel: 0.4 + om * R * 0.27, om: om,
-                col: new THREE.Color(TC[RAW.nodes[e.to].type] || TC.other) };
+        // ── Nervenbahnen: kubische Bezier ueber die Mittelpunkte der Areale (Buendelung) ──
+        var kanten = EDGES.filter(function (e) { return pos[e.from] && pos[e.to] && e.from !== e.to; });
+        var bahnen = kanten.map(function (e) {
+            var a = pos[e.from], b = pos[e.to], ga = gruppen[gruppeVon[e.from]], gb = gruppen[gruppeVon[e.to]];
+            var c1, c2;
+            if (ga === gb) {
+                var mitte = a.clone().add(b).multiplyScalar(0.5), weg = mitte.clone().sub(ga.c);
+                if (weg.lengthSq() < 0.01) weg.set(0, 1, 0);
+                weg.normalize().multiplyScalar(ga.rc * 0.6);
+                c1 = a.clone().add(weg); c2 = b.clone().add(weg);
+            } else {
+                // Am eigenen Arealkern vorbei: so laufen alle Bahnen zweier Areale als Strang
+                c1 = ga.c.clone().lerp(a, 0.35); c2 = gb.c.clone().lerp(b, 0.35);
+            }
+            return { e: e, p0: a, p1: c1, p2: c2, p3: b, col: new THREE.Color(TC[RAW.nodes[e.to].type] || TC.other), len: a.distanceTo(b) };
         });
-        function routenPunkt(k, t, out) {
-            var om = k.om, s = Math.sin(om), wa, wb;
-            if (s < 1e-4) { wa = 1 - t; wb = t; } else { wa = Math.sin((1 - t) * om) / s; wb = Math.sin(t * om) / s; }
-            out.set(k.a.x * wa + k.b.x * wb, k.a.y * wa + k.b.y * wb, k.a.z * wa + k.b.z * wb).normalize();
-            return out.multiplyScalar(R + k.ha + (k.hb - k.ha) * t + k.buckel * Math.sin(Math.PI * t));
+        function bez(k, t, out) {
+            var u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+            return out.set(a * k.p0.x + b * k.p1.x + c * k.p2.x + d * k.p3.x, a * k.p0.y + b * k.p1.y + c * k.p2.y + d * k.p3.y, a * k.p0.z + b * k.p1.z + c * k.p2.z + d * k.p3.z);
         }
-        var SEG = 28;
+        var SEG = 32;
         function linien(menge, mat) {
             var n = menge.length * SEG * 2, P = new Float32Array(n * 3), C = new Float32Array(n * 3), j = 0, v = new V(), w = new V();
             menge.forEach(function (k) {
                 for (var s = 0; s < SEG; s++) {
                     var t0 = s / SEG, t1 = (s + 1) / SEG;
-                    routenPunkt(k, t0, v); routenPunkt(k, t1, w);
+                    bez(k, t0, v); bez(k, t1, w);
                     P.set([v.x, v.y, v.z, w.x, w.y, w.z], j * 3);
-                    var k0 = 0.15 + 0.85 * t0, k1 = 0.15 + 0.85 * t1;
+                    var k0 = 0.12 + 0.88 * t0, k1 = 0.12 + 0.88 * t1;
                     C.set([k.col.r * k0, k.col.g * k0, k.col.b * k0, k.col.r * k1, k.col.g * k1, k.col.b * k1], j * 3);
                     j += 2;
                 }
@@ -425,88 +301,81 @@
             g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
             return new THREE.LineSegments(g, mat);
         }
-        var gleisMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-        var gleise = linien(bez, gleisMat); gleise.renderOrder = 3; scene.add(gleise);
-        var wahlMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending });
+        var bahnMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+        var bahnLinien = linien(bahnen, bahnMat); bahnLinien.renderOrder = 3; scene.add(bahnLinien);
+        var wahlMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending });
         var wahlLinien = null, wahlFuer;
 
-        // Lichtpakete: je Route zwei, jedes mit langem Schweif (8 Punkte)
-        var PAKETE = 2, SCHWEIF = 8, nP = bez.length * PAKETE * SCHWEIF;
-        var AA = new Float32Array(nP * 3), AB = new Float32Array(nP * 3), AH = new Float32Array(nP * 3), AW = new Float32Array(nP);
+        // Lichtimpulse: je Bahn zwei, mit langem Schweif. Dieselbe Bezier wie oben, im Shader.
+        var IMP = 2, SCHWEIF = 10, nP = bahnen.length * IMP * SCHWEIF;
+        var A0 = new Float32Array(nP * 3), A1 = new Float32Array(nP * 3), A2 = new Float32Array(nP * 3), A3 = new Float32Array(nP * 3);
         var APh = new Float32Array(nP), ASp = new Float32Array(nP), ATr = new Float32Array(nP), ACo = new Float32Array(nP * 3), AZu = new Float32Array(nP);
         var kantePunkte = [], j = 0;
-        bez.forEach(function (k, ki) {
-            var start = j, sp = 0.5 / (k.om * R * 0.6 + 2.5);
-            for (var p = 0; p < PAKETE; p++) {
-                var ph = ((ki * 0.37) % 1 + p / PAKETE) % 1;
+        bahnen.forEach(function (k, ki) {
+            var start = j, sp = 0.7 / (k.len * 0.12 + 2.4);
+            for (var p = 0; p < IMP; p++) {
+                var ph = (zufall(ki * 3.7) + p / IMP) % 1;
                 for (var s = 0; s < SCHWEIF; s++) {
-                    AA.set([k.a.x, k.a.y, k.a.z], j * 3); AB.set([k.b.x, k.b.y, k.b.z], j * 3); AH.set([k.ha, k.hb, k.buckel], j * 3);
-                    AW[j] = k.om; APh[j] = ph; ASp[j] = sp; ATr[j] = s; ACo.set([k.col.r, k.col.g, k.col.b], j * 3); j++;
+                    A0.set([k.p0.x, k.p0.y, k.p0.z], j * 3); A1.set([k.p1.x, k.p1.y, k.p1.z], j * 3);
+                    A2.set([k.p2.x, k.p2.y, k.p2.z], j * 3); A3.set([k.p3.x, k.p3.y, k.p3.z], j * 3);
+                    APh[j] = ph; ASp[j] = sp; ATr[j] = s; ACo.set([k.col.r, k.col.g, k.col.b], j * 3); j++;
                 }
             }
             kantePunkte.push([start, j]);
         });
         var gP = new THREE.BufferGeometry();
         gP.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nP * 3), 3));
-        [['aA', AA, 3], ['aB', AB, 3], ['aH', AH, 3], ['aW', AW, 1], ['aPh', APh, 1], ['aSp', ASp, 1], ['aTr', ATr, 1], ['aCo', ACo, 3]].forEach(function (x) {
+        [['a0', A0, 3], ['a1', A1, 3], ['a2', A2, 3], ['a3', A3, 3], ['aPh', APh, 1], ['aSp', ASp, 1], ['aTr', ATr, 1], ['aCo', ACo, 3]].forEach(function (x) {
             gP.setAttribute(x[0], new THREE.BufferAttribute(x[1], x[2]));
         });
         var attrZu = new THREE.BufferAttribute(AZu, 1); attrZu.setUsage(THREE.DynamicDrawUsage); gP.setAttribute('aZu', attrZu);
-        var uPx = { value: renderer.getPixelRatio() };
-        var pakete = new THREE.Points(gP, new THREE.ShaderMaterial({
+        var impulse = new THREE.Points(gP, new THREE.ShaderMaterial({
             transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-            uniforms: { uZeit: uZeit, uFluss: uFluss, uPx: uPx, uRuhe: uRuhe, uR: { value: R } },
+            uniforms: { uZeit: uZeit, uFluss: uFluss, uPx: uPx, uRuhe: uRuhe, uTempo: { value: 1 } },
             vertexShader: `
-                attribute vec3 aA; attribute vec3 aB; attribute vec3 aH; attribute vec3 aCo;
-                attribute float aW; attribute float aPh; attribute float aSp; attribute float aTr; attribute float aZu;
-                uniform float uZeit; uniform float uFluss; uniform float uPx; uniform float uRuhe; uniform float uR;
+                attribute vec3 a0; attribute vec3 a1; attribute vec3 a2; attribute vec3 a3; attribute vec3 aCo;
+                attribute float aPh; attribute float aSp; attribute float aTr; attribute float aZu;
+                uniform float uZeit; uniform float uFluss; uniform float uPx; uniform float uRuhe;
                 varying vec3 vC; varying float vA;
                 void main() {
-                    float t = fract(aPh + (uRuhe > 0.5 ? 0.0 : uZeit * aSp)) - aTr * 0.0065;
-                    float ok = step(0.0, t); t = clamp(t, 0.0, 1.0);
-                    float s = sin(aW); float wa = 1.0 - t, wb = t;
-                    if (s > 0.0001) { wa = sin((1.0 - t) * aW) / s; wb = sin(t * aW) / s; }
-                    vec3 d = normalize(aA * wa + aB * wb);
-                    vec3 p = d * (uR + mix(aH.x, aH.y, t) + aH.z * sin(3.14159265 * t));
-                    vec4 mv = modelViewMatrix * vec4(p, 1.0);
                     float hi = step(0.5, aZu) * step(aZu, 1.5), aus = step(1.5, aZu);
-                    float kopf = 1.0 - aTr / 8.0;
-                    gl_PointSize = max(1.0, (2.0 + 5.5 * kopf * kopf) * (1.0 + hi * 0.6) * uPx * 24.0 / -mv.z);
-                    vA = ok * kopf * kopf * uFluss * smoothstep(0.0, 0.04, t) * smoothstep(1.0, 0.95, t) * (1.0 - aus * 0.94) * (1.0 + hi * 1.2);
-                    vC = mix(aCo, vec3(1.0), 0.2 + (1.0 - aTr / 8.0) * 0.35) * 3.0;
+                    float tempo = 1.0 + hi * 1.6;
+                    float t = fract(aPh + (uRuhe > 0.5 ? 0.0 : uZeit * aSp * tempo)) - aTr * 0.007;
+                    float ok = step(0.0, t); t = clamp(t, 0.0, 1.0);
+                    float u = 1.0 - t;
+                    vec3 p = u * u * u * a0 + 3.0 * u * u * t * a1 + 3.0 * u * t * t * a2 + t * t * t * a3;
+                    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+                    float kopf = 1.0 - aTr / 10.0;
+                    gl_PointSize = clamp((1.5 + 6.0 * kopf * kopf) * (1.0 + hi * 0.7) * uPx * 22.0 / -mv.z, 1.0, 40.0 * uPx);
+                    vA = ok * kopf * kopf * uFluss * smoothstep(0.0, 0.05, t) * smoothstep(1.0, 0.94, t) * (1.0 - aus * 0.95) * (1.0 + hi * 1.3);
+                    vC = mix(aCo, vec3(1.0), 0.15 + kopf * 0.4) * 2.8;
                     gl_Position = projectionMatrix * mv;
                 }`,
             fragmentShader: `varying vec3 vC; varying float vA;
                 void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d); gl_FragColor = vec4(vC * a * a * vA, 1.0); }`
         }));
-        pakete.frustumCulled = false; pakete.renderOrder = 4; scene.add(pakete);
+        impulse.frustumCulled = false; impulse.renderOrder = 4; scene.add(impulse);
 
-        // ── Auswahl: Ring + Druckwelle auf der Oberflaeche, Strahl ins All ──
-        function weissM() { return new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }); }
-        var ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 64), weissM()); ring.visible = false; scene.add(ring);
-        var welle = new THREE.Mesh(new THREE.RingGeometry(0.92, 1.0, 128), weissM()); welle.visible = false; scene.add(welle);
-        var strahlGeo = new THREE.CylinderGeometry(0.07, 0.07, 90, 16, 1, true); strahlGeo.translate(0, 45, 0);
-        var strahlFarbe = { value: new THREE.Color(1, 1, 1) }, strahlA = { value: 0 };
-        var strahl = new THREE.Mesh(strahlGeo, new THREE.ShaderMaterial({
-            transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-            uniforms: { uF: strahlFarbe, uA: strahlA },
-            vertexShader: `varying float vH; void main() { vH = position.y / 90.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `uniform vec3 uF; uniform float uA; varying float vH; void main() { gl_FragColor = vec4(uF * 2.6 * pow(1.0 - vH, 2.6) * uA, 1.0); }`
-        }));
-        strahl.visible = false; strahl.renderOrder = 5; scene.add(strahl);
-        var wahlZeit = 0, ZA = new V(0, 0, 1);
+        // ── Auswahl: zwei Ringe, die sich zur Kamera drehen; Schockwelle ──
+        var ringTex = kreisTextur(function (g, r) {
+            g.strokeStyle = 'rgba(255,255,255,1)'; g.lineWidth = 5; g.beginPath(); g.arc(r, r, r - 8, 0, Math.PI * 2); g.stroke();
+        });
+        function ringSprite() { return new THREE.Sprite(new THREE.SpriteMaterial({ map: ringTex, transparent: true, opacity: 0, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending })); }
+        var ring = ringSprite(), welle = ringSprite(); ring.renderOrder = 8; welle.renderOrder = 8;
+        ring.visible = welle.visible = false; scene.add(ring); scene.add(welle);
+        var wahlZeit = 0;
 
-        // ── Beschriftung der Kontinente (feste Bildschirmgroesse, Rueckseite blendet aus) ──
+        // ── Beschriftung der Areale (feste Bildschirmgroesse) ──────────
         var schilder = [];
         function schild(text, zahl) {
             var fs = 40, pad = 16, c = document.createElement('canvas'), g = c.getContext('2d');
             g.font = '600 ' + fs + 'px Inter, system-ui, sans-serif'; var tw = g.measureText(text).width;
             g.font = '500 ' + (fs * 0.7) + 'px "JetBrains Mono", monospace'; var zw = g.measureText(String(zahl)).width;
             c.width = Math.ceil(tw + zw + pad * 3); c.height = fs + pad * 2;
-            g.fillStyle = 'rgba(4,5,10,0.62)';
+            g.fillStyle = 'rgba(4,5,10,0.55)';
             var r = c.height / 2; g.beginPath(); g.moveTo(r, 0); g.arcTo(c.width, 0, c.width, c.height, r); g.arcTo(c.width, c.height, 0, c.height, r);
             g.arcTo(0, c.height, 0, 0, r); g.arcTo(0, 0, c.width, 0, r); g.closePath(); g.fill();
-            g.strokeStyle = 'rgba(190,210,255,0.22)'; g.lineWidth = 2; g.stroke();
+            g.strokeStyle = 'rgba(190,210,255,0.2)'; g.lineWidth = 2; g.stroke();
             g.font = '600 ' + fs + 'px Inter, system-ui, sans-serif'; g.fillStyle = '#eef1ff'; g.textBaseline = 'middle'; g.fillText(text, pad, c.height / 2 + 2);
             g.font = '500 ' + (fs * 0.7) + 'px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(200,210,240,0.5)'; g.fillText(String(zahl), pad * 2 + tw, c.height / 2 + 2);
             var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
@@ -515,20 +384,23 @@
             s.userData.verh = c.width / c.height; return s;
         }
         gruppen.forEach(function (b) {
-            if (b.files.length < 6) return;
+            if (b.files.length < 5) return;
             var s = schild(b.g.label, b.files.length), hw = b.files.length >= 30 ? 0.022 : 0.017;
             s.scale.set(hw * s.userData.verh, hw, 1); s.center.set(0.5, 0);
-            s.position.copy(b.mitte).multiplyScalar(R + b.hmax + 0.7);
-            s.userData.richt = b.mitte; s.renderOrder = 20; scene.add(s); schilder.push(s);
+            s.position.copy(b.c).add(new V(0, b.ausdehnung + 1.6, 0));
+            s.renderOrder = 20; scene.add(s); schilder.push(s);
         });
 
-        // ── Nachbearbeitung: HDR-Szene, Bloom (3 Stufen), Farbsaum, Korn, Vignette ──
+        // ── Nachbearbeitung: HDR-Szene, Bloom (4 Stufen), leichter Farbsaum, Korn, Vignette ──
         var quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)), quadSzene = new THREE.Scene(); quadSzene.add(quad);
         function rt(samples) { return new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: samples || 0, depthBuffer: !!samples }); }
         var rtSzene = rt(4), rtHell = rt(), stufen = [rt(), rt(), rt(), rt()], hilf = [rt(), rt(), rt(), rt()];
         var vsQuad = `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
+        // NaN-Sperre: ein einziges NaN-Pixel verschmiert der Bloom sonst zu schwarzen Bloecken (gemessen 21.10.)
         var matHell = new THREE.ShaderMaterial({ uniforms: { tS: { value: null } }, vertexShader: vsQuad, depthTest: false,
-            fragmentShader: `uniform sampler2D tS; varying vec2 vUv; void main() { vec3 c = texture2D(tS, vUv).rgb; if (!(c.r == c.r && c.g == c.g && c.b == c.b)) c = vec3(0.0); c = clamp(c, 0.0, 60.0); float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.62, 1.5, l), 1.0); }` });
+            fragmentShader: `uniform sampler2D tS; varying vec2 vUv;
+                void main() { vec3 c = texture2D(tS, vUv).rgb; if (!(c.r == c.r && c.g == c.g && c.b == c.b)) c = vec3(0.0); c = clamp(c, 0.0, 60.0);
+                    float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.55, 1.4, l), 1.0); }` });
         var matBlur = new THREE.ShaderMaterial({ uniforms: { tQ: { value: null }, uRicht: { value: new THREE.Vector2() } }, vertexShader: vsQuad, depthTest: false,
             fragmentShader: `uniform sampler2D tQ; uniform vec2 uRicht; varying vec2 vUv;
                 void main() { vec3 c = texture2D(tQ, vUv).rgb * 0.227027;
@@ -542,15 +414,14 @@
                 float rausch(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
                 void main() {
                     vec2 m = vUv - 0.5; float r2 = dot(m, m);
-                    // Farbsaum: nur zum Rand hin, in der Mitte bleibt das Bild scharf
                     vec2 off = m * r2 * 0.012;
                     vec3 c = vec3(texture2D(tS, vUv + off).r, texture2D(tS, vUv).g, texture2D(tS, vUv - off).b);
                     if (!(c.r == c.r && c.g == c.g && c.b == c.b)) c = vec3(0.0);
                     vec3 b = texture2D(tB0, vUv).rgb * 0.8 + texture2D(tB1, vUv).rgb * 0.9 + texture2D(tB2, vUv).rgb * 1.0 + texture2D(tB3, vUv).rgb * 1.1;
-                    c += b * 0.9;
-                    c *= mix(0.42, 1.0, smoothstep(0.62, 0.08, r2 * 1.9));
+                    c += b * 0.85;
+                    c *= mix(0.4, 1.0, smoothstep(0.62, 0.08, r2 * 1.9));
                     float k = rausch(vUv * vec2(1931.0, 1129.0) + (uRuhe > 0.5 ? 0.0 : fract(uZeit * 7.0) * 91.0));
-                    c += (k - 0.5) * 0.028;
+                    c += (k - 0.5) * 0.024;
                     gl_FragColor = vec4(max(c, 0.0), 1.0);
                     #include <tonemapping_fragment>
                     #include <colorspace_fragment>
@@ -578,18 +449,18 @@
             if (searchQ && n.name.toLowerCase().indexOf(searchQ) < 0 && n.path.toLowerCase().indexOf(searchQ) < 0) return false;
             return true;
         }
-        var gleisZiel = 0.09;
+        var bahnZiel = 0.08, aktivGruppe = -1;
         function setzeZustand() {
             var nb = sel ? nachbarn(sel).set : null, gefiltert = filterType !== 'all' || !!searchQ;
             for (var i = 0; i < N; i++) {
                 var fid = liste[i];
-                aDim[i] = nb ? (nb.has(fid) ? 0 : 0.9) : (gefiltert && !passt(RAW.nodes[fid]) ? 0.85 : 0);
+                aDim[i] = nb ? (nb.has(fid) ? 0 : 0.92) : (gefiltert && !passt(RAW.nodes[fid]) ? 0.88 : 0);
                 aHi[i] = fid === sel ? 1 : fid === hov ? 0.6 : 0;
             }
             attrDim.needsUpdate = true; attrHi.needsUpdate = true;
             var id = sel || hov || null;
-            for (var k = 0; k < bez.length; k++) {
-                var e = bez[k].e, z = 0;
+            for (var k = 0; k < bahnen.length; k++) {
+                var e = bahnen[k].e, z = 0;
                 if (id) z = (e.from === id || e.to === id) ? 1 : (sel ? 2 : 0);
                 else if (gefiltert) z = (passt(RAW.nodes[e.from]) || passt(RAW.nodes[e.to])) ? 0 : 2;
                 for (var q = kantePunkte[k][0]; q < kantePunkte[k][1]; q++) AZu[q] = z;
@@ -599,102 +470,84 @@
                 wahlFuer = id;
                 if (wahlLinien) { scene.remove(wahlLinien); wahlLinien.geometry.dispose(); wahlLinien = null; }
                 if (id) {
-                    var eigene = bez.filter(function (b) { return b.e.from === id || b.e.to === id; });
+                    var eigene = bahnen.filter(function (b) { return b.e.from === id || b.e.to === id; });
                     if (eigene.length) { wahlLinien = linien(eigene, wahlMat); wahlLinien.renderOrder = 3; scene.add(wahlLinien); }
                 }
             }
-            uGrp.value = sel && flach[sel] ? flach[sel].g : -1;
-            gleisZiel = sel ? 0.02 : (hov || gefiltert) ? 0.045 : 0.09;
+            aktivGruppe = sel ? gruppeVon[sel] : -1;
+            bahnZiel = sel ? 0.015 : (hov || gefiltert) ? 0.035 : 0.08;
+            if (dendritMat) dendritMat.uniforms.uDim.value = sel || gefiltert ? 0.25 : 1;
         }
 
-        // ── Kamera wie in einem Globus-Programm: Blickpunkt auf der Oberflaeche, Abstand,
-        // Neigung, Blickrichtung. Bis 21.10. zielte sie immer auf den Kugelmittelpunkt —
-        // dann kann man nie seitlich auf die Tuerme schauen (Meldung des Nutzers).
-        // Zoomen neigt den Blick automatisch Richtung Horizont; rechte Maustaste/Umschalt
-        // kippt und dreht von Hand, zwei Finger verschieben senkrecht = kippen.
-        var HEIM_F = new V(0.33, 0.9, 0.28).normalize(), YA = new V(0, 1, 0);
-        var fokus = HEIM_F.clone(), fokusSoll = HEIM_F.clone(), vorn = new V();
-        var abst = 1, abstSoll = 1, heimAbst = 1, neigX = 0, neigXSoll = 0;
-        var flug = null, letzteEingabe = 0, intro = null, qTmp = new THREE.Quaternion(), tmpA = new V(), tmpB = new V();
-        function tangente(f, v) {
-            v.addScaledVector(f, -v.dot(f));
-            if (v.lengthSq() < 1e-8) v.set(1, 0, 0).addScaledVector(f, -f.x);
-            return v.normalize();
-        }
-        function slerp(a, b, t, out) {
-            var om = a.angleTo(b);
-            if (om < 1e-5) return out.copy(b);
-            var s = Math.sin(om);
-            return out.copy(a).multiplyScalar(Math.sin((1 - t) * om) / s).addScaledVector(b, Math.sin(t * om) / s).normalize();
-        }
-        tangente(fokus, vorn.copy(YA));
+        // ── Kamera: frei um ein Ziel im Raum (Ziel wandert zum gewaehlten Neuron) ──
+        var HEIM_T = 0.7, HEIM_P = 1.15;
+        var ziel = new V(), zielSoll = new V(), theta = HEIM_T, thetaSoll = HEIM_T, phi = HEIM_P, phiSoll = HEIM_P;
+        var dist = 1, distSoll = 1, heimDist = 1, flug = null, letzteEingabe = 0, intro = null, tmpA = new V(), tmpB = new V();
         function heimWerte() {
             var asp = Math.max(0.5, (wrap.clientWidth || 1) / (wrap.clientHeight || 1));
-            heimAbst = R * (asp < 1 ? 6.2 : 3.7); return heimAbst;
+            heimDist = weltR * (asp < 1 ? 3.4 : 2.2); return heimDist;
         }
-        function autoNeig(a) { var t = clamp((R * 2.4 - a) / (R * 2.15), 0, 1); return 0.1 + (1 - Math.pow(1 - t, 2)) * 1.08; }
         function kameraSetzen() {
-            var ne = clamp(autoNeig(abst) + neigX, 0, 1.4), c = Math.cos(ne), s = Math.sin(ne);
-            tmpA.copy(fokus).multiplyScalar(R);
-            camera.position.copy(tmpA).addScaledVector(fokus, c * abst).addScaledVector(vorn, -s * abst);
-            camera.up.copy(vorn).multiplyScalar(c).addScaledVector(fokus, s);
-            camera.lookAt(tmpA);
-            var zl = document.getElementById('zLvl'); if (zl) zl.textContent = Math.round(heimAbst / abst * 100) + '%';
+            var sp = Math.sin(phi);
+            camera.position.set(ziel.x + dist * sp * Math.sin(theta), ziel.y + dist * Math.cos(phi), ziel.z + dist * sp * Math.cos(theta));
+            camera.lookAt(ziel);
+            var zl = document.getElementById('zLvl'); if (zl) zl.textContent = Math.round(heimDist / dist * 100) + '%';
         }
         function introStarten() {
-            heimWerte(); intro = { t0: performance.now(), dauer: 4600 };
-            fokusSoll.copy(HEIM_F); abstSoll = heimAbst; neigXSoll = neigX = 0;
+            heimWerte(); intro = { t0: performance.now(), dauer: 4800 };
+            zielSoll.set(0, 0, 0); thetaSoll = HEIM_T; phiSoll = HEIM_P; distSoll = heimDist;
         }
         function introBeenden() {
             if (!intro) return; intro = null; uIntro.value = 99; uFluss.value = 1;
-            fokus.copy(fokusSoll); tangente(fokus, vorn.copy(YA)); abst = abstSoll;
+            ziel.copy(zielSoll); theta = thetaSoll; phi = phiSoll; dist = distSoll;
         }
-        function drehUmY(w) { qTmp.setFromAxisAngle(YA, w); fokusSoll.applyQuaternion(qTmp); fokus.applyQuaternion(qTmp); vorn.applyQuaternion(qTmp); }
 
         // ── Bildschleife ───────────────────────────────────────────────
-        var aktiv = false, raf = 0, letzt = 0, kamRicht = new V();
+        var aktiv = false, raf = 0, letzt = 0;
         function bild(jetzt) {
             raf = 0; if (!aktiv) return;
             var dt = letzt ? Math.min(0.05, (jetzt - letzt) / 1000) : 0.016; letzt = jetzt;
             uZeit.value += dt;
             if (intro) {
+                // Anflug: aus der Ferne durch den Staub, dabei eine halbe Drehung
                 var f = clamp((jetzt - intro.t0) / intro.dauer, 0, 1), k = easeInOut(f);
-                qTmp.setFromAxisAngle(YA, -(1 - k) * 2.2);
-                fokus.copy(fokusSoll).applyQuaternion(qTmp); tangente(fokus, vorn.copy(YA));
-                abst = heimAbst * 5 + (heimAbst - heimAbst * 5) * (1 - Math.pow(1 - f, 3));
-                uIntro.value = (jetzt - intro.t0) / 1000 * 1.05;
-                uFluss.value = clamp((f - 0.7) / 0.3, 0, 1);
+                theta = HEIM_T - (1 - k) * 2.6; phi = HEIM_P + (1 - k) * 0.25;
+                dist = heimDist * (1 + (1 - easeOut(f)) * 4.5);
+                uIntro.value = (jetzt - intro.t0) / 1000 * 0.95;
+                uFluss.value = clamp((f - 0.6) / 0.4, 0, 1);
                 if (f >= 1) introBeenden();
             } else if (flug) {
                 var g = clamp((jetzt - flug.t0) / flug.dauer, 0, 1), kk = easeInOut(g);
-                slerp(flug.f0, flug.f1, kk, fokus); tangente(fokus, vorn);
-                // Beim Flug ueber die Kugel kurz Hoehe gewinnen, sonst schrammt die Kamera durch die Tuerme
-                abst = flug.a0 + (flug.a1 - flug.a0) * kk + Math.sin(Math.PI * g) * flug.hub;
-                fokusSoll.copy(fokus); abstSoll = flug.a1;
+                ziel.lerpVectors(flug.z0, flug.z1, kk); zielSoll.copy(ziel);
+                dist = flug.d0 + (flug.d1 - flug.d0) * kk; distSoll = flug.d1;
+                theta += (thetaSoll - theta) * 0.06; phi += (phiSoll - phi) * 0.06;
                 if (g >= 1) flug = null;
             } else {
-                if (!RM && !sel && jetzt - letzteEingabe > 6000) drehUmY(dt * 0.05);
-                var d = 1 - Math.pow(0.00008, dt);
-                fokus.lerp(fokusSoll, d).normalize(); tangente(fokus, vorn);
-                abst += (abstSoll - abst) * d; neigX += (neigXSoll - neigX) * d;
+                if (!RM && !sel && jetzt - letzteEingabe > 6000) thetaSoll += dt * 0.045;
+                var d = 1 - Math.pow(0.00006, dt);
+                ziel.lerp(zielSoll, d); theta += (thetaSoll - theta) * d; phi += (phiSoll - phi) * d; dist += (distSoll - dist) * d;
             }
-            gleisMat.opacity += ((intro ? 0 : gleisZiel) - gleisMat.opacity) * 0.08;
-
+            bahnMat.opacity += ((intro ? uFluss.value * 0.08 : bahnZiel) - bahnMat.opacity) * 0.08;
             kameraSetzen();
-            kamRicht.copy(camera.position).normalize();
-            schilder.forEach(function (s) {
-                var blick = s.userData.richt.dot(kamRicht);
-                var z = intro ? 0 : (sel ? 0.22 : 1) * clamp((blick - 0.15) / 0.3, 0, 1);
-                s.material.opacity += (z - s.material.opacity) * 0.12;
-                s.visible = s.material.opacity > 0.01;
-            });
 
-            if (sel && richt[sel] && wahlZeit) {
-                var w = clamp((jetzt - wahlZeit) / 1300, 0, 1);
-                welle.visible = w < 1; welle.scale.setScalar(1 + easeOut(w) * 11); welle.material.opacity = (1 - w) * 0.85;
-                ring.material.opacity = 0.9;
-                strahlA.value = (RM ? 0.5 : (0.4 + 0.6 * Math.exp(-w * 3))) * (0.85 + 0.15 * Math.sin(uZeit.value * 2.4));
-            }
+            nebel.forEach(function (m) {
+                var z = (intro ? clamp(uIntro.value - 0.3, 0, 1) : 1) * m.userData.basis * (aktivGruppe < 0 ? 1 : (m.userData.gi === aktivGruppe ? 2.2 : 0.35));
+                m.material.opacity += (z - m.material.opacity) * 0.08;
+            });
+            schilder.forEach(function (s) {
+                // Schilder blenden aus, wenn die Kamera mitten im Areal steckt
+                var ab = s.position.distanceTo(camera.position);
+                var z = intro ? 0 : (sel ? 0.25 : 1) * clamp((ab - 6) / 10, 0, 1);
+                s.material.opacity += (z - s.material.opacity) * 0.12; s.visible = s.material.opacity > 0.01;
+            });
+            if (sel && pos[sel]) {
+                var p = pos[sel], gr = gross[sel];
+                ring.visible = true; ring.position.copy(p); ring.material.opacity = 0.85;
+                var rs = gr * 2.6 * (1 + 0.06 * Math.sin(uZeit.value * 3)); ring.scale.set(rs, rs, 1);
+                var w = wahlZeit ? clamp((jetzt - wahlZeit) / 1200, 0, 1) : 1;
+                welle.visible = w < 1; welle.position.copy(p);
+                var ws = gr * (2.5 + easeOut(w) * 22); welle.scale.set(ws, ws, 1); welle.material.opacity = (1 - w) * 0.9;
+            } else { ring.visible = false; welle.visible = false; }
 
             zeichnen();
             raf = requestAnimationFrame(bild);
@@ -711,47 +564,41 @@
         }
         function heim() {
             flug = null; introBeenden();
-            fokusSoll.copy(HEIM_F); abstSoll = heimWerte(); neigXSoll = 0; letzteEingabe = performance.now();
+            zielSoll.set(0, 0, 0); phiSoll = HEIM_P; distSoll = heimWerte(); letzteEingabe = performance.now();
         }
-        function zoom(f) { introBeenden(); flug = null; abstSoll = clamp(abstSoll / f, R * 0.2, heimAbst * 2.6); letzteEingabe = performance.now(); }
+        function zoom(f) { introBeenden(); flug = null; distSoll = clamp(distSoll / f, 2.5, heimDist * 3); letzteEingabe = performance.now(); }
         function flieg(id) {
-            var nv = richt[id]; if (!nv) return;
+            var p = pos[id]; if (!p) return;
             introBeenden();
-            var weit = 0;
-            nachbarn(id).set.forEach(function (o) { if (richt[o]) weit = Math.max(weit, richt[o].angleTo(nv)); });
-            // Abstand nach der Streuung der Nachbarn: liegen sie weit weg, muss die Kamera hoeher
-            var a1 = clamp(R * (0.32 + weit * 1.5), R * 0.3, heimAbst * 0.95);
-            neigXSoll = 0; letzteEingabe = performance.now();
-            if (RM) { fokus.copy(nv); fokusSoll.copy(nv); tangente(fokus, vorn); abst = abstSoll = a1; return; }
-            var weg = fokus.angleTo(nv);
-            flug = { t0: performance.now(), dauer: 1100 + weg * 650, f0: fokus.clone(), f1: nv.clone(), a0: abst, a1: a1, hub: Math.min(weg, 1.6) * R * 0.85 };
+            var weit = 6;
+            nachbarn(id).set.forEach(function (o) { if (pos[o]) weit = Math.max(weit, pos[o].distanceTo(p)); });
+            // Abstand nach der Streuung der Nachbarn, damit die feuernden Bahnen im Bild sind
+            var d1 = clamp(weit * 1.35, 10, heimDist * 0.9);
+            letzteEingabe = performance.now();
+            if (RM) { ziel.copy(p); zielSoll.copy(p); dist = distSoll = d1; return; }
+            flug = { t0: performance.now(), dauer: 1200 + Math.min(ziel.distanceTo(p) * 12, 900), z0: ziel.clone(), z1: p.clone(), d0: dist, d1: d1 };
         }
 
-        // ── Zeiger ─────────────────────────────────────────────────────
+        // ── Zeiger: links drehen, rechts/Umschalt verschieben, Rad/zwei Finger zoomen ──
         var ray = new THREE.Raycaster(), maus = new THREE.Vector2();
         function treffer(cx, cy) {
             var r = canvas.getBoundingClientRect();
             maus.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
             ray.setFromCamera(maus, camera);
-            var t = ray.intersectObjects([tuerme, halme], false);
+            var t = ray.intersectObject(trefferKugeln, false);
             return t.length ? liste[t[0].instanceId] : null;
         }
-        function schieben(dx, dy) {
-            // Karte folgt dem Finger: nach rechts ziehen = Blickpunkt wandert nach links
-            var k = 0.0021 * clamp(abst / R, 0.12, 4);
-            tmpB.crossVectors(vorn, fokus);
-            fokusSoll.addScaledVector(tmpB, -dx * k).addScaledVector(vorn, dy * k).normalize();
+        function verschieben(dx, dy) {
+            var s = dist * 0.0013;
+            tmpA.setFromMatrixColumn(camera.matrixWorld, 0); tmpB.setFromMatrixColumn(camera.matrixWorld, 1);
+            zielSoll.addScaledVector(tmpA, -dx * s).addScaledVector(tmpB, dy * s);
         }
-        function kippen(dx, dy) {
-            qTmp.setFromAxisAngle(fokus, -dx * 0.006); vorn.applyQuaternion(qTmp);
-            neigXSoll = clamp(neigXSoll + dy * 0.005, -0.6, 1.0);
-        }
-        var zeiger = new Map(), start = null, bewegt = false, pinch = 0, mitteY = 0, mitteX = 0;
+        var zeiger = new Map(), start = null, bewegt = false, pinch = 0, mitteX = 0, mitteY = 0;
         function mitte() { var a = Array.from(zeiger.values()); return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2, d: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) }; }
         canvas.addEventListener('pointerdown', function (e) {
             canvas.setPointerCapture(e.pointerId);
             zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            if (zeiger.size === 1) { start = { x: e.clientX, y: e.clientY, kipp: e.button === 2 || e.shiftKey || e.ctrlKey || e.metaKey }; bewegt = false; }
+            if (zeiger.size === 1) { start = { x: e.clientX, y: e.clientY, schieb: e.button === 2 || e.shiftKey || e.ctrlKey || e.metaKey }; bewegt = false; }
             if (zeiger.size === 2) { var m = mitte(); pinch = m.d; mitteX = m.x; mitteY = m.y; bewegt = true; }
             letzteEingabe = performance.now(); flug = null; if (intro) introBeenden();
         });
@@ -773,12 +620,13 @@
             if (zeiger.size === 2) {
                 var m = mitte();
                 if (pinch) zoom(m.d / pinch);
-                kippen(0, (m.y - mitteY) * 0.6);
+                verschieben(m.x - mitteX, m.y - mitteY);
                 pinch = m.d; mitteX = m.x; mitteY = m.y; return;
             }
             if (!bewegt) return;
             hideTT();
-            if (start && start.kipp) kippen(dx, dy); else schieben(dx, dy);
+            if (start && start.schieb) verschieben(dx, dy);
+            else { thetaSoll -= dx * 0.005; phiSoll = clamp(phiSoll - dy * 0.005, 0.12, Math.PI - 0.12); }
             canvas.style.cursor = 'grabbing';
         });
         function los(e) {
@@ -799,16 +647,10 @@
 
         // ── Schnittstelle zur Seite ───────────────────────────────────
         var letzteWahl = null;
-        function ausrichten(m, nv, hoch) { m.quaternion.setFromUnitVectors(ZA, nv); m.position.copy(nv).multiplyScalar(R + hoch); }
         function sync() {
             setzeZustand();
-            if (sel && richt[sel]) {
-                var nv = richt[sel];
-                ausrichten(ring, nv, 0.03); ausrichten(welle, nv, 0.05); ring.visible = true;
-                strahl.quaternion.setFromUnitVectors(OBEN, nv); strahl.position.copy(nv).multiplyScalar(R + hoehe[sel]); strahl.visible = true;
-                strahlFarbe.value.copy(grund[index[sel]]).lerp(new THREE.Color(1, 1, 1), 0.5);
-                if (letzteWahl !== sel) { wahlZeit = performance.now(); letzteWahl = sel; }
-            } else { ring.visible = false; strahl.visible = false; welle.visible = false; letzteWahl = null; wahlZeit = 0; }
+            if (sel && pos[sel]) { if (letzteWahl !== sel) { wahlZeit = performance.now(); letzteWahl = sel; } }
+            else { letzteWahl = null; wahlZeit = 0; }
         }
 
         setzeZustand();
@@ -818,7 +660,7 @@
                 aktiv = true; canvas.classList.add('on'); groesse();
                 if (ersterStart) {
                     ersterStart = false;
-                    if (RM) { heim(); fokus.copy(fokusSoll); tangente(fokus, vorn.copy(YA)); abst = abstSoll; }
+                    if (RM) { heim(); ziel.copy(zielSoll); theta = thetaSoll; phi = phiSoll; dist = distSoll; }
                     else introStarten();
                 }
                 letzteEingabe = performance.now(); sync(); bitte();
