@@ -1,21 +1,20 @@
 // ═══ ARCHFLOW 3D MODULE ═══
-// /archflow/ Ansicht „3D“: der Quellcode als Stadt bei Nacht, durch die die
-// Ladebeziehungen als Lichtpakete fliessen. Gruppe = Viertel (Glasplatte),
-// Datei = Turm (Hoehe = sqrt(ein+aus), Fenster brennen nach Aktivitaet), Farbe =
-// Dateiart (TC der Seite), Verbindung = Bogen mit wanderndem Lichtpaket vom
-// Lader zur geladenen Datei.
+// /archflow/ Ansicht „3D“: der Quellcode als Planet. Gruppe = leuchtender Kontinent
+// aus Lichtpunkten, Datei = Glasturm, der aus der Kugel ragt (Hoehe = sqrt(ein+aus),
+// Fenster brennen nach Aktivitaet), Farbe = Dateiart (TC der Seite), Verbindung =
+// Flugroute ueber die Kugel mit wanderndem Lichtpaket vom Lader zur geladenen Datei.
 //
 // Haengt an den Globals des Hauptskripts der Seite (NODES, EDGES, GROUPS, RAW, sel,
 // hov, filterType, searchQ, TC, selectNode, closeDetail, showTT, hideTT, nachbarn).
 // Das Hauptskript ruft window.AF3D nur, solange layout === '3d'.
 //
-// Wunsch des Nutzers (21.10.2026): „so krass, dass mir die Spucke wegbleibt“ — die
-// erste ruhige Fassung war ihm „Standard-Three.js“. Deshalb hier bewusst mehr als die
-// sonstige Ein-Effekt-Regel: Bloom, Fluss, Spiegelung, Kamerafahrt. Bei
-// prefers-reduced-motion steht alles still (kein Flug, kein Fluss, kein Drehen).
+// Werdegang (21.10.2026, alles an einem Abend): ruhige Stadt -> „Standard-Three.js“;
+// Nachtstadt mit Fensterklotzen -> „Shader so naja, viel krasser, absurder“. Dies ist
+// Fassung drei. Bewusst VIEL Effekt (Bloom, Fluss, Atmosphaere, Sterne, Korn,
+// Farbsaum) — Wunsch des Nutzers, hier gilt die sonstige Ein-Effekt-Regel nicht.
+// prefers-reduced-motion: kein Anflug, kein Fluss, kein Drehen, kein Funkeln.
 //
-// Bloom ist selbst gebaut (Helligkeitsfilter + drei Unschaerfe-Stufen), weil im Repo
-// nur three.module.js liegt, keine examples/jsm-Zusaetze.
+// Bloom ist selbst gebaut, weil im Repo nur three.module.js liegt (keine examples/jsm).
 (function () {
     'use strict';
 
@@ -52,58 +51,34 @@
     function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
     function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
     function easeInOut(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+    function winkelNah(a, b) { var d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return a + d; }
 
     function baue(THREE) {
+        var V = THREE.Vector3;
         var wrap = canvas.parentElement;
         var schmal = window.innerWidth < 768;
         var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, schmal ? 1.5 : 1.75));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.05;
-        renderer.setClearColor(0x020203, 1);
+        renderer.toneMappingExposure = 1.1;
+        renderer.setClearColor(0x010103, 1);
 
         var scene = new THREE.Scene();
-        var BG = new THREE.Color('#030306');
-        scene.fog = new THREE.Fog(BG, 70, 230);
-        var camera = new THREE.PerspectiveCamera(38, 1, 0.1, 900);
+        var camera = new THREE.PerspectiveCamera(36, 1, 0.1, 2000);
+        var akzent = new THREE.Color((getComputedStyle(document.documentElement).getPropertyValue('--primary') || '').trim() || '#5578a8');
+        var akzentHell = akzent.clone().lerp(new THREE.Color('#bcd2ff'), 0.55);
 
-        var akzent = new THREE.Color((getComputedStyle(document.documentElement).getPropertyValue('--primary') || '#5578a8').trim() || '#5578a8');
+        var uZeit = { value: 0 }, uIntro = { value: RM ? 99 : 0 }, uFluss = { value: RM ? 1 : 0 };
+        var uRuhe = { value: RM ? 1 : 0 };
 
-        scene.add(new THREE.HemisphereLight(new THREE.Color('#9fb0d8'), new THREE.Color('#05050a'), 0.6));
-        var key = new THREE.DirectionalLight(0xffffff, 0.9); key.position.set(30, 60, 25); scene.add(key);
-
-        var uZeit = { value: 0 }, uIntro = { value: 0 }, uFluss = { value: RM ? 1 : 0 };
-
-        // ── Himmel: Verlauf mit leichtem Akzent-Schimmer am Horizont ───
-        var himmel = new THREE.Mesh(new THREE.SphereGeometry(600, 48, 24), new THREE.ShaderMaterial({
-            side: THREE.BackSide, depthWrite: false, fog: false,
-            uniforms: { uAkz: { value: akzent } },
-            vertexShader: `
-                varying vec3 vDir;
-                void main() { vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `
-                uniform vec3 uAkz;
-                varying vec3 vDir;
-                void main() {
-                    float h = vDir.y;
-                    vec3 oben = vec3(0.004, 0.005, 0.012);
-                    vec3 horiz = vec3(0.012, 0.014, 0.028) + uAkz * 0.05;
-                    vec3 c = mix(horiz, oben, smoothstep(0.0, 0.55, h));
-                    c = mix(vec3(0.006, 0.006, 0.01), c, smoothstep(-0.12, 0.02, h));
-                    gl_FragColor = vec4(c, 1.0);
-                }`
-        }));
-        himmel.renderOrder = -10; scene.add(himmel);
-
-        // ── Layout: Viertel spiralfoermig gepackt, groesste innen ──────
-        var ZELLE = 1.05, FUSS = 0.62, RAND = 0.7, LUECKE = 1.6;
+        // ── Layout: Viertel erst flach packen (wie die 2D-Karte), dann auf die Kugel legen ──
+        var ZELLE = 1.05, FUSS = 0.58, RAND = 0.6, LUECKE = 2.4;
         var gruppen = GROUPS.map(function (g) {
             var files = g.files.filter(function (f) { return RAW.nodes[f]; });
             var k = Math.max(1, Math.ceil(Math.sqrt(files.length)));
             var reihen = Math.ceil(files.length / k);
             return { g: g, files: files, k: k, w: k * ZELLE + RAND * 2, d: reihen * ZELLE + RAND * 2 };
         }).filter(function (b) { return b.files.length; }).sort(function (a, b) { return b.files.length - a.files.length; });
-
         var platziert = [];
         function frei(x, z, b) {
             for (var i = 0; i < platziert.length; i++) {
@@ -114,51 +89,148 @@
         }
         gruppen.forEach(function (b, i) {
             if (!i) { platziert.push({ x: 0, z: 0, b: b }); b.x = 0; b.z = 0; return; }
-            for (var s = 1; s < 20000; s++) {
+            for (var s = 1; s < 30000; s++) {
                 var r = 1.35 * Math.sqrt(s), a = s * 2.39996;
                 var x = Math.cos(a) * r, z = Math.sin(a) * r;
                 if (frei(x, z, b)) { b.x = x; b.z = z; platziert.push({ x: x, z: z, b: b }); return; }
             }
         });
-
-        var pos = {}, hoehe = {}, liste = [], index = {};
-        var maxGrad = 1;
-        NODES.forEach(function (n) { maxGrad = Math.max(maxGrad, (n.inDegree || 0) + (n.outDegree || 0)); });
-        gruppen.forEach(function (b) {
+        var flach = {}, rMax = 1;
+        gruppen.forEach(function (b, gi) {
             b.files.forEach(function (fid, fi) {
-                var n = RAW.nodes[fid];
                 var c = fi % b.k, r = Math.floor(fi / b.k);
-                var x = b.x - b.w / 2 + RAND + (c + 0.5) * ZELLE;
-                var z = b.z - b.d / 2 + RAND + (r + 0.5) * ZELLE;
-                pos[fid] = new THREE.Vector3(x, 0, z);
-                hoehe[fid] = 0.35 + Math.sqrt((n.inDegree || 0) + (n.outDegree || 0)) * 0.62;
-                index[fid] = liste.length; liste.push(fid);
+                var x = b.x - b.w / 2 + RAND + (c + 0.5) * ZELLE, z = b.z - b.d / 2 + RAND + (r + 0.5) * ZELLE;
+                flach[fid] = { x: x, z: z, g: gi };
+                rMax = Math.max(rMax, Math.hypot(x, z));
             });
         });
-        var radius = 1;
-        gruppen.forEach(function (b) { radius = Math.max(radius, Math.hypot(Math.abs(b.x) + b.w / 2, Math.abs(b.z) + b.d / 2)); });
+        // Flaechentreue Azimutalprojektion (Lambert): der Mittelpunkt wird der Nordpol,
+        // aussen reicht die Stadt bis ~112 Grad. Flaechentreu, damit die vielen kleinen
+        // Viertel am Rand nicht zusammengequetscht werden.
+        var MAXW = Math.PI * 0.62;
+        var R = (rMax + 1.5) / (2 * Math.sin(MAXW / 2));
+        function aufKugel(x, z) {
+            var r = Math.hypot(x, z), w = 2 * Math.asin(clamp(r / (2 * R), 0, 1)), az = Math.atan2(z, x);
+            return new V(Math.sin(w) * Math.cos(az), Math.cos(w), Math.sin(w) * Math.sin(az));
+        }
 
-        // ── Viertel: dunkle Glasplatten (durchscheinend, darunter liegt die Spiegelung) ──
-        var platteMat = new THREE.MeshStandardMaterial({ color: new THREE.Color('#0a0b12'), roughness: 0.35, metalness: 0.6, transparent: true, opacity: 0.8 });
-        var kanteMat = new THREE.LineBasicMaterial({ color: akzent.clone().lerp(new THREE.Color(1, 1, 1), 0.4), transparent: true, opacity: 0.16 });
+        var richt = {}, hoehe = {}, liste = [], index = {}, maxGrad = 1;
+        NODES.forEach(function (n) { maxGrad = Math.max(maxGrad, (n.inDegree || 0) + (n.outDegree || 0)); });
         gruppen.forEach(function (b) {
-            var geo = new THREE.BoxGeometry(b.w, 0.1, b.d);
-            var m = new THREE.Mesh(geo, platteMat); m.position.set(b.x, -0.05, b.z); m.renderOrder = 1; scene.add(m);
-            var e = new THREE.LineSegments(new THREE.EdgesGeometry(geo), kanteMat); e.position.copy(m.position); scene.add(e);
+            b.files.forEach(function (fid) {
+                var n = RAW.nodes[fid], f = flach[fid];
+                richt[fid] = aufKugel(f.x, f.z);
+                hoehe[fid] = 0.3 + Math.sqrt((n.inDegree || 0) + (n.outDegree || 0)) * 0.55;
+                index[fid] = liste.length; liste.push(fid);
+            });
+            var m = new V(); b.files.forEach(function (f) { m.add(richt[f]); }); b.mitte = m.normalize();
+            var wMax = 0; b.files.forEach(function (f) { wMax = Math.max(wMax, b.mitte.angleTo(richt[f])); });
+            b.winkel = wMax + 0.55 / R + 0.02;
+            var hmax = 0; b.files.forEach(function (f) { hmax = Math.max(hmax, hoehe[f]); }); b.hmax = hmax;
         });
-        var grid = new THREE.GridHelper(Math.ceil(radius * 3 / 4) * 4, Math.ceil(radius * 3 / 4), 0x12131c, 0x0b0b12);
-        grid.position.y = -0.12; scene.add(grid);
+        function spitze(fid) { return richt[fid].clone().multiplyScalar(R + hoehe[fid]); }
 
-        // ── Tuerme: ein Shader fuer Glas, Fenster, Dach, Auswahl und Spiegelung ──
+        // ── Sterne: zwei Schichten, funkeln leise ──────────────────────
+        (function () {
+            var n = schmal ? 1800 : 3600, P = new Float32Array(n * 3), S = new Float32Array(n), K = new Float32Array(n);
+            for (var i = 0; i < n; i++) {
+                var u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, rr = 420 + Math.random() * 380, q = Math.sqrt(1 - u * u);
+                P.set([q * Math.cos(a) * rr, u * rr, q * Math.sin(a) * rr], i * 3);
+                S[i] = Math.pow(Math.random(), 6) * 2.6 + 0.6; K[i] = Math.random() * 100;
+            }
+            var g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+            g.setAttribute('aS', new THREE.BufferAttribute(S, 1)); g.setAttribute('aK', new THREE.BufferAttribute(K, 1));
+            var sterne = new THREE.Points(g, new THREE.ShaderMaterial({
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+                uniforms: { uZeit: uZeit, uRuhe: uRuhe, uPx: { value: renderer.getPixelRatio() } },
+                vertexShader: `attribute float aS; attribute float aK; uniform float uZeit; uniform float uRuhe; uniform float uPx; varying float vA;
+                    void main() { vA = 0.45 + 0.55 * (uRuhe > 0.5 ? 1.0 : 0.5 + 0.5 * sin(uZeit * (0.6 + fract(aK) * 1.4) + aK));
+                        gl_PointSize = aS * uPx; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: `varying float vA; void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d);
+                    gl_FragColor = vec4(vec3(0.75, 0.82, 1.0) * a * a * vA * 1.4, 1.0); }`
+            }));
+            sterne.frustumCulled = false; scene.add(sterne);
+        })();
+
+        // ── Planetenkern: dunkle Kugel mit innerem Randlicht ───────────
+        var kern = new THREE.Mesh(new THREE.SphereGeometry(R - 0.04, 128, 96), new THREE.ShaderMaterial({
+            uniforms: { uAkz: { value: akzentHell } },
+            vertexShader: `varying vec3 vN;
+                void main() { vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `uniform vec3 uAkz; varying vec3 vN;
+                void main() {
+                    float f = pow(1.0 - max(dot(normalize(vN), vec3(0.0, 0.0, 1.0)), 0.0), 2.6);
+                    vec3 c = vec3(0.006, 0.008, 0.016) + uAkz * f * 0.18;
+                    gl_FragColor = vec4(c, 1.0); }`
+        }));
+        scene.add(kern);
+        // Atmosphaere: Ruecklicht um die Kugel
+        var atmo = new THREE.Mesh(new THREE.SphereGeometry(R * 1.16, 96, 64), new THREE.ShaderMaterial({
+            side: THREE.BackSide, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+            uniforms: { uAkz: { value: akzentHell } },
+            vertexShader: `varying vec3 vN; void main() { vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `uniform vec3 uAkz; varying vec3 vN;
+                void main() { float i = pow(clamp(0.68 - dot(vN, vec3(0.0, 0.0, 1.0)), 0.0, 1.0), 4.0); gl_FragColor = vec4(uAkz * i * 0.34, 1.0); }`
+        }));
+        scene.add(atmo);
+
+        // ── Oberflaeche: Fibonacci-Lichtpunkte, Kontinente = Viertel ───
+        var uGrp = { value: -1 };
+        (function () {
+            var n = schmal ? 26000 : 52000, P = new Float32Array(n * 3), IN = new Float32Array(n), G = new Float32Array(n), D = new Float32Array(n);
+            var gold = Math.PI * (3 - Math.sqrt(5)), d = new V();
+            for (var i = 0; i < n; i++) {
+                var y = 1 - (i / (n - 1)) * 2, q = Math.sqrt(1 - y * y), a = i * gold;
+                d.set(Math.cos(a) * q, y, Math.sin(a) * q);
+                var gi = -1, best = 0;
+                for (var k = 0; k < gruppen.length; k++) {
+                    var b = gruppen[k], ang = b.mitte.angleTo(d);
+                    if (ang < b.winkel) { var s = 1 - ang / b.winkel; if (s > best) { best = s; gi = k; } }
+                }
+                P.set([d.x * R, d.y * R, d.z * R], i * 3);
+                IN[i] = gi >= 0 ? Math.min(1, 0.35 + best * 1.6) : 0; G[i] = gi; D[i] = Math.acos(clamp(d.y, -1, 1)) * 0.75;
+            }
+            var g = new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+            g.setAttribute('aIn', new THREE.BufferAttribute(IN, 1)); g.setAttribute('aG', new THREE.BufferAttribute(G, 1)); g.setAttribute('aD', new THREE.BufferAttribute(D, 1));
+            var punkte = new THREE.Points(g, new THREE.ShaderMaterial({
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+                uniforms: { uZeit: uZeit, uIntro: uIntro, uPx: { value: renderer.getPixelRatio() }, uAkz: { value: akzentHell }, uGrp: uGrp, uR: { value: R } },
+                vertexShader: `attribute float aIn; attribute float aG; attribute float aD;
+                    uniform float uIntro; uniform float uPx; uniform float uGrp; uniform float uR;
+                    varying float vIn; varying float vA; varying float vSel; varying float vFace;
+                    void main() {
+                        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+                        vec3 nV = normalize(normalMatrix * normalize(position));
+                        vFace = dot(nV, normalize(-mv.xyz));
+                        vIn = aIn; vSel = (uGrp >= 0.0 && abs(aG - uGrp) < 0.5) ? 1.0 : 0.0;
+                        vA = smoothstep(aD, aD + 0.5, uIntro);
+                        float s = aIn > 0.0 ? 2.3 : 1.35;
+                        gl_PointSize = min(s * uPx * (uR * 2.6) / -mv.z, 2.6 * uPx);   // gedeckelt: aus der Naehe wurde die Oberflaeche ein grobes Raster
+                        gl_Position = projectionMatrix * mv;
+                    }`,
+                fragmentShader: `uniform vec3 uAkz; varying float vIn; varying float vA; varying float vSel; varying float vFace;
+                    void main() {
+                        float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard;
+                        float a = smoothstep(0.5, 0.15, d) * vA * smoothstep(-0.05, 0.25, vFace);
+                        vec3 aus = vec3(0.10, 0.12, 0.2) * 0.55;
+                        vec3 an = mix(vec3(0.85, 0.9, 1.0), uAkz, 0.35) * (0.55 + vIn * 0.55);
+                        vec3 c = mix(aus, an, step(0.01, vIn)) * (1.0 + vSel * 0.5);
+                        gl_FragColor = vec4(c * a, 1.0);
+                    }`
+            }));
+            punkte.frustumCulled = false; punkte.renderOrder = 1; scene.add(punkte);
+        })();
+
+        // ── Tuerme: Glasprismen mit feinem Fensterraster und Neonkanten ──
         var geoTurm = new THREE.BoxGeometry(FUSS, 1, FUSS); geoTurm.translate(0, 0.5, 0);
         var N = liste.length;
-        var aSeed = new Float32Array(N), aDelay = new Float32Array(N), aAkt = new Float32Array(N);
-        var aDim = new Float32Array(N), aHi = new Float32Array(N);
+        var aSeed = new Float32Array(N), aDelay = new Float32Array(N), aAkt = new Float32Array(N), aDim = new Float32Array(N), aHi = new Float32Array(N);
         liste.forEach(function (fid, i) {
-            var n = RAW.nodes[fid], p = pos[fid];
-            aSeed[i] = (i * 0.61803) % 1 * 97.0 + 3.0;
-            // Wachsen von der Mitte nach aussen
-            aDelay[i] = Math.hypot(p.x, p.z) / radius * 1.5 + ((i * 7) % 11) * 0.025;
+            var n = RAW.nodes[fid];
+            aSeed[i] = (i * 0.61803) % 1 * 97 + 3;
+            aDelay[i] = Math.acos(clamp(richt[fid].y, -1, 1)) * 0.75 + 0.35 + ((i * 7) % 11) * 0.02;
             aAkt[i] = Math.sqrt(((n.inDegree || 0) + (n.outDegree || 0)) / maxGrad);
         });
         geoTurm.setAttribute('aSeed', new THREE.InstancedBufferAttribute(aSeed, 1));
@@ -168,290 +240,247 @@
         var attrHi = new THREE.InstancedBufferAttribute(aHi, 1); attrHi.setUsage(THREE.DynamicDrawUsage);
         geoTurm.setAttribute('aDim', attrDim); geoTurm.setAttribute('aHi', attrHi);
 
-        var turmVS = `
-            attribute float aSeed; attribute float aDelay; attribute float aAkt; attribute float aDim; attribute float aHi;
-            uniform float uIntro; uniform float uSpiegel;
-            varying vec3 vN; varying vec3 vW; varying vec3 vL; varying vec3 vCol;
-            varying float vY; varying float vSeed; varying float vAkt; varying float vDim; varying float vHi; varying float vLicht;
-            void main() {
-                float t = clamp((uIntro - aDelay) / 0.9, 0.0, 1.0);
-                float wachs = 1.0 - pow(1.0 - t, 3.0);
-                vec3 p = position; p.y *= max(wachs, 0.0005);
-                vec4 w = modelMatrix * instanceMatrix * vec4(p, 1.0);
-                if (uSpiegel > 0.5) w.y = -w.y;
-                float hs = length(instanceMatrix[1].xyz);
-                vY = p.y * hs;
-                vN = normalize(mat3(instanceMatrix) * normal);
-                vW = w.xyz; vL = position; vCol = instanceColor;
-                vSeed = aSeed; vAkt = aAkt; vDim = aDim; vHi = aHi;
-                vLicht = clamp((uIntro - aDelay - 0.7) / 0.6, 0.0, 1.0);
-                gl_Position = projectionMatrix * viewMatrix * w;
-            }`;
-        var turmFS = `
-            uniform float uZeit; uniform float uSpiegel; uniform vec3 uBg; uniform float uNebelN; uniform float uNebelF;
-            varying vec3 vN; varying vec3 vW; varying vec3 vL; varying vec3 vCol;
-            varying float vY; varying float vSeed; varying float vAkt; varying float vDim; varying float vHi; varying float vLicht;
-            float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
-            void main() {
-                vec3 n = normalize(vN);
-                vec3 v = normalize(cameraPosition - vW);
-                vec3 L = normalize(vec3(0.45, 0.8, 0.35));
-                vec3 c = vCol * 0.035 + vCol * 0.10 * max(dot(n, L), 0.0);
-                float rim = pow(1.0 - max(dot(n, v), 0.0), 3.0);
-                c += vCol * rim * 0.35;
-                if (n.y > 0.5) {
-                    // Dach: leuchtet in der Farbe der Dateiart
-                    vec2 q = abs(vL.xz) / 0.31;
-                    float kante = smoothstep(0.78, 0.98, max(q.x, q.y));
-                    c = vCol * (0.9 + kante * 1.6) * (0.35 + 0.65 * vLicht);
-                } else if (n.y > -0.5) {
-                    // Fenster: drei Spalten je Seite, Stockwerke je 0.2 Welteinheiten
-                    float u = abs(n.x) > 0.5 ? vL.z : vL.x;
-                    float seite = abs(n.x) > 0.5 ? (n.x > 0.0 ? 1.0 : 2.0) : (n.z > 0.0 ? 3.0 : 4.0);
-                    float sx = (u + 0.31) / 0.62 * 3.0;
-                    float sy = vY / 0.2;
-                    float spalte = floor(sx), stock = floor(sy);
-                    vec2 f = fract(vec2(sx, sy));
-                    float fenster = step(0.2, f.x) * step(f.x, 0.8) * step(0.28, f.y) * step(f.y, 0.72) * step(0.8, sy);
-                    // Ab und zu geht ein Licht an oder aus — die Stadt lebt
-                    float takt = floor(uZeit * 0.12 + hash(vec3(vSeed, stock, spalte)) * 8.0);
-                    float an = step(hash(vec3(vSeed + seite * 13.0, stock * 1.7 + takt * 0.37, spalte)), 0.12 + 0.62 * vAkt);
-                    vec3 warm = mix(vCol, vec3(1.0, 0.93, 0.8), 0.45);
-                    c += warm * fenster * an * (1.6 + vHi * 1.4) * vLicht;
-                    c += vCol * fenster * 0.05;
-                }
-                c += vec3(1.0) * vHi * 0.12;
-                c = mix(c, uBg, vDim);
-                float a = 1.0;
-                if (uSpiegel > 0.5) { a = 0.32 * (1.0 - smoothstep(0.0, 2.6, -vW.y)); c *= 0.8; }
-                float d = length(vW - cameraPosition);
-                c = mix(c, uBg, smoothstep(uNebelN, uNebelF, d));
-                gl_FragColor = vec4(c, a);
-            }`;
-        function turmMaterial(spiegel) {
-            return new THREE.ShaderMaterial({
-                vertexShader: turmVS, fragmentShader: turmFS,
-                transparent: spiegel, depthWrite: !spiegel,
-                uniforms: { uZeit: uZeit, uIntro: uIntro, uSpiegel: { value: spiegel ? 1 : 0 }, uBg: { value: BG },
-                    uNebelN: { value: 70 }, uNebelF: { value: 230 } }
-            });
-        }
-        var tuerme = new THREE.InstancedMesh(geoTurm, turmMaterial(false), N);
-        var spiegel = new THREE.InstancedMesh(geoTurm, turmMaterial(true), N);
+        var turmMat = new THREE.ShaderMaterial({
+            uniforms: { uZeit: uZeit, uIntro: uIntro, uAkz: { value: akzentHell }, uFuss: { value: FUSS } },
+            vertexShader: `
+                attribute float aSeed; attribute float aDelay; attribute float aAkt; attribute float aDim; attribute float aHi;
+                uniform float uIntro;
+                varying vec3 vN; varying vec3 vW; varying vec3 vL; varying vec3 vLN; varying vec3 vCol;
+                varying float vY; varying float vH; varying float vSeed; varying float vAkt; varying float vDim; varying float vHi; varying float vLicht;
+                void main() {
+                    float t = clamp((uIntro - aDelay) / 0.9, 0.0, 1.0);
+                    float wachs = 1.0 - pow(1.0 - t, 4.0);
+                    vec3 p = position; p.y *= max(wachs, 0.0005);
+                    vec4 w = modelMatrix * instanceMatrix * vec4(p, 1.0);
+                    float hs = length(instanceMatrix[1].xyz);
+                    vY = p.y * hs; vH = hs * wachs;
+                    vN = normalize(mat3(instanceMatrix) * normal); vLN = normal;
+                    vW = w.xyz; vL = position; vCol = instanceColor;
+                    vSeed = aSeed; vAkt = aAkt; vDim = aDim; vHi = aHi;
+                    vLicht = clamp((uIntro - aDelay - 0.6) / 0.7, 0.0, 1.0);
+                    gl_Position = projectionMatrix * viewMatrix * w;
+                }`,
+            fragmentShader: `
+                uniform float uZeit; uniform vec3 uAkz; uniform float uFuss;
+                varying vec3 vN; varying vec3 vW; varying vec3 vL; varying vec3 vLN; varying vec3 vCol;
+                varying float vY; varying float vH; varying float vSeed; varying float vAkt; varying float vDim; varying float vHi; varying float vLicht;
+                float hash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+                float kasten(float x, float a, float b) { float w = fwidth(x) * 0.75; return smoothstep(a - w, a + w, x) * (1.0 - smoothstep(b - w, b + w, x)); }
+                void main() {
+                    vec3 n = normalize(vN), v = normalize(cameraPosition - vW);
+                    float fres = pow(1.0 - clamp(abs(dot(n, v)), 0.0, 1.0), 2.5);
+                    float halb = uFuss * 0.5;
+                    vec3 c;
+                    if (vLN.y > 0.5) {
+                        // Dach: dunkles Glas, Lichtrahmen in Dateifarbe
+                        vec2 q = abs(vL.xz) / halb;
+                        float rahmen = smoothstep(0.80, 0.94, max(q.x, q.y));
+                        c = vCol * (0.12 + rahmen * 3.2) * (0.25 + 0.75 * vLicht);
+                    } else if (vLN.y < -0.5) {
+                        c = vec3(0.0);
+                    } else {
+                        float u = abs(vLN.x) > 0.5 ? vL.z : vL.x;
+                        float seite = abs(vLN.x) > 0.5 ? (vLN.x > 0.0 ? 1.0 : 2.0) : (vLN.z > 0.0 ? 3.0 : 4.0);
+                        // Glas: tiefdunkel, spiegelt den Akzenthimmel am Rand, wird nach oben heller
+                        float hoch = clamp(vY / max(vH, 0.001), 0.0, 1.0);
+                        c = vCol * 0.04 + uAkz * fres * 0.08 + vCol * 0.10 * hoch * hoch;
+                        // Fensterraster: 5 Spalten, Stockwerk 0.11 — fein genug, um als Glasfassade zu lesen
+                        float sx = (u / uFuss + 0.5) * 5.0, sy = vY / 0.11;
+                        float spalte = floor(sx), stock = floor(sy);
+                        float fenster = kasten(fract(sx), 0.16, 0.84) * kasten(fract(sy), 0.24, 0.76) * step(1.0, sy) * step(sy, vH / 0.11 - 0.6);
+                        float takt = floor(uZeit * 0.09 + hash(vec3(vSeed, stock, spalte)) * 9.0);
+                        float zufall = hash(vec3(vSeed + seite * 13.0, stock * 1.7 + takt * 0.37, spalte));
+                        float an = step(zufall, 0.10 + 0.70 * vAkt);
+                        float glanz = 0.55 + 0.45 * hash(vec3(spalte, stock, vSeed + 7.0));
+                        vec3 licht = mix(vec3(1.0, 0.94, 0.86), vCol, 0.38);
+                        c += licht * fenster * an * glanz * (1.9 + vHi * 1.6) * vLicht;
+                        // Neonkanten: senkrechte Gratlinien und ein Kranz unter dem Dach
+                        float grat = 1.0 - smoothstep(0.0, fwidth(u) * 1.6 + 0.004, halb - abs(u));
+                        float kranz = kasten(vH - vY, 0.03, 0.075);
+                        c += vCol * (grat * 0.55 + kranz * 1.8) * vLicht;
+                        // Abtaststrahl: ein Lichtband laeuft langsam an den Tuermen hoch
+                        float band = exp(-pow((fract(uZeit * 0.07 + vSeed * 0.013) * (vH + 3.0) - vY) * 3.0, 2.0));
+                        c += vCol * band * 0.6 * vLicht * (0.4 + vAkt);
+                    }
+                    c += vec3(0.9, 0.95, 1.0) * vHi * 0.10;
+                    c = mix(c, vec3(0.002, 0.002, 0.006), vDim);
+                    gl_FragColor = vec4(c, 1.0);
+                }`
+        });
+        var tuerme = new THREE.InstancedMesh(geoTurm, turmMat, N);
         var grund = liste.map(function (fid) { return new THREE.Color(TC[RAW.nodes[fid].type] || TC.other); });
-        var tmpM = new THREE.Matrix4();
-        liste.forEach(function (fid, i) {
-            tmpM.makeScale(1, hoehe[fid], 1); tmpM.setPosition(pos[fid].x, 0, pos[fid].z);
-            tuerme.setMatrixAt(i, tmpM); tuerme.setColorAt(i, grund[i]);
-        });
-        spiegel.instanceMatrix = tuerme.instanceMatrix; spiegel.instanceColor = tuerme.instanceColor;
-        spiegel.renderOrder = 0; tuerme.renderOrder = 2;
-        spiegel.frustumCulled = false;
-        scene.add(spiegel); scene.add(tuerme);
+        var tmpM = new THREE.Matrix4(), OBEN = new V(0, 1, 0), XA = new V(1, 0, 0);
+        function rahmen(nv, ost, nord) {
+            ost.crossVectors(OBEN, nv); if (ost.lengthSq() < 1e-6) ost.copy(XA); ost.normalize();
+            nord.crossVectors(nv, ost).normalize();
+        }
+        (function () {
+            var ost = new V(), nord = new V(), s = new V();
+            liste.forEach(function (fid, i) {
+                var nv = richt[fid]; rahmen(nv, ost, nord);
+                tmpM.makeBasis(ost, nv, nord); tmpM.scale(s.set(1, hoehe[fid], 1));
+                tmpM.setPosition(nv.x * R, nv.y * R, nv.z * R);
+                tuerme.setMatrixAt(i, tmpM); tuerme.setColorAt(i, grund[i]);
+            });
+        })();
+        tuerme.renderOrder = 2; scene.add(tuerme);
 
-        // ── Boegen: Geometrie gemeinsam fuer Gleise (Linien) und Lichtpakete ──
-        var kanten = EDGES.filter(function (e) { return pos[e.from] && pos[e.to] && e.from !== e.to; });
+        // ── Flugrouten: Grosskreis + Hoehenbuckel, CPU (Linien) und GPU (Pakete) gleich ──
+        var kanten = EDGES.filter(function (e) { return richt[e.from] && richt[e.to] && e.from !== e.to; });
         var bez = kanten.map(function (e) {
-            var a = pos[e.from], b = pos[e.to];
-            var ha = hoehe[e.from], hb = hoehe[e.to];
-            var dist = a.distanceTo(b);
-            return {
-                e: e, len: dist,
-                p0: new THREE.Vector3(a.x, ha, a.z), p2: new THREE.Vector3(b.x, hb, b.z),
-                p1: new THREE.Vector3((a.x + b.x) / 2, Math.max(ha, hb) + 0.6 + dist * 0.3, (a.z + b.z) / 2),
-                col: new THREE.Color(TC[RAW.nodes[e.to].type] || TC.other)
-            };
+            var a = richt[e.from], b = richt[e.to], om = a.angleTo(b);
+            return { e: e, a: a, b: b, ha: hoehe[e.from], hb: hoehe[e.to], buckel: 0.4 + om * R * 0.27, om: om,
+                col: new THREE.Color(TC[RAW.nodes[e.to].type] || TC.other) };
         });
-
-        var SEG = 20;
+        function routenPunkt(k, t, out) {
+            var om = k.om, s = Math.sin(om), wa, wb;
+            if (s < 1e-4) { wa = 1 - t; wb = t; } else { wa = Math.sin((1 - t) * om) / s; wb = Math.sin(t * om) / s; }
+            out.set(k.a.x * wa + k.b.x * wb, k.a.y * wa + k.b.y * wb, k.a.z * wa + k.b.z * wb).normalize();
+            return out.multiplyScalar(R + k.ha + (k.hb - k.ha) * t + k.buckel * Math.sin(Math.PI * t));
+        }
+        var SEG = 28;
         function linien(menge, mat) {
-            var n = menge.length * SEG * 2, P = new Float32Array(n * 3), C = new Float32Array(n * 3), j = 0;
-            var v = new THREE.Vector3(), w = new THREE.Vector3();
+            var n = menge.length * SEG * 2, P = new Float32Array(n * 3), C = new Float32Array(n * 3), j = 0, v = new V(), w = new V();
             menge.forEach(function (k) {
                 for (var s = 0; s < SEG; s++) {
                     var t0 = s / SEG, t1 = (s + 1) / SEG;
-                    punkt(k, t0, v); punkt(k, t1, w);
+                    routenPunkt(k, t0, v); routenPunkt(k, t1, w);
                     P.set([v.x, v.y, v.z, w.x, w.y, w.z], j * 3);
-                    var k0 = 0.2 + 0.8 * t0, k1 = 0.2 + 0.8 * t1;
+                    var k0 = 0.15 + 0.85 * t0, k1 = 0.15 + 0.85 * t1;
                     C.set([k.col.r * k0, k.col.g * k0, k.col.b * k0, k.col.r * k1, k.col.g * k1, k.col.b * k1], j * 3);
                     j += 2;
                 }
             });
             var g = new THREE.BufferGeometry();
-            g.setAttribute('position', new THREE.BufferAttribute(P, 3));
-            g.setAttribute('color', new THREE.BufferAttribute(C, 3));
+            g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
             return new THREE.LineSegments(g, mat);
         }
-        function punkt(k, t, out) {
-            var u = 1 - t;
-            out.set(u * u * k.p0.x + 2 * u * t * k.p1.x + t * t * k.p2.x,
-                u * u * k.p0.y + 2 * u * t * k.p1.y + t * t * k.p2.y,
-                u * u * k.p0.z + 2 * u * t * k.p1.z + t * t * k.p2.z);
-            return out;
-        }
-        var gleisMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+        var gleisMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
         var gleise = linien(bez, gleisMat); gleise.renderOrder = 3; scene.add(gleise);
-        var wahlMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+        var wahlMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, blending: THREE.AdditiveBlending });
         var wahlLinien = null, wahlFuer;
 
-        // Lichtpakete: je Bogen zwei Pakete, jedes mit fuenf Schweifpunkten. Ganz auf der GPU.
-        var PAKETE = 2, SCHWEIF = 5;
-        var nP = bez.length * PAKETE * SCHWEIF;
-        var A0 = new Float32Array(nP * 3), A1 = new Float32Array(nP * 3), A2 = new Float32Array(nP * 3);
-        var APh = new Float32Array(nP), ASp = new Float32Array(nP), ATr = new Float32Array(nP), ACo = new Float32Array(nP * 3);
-        var AZu = new Float32Array(nP), dummy = new Float32Array(nP * 3);
-        var kantePunkte = [];
-        var j = 0;
+        // Lichtpakete: je Route zwei, jedes mit langem Schweif (8 Punkte)
+        var PAKETE = 2, SCHWEIF = 8, nP = bez.length * PAKETE * SCHWEIF;
+        var AA = new Float32Array(nP * 3), AB = new Float32Array(nP * 3), AH = new Float32Array(nP * 3), AW = new Float32Array(nP);
+        var APh = new Float32Array(nP), ASp = new Float32Array(nP), ATr = new Float32Array(nP), ACo = new Float32Array(nP * 3), AZu = new Float32Array(nP);
+        var kantePunkte = [], j = 0;
         bez.forEach(function (k, ki) {
-            var start = j;
+            var start = j, sp = 0.5 / (k.om * R * 0.6 + 2.5);
             for (var p = 0; p < PAKETE; p++) {
                 var ph = ((ki * 0.37) % 1 + p / PAKETE) % 1;
-                var sp = 0.55 / (k.len * 0.55 + 2.2);
                 for (var s = 0; s < SCHWEIF; s++) {
-                    A0.set([k.p0.x, k.p0.y, k.p0.z], j * 3); A1.set([k.p1.x, k.p1.y, k.p1.z], j * 3); A2.set([k.p2.x, k.p2.y, k.p2.z], j * 3);
-                    APh[j] = ph; ASp[j] = sp; ATr[j] = s; ACo.set([k.col.r, k.col.g, k.col.b], j * 3);
-                    j++;
+                    AA.set([k.a.x, k.a.y, k.a.z], j * 3); AB.set([k.b.x, k.b.y, k.b.z], j * 3); AH.set([k.ha, k.hb, k.buckel], j * 3);
+                    AW[j] = k.om; APh[j] = ph; ASp[j] = sp; ATr[j] = s; ACo.set([k.col.r, k.col.g, k.col.b], j * 3); j++;
                 }
             }
             kantePunkte.push([start, j]);
         });
         var gP = new THREE.BufferGeometry();
-        gP.setAttribute('position', new THREE.BufferAttribute(dummy, 3));
-        gP.setAttribute('aP0', new THREE.BufferAttribute(A0, 3));
-        gP.setAttribute('aP1', new THREE.BufferAttribute(A1, 3));
-        gP.setAttribute('aP2', new THREE.BufferAttribute(A2, 3));
-        gP.setAttribute('aPh', new THREE.BufferAttribute(APh, 1));
-        gP.setAttribute('aSp', new THREE.BufferAttribute(ASp, 1));
-        gP.setAttribute('aTr', new THREE.BufferAttribute(ATr, 1));
-        gP.setAttribute('aCo', new THREE.BufferAttribute(ACo, 3));
-        var attrZu = new THREE.BufferAttribute(AZu, 1); attrZu.setUsage(THREE.DynamicDrawUsage);
-        gP.setAttribute('aZu', attrZu);
+        gP.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nP * 3), 3));
+        [['aA', AA, 3], ['aB', AB, 3], ['aH', AH, 3], ['aW', AW, 1], ['aPh', APh, 1], ['aSp', ASp, 1], ['aTr', ATr, 1], ['aCo', ACo, 3]].forEach(function (x) {
+            gP.setAttribute(x[0], new THREE.BufferAttribute(x[1], x[2]));
+        });
+        var attrZu = new THREE.BufferAttribute(AZu, 1); attrZu.setUsage(THREE.DynamicDrawUsage); gP.setAttribute('aZu', attrZu);
         var uPx = { value: renderer.getPixelRatio() };
         var pakete = new THREE.Points(gP, new THREE.ShaderMaterial({
             transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-            uniforms: { uZeit: uZeit, uFluss: uFluss, uPx: uPx, uRuhe: { value: RM ? 1 : 0 } },
+            uniforms: { uZeit: uZeit, uFluss: uFluss, uPx: uPx, uRuhe: uRuhe, uR: { value: R } },
             vertexShader: `
-                attribute vec3 aP0; attribute vec3 aP1; attribute vec3 aP2; attribute vec3 aCo;
-                attribute float aPh; attribute float aSp; attribute float aTr; attribute float aZu;
-                uniform float uZeit; uniform float uFluss; uniform float uPx; uniform float uRuhe;
+                attribute vec3 aA; attribute vec3 aB; attribute vec3 aH; attribute vec3 aCo;
+                attribute float aW; attribute float aPh; attribute float aSp; attribute float aTr; attribute float aZu;
+                uniform float uZeit; uniform float uFluss; uniform float uPx; uniform float uRuhe; uniform float uR;
                 varying vec3 vC; varying float vA;
                 void main() {
-                    float t = fract(aPh + (uRuhe > 0.5 ? 0.0 : uZeit * aSp)) - aTr * 0.011;
-                    float ok = step(0.0, t);
-                    t = clamp(t, 0.0, 1.0);
-                    float u = 1.0 - t;
-                    vec3 p = u * u * aP0 + 2.0 * u * t * aP1 + t * t * aP2;
+                    float t = fract(aPh + (uRuhe > 0.5 ? 0.0 : uZeit * aSp)) - aTr * 0.0065;
+                    float ok = step(0.0, t); t = clamp(t, 0.0, 1.0);
+                    float s = sin(aW); float wa = 1.0 - t, wb = t;
+                    if (s > 0.0001) { wa = sin((1.0 - t) * aW) / s; wb = sin(t * aW) / s; }
+                    vec3 d = normalize(aA * wa + aB * wb);
+                    vec3 p = d * (uR + mix(aH.x, aH.y, t) + aH.z * sin(3.14159265 * t));
                     vec4 mv = modelViewMatrix * vec4(p, 1.0);
-                    // aZu: 0 normal, 1 hervorgehoben, 2 abgedunkelt
-                    float hi = step(0.5, aZu) * step(aZu, 1.5);
-                    float aus = step(1.5, aZu);
-                    float g = (1.0 - aTr * 0.17) * (1.0 + hi * 0.7);
-                    gl_PointSize = max(1.0, 7.0 * g * uPx * 26.0 / -mv.z);
-                    vA = ok * (1.0 - aTr * 0.2) * uFluss * smoothstep(0.0, 0.05, t) * smoothstep(1.0, 0.93, t) * (1.0 - aus * 0.93) * (1.0 + hi);
-                    vC = mix(aCo, vec3(1.0), 0.25 + hi * 0.25) * 2.6;
+                    float hi = step(0.5, aZu) * step(aZu, 1.5), aus = step(1.5, aZu);
+                    float kopf = 1.0 - aTr / 8.0;
+                    gl_PointSize = max(1.0, (2.0 + 5.5 * kopf * kopf) * (1.0 + hi * 0.6) * uPx * 24.0 / -mv.z);
+                    vA = ok * kopf * kopf * uFluss * smoothstep(0.0, 0.04, t) * smoothstep(1.0, 0.95, t) * (1.0 - aus * 0.94) * (1.0 + hi * 1.2);
+                    vC = mix(aCo, vec3(1.0), 0.2 + (1.0 - aTr / 8.0) * 0.35) * 3.0;
                     gl_Position = projectionMatrix * mv;
                 }`,
-            fragmentShader: `
-                varying vec3 vC; varying float vA;
-                void main() {
-                    float d = length(gl_PointCoord - 0.5);
-                    float a = smoothstep(0.5, 0.0, d);
-                    gl_FragColor = vec4(vC * a * a * vA, 1.0);
-                }`
+            fragmentShader: `varying vec3 vC; varying float vA;
+                void main() { float d = length(gl_PointCoord - 0.5); float a = smoothstep(0.5, 0.0, d); gl_FragColor = vec4(vC * a * a * vA, 1.0); }`
         }));
         pakete.frustumCulled = false; pakete.renderOrder = 4; scene.add(pakete);
 
-        // ── Auswahl: Ring, Lichtstrahl in den Himmel, Druckwelle am Boden ──
-        var weissM = function (op) { return new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: op, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }); };
-        var ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.64, 64), weissM(0.9));
-        ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring);
-        var welle = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.0, 96), weissM(0));
-        welle.rotation.x = -Math.PI / 2; welle.visible = false; scene.add(welle);
-        var strahlGeo = new THREE.CylinderGeometry(0.09, 0.09, 60, 16, 1, true); strahlGeo.translate(0, 30, 0);
+        // ── Auswahl: Ring + Druckwelle auf der Oberflaeche, Strahl ins All ──
+        function weissM() { return new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }); }
+        var ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.58, 64), weissM()); ring.visible = false; scene.add(ring);
+        var welle = new THREE.Mesh(new THREE.RingGeometry(0.92, 1.0, 128), weissM()); welle.visible = false; scene.add(welle);
+        var strahlGeo = new THREE.CylinderGeometry(0.07, 0.07, 90, 16, 1, true); strahlGeo.translate(0, 45, 0);
         var strahlFarbe = { value: new THREE.Color(1, 1, 1) }, strahlA = { value: 0 };
         var strahl = new THREE.Mesh(strahlGeo, new THREE.ShaderMaterial({
             transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
             uniforms: { uF: strahlFarbe, uA: strahlA },
-            vertexShader: `varying float vH; void main() { vH = position.y / 60.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-            fragmentShader: `uniform vec3 uF; uniform float uA; varying float vH;
-                void main() { float a = pow(1.0 - vH, 2.2) * uA; gl_FragColor = vec4(uF * 2.2 * a, 1.0); }`
+            vertexShader: `varying float vH; void main() { vH = position.y / 90.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+            fragmentShader: `uniform vec3 uF; uniform float uA; varying float vH; void main() { gl_FragColor = vec4(uF * 2.6 * pow(1.0 - vH, 2.6) * uA, 1.0); }`
         }));
         strahl.visible = false; strahl.renderOrder = 5; scene.add(strahl);
-        var wahlZeit = 0;
+        var wahlZeit = 0, ZA = new V(0, 0, 1);
 
-        // ── Beschriftung der Viertel (feste Bildschirmgroesse) ─────────
+        // ── Beschriftung der Kontinente (feste Bildschirmgroesse, Rueckseite blendet aus) ──
         var schilder = [];
         function schild(text, zahl) {
-            var fs = 44, pad = 18;
-            var c = document.createElement('canvas'), g = c.getContext('2d');
-            g.font = '600 ' + fs + 'px Inter, system-ui, sans-serif';
-            var tw = g.measureText(text).width;
-            g.font = '500 ' + (fs * 0.72) + 'px "JetBrains Mono", monospace';
-            var zw = g.measureText(String(zahl)).width;
+            var fs = 40, pad = 16, c = document.createElement('canvas'), g = c.getContext('2d');
+            g.font = '600 ' + fs + 'px Inter, system-ui, sans-serif'; var tw = g.measureText(text).width;
+            g.font = '500 ' + (fs * 0.7) + 'px "JetBrains Mono", monospace'; var zw = g.measureText(String(zahl)).width;
             c.width = Math.ceil(tw + zw + pad * 3); c.height = fs + pad * 2;
-            g.fillStyle = 'rgba(6,6,10,0.72)';
+            g.fillStyle = 'rgba(4,5,10,0.62)';
             var r = c.height / 2; g.beginPath(); g.moveTo(r, 0); g.arcTo(c.width, 0, c.width, c.height, r); g.arcTo(c.width, c.height, 0, c.height, r);
             g.arcTo(0, c.height, 0, 0, r); g.arcTo(0, 0, c.width, 0, r); g.closePath(); g.fill();
-            g.strokeStyle = 'rgba(255,255,255,0.14)'; g.lineWidth = 2; g.stroke();
-            g.font = '600 ' + fs + 'px Inter, system-ui, sans-serif'; g.fillStyle = '#e9e9ef'; g.textBaseline = 'middle';
-            g.fillText(text, pad, c.height / 2 + 2);
-            g.font = '500 ' + (fs * 0.72) + 'px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(233,233,239,0.45)';
-            g.fillText(String(zahl), pad * 2 + tw, c.height / 2 + 2);
+            g.strokeStyle = 'rgba(190,210,255,0.22)'; g.lineWidth = 2; g.stroke();
+            g.font = '600 ' + fs + 'px Inter, system-ui, sans-serif'; g.fillStyle = '#eef1ff'; g.textBaseline = 'middle'; g.fillText(text, pad, c.height / 2 + 2);
+            g.font = '500 ' + (fs * 0.7) + 'px "JetBrains Mono", monospace'; g.fillStyle = 'rgba(200,210,240,0.5)'; g.fillText(String(zahl), pad * 2 + tw, c.height / 2 + 2);
             var t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
-            // sizeAttenuation:false = feste Bildschirmgroesse. Mit Weltgroesse wurde ein
-            // Schild beim Heranfliegen bildschirmfuellend und verdeckte den gewaehlten Turm.
-            var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false, sizeAttenuation: false, fog: false, opacity: 0 }));
-            s.userData.verh = c.width / c.height;
-            return s;
+            // sizeAttenuation:false = feste Bildschirmgroesse; mit Weltgroesse fuellte ein Schild beim Heranfliegen das Bild.
+            var s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false, depthTest: false, toneMapped: false, sizeAttenuation: false, opacity: 0 }));
+            s.userData.verh = c.width / c.height; return s;
         }
         gruppen.forEach(function (b) {
-            if (b.files.length < 4) return;
-            var hmax = 0; b.files.forEach(function (f) { hmax = Math.max(hmax, hoehe[f]); });
-            var s = schild(b.g.label, b.files.length);
-            var hw = b.files.length >= 20 ? 0.024 : 0.019;
-            s.scale.set(hw * s.userData.verh, hw, 1);
-            s.center.set(0.5, 0);
-            s.position.set(b.x, hmax + 0.5, b.z - b.d / 2);
-            s.renderOrder = 10; scene.add(s); schilder.push(s);
+            if (b.files.length < 6) return;
+            var s = schild(b.g.label, b.files.length), hw = b.files.length >= 30 ? 0.022 : 0.017;
+            s.scale.set(hw * s.userData.verh, hw, 1); s.center.set(0.5, 0);
+            s.position.copy(b.mitte).multiplyScalar(R + b.hmax + 0.7);
+            s.userData.richt = b.mitte; s.renderOrder = 20; scene.add(s); schilder.push(s);
         });
 
-        // ── Nachbearbeitung: Szene in HDR, Bloom in drei Stufen, Komposit ──
-        var quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        var quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2));
-        var quadSzene = new THREE.Scene(); quadSzene.add(quad);
-        function rt(w, h, samples) {
-            return new THREE.WebGLRenderTarget(w, h, { type: THREE.HalfFloatType, samples: samples || 0, depthBuffer: !!samples });
-        }
-        var rtSzene = rt(2, 2, 4), rtHell = rt(2, 2), stufen = [], hilf = [];
-        for (var si = 0; si < 3; si++) { stufen.push(rt(2, 2)); hilf.push(rt(2, 2)); }
+        // ── Nachbearbeitung: HDR-Szene, Bloom (3 Stufen), Farbsaum, Korn, Vignette ──
+        var quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2)), quadSzene = new THREE.Scene(); quadSzene.add(quad);
+        function rt(samples) { return new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: samples || 0, depthBuffer: !!samples }); }
+        var rtSzene = rt(4), rtHell = rt(), stufen = [rt(), rt(), rt(), rt()], hilf = [rt(), rt(), rt(), rt()];
         var vsQuad = `varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
-        var matHell = new THREE.ShaderMaterial({
-            uniforms: { tSzene: { value: null }, uSchwelle: { value: 0.75 } }, vertexShader: vsQuad, depthTest: false,
-            fragmentShader: `uniform sampler2D tSzene; uniform float uSchwelle; varying vec2 vUv;
-                void main() { vec3 c = texture2D(tSzene, vUv).rgb; float l = max(c.r, max(c.g, c.b));
-                    gl_FragColor = vec4(c * smoothstep(uSchwelle, uSchwelle + 0.8, l), 1.0); }`
-        });
-        var matBlur = new THREE.ShaderMaterial({
-            uniforms: { tQ: { value: null }, uRicht: { value: new THREE.Vector2() } }, vertexShader: vsQuad, depthTest: false,
+        var matHell = new THREE.ShaderMaterial({ uniforms: { tS: { value: null } }, vertexShader: vsQuad, depthTest: false,
+            fragmentShader: `uniform sampler2D tS; varying vec2 vUv; void main() { vec3 c = texture2D(tS, vUv).rgb; float l = max(c.r, max(c.g, c.b)); gl_FragColor = vec4(c * smoothstep(0.62, 1.5, l), 1.0); }` });
+        var matBlur = new THREE.ShaderMaterial({ uniforms: { tQ: { value: null }, uRicht: { value: new THREE.Vector2() } }, vertexShader: vsQuad, depthTest: false,
             fragmentShader: `uniform sampler2D tQ; uniform vec2 uRicht; varying vec2 vUv;
-                void main() {
-                    vec3 c = texture2D(tQ, vUv).rgb * 0.227027;
+                void main() { vec3 c = texture2D(tQ, vUv).rgb * 0.227027;
                     c += (texture2D(tQ, vUv + uRicht * 1.3846).rgb + texture2D(tQ, vUv - uRicht * 1.3846).rgb) * 0.3162162;
                     c += (texture2D(tQ, vUv + uRicht * 3.2308).rgb + texture2D(tQ, vUv - uRicht * 3.2308).rgb) * 0.0702703;
-                    gl_FragColor = vec4(c, 1.0);
-                }`
-        });
+                    gl_FragColor = vec4(c, 1.0); }` });
         var matKomp = new THREE.ShaderMaterial({
-            uniforms: { tSzene: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, uStaerke: { value: 1.15 } },
+            uniforms: { tS: { value: null }, tB0: { value: null }, tB1: { value: null }, tB2: { value: null }, tB3: { value: null }, uZeit: uZeit, uRuhe: uRuhe },
             vertexShader: vsQuad, depthTest: false,
-            fragmentShader: `uniform sampler2D tSzene; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform float uStaerke; varying vec2 vUv;
+            fragmentShader: `uniform sampler2D tS; uniform sampler2D tB0; uniform sampler2D tB1; uniform sampler2D tB2; uniform sampler2D tB3; uniform float uZeit; uniform float uRuhe; varying vec2 vUv;
+                float rausch(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
                 void main() {
-                    vec3 c = texture2D(tSzene, vUv).rgb;
-                    vec3 b = texture2D(tB0, vUv).rgb * 0.9 + texture2D(tB1, vUv).rgb * 0.8 + texture2D(tB2, vUv).rgb * 0.75;
-                    c += b * uStaerke;
-                    float vig = smoothstep(1.25, 0.35, length(vUv - 0.5) * 1.6);
-                    c *= mix(0.55, 1.0, vig);
-                    gl_FragColor = vec4(c, 1.0);
+                    vec2 m = vUv - 0.5; float r2 = dot(m, m);
+                    // Farbsaum: nur zum Rand hin, in der Mitte bleibt das Bild scharf
+                    vec2 off = m * r2 * 0.028;
+                    vec3 c = vec3(texture2D(tS, vUv + off).r, texture2D(tS, vUv).g, texture2D(tS, vUv - off).b);
+                    vec3 b = texture2D(tB0, vUv).rgb * 0.8 + texture2D(tB1, vUv).rgb * 0.9 + texture2D(tB2, vUv).rgb * 1.0 + texture2D(tB3, vUv).rgb * 1.1;
+                    c += b * 0.9;
+                    c *= mix(0.42, 1.0, smoothstep(0.62, 0.08, r2 * 1.9));
+                    float k = rausch(vUv * vec2(1931.0, 1129.0) + (uRuhe > 0.5 ? 0.0 : fract(uZeit * 7.0) * 91.0));
+                    c += (k - 0.5) * 0.028;
+                    gl_FragColor = vec4(max(c, 0.0), 1.0);
                     #include <tonemapping_fragment>
                     #include <colorspace_fragment>
                 }`
@@ -459,32 +488,31 @@
         function pass(mat, ziel) { quad.material = mat; renderer.setRenderTarget(ziel); renderer.render(quadSzene, quadCam); }
         function zeichnen() {
             renderer.setRenderTarget(rtSzene); renderer.render(scene, camera);
-            matHell.uniforms.tSzene.value = rtSzene.texture; pass(matHell, rtHell);
-            var quelle = rtHell;
-            for (var i = 0; i < 3; i++) {
+            matHell.uniforms.tS.value = rtSzene.texture; pass(matHell, rtHell);
+            var q = rtHell;
+            for (var i = 0; i < 4; i++) {
                 var s = stufen[i], h = hilf[i];
-                matBlur.uniforms.tQ.value = quelle.texture; matBlur.uniforms.uRicht.value.set(1 / s.width, 0); pass(matBlur, h);
+                matBlur.uniforms.tQ.value = q.texture; matBlur.uniforms.uRicht.value.set(1 / s.width, 0); pass(matBlur, h);
                 matBlur.uniforms.tQ.value = h.texture; matBlur.uniforms.uRicht.value.set(0, 1 / s.height); pass(matBlur, s);
-                quelle = s;
+                q = s;
             }
-            matKomp.uniforms.tSzene.value = rtSzene.texture;
-            matKomp.uniforms.tB0.value = stufen[0].texture; matKomp.uniforms.tB1.value = stufen[1].texture; matKomp.uniforms.tB2.value = stufen[2].texture;
+            var u = matKomp.uniforms; u.tS.value = rtSzene.texture;
+            u.tB0.value = stufen[0].texture; u.tB1.value = stufen[1].texture; u.tB2.value = stufen[2].texture; u.tB3.value = stufen[3].texture;
             pass(matKomp, null);
         }
 
-        // ── Zustand (Auswahl, Hover, Filter) in die Puffer schreiben ──
+        // ── Zustand (Auswahl, Hover, Filter) in die Puffer ─────────────
         function passt(n) {
             if (filterType !== 'all' && n.type !== filterType) return false;
             if (searchQ && n.name.toLowerCase().indexOf(searchQ) < 0 && n.path.toLowerCase().indexOf(searchQ) < 0) return false;
             return true;
         }
-        var gleisZiel = 0.11;
+        var gleisZiel = 0.09;
         function setzeZustand() {
-            var nb = sel ? nachbarn(sel).set : null;
-            var gefiltert = filterType !== 'all' || !!searchQ;
+            var nb = sel ? nachbarn(sel).set : null, gefiltert = filterType !== 'all' || !!searchQ;
             for (var i = 0; i < N; i++) {
                 var fid = liste[i];
-                aDim[i] = nb ? (nb.has(fid) ? 0 : 0.88) : (gefiltert && !passt(RAW.nodes[fid]) ? 0.82 : 0);
+                aDim[i] = nb ? (nb.has(fid) ? 0 : 0.9) : (gefiltert && !passt(RAW.nodes[fid]) ? 0.85 : 0);
                 aHi[i] = fid === sel ? 1 : fid === hov ? 0.6 : 0;
             }
             attrDim.needsUpdate = true; attrHi.needsUpdate = true;
@@ -504,126 +532,109 @@
                     if (eigene.length) { wahlLinien = linien(eigene, wahlMat); wahlLinien.renderOrder = 3; scene.add(wahlLinien); }
                 }
             }
-            gleisZiel = sel ? 0.03 : (hov || gefiltert) ? 0.06 : 0.11;
-            schilder.forEach(function (s) { s.userData.ziel = sel ? 0.2 : 1; });
+            uGrp.value = sel && flach[sel] ? flach[sel].g : -1;
+            gleisZiel = sel ? 0.02 : (hov || gefiltert) ? 0.045 : 0.09;
         }
 
-        // ── Kamera: Kugelkoordinaten um ein Ziel, gedaempft ───────────
-        var ziel = new THREE.Vector3(), zielSoll = new THREE.Vector3();
-        var HEIM_T = -0.65, HEIM_P = 0.98;
-        var theta = HEIM_T, thetaSoll = theta, phi = HEIM_P, phiSoll = phi;
-        var dist = 1, distSoll = 1, heimDist = 1;
+        // ── Kamera: Umlaufbahn um den Planeten ────────────────────────
+        var HEIM_T = 0.6, HEIM_P = 0.5;
+        var theta = HEIM_T, thetaSoll = theta, phi = HEIM_P, phiSoll = phi, dist = 1, distSoll = 1, heimDist = 1;
         var flug = null, letzteEingabe = 0, intro = null;
-
         function heimWerte() {
-            var asp = Math.max(0.6, (wrap.clientWidth || 1) / (wrap.clientHeight || 1));
-            heimDist = radius * (asp < 1 ? 3.7 : 2.6);
-            return heimDist;
+            var asp = Math.max(0.5, (wrap.clientWidth || 1) / (wrap.clientHeight || 1));
+            heimDist = R * (asp < 1 ? 7.2 : 4.7); return heimDist;
         }
         function kameraSetzen() {
             var sp = Math.sin(phi);
-            camera.position.set(ziel.x + dist * sp * Math.sin(theta), ziel.y + dist * Math.cos(phi), ziel.z + dist * sp * Math.cos(theta));
-            camera.lookAt(ziel);
-            var zl = document.getElementById('zLvl');
-            if (zl) zl.textContent = Math.round(heimDist / dist * 100) + '%';
+            camera.position.set(dist * sp * Math.sin(theta), dist * Math.cos(phi), dist * sp * Math.cos(theta));
+            camera.lookAt(0, 0, 0);
+            var zl = document.getElementById('zLvl'); if (zl) zl.textContent = Math.round(heimDist / dist * 100) + '%';
         }
-
         function introStarten() {
-            heimWerte();
-            intro = { t0: performance.now(), dauer: 3600 };
-            ziel.set(0, 0, 0); zielSoll.set(0, 0, 0);
-            theta = HEIM_T + 2.4; phi = 0.06; dist = heimDist * 2.3;
+            heimWerte(); intro = { t0: performance.now(), dauer: 4600 };
             thetaSoll = HEIM_T; phiSoll = HEIM_P; distSoll = heimDist;
+            theta = HEIM_T - 2.2; phi = 1.45; dist = heimDist * 5.5;
         }
         function introBeenden() {
-            if (!intro) return;
-            intro = null; uIntro.value = 99; uFluss.value = 1;
+            if (!intro) return; intro = null; uIntro.value = 99; uFluss.value = 1;
             theta = thetaSoll; phi = phiSoll; dist = distSoll;
         }
 
-        // ── Bildschleife: laeuft, solange die Ansicht offen ist ──────
-        var aktiv = false, raf = 0, letzt = 0;
+        // ── Bildschleife ───────────────────────────────────────────────
+        var aktiv = false, raf = 0, letzt = 0, kamRicht = new V();
         function bild(jetzt) {
-            raf = 0;
-            if (!aktiv) return;
+            raf = 0; if (!aktiv) return;
             var dt = letzt ? Math.min(0.05, (jetzt - letzt) / 1000) : 0.016; letzt = jetzt;
             uZeit.value += dt;
-
             if (intro) {
                 var f = clamp((jetzt - intro.t0) / intro.dauer, 0, 1), k = easeInOut(f);
-                theta = (HEIM_T + 2.4) + (thetaSoll - (HEIM_T + 2.4)) * k;
-                phi = 0.06 + (phiSoll - 0.06) * k;
-                dist = heimDist * 2.3 + (distSoll - heimDist * 2.3) * k;
-                uIntro.value = (jetzt - intro.t0) / 1000;
-                uFluss.value = clamp((f - 0.72) / 0.28, 0, 1);
+                theta = (HEIM_T - 2.2) + 2.2 * k; phi = 1.45 + (HEIM_P - 1.45) * k;
+                dist = heimDist * 5.5 + (heimDist - heimDist * 5.5) * (1 - Math.pow(1 - f, 3));
+                uIntro.value = (jetzt - intro.t0) / 1000 * 1.05;
+                uFluss.value = clamp((f - 0.7) / 0.3, 0, 1);
                 if (f >= 1) { intro = null; uIntro.value = 99; uFluss.value = 1; }
             } else if (flug) {
                 var g = clamp((jetzt - flug.t0) / flug.dauer, 0, 1), kk = easeInOut(g);
-                zielSoll.lerpVectors(flug.vonZiel, flug.nachZiel, kk);
-                distSoll = flug.vonDist + (flug.nachDist - flug.vonDist) * kk;
-                ziel.copy(zielSoll); dist = distSoll;
-                theta += (thetaSoll - theta) * 0.12; phi += (phiSoll - phi) * 0.12;
-                if (g >= 1) flug = null;
+                theta = flug.t0w + (flug.t1w - flug.t0w) * kk; phi = flug.p0 + (flug.p1 - flug.p0) * kk;
+                // Bogen nach aussen: beim Flug um die Kugel kurz Abstand gewinnen
+                dist = flug.d0 + (flug.d1 - flug.d0) * kk + Math.sin(Math.PI * g) * flug.hub;
+                thetaSoll = theta; phiSoll = phi; distSoll = flug.d1;
+                if (g >= 1) { flug = null; dist = distSoll; }
             } else {
-                // Leerlauf: nach 8 s ohne Eingabe dreht die Stadt langsam
-                if (!RM && !sel && jetzt - letzteEingabe > 8000) thetaSoll += dt * 0.035;
-                var d = 1 - Math.pow(0.0001, dt);
-                ziel.lerp(zielSoll, d);
+                if (!RM && !sel && jetzt - letzteEingabe > 6000) thetaSoll += dt * 0.05;
+                var d = 1 - Math.pow(0.00008, dt);
                 theta += (thetaSoll - theta) * d; phi += (phiSoll - phi) * d; dist += (distSoll - dist) * d;
             }
-
             gleisMat.opacity += ((intro ? 0 : gleisZiel) - gleisMat.opacity) * 0.08;
-            schilder.forEach(function (s) {
-                var z = intro ? 0 : (s.userData.ziel == null ? 1 : s.userData.ziel);
-                s.material.opacity += (z - s.material.opacity) * 0.1;
-            });
-
-            if (sel && pos[sel] && wahlZeit) {
-                var w = clamp((jetzt - wahlZeit) / 1100, 0, 1);
-                welle.visible = w < 1;
-                welle.scale.setScalar(1 + easeOut(w) * 9);
-                welle.material.opacity = (1 - w) * 0.7;
-                strahlA.value = (RM ? 0.5 : (0.35 + 0.65 * Math.exp(-w * 3))) * (0.85 + 0.15 * Math.sin(uZeit.value * 2.2));
-            }
 
             kameraSetzen();
+            kamRicht.copy(camera.position).normalize();
+            schilder.forEach(function (s) {
+                var blick = s.userData.richt.dot(kamRicht);
+                var z = intro ? 0 : (sel ? 0.22 : 1) * clamp((blick - 0.15) / 0.3, 0, 1);
+                s.material.opacity += (z - s.material.opacity) * 0.12;
+                s.visible = s.material.opacity > 0.01;
+            });
+
+            if (sel && richt[sel] && wahlZeit) {
+                var w = clamp((jetzt - wahlZeit) / 1300, 0, 1);
+                welle.visible = w < 1; welle.scale.setScalar(1 + easeOut(w) * 11); welle.material.opacity = (1 - w) * 0.85;
+                ring.material.opacity = 0.9;
+                strahlA.value = (RM ? 0.5 : (0.4 + 0.6 * Math.exp(-w * 3))) * (0.85 + 0.15 * Math.sin(uZeit.value * 2.4));
+            }
+
             zeichnen();
             raf = requestAnimationFrame(bild);
         }
         function bitte() { if (aktiv && !raf) { letzt = 0; raf = requestAnimationFrame(bild); } }
 
         function groesse() {
-            var w = wrap.clientWidth, h = wrap.clientHeight;
-            if (!w || !h) return;
+            var w = wrap.clientWidth, h = wrap.clientHeight; if (!w || !h) return;
             renderer.setSize(w, h, false);
             var pr = renderer.getPixelRatio(), W = Math.floor(w * pr), H = Math.floor(h * pr);
             rtSzene.setSize(W, H); rtHell.setSize(W >> 1, H >> 1);
-            for (var i = 0; i < 3; i++) { var f = 1 << (i + 1); stufen[i].setSize(Math.max(1, W / f | 0), Math.max(1, H / f | 0)); hilf[i].setSize(Math.max(1, W / f | 0), Math.max(1, H / f | 0)); }
-            uPx.value = pr;
-            camera.aspect = w / h; camera.updateProjectionMatrix();
-            heimWerte(); bitte();
+            for (var i = 0; i < 4; i++) { var f = 2 << i; stufen[i].setSize(Math.max(1, W / f | 0), Math.max(1, H / f | 0)); hilf[i].setSize(Math.max(1, W / f | 0), Math.max(1, H / f | 0)); }
+            uPx.value = pr; camera.aspect = w / h; camera.updateProjectionMatrix(); heimWerte(); bitte();
         }
-
-        function heim() {
-            flug = null; introBeenden();
-            zielSoll.set(0, 0, 0); thetaSoll = HEIM_T; phiSoll = HEIM_P; distSoll = heimWerte();
-        }
-        function zoom(f) { introBeenden(); distSoll = clamp(distSoll / f, 4, heimDist * 2.6); letzteEingabe = performance.now(); }
+        function heim() { flug = null; introBeenden(); thetaSoll = winkelNah(theta, HEIM_T); phiSoll = HEIM_P; distSoll = heimWerte(); letzteEingabe = performance.now(); }
+        function zoom(f) { introBeenden(); flug = null; distSoll = clamp(distSoll / f, R * 1.22, heimDist * 3); letzteEingabe = performance.now(); }
         function flieg(id) {
-            var p = pos[id]; if (!p) return;
+            var nv = richt[id]; if (!nv) return;
             introBeenden();
-            var nach = new THREE.Vector3(p.x, hoehe[id] * 0.5, p.z);
-            // Abstand so, dass Turm UND Nachbarn ins Bild passen — sonst zeigen die Boegen ins Leere
-            var weit = 4;
-            nachbarn(id).set.forEach(function (o) { if (pos[o]) weit = Math.max(weit, pos[o].distanceTo(p)); });
-            var nachDist = clamp(weit * 3.2, 14, heimDist * 1.1);   // 3.2 ~ 1 / tan(halbe Sichthoehe 19 Grad), plus Rand
-            phiSoll = Math.min(phiSoll, 1.05);
+            // Blick leicht von "oben" (Richtung Pol) auf den Turm, damit Horizont und Routen im Bild sind
+            var pZiel = clamp(Math.acos(clamp(nv.y, -1, 1)) - 0.32, 0.12, Math.PI - 0.12);
+            var tZiel = Math.atan2(nv.x, nv.z);
+            var weit = 0;
+            nachbarn(id).set.forEach(function (o) { if (richt[o]) weit = Math.max(weit, richt[o].angleTo(nv)); });
+            var d1 = clamp(R * (1.75 + weit * 1.25), R * 1.6, heimDist * 1.05);
             letzteEingabe = performance.now();
-            if (RM) { zielSoll.copy(nach); ziel.copy(nach); distSoll = dist = nachDist; return; }
-            flug = { t0: performance.now(), dauer: 1100, vonZiel: ziel.clone(), nachZiel: nach, vonDist: dist, nachDist: nachDist };
+            if (RM) { theta = thetaSoll = tZiel; phi = phiSoll = pZiel; dist = distSoll = d1; return; }
+            var t1 = winkelNah(theta, tZiel);
+            var weg = Math.hypot(t1 - theta, pZiel - phi);
+            flug = { t0: performance.now(), dauer: 1100 + weg * 380, t0w: theta, t1w: t1, p0: phi, p1: pZiel, d0: dist, d1: d1, hub: Math.min(weg, 2) * R * 0.45 };
         }
 
-        // ── Zeiger: drehen, verschieben, zoomen, waehlen ──────────────
+        // ── Zeiger ─────────────────────────────────────────────────────
         var ray = new THREE.Raycaster(), maus = new THREE.Vector2();
         function treffer(cx, cy) {
             var r = canvas.getBoundingClientRect();
@@ -632,15 +643,13 @@
             var t = ray.intersectObject(tuerme, false);
             return t.length ? liste[t[0].instanceId] : null;
         }
-
         var zeiger = new Map(), start = null, bewegt = false, pinch = 0;
         canvas.addEventListener('pointerdown', function (e) {
             canvas.setPointerCapture(e.pointerId);
             zeiger.set(e.pointerId, { x: e.clientX, y: e.clientY });
-            if (zeiger.size === 1) { start = { x: e.clientX, y: e.clientY, knopf: e.button, shift: e.shiftKey || e.ctrlKey || e.metaKey }; bewegt = false; }
+            if (zeiger.size === 1) { start = { x: e.clientX, y: e.clientY }; bewegt = false; }
             if (zeiger.size === 2) { var a = Array.from(zeiger.values()); pinch = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); }
-            letzteEingabe = performance.now();
-            if (intro) introBeenden();
+            letzteEingabe = performance.now(); if (intro) introBeenden();
         });
         canvas.addEventListener('pointermove', function (e) {
             var alt = zeiger.get(e.pointerId);
@@ -658,31 +667,22 @@
             letzteEingabe = performance.now();
             if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 5) bewegt = true;
             if (zeiger.size === 2) {
-                var a = Array.from(zeiger.values());
-                var nd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
-                if (pinch) zoom(nd / pinch);
-                pinch = nd; return;
+                var a = Array.from(zeiger.values()), nd = Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y);
+                if (pinch) zoom(nd / pinch); pinch = nd; return;
             }
             if (!bewegt) return;
             hideTT(); flug = null;
-            if (start && (start.knopf === 2 || start.shift)) {
-                var s = dist * 0.0016;
-                zielSoll.x -= (dx * Math.cos(theta) + dy * Math.sin(theta)) * s;
-                zielSoll.z -= (dx * -Math.sin(theta) + dy * Math.cos(theta)) * s;
-            } else {
-                thetaSoll -= dx * 0.0055;
-                phiSoll = clamp(phiSoll - dy * 0.0045, 0.18, 1.42);
-            }
+            // Drehtempo mit dem Abstand: nah an der Oberflaeche feiner
+            var tempo = 0.0042 * clamp((dist - R) / (heimDist - R), 0.18, 1.4);
+            thetaSoll -= dx * tempo; phiSoll = clamp(phiSoll - dy * tempo, 0.08, Math.PI - 0.08);
             canvas.style.cursor = 'grabbing';
         });
         function los(e) {
             var warEiner = zeiger.size === 1;
-            zeiger.delete(e.pointerId);
-            if (zeiger.size < 2) pinch = 0;
+            zeiger.delete(e.pointerId); if (zeiger.size < 2) pinch = 0;
             if (warEiner && start && !bewegt) {
                 var id = treffer(e.clientX, e.clientY);
-                if (id) { selectNode(id); flieg(id); }
-                else if (sel) closeDetail();
+                if (id) { selectNode(id); flieg(id); } else if (sel) closeDetail();
             }
             if (!zeiger.size) { start = null; canvas.style.cursor = 'grab'; }
         }
@@ -695,18 +695,16 @@
 
         // ── Schnittstelle zur Seite ───────────────────────────────────
         var letzteWahl = null;
+        function ausrichten(m, nv, hoch) { m.quaternion.setFromUnitVectors(ZA, nv); m.position.copy(nv).multiplyScalar(R + hoch); }
         function sync() {
             setzeZustand();
-            if (sel && pos[sel]) {
-                var p = pos[sel];
-                ring.visible = true; ring.position.set(p.x, 0.03, p.z);
-                strahl.visible = true; strahl.position.set(p.x, hoehe[sel], p.z);
+            if (sel && richt[sel]) {
+                var nv = richt[sel];
+                ausrichten(ring, nv, 0.03); ausrichten(welle, nv, 0.05); ring.visible = true;
+                strahl.quaternion.setFromUnitVectors(OBEN, nv); strahl.position.copy(nv).multiplyScalar(R + hoehe[sel]); strahl.visible = true;
                 strahlFarbe.value.copy(grund[index[sel]]).lerp(new THREE.Color(1, 1, 1), 0.5);
-                welle.position.set(p.x, 0.04, p.z);
                 if (letzteWahl !== sel) { wahlZeit = performance.now(); letzteWahl = sel; }
-            } else {
-                ring.visible = false; strahl.visible = false; welle.visible = false; letzteWahl = null; wahlZeit = 0;
-            }
+            } else { ring.visible = false; strahl.visible = false; welle.visible = false; letzteWahl = null; wahlZeit = 0; }
         }
 
         setzeZustand();
@@ -716,11 +714,10 @@
                 aktiv = true; canvas.classList.add('on'); groesse();
                 if (ersterStart) {
                     ersterStart = false;
-                    if (RM) { heim(); uIntro.value = 99; uFluss.value = 1; ziel.copy(zielSoll); theta = thetaSoll; phi = phiSoll; dist = distSoll; }
+                    if (RM) { heim(); theta = thetaSoll; phi = phiSoll; dist = distSoll; }
                     else introStarten();
                 }
-                letzteEingabe = performance.now();
-                sync(); bitte();
+                letzteEingabe = performance.now(); sync(); bitte();
             },
             aus: function () { aktiv = false; canvas.classList.remove('on'); if (raf) { cancelAnimationFrame(raf); raf = 0; } },
             sync: sync, groesse: groesse, heim: heim, zoom: zoom, flieg: flieg,
