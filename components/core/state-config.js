@@ -6,7 +6,6 @@
         customEntryTypes: [],  // NEW: User-defined entry types
         customFields: [],       // NEW: User-defined fields per type
         workflowRules: [],      // NEW: Conditional rules & automation
-        untis: null,            // NEW: Untis integration data
         settings: { 
             name:'User', 
             avatarInitials: '',

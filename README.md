@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-8.7.0-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-8.7.1-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -43,7 +43,7 @@ Die App ist reines HTML, CSS und JavaScript und läuft vollständig im Browser. 
 | **Lokal zuerst** | Daten bleiben auf dem Gerät; zehn Sicherungskopien im Hintergrund, verschlüsselter Export auf Wunsch |
 | **Offline nutzbar** | Service Worker mit drei Cache-Strategien — die App startet auch ohne Netz |
 | **Ohne Werbe-Tracking** | keine Cookies, keine Profile; Nutzungszahlen nur anonym (PostHog EU, cookiefrei) |
-| **Für die Ausbildung gebaut** | IHK-Berichtsheft, Prüfungszulassung, BBiG-Rechte, Berufsschule, Untis, Fahrtkosten |
+| **Für die Ausbildung gebaut** | IHK-Berichtsheft, Prüfungszulassung, BBiG-Rechte, Berufsschule |
 | **KI optional** | Berichtsheft-Vorschläge aus der Cloud (über einen Proxy, kein eigener Schlüssel) oder aus einer lokalen Engine ohne Netz |
 
 ---
@@ -86,10 +86,9 @@ Die App ist reines HTML, CSS und JavaScript und läuft vollständig im Browser. 
 - **Aufgaben** — Heute / Geplant / Alle / Erledigt, Schnelleingabe („morgen", „!!", „#Liste"), Wiederholungen, Notizen
 - **Rechte-Checker** — BBiG, JArbSchG und ArbZG interaktiv prüfen
 - **IHK-Ansicht** — Prüfungszulassung, Fehlquote, Nachweis-Lücken
-- **Berufsschule** — Noten je Lehrjahr, Stundenplan aus WebUntis
+- **Berufsschule** — Noten je Lehrjahr
 - **Urlaubsplaner** — Brückentage nach Bundesland, Ausbeute-Ranking, Ein-Klick-Buchung
 - **Vertrags-Manager** — Gehalt, Benefits, Zuschläge
-- **Fahrtkosten** — Routing je Verkehrsmittel, eigene Strecke einzeichnen, Pendlerpauschale
 - **IT-Deep-Dives** — bedienbare Diagramme zu LED, SSD, Arbeitsspeicher, Qubit
 
 ### Sicherheit & Datenschutz
@@ -123,7 +122,6 @@ Die App unter `/` ist eine Single-Page-App aus Komponenten. Daneben gibt es eige
 | [/aufgaben/](https://myworklog.de/aufgaben/) | Aufgaben mit Wiederholungen und Notizen |
 | [/rechte-checker/](https://myworklog.de/rechte-checker/) | Ausbildungsrechte interaktiv prüfen |
 | [/vertrags-manager/](https://myworklog.de/vertrags-manager/) | Vertrag, Gehalt, Zuschläge |
-| [/fahrtkosten/](https://myworklog.de/fahrtkosten/) | Fahrtkosten mit echter Route und Karte |
 | [/it-landing/](https://myworklog.de/it-landing/) | Einstieg zu den Deep-Dives |
 | [/it-stories/…](https://myworklog.de/it-landing/) | Deep-Dives: blaue LED, SSD, Arbeitsspeicher, Qubit |
 | [/wechseln/](https://myworklog.de/wechseln/) | Umzug aus anderen Zeiterfassungen |
@@ -167,13 +165,13 @@ MyWorkLog/
 │  ├─ core/                 Speicher, Timer, Diagramme, Export, Cloud-Abgleich, P2P, Icons
 │  ├─ dashboard/            KPI-Ringe, Eintrag erfassen, Widgets
 │  ├─ history/ weekview/ yearview/ monthcompare/   Auswertungen
-│  ├─ ihk/ school/ untis/ jobs/ goals/             Ausbildung, Schule, Jobs, Ziele
+│  ├─ ihk/ school/ jobs/ goals/                   Ausbildung, Schule, Jobs, Ziele
 │  ├─ import/ urlaubsplaner/ bbig-scanner/         Wechsel-Brücke, Urlaub, Rechte
 │  └─ …                     eine Komponente je Ansicht, Dialog und Werkzeug
 │
 ├─ pages/                   Eigenständige Seiten, je pages/<name>/index.html
 │  ├─ berichtsheft/         Markup — die Logik liegt in Assets/js/berichtsheft/
-│  ├─ ausbilder/ aufgaben/ rechte-checker/ fahrtkosten/ …
+│  ├─ ausbilder/ aufgaben/ rechte-checker/ klasse/ …
 │  └─ it-stories/<slug>/    Deep-Dives mit bedienbaren Diagrammen
 │
 ├─ Assets/
@@ -247,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v8.7.0** · 2026-10-19
+Aktuelle Version: **v8.7.1** · 2026-10-21
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **8.7.0** | 2026-10-19 | Der Rechte-Checker beantwortet jetzt 112 Fragen, jede mit eigener Seite |
+| **8.7.1** | 2026-10-21 | Fahrtkosten, Diagramme und Untis-Import sind aus der App entfernt |
+| 8.7.0 | 2026-10-19 | Der Rechte-Checker beantwortet jetzt 112 Fragen, jede mit eigener Seite |
 | 8.6.3 | 2026-10-19 | Die Berichtsheft-KI gliedert zusammengehörige Aufgaben in Ober- und Unterpunkte |
 | 8.6.2 | 2026-10-18 | Preise für Ausbildungs-Pass und Plus stehen fest, und alle Seiten tragen dieselbe Farbe |
 | 8.6.1 | 2026-10-18 | Die Leiste oben im Dashboard verdeckt am Handy nichts mehr |
-| 8.6.0 | 2026-10-18 | Preise und Vergleich zeigen, was kostenlos bleibt und was dazukommt |
 
 <!-- changelog:end -->
 

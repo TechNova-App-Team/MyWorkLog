@@ -70,7 +70,7 @@ for (let d = new Date(start); d <= ende; d.setDate(d.getDate() + 1)) {
 }
 
 const data = {
-    entries, trash: [], customEntryTypes: [], customFields: [], workflowRules: [], untis: null,
+    entries, trash: [], customEntryTypes: [], customFields: [], workflowRules: [],
     settings: {
         // Theme = Voreinstellung der App (state-config.js). Bis 18.10.2026 stand hier
         // noch das Lila von vor v8.1.8 — die Bilder zeigten damit eine Marke, die es nicht mehr gibt.

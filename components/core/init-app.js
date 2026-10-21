@@ -41,9 +41,6 @@
         if(typeof data.settings.rounding.mode === 'undefined') data.settings.rounding.mode = 'commercial';
         if(typeof data.settings.rounding.taktungMinutes === 'undefined') data.settings.rounding.taktungMinutes = 15;
         
-        // Initialize Untis Integration (optional — Funktion existiert nur wenn Untis-Modul geladen)
-        if (typeof initializeUntisIntegration === 'function') initializeUntisIntegration();
-        
         // Initialize projects list
         if (!Array.isArray(data.settings.projects)) data.settings.projects = [];
         // Collect unique projects from entries

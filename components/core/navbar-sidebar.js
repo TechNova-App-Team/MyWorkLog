@@ -6,7 +6,6 @@
             history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
             newEntry: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
             widgets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
-            fahrtkosten: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2.5"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="2.5"/></svg>',
             yearview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/><path d="M10 3v4"/><path d="M14 3v4"/></svg>',
             monthcompare: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 5v4"/><path d="M15 5v4"/></svg>',
             weekview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 5v4"/><path d="M16 5v4"/></svg>',
@@ -14,13 +13,11 @@
             school: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M4 9v7a8 8 0 0016 0V9"/></svg>',
             ihk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L3 7l9 4 9-4-9-4z"/><path d="M3 7v6c0 5 4 9 9 9s9-4 9-9V7"/></svg>',
             goals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 5v2"/><path d="M12 17v2"/><path d="M5 12h2"/><path d="M17 12h2"/></svg>',
-            'analytics-pro': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 15v4"/><path d="M12 11v8"/><path d="M16 7v12"/></svg>',
             settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>',
             alerts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
             onboarding: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
             import: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>',
             backup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v6h6"/></svg>',
-            untis: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9h18"/><path d="M9 9v12"/><path d="M15 9v12"/><rect x="10.2" y="11" width="3.6" height="7" rx="1" fill="currentColor" stroke="none" opacity="0.45"/></svg>',
             nfc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8.32a7.43 7.43 0 0 1 0 7.36"/><path d="M9.46 6.21a11.76 11.76 0 0 1 0 11.58"/><path d="M12.91 4.1a15.91 15.91 0 0 1 0 15.8"/><path d="M16.37 2a20.16 20.16 0 0 1 0 20"/></svg>',
             support: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><path d="M4 15h1a3 3 0 003 3v-5"/><path d="M20 15h-1a3 3 0 01-3 3v-5"/></svg>',
             'repo-analysis': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 15v4"/><path d="M12 11v8"/><path d="M16 7v12"/></svg>',
@@ -142,7 +139,6 @@
             {id:'school', label:'Berufsschule', icon:getIconSvgById('school'), visible:true},
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
-            {id:'analytics-pro', label:'Diagramme', icon:getIconSvgById('analytics-pro'), visible:true},
             {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'/aufgaben/'},
         ];
 
@@ -150,7 +146,9 @@
         // 6: Urlaubsplaner ergaenzt. Ohne Bump landet er bei Bestandsnutzern
         // per Append ganz unten statt bei den Zeitraum-Ansichten — die
         // Sidebar-Reihenfolge steckt in den Nutzerdaten (data.settings.nav).
-        // 7: Fahrtkosten ist jetzt fest in Ausbildung & Lernen.
+        // 7: Fahrtkosten war fest in Ausbildung & Lernen (seit v8.7.1 entfernt).
+        // Entfernte Ansichten (Diagramme, v8.7.1) brauchen KEINEN Bump: der
+        // else-Zweig unten filtert unbekannte ids aus data.settings.nav.
         // Nur hochzaehlen, wenn sich die Liste OBEN wirklich aendert: ein Bump
         // ueberschreibt jedem Bestandsnutzer seine selbst sortierte Sidebar.
         // 🔴 Gegenbeispiel aus v6.4.9: beim Entfernen der FI Academy war der
@@ -407,14 +405,12 @@
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
         { id: 'ihk',          label: 'IHK',               icon: getIconSvgById('ihk'), group: 'Navigation', action: () => switchTab('ihk') },
         { id: 'goals',        label: 'Ziele',             icon: getIconSvgById('goals'), group: 'Navigation', action: () => switchTab('goals') },
-        { id: 'analytics-pro', label: 'Diagramme',         icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
         { id: 'alerts',       label: 'Alerts',            icon: getIconSvgById('alerts'), group: 'Tools',      action: () => toggleAlertsPanel() },
         { id: 'backup',       label: 'Backup / Export',   icon: getIconSvgById('backup'), group: 'Tools',      action: () => showExportMenu() },
         { id: 'import',       label: 'Import',            icon: getIconSvgById('import'), group: 'Tools',      action: () => showBackupMenu() },
         { id: 'onboarding',   label: 'Anleitung / Tour',  icon: getIconSvgById('onboarding'), group: 'Tools',      action: () => startOnboardingTour() },
-        { id: 'untis',        label: 'Untis Import',      icon: getIconSvgById('untis'), group: 'Tools',      action: () => showUntisImportModal() },
         // Einziger Einstieg in die NFC-Einrichtung, seit die Befehlsleiste mit dem
         // alten Dashboard wegfiel (44615da3). Am Handy ueber Mehr → Suche erreichbar;
         // das Mehr-Blatt selbst ist ein volles 4er-Raster, ein 13. Feld braeche es.
@@ -428,7 +424,6 @@
         // weggeklickt war.
         { id: 'ausbilder-betrieb', label: 'Ausbilder / Betrieb verbinden', icon: getIconSvgById('berichtsheft'), group: 'Extern', action: () => { window.location.href = './berichtsheft/?betrieb=1'; } },
         { id: 'schatten-berichtsheft', label: 'Schatten-Berichtsheft', icon: getIconSvgById('schatten-berichtsheft'), group: 'Extern', action: () => { window.location.href = './schatten-berichtsheft/'; } },
-        { id: 'fahrtkosten',  label: 'Fahrtkosten',       icon: getIconSvgById('fahrtkosten'), group: 'Extern',     action: () => { window.location.href = './fahrtkosten/'; } },
         { id: 'support',      label: 'Support',           icon: getIconSvgById('support'), group: 'Extern',     action: () => { window.location.href = './support/'; } },
         { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './aufgaben/'; } },
         { id: 'it-hub',       label: 'IT Professional Hub', icon: getIconSvgById('it-hub'), group: 'Extern',     action: () => { window.location.href = './it-landing/'; } },

@@ -2292,8 +2292,7 @@ Mit freundlichen Grüßen
         tips: [
             'Frag nach einem Jobticket oder Fahrtkostenzuschuss — viele Betriebe zahlen freiwillig.',
             'Mach eine Steuererklärung: Als Azubi bekommst du einbehaltene Lohnsteuer oft komplett zurück.',
-            'Notiere deine Arbeitstage und die Strecke für die Entfernungspauschale.',
-            'Rechne deine Pendelkosten mit dem Fahrtkosten-Rechner von MyWorkLog durch.'
+            'Notiere deine Arbeitstage und die Strecke für die Entfernungspauschale.'
         ]
     },
     {

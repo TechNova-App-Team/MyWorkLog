@@ -162,39 +162,17 @@
     'Buchen': 'Book',
     'Datum': 'Date',
 
-    // ─── Fahrtkosten-Seite (JS-gerendert) ───
-    'Kurze Pendelstrecke ✓': 'Short commute ✓',
-    'Mittlere Pendelstrecke': 'Medium commute',
-    'Lange Pendelstrecke': 'Long commute',
-    'KM / TAG': 'KM / DAY',
-    'Startadresse (Zuhause)': 'Start address (home)',
-    'Zieladresse (Betrieb / Berufsschule)': 'Destination (workplace / vocational school)',
-    'Zugverbindung suchen': 'Find a train connection',
-    'Fernbus-Verbindung': 'Long-distance coach',
-    'Mitfahrgelegenheit finden': 'Find a rideshare',
-    'Fahrrad-Route planen': 'Plan a cycling route',
-    '49€ Monatsticket Info': 'About the €49 monthly ticket',
-    'Auto': 'Car',
-    'Fahrrad': 'Bicycle',
-    'Zu Fuß': 'On foot',
-    'Öffentlich': 'Public transport',
-
     // ─── Sidebar- und Command-Palette-Labels ───
     // Die Sidebar wird aus data.settings.nav gerendert, die Labels liegen also
     // in den NUTZERDATEN und nicht im HTML — die statische Pipeline kann sie
     // gar nicht sehen. Deshalb hier.
     'Verlauf': 'History',
-    // Zwei Auswertungs-Ansichten, zwei eindeutige Namen (v8.1.0): was in einem
-    // Zeitraum herauskam vs. die Diagramm-Sammlung.
     'Bilanz': 'Summary',
-    'Diagramme': 'Charts',
-    'Fahrtkosten': 'Commuting costs',
     'Jahresansicht': 'Year view',
     'Monatsansicht': 'Month view',
     'Monatvergleich': 'Month comparison',
     'Neu': 'New',
     'Anleitung / Tour': 'Guide / tour',
-    'Untis Import': 'Untis import',
     'NFC-Chip einrichten': 'Set up NFC chip',
     'Aufgaben Manager': 'Task manager',
     'Rechte-Checker': 'Rights checker',
@@ -236,8 +214,6 @@
     'Kategorie': 'Category',
     'Erinnerung': 'Reminder',
 
-    // ─── Fahrtkosten ───
-    'Route mit allen Verkehrsmitteln': 'Route with all modes of transport',
 
     // ─── Allgemeine Statuswörter (u. a. Einstellungen, Leistung, Datenschutz) ───
     'Läuft': 'Active',

@@ -25,10 +25,7 @@
             'monthcompare':  ym,
             'urlaubsplaner': ['/components/urlaubsplaner/urlaubsplaner.js?v=ae79efc83b'],
             'weekview':      ['/components/weekview/weekview.js?v=fd76c6ae9b'],
-            'history':       ['/components/history/history.js?v=170862dd4b'],
-            'analytics-pro': ['/components/core/analytics-pro-engine.js?v=4afdcf04de',
-                              '/components/core/galaxy-ultra-engine.js?v=5f37d2db16',
-                              '/components/analytics-pro/analytics-pro.js?v=53062e7207']
+            'history':       ['/components/history/history.js?v=170862dd4b']
         };
     })();
     // Jeder Pfad oben traegt seinen EIGENEN Inhalts-Hash: stamp-assets.js schreibt
@@ -54,8 +51,6 @@
         });
         return _tnLoads[path];
     }
-    // Der Reihe nach: galaxy-ultra-engine.js prueft beim Laden auf apGxState
-    // aus analytics-pro-engine.js.
     function loadViewScripts(tabId) {
         return (VIEW_SCRIPTS[tabId] || []).reduce((p, path) => p.then(() => loadScriptOnce(path)), Promise.resolve());
     }
@@ -127,7 +122,6 @@
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
             'weekview': 'Wochenansicht',
             'urlaubsplaner': 'Urlaubsplaner',
-            'analytics-pro': 'Diagramme',
         };
         document.title = 'MyWorkLog | ' + (titles[tabId] || tabId);
 
@@ -196,9 +190,6 @@
         }
         if (tabId === 'urlaubsplaner') {
             renderUrlaubsplaner();
-        }
-        if (tabId === 'analytics-pro') {
-            if (typeof renderAnalyticsPro === 'function') renderAnalyticsPro();
         }
     }
     

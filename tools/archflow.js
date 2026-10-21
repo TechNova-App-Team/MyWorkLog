@@ -65,7 +65,6 @@ const GROUP_KEYWORDS = [
   { key:'dashboard',    label:'Dashboard',        color:'#6c63ff', icon:'📊' },
   { key:'berichtsheft', label:'Berichtsheft',     color:'#3b82f6', icon:'📋' },
   { key:'schatten',     label:'Berichtsheft',     color:'#3b82f6', icon:'📋' },
-  { key:'fahrtkost',    label:'Fahrtkosten',      color:'#f59e0b', icon:'🚗' },
   { key:'analytic',     label:'Analytics',        color:'#10b981', icon:'📈' },
   { key:'supabase',     label:'Supabase / DB',    color:'#22d3ee', icon:'🗄️'  },
   { key:'setting',      label:'Einstellungen',    color:'#a855f7', icon:'⚙️'  },

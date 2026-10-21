@@ -2443,8 +2443,7 @@ Kind regards
             tips: [
                 'Ask about a job ticket or travel subsidy — many companies pay voluntarily.',
                 'File a tax return: as a trainee you often get withheld income tax back in full.',
-                'Note your working days and the distance for the commuter allowance.',
-                'Work out your commuting costs with the MyWorkLog travel cost calculator.'
+                'Note your working days and the distance for the commuter allowance.'
             ]
         },
         'kindergeld-bab': {

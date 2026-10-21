@@ -25,7 +25,7 @@ const eager = [...tpl.matchAll(/<script[^>]*src="\/([^"?]+)/g)].map(m => m[1]).f
 const includes = [...tpl.matchAll(/@include ([^ ]+)/g)].map(m => m[1]);
 
 console.log('── Liste und Einbindung');
-ok(lazy.length >= 9, 'VIEW_SCRIPTS gefunden (' + lazy.length + ' Dateien)', lazy);
+ok(lazy.length >= 6, 'VIEW_SCRIPTS gefunden (' + lazy.length + ' Dateien)', lazy);
 ok(lazy.every(f => existsSync(new URL('../' + f, import.meta.url))), 'jede nachgeladene Datei existiert');
 const doppelt = lazy.filter(f => eager.includes(f));
 ok(doppelt.length === 0, 'keine nachgeladene Datei steht als <script> in index.template.html', doppelt);
