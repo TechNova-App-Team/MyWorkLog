@@ -179,6 +179,64 @@
         }
     }
 
+    // ── KI-Briefkasten (ki-briefkasten.js) ─────────────────────────────────
+    // Zwei eigene Tabellen: das Schluesselpaar (privater Teil mit dem
+    // Tresor-Hauptschluessel verpackt) und die Entwuerfe, die der MCP-Server
+    // verschluesselt einwirft. Auch hier nur Geheimtext. Anders als vcPull/
+    // vcPush WERFEN diese Funktionen: die Oberflaeche muss „nicht erreichbar"
+    // von „nichts da" unterscheiden, sonst zeigt sie einen leeren Briefkasten,
+    // obwohl nur das Netz fehlt.
+    async function kiCtx() {
+        if (!hatSitzung()) throw new Error('keine Sitzung');
+        const c = await client();
+        const u = await benutzer(c);
+        if (!u) throw new Error('keine Sitzung');
+        return { c, u };
+    }
+
+    function pruefen(res) {
+        if (res.error) throw new Error(res.error.message || 'Supabase-Fehler');
+        return res.data;
+    }
+
+    window.vcKi = {
+        async schluesselLesen() {
+            const { c, u } = await kiCtx();
+            return pruefen(await c.from('schatten_ki_schluessel')
+                .select('public_key, private_key, created_at').eq('user_id', u.id).maybeSingle());
+        },
+        async schluesselSchreiben(publicKey, privateKey) {
+            const { c, u } = await kiCtx();
+            pruefen(await c.from('schatten_ki_schluessel')
+                .upsert({ user_id: u.id, public_key: publicKey, private_key: privateKey }, { onConflict: 'user_id' }));
+        },
+        async schluesselLoeschen() {
+            const { c, u } = await kiCtx();
+            pruefen(await c.from('schatten_ki_entwuerfe').delete().eq('user_id', u.id));
+            pruefen(await c.from('schatten_ki_schluessel').delete().eq('user_id', u.id));
+        },
+        async entwuerfe() {
+            const { c, u } = await kiCtx();
+            return pruefen(await c.from('schatten_ki_entwuerfe')
+                .select('id, payload, created_at, expires_at').eq('user_id', u.id)
+                .order('created_at', { ascending: true }));
+        },
+        // Verbundene KI-Clients (Supabase-OAuth). Nur Name und Datum, kein Token.
+        async verbindungen() {
+            const { c } = await kiCtx();
+            if (!c.auth.oauth || typeof c.auth.oauth.getUserGrants !== 'function') return [];
+            return pruefen(await c.auth.oauth.getUserGrants()) || [];
+        },
+        async verbindungTrennen(clientId) {
+            const { c } = await kiCtx();
+            pruefen(await c.auth.oauth.revokeGrant(clientId));
+        },
+        async entwurfLoeschen(id) {
+            const { c, u } = await kiCtx();
+            pruefen(await c.from('schatten_ki_entwuerfe').delete().eq('user_id', u.id).eq('id', id));
+        },
+    };
+
     window.vcAngemeldet = vcAngemeldet;
     window.vcPull = vcPull;
     window.vcPush = vcPush;

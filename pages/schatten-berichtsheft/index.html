@@ -1257,6 +1257,69 @@
         }
         .vault-menu-hint[hidden] { display: none; }
 
+        /* ══ KI-BRIEFKASTEN ══
+           Die Leiste ist eine Aufforderung, keine Warnung: Akzent nur als Randlinie,
+           derselbe Kasten wie die verlorene Ausbildungszeit darunter. */
+        .ki-inbox {
+            display: flex; align-items: center; gap: 12px;
+            border: 1px solid var(--border); border-left: 2px solid var(--primary);
+            border-radius: 0 var(--r-3) var(--r-3) 0;
+            background: var(--bg-1); padding: 0.75rem 1rem; margin-bottom: 1.5rem;
+        }
+        .ki-inbox[hidden] { display: none; }
+        .ki-inbox-ico { display: flex; color: var(--primary); flex-shrink: 0; }
+        .ki-inbox-text { flex: 1; min-width: 0; font-size: 0.86rem; color: var(--text-0); }
+        .entry-ai {
+            margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+            font-size: 0.68rem; font-weight: 500; color: var(--text-2);
+            border: 1px solid var(--border);
+        }
+        .ki-sub { font-size: 0.8rem; font-weight: 600; color: var(--text-0); margin: 0 0 6px; }
+        .ki-small { font-size: 0.78rem; line-height: 1.55; color: var(--text-2); margin: 0; }
+        .ki-url {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 0.9rem;
+            background: var(--bg-0); border: 1px solid var(--border); border-radius: var(--r-2);
+            padding: 6px 6px 6px 12px;
+        }
+        .ki-url code { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 0.82rem; color: var(--text-0); }
+        .ki-steps { margin: 0 0 0.6rem; padding-left: 1.1rem; display: grid; gap: 8px; }
+        .ki-steps li { font-size: 0.82rem; line-height: 1.6; color: var(--text-1); }
+        .ki-steps b { color: var(--text-0); font-weight: 600; }
+        .ki-steps code { font-size: 0.76rem; overflow-wrap: anywhere; color: var(--text-0); }
+        .ki-conn { list-style: none; margin: 0 0 0.6rem; padding: 0; display: grid; gap: 6px; }
+        .ki-conn li { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.84rem; color: var(--text-0); }
+        .ki-conn small { color: var(--text-2); }
+        .ki-paste-row {
+            display: flex; gap: 14px; align-items: flex-start; justify-content: space-between;
+            margin-top: 1.2rem; padding-top: 1.1rem; border-top: 1px solid var(--border);
+        }
+        .ki-paste-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .ki-paste { font-family: var(--font-mono, monospace); font-size: 0.8rem; min-height: 180px; }
+        .ki-list { list-style: none; margin: 0 0 0.9rem; padding: 0; display: grid; gap: 10px; }
+        .ki-item { border: 1px solid var(--border); border-radius: var(--r-3); padding: 12px 14px; background: var(--bg-1); }
+        .ki-item-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .ki-item-head .entry-category { margin-bottom: 0; }
+        .ki-item-meta { font-size: 0.74rem; color: var(--text-3); margin: 6px 0; }
+        .ki-item-text { font-size: 0.85rem; line-height: 1.6; color: var(--text-1); margin: 0 0 10px; white-space: pre-line; }
+        .ki-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .ki-item--kaputt .ki-item-text { color: var(--text-2); }
+        .ki-form {
+            margin-bottom: 1.1rem; padding: 10px 12px;
+            border: 1px solid var(--border); border-left: 2px solid var(--primary);
+            border-radius: 0 var(--r-2) var(--r-2) 0; background: rgba(var(--primary-rgb), 0.04);
+        }
+        .ki-form[hidden] { display: none; }
+        .ki-form-lead { font-size: 0.8rem; line-height: 1.6; color: var(--text-1); margin: 0; }
+        .ki-form-warn { font-size: 0.8rem; color: var(--sev-high); margin: 6px 0 0; }
+        .ki-form-orig { margin-top: 8px; font-size: 0.8rem; }
+        .ki-form-orig summary { cursor: pointer; color: var(--text-2); }
+        .ki-form-orig p { white-space: pre-line; color: var(--text-1); line-height: 1.6; margin: 6px 0 2px; }
+        .ki-form-orig small { color: var(--text-3); }
+        @media (max-width: 560px) {
+            .ki-paste-row { flex-direction: column; }
+            .ki-inbox { flex-wrap: wrap; }
+        }
+
         /* ══ BEWEISMITTEL ══ */
         .form-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
         .form-label-row .form-label { margin-bottom: 0; }
@@ -2238,6 +2301,11 @@
                             <span>Cloud-Freigabe</span>
                             <span class="vault-menu-state" id="cloudSyncState">Aus</span>
                         </button>
+                        <button class="vault-menu-item" onclick="kiOeffnen()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"></path><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg>
+                            <span>KI-Entwürfe</span>
+                            <span class="vault-menu-state" id="kiMenuState">Aus</span>
+                        </button>
                         <!-- Nur sichtbar, solange die Freigabe laeuft: erinnert an die
                              eine Sache, die sie NICHT tut. Im Modal steht es beim
                              Einschalten, hier bleibt es abrufbar. -->
@@ -2296,6 +2364,9 @@
         <!-- VERLORENE AUSBILDUNGSZEIT -->
         <div class="lost-time-wrap" id="lostTimeWrap" style="display:none;"></div>
 
+        <!-- KI-BRIEFKASTEN: nur sichtbar, wenn Entwuerfe warten (ki-briefkasten.js) -->
+        <div class="ki-inbox" id="kiInbox" role="status" hidden></div>
+
         <!-- TOOLBAR -->
         <div class="toolbar">
             <div class="toolbar-left">
@@ -2351,6 +2422,8 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="entryEditId">
+            <!-- Herkunft eines KI-Entwurfs, nur beim Pruefen sichtbar (ki-briefkasten.js) -->
+            <div class="ki-form" id="kiFormHinweis" hidden></div>
             <!-- Zeitbezug: welcher der beiden Zeitstempel die Chronologie
                  dieses Eintrags traegt. Beide werden immer gespeichert —
                  hier wird nur entschieden, welcher fuehrt. -->
@@ -2917,11 +2990,12 @@
 <script src="/config/supabase-config.js"></script>
 <script src="/Assets/js/mwl-dialog.js?v=701a9b3a42"></script>
 <script src="/Assets/js/berichtsheft/vault-store.js?v=7739e7ac19"></script>
-<script src="/Assets/js/berichtsheft/vault-cloud.js?v=99ef495630"></script>
-<script src="/Assets/js/berichtsheft/vault-journal.js?v=2cb4e31e15"></script>
+<script src="/Assets/js/berichtsheft/vault-cloud.js?v=bf665a7d02"></script>
+<script src="/Assets/js/berichtsheft/vault-journal.js?v=fdd7bff66f"></script>
 <script src="/Assets/js/berichtsheft/file-preview.js?v=132116240b"></script>
 <script src="/Assets/js/berichtsheft/drive-backup.js?v=5282edac6b"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=d8228af821"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=0e647a73a5"></script>
+<script src="/Assets/js/berichtsheft/ki-briefkasten.js?v=f5d83e9259"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das

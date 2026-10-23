@@ -1706,6 +1706,8 @@ async function enterApp() {
     installCategoryValueMirror();
     populateCategorySelects();
     updateCloudSyncUI();
+    // Nicht abwarten: der Briefkasten braucht Netz, der Tresor nicht.
+    if (typeof kiLaden === 'function') kiLaden();
 }
 
 function lockApp() {
@@ -1714,6 +1716,7 @@ function lockApp() {
     // Die eigenen Kategorien sind Tresor-Inhalt und duerfen nach dem
     // Sperren nicht im Speicher stehen bleiben.
     customCategories = [];
+    if (typeof kiVergessen === 'function') kiVergessen();
     document.getElementById('mainApp').classList.remove('visible');
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('sessionTimer').style.display = 'none';
@@ -2742,6 +2745,7 @@ function fillEntryBasisFields(entry) {
 }
 
 function openNewEntry() {
+    if (typeof kiFormularZuruecksetzen === 'function') kiFormularZuruecksetzen();
     document.getElementById('entryModalTitle').textContent = L('Neuer Eintrag', 'New entry');
     document.getElementById('entryEditId').value = '';
     // Vorbelegung bleibt „jetzt": die allermeisten Vorfaelle werden noch am
@@ -2765,6 +2769,7 @@ function openNewEntry() {
 function openEditEntry(id) {
     const entry = entries.find(e => e.id === id);
     if (!entry) return;
+    if (typeof kiFormularZuruecksetzen === 'function') kiFormularZuruecksetzen();
     document.getElementById('entryModalTitle').textContent = L('Eintrag bearbeiten', 'Edit entry');
     document.getElementById('entryEditId').value = id;
     document.getElementById('entryDate').value = entry.date || '';
@@ -2862,6 +2867,10 @@ async function saveEntry() {
             updatedAt: new Date().toISOString(),
         };
         if (basisOverride) newEntry.timeBasis = basisOverride;
+        // Herkunft aus dem KI-Briefkasten. Nur der Vermerk wandert mit — die
+        // Originalworte des Nutzers bewusst nicht: Wutsaetze gehoeren nicht
+        // dauerhaft neben ein Protokoll, das als Beleg dienen soll.
+        if (typeof kiPending !== 'undefined' && kiPending) newEntry.source = 'ai_assisted';
         newEntry.contentHash = await contentFingerprint(newEntry);
         entries.push(newEntry);
         await journalRecord('create', newEntry);
@@ -2877,6 +2886,7 @@ async function saveEntry() {
         return;
     }
     await cleanupUnusedFiles();
+    if (!editId && typeof kiNachSpeichern === 'function') kiNachSpeichern();
     closeModal('entryModal');
     renderEntries();
     updateStats();
@@ -3022,7 +3032,8 @@ function renderEntries() {
                     '<div class="entry-header-badges"><span class="entry-severity ' + sevClass + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>' + statusHtml + '</div>' +
                 '</div>' +
                 entryAltStampHtml(e) +
-                '<div class="entry-category"><span class="cat-icon">' + categoryIcon(cat) + '</span>' + escapeHtml(cat.label) + '</div>' +
+                '<div class="entry-category"><span class="cat-icon">' + categoryIcon(cat) + '</span>' + escapeHtml(cat.label) +
+                    (e.source === 'ai_assisted' ? '<span class="entry-ai" title="' + L('Aus einem KI-Entwurf, von dir geprüft und gespeichert', 'From an AI draft, reviewed and saved by you') + '">' + L('mit KI formuliert', 'worded with AI') + '</span>' : '') + '</div>' +
                 '<div class="entry-text">' + escapeHtml(e.text) + '</div>' +
                 detailsHtml +
                 attachHtml +
@@ -3854,6 +3865,7 @@ function buildProtocol(exportEntries) {
         lines.push(L('  Kategorie:   ', '  Category:    ') + catExportLabel(cat));
         lines.push(L('  Status:      ', '  Status:      ') + (STATUS_META[e.status || 'open'] || STATUS_META.open).label);
         if (e.contentHash) lines.push(L('  Fingerprint: ', '  Fingerprint: ') + e.contentHash);
+        if (e.source === 'ai_assisted') lines.push(L('  Herkunft:    Mit KI-Unterstützung formuliert, vom Nutzer geprüft und gespeichert', '  Origin:      Worded with AI assistance, reviewed and saved by the user'));
         if (e.history && e.history.length) lines.push(L('  Änderungen:  ', '  Revisions:   ') + e.history.length + L(' × bearbeitet, zuletzt am ', ' × edited, last on ') + new Date(e.updatedAt).toLocaleString(mwlLocale()));
         const detailRows = resolveCategoryDetails(e.category, e.details);
         if (detailRows.length) {
@@ -4394,6 +4406,7 @@ async function exportAsPDF() {
         html += '</div>';
         html += '<p class="inc-cat"><span class="icon-label">' + catIconHtml(cat) + escapeHtml(catExportLabel(cat)) + '</span></p>';
         html += '<div class="inc-text">' + escapeHtml(e.text) + '</div>';
+        if (e.source === 'ai_assisted') html += '<p class="wit">' + L('Mit KI-Unterstützung formuliert, vom Nutzer geprüft und gespeichert.', 'Worded with AI assistance, reviewed and saved by the user.') + '</p>';
 
         const detailRows = resolveCategoryDetails(e.category, e.details);
         if (detailRows.length) {

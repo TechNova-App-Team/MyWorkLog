@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/Grafiken/apple-touch-icon.png">
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+    <title>KI-Assistent verbinden · MyWorkLog</title>
+    <!-- Zustimmungsseite des Supabase-OAuth-Servers (Authorization Path).
+         Keine Suchseite: noindex, nicht in der sitemap.xml, kein Disallow
+         (sonst liest Google das noindex nie).
+         🔴 KEIN /en/-Zwilling: Supabase schickt immer auf DIESE Adresse. Die
+         Seite waehlt ihre Sprache selbst (wie 404.html) — wer hier Text
+         ergaenzt, pflegt die EN-Fassung im <script> mit; die i18n-Pipeline
+         sieht diese Seite nicht. -->
+    <meta name="robots" content="noindex,follow">
+    <meta name="theme-color" content="#0a0b0e">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script defer src="/Assets/js/ph-init.js?v=fdd6df24b6"></script>
+    <style>
+        :root {
+            --bg-0: #0a0b0e;
+            --bg-1: #0f1116;
+            --bg-2: #161922;
+            --primary: #5578a8;
+            --primary-rgb: 85, 120, 168;
+            --danger: #f2384f;
+            --text-0: #e9ebef;
+            --text-1: #a8aeb9;
+            --text-2: #6b7280;
+            --border: rgba(255, 255, 255, 0.07);
+            --border-strong: rgba(255, 255, 255, 0.13);
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --r-2: 8px;
+            --r-3: 14px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        button, input, select, textarea, optgroup { font-family: inherit; }
+        body {
+            background: var(--bg-0); color: var(--text-0);
+            font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+            min-height: 100vh; display: flex; flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+        .kv-top { padding: 20px 24px; }
+        .kv-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--text-0); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+        .kv-brand svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+        main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 6vh 16px 64px; }
+        .kv-card {
+            width: 100%; max-width: 460px;
+            background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--r-3);
+            padding: 28px 28px 24px;
+        }
+        .kv-who { font-size: 0.8rem; color: var(--text-2); margin-bottom: 14px; }
+        .kv-card h1 { font-size: 1.35rem; line-height: 1.3; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .kv-lead { color: var(--text-1); font-size: 0.92rem; margin-bottom: 20px; }
+        .kv-list { list-style: none; display: grid; gap: 10px; margin-bottom: 18px; }
+        .kv-list li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.88rem; color: var(--text-1); }
+        .kv-list svg { flex-shrink: 0; width: 16px; height: 16px; margin-top: 3px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .kv-list--ja svg { color: var(--primary); }
+        .kv-list--nein svg { color: var(--text-2); }
+        .kv-h { font-size: 0.8rem; font-weight: 600; color: var(--text-0); margin: 0 0 8px; }
+        .kv-note {
+            font-size: 0.82rem; color: var(--text-1); line-height: 1.6;
+            border-left: 2px solid var(--primary); background: rgba(var(--primary-rgb), 0.06);
+            padding: 10px 12px; border-radius: 0 var(--r-2) var(--r-2) 0; margin-bottom: 18px;
+        }
+        .kv-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; }
+        .kv-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 40px; padding: 0 18px; border-radius: var(--r-2);
+            border: 1px solid var(--border-strong); background: transparent; color: var(--text-0);
+            font-size: 0.9rem; font-weight: 500; cursor: pointer; text-decoration: none;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+        .kv-btn:hover { border-color: rgba(255, 255, 255, 0.25); }
+        .kv-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .kv-btn--ja { background: var(--text-0); color: var(--bg-0); border-color: transparent; font-weight: 600; }
+        .kv-btn--ja:hover { background: #fff; }
+        .kv-btn[disabled] { opacity: 0.5; cursor: default; }
+        .kv-link { background: none; border: none; color: var(--text-2); font-size: 0.8rem; text-decoration: underline; cursor: pointer; padding: 0; }
+        .kv-fehler { color: var(--danger); font-size: 0.85rem; margin-top: 12px; min-height: 1.2em; }
+        .kv-wait { color: var(--text-2); font-size: 0.9rem; }
+        @media (max-width: 480px) {
+            .kv-card { padding: 22px 18px 18px; }
+            .kv-actions { flex-direction: column-reverse; }
+            .kv-btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<header class="kv-top">
+    <a class="kv-brand" href="/" translate="no">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>MyWorkLog</span>
+    </a>
+</header>
+
+<main>
+    <section class="kv-card" id="kv" aria-live="polite">
+        <p class="kv-wait">Einen Moment …</p>
+        <noscript><p>Diese Seite braucht JavaScript.</p></noscript>
+    </section>
+</main>
+
+<div id="page-footer"></div>
+
+<script src="/config/supabase-config.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    // Englisch auf /en/ und fuer Browser, die nicht deutsch eingestellt sind.
+    var EN = /^\/en(\/|$)/.test(location.pathname) || !/^de\b/i.test(navigator.language || 'de');
+    if (EN) document.documentElement.lang = 'en';
+    function T(de, en) { return EN ? en : de; }
+
+    var BOX = document.getElementById('kv');
+    var MERK = 'mwl_ki_verbinden';            // authorization_id ueber den Anmelde-Umweg
+    var MERK_MS = 9 * 60 * 1000;              // Supabase laesst die Anfrage 10 min offen
+    var ICON_JA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+    var ICON_NEIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = String(s == null ? '' : s);
+        return d.innerHTML.replace(/"/g, '&quot;');
+    }
+
+    function zeige(html) { BOX.innerHTML = html; }
+
+    function ereignis(name, props) {
+        if (typeof mwlEvent === 'function') mwlEvent(name, props || {});
+    }
+
+    function fehlerSeite(titel, text) {
+        zeige('<h1>' + titel + '</h1><p class="kv-lead">' + text + '</p>' +
+            '<div class="kv-actions"><a class="kv-btn" href="/schatten-berichtsheft/">' + T('Zum Schatten-Berichtsheft', 'Go to the shadow report book') + '</a></div>');
+    }
+
+    // authorization_id: aus der Adresse, sonst aus dem Merkzettel vom Anmelde-Umweg.
+    function anfrageId() {
+        var m = /[?&]authorization_id=([A-Za-z0-9-]{8,80})(?:&|$)/.exec(location.search);
+        if (m) return m[1];
+        try {
+            var z = JSON.parse(localStorage.getItem(MERK) || 'null');
+            if (z && z.id && Date.now() - z.t < MERK_MS) return z.id;
+        } catch (e) { /* kein Merkzettel */ }
+        return null;
+    }
+
+    function ladeBibliothek() {
+        if (window.supabase && window.supabase.createClient) return Promise.resolve();
+        return new Promise(function (ok, nein) {
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+            s.onload = ok;
+            s.onerror = function () { nein(new Error('CDN')); };
+            document.head.appendChild(s);
+        });
+    }
+
+    function anmeldenZeigen(id) {
+        try { localStorage.setItem(MERK, JSON.stringify({ id: id, t: Date.now() })); } catch (e) { /* ohne Merkzettel */ }
+        // Der Anmelde-Dialog liegt in der App; back= fuehrt danach hierher zurueck
+        // (api-cloud-sync.js, nur Slugs — deshalb heisst die Seite ki-verbinden).
+        zeige('<h1>' + T('Erst anmelden', 'Sign in first') + '</h1>' +
+            '<p class="kv-lead">' + T('Ein KI-Assistent möchte sich mit deinem MyWorkLog-Konto verbinden. Melde dich an, danach kommst du hierher zurück und entscheidest.',
+                'An AI assistant wants to connect to your MyWorkLog account. Sign in, then you come back here and decide.') + '</p>' +
+            '<div class="kv-actions"><a class="kv-btn kv-btn--ja" href="/?cloud=login&amp;back=ki-verbinden">' + T('Anmelden', 'Sign in') + '</a></div>');
+    }
+
+    function zustimmungZeigen(sb, id, d, user, briefkastenAn) {
+        var name = (d.client && (d.client.client_name || d.client.name)) || T('Ein KI-Assistent', 'An AI assistant');
+        var adresse = d.client && (d.client.client_uri || d.client.uri);
+        zeige(
+            '<p class="kv-who">' + T('Angemeldet als ', 'Signed in as ') + esc(user.email || '') + '</p>' +
+            '<h1>' + T(esc(name) + ' möchte Entwürfe in dein Schatten-Berichtsheft legen', esc(name) + ' wants to drop drafts into your shadow report book') + '</h1>' +
+            '<p class="kv-lead">' + T('Danach kannst du dem Assistenten erzählen, was in der Ausbildung passiert ist, und er legt einen Entwurf für dich ab.',
+                'After that you can tell the assistant what happened during your training, and it drops a draft for you.') +
+                (adresse ? ' <span style="color:var(--text-2)">(' + esc(adresse) + ')</span>' : '') + '</p>' +
+            '<p class="kv-h">' + T('Der Assistent darf', 'The assistant may') + '</p>' +
+            '<ul class="kv-list kv-list--ja">' +
+                '<li>' + ICON_JA + '<span>' + T('Entwürfe verschlüsselt in deinen Briefkasten legen', 'drop encrypted drafts into your mailbox') + '</span></li>' +
+                '<li>' + ICON_JA + '<span>' + T('die Kategorien des Schatten-Berichtshefts abrufen', 'look up the categories of the shadow report book') + '</span></li>' +
+            '</ul>' +
+            '<p class="kv-h">' + T('Der Assistent darf nicht', 'The assistant may not') + '</p>' +
+            '<ul class="kv-list kv-list--nein">' +
+                '<li>' + ICON_NEIN + '<span>' + T('deine Einträge lesen — der Tresor bleibt verschlossen', 'read your entries — the vault stays locked') + '</span></li>' +
+                '<li>' + ICON_NEIN + '<span>' + T('Einträge anlegen, ändern oder löschen — das machst nur du', 'create, change or delete entries — only you do that') + '</span></li>' +
+                '<li>' + ICON_NEIN + '<span>' + T('an andere Daten deines Kontos: Arbeitszeiten, Berichtsheft, Einstellungen', 'access other data in your account: working hours, report book, settings') + '</span></li>' +
+            '</ul>' +
+            (briefkastenAn ? '' : '<p class="kv-note">' + T('Dein Briefkasten ist noch aus. Schalte ihn danach im Schatten-Berichtsheft ein: Tresor entsperren, Tresor-Menü, „KI-Entwürfe".',
+                'Your mailbox is still off. Switch it on afterwards in the shadow report book: unlock the vault, vault menu, "AI drafts".') + '</p>') +
+            '<p class="kv-lead" style="font-size:0.82rem;margin:0">' + T('Trennen kannst du die Verbindung jederzeit im Schatten-Berichtsheft unter „KI-Entwürfe".',
+                'You can disconnect at any time in the shadow report book under "AI drafts".') + '</p>' +
+            '<div class="kv-actions">' +
+                '<button class="kv-btn" id="kvNein">' + T('Ablehnen', 'Deny') + '</button>' +
+                '<button class="kv-btn kv-btn--ja" id="kvJa">' + T('Erlauben', 'Allow') + '</button>' +
+            '</div>' +
+            '<p class="kv-fehler" id="kvFehler"></p>' +
+            '<p style="margin-top:10px"><button class="kv-link" id="kvAnders">' + T('Anderes Konto verwenden', 'Use a different account') + '</button></p>'
+        );
+
+        function entscheiden(ja) {
+            var bJa = document.getElementById('kvJa'), bNein = document.getElementById('kvNein');
+            bJa.disabled = bNein.disabled = true;
+            var p = ja ? sb.auth.oauth.approveAuthorization(id) : sb.auth.oauth.denyAuthorization(id);
+            p.then(function (r) {
+                if (r.error || !r.data || !r.data.redirect_url) throw r.error || new Error('keine Weiterleitung');
+                try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
+                ereignis('ki_verbindung', { erlaubt: !!ja });
+                location.href = r.data.redirect_url;
+            }).catch(function () {
+                bJa.disabled = bNein.disabled = false;
+                document.getElementById('kvFehler').textContent = T('Das hat nicht geklappt. Die Anfrage ist evtl. abgelaufen — starte die Verbindung im Assistenten neu.',
+                    'That did not work. The request may have expired — start the connection again in the assistant.');
+            });
+        }
+        document.getElementById('kvJa').onclick = function () { entscheiden(true); };
+        document.getElementById('kvNein').onclick = function () { entscheiden(false); };
+        document.getElementById('kvAnders').onclick = function () {
+            sb.auth.signOut({ scope: 'local' }).finally(function () { anmeldenZeigen(id); });
+        };
+    }
+
+    async function start() {
+        var id = anfrageId();
+        if (!id) {
+            fehlerSeite(T('Keine Verbindungsanfrage', 'No connection request'),
+                T('Diese Seite öffnet sich, wenn du in einem KI-Assistenten MyWorkLog verbindest. Die Adresse für den Assistenten findest du im Schatten-Berichtsheft unter „KI-Entwürfe".',
+                  'This page opens when you connect MyWorkLog in an AI assistant. The address for the assistant is in the shadow report book under "AI drafts".'));
+            return;
+        }
+        try { await ladeBibliothek(); }
+        catch (e) {
+            fehlerSeite(T('Keine Verbindung', 'No connection'), T('Die Anmeldung konnte nicht geladen werden. Prüf deine Internetverbindung und lade die Seite neu.', 'Sign-in could not be loaded. Check your internet connection and reload the page.'));
+            return;
+        }
+        var sb = window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY);
+        var s = await sb.auth.getSession();
+        var user = s.data && s.data.session && s.data.session.user;
+        if (!user) { anmeldenZeigen(id); return; }
+
+        var r = await sb.auth.oauth.getAuthorizationDetails(id);
+        if (r.error || !r.data) {
+            try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
+            fehlerSeite(T('Anfrage abgelaufen', 'Request expired'),
+                T('Diese Verbindungsanfrage gilt nicht mehr. Starte die Verbindung im KI-Assistenten neu.', 'This connection request is no longer valid. Start the connection again in the AI assistant.'));
+            return;
+        }
+        // Schon einmal zugestimmt: Supabase liefert direkt die Weiterleitung.
+        if (r.data.redirect_url && !r.data.authorization_id) {
+            try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
+            location.replace(r.data.redirect_url);
+            return;
+        }
+        var an = false;
+        try {
+            var k = await sb.from('schatten_ki_schluessel').select('user_id').eq('user_id', user.id).maybeSingle();
+            an = !!(k.data);
+        } catch (e) { /* Hinweis ist nur Komfort */ }
+        zustimmungZeigen(sb, id, r.data, user, an);
+    }
+
+    start().catch(function () {
+        fehlerSeite(T('Etwas ist schiefgelaufen', 'Something went wrong'), T('Lade die Seite neu oder starte die Verbindung im Assistenten neu.', 'Reload the page or start the connection again in the assistant.'));
+    });
+})();
+</script>
+<script>
+  /* Geteilter Footer (Pflicht fuer Standalone-Seiten). */
+  fetch('/pages/footer/footer.html')
+    .then(function(r){return r.text();})
+    .then(function(html){
+      var ph=document.getElementById('page-footer'); if(!ph)return;
+      var t=document.createElement('template'); t.innerHTML=html; ph.replaceWith(t.content);
+    });
+</script>
+<script>
+/* Theme-Sync: Akzent aus den App-Einstellungen nachziehen. */
+(function() {
+    function applyTheme(hex) {
+        if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+        document.documentElement.style.setProperty('--primary', hex);
+        document.documentElement.style.setProperty('--primary-rgb', r+','+g+','+b);
+    }
+    try { var raw=localStorage.getItem('tg_pro_data'); if(raw){ var d=JSON.parse(raw); if(d&&d.settings&&d.settings.theme) applyTheme(d.settings.theme); } } catch(e){}
+})();
+</script>
+</body>
+</html>

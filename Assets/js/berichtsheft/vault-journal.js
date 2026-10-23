@@ -83,6 +83,11 @@
         teile.push('d:' + keys.length);
         keys.forEach(function (k) { teile.push(k, String(d[k] === undefined || d[k] === null ? '' : d[k])); });
 
+        // Herkunft (KI-Briefkasten) zaehlt mit: wer den Vermerk „mit KI
+        // formuliert" still entfernt, muss die Kette brechen. Nur angehaengt,
+        // wenn gesetzt — so bleibt der Hash jedes aelteren Eintrags gleich.
+        if (e.source) teile.push('s:' + String(e.source));
+
         return teile.join(SEP);
     }
 
