@@ -336,32 +336,23 @@ async function kiVorlageKopieren() {
 // Cloudflares „Connect to your agent"): klicken, kopieren, im Chat einfuegen.
 // Der Text erklaert dem Agenten die Einrichtung selbst — wer MCP-Server
 // anlegen kann (Claude Code, Cursor …), tut es; wer nicht, nennt dem Nutzer
-// den Connector-Weg oder arbeitet mit dem Vorlagenformat. Deshalb steckt die
-// komplette Chat-Vorlage als Rueckfallebene mit drin.
+// den Connector-Weg.
+// 🔴 KURZ halten (Nutzer 24.10.: „warum so viel"). Die erste Fassung trug die
+// ganze Chat-Vorlage mit 39 Kategorien als Notfallweg — ueber 4000 Zeichen.
+// Ein verbundener Agent braucht davon nichts: Kategorien liefert das Werkzeug
+// schatten_kategorien, das Verhalten die `instructions` aus initialize. Wer
+// kein MCP hat, nimmt den eigenen Knopf „Vorlage kopieren".
 const KI_WUNSCH = 'mwl_ki_wunsch';       // Klick gemerkt → Briefkasten nach dem Anmelden von selbst an
 const KI_BANNER_WEG = 'mwl_ki_banner_weg';
 
 function kiAgentPrompt() {
     return [
-        L('Verbinde dich bitte mit meinem MyWorkLog Schatten-Berichtsheft. Das ist mein verschlüsseltes Protokoll über Probleme in meiner Ausbildung.',
-          'Please connect to my MyWorkLog shadow report book. It is my encrypted record of problems during my apprenticeship.'),
+        L('Verbinde dich mit meinem MyWorkLog Schatten-Berichtsheft (MCP-Server, Remote-HTTP, Anmeldung per OAuth):',
+          'Connect to my MyWorkLog shadow report book (MCP server, remote HTTP, OAuth sign-in):'),
+        KI_MCP_URL,
         '',
-        L('MCP-Server: ' + KI_MCP_URL + ' (Remote, Streamable HTTP, Anmeldung per OAuth im Browser)',
-          'MCP server: ' + KI_MCP_URL + ' (remote, Streamable HTTP, OAuth sign-in in the browser)'),
-        '',
-        L('Nimm den ersten Weg, der bei dir geht:', 'Take the first route that works for you:'),
-        L('1. Kannst du MCP-Server selbst einrichten (z. B. Claude Code: `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`, oder Cursor, VS Code, Windsurf über deine MCP-Konfiguration), dann richte ihn ein und starte die Anmeldung. Ich bestätige sie im Browser.',
-          '1. If you can set up MCP servers yourself (e.g. Claude Code: `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`, or Cursor, VS Code, Windsurf via your MCP config), set it up and start the sign-in. I confirm it in the browser.'),
-        L('2. Kann deine App Connectors, die nur ich hinzufügen darf (z. B. Claude im Browser), sag mir in einem Satz, wo ich die Adresse eintrage.',
-          '2. If your app supports connectors that only I can add (e.g. Claude in the browser), tell me in one sentence where to enter the address.'),
-        L('3. Geht beides nicht, arbeite mit dem Vorlagenformat unten — ich füge deine Antwort dann selbst ein.',
-          '3. If neither works, use the template format below — I will paste your answer myself.'),
-        '',
-        L('Danach: Wenn ich dir von einem Vorfall erzähle, biete an, daraus einen Entwurf zu machen, frag nach, was fehlt, und leg ihn erst nach meinem OK ab. Einträge bestätige ich selbst.',
-          'After that: when I tell you about an incident, offer to turn it into a draft, ask about what is missing and only drop it after my OK. I confirm entries myself.'),
-        '',
-        '── ' + L('Vorlagenformat (nur für Weg 3)', 'Template format (route 3 only)') + ' ──',
-        kiChatVorlage(),
+        L('Kannst du MCP-Server selbst einrichten, tu es und starte die Anmeldung — in Claude Code z. B. `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`. Sonst sag mir in einem Satz, wo ich die Adresse als Connector eintrage.',
+          'If you can add MCP servers yourself, do it and start the sign-in — in Claude Code e.g. `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`. Otherwise tell me in one sentence where to add the address as a connector.'),
     ].join('\n');
 }
 
