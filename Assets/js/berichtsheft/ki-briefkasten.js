@@ -345,15 +345,11 @@ async function kiVorlageKopieren() {
 const KI_WUNSCH = 'mwl_ki_wunsch';       // Klick gemerkt → Briefkasten nach dem Anmelden von selbst an
 const KI_BANNER_WEG = 'mwl_ki_banner_weg';
 
+// Seit 24.10. nur noch EINE Zeile (Vorbild Cloudflare). Die Anleitung samt
+// Wegen je App und Vorlagenformat liefert der Worker unter /setup.md.
 function kiAgentPrompt() {
-    return [
-        L('Verbinde dich mit meinem MyWorkLog Schatten-Berichtsheft (MCP-Server, Remote-HTTP, Anmeldung per OAuth):',
-          'Connect to my MyWorkLog shadow report book (MCP server, remote HTTP, OAuth sign-in):'),
-        KI_MCP_URL,
-        '',
-        L('Kannst du MCP-Server selbst einrichten, tu es und starte die Anmeldung — in Claude Code z. B. `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`. Sonst sag mir in einem Satz, wo ich die Adresse als Connector eintrage.',
-          'If you can add MCP servers yourself, do it and start the sign-in — in Claude Code e.g. `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`. Otherwise tell me in one sentence where to add the address as a connector.'),
-    ].join('\n');
+    return L('Hol dir die Anleitung von https://mcp.myworklog.de/setup.md und richte mich damit für MyWorkLog ein.',
+             'Fetch the instructions from https://mcp.myworklog.de/en/setup.md and use them to set me up for MyWorkLog.');
 }
 
 function kiKopierKnopf(id) {

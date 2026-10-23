@@ -110,8 +110,8 @@ ok(await J.entryHash(mitKi) !== await J.entryHash(alt), 'Herkunftsvermerk geht i
 
 console.log('7. Ein Knopf fuer den Agenten');
 const prompt = E('kiAgentPrompt')();
-ok(prompt.includes('https://mcp.myworklog.de/mcp') && prompt.includes('claude mcp add --transport http myworklog'), 'Agenten-Text nennt Adresse und Claude-Code-Befehl');
-ok(prompt.length < 600 && !prompt.includes('myworklog_entwurf'), 'Agenten-Text bleibt kurz, ohne Kategorienliste (' + prompt.length + ' Zeichen)');
+ok(prompt.includes('https://mcp.myworklog.de/setup.md'), 'Agenten-Text verweist auf die Anleitung');
+ok(prompt.length < 160 && !prompt.includes('\n'), 'Agenten-Text ist eine Zeile (' + prompt.length + ' Zeichen)');
 const kSrc = lies('Assets/js/berichtsheft/ki-briefkasten.js');
 const fn = kSrc.slice(kSrc.indexOf('async function kiAgentKopieren'), kSrc.indexOf('\n}\n', kSrc.indexOf('async function kiAgentKopieren')));
 ok(fn.length > 100, 'Gegenprobe: kiAgentKopieren gefunden');
