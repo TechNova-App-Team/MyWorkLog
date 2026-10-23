@@ -249,26 +249,31 @@
         '</button>';
         const btn = el.querySelector('button');
         btn.addEventListener('click', async () => {
-            // Kopieren ZUERST, im selben Klick (Nutzergeste, s. ki-briefkasten.js).
-            const text = kiAgentZeile(en);
-            let ok = true;
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
-                else throw new Error('keine Zwischenablage');
-            } catch (e) { ok = false; }
-            if (!ok) { btn.title = text; return; }
-            try { localStorage.setItem(WUNSCH, '1'); } catch (e) { /* ohne Merker */ }
+            if (!(await verbindenKopieren(ort, angemeldet))) { btn.title = kiAgentZeile(en); return; }
             btn.classList.add('is-kopiert');
             setTimeout(() => btn.classList.remove('is-kopiert'), 2600);
-            if (typeof mwlEvent === 'function') mwlEvent('ki_agent_kopiert', { status: zustand.status, ort });
-            // Briefkasten gleich bereitstellen, wenn moeglich — sonst nach dem
-            // Anmelden ueber laden().
-            if (typeof angemeldet === 'function' && angemeldet()) laden(false).catch(() => {});
         });
     }
 
+    // Gemeinsamer Klick fuer Pille (Berichtsheft) und Leisten-Symbol (Dashboard):
+    // Zeile kopieren, Wunsch merken, Briefkasten bereitstellen. → true/false.
+    async function verbindenKopieren(ort, angemeldet) {
+        // Kopieren ZUERST, im selben Klick (Nutzergeste, s. ki-briefkasten.js).
+        const text = kiAgentZeile(document.documentElement.lang === 'en');
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.writeText) return false;
+            await navigator.clipboard.writeText(text);
+        } catch (e) { return false; }
+        try { localStorage.setItem(WUNSCH, '1'); } catch (e) { /* ohne Merker */ }
+        if (typeof mwlEvent === 'function') mwlEvent('ki_agent_kopiert', { status: zustand.status, ort });
+        // Briefkasten gleich bereitstellen, wenn moeglich — sonst nach dem
+        // Anmelden ueber laden().
+        if (typeof angemeldet === 'function' && angemeldet()) laden(false).catch(() => {});
+        return true;
+    }
+
     window.MWLKiApp = {
-        init, laden, einschalten, ausschalten, loeschen, verbindungen, trennen, entwuerfe, gemerkt, gewuenscht, pille,
+        init, laden, einschalten, ausschalten, loeschen, verbindungen, trennen, entwuerfe, gemerkt, gewuenscht, pille, verbindenKopieren,
         get status() { return zustand.status; },
         get alle() { return zustand.entwuerfe; },
         get verbunden() { return zustand.verbindungen; },

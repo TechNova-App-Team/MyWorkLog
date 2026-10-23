@@ -210,10 +210,40 @@
         letzter = Date.now();
         await MWLKiApp.laden(false);
         kiaBanner();
-        kiaPille();
+        kiaChip();
     }
-    function kiaPille() { MWLKiApp.pille(document.getElementById('kiPilleDash'), 'dashboard', eingeloggt); }
-    document.addEventListener('DOMContentLoaded', () => { kiaPille(); setTimeout(kiaPruefen, 2500); });
+
+    // Dashboard: Symbol in der Leiste statt Pille (Platz, Wunsch des Nutzers
+    // 24.10.2026). Punkt = „neu", bis einmal geklickt; danach nur noch das
+    // Symbol, das den Satz fuer weitere Agenten erneut kopiert.
+    const CHIP_GESEHEN = 'mwl_ki_chip_gesehen';
+    function kiaChip() {
+        const b = document.getElementById('kiChipDash');
+        if (!b) return;
+        let gesehen = false;
+        try { gesehen = localStorage.getItem(CHIP_GESEHEN) === '1'; } catch (e) { /* Punkt zeigen */ }
+        const titel = MWLKiApp.gemerkt()
+            ? L('KI-Assistent verbunden — klicken kopiert den Satz für einen weiteren', 'AI assistant connected — click copies the line for another one')
+            : L('KI-Assistent verbinden — kopiert einen Satz für Claude, ChatGPT & Co.', 'Connect your AI assistant — copies one line for Claude, ChatGPT & co.');
+        b.title = titel;
+        b.setAttribute('aria-label', titel);
+        document.getElementById('kiChipPunkt').hidden = gesehen;
+        b.hidden = false;
+        if (b.dataset.verdrahtet) return;
+        b.dataset.verdrahtet = '1';
+        b.addEventListener('click', async () => {
+            const tip = b.querySelector('.dn-ki__tip');
+            const ok = await MWLKiApp.verbindenKopieren('dashboard', eingeloggt);
+            tip.textContent = ok ? L('Kopiert — im Chat einfügen', 'Copied — paste it in the chat')
+                                 : L('Kopieren nicht erlaubt', 'Copying not allowed');
+            try { localStorage.setItem(CHIP_GESEHEN, '1'); } catch (e) { /* egal */ }
+            document.getElementById('kiChipPunkt').hidden = true;
+            b.classList.add('is-kopiert');
+            clearTimeout(b._weg);
+            b._weg = setTimeout(() => b.classList.remove('is-kopiert'), 2600);
+        });
+    }
+    document.addEventListener('DOMContentLoaded', () => { kiaChip(); setTimeout(kiaPruefen, 2500); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) kiaPruefen(); });
 
     // Abschnitt erst beim Oeffnen des Cloud-Tabs laden, wie die Passkeys
