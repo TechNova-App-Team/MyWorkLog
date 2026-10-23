@@ -164,8 +164,8 @@
 
     // ── Die Pille „Verbinde deinen KI-Assistenten" (Vorbild: Cloudflares
     // „Onboard your agent", Wunsch des Nutzers 24.10.2026) ─────────────────
-    // Sichtbar auf Dashboard und Berichtsheft, solange dieses Geraet den
-    // Briefkasten nicht offen hat. Ein Klick kopiert die eine Zeile
+    // Immer sichtbar auf Dashboard und Berichtsheft; laeuft der Briefkasten,
+    // in leiser Form (s. u.). Ein Klick kopiert die eine Zeile
     // (kiAgentZeile, ki-krypto.js) und merkt sich den Wunsch: ist man
     // angemeldet, springt der Briefkasten gleich an, sonst nach dem Anmelden
     // (laden()). Stil als eingebautes <style>, weil App und Berichtsheft
@@ -197,6 +197,16 @@
             'background:color-mix(in srgb,currentColor 8%,transparent);opacity:.85}' +
             '.ki-pille.is-kopiert .ki-pille__marken{opacity:.35}' +
             '@media (max-width:420px){.ki-pille__marken svg:nth-child(n+3){display:none}}' +
+            // Leise Form nach dem Verbinden: kleiner, kaum Flaeche, das Kopier-Symbol
+            // erst bei Zeiger/Fokus deutlich — auf Touch immer halb sichtbar.
+            '.ki-pille--leise{gap:8px;padding:4px 10px;font-size:12px;font-weight:450;' +
+            'border-color:color-mix(in srgb,currentColor 10%,transparent);background:transparent;opacity:.82}' +
+            '.ki-pille__punkt{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--primary,currentColor);' +
+            'box-shadow:0 0 0 3px color-mix(in srgb,var(--primary,currentColor) 22%,transparent)}' +
+            '.ki-pille__mehr{display:inline-flex;opacity:.45;transition:opacity .2s ease}' +
+            '.ki-pille__mehr svg{width:13px;height:13px}' +
+            '@media (hover:hover) and (pointer:fine){.ki-pille--leise:hover{opacity:1}.ki-pille--leise:hover .ki-pille__mehr{opacity:1}}' +
+            '.ki-pille--leise:focus-visible{opacity:1}' +
             '@media (prefers-reduced-motion:reduce){.ki-pille__text>span{transition:opacity .12s ease;filter:none!important}.ki-pille:active{transform:none}}';
         document.head.appendChild(s);
     }
@@ -213,17 +223,29 @@
 
     function pille(el, ort, angemeldet) {
         if (!el) return;
-        if (gemerkt()) { el.hidden = true; el.innerHTML = ''; return; }
         pillenStil();
         const en = document.documentElement.lang === 'en';
         const T = (de, e) => en ? e : de;
+        // Laeuft der Briefkasten schon, bleibt die Pille — aber leise: man will
+        // den Satz ggf. fuer einen weiteren Agenten noch einmal kopieren
+        // (Wunsch des Nutzers 24.10.: „nicht verschwinden, nicht stoeren,
+        // trotzdem auffallen"). Punkt im Akzent statt Symbolreihe.
+        const leise = gemerkt();
         el.hidden = false;
-        el.innerHTML = '<button type="button" class="ki-pille" title="' + T('Kopiert einen Satz für Claude, ChatGPT & Co.', 'Copies one line for Claude, ChatGPT & co.') + '">' +
+        el.innerHTML = '<button type="button" class="ki-pille' + (leise ? ' ki-pille--leise' : '') + '" title="' +
+                (leise ? T('Noch einen Assistenten verbinden — kopiert den Satz erneut', 'Connect another assistant — copies the line again')
+                       : T('Kopiert einen Satz für Claude, ChatGPT & Co.', 'Copies one line for Claude, ChatGPT & co.')) + '">' +
+            (leise ? '<span class="ki-pille__punkt" aria-hidden="true"></span>' : '') +
             '<span class="ki-pille__text">' +
-                '<span class="ki-pille__an">' + T('Verbinde deinen KI-Assistenten', 'Connect your AI assistant') + '</span>' +
-                '<span class="ki-pille__ok" aria-hidden="true">' + svg('<path d="M20 6 9 17l-5-5"/>') + T('Kopiert — im Chat einfügen', 'Copied — paste it in the chat') + '</span>' +
+                '<span class="ki-pille__an">' + (leise ? T('KI-Assistent verbunden', 'AI assistant connected') : T('Verbinde deinen KI-Assistenten', 'Connect your AI assistant')) + '</span>' +
+                // Leise: kurzes „Kopiert", sonst wuerde das gemeinsame Rasterfeld die
+                // kleine Pille auf die Breite des langen Satzes aufblasen.
+                '<span class="ki-pille__ok" aria-hidden="true">' + svg('<path d="M20 6 9 17l-5-5"/>') +
+                    (leise ? T('Kopiert', 'Copied') : T('Kopiert — im Chat einfügen', 'Copied — paste it in the chat')) + '</span>' +
             '</span>' +
-            '<span class="ki-pille__marken">' + MARKEN.map(svg).join('') + '</span>' +
+            (leise
+                ? '<span class="ki-pille__mehr" aria-hidden="true">' + svg('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>') + '</span>'
+                : '<span class="ki-pille__marken">' + MARKEN.map(svg).join('') + '</span>') +
         '</button>';
         const btn = el.querySelector('button');
         btn.addEventListener('click', async () => {
