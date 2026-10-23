@@ -35,6 +35,7 @@ function funktion(name) {
 w.eval(schatten.slice(0, schnitt) + '\nlet derivedKey = null;\n' +
     ['strToU8', 'u8ToB64', 'b64ToU8', 'encrypt', 'decrypt'].map(funktion).join('\n') +
     '\nfunction escapeHtml(s){return String(s);}\nfunction openModal(){}\nfunction closeModal(){}\nfunction showToast(){}\n' +
+    lies('Assets/js/ki-krypto.js') + '\n' +
     lies('Assets/js/berichtsheft/ki-briefkasten.js') + '\n' +
     lies('Assets/js/berichtsheft/vault-journal.js') +
     '\nwindow.__ki = function (code) { return eval(code); };\n');
@@ -54,6 +55,13 @@ const anderer = await crypto.subtle.importKey('raw', crypto.getRandomValues(new 
 let fremdOffen = true;
 try { await E('kiPrivatSchluesselAuspacken')(p.privateKey, anderer); } catch (e) { fremdOffen = false; }
 ok(!fremdOffen, 'anderer Tresor packt nicht aus (Fall „fremd")');
+// Bis v8.8.0 verpackte das Schatten-Modul den Schluessel mit seinem encrypt();
+// seit der gemeinsamen ki-krypto.js packt kiAuspacken aus. Alte Schluessel
+// muessen lesbar bleiben, sonst stuende jeder bestehende Briefkasten auf „fremd".
+const altPaar = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+const altVerpackt = await E('encrypt')(JSON.stringify(await crypto.subtle.exportKey('jwk', altPaar.privateKey)), master);
+const altAus = await E('kiPrivatSchluesselAuspacken')(altVerpackt, master).catch(() => null);
+ok(altAus && altAus.type === 'private', 'mit dem alten encrypt() verpackter Schluessel bleibt lesbar');
 
 console.log('3. Rundweg im Format des Workers');
 // Format v1 wie verschluesseln() in workers/mcp-proxy/worker.js. Hier
@@ -141,6 +149,8 @@ ok(/if \(!editId && typeof kiNachSpeichern === 'function'\) kiNachSpeichern\(\);
 ok(!/originalworte/.test(schatten), 'Originalworte landen nicht im Eintrag');
 const html = lies('pages/schatten-berichtsheft/index.html');
 const tagKi = html.indexOf('<script src="/Assets/js/berichtsheft/ki-briefkasten.js');
+const tagKrypto = html.indexOf('<script src="/Assets/js/ki-krypto.js');
+ok(tagKrypto > 0 && tagKrypto < tagKi, 'ki-krypto.js laedt vor ki-briefkasten.js');
 ok(tagKi > 0 && tagKi > html.indexOf('<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js'),'ki-briefkasten.js laedt nach dem Schatten-Modul');
 
 console.log(`\n${pass} bestanden, ${fail} fehlgeschlagen`);

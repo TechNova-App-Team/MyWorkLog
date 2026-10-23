@@ -16,15 +16,12 @@
 // Tresor-Spiegel reisen. Nach einem Tresor-Reset passt er nicht mehr — dann
 // meldet kiLaden() 'fremd' und bietet Neu-Einrichten an.
 //
-// Format eines Entwurfs: siehe verschluesseln() im Worker. Aenderungen nur mit
-// neuer Versionsnummer `v`, sonst kann die Inbox alte Entwuerfe nicht mehr lesen.
-//
-// Laeuft nach schatten-berichtsheft.js und benutzt dessen Globals (derivedKey,
-// encrypt, decrypt, L, escapeHtml, openModal, closeModal, showToast,
-// getCategory, categoryExists, categoryFields, SEVERITY_LABELS …).
+// Krypto (Schluesselpaar, Auspacken, Entschluesseln) steht in /Assets/js/ki-krypto.js
+// — dieselbe Datei laden App und Berichtsheft. Laeuft nach schatten-berichtsheft.js
+// und benutzt dessen Globals (derivedKey, L, escapeHtml, openModal, closeModal,
+// showToast, getCategory, categoryExists, categoryFields, SEVERITY_LABELS …).
 
 const KI_MCP_URL = 'https://mcp.myworklog.de/mcp';
-const KI_HKDF_INFO = 'mwl-ki-entwurf/1';
 const KI_SCHWERE = ['critical', 'high', 'medium', 'low', 'note'];
 
 let kiPrivKey = null;        // CryptoKey, nur solange der Tresor offen ist
@@ -32,39 +29,6 @@ let kiStatus = 'aus';        // 'aus' | 'an' | 'konto' (keine Anmeldung) | 'frem
 let kiEntwuerfe = [];        // [{id, created_at, daten, fehler}]
 let kiPending = null;        // Entwurf, der gerade im Eintragsformular liegt
 let kiVerbindungen = [];     // [{client_id, client_name, created_at}] aus Supabase-OAuth
-
-function kiB64ToU8(b64) { return Uint8Array.from(atob(b64), c => c.charCodeAt(0)); }
-
-// ── Krypto ────────────────────────────────────────────────────────────────
-async function kiSchluesselpaarErzeugen(masterKey) {
-    const paar = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
-    const pub = await crypto.subtle.exportKey('jwk', paar.publicKey);
-    const priv = await crypto.subtle.exportKey('jwk', paar.privateKey);
-    const verpackt = await encrypt(JSON.stringify(priv), masterKey);
-    priv.d = '';   // Rohwert nicht laenger als noetig herumliegen lassen
-    return { publicKey: { kty: 'EC', crv: 'P-256', x: pub.x, y: pub.y }, privateKey: verpackt, cryptoKey: paar.privateKey };
-}
-
-async function kiPrivatSchluesselAuspacken(verpackt, masterKey) {
-    const jwk = JSON.parse(await decrypt(verpackt, masterKey));
-    // extractable:false — aus dem laufenden Code nicht wieder auslesbar,
-    // wie der Tresor-Hauptschluessel.
-    return crypto.subtle.importKey('jwk', jwk, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
-}
-
-async function kiEntwurfEntschluesseln(payload, privKey) {
-    if (!payload || payload.v !== 1) throw new Error('Unbekanntes Format');
-    const epk = await crypto.subtle.importKey('jwk',
-        { kty: 'EC', crv: 'P-256', x: payload.epk.x, y: payload.epk.y },
-        { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-    const bits = await crypto.subtle.deriveBits({ name: 'ECDH', public: epk }, privKey, 256);
-    const hk = await crypto.subtle.importKey('raw', bits, 'HKDF', false, ['deriveKey']);
-    const key = await crypto.subtle.deriveKey(
-        { name: 'HKDF', hash: 'SHA-256', salt: kiB64ToU8(payload.salt), info: new TextEncoder().encode(KI_HKDF_INFO) },
-        hk, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
-    const pt = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: kiB64ToU8(payload.iv) }, key, kiB64ToU8(payload.ct));
-    return JSON.parse(new TextDecoder().decode(pt));
-}
 
 // ── Normalisieren ─────────────────────────────────────────────────────────
 // Gilt fuer BEIDE Wege. Der MCP-Server prueft schon, ein eingefuegter Block
@@ -345,11 +309,10 @@ async function kiVorlageKopieren() {
 const KI_WUNSCH = 'mwl_ki_wunsch';       // Klick gemerkt → Briefkasten nach dem Anmelden von selbst an
 const KI_BANNER_WEG = 'mwl_ki_banner_weg';
 
-// Seit 24.10. nur noch EINE Zeile (Vorbild Cloudflare). Die Anleitung samt
-// Wegen je App und Vorlagenformat liefert der Worker unter /setup.md.
+// Seit 24.10. nur noch EINE Zeile (Vorbild Cloudflare), Text in ki-krypto.js,
+// damit App und Schatten-Seite denselben kopieren.
 function kiAgentPrompt() {
-    return L('Hol dir die Anleitung von https://mcp.myworklog.de/setup.md und richte mich damit für MyWorkLog ein.',
-             'Fetch the instructions from https://mcp.myworklog.de/en/setup.md and use them to set me up for MyWorkLog.');
+    return kiAgentZeile(document.documentElement.lang === 'en');
 }
 
 function kiKopierKnopf(id) {

@@ -822,6 +822,9 @@ function mwlImportApply() {
         e.id = base + i;
         e.timestamp = base + i;
         e.importedAt = new Date().toISOString();
+        // Herkunft, wenn nicht aus einer Datei (z. B. 'ki' = KI-Assistent,
+        // components/core/ki-assistent.js) — damit man es spaeter noch sieht.
+        if (_mwlImport.quelle) e.quelle = _mwlImport.quelle;
         _mwlImport.undo.ids.push(e.id);
         data.entries.push(e);
     });
@@ -832,7 +835,10 @@ function mwlImportApply() {
     save();
     if (typeof renderAll === 'function') renderAll();
 
-    if (typeof mwlEvent === 'function') mwlEvent('data_imported', { source: 'tabelle', rows: nehmen.length });
+    if (typeof mwlEvent === 'function') mwlEvent('data_imported', { source: _mwlImport.quelle === 'ki' ? 'ki' : 'tabelle', rows: nehmen.length });
+    // Nachlauf des Aufrufers erst NACH dem Speichern (KI-Assistent: Entwuerfe
+    // loeschen). Wer die Vorschau nur schliesst, laeuft hier nie durch.
+    if (typeof _mwlImport.nachher === 'function') { try { _mwlImport.nachher(); } catch (e) { /* Import ist schon sicher */ } }
 
     closeImportWizard();
     if (typeof showCustomMessage === 'function') {

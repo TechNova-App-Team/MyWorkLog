@@ -199,26 +199,31 @@
         return res.data;
     }
 
+    // 🔴 Immer mit bereich = 'schatten': seit v8.8.1 liegt daneben das Paar der
+    // App (Zeiterfassung/Berichtsheft, Assets/js/ki-app-briefkasten.js). Ohne
+    // den Filter liefert maybeSingle() zwei Zeilen und wirft, und das Loeschen
+    // nähme den App-Briefkasten mit.
+    const BEREICH = 'schatten';
     window.vcKi = {
         async schluesselLesen() {
             const { c, u } = await kiCtx();
             return pruefen(await c.from('schatten_ki_schluessel')
-                .select('public_key, private_key, created_at').eq('user_id', u.id).maybeSingle());
+                .select('public_key, private_key, created_at').eq('user_id', u.id).eq('bereich', BEREICH).maybeSingle());
         },
         async schluesselSchreiben(publicKey, privateKey) {
             const { c, u } = await kiCtx();
             pruefen(await c.from('schatten_ki_schluessel')
-                .upsert({ user_id: u.id, public_key: publicKey, private_key: privateKey }, { onConflict: 'user_id' }));
+                .upsert({ user_id: u.id, bereich: BEREICH, public_key: publicKey, private_key: privateKey }, { onConflict: 'user_id,bereich' }));
         },
         async schluesselLoeschen() {
             const { c, u } = await kiCtx();
-            pruefen(await c.from('schatten_ki_entwuerfe').delete().eq('user_id', u.id));
-            pruefen(await c.from('schatten_ki_schluessel').delete().eq('user_id', u.id));
+            pruefen(await c.from('schatten_ki_entwuerfe').delete().eq('user_id', u.id).eq('bereich', BEREICH));
+            pruefen(await c.from('schatten_ki_schluessel').delete().eq('user_id', u.id).eq('bereich', BEREICH));
         },
         async entwuerfe() {
             const { c, u } = await kiCtx();
             return pruefen(await c.from('schatten_ki_entwuerfe')
-                .select('id, payload, created_at, expires_at').eq('user_id', u.id)
+                .select('id, payload, created_at, expires_at').eq('user_id', u.id).eq('bereich', BEREICH)
                 .order('created_at', { ascending: true }));
         },
         // Verbundene KI-Clients (Supabase-OAuth). Nur Name und Datum, kein Token.

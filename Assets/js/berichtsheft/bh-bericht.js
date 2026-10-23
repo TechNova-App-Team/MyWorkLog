@@ -159,6 +159,7 @@ function closeReportModal() {
     document.body.style.overflow = '';
     editingId = null;
     clearDraft();
+    if (typeof bhKiAbbrechen === 'function') bhKiAbbrechen();
 }
 
 function closeViewModal() {
@@ -256,6 +257,9 @@ async function saveReport(event) {
     // das Speichern nie stoeren — der Bericht ist zu diesem Zeitpunkt schon sicher.
     if (window.BHLernen) { try { BHLernen.berichtGespeichert(report); } catch (e) { } }
     updateUI();
+    // KI-Entwurf (bh-ki.js) erst nach dem Speichern loeschen — und VOR
+    // closeReportModal(), das den Merker zuruecksetzt.
+    if (warNeu && typeof bhKiNachSpeichern === 'function') bhKiNachSpeichern();
     bhFormularOffen = false;
     closeReportModal();
     clearDraft();
