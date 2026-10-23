@@ -12,7 +12,7 @@ let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  OK    ' + m); } else { fail++; console.log('  FAIL  ' + m); } };
 const lies = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8').split('\r\n').join('\n');
 
-const dom = new JSDOM('<!doctype html><html lang="de"><body></body></html>', { runScripts: 'outside-only' });
+const dom = new JSDOM('<!doctype html><html lang="de"><body></body></html>', { runScripts: 'outside-only', url: 'https://myworklog.de/schatten-berichtsheft/' });
 const w = dom.window;
 Object.defineProperty(w, 'crypto', { value: globalThis.crypto });
 w.TextEncoder = TextEncoder;
@@ -28,12 +28,17 @@ function funktion(name) {
     if (!m) throw new Error('Funktion fehlt: ' + name);
     return schatten.slice(m.index, schatten.indexOf('\n}\n', m.index) + 3);
 }
+// EIN eval fuer alles: jsdoms window.eval gibt jedem Aufruf einen eigenen
+// Scope fuer const/let — im Browser teilen sich alle <script> einen. Der
+// Zugang __ki ist ein direktes eval IN diesem Scope, damit der Test auch
+// let-Zustand (kiStatus, derivedKey) setzen kann.
 w.eval(schatten.slice(0, schnitt) + '\nlet derivedKey = null;\n' +
     ['strToU8', 'u8ToB64', 'b64ToU8', 'encrypt', 'decrypt'].map(funktion).join('\n') +
-    '\nfunction escapeHtml(s){return String(s);}\nfunction openModal(){}\nfunction closeModal(){}\nfunction showToast(){}\n');
-w.eval(lies('Assets/js/berichtsheft/ki-briefkasten.js'));
-w.eval(lies('Assets/js/berichtsheft/vault-journal.js'));
-const E = (src) => w.eval(src);
+    '\nfunction escapeHtml(s){return String(s);}\nfunction openModal(){}\nfunction closeModal(){}\nfunction showToast(){}\n' +
+    lies('Assets/js/berichtsheft/ki-briefkasten.js') + '\n' +
+    lies('Assets/js/berichtsheft/vault-journal.js') +
+    '\nwindow.__ki = function (code) { return eval(code); };\n');
+const E = (src) => w.__ki(src);
 
 console.log('1. Dialoge angelegt');
 ok(!!w.document.getElementById('kiModal') && !!w.document.getElementById('kiInboxModal') && !!w.document.getElementById('kiPasteModal'), 'drei Dialog-Huellen im DOM');
@@ -103,7 +108,33 @@ ok(!kanonAlt.includes('s:'), 'Eintrag ohne Herkunft: kanonische Form unveraender
 const mitKi = { ...alt, source: 'ai_assisted' };
 ok(await J.entryHash(mitKi) !== await J.entryHash(alt), 'Herkunftsvermerk geht in den Hash ein');
 
-console.log('7. Verdrahtung im Schatten-Modul');
+console.log('7. Ein Knopf fuer den Agenten');
+const prompt = E('kiAgentPrompt')();
+ok(prompt.includes('https://mcp.myworklog.de/mcp') && prompt.includes('claude mcp add --transport http myworklog'), 'Agenten-Text nennt Adresse und Claude-Code-Befehl');
+ok(prompt.includes('myworklog_entwurf'), 'Vorlagenformat steckt als Rueckfallebene drin');
+const kSrc = lies('Assets/js/berichtsheft/ki-briefkasten.js');
+const fn = kSrc.slice(kSrc.indexOf('async function kiAgentKopieren'), kSrc.indexOf('\n}\n', kSrc.indexOf('async function kiAgentKopieren')));
+ok(fn.length > 100, 'Gegenprobe: kiAgentKopieren gefunden');
+ok(fn.indexOf('kiKopieren(kiAgentPrompt())') < fn.indexOf('await'), 'kopiert im Klick, BEVOR irgendetwas abgewartet wird');
+ok(fn.indexOf('kiEinschalten({ leise: true })') > fn.indexOf('await kopiert'), 'Briefkasten erst nach dem Kopieren');
+const bannerHost = w.document.createElement('div');
+bannerHost.id = 'kiConnect'; bannerHost.hidden = true;
+w.document.body.appendChild(bannerHost);
+E('kiStatus = "aus"; derivedKey = null; kiRenderBanner();');
+ok(bannerHost.hidden, 'gesperrter Tresor: kein Hinweis');
+E('derivedKey = {}; kiRenderBanner();');
+ok(!bannerHost.hidden && !!bannerHost.querySelector('.ki-copy'), 'offener Tresor, nichts verbunden: Hinweis mit Knopf');
+bannerHost.classList.add('is-done');
+E('kiStatus = "an"; kiRenderBanner();');
+ok(!bannerHost.hidden, 'nach dem Kopieren bleibt „Fertig" stehen, auch wenn der Briefkasten angesprungen ist');
+bannerHost.classList.remove('is-done');
+E('kiRenderBanner();');
+ok(bannerHost.hidden, 'verbunden, ohne frischen Klick: Hinweis weg');
+E('kiStatus = "aus"; delete document.getElementById("kiConnect").dataset.gebaut; kiBannerWeg(); kiRenderBanner();');
+ok(bannerHost.hidden && w.localStorage.getItem('mwl_ki_banner_weg') === '1', 'Ausblenden haelt (localStorage)');
+E('derivedKey = null;');
+
+console.log('8. Verdrahtung im Schatten-Modul');
 ok(/if \(typeof kiPending !== 'undefined' && kiPending\) newEntry\.source = 'ai_assisted';/.test(schatten), 'neuer Eintrag bekommt den Vermerk');
 ok(!/updated\.source|prev\.source =/.test(schatten), 'Bearbeiten setzt keinen Vermerk');
 ok(/if \(!editId && typeof kiNachSpeichern === 'function'\) kiNachSpeichern\(\);/.test(schatten), 'Entwurf wird erst nach erfolgreichem Speichern geloescht');

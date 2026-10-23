@@ -206,6 +206,8 @@ var EVENT_LABELS = {
     'umfrage_geoeffnet': ['Umfrage geöffnet', 'Survey opened'],
     'umfrage_gesendet': ['Umfrage abgeschickt', 'Survey submitted'],
     'umfrage_abgelehnt': ['Umfrage abgelehnt', 'Survey declined'],
+    'ki_agent_kopiert': ['KI-Verbindung: Text für Assistenten kopiert', 'AI connection: text for assistant copied'],
+    'ki_verbindung': ['KI-Verbindung erlaubt/abgelehnt', 'AI connection allowed/denied'],
     'feedback_gesendet': ['Feedback gesendet', 'Feedback sent'],
     'foto_import_opened': ['Foto-Import geöffnet', 'Photo import opened'],
     'foto_import_applied': ['Foto-Import übernommen', 'Photo import applied'],

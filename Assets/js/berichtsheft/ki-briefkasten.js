@@ -114,7 +114,16 @@ async function kiLaden() {
     }
     try {
         const zeile = await window.vcKi.schluesselLesen();
-        if (!zeile) { kiStatus = 'aus'; kiRender(); return; }
+        if (!zeile) {
+            kiStatus = 'aus';
+            // Wer den Knopf gedrueckt hat, bevor er hier angemeldet war, will den
+            // Briefkasten — dann jetzt einschalten, statt ihn nochmal fragen zu lassen.
+            let wunsch = false;
+            try { wunsch = localStorage.getItem(KI_WUNSCH) === '1'; } catch (e) { /* nein */ }
+            if (wunsch && derivedKey) { await kiEinschalten({ leise: true }); return; }
+            kiRender();
+            return;
+        }
         try {
             kiPrivKey = await kiPrivatSchluesselAuspacken(zeile.private_key, derivedKey);
         } catch (e) {
@@ -159,7 +168,8 @@ function kiVergessen() {
 }
 
 // ── Einschalten / Ausschalten ─────────────────────────────────────────────
-async function kiEinschalten() {
+async function kiEinschalten(opts) {
+    const leise = !!(opts && opts.leise);
     if (!derivedKey) return;
     const btn = document.getElementById('kiToggleBtn');
     if (btn) btn.disabled = true;
@@ -172,7 +182,7 @@ async function kiEinschalten() {
         kiPrivKey = await kiPrivatSchluesselAuspacken(p.privateKey, derivedKey);
         kiStatus = 'an';
         kiEntwuerfe = [];
-        showToast(L('KI-Entwürfe sind eingeschaltet', 'AI drafts are switched on'), 'success');
+        if (!leise) showToast(L('KI-Entwürfe sind eingeschaltet', 'AI drafts are switched on'), 'success');
     } catch (e) {
         showToast(L('Einschalten fehlgeschlagen — bist du online und angemeldet?', 'Switching on failed — are you online and signed in?'), 'error');
     } finally {
@@ -195,6 +205,7 @@ async function kiAusschalten() {
         kiPrivKey = null;
         kiEntwuerfe = [];
         kiStatus = 'aus';
+        try { localStorage.removeItem(KI_WUNSCH); } catch (e) { /* egal */ }
         showToast(L('KI-Entwürfe sind ausgeschaltet', 'AI drafts are switched off'), 'info');
     } catch (e) {
         showToast(L('Ausschalten fehlgeschlagen — bitte erneut versuchen', 'Switching off failed — please try again'), 'error');
@@ -319,6 +330,118 @@ async function kiVorlageKopieren() {
     } catch (e) {
         showToast(L('Kopieren nicht erlaubt', 'Copying not allowed'), 'error');
     }
+}
+
+// ── Ein Knopf fuer den Agenten (Wunsch des Nutzers, 24.10.2026, nach
+// Cloudflares „Connect to your agent"): klicken, kopieren, im Chat einfuegen.
+// Der Text erklaert dem Agenten die Einrichtung selbst — wer MCP-Server
+// anlegen kann (Claude Code, Cursor …), tut es; wer nicht, nennt dem Nutzer
+// den Connector-Weg oder arbeitet mit dem Vorlagenformat. Deshalb steckt die
+// komplette Chat-Vorlage als Rueckfallebene mit drin.
+const KI_WUNSCH = 'mwl_ki_wunsch';       // Klick gemerkt → Briefkasten nach dem Anmelden von selbst an
+const KI_BANNER_WEG = 'mwl_ki_banner_weg';
+
+function kiAgentPrompt() {
+    return [
+        L('Verbinde dich bitte mit meinem MyWorkLog Schatten-Berichtsheft. Das ist mein verschlüsseltes Protokoll über Probleme in meiner Ausbildung.',
+          'Please connect to my MyWorkLog shadow report book. It is my encrypted record of problems during my apprenticeship.'),
+        '',
+        L('MCP-Server: ' + KI_MCP_URL + ' (Remote, Streamable HTTP, Anmeldung per OAuth im Browser)',
+          'MCP server: ' + KI_MCP_URL + ' (remote, Streamable HTTP, OAuth sign-in in the browser)'),
+        '',
+        L('Nimm den ersten Weg, der bei dir geht:', 'Take the first route that works for you:'),
+        L('1. Kannst du MCP-Server selbst einrichten (z. B. Claude Code: `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`, oder Cursor, VS Code, Windsurf über deine MCP-Konfiguration), dann richte ihn ein und starte die Anmeldung. Ich bestätige sie im Browser.',
+          '1. If you can set up MCP servers yourself (e.g. Claude Code: `claude mcp add --transport http myworklog ' + KI_MCP_URL + '`, or Cursor, VS Code, Windsurf via your MCP config), set it up and start the sign-in. I confirm it in the browser.'),
+        L('2. Kann deine App Connectors, die nur ich hinzufügen darf (z. B. Claude im Browser), sag mir in einem Satz, wo ich die Adresse eintrage.',
+          '2. If your app supports connectors that only I can add (e.g. Claude in the browser), tell me in one sentence where to enter the address.'),
+        L('3. Geht beides nicht, arbeite mit dem Vorlagenformat unten — ich füge deine Antwort dann selbst ein.',
+          '3. If neither works, use the template format below — I will paste your answer myself.'),
+        '',
+        L('Danach: Wenn ich dir von einem Vorfall erzähle, biete an, daraus einen Entwurf zu machen, frag nach, was fehlt, und leg ihn erst nach meinem OK ab. Einträge bestätige ich selbst.',
+          'After that: when I tell you about an incident, offer to turn it into a draft, ask about what is missing and only drop it after my OK. I confirm entries myself.'),
+        '',
+        '── ' + L('Vorlagenformat (nur für Weg 3)', 'Template format (route 3 only)') + ' ──',
+        kiChatVorlage(),
+    ].join('\n');
+}
+
+function kiKopierKnopf(id) {
+    return '<button type="button" class="btn btn-cta ki-copy" id="' + id + '" onclick="kiAgentKopieren(this)">' +
+        '<span class="ki-copy-face ki-copy-face--an">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
+            L('Für deinen Assistenten kopieren', 'Copy for your assistant') + '</span>' +
+        '<span class="ki-copy-face ki-copy-face--ok" aria-hidden="true">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>' +
+            L('Kopiert — im Chat einfügen', 'Copied — paste it in the chat') + '</span>' +
+    '</button>';
+}
+
+function kiKopieren(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+    // Rueckfall fuer Browser ohne Clipboard-API (aeltere WebViews).
+    return new Promise((ok, nein) => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const gut = document.execCommand('copy');
+        ta.remove();
+        gut ? ok() : nein(new Error('copy'));
+    });
+}
+
+async function kiAgentKopieren(btn) {
+    // ZUERST kopieren, im selben Klick: die Kopier-Erlaubnis des Browsers haengt
+    // an der Nutzergeste und waere nach einem Netzabruf evtl. verfallen.
+    const kopiert = kiKopieren(kiAgentPrompt());
+    try { localStorage.setItem(KI_WUNSCH, '1'); } catch (e) { /* ohne Merker */ }
+    try {
+        await kopiert;
+    } catch (e) {
+        showToast(L('Kopieren nicht erlaubt — gib dem Browser die Erlaubnis und versuch es erneut', 'Copying not allowed — allow it in your browser and try again'), 'error');
+        return;
+    }
+    if (typeof mwlEvent === 'function') mwlEvent('ki_agent_kopiert', { status: kiStatus });
+    document.querySelectorAll('.ki-copy').forEach(b => b.classList.add('is-copied'));
+    const banner = document.getElementById('kiConnect');
+    if (banner) banner.classList.add('is-done');
+    setTimeout(() => document.querySelectorAll('.ki-copy').forEach(b => b.classList.remove('is-copied')), 2600);
+    // Briefkasten im Hintergrund bereitstellen — der Agent soll gleich einwerfen koennen.
+    if ((kiStatus === 'aus' || kiStatus === 'fremd') && derivedKey) kiEinschalten({ leise: true });
+}
+
+function kiBannerWeg() {
+    try { localStorage.setItem(KI_BANNER_WEG, '1'); } catch (e) { /* dann eben nur fuer diese Sitzung */ }
+    const el = document.getElementById('kiConnect');
+    if (el) { el.hidden = true; el.innerHTML = ''; }
+}
+
+function kiRenderBanner() {
+    const el = document.getElementById('kiConnect');
+    if (!el) return;
+    let weg = false;
+    try { weg = localStorage.getItem(KI_BANNER_WEG) === '1'; } catch (e) { /* zeigen */ }
+    // Nur solange noch nichts verbunden ist. Laeuft der Briefkasten, uebernimmt
+    // die Inbox-Leiste diesen Platz.
+    // Nach dem Kopieren bleibt der Hinweis mit „Fertig" stehen, auch wenn der
+    // Briefkasten dabei angesprungen ist — sonst verschwaende er, bevor man liest.
+    if (!el.hidden && el.classList.contains('is-done') && derivedKey) return;
+    if (weg || !derivedKey || kiStatus === 'an' || kiStatus === 'fehler') { el.hidden = true; el.innerHTML = ''; delete el.dataset.gebaut; return; }
+    if (el.dataset.gebaut === kiStatus && !el.hidden) return;
+    el.dataset.gebaut = kiStatus;
+    el.classList.remove('is-done');
+    el.hidden = false;
+    el.innerHTML =
+        '<span class="ki-inbox-ico">' + KI_ICON + '</span>' +
+        '<div class="ki-connect-text">' +
+            '<p class="ki-connect-title">' + L('Verbinde dein Schatten-Berichtsheft mit deinem KI-Assistenten', 'Connect your shadow report book to your AI assistant') + '</p>' +
+            '<p class="ki-connect-sub ki-connect-sub--vorher">' + L('Erzähl dem Assistenten, was passiert ist — er legt den Entwurf hier ab, du bestätigst.', 'Tell the assistant what happened — it drops the draft here, you confirm.') + '</p>' +
+            '<p class="ki-connect-sub ki-connect-sub--nachher">' + L('Fertig. Füg den Text bei Claude, ChatGPT & Co. ein — den Rest richtet der Assistent selbst ein.', 'Done. Paste the text into Claude, ChatGPT & co. — the assistant sets up the rest.') + '</p>' +
+        '</div>' +
+        kiKopierKnopf('kiCopyBanner') +
+        '<button type="button" class="ki-connect-x" onclick="kiBannerWeg()" aria-label="' + L('Hinweis ausblenden', 'Hide this') + '">' + KI_SCHLIESSEN + '</button>';
 }
 
 // Sucht den ersten JSON-Block im eingefuegten Text — Chatbots setzen gern
@@ -461,31 +584,38 @@ function kiRenderEinrichten() {
         '<div class="ki-paste-actions"><button class="btn btn-sm" onclick="kiVorlageKopieren()">' + L('Vorlage kopieren', 'Copy template') + '</button>' +
         '<button class="btn btn-sm" onclick="kiEinfuegenOeffnen()">' + L('Antwort einfügen', 'Paste answer') + '</button></div></div>';
 
+    // Der eine Knopf steht in jedem Zustand gleich da; was er nebenbei tun muss
+    // (Briefkasten einschalten, alten Schluessel ersetzen), erledigt kiAgentKopieren.
+    const knopf = '<div class="ki-copy-row">' + kiKopierKnopf('kiCopyModal') + '</div>' +
+        '<p class="ki-small ki-copy-hint">' + L('Der Text sagt deinem Assistenten, wie er sich verbindet. Du bestätigst danach nur noch einmal mit deinem MyWorkLog-Konto.',
+            'The text tells your assistant how to connect. Afterwards you only confirm once with your MyWorkLog account.') + '</p>';
+    const selbst = '<details class="ki-self"><summary>' + L('Lieber selbst einrichten', 'Set it up yourself') + '</summary>' +
+        '<div class="ki-url"><code>' + KI_MCP_URL + '</code><button class="btn btn-sm" onclick="kiAdresseKopieren()">' + L('Kopieren', 'Copy') + '</button></div>' +
+        '<ol class="ki-steps">' +
+            '<li><b>Claude</b> — ' + L('Einstellungen → Connectors → eigenen Connector hinzufügen, Adresse einfügen. Danach meldest du dich mit deinem MyWorkLog-Konto an und erlaubst den Zugriff.',
+                'Settings → Connectors → add custom connector, paste the address. Then sign in with your MyWorkLog account and allow access.') + '</li>' +
+            '<li><b>Claude Code</b> — <code>claude mcp add --transport http myworklog ' + KI_MCP_URL + '</code></li>' +
+            '<li>' + L('Andere Apps mit MCP-Unterstützung: dieselbe Adresse als Remote-Server eintragen.', 'Other apps with MCP support: add the same address as a remote server.') + '</li>' +
+        '</ol></details>';
+
     let teil = '';
-    if (kiStatus === 'konto') {
-        teil = '<div class="vc-note">' + L('Für die direkte Verbindung brauchst du ein MyWorkLog-Konto, damit der Assistent weiß, wessen Briefkasten er füllt. Dein Tresor bleibt dabei verschlüsselt.',
-            'The direct connection needs a MyWorkLog account so the assistant knows whose mailbox to fill. Your vault stays encrypted.') + '</div>' +
-            '<div class="modal-footer"><a class="btn btn-cta" href="' + L('/', '/en/') + '?cloud=login&amp;back=schatten-berichtsheft">' + L('Anmelden', 'Sign in') + '</a></div>';
-    } else if (kiStatus === 'fehler') {
+    if (kiStatus === 'fehler') {
         teil = '<div class="vc-note">' + L('Der Briefkasten ist gerade nicht erreichbar. Prüf deine Verbindung und versuch es erneut.',
             'The mailbox cannot be reached right now. Check your connection and try again.') + '</div>' +
             '<div class="modal-footer"><button class="btn btn-cta" onclick="kiInboxAktualisieren()">' + L('Erneut versuchen', 'Try again') + '</button></div>';
-    } else if (kiStatus === 'fremd') {
-        teil = '<div class="vc-note">' + L('Der Briefkasten gehört zu einem früheren Tresor. Richte ihn neu ein — liegende Entwürfe sind mit dem alten Schlüssel verschlossen und werden dabei gelöscht.',
-            'The mailbox belongs to an earlier vault. Set it up again — waiting drafts are locked with the old key and will be deleted.') + '</div>' +
-            '<div class="modal-footer"><button class="btn btn-cta" id="kiToggleBtn" onclick="kiEinschalten()">' + L('Neu einrichten', 'Set up again') + '</button></div>';
-    } else if (kiStatus === 'aus') {
-        teil = '<div class="modal-footer"><button class="btn btn-cta" id="kiToggleBtn" onclick="kiEinschalten()">' + L('Briefkasten einschalten', 'Switch mailbox on') + '</button></div>';
+    } else if (kiStatus !== 'an') {
+        teil = knopf + selbst +
+            (kiStatus === 'konto'
+                ? '<div class="vc-note">' + L('Du bist auf diesem Gerät nicht angemeldet. Das macht nichts: Beim Verbinden fragt dein Assistent nach deinem MyWorkLog-Konto. Damit Entwürfe hier ankommen, melde dich danach auch hier an.',
+                    'You are not signed in on this device. That is fine: your assistant asks for your MyWorkLog account when connecting. For drafts to arrive here, sign in here afterwards too.') +
+                  ' <a href="' + L('/', '/en/') + '?cloud=login&amp;back=schatten-berichtsheft">' + L('Jetzt anmelden', 'Sign in now') + '</a></div>'
+                : '') +
+            (kiStatus === 'fremd'
+                ? '<div class="vc-note">' + L('Der Briefkasten gehört zu einem früheren Tresor. Beim Kopieren wird er neu eingerichtet; liegende Entwürfe sind mit dem alten Schlüssel verschlossen und werden gelöscht.',
+                    'The mailbox belongs to an earlier vault. Copying sets it up again; waiting drafts are locked with the old key and will be deleted.') + '</div>'
+                : '');
     } else {
-        teil =
-            '<p class="ki-sub">' + L('Verbinden', 'Connect') + '</p>' +
-            '<div class="ki-url"><code>' + KI_MCP_URL + '</code><button class="btn btn-sm" onclick="kiAdresseKopieren()">' + L('Kopieren', 'Copy') + '</button></div>' +
-            '<ol class="ki-steps">' +
-                '<li><b>Claude</b> — ' + L('Einstellungen → Connectors → eigenen Connector hinzufügen, Adresse einfügen. Danach meldest du dich mit deinem MyWorkLog-Konto an und erlaubst den Zugriff.',
-                    'Settings → Connectors → add custom connector, paste the address. Then sign in with your MyWorkLog account and allow access.') + '</li>' +
-                '<li><b>Claude Code</b> — <code>claude mcp add --transport http myworklog ' + KI_MCP_URL + '</code></li>' +
-                '<li>' + L('Andere Apps mit MCP-Unterstützung: dieselbe Adresse als Remote-Server eintragen.', 'Other apps with MCP support: add the same address as a remote server.') + '</li>' +
-            '</ol>' +
+        teil = knopf + selbst +
             (kiVerbindungen.length
                 ? '<p class="ki-sub">' + L('Verbundene Assistenten', 'Connected assistants') + '</p><ul class="ki-conn">' +
                     kiVerbindungen.map(v => '<li><span>' + escapeHtml(v.client_name || v.client_id) + '<small>' +
@@ -553,6 +683,7 @@ function kiRenderMenue() {
 
 function kiRender() {
     kiRenderMenue();
+    kiRenderBanner();
     kiRenderLeiste();
     kiRenderEinrichten();
     kiRenderInbox();

@@ -1267,6 +1267,55 @@
             background: var(--bg-1); padding: 0.75rem 1rem; margin-bottom: 1.5rem;
         }
         .ki-inbox[hidden] { display: none; }
+
+        /* Verbinden-Hinweis: derselbe Kasten wie die Inbox-Leiste, damit beide
+           als EIN Ort lesen (erst „verbinden", spaeter „Entwuerfe warten"). */
+        .ki-connect {
+            display: flex; align-items: center; gap: 14px;
+            border: 1px solid var(--border); border-left: 2px solid var(--primary);
+            border-radius: 0 var(--r-3) var(--r-3) 0;
+            background: var(--bg-1); padding: 0.85rem 0.75rem 0.85rem 1rem; margin-bottom: 1.5rem;
+        }
+        .ki-connect[hidden] { display: none; }
+        .ki-connect-text { flex: 1; min-width: 0; }
+        .ki-connect-title { font-size: 0.88rem; font-weight: 600; color: var(--text-0); margin: 0 0 2px; letter-spacing: -0.01em; }
+        .ki-connect-sub { font-size: 0.8rem; line-height: 1.5; color: var(--text-2); margin: 0; }
+        .ki-connect-sub--nachher { display: none; color: var(--text-1); }
+        .ki-connect.is-done .ki-connect-sub--vorher { display: none; }
+        .ki-connect.is-done .ki-connect-sub--nachher { display: block; }
+        .ki-connect-x {
+            flex-shrink: 0; display: flex; padding: 6px; border: 0; border-radius: var(--r-2);
+            background: none; color: var(--text-2); cursor: pointer;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+        .ki-connect-x svg { width: 15px; height: 15px; }
+        .ki-connect-x:hover { color: var(--text-0); background: rgba(var(--primary-rgb), 0.08); }
+
+        /* Kopier-Knopf: beide Beschriftungen liegen im SELBEN Rasterfeld, die
+           Breite richtet sich nach der laengeren — so springt nichts, wenn
+           „Kopiert" erscheint. Wechsel per Deckkraft + leichter Unschaerfe. */
+        .ki-copy { display: inline-grid; flex-shrink: 0; transition: transform 160ms ease-out; }
+        .ki-copy:active { transform: scale(0.97); }
+        .ki-copy-face {
+            grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            transition: opacity 200ms ease, filter 200ms ease;
+        }
+        .ki-copy-face--ok { opacity: 0; filter: blur(2px); }
+        .ki-copy.is-copied .ki-copy-face--an { opacity: 0; filter: blur(2px); }
+        .ki-copy.is-copied .ki-copy-face--ok { opacity: 1; filter: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .ki-copy-face { transition: opacity 120ms ease; filter: none !important; }
+            .ki-copy:active { transform: none; }
+        }
+        .ki-copy-row { margin: 0.2rem 0 0.5rem; }
+        .ki-copy-row .ki-copy { width: 100%; }
+        /* Zwei Klassen, weil .ki-small (margin: 0) weiter unten steht und
+           sonst bei gleicher Spezifitaet gewinnt. */
+        .ki-small.ki-copy-hint { margin-bottom: 0.9rem; }
+        .vc-note a { color: var(--text-0); text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+        .ki-self { margin-bottom: 1rem; font-size: 0.82rem; }
+        .ki-self summary { cursor: pointer; color: var(--text-2); margin-bottom: 0.7rem; }
+        .ki-self[open] summary { color: var(--text-1); }
         .ki-inbox-ico { display: flex; color: var(--primary); flex-shrink: 0; }
         .ki-inbox-text { flex: 1; min-width: 0; font-size: 0.86rem; color: var(--text-0); }
         .entry-ai {
@@ -1318,6 +1367,12 @@
         @media (max-width: 560px) {
             .ki-paste-row { flex-direction: column; }
             .ki-inbox { flex-wrap: wrap; }
+            /* Handy: Text oben ueber die ganze Breite, Knopf darunter, das
+               Kreuz bleibt oben rechts statt eine eigene Zeile zu fressen. */
+            .ki-connect { flex-wrap: wrap; position: relative; padding-right: 1rem; }
+            .ki-connect-text { flex-basis: calc(100% - 40px); padding-right: 28px; }
+            .ki-connect .ki-copy { width: 100%; }
+            .ki-connect-x { position: absolute; top: 8px; right: 6px; }
         }
 
         /* ══ BEWEISMITTEL ══ */
@@ -2364,7 +2419,9 @@
         <!-- VERLORENE AUSBILDUNGSZEIT -->
         <div class="lost-time-wrap" id="lostTimeWrap" style="display:none;"></div>
 
-        <!-- KI-BRIEFKASTEN: nur sichtbar, wenn Entwuerfe warten (ki-briefkasten.js) -->
+        <!-- KI-BRIEFKASTEN (ki-briefkasten.js): Verbinden-Hinweis, solange nichts
+             verbunden ist; danach die Leiste fuer wartende Entwuerfe -->
+        <div class="ki-connect" id="kiConnect" hidden></div>
         <div class="ki-inbox" id="kiInbox" role="status" hidden></div>
 
         <!-- TOOLBAR -->
@@ -2995,7 +3052,7 @@
 <script src="/Assets/js/berichtsheft/file-preview.js?v=132116240b"></script>
 <script src="/Assets/js/berichtsheft/drive-backup.js?v=5282edac6b"></script>
 <script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=0e647a73a5"></script>
-<script src="/Assets/js/berichtsheft/ki-briefkasten.js?v=f5d83e9259"></script>
+<script src="/Assets/js/berichtsheft/ki-briefkasten.js?v=7b6fd6ecc9"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das
