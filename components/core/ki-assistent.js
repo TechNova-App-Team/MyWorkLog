@@ -200,15 +200,20 @@
 
     // Beim Start nur, wenn dieses Geraet den Briefkasten schon einmal offen
     // hatte — sonst kein einziger Abruf (Merker in ki-app-briefkasten.js).
+    // Ausnahme: die Pille wurde gedrueckt (Wunsch gemerkt) und man ist jetzt
+    // angemeldet — dann schaltet laden() den Briefkasten ein.
     let letzter = 0;
+    const eingeloggt = () => !!(window.cloudSync && typeof window.cloudSync.isLoggedIn === 'function' && window.cloudSync.isLoggedIn());
     async function kiaPruefen() {
-        if (!MWLKiApp.gemerkt()) return;
+        if (!MWLKiApp.gemerkt() && !(MWLKiApp.gewuenscht() && eingeloggt())) return;
         if (Date.now() - letzter < 20000) return;
         letzter = Date.now();
         await MWLKiApp.laden(false);
         kiaBanner();
+        kiaPille();
     }
-    document.addEventListener('DOMContentLoaded', () => setTimeout(kiaPruefen, 2500));
+    function kiaPille() { MWLKiApp.pille(document.getElementById('kiPilleDash'), 'dashboard', eingeloggt); }
+    document.addEventListener('DOMContentLoaded', () => { kiaPille(); setTimeout(kiaPruefen, 2500); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) kiaPruefen(); });
 
     // Abschnitt erst beim Oeffnen des Cloud-Tabs laden, wie die Passkeys

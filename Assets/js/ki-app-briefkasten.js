@@ -78,7 +78,17 @@
             const aes = await e2eSchluessel(u.id);
             const zeile = pruefen(await c.from('schatten_ki_schluessel')
                 .select('public_key, private_key').eq('user_id', u.id).eq('bereich', BEREICH).maybeSingle());
-            if (!zeile) { zustand.status = aes ? 'aus' : 'code'; merken(false); return zustand; }
+            if (!zeile) {
+                zustand.status = aes ? 'aus' : 'code';
+                merken(false);
+                // Wer die Pille gedrueckt hat, will den Briefkasten — dann jetzt
+                // einschalten, statt ihn nochmal in den Einstellungen suchen zu lassen.
+                if (aes && gewuenscht()) {
+                    await einschalten();
+                    try { localStorage.removeItem(WUNSCH); } catch (e) { /* egal */ }
+                }
+                return zustand;
+            }
             if (!aes) { zustand.status = 'code'; return zustand; }
             try { zustand.priv = await kiPrivatSchluesselAuspacken(zeile.private_key, aes); }
             catch (e) { zustand.status = 'fremd'; return zustand; }
@@ -152,8 +162,91 @@
         return zustand.entwuerfe.filter(e => !e.fehler && e.daten && e.daten.art === art);
     }
 
+    // ── Die Pille „Verbinde deinen KI-Assistenten" (Vorbild: Cloudflares
+    // „Onboard your agent", Wunsch des Nutzers 24.10.2026) ─────────────────
+    // Sichtbar auf Dashboard und Berichtsheft, solange dieses Geraet den
+    // Briefkasten nicht offen hat. Ein Klick kopiert die eine Zeile
+    // (kiAgentZeile, ki-krypto.js) und merkt sich den Wunsch: ist man
+    // angemeldet, springt der Briefkasten gleich an, sonst nach dem Anmelden
+    // (laden()). Stil als eingebautes <style>, weil App und Berichtsheft
+    // verschiedene Tokens haben — die Pille richtet sich nur nach currentColor.
+    const WUNSCH = 'mwl_ki_app_wunsch';
+    function gewuenscht() { try { return localStorage.getItem(WUNSCH) === '1'; } catch (e) { return false; } }
+
+    function pillenStil() {
+        if (document.getElementById('kiPilleStil')) return;
+        const s = document.createElement('style');
+        s.id = 'kiPilleStil';
+        s.textContent =
+            '.ki-pille{display:inline-flex;align-items:center;gap:10px;max-width:100%;padding:7px 8px 7px 14px;' +
+            'border-radius:999px;border:1px solid color-mix(in srgb,currentColor 16%,transparent);' +
+            'background:color-mix(in srgb,currentColor 4%,transparent);color:inherit;font:inherit;font-size:13px;' +
+            'font-weight:500;cursor:pointer;transition:border-color .2s ease,background-color .2s ease,transform .16s ease-out}' +
+            '.ki-pille:active{transform:scale(.97)}' +
+            '.ki-pille:focus-visible{outline:2px solid var(--primary,currentColor);outline-offset:2px}' +
+            '@media (hover:hover) and (pointer:fine){.ki-pille:hover{border-color:color-mix(in srgb,currentColor 30%,transparent);' +
+            'background:color-mix(in srgb,currentColor 7%,transparent)}}' +
+            '.ki-pille__text{display:inline-grid}' +
+            '.ki-pille__text>span{grid-area:1/1;white-space:nowrap;transition:opacity .2s ease,filter .2s ease}' +
+            '.ki-pille__ok{opacity:0;filter:blur(2px);display:inline-flex;align-items:center;gap:6px}' +
+            '.ki-pille__ok svg{width:14px;height:14px}' +
+            '.ki-pille.is-kopiert .ki-pille__an{opacity:0;filter:blur(2px)}' +
+            '.ki-pille.is-kopiert .ki-pille__ok{opacity:1;filter:none}' +
+            '.ki-pille__marken{display:inline-flex;gap:4px;transition:opacity .2s ease}' +
+            '.ki-pille__marken svg{width:22px;height:22px;padding:4px;border-radius:999px;' +
+            'background:color-mix(in srgb,currentColor 8%,transparent);opacity:.85}' +
+            '.ki-pille.is-kopiert .ki-pille__marken{opacity:.35}' +
+            '@media (max-width:420px){.ki-pille__marken svg:nth-child(n+3){display:none}}' +
+            '@media (prefers-reduced-motion:reduce){.ki-pille__text>span{transition:opacity .12s ease;filter:none!important}.ki-pille:active{transform:none}}';
+        document.head.appendChild(s);
+    }
+
+    // Neutrale Symbole statt fremder Logos: Funke (Chat-KI), Terminal (Claude
+    // Code & Co.), Sprechblase (ChatGPT, Gemini …), Stecker (MCP).
+    const MARKEN = [
+        '<path d="M12 3l1.6 4.9L18.5 9.5l-4.9 1.6L12 16l-1.6-4.9L5.5 9.5l4.9-1.6z"/><path d="M19 15l.7 2.1 2.1.7-2.1.7L19 20.6l-.7-2.1-2.1-.7 2.1-.7z"/>',
+        '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>',
+        '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+        '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8z"/>',
+    ];
+    const svg = p => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
+
+    function pille(el, ort, angemeldet) {
+        if (!el) return;
+        if (gemerkt()) { el.hidden = true; el.innerHTML = ''; return; }
+        pillenStil();
+        const en = document.documentElement.lang === 'en';
+        const T = (de, e) => en ? e : de;
+        el.hidden = false;
+        el.innerHTML = '<button type="button" class="ki-pille" title="' + T('Kopiert einen Satz für Claude, ChatGPT & Co.', 'Copies one line for Claude, ChatGPT & co.') + '">' +
+            '<span class="ki-pille__text">' +
+                '<span class="ki-pille__an">' + T('Verbinde deinen KI-Assistenten', 'Connect your AI assistant') + '</span>' +
+                '<span class="ki-pille__ok" aria-hidden="true">' + svg('<path d="M20 6 9 17l-5-5"/>') + T('Kopiert — im Chat einfügen', 'Copied — paste it in the chat') + '</span>' +
+            '</span>' +
+            '<span class="ki-pille__marken">' + MARKEN.map(svg).join('') + '</span>' +
+        '</button>';
+        const btn = el.querySelector('button');
+        btn.addEventListener('click', async () => {
+            // Kopieren ZUERST, im selben Klick (Nutzergeste, s. ki-briefkasten.js).
+            const text = kiAgentZeile(en);
+            let ok = true;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+                else throw new Error('keine Zwischenablage');
+            } catch (e) { ok = false; }
+            if (!ok) { btn.title = text; return; }
+            try { localStorage.setItem(WUNSCH, '1'); } catch (e) { /* ohne Merker */ }
+            btn.classList.add('is-kopiert');
+            setTimeout(() => btn.classList.remove('is-kopiert'), 2600);
+            if (typeof mwlEvent === 'function') mwlEvent('ki_agent_kopiert', { status: zustand.status, ort });
+            // Briefkasten gleich bereitstellen, wenn moeglich — sonst nach dem
+            // Anmelden ueber laden().
+            if (typeof angemeldet === 'function' && angemeldet()) laden(false).catch(() => {});
+        });
+    }
+
     window.MWLKiApp = {
-        init, laden, einschalten, ausschalten, loeschen, verbindungen, trennen, entwuerfe, gemerkt,
+        init, laden, einschalten, ausschalten, loeschen, verbindungen, trennen, entwuerfe, gemerkt, gewuenscht, pille,
         get status() { return zustand.status; },
         get alle() { return zustand.entwuerfe; },
         get verbunden() { return zustand.verbindungen; },

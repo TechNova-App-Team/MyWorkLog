@@ -105,12 +105,15 @@
     // Datenschicht) und eine Sitzung da ist — sonst kein einziger Abruf.
     let letzter = 0;
     async function pruefen() {
-        if (!MWLKiApp.gemerkt() || !BHB2B.angemeldet()) return;
+        if (!BHB2B.angemeldet() || !(MWLKiApp.gemerkt() || MWLKiApp.gewuenscht())) return;
         if (Date.now() - letzter < 20000) return;
         letzter = Date.now();
         await MWLKiApp.laden(false);
         render();
+        pille();
     }
+    function pille() { MWLKiApp.pille(document.getElementById('kiPilleBh'), 'berichtsheft', () => BHB2B.angemeldet()); }
+    pille();
     setTimeout(pruefen, 1500);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) pruefen(); });
 
