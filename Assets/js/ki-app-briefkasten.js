@@ -183,9 +183,19 @@
     function berichteUeberblick() {
         let liste = [];
         try { liste = JSON.parse(localStorage.getItem('berichtsheft_reports') || '[]') || []; } catch (e) { liste = []; }
+        // jahr = ISO-Wochenjahr (Jahr des Donnerstags), nicht das Jahr des
+        // Montags: KW 1 ab 29.12.2025 hiess sonst "KW 1 / 2025". r.year taugt
+        // nicht, das ist das Ausbildungsjahr (1–3).
+        const wochenjahr = von => {
+            const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(von || ''));
+            if (!m) return null;
+            const d = new Date(+m[1], +m[2] - 1, +m[3]);
+            d.setDate(d.getDate() - (d.getDay() + 6) % 7 + 3);
+            return d.getFullYear();
+        };
         return liste.filter(r => r && r.week).map(r => ({
             kw: r.week,
-            jahr: parseInt(String(r.dateFrom || '').slice(0, 4), 10) || null,
+            jahr: wochenjahr(r.dateFrom),
             von: r.dateFrom || '',
             status: r.status || '',
             modus: r.mode || 'weekly',

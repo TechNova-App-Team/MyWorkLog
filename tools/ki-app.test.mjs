@@ -129,6 +129,18 @@ ok(!db.schatten_ki_schluessel.some(z => z.bereich === 'app') && !db.schatten_ki_
 ok(db.schatten_ki_schluessel.some(z => z.bereich === 'schatten') && db.schatten_ki_entwuerfe.some(z => z.id === 's1'), 'Schatten-Briefkasten bleibt beim Ausschalten der App unberuehrt');
 ok(!K.gemerkt(), 'Merker weg');
 
+// Wochenjahr der Lese-Kopie: KW 1 ab 29.12.2025 gehoert zu 2026, KW 53 ab
+// 28.12.2026 zu 2026. year im Bericht ist das Ausbildungsjahr, darf nicht zaehlen.
+w.localStorage.setItem('berichtsheft_reports', JSON.stringify([
+    { week: 1, year: 1, dateFrom: '2025-12-29' },
+    { week: 53, year: 2, dateFrom: '2026-12-28' },
+    { week: 43, year: 2, dateFrom: '2026-10-19' },
+]));
+const ueb = K.berichteUeberblick();
+ok(ueb.length === 3, 'Gegenprobe: drei Wochen im Ueberblick');
+ok(ueb[0].jahr === 2026 && ueb[1].jahr === 2026 && ueb[2].jahr === 2026, 'Wochenjahr nach Donnerstag, nicht nach Montag oder Ausbildungsjahr');
+w.localStorage.removeItem('berichtsheft_reports');
+
 console.log('2. App fuehrt aus (ki-assistent.js ueber den Import)');
 // App-Umgebung: data, save/renderAll als Attrappe, Import + KI-Module in EINEM
 // eval (jsdom gibt jedem eval eigenen const/let-Scope, s. ki-briefkasten-Test).
