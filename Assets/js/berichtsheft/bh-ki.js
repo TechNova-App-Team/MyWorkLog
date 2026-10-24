@@ -39,7 +39,9 @@
             const d = e.daten;
             return '<div class="bh-ki-zeile">' +
                 '<svg class="icon icon-sm" aria-hidden="true"><use href="#i-sparkles" /></svg>' +
-                '<span class="bh-ki-text">' + L('KW ' + d.kw + '/' + d.jahr + ' — vom KI-Assistenten vorgeschrieben', 'CW ' + d.kw + '/' + d.jahr + ' — pre-written by your AI assistant') +
+                // In der Leiste stehen nur noch Wochen, die es schon gibt — die
+                // neuen hat selbstAnlegen() erledigt.
+                '<span class="bh-ki-text">' + L('KW ' + d.kw + '/' + d.jahr + ' gibt es schon — dein KI-Assistent hat eine neue Fassung vorgeschlagen', 'CW ' + d.kw + '/' + d.jahr + ' already exists — your AI assistant suggested a new version') +
                     (d.client ? ' <small>(' + L('laut Client: ', 'client says: ') + esc(d.client) + ')</small>' : '') + '</span>' +
                 '<button type="button" class="hf-chip" onclick="bhKiOeffnen(\'' + e.id + '\')">' + L('Prüfen', 'Review') + '</button>' +
                 '<button type="button" class="hf-chip" onclick="bhKiVerwerfen(\'' + e.id + '\')">' + L('Verwerfen', 'Discard') + '</button>' +
@@ -47,7 +49,7 @@
         }).join('');
     }
 
-    function bhKiOeffnen(id) {
+    function bhKiOeffnen(id, still) {
         const e = MWLKiApp.entwuerfe('bericht').find(x => x.id === id);
         if (!e) return;
         const d = e.daten;
@@ -75,7 +77,7 @@
         setze('reportInstruction', d.unterweisungen);
         setze('reportHours', d.stunden);
         pending = id;
-        if (typeof showToast === 'function') {
+        if (!still && typeof showToast === 'function') {
             showToast(L('Entwurf eingefügt — prüfen und speichern', 'Draft filled in — review and save'), 'info');
         }
     }
@@ -109,8 +111,34 @@
         if (Date.now() - letzter < 20000) return;
         letzter = Date.now();
         await MWLKiApp.laden(false);
+        await selbstAnlegen();
         render();
         pille();
+    }
+
+    // Neue Wochen legt die Seite SELBST an (Entscheidung des Nutzers 24.10.:
+    // „der Agent macht alles") — ueber das echte Formular und saveReport(),
+    // damit Ausbildungsjahr, B2B-Spiegel und Messung genauso laufen wie von
+    // Hand. Gibt es die Woche schon, bleibt der Vorschlag in der Leiste: ein
+    // vorhandener Bericht wird nie still ueberschrieben.
+    function wocheGibtEs(d) {
+        return (typeof reports !== 'undefined' ? reports : []).some(r =>
+            r.week === d.kw && parseInt(String(r.dateFrom || '').slice(0, 4), 10) === d.jahr);
+    }
+    async function selbstAnlegen() {
+        if (MWLKiApp.status !== 'an' || typeof saveReport !== 'function') return;
+        const neu = MWLKiApp.entwuerfe('bericht').filter(e => !wocheGibtEs(e.daten));
+        const kw = [];
+        for (const e of neu) {
+            bhKiOeffnen(e.id, true);
+            try { await saveReport({ preventDefault() {} }); kw.push(e.daten.kw); }
+            catch (x) { console.warn('[KI-Berichtsheft]', x && x.message); bhKiAbbrechen(); }
+        }
+        if (!kw.length) return;
+        if (typeof showToast === 'function') {
+            showToast(L('Dein KI-Assistent hat KW ' + kw.join(', ') + ' angelegt', 'Your AI assistant created CW ' + kw.join(', ')), 'success');
+        }
+        MWLKiApp.spiegelBerichteAktualisieren().catch(() => {});
     }
     function pille() { MWLKiApp.pille(document.getElementById('kiPilleBh'), 'berichtsheft', () => BHB2B.angemeldet()); }
     pille();

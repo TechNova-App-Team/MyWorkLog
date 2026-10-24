@@ -129,33 +129,70 @@ ok(!db.schatten_ki_schluessel.some(z => z.bereich === 'app') && !db.schatten_ki_
 ok(db.schatten_ki_schluessel.some(z => z.bereich === 'schatten') && db.schatten_ki_entwuerfe.some(z => z.id === 's1'), 'Schatten-Briefkasten bleibt beim Ausschalten der App unberuehrt');
 ok(!K.gemerkt(), 'Merker weg');
 
-console.log('2. Rundweg Entwurf → Import');
-const imp = new JSDOM('<!doctype html><html lang="de"><body></body></html>', { runScripts: 'outside-only' }).window;
-imp.eval(lies('components/import/import.js') + '\nwindow.__i = function (c) { return eval(c); };');
-// kiaZeilen aus dem App-Modul, ohne den Rest des Moduls zu starten
-const kiaSrc = lies('components/core/ki-assistent.js');
-const a = kiaSrc.indexOf('    function kiaZeilen(');
-const zeilenSrc = kiaSrc.slice(a, kiaSrc.indexOf('\n    }\n', a) + 7);
-ok(a > 0, 'Gegenprobe: kiaZeilen gefunden');
-const kiaZeilen = new Function(zeilenSrc + '\nreturn kiaZeilen;')();
-const rows = kiaZeilen([{ daten: { art: 'zeit', eintraege: [
-    { datum: '2026-10-19', art: 'arbeit', von: '07:30', bis: '16:15', pause_min: 30, stunden: null, notiz: 'Lager; Netzwerk' },
-    { datum: '2026-10-20', art: 'schule', von: '', bis: '', pause_min: 0, stunden: null, notiz: '' },
-    { datum: '2026-10-21', art: 'arbeit', von: '', bis: '', pause_min: 0, stunden: 7.5, notiz: '' },
-    { datum: '2026-10-22', art: 'urlaub', von: '', bis: '', pause_min: 0, stunden: null, notiz: '' },
-] } }]);
-const an = imp.__i('mwlAnalyzeRows')(rows);
-ok(an.hadHeader && ['date', 'start', 'end', 'hours', 'break', 'type', 'info'].every(k => an.mapping[k] !== undefined), 'Import erkennt alle sieben Spalten am Kopf');
-const vorschau = imp.__i('mwlBuildPreview')(an.body, an.mapping, { expectedFor: () => 8 });
-const e = vorschau.map(r => r.entry);
-ok(vorschau.every(r => r.ok), 'alle Zeilen gueltig');
-ok(e[0].type === 'work' && e[0].worked === 8.25 && e[0].breakMins === 30 && e[0].diff === 0.25, 'Arbeit 07:30–16:15, 30 min Pause → 8,25 h, +0,25');
-ok(e[0].info === 'Lager; Netzwerk', 'Notiz mit Semikolon bleibt heil');
-ok(e[1].type === 'school' && e[1].worked === 8 && e[1].diff === 0, 'Schule traegt das Tagessoll');
-ok(e[2].worked === 7.5 && e[2].breakMins === 0 && e[2].diff === -0.5, 'reine Stundenzahl 7,5 ohne Pausenabzug');
-ok(e[3].type === 'vacation', 'Urlaub erkannt');
+console.log('2. App fuehrt aus (ki-assistent.js ueber den Import)');
+// App-Umgebung: data, save/renderAll als Attrappe, Import + KI-Module in EINEM
+// eval (jsdom gibt jedem eval eigenen const/let-Scope, s. ki-briefkasten-Test).
+const app = new JSDOM('<!doctype html><html lang="de"><body><div id="kiAppBanner"></div></body></html>',
+    { runScripts: 'outside-only', url: 'https://myworklog.de/' }).window;
+Object.defineProperty(app, 'crypto', { value: globalThis.crypto });
+let saves = 0;
+app.eval(
+    'var data = { settings: { hours: [0, 8, 8, 8, 8, 6, 0], break: { min: [0, 30, 30, 30, 30, 15, 0], thresh: 6 }, vacation: { total: 30, used: 0, mode: "days" }, name: "", bundesland: "" }, entries: [], trash: [] };\n' +
+    'function save() { window.__saves = (window.__saves || 0) + 1; }\nfunction renderAll() {}\n' +
+    lies('components/import/import.js') + '\n' + lies('Assets/js/ki-krypto.js') + '\n' + lies('Assets/js/ki-app-briefkasten.js') + '\n' +
+    lies('components/core/ki-assistent.js') + '\nwindow.__a = function (c) { return eval(c); };');
+const A = app.__kia;
+ok(!!A && typeof A.ausfuehren === 'function', 'Gegenprobe: App-Modul geladen');
+const auftrag = (art, rest) => ({ id: art + Math.random(), daten: Object.assign({ v: 1, art }, rest) });
+// Mo 19.10. 07:30–16:15 ohne genannte Pause → Standard 30 min (≥ 6 h), Fr 23.10. → 15 min
+let r = A.ausfuehren([auftrag('zeit', { eintraege: [
+    { datum: '2026-10-19', art: 'arbeit', von: '07:30', bis: '16:15', pause_min: null, stunden: null, notiz: 'Lager; Netzwerk' },
+    { datum: '2026-10-20', art: 'schule', von: '', bis: '', pause_min: null, stunden: null, notiz: 'LF 4' },
+    { datum: '2026-10-21', art: 'arbeit', von: '', bis: '', pause_min: null, stunden: 7.5, notiz: '' },
+    { datum: '2026-10-23', art: 'arbeit', von: '08:00', bis: '14:30', pause_min: null, stunden: null, notiz: '' },
+    { datum: '2026-10-22', art: 'urlaub', von: '', bis: '', pause_min: null, stunden: null, notiz: '' },
+] })]);
+const E = d => app.__a('data').entries.find(x => x.date === d);
+ok(r.z.neu === 5, 'fuenf Tage eingetragen');
+ok(E('2026-10-19').worked === 8.25 && E('2026-10-19').breakMins === 30 && E('2026-10-19').diff === 0.25, 'Mo: Standardpause 30 min ab 6 h → 8,25 h, +0,25');
+ok(E('2026-10-23').breakMins === 15 && E('2026-10-23').worked === 6.25, 'Fr: Pause des Wochentags (15 min) → 6,25 h');
+ok(E('2026-10-20').type === 'school' && E('2026-10-20').worked === 8 && E('2026-10-20').diff === 0, 'Schule ohne Zeiten traegt das Tagessoll');
+ok(E('2026-10-21').worked === 7.5 && E('2026-10-21').breakMins === 0, 'reine Stundenzahl ohne Pausenabzug');
+ok(E('2026-10-19').info === '07:30 - 16:15 (30m Pause) | Lager; Netzwerk' && A.nutzerNotiz(E('2026-10-19').info) === 'Lager; Netzwerk', 'Notiz wie handleEntry, Nutzertext wieder lesbar');
+ok(A.nutzerNotiz(E('2026-10-20').info) === 'LF 4', 'Notiz eines Schultags bleibt erhalten');
+ok(E('2026-10-19').quelle === 'ki', 'Herkunft vermerkt');
+r = A.ausfuehren([auftrag('zeit', { eintraege: [{ datum: '2026-10-19', art: 'arbeit', von: '09:00', bis: '17:00', pause_min: null, stunden: null, notiz: '' }] })]);
+ok(r.z.neu === 0 && r.z.doppelt === 1 && app.__a('data').entries.length === 5, 'vorhandener Tag wird nicht doppelt angelegt');
+const mo = E('2026-10-19');
+r = A.ausfuehren([auftrag('zeit_aendern', { aenderungen: [{ id: String(mo.id), bis: '17:15' }, { id: 'gibtsnicht', bis: '10:00' }] })]);
+ok(r.z.geaendert === 1 && r.z.unbekannt === 1, 'Aenderung angewandt, unbekannte id uebersprungen');
+ok(E('2026-10-19').id === mo.id && E('2026-10-19').worked === 9.25 && E('2026-10-19').breakMins === 30, 'neues Ende, Standardpause erneut, gleiche id');
+ok(A.nutzerNotiz(E('2026-10-19').info) === 'Lager; Netzwerk', 'Notiz uebersteht die Aenderung');
+const fr = E('2026-10-23');
+r = A.ausfuehren([auftrag('zeit_loeschen', { ids: [String(fr.id)] })]);
+ok(r.z.geloescht === 1 && !E('2026-10-23') && app.__a('data').trash.some(t => t.entry.id === fr.id), 'Loeschen schiebt in den Papierkorb');
+const undoLoeschen = r.undo;
+r = A.ausfuehren([auftrag('einstellungen', { patch: { name: 'Anna', beruf: 'Koch', bundesland: 'BY', sollstunden: { freitag: 7 }, pausen: { montag: 45 }, pause_ab_stunden: 6, urlaubstage: 28 } })]);
+const S = app.__a('data').settings;
+ok(S.name === 'Anna' && S.bundesland === 'BY' && S.hours[5] === 7 && S.break.min[1] === 45 && S.vacation.total === 28, 'Einstellungen gesetzt (Index 0 = Sonntag)');
+ok(S.job === 'sonstige' && S.jobCustom === 'Koch', 'unbekannter Beruf als Freitext');
+r.undo.forEach(f => f());
+ok(S.name === '' && S.hours[5] === 6 && S.break.min[1] === 30, 'Rueckgaengig stellt die Einstellungen wieder her');
+undoLoeschen.forEach(f => f());
+ok(!!E('2026-10-23') && !app.__a('data').trash.some(t => t.entry.id === fr.id), 'Rueckgaengig holt den geloeschten Tag zurueck');
 
-console.log('3. Verdrahtung');
+console.log('3. Lese-Kopie');
+const sp = A.kiaSpiegel();
+ok(sp.einstellungen.sollstunden.montag === 8 && sp.einstellungen.sollstunden.sonntag === 0, 'Sollstunden je Wochentag benannt');
+ok(sp.eintraege.every(x => typeof x.id === 'string') && sp.eintraege.some(x => x.art === 'schule'), 'Eintraege mit id als Text und Art auf Deutsch');
+ok(!JSON.stringify(sp).includes('schatten'), 'kein Schatten-Inhalt in der Kopie');
+ok(Array.isArray(sp.offene_tage) && sp.offene_tage.every(d => [1, 2, 3, 4, 5].includes(new Date(d + 'T12:00:00').getDay())), 'fehlende Tage nur an Tagen mit Soll');
+// Gegenprobe: einen Arbeitstag herausnehmen — er muss als fehlend erscheinen
+// (sonst waere die Pruefung darueber mit einer leeren Liste gruen).
+app.__a('data.entries = data.entries.filter(x => x.date !== "2026-10-21")');
+ok(A.kiaSpiegel().offene_tage.includes('2026-10-21'), 'Gegenprobe: herausgenommener Arbeitstag steht als fehlend da');
+
+console.log('4. Verdrahtung');
 const tpl = lies('index.template.html');
 const pos = n => tpl.indexOf('src="/' + n);
 ok(pos('components/import/import.js') > 0 && pos('Assets/js/ki-krypto.js') > pos('components/import/import.js') &&
@@ -169,9 +206,9 @@ const save = lies('Assets/js/berichtsheft/bh-bericht.js');
 const s0 = save.indexOf('async function saveReport');
 ok(save.indexOf('bhKiNachSpeichern()', s0) > save.indexOf('saveToStorage();', s0) &&
     save.indexOf('bhKiNachSpeichern()', s0) < save.indexOf('closeReportModal();', s0), 'Entwurf erst nach dem Speichern und vor dem Schliessen geloescht');
-const im = lies('components/import/import.js');
-const ap = im.indexOf('function mwlImportApply');
-ok(im.indexOf('_mwlImport.nachher()', ap) > im.indexOf('save();', ap), 'Import ruft den Nachlauf erst nach save()');
+const kia = lies('components/core/ki-assistent.js');
+const ka = kia.indexOf('async function kiaAusfuehren');
+ok(ka > 0 && kia.indexOf('MWLKiApp.loeschen', ka) > kia.indexOf('nachAenderung()', ka), 'Auftraege erst nach dem Speichern aus dem Briefkasten');
 
 console.log(`\n${pass} bestanden, ${fail} fehlgeschlagen`);
 if (pass < 25) { console.log('Gegenprobe: zu wenige Pruefungen gelaufen'); process.exit(1); }

@@ -157,6 +157,54 @@
         zustand.verbindungen = zustand.verbindungen.filter(v => v.client_id !== clientId);
     }
 
+    // ── Lese-Freigabe (ki_app_spiegel) ───────────────────────────────────
+    // Eigene, LESBARE Kopie nur fuer den Agenten — Entscheidung des Nutzers
+    // 24.10.2026. Getrennt vom E2E-Backup, ohne Schatten-Tresor, nur auf
+    // ausdrueckliches Einschalten. Merker je Geraet, damit niemand ungefragt
+    // eine lesbare Kopie hochlaedt.
+    const LESEN = 'mwl_ki_lesen';
+    function lesenAn() { try { return localStorage.getItem(LESEN) === '1'; } catch (e) { return false; } }
+
+    async function spiegelSchreiben(daten) {
+        const { c, u } = await ctx();
+        if (!u) return;
+        pruefen(await c.from('ki_app_spiegel').upsert({ user_id: u.id, daten }, { onConflict: 'user_id' }));
+    }
+
+    async function lesenSetzen(an, daten) {
+        try { an ? localStorage.setItem(LESEN, '1') : localStorage.removeItem(LESEN); } catch (e) { /* egal */ }
+        if (an) { if (daten) await spiegelSchreiben(daten); return; }
+        const { c, u } = await ctx();
+        if (u) pruefen(await c.from('ki_app_spiegel').delete().eq('user_id', u.id));
+    }
+
+    // Wochen des Berichtshefts (localStorage berichtsheft_reports, gleiche
+    // Herkunft wie die App). Kurzfassung, damit der Agent fehlende Wochen sieht.
+    function berichteUeberblick() {
+        let liste = [];
+        try { liste = JSON.parse(localStorage.getItem('berichtsheft_reports') || '[]') || []; } catch (e) { liste = []; }
+        return liste.filter(r => r && r.week).map(r => ({
+            kw: r.week,
+            jahr: parseInt(String(r.dateFrom || '').slice(0, 4), 10) || null,
+            von: r.dateFrom || '',
+            status: r.status || '',
+            modus: r.mode || 'weekly',
+            kurz: String(r.activities || '').replace(/\s+/g, ' ').slice(0, 160),
+        })).sort((a, b) => String(a.von).localeCompare(String(b.von)));
+    }
+
+    // Vom Berichtsheft aus: nur den Teil `berichte` der Kopie erneuern — der
+    // Rest (Einstellungen, Zeiten, Feiertage) entsteht in der App.
+    async function spiegelBerichteAktualisieren() {
+        if (!lesenAn()) return;
+        const { c, u } = await ctx();
+        if (!u) return;
+        const z = pruefen(await c.from('ki_app_spiegel').select('daten').eq('user_id', u.id).maybeSingle());
+        if (!z || !z.daten) return;
+        z.daten.berichte = berichteUeberblick();
+        await spiegelSchreiben(z.daten);
+    }
+
     // Entwuerfe einer Art: 'zeit' | 'bericht'.
     function entwuerfe(art) {
         return zustand.entwuerfe.filter(e => !e.fehler && e.daten && e.daten.art === art);
@@ -274,6 +322,7 @@
 
     window.MWLKiApp = {
         init, laden, einschalten, ausschalten, loeschen, verbindungen, trennen, entwuerfe, gemerkt, gewuenscht, pille, verbindenKopieren,
+        lesenAn, lesenSetzen, spiegelSchreiben, berichteUeberblick, spiegelBerichteAktualisieren,
         get status() { return zustand.status; },
         get alle() { return zustand.entwuerfe; },
         get verbunden() { return zustand.verbindungen; },
