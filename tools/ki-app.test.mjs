@@ -178,6 +178,11 @@ ok(S.name === 'Anna' && S.bundesland === 'BY' && S.hours[5] === 7 && S.break.min
 ok(S.job === 'sonstige' && S.jobCustom === 'Koch', 'unbekannter Beruf als Freitext');
 r.undo.forEach(f => f());
 ok(S.name === '' && S.hours[5] === 6 && S.break.min[1] === 30, 'Rueckgaengig stellt die Einstellungen wieder her');
+r = A.ausfuehren([auftrag('einstellungen', { patch: { name: 'Anna', betrieb: 'Zahn Pinsel GmbH', ausbildung_beginn: '2025-08-01' } })]);
+const cfg = JSON.parse(app.localStorage.getItem('pdf_personal_cfg') || '{}');
+ok(cfg.betrieb === 'Zahn Pinsel GmbH' && cfg.name === 'Anna' && cfg.beginn === '01.08.2025', 'Deckblatt landet in pdf_personal_cfg (Datum wie im Formular)');
+r.undo.forEach(f => f());
+ok(app.localStorage.getItem('pdf_personal_cfg') === null, 'Rueckgaengig nimmt das Deckblatt zurueck');
 undoLoeschen.forEach(f => f());
 ok(!!E('2026-10-23') && !app.__a('data').trash.some(t => t.entry.id === fr.id), 'Rueckgaengig holt den geloeschten Tag zurueck');
 

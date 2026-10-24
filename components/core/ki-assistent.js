@@ -155,8 +155,13 @@
                     name: s.name, job: s.job, jobCustom: s.jobCustom, bundesland: s.bundesland,
                     hours: s.hours, break: s.break, vacation: s.vacation, eingerichtet: s.eingerichtet,
                 }));
+                let pdfVorher = null;
+                try { pdfVorher = localStorage.getItem('pdf_personal_cfg'); } catch (e) { /* ohne */ }
                 einstellungenAnwenden(d.patch || {}, z);
-                undo.push(() => Object.assign(data.settings, vorher));
+                undo.push(() => {
+                    Object.assign(data.settings, vorher);
+                    try { pdfVorher === null ? localStorage.removeItem('pdf_personal_cfg') : localStorage.setItem('pdf_personal_cfg', pdfVorher); } catch (e) { /* egal */ }
+                });
             }
         }
         return { undo, z };
@@ -187,6 +192,23 @@
             if (p.pausen) Object.entries(p.pausen).forEach(([t, v]) => { s.break.min[TAGE.indexOf(t)] = v; });
             if ('pause_ab_stunden' in p) s.break.thresh = p.pause_ab_stunden;
             z.einstellungen.push(L('Pausen', 'breaks'));
+        }
+        // Deckblatt des Berichtsheft-PDFs: liegt in pdf_personal_cfg (gleiche
+        // Herkunft, bh-pdf-modal.js liest es). Name und Beruf gehen mit, damit
+        // App und PDF nicht zweierlei sagen. Datum dort als TT.MM.JJJJ wie im Formular.
+        const DECK = ['name', 'beruf', 'betrieb', 'ausbilder', 'ausbildung_beginn', 'ausbildung_ende'];
+        if (DECK.some(k => k in p)) {
+            let cfg = {};
+            try { cfg = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}') || {}; } catch (e) { cfg = {}; }
+            const tt = iso => iso.split('-').reverse().join('.');
+            if ('name' in p) cfg.name = p.name;
+            if ('beruf' in p) cfg.beruf = p.beruf;
+            if ('betrieb' in p) cfg.betrieb = p.betrieb;
+            if ('ausbilder' in p) cfg.ausbilder = p.ausbilder;
+            if ('ausbildung_beginn' in p) cfg.beginn = tt(p.ausbildung_beginn);
+            if ('ausbildung_ende' in p) cfg.ende = tt(p.ausbildung_ende);
+            try { localStorage.setItem('pdf_personal_cfg', JSON.stringify(cfg)); } catch (e) { /* Speicher voll */ }
+            if (['betrieb', 'ausbilder', 'ausbildung_beginn', 'ausbildung_ende'].some(k => k in p)) z.einstellungen.push(L('Deckblatt', 'cover page'));
         }
         if ('urlaubstage' in p || 'urlaub_uebertrag' in p) {
             s.vacation = s.vacation || { total: 30, used: 0, usedManual: 0, mode: 'days' };
@@ -270,6 +292,11 @@
                 pause_ab_stunden: (s.break && s.break.thresh) || 0,
                 urlaub: { modus: vac.mode || 'days', anspruch: vac.total || 0, uebertrag: vac.carriedOver || 0, genommen: vac.used || 0 },
                 mehrere_jobs: (typeof hasMultipleJobs === 'function') ? !!hasMultipleJobs() : false,
+                deckblatt: (() => {
+                    let c = {};
+                    try { c = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}') || {}; } catch (e) { c = {}; }
+                    return { name: c.name || '', betrieb: c.betrieb || '', ausbilder: c.ausbilder || '', beruf: c.beruf || '', beginn: c.beginn || '', ende: c.ende || '' };
+                })(),
             },
             offene_tage: offen,
             konten: {

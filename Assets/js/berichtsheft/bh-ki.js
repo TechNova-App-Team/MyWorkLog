@@ -106,14 +106,59 @@
     // Netz nur, wenn dieses Geraet den Briefkasten schon kennt (Merker der
     // Datenschicht) und eine Sitzung da ist — sonst kein einziger Abruf.
     let letzter = 0;
-    async function pruefen() {
+    async function pruefen(sofort) {
         if (!BHB2B.angemeldet() || !(MWLKiApp.gemerkt() || MWLKiApp.gewuenscht())) return;
-        if (Date.now() - letzter < 20000) return;
+        if (!sofort && Date.now() - letzter < 20000) return;
         letzter = Date.now();
         await MWLKiApp.laden(false);
+        deckblattUebernehmen();
         await selbstAnlegen();
         render();
         pille();
+    }
+
+    // Deckblatt-Teil wartender Einstellungen gleich hier setzen — wer ueber den
+    // PDF-Link direkt ins Berichtsheft kommt, haette sonst ein PDF ohne Betrieb.
+    // Den Auftrag selbst loescht erst die App (sie setzt auch den Rest);
+    // das Setzen hier ist idempotent, ein zweites Mal schadet nicht.
+    function deckblattUebernehmen() {
+        const auftraege = MWLKiApp.alle.filter(a => !a.fehler && a.daten && a.daten.art === 'einstellungen');
+        if (!auftraege.length) return;
+        let cfg = {};
+        try { cfg = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}') || {}; } catch (e) { cfg = {}; }
+        const tt = iso => String(iso).split('-').reverse().join('.');
+        auftraege.forEach(a => {
+            const p = a.daten.patch || {};
+            if ('name' in p) cfg.name = p.name;
+            if ('beruf' in p) cfg.beruf = p.beruf;
+            if ('betrieb' in p) cfg.betrieb = p.betrieb;
+            if ('ausbilder' in p) cfg.ausbilder = p.ausbilder;
+            if ('ausbildung_beginn' in p) cfg.beginn = tt(p.ausbildung_beginn);
+            if ('ausbildung_ende' in p) cfg.ende = tt(p.ausbildung_ende);
+        });
+        try { localStorage.setItem('pdf_personal_cfg', JSON.stringify(cfg)); } catch (e) { /* Speicher voll */ }
+    }
+
+    // Link aus dem Werkzeug berichtsheft_pdf: /berichtsheft/#pdf=JJJJ-KW.
+    // Erst wartende Wochen anlegen, dann das PDF genau so erzeugen wie der
+    // Knopf im Dialog (openPDFModal → executePDFExport), damit Vorlage, Kammer
+    // und Deckblatt aus den gespeicherten Einstellungen kommen.
+    async function pdfAusAnker() {
+        const m = /^#pdf=(\d{4})-(\d{1,2})$/.exec(location.hash);
+        if (!m) return;
+        history.replaceState(null, '', location.pathname + location.search);
+        const jahr = +m[1], kw = +m[2];
+        try { await pruefen(true); } catch (e) { /* ohne Briefkasten weiter */ }
+        const r = (typeof reports !== 'undefined' ? reports : []).find(x =>
+            x.week === kw && parseInt(String(x.dateFrom || '').slice(0, 4), 10) === jahr);
+        if (!r) {
+            if (typeof showToast === 'function') showToast(L('KW ' + kw + '/' + jahr + ' gibt es im Berichtsheft noch nicht', 'CW ' + kw + '/' + jahr + ' does not exist in the report book yet'), 'warning');
+            return;
+        }
+        openPDFModal(r.id);
+        await new Promise(res => setTimeout(res, 300));
+        executePDFExport();
+        if (typeof closePDFModal === 'function') closePDFModal();
     }
 
     // Neue Wochen legt die Seite SELBST an (Entscheidung des Nutzers 24.10.:
@@ -142,7 +187,8 @@
     }
     function pille() { MWLKiApp.pille(document.getElementById('kiPilleBh'), 'berichtsheft', () => BHB2B.angemeldet()); }
     pille();
-    setTimeout(pruefen, 1500);
+    if (/^#pdf=/.test(location.hash)) setTimeout(pdfAusAnker, 800);
+    else setTimeout(pruefen, 1500);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) pruefen(); });
 
     window.bhKiOeffnen = bhKiOeffnen;
