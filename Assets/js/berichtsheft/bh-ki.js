@@ -113,8 +113,120 @@
         await MWLKiApp.laden(false);
         deckblattUebernehmen();
         await selbstAnlegen();
+        await aendernUndLoeschen();
         render();
         pille();
+    }
+
+    // ── Aendern / Loeschen vorhandener Wochen (seit 9.3.0) ───────────────
+    // Direkt am Bericht, nicht ueber das Formular: das Formular ist fuer
+    // NEUE Wochen der Weg (Ausbildungsjahr, Doppelte-Woche-Pruefung). Beim
+    // Aendern bleibt alles andere stehen, und die Folgen laufen wie beim
+    // Speichern von Hand: saveToStorage, Betriebs-Spiegel (b2bOnReportSaved).
+    // 🔴 Sperre wie editReport(): Betriebs-Freigabe nie, lokale Bestaetigung
+    // nur mit freigabe_aufheben (der Worker fragt das vorher beim Agenten ab).
+    function berichtZurWoche(jahr, kw) {
+        return (typeof reports !== 'undefined' ? reports : []).find(r =>
+            r.week === kw && MWLKiApp.wochenjahr(r.dateFrom) === jahr) || null;
+    }
+    const TAG_KEY = { montag: 'monday', dienstag: 'tuesday', mittwoch: 'wednesday', donnerstag: 'thursday', freitag: 'friday' };
+
+    function aendern(d) {
+        const r = berichtZurWoche(d.jahr, d.kw), w = 'KW ' + d.kw + '/' + d.jahr;
+        if (!r) return { fehler: w + ' gibt es nicht' };
+        if (typeof bhIsLocked === 'function' && bhIsLocked(r)) {
+            if (r.approval.server) return { fehler: w + ' ist über den Betrieb abgezeichnet — gesperrt' };
+            if (!d.freigabe_aufheben) return { fehler: w + ' ist bestätigt — ohne freigabe_aufheben nicht geändert' };
+        }
+        const f = d.felder || {};
+        const neuModus = f.tage ? 'daily' : ('taetigkeiten' in f ? 'weekly' : (r.mode || 'weekly'));
+        if ('berufsschule' in f && neuModus === 'daily') return { fehler: w + ': Tagesbericht hat kein Berufsschul-Feld — Schultag als eigenen Tag beschreiben' };
+        const vorher = JSON.parse(JSON.stringify(r));
+        if (r.approval && d.freigabe_aufheben) { delete r.approval; if (!('status' in f) && r.status === 'signed') r.status = 'complete'; }
+        if (f.tage) {
+            const tage = Object.assign({}, r.mode === 'daily' ? (r.dailyActivities || {}) : {});
+            Object.keys(f.tage).forEach(k => { if (f.tage[k]) tage[TAG_KEY[k]] = f.tage[k]; else delete tage[TAG_KEY[k]]; });
+            r.mode = 'daily';
+            r.dailyActivities = tage;
+            r.activities = typeof combineDailyToWeeklyText === 'function' ? combineDailyToWeeklyText(tage) : Object.values(tage).join('\n\n');
+            r.school = '';   // wie saveReport(): im Tagesmodus traegt dailySchool die Angabe
+        }
+        if ('taetigkeiten' in f) { r.mode = 'weekly'; r.activities = f.taetigkeiten; r.dailyActivities = null; r.dailyHours = null; r.dailySchool = null; }
+        if ('berufsschule' in f) r.school = f.berufsschule;
+        if ('abteilung' in f) r.department = f.abteilung;
+        if ('unterweisungen' in f) r.instruction = f.unterweisungen;
+        if ('stunden' in f) r.hours = f.stunden;
+        if ('status' in f) r.status = f.status;
+        r.updatedAt = new Date().toISOString();
+        return { ok: w + ' geändert (' + Object.keys(f).join(', ') + ')', r, vorher };
+    }
+
+    async function aendernUndLoeschen() {
+        if (MWLKiApp.status !== 'an' || typeof saveToStorage !== 'function') return;
+        const auftraege = MWLKiApp.alle.filter(a => !a.fehler && a.daten && (a.daten.art === 'bericht_aendern' || a.daten.art === 'bericht_loeschen'));
+        if (!auftraege.length) return;
+        const undo = [], getan = [];
+        for (const a of auftraege) {
+            const d = a.daten, w = 'KW ' + d.kw + '/' + d.jahr;
+            if (d.art === 'bericht_aendern') {
+                const e = aendern(d);
+                if (e.fehler) { MWLKiApp.protokollieren('Berichtsheft', 'NICHT geändert: ' + e.fehler); }
+                else {
+                    MWLKiApp.protokollieren('Berichtsheft', e.ok);
+                    getan.push(w);
+                    undo.push(() => { const i = reports.findIndex(x => x.id === e.r.id); if (i >= 0) reports[i] = e.vorher; });
+                    if (typeof b2bOnReportSaved === 'function') { try { b2bOnReportSaved(e.r); } catch (x) { /* Spiegel holt es beim naechsten Speichern */ } }
+                }
+            } else {
+                const r = berichtZurWoche(d.jahr, d.kw);
+                if (!r) MWLKiApp.protokollieren('Berichtsheft', 'NICHT gelöscht: ' + w + ' gibt es nicht');
+                else if (typeof bhIsLocked === 'function' && bhIsLocked(r)) MWLKiApp.protokollieren('Berichtsheft', 'NICHT gelöscht: ' + w + ' ist abgezeichnet');
+                else {
+                    // Gleicher Weg wie der Papierkorb-Knopf (Papierkorb, Betriebs-Spiegel, eigener Toast mit Rueckgaengig)
+                    entferneBericht(r.id);
+                    MWLKiApp.protokollieren('Berichtsheft', w + ' in den Papierkorb');
+                }
+            }
+            try { await MWLKiApp.loeschen(a.id); } catch (x) { /* naechstes Mal; Aendern ist idempotent */ }
+        }
+        if (getan.length) {
+            saveToStorage();
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof showToast === 'function') {
+                showToast(L('Dein KI-Assistent hat ' + getan.join(', ') + ' geändert', 'Your AI assistant changed ' + getan.join(', ')), 'success', {
+                    label: L('Rückgängig', 'Undo'),
+                    onClick: () => { undo.forEach(f => f()); saveToStorage(); if (typeof updateUI === 'function') updateUI(); MWLKiApp.protokollieren('Berichtsheft', 'Nutzer hat Änderung an ' + getan.join(', ') + ' rückgängig gemacht'); spiegelBald(); },
+                });
+            }
+        }
+        spiegelBald();
+    }
+
+    // Kopie nach JEDEM Speichern im Berichtsheft auffrischen (nur mit
+    // Lese-Freigabe, entprellt) — sonst liest der Agent den Stand von gestern.
+    let spiegelTimer = null;
+    function spiegelBald() {
+        if (!MWLKiApp.lesenAn() || !BHB2B.angemeldet()) return;
+        clearTimeout(spiegelTimer);
+        spiegelTimer = setTimeout(() => { MWLKiApp.spiegelBerichteAktualisieren().catch(() => {}); }, 4000);
+    }
+    if (typeof window.saveToStorage === 'function' && !window.saveToStorage._kiKopie) {
+        const orig = window.saveToStorage;
+        window.saveToStorage = function () { const r = orig.apply(this, arguments); spiegelBald(); return r; };
+        window.saveToStorage._kiKopie = true;
+    }
+
+    // Link aus berichtsheft_freigabe_link: /berichtsheft/#freigabe=2026-43,2026-44
+    function freigabeAusAnker() {
+        const m = /^#freigabe=([\d,-]+)$/.exec(location.hash);
+        if (!m) return;
+        history.replaceState(null, '', location.pathname + location.search);
+        const ids = m[1].split(',').map(t => { const [j, k] = t.split('-').map(Number); const r = berichtZurWoche(j, k); return r && r.id; }).filter(Boolean);
+        if (!ids.length) {
+            if (typeof showToast === 'function') showToast(L('Diese Wochen gibt es im Berichtsheft nicht', 'These weeks do not exist in the report book'), 'warning');
+            return;
+        }
+        if (typeof openFreigabeModalFuer === 'function') openFreigabeModalFuer(ids);
     }
 
     // Deckblatt-Teil wartender Einstellungen gleich hier setzen — wer ueber den
@@ -149,8 +261,7 @@
         history.replaceState(null, '', location.pathname + location.search);
         const jahr = +m[1], kw = +m[2];
         try { await pruefen(true); } catch (e) { /* ohne Briefkasten weiter */ }
-        const r = (typeof reports !== 'undefined' ? reports : []).find(x =>
-            x.week === kw && parseInt(String(x.dateFrom || '').slice(0, 4), 10) === jahr);
+        const r = berichtZurWoche(jahr, kw);
         if (!r) {
             if (typeof showToast === 'function') showToast(L('KW ' + kw + '/' + jahr + ' gibt es im Berichtsheft noch nicht', 'CW ' + kw + '/' + jahr + ' does not exist in the report book yet'), 'warning');
             return;
@@ -166,10 +277,7 @@
     // damit Ausbildungsjahr, B2B-Spiegel und Messung genauso laufen wie von
     // Hand. Gibt es die Woche schon, bleibt der Vorschlag in der Leiste: ein
     // vorhandener Bericht wird nie still ueberschrieben.
-    function wocheGibtEs(d) {
-        return (typeof reports !== 'undefined' ? reports : []).some(r =>
-            r.week === d.kw && parseInt(String(r.dateFrom || '').slice(0, 4), 10) === d.jahr);
-    }
+    function wocheGibtEs(d) { return !!berichtZurWoche(d.jahr, d.kw); }
     async function selbstAnlegen() {
         if (MWLKiApp.status !== 'an' || typeof saveReport !== 'function') return;
         const neu = MWLKiApp.entwuerfe('bericht').filter(e => !wocheGibtEs(e.daten));
@@ -179,7 +287,14 @@
             try { await saveReport({ preventDefault() {} }); kw.push(e.daten.kw); }
             catch (x) { console.warn('[KI-Berichtsheft]', x && x.message); bhKiAbbrechen(); }
         }
+        MWLKiApp.entwuerfe('bericht').filter(e => wocheGibtEs(e.daten) && !neu.includes(e))
+            .forEach(e => {
+                // Der Vorschlag bleibt in der Leiste und kaeme bei jedem Blick wieder — nur einmal vermerken.
+                const t = 'KW ' + e.daten.kw + '/' + e.daten.jahr + ' gibt es schon — nicht angelegt; zum Ändern berichtsheft_woche_aendern';
+                if (!MWLKiApp.protokoll().some(p => p.text === t)) MWLKiApp.protokollieren('Berichtsheft', t);
+            });
         if (!kw.length) return;
+        kw.forEach(k => MWLKiApp.protokollieren('Berichtsheft', 'KW ' + k + ' angelegt'));
         if (typeof showToast === 'function') {
             showToast(L('Dein KI-Assistent hat KW ' + kw.join(', ') + ' angelegt', 'Your AI assistant created CW ' + kw.join(', ')), 'success');
         }
@@ -188,6 +303,7 @@
     function pille() { MWLKiApp.pille(document.getElementById('kiPilleBh'), 'berichtsheft', () => BHB2B.angemeldet()); }
     pille();
     if (/^#pdf=/.test(location.hash)) setTimeout(pdfAusAnker, 800);
+    else if (/^#freigabe=/.test(location.hash)) setTimeout(async () => { try { await pruefen(true); } catch (e) { /* weiter */ } freigabeAusAnker(); }, 800);
     else setTimeout(pruefen, 1500);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) pruefen(); });
 
@@ -195,4 +311,6 @@
     window.bhKiVerwerfen = bhKiVerwerfen;
     window.bhKiNachSpeichern = bhKiNachSpeichern;
     window.bhKiAbbrechen = bhKiAbbrechen;
+    // fuer tools/ki-app.test.mjs
+    window.__bhki = { aendern, berichtZurWoche };
 })();

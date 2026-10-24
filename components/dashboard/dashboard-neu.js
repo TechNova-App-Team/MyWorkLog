@@ -133,8 +133,7 @@ function dnTimerState() {
 function dnTimerH() {
     if (dnTimerState() === 'off') return 0;
     let ms = timer.paused || 0;
-    if (timer.running && timer.start) ms += Date.now() - timer.start;
-    ms -= (timer.breakTime || 0);
+    if (timer.running && timer.start) ms += Date.now() - timer.start;   // reine Laufzeit, Pause steckt nicht darin
     return Math.max(0, ms) / 3.6e6;
 }
 function dnNote(e) {

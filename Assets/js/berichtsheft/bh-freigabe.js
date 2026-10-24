@@ -145,6 +145,15 @@ function openFreigabeModal(id) {
     rebuildFreigabeLink();
 }
 
+// Mit mehreren Wochen vorausgewaehlt — Link des KI-Assistenten
+// (berichtsheft_freigabe_link, bh-ki.js freigabeAusAnker).
+function openFreigabeModalFuer(ids) {
+    openFreigabeModal(ids[0]);
+    _freigabeSel = new Set(ids);
+    renderFreigabeAuswahl();
+    rebuildFreigabeLink();
+}
+
 function renderFreigabeAuswahl() {
     const box = document.getElementById('freigabeWeeks');
     const alle = bhFreigabeKandidaten();

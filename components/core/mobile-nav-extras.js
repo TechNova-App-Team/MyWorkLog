@@ -166,31 +166,28 @@
         if (breakWarningInterval) clearInterval(breakWarningInterval);
 
         breakWarningInterval = setInterval(() => {
-            // Check if timer is running
-            if (!window.timer || !window.timer.running) {
-                const banner = document.getElementById('breakWarningBanner');
+            // 🔴 `timer` ist ein let-Global (state-config.js) und steht NICHT auf
+            // window — bis v9.3.0 fragte das hier window.timer.elapsed (gibt es
+            // beides nicht) und die Warnung erschien nie. Laufzeit = paused +
+            // laufender Abschnitt (die Pause steckt nicht darin), Pause in Sekunden.
+            const t = typeof timer !== 'undefined' ? timer : null;
+            const banner = document.getElementById('breakWarningBanner');
+            if (!t || !t.running || (typeof mwlAlertsOn === 'function' && !mwlAlertsOn('shiftMax'))) {
                 if (banner) banner.classList.remove('visible');
                 return;
             }
+            const workHours = ((t.paused || 0) + (Date.now() - t.start)) / 3.6e6;
+            const breakTime = (t.breakTime || 0) / 1000;
 
-            // Calculate elapsed working time in hours
-            const elapsed = window.timer.elapsed || 0;
-            const breakTime = window.timer.breakTime || 0;
-            const workHours = (elapsed - breakTime) / 3600;
-
-            const banner = document.getElementById('breakWarningBanner');
             const text = document.getElementById('breakWarningText');
             if (!banner || !text) return;
 
-            // German labor law: 30min break after 6h, 45min after 9h
+            // ArbZG § 4: 30 min Pause ab mehr als 6 h, 45 min ab mehr als 9 h
             if (workHours >= 9 && breakTime < 2700) {
-                text.textContent = `⏰ ${workHours.toFixed(1)}h Arbeit! Gesetzlich: mind. 45 Min Pause nötig!`;
+                text.textContent = `${workHours.toFixed(1)} h Arbeit – gesetzlich sind mindestens 45 Minuten Pause nötig.`;
                 banner.classList.add('visible');
-            } else if (workHours >= 6 && breakTime < 3600 * 0.5) {
-                text.textContent = `Du arbeitest seit ${workHours.toFixed(1)}h – bitte mach eine Pause (mind. 30 Min)!`;
-                banner.classList.add('visible');
-            } else if (workHours >= 4 && breakTime < 600) {
-                text.textContent = `${workHours.toFixed(1)}h ohne Pause – gönn dir eine kurze Auszeit 🧘`;
+            } else if (workHours >= 6 && breakTime < 1800) {
+                text.textContent = `Du arbeitest seit ${workHours.toFixed(1)} h – bitte mach eine Pause (mindestens 30 Minuten).`;
                 banner.classList.add('visible');
             } else {
                 banner.classList.remove('visible');
@@ -259,7 +256,7 @@
 
         // Laufenden Timer einrechnen (mit Break-Abzug)
         if (timer && timer.running && timer.start) {
-            const timerMs = (timer.paused || 0) + (Date.now() - timer.start) - (timer.breakTime || 0);
+            const timerMs = (timer.paused || 0) + (Date.now() - timer.start);   // Laufzeit, ohne Pause
             const timerHours = Math.max(0, timerMs / 3.6e6);
             todayWorked += timerHours;
         }

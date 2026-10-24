@@ -402,6 +402,9 @@
     // ── Geburtstag: Restzeit der Kerze und Server-Status tragen Zahlen ──
     [/^Die Kerze brennt herunter, noch (\d+) h (\d+) min\.$/g, 'The candle burns down, $1 h $2 min left.'],
     [/^Server antwortete mit (\d+)$/g, 'Server answered with $1'],
+    // Pausen-Warnung der Stempeluhr (mobile-nav-extras.js)
+    [/^([\d.,]+) h Arbeit – gesetzlich sind mindestens 45 Minuten Pause nötig\.$/g, '$1 h of work – the law requires a break of at least 45 minutes.'],
+    [/^Du arbeitest seit ([\d.,]+) h – bitte mach eine Pause \(mindestens 30 Minuten\)\.$/g, 'You have been working for $1 h – please take a break (at least 30 minutes).'],
     // ── IHK-PDF-Import: Zahl steht vorne, deshalb kein MAP-Eintrag moeglich ──
     [/^(\d+) Wochen gefunden$/g, '$1 weeks found'],
     [/^(\d+) Wochen importieren$/g, 'Import $1 weeks'],

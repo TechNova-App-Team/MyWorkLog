@@ -178,41 +178,91 @@
         if (u) pruefen(await c.from('ki_app_spiegel').delete().eq('user_id', u.id));
     }
 
+    // ISO-Wochenjahr (Jahr des Donnerstags), nicht das Jahr des Montags: KW 1
+    // ab 29.12.2025 hiess sonst "KW 1 / 2025". r.year eines Berichts taugt
+    // nicht, das ist das Ausbildungsjahr (1–3). App, Berichtsheft und Worker
+    // muessen dieselbe Woche meinen — deshalb nur diese eine Rechnung.
+    function wochenjahr(von) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(von || ''));
+        if (!m) return null;
+        const d = new Date(+m[1], +m[2] - 1, +m[3]);
+        d.setDate(d.getDate() - (d.getDay() + 6) % 7 + 3);
+        return d.getFullYear();
+    }
+
+    // Freigabe als Wort. Der Worker vergleicht auf genau diese Texte
+    // („abgezeichnet (Betrieb)" ist gesperrt, „abgezeichnet" nur mit Rueckfrage)
+    // — Regel wie bhIsLocked() in bh-freigabe.js.
+    function freigabeText(a) {
+        if (!a || !a.state) return '';
+        if (a.state === 'approved') {
+            if (a.stale) return 'veraltet (nach dem Abzeichnen geändert)';
+            if (a.sigStatus === 'ungueltig') return 'Signatur ungültig';
+            return a.server ? 'abgezeichnet (Betrieb)' : 'abgezeichnet';
+        }
+        if (a.state === 'rejected') return 'zurückgegeben' + (a.note ? ': ' + String(a.note).slice(0, 200) : '');
+        return String(a.state);
+    }
+
     // Wochen des Berichtshefts (localStorage berichtsheft_reports, gleiche
-    // Herkunft wie die App). Kurzfassung, damit der Agent fehlende Wochen sieht.
+    // Herkunft wie die App), seit 9.3.0 mit vollem Text — der Agent soll eine
+    // Woche lesen und aendern koennen (berichtsheft_woche_lesen). Die Antwort
+    // von myworklog_stand zeigt davon nur KW/Jahr/Status.
     function berichteUeberblick() {
         let liste = [];
         try { liste = JSON.parse(localStorage.getItem('berichtsheft_reports') || '[]') || []; } catch (e) { liste = []; }
-        // jahr = ISO-Wochenjahr (Jahr des Donnerstags), nicht das Jahr des
-        // Montags: KW 1 ab 29.12.2025 hiess sonst "KW 1 / 2025". r.year taugt
-        // nicht, das ist das Ausbildungsjahr (1–3).
-        const wochenjahr = von => {
-            const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(von || ''));
-            if (!m) return null;
-            const d = new Date(+m[1], +m[2] - 1, +m[3]);
-            d.setDate(d.getDate() - (d.getDay() + 6) % 7 + 3);
-            return d.getFullYear();
-        };
-        return liste.filter(r => r && r.week).map(r => ({
-            kw: r.week,
-            jahr: wochenjahr(r.dateFrom),
-            von: r.dateFrom || '',
-            status: r.status || '',
-            modus: r.mode || 'weekly',
-            kurz: String(r.activities || '').replace(/\s+/g, ' ').slice(0, 160),
-        })).sort((a, b) => String(a.von).localeCompare(String(b.von)));
+        const kurz = (s, n) => String(s || '').slice(0, n);
+        return liste.filter(r => r && r.week).map(r => {
+            const o = {
+                kw: r.week, jahr: wochenjahr(r.dateFrom), von: r.dateFrom || '', bis: r.dateTo || '',
+                status: r.status || '', modus: r.mode || 'weekly', ausbildungsjahr: r.year || null,
+                freigabe: freigabeText(r.approval),
+                abteilung: kurz(r.department, 120), stunden: +r.hours || 0,
+                unterweisungen: kurz(r.instruction, 2000),
+                kurz: String(r.activities || '').replace(/\s+/g, ' ').slice(0, 160),
+            };
+            if (o.modus === 'daily') {
+                o.tage = {};
+                Object.keys(r.dailyActivities || {}).forEach(k => { o.tage[k] = kurz(r.dailyActivities[k], 2000); });
+                o.tage_schule = r.dailySchool || {};
+            } else {
+                o.taetigkeiten = kurz(r.activities, 6000);
+                o.berufsschule = kurz(r.school, 3000);
+            }
+            return o;
+        }).sort((a, b) => String(a.von).localeCompare(String(b.von)));
     }
 
-    // Vom Berichtsheft aus: nur den Teil `berichte` der Kopie erneuern — der
-    // Rest (Einstellungen, Zeiten, Feiertage) entsteht in der App.
-    async function spiegelBerichteAktualisieren() {
+    // ── Protokoll fuer den Agenten ───────────────────────────────────────
+    // Was die App (oder das Berichtsheft) von seinen Auftraegen ausgefuehrt
+    // hat, inkl. Fehlschlaegen. Ohne das sagt der Agent „erledigt", obwohl der
+    // Code einer Klasse falsch war oder eine Woche gesperrt ist. Gleiche
+    // Herkunft, deshalb EIN Schluessel fuer beide Seiten.
+    const PROTOKOLL = 'mwl_ki_protokoll';
+    function protokoll() {
+        try { const p = JSON.parse(localStorage.getItem(PROTOKOLL) || '[]'); return Array.isArray(p) ? p : []; } catch (e) { return []; }
+    }
+    function protokollieren(art, text) {
+        const d = new Date(), p = protokoll();
+        const zeit = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') +
+            ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        p.unshift({ zeit, art, text: String(text).slice(0, 300) });
+        try { localStorage.setItem(PROTOKOLL, JSON.stringify(p.slice(0, 30))); } catch (e) { /* voll */ }
+    }
+
+    // Von einer Unterseite aus (Berichtsheft): nur einzelne Teile der Kopie
+    // erneuern — der Rest (Einstellungen, Zeiten, Feiertage) entsteht in der App.
+    async function spiegelTeileAktualisieren(teile) {
         if (!lesenAn()) return;
         const { c, u } = await ctx();
         if (!u) return;
         const z = pruefen(await c.from('ki_app_spiegel').select('daten').eq('user_id', u.id).maybeSingle());
         if (!z || !z.daten) return;
-        z.daten.berichte = berichteUeberblick();
+        Object.assign(z.daten, teile);
         await spiegelSchreiben(z.daten);
+    }
+    function spiegelBerichteAktualisieren() {
+        return spiegelTeileAktualisieren({ berichte: berichteUeberblick(), protokoll: protokoll() });
     }
 
     // Entwuerfe einer Art: 'zeit' | 'bericht'.
@@ -332,7 +382,8 @@
 
     window.MWLKiApp = {
         init, laden, einschalten, ausschalten, loeschen, verbindungen, trennen, entwuerfe, gemerkt, gewuenscht, pille, verbindenKopieren,
-        lesenAn, lesenSetzen, spiegelSchreiben, berichteUeberblick, spiegelBerichteAktualisieren,
+        lesenAn, lesenSetzen, spiegelSchreiben, berichteUeberblick, spiegelBerichteAktualisieren, spiegelTeileAktualisieren,
+        wochenjahr, protokoll, protokollieren,
         get status() { return zustand.status; },
         get alle() { return zustand.entwuerfe; },
         get verbunden() { return zustand.verbindungen; },

@@ -79,13 +79,10 @@
         requestAnimationFrame(timerRun);
         
         const now = Date.now();
-        const rawRunningTimeMs = now - timer.start;
-        const totalWorkedMs_raw = rawRunningTimeMs + timer.paused;
-        
-        // Netto-Arbeitszeit anzeigen
-        const totalWorkedMs_netto = totalWorkedMs_raw - timer.breakTime;
-        
-        displayTimerTime(totalWorkedMs_netto);
+        // timer.paused ist die Laufzeit der abgeschlossenen Abschnitte — die
+        // Pause steckt nicht darin, also NICHT breakTime abziehen (bis v9.3.0
+        // doppelt abgezogen: die Uhr ging je Pause um deren Laenge nach).
+        displayTimerTime((now - timer.start) + timer.paused);
         renderTimerLogBar();
     }
     
@@ -129,7 +126,6 @@
         // Status-Anzeige (Berücksichtigt die Gesamt-Pause)
         const totalWorkedHours = (timer.paused + (timer.running ? Date.now() - timer.start : 0)) / 3.6e6;
         const minBreakRequired = data.settings.break.min / 60;
-        const netTimeAfterBreak = totalWorkedHours - (timer.breakTime / 3.6e6);
         const requiredBreak = totalWorkedHours >= data.settings.break.thresh ? minBreakRequired : 0;
         const breakDeficit = Math.max(0, requiredBreak - (timer.breakTime / 3.6e6));
 

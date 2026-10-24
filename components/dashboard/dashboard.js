@@ -102,10 +102,9 @@
             } else if (timer.paused > 0 || timer.running) { // Timer-Daten übernehmen
                  const now = Date.now();
                  let totalMs = timer.paused + (timer.running ? now - timer.start : 0);
+                 // totalMs ist schon reine Laufzeit — die gemessene Pause steckt
+                 // nicht darin und wird NICHT noch einmal abgezogen.
                  let h = totalMs / 3.6e6;
-                 
-                 // Präzise Pausenlogik: Abzug der gemessenen Pausenzeit
-                 h -= (timer.breakTime / 3.6e6); // Abzug der im Timer gemessenen Pausenzeit (NEU)
 
                  // Hole Pausenzeit für diesen Wochentag (aus dem gewählten Job)
                  const jobBreakT = (typeof getJobBreak === 'function') ? getJobBreak(entryJobId) : data.settings.break;
@@ -378,38 +377,31 @@
                 logTimerAction('pause', now);
             }
         } else if (act === 'stop') {
-            // Stop leert Timer und bucht den Eintrag
-            timer.running = false; 
-            document.getElementById('timerBox').classList.remove('timer-active');
-            
-            // Loggt die Stop-Aktion, um letzte Pause/Laufzeit zu beenden
-            logTimerAction('stop', now); 
-
-            let total = timer.paused + (timer.start > 0 ? now - timer.start : 0);
-            let h_raw = total / 3.6e6; // Brutto-Stunden
-            let h_netto = h_raw - (timer.breakTime / 3.6e6); // Netto-Stunden
-
-            // Manuelle Mindestpausen-Korrektur (wird in handleEntry detailliert durchgeführt)
+            // 🔴 timer.paused ist die reine LAUFZEIT (Pause addiert nur den
+            // laufenden Abschnitt), breakTime die gemessene Pause. Bis v9.3.0
+            // stand hier „Laufzeit − Pause" (Pause doppelt abgezogen: 8–12,
+            // 12:30–16 Uhr ergab 7,0 statt 7,5 h), die Zahl ging als „Manuell"
+            // ins Stundenfeld — ohne Mindestpause und ohne die Uhr danach
+            // zurueckzusetzen. Jetzt erst beim Bestaetigen festschreiben und
+            // ueber den Tracker-Zweig von handleEntry() buchen (Felder leer).
+            const letzte = timer.log[timer.log.length - 1];
+            const laufMs = timer.paused + (timer.running ? now - timer.start : 0);
+            const pauseMs = timer.breakTime + (!timer.running && letzte && letzte.action === 'pause' ? now - letzte.time : 0);
             showCustomConfirm(
                 'Zeit stoppen und buchen?',
-                `Geleistete Zeit: ${h_netto.toFixed(2)}h\nPausenzeit: ${(timer.breakTime / 3.6e6).toFixed(2)}h`,
+                `Geleistete Zeit: ${(laufMs / 3.6e6).toFixed(2)}h\nPausenzeit: ${(pauseMs / 3.6e6).toFixed(2)}h`,
                 () => {
-                    // Den Netto-Wert in das Stundenfeld übertragen, damit handleEntry es verarbeitet
-                    document.getElementById('inpHours').value = h_netto.toFixed(2);
+                    timer.running = false;
+                    timer.paused = laufMs;
+                    timer.breakTime = pauseMs;
+                    document.getElementById('timerBox').classList.remove('timer-active');
+                    ['inpStart', 'inpEnd', 'inpHours'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
                     document.getElementById('inpType').value = 'work';
                     document.getElementById('inpDate').valueAsDate = new Date();
-                    
-                    // Da handleEntry Timer-Daten automatisch übernimmt, rufen wir es auf
-                    handleEntry(); 
-                    
-                    // Timer ist bereits in handleEntry zurückgesetzt
+                    handleEntry();   // setzt die Uhr zurueck
+                    if (typeof renderTimerLogBar === 'function') renderTimerLogBar();
                 },
-                () => {
-                    // Wenn Abbruch, Log und Timer auf Pause-Status zurücksetzen
-                    timer.running = false;
-                    timer.log.pop(); // Stop-Eintrag entfernen
-                    saveTimerState();
-                }
+                () => { /* nichts geaendert — die Uhr laeuft bzw. pausiert weiter */ }
             );
         }
     }

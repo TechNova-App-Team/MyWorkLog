@@ -200,13 +200,240 @@
         return o;
     }
 
+    // ── Der Rest der App (seit 9.3.0) ────────────────────────────────────
+    // Wunsch des Nutzers 24.10.2026: „wirklich komplett, ausser Schatten".
+    // Jede Art schreibt ins Protokoll (MWLKiApp.protokollieren), auch wenn
+    // sie scheitert — der Agent liest es in myworklog_stand.
+    const prot = (art, text) => { try { MWLKiApp.protokollieren(art, text); } catch (e) { /* egal */ } };
+    const lsLesen = (k, fb) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch (e) { return fb; } };
+    const uhr = ms => { const d = new Date(ms); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+    // Stempeluhr: dieselben Felder wie timerAction() (dashboard.js), aber mit
+    // dem Zeitpunkt aus dem Auftrag statt Date.now() — der Agent sagt „seit
+    // 7:30", und die App ist vielleicht erst um 9 offen.
+    // Stop bucht NICHT ueber handleEntry() (das liest Formularfelder und
+    // Date.now()), sondern als von/bis/Pause durch denselben Import wie jeder
+    // andere Tag. timer.paused ist reine Laufzeit, breakTime die Pause.
+    function timerAuftrag(d, z, undo) {
+        if (typeof timer === 'undefined' || typeof logTimerAction !== 'function') { prot('Stempeluhr', 'NICHT ausgeführt: Stempeluhr nicht geladen'); return; }
+        const [h, m] = String(d.uhrzeit || '').split(':').map(Number);
+        const t0 = new Date(d.datum + 'T00:00:00'); t0.setHours(h, m, 0, 0);
+        const t = Math.min(t0.getTime(), Date.now());
+        const vorher = JSON.stringify(timer);
+        const box = document.getElementById('timerBox');
+        const zurueck = () => { const v = JSON.parse(vorher); Object.keys(timer).forEach(k => delete timer[k]); Object.assign(timer, v); saveTimerState(); if (typeof displayTimerTime === 'function') displayTimerTime(timer.paused || 0); };
+        if (d.aktion === 'start' || d.aktion === 'weiter') {
+            if (timer.running) { prot('Stempeluhr', 'läuft schon seit ' + uhr(timer.start) + ' — nichts geändert'); return; }
+            timer.start = t; timer.running = true;
+            logTimerAction('start', t);
+            if (typeof timerRun === 'function') timerRun();
+            if (box) box.classList.add('timer-active');
+            undo.push(zurueck);
+            const weiter = timer.paused > 0;
+            z.timer = weiter ? L('die Stempeluhr um ' + d.uhrzeit + ' weiterlaufen lassen', 'resumed the time clock at ' + d.uhrzeit)
+                             : L('die Stempeluhr um ' + d.uhrzeit + ' gestartet', 'started the time clock at ' + d.uhrzeit);
+            prot('Stempeluhr', (weiter ? 'weiter' : 'gestartet') + ' um ' + d.uhrzeit);
+            return;
+        }
+        if (d.aktion === 'pause') {
+            if (!timer.running) { prot('Stempeluhr', 'NICHT pausiert: läuft gerade nicht'); return; }
+            timer.running = false;
+            timer.paused += Math.max(0, t - timer.start);
+            logTimerAction('pause', t);
+            if (box) box.classList.remove('timer-active');
+            if (typeof displayTimerTime === 'function') displayTimerTime(timer.paused);
+            undo.push(zurueck);
+            z.timer = L('die Stempeluhr um ' + d.uhrzeit + ' angehalten', 'paused the time clock at ' + d.uhrzeit);
+            prot('Stempeluhr', 'Pause um ' + d.uhrzeit);
+            return;
+        }
+        // stop
+        const log = (timer.log || []).slice();
+        const erster = log.find(l => l.action === 'start');
+        const vonMs = erster ? erster.time : (timer.running ? timer.start : 0);
+        if (!vonMs) { prot('Stempeluhr', 'NICHT gebucht: Stempeluhr lief nicht'); return; }
+        let pauseMs = timer.breakTime || 0;
+        const letzte = log[log.length - 1];
+        if (letzte && letzte.action === 'pause') pauseMs += Math.max(0, t - letzte.time);
+        const datum = iso(new Date(vonMs)), von = uhr(vonMs), bis = uhr(t);
+        // Mindestpause wie handleEntry(): reicht die gemessene nicht, gilt die des Wochentags.
+        const pause = Math.max(Math.round(pauseMs / 60000), standardPause(datum, von, bis));
+        const r = kiaBaue([{ datum, von, bis, pause_min: pause, notiz: d.notiz || '' }])[0];
+        if (!r || !r.ok) { prot('Stempeluhr', 'NICHT gebucht: Zeiten ungültig (' + von + '–' + bis + ')'); return; }
+        const id = Math.max(Date.now(), ...(data.entries || []).map(x => Math.floor(+x.id) || 0)) + 1;
+        const e = Object.assign({}, r.entry, { id, timestamp: id, quelle: 'ki' });
+        e.info = 'Live-Tracker (' + (+e.worked).toFixed(2) + 'h) | ' + (e.info || '');
+        data.entries.push(e);
+        Object.keys(timer).forEach(k => delete timer[k]);
+        Object.assign(timer, { id: null, start: 0, paused: 0, running: false, log: [], breakTime: 0 });
+        saveTimerState();
+        if (typeof displayTimerTime === 'function') displayTimerTime(0);
+        if (box) box.classList.remove('timer-active');
+        undo.push(() => { data.entries = data.entries.filter(x => x.id !== e.id); zurueck(); });
+        z.neu++;
+        z.timer = L('die Stempeluhr gestoppt (' + von + '–' + bis + ')', 'stopped the time clock (' + von + '–' + bis + ')');
+        prot('Stempeluhr', 'gestoppt: ' + datum + ' ' + von + '–' + bis + ', ' + pause + ' min Pause, ' + (+e.worked).toFixed(2) + ' h');
+    }
+
+    // Aufgaben (/aufgaben/): gleiche Schluessel und Formen wie aufgaben.js.
+    // Die Seite laedt bei jedem fremden Schreiben neu (storage-Ereignis), ein
+    // offener Tab ueberschreibt also nichts.
+    const AG = { cats: 'mwl_tasks_cats', states: 'mwl_tasks_states', notes: 'mwl_tasks_notes', stats: 'mwl_tasks_stats' };
+    function aufgabenAuftrag(ops, z, undo) {
+        const vorher = {};
+        Object.values(AG).forEach(k => { try { vorher[k] = localStorage.getItem(k); } catch (e) { vorher[k] = null; } });
+        const cats = lsLesen(AG.cats, []), st = lsLesen(AG.states, {}) || {}, stats = lsLesen(AG.stats, { done: 0 });
+        let notes = lsLesen(AG.notes, []);
+        if (!Array.isArray(cats) || !Array.isArray(notes)) { prot('Aufgaben', 'NICHT ausgeführt: Speicher der Aufgaben ist beschädigt'); return; }
+        cats.forEach(c => { if (!Array.isArray(c.tasks)) c.tasks = []; });
+        const rnd = () => Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+        const lokalJetzt = () => { const d = new Date(); return iso(d) + 'T' + [d.getHours(), d.getMinutes(), d.getSeconds()].map(n => String(n).padStart(2, '0')).join(':'); };
+        const liste = name => {
+            if (!name) {
+                let c = cats.find(x => x.id === 'cat_inbox');
+                if (!c) { c = { id: 'cat_inbox', name: L('Eingang', 'Inbox'), icon: 'inbox', tasks: [], defaultPriority: '', days: [], autoReset: '' }; cats.unshift(c); }
+                return c;
+            }
+            const n = String(name).trim().toLowerCase();
+            let c = cats.find(x => x.id === name || String(x.name || '').trim().toLowerCase() === n);
+            if (!c) { c = { id: 'cat_' + rnd(), name: String(name).trim(), icon: 'folder', tasks: [], defaultPriority: '', days: [], autoReset: '' }; cats.push(c); }
+            return c;
+        };
+        const finde = id => { for (const c of cats) { const t = c.tasks.find(x => x.id === id); if (t) return { c, t }; } return null; };
+        let n = 0;
+        ops.forEach(o => {
+            const f = o.id ? finde(o.id) : null;
+            if (['aendern', 'erledigt', 'offen', 'loeschen'].includes(o.aktion) && !f) { prot('Aufgaben', 'NICHT ' + o.aktion + ': Aufgabe ' + o.id + ' gibt es nicht'); return; }
+            if (o.aktion === 'anlegen' || o.aktion === 'aendern') {
+                const c = o.aktion === 'anlegen' || 'liste' in o ? liste(o.liste) : f.c;
+                const t = f ? f.t : { id: 'tk_' + rnd(), name: o.name, priority: c.defaultPriority || '', days: [], due: '', recurring: 'none', reminder: '', note: '', subtasks: [], createdAt: new Date().toISOString() };
+                if ('name' in o) t.name = o.name;
+                if ('faellig' in o) t.due = o.faellig;
+                if ('prioritaet' in o) t.priority = o.prioritaet;
+                if ('wiederholung' in o) t.recurring = o.wiederholung;
+                if ('tage' in o) t.days = o.tage;
+                if ('notiz' in o) t.note = o.notiz;
+                if ('unteraufgaben' in o) t.subtasks = o.unteraufgaben.map(s => ({ name: s, done: !!st[t.id] }));
+                if (f && f.c !== c) f.c.tasks.splice(f.c.tasks.indexOf(t), 1);
+                if (!f || f.c !== c) c.tasks.push(t);
+                prot('Aufgaben', (f ? 'geändert' : 'angelegt') + ': „' + t.name + '" (id ' + t.id + ', Liste ' + c.name + ')');
+            } else if (o.aktion === 'erledigt') {
+                if (!st[o.id]) { st[o.id] = true; f.t.doneAt = lokalJetzt(); stats.done = (stats.done || 0) + 1; }
+                (f.t.subtasks || []).forEach(s => { s.done = true; });
+                prot('Aufgaben', 'erledigt: „' + f.t.name + '"');
+            } else if (o.aktion === 'offen') {
+                delete st[o.id]; delete f.t.doneAt;
+                (f.t.subtasks || []).forEach(s => { s.done = false; });
+                prot('Aufgaben', 'wieder offen: „' + f.t.name + '"');
+            } else if (o.aktion === 'loeschen') {
+                f.c.tasks.splice(f.c.tasks.indexOf(f.t), 1); delete st[o.id];
+                prot('Aufgaben', 'gelöscht: „' + f.t.name + '"');
+            } else if (o.aktion === 'notiz_anlegen') {
+                const id = 'nt_' + rnd();
+                notes.unshift({ id, text: o.text, createdAt: new Date().toISOString() });
+                prot('Aufgaben', 'Notiz angelegt (id ' + id + ')');
+            } else if (o.aktion === 'notiz_loeschen') {
+                const vor = notes.length;
+                notes = notes.filter(x => x.id !== o.id);
+                if (notes.length === vor) { prot('Aufgaben', 'NICHT gelöscht: Notiz ' + o.id + ' gibt es nicht'); return; }
+                prot('Aufgaben', 'Notiz gelöscht');
+            } else if (o.aktion === 'liste_anlegen') {
+                prot('Aufgaben', 'Liste „' + liste(o.name).name + '" bereit');
+            }
+            n++;
+        });
+        if (!n) return;
+        try {
+            localStorage.setItem(AG.cats, JSON.stringify(cats));
+            localStorage.setItem(AG.states, JSON.stringify(st));
+            localStorage.setItem(AG.notes, JSON.stringify(notes));
+            localStorage.setItem(AG.stats, JSON.stringify(stats));
+        } catch (e) { prot('Aufgaben', 'NICHT gespeichert: Speicher voll'); return; }
+        z.aufgaben += n;
+        undo.push(() => Object.keys(vorher).forEach(k => { try { vorher[k] === null ? localStorage.removeItem(k) : localStorage.setItem(k, vorher[k]); } catch (e) { /* egal */ } }));
+    }
+
+    // Meldungen: ueber die Haken in den Einstellungen und saveAlertSettings()
+    // (alerts-toasts.js) — so gelten Hauptschalter-Logik und Ansicht gleich mit.
+    const MELDUNG_ID = k => 'alert' + k.charAt(0).toUpperCase() + k.slice(1);
+    const MELDUNG_KEY = 'timetracker_alert_settings_v2';
+    function meldungenAuftrag(schalter, z, undo) {
+        let vorher = null;
+        try { vorher = localStorage.getItem(MELDUNG_KEY); } catch (e) { /* ohne */ }
+        Object.entries(schalter).forEach(([k, v]) => { const el = document.getElementById(MELDUNG_ID(k)); if (el) el.checked = v; });
+        if (typeof saveAlertSettings === 'function') saveAlertSettings();
+        else {
+            const s = Object.assign(lsLesen(MELDUNG_KEY, {}), schalter);
+            try { localStorage.setItem(MELDUNG_KEY, JSON.stringify(s)); } catch (e) { /* voll */ }
+        }
+        z.einstellungen.push(L('Meldungen', 'notifications'));
+        prot('Meldungen', Object.entries(schalter).map(([k, v]) => k + ' ' + (v ? 'an' : 'aus')).join(', '));
+        undo.push(() => {
+            const alt = Object.assign({}, lsLesen(MELDUNG_KEY, {}), vorher ? JSON.parse(vorher) : {});
+            Object.keys(schalter).forEach(k => { const el = document.getElementById(MELDUNG_ID(k)); if (el) el.checked = alt[k] !== false; });
+            if (typeof saveAlertSettings === 'function') saveAlertSettings();
+            try { vorher === null ? localStorage.removeItem(MELDUNG_KEY) : localStorage.setItem(MELDUNG_KEY, vorher); } catch (e) { /* egal */ }
+        });
+    }
+
+    // Klasse: derselbe Ablauf wie der Knopf auf /klasse/ (klasse.js) —
+    // laden, planen, beitreten, vormerken; anwenden macht appAbgleich() wie
+    // nach jedem Beitritt. Asynchron (Netz), deshalb nicht in ausfuehren().
+    async function klasseAuftrag(d, z) {
+        const K = window.MWLKlasse;
+        if (!K) { prot('Klasse', 'NICHT ausgeführt: Klassen-Modul nicht geladen'); return; }
+        if (d.aktion === 'austreten') {
+            const alt = K.zustand();
+            if (!alt) { prot('Klasse', 'kein Austritt nötig — in keiner Klasse'); return; }
+            K.austreten();
+            z.klasse = L('die Klasse verlassen', 'left the class');
+            prot('Klasse', 'ausgetreten aus ' + (alt.name || alt.code));
+            return;
+        }
+        const code = K.codeNorm(d.code);
+        if (!code) { prot('Klasse', 'NICHT beigetreten: Code ' + d.code + ' ist ungültig'); return; }
+        let p;
+        try { p = await K.laden(code); } catch (e) { prot('Klasse', 'NICHT beigetreten: Server nicht erreichbar, nächstes Öffnen versucht es wieder'); throw e; }
+        if (!p) { prot('Klasse', 'NICHT beigetreten: Code ' + K.codeFmt(code) + ' gehört zu keiner Klasse'); return; }
+        const alt = K.zustand(), mitglied = !!(alt && alt.code === p.code);
+        if (p.geschlossen && !mitglied) { prot('Klasse', 'NICHT beigetreten: ' + p.name + ' nimmt gerade keine neuen Mitglieder auf'); return; }
+        const plan = K.planen(data.settings, p);
+        const auswahl = plan.filter(it => !it.gleich && (!d.bereiche || d.bereiche.includes(it.id))).map(it => it.id);
+        if (!mitglied) await K.beitreten(p.code);
+        K.vormerken(p, auswahl);
+        await K.appAbgleich(true);
+        z.klasse = L('die Klasse „' + p.name + '“ eingerichtet', 'set up the class “' + p.name + '”');
+        prot('Klasse', (mitglied ? 'aktualisiert: ' : 'beigetreten: ') + p.name + (auswahl.length ? ' (übernommen: ' + auswahl.join(', ') + ')' : ' (nichts zu übernehmen)'));
+    }
+
+    // Export-Link aus zeiten_export: /#export=csv:VON:BIS
+    function exportAusAnker() {
+        const m = /^#export=(csv|json)(?::(\d{4}-\d{2}-\d{2})?:(\d{4}-\d{2}-\d{2})?)?$/.exec(location.hash);
+        if (!m || typeof data === 'undefined') return;
+        history.replaceState(null, '', location.pathname + location.search);
+        const [, format, von, bis] = m;
+        const liste = (data.entries || []).filter(e => (!von || e.date >= von) && (!bis || e.date <= bis))
+            .slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+        if (!liste.length) {
+            if (typeof showCustomMessage === 'function') showCustomMessage(L('Nichts zu exportieren', 'Nothing to export'), L('Im Zeitraum gibt es keine Einträge.', 'There are no entries in this period.'), 'info');
+            return;
+        }
+        const inhalt = format === 'csv' && typeof convertToCSV === 'function' ? convertToCSV(liste) : JSON.stringify(liste, null, 2);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([inhalt], { type: format === 'csv' ? 'text/csv' : 'application/json' }));
+        a.download = 'myworklog_' + (von || 'anfang') + '_' + (bis || iso(new Date())) + '.' + format;
+        document.body.appendChild(a); a.click(); a.remove();
+        if (typeof mwlEvent === 'function') mwlEvent('data_exported', { format, quelle: 'ki' });
+        prot('Export', liste.length + ' Einträge als ' + format.toUpperCase() + ' heruntergeladen');
+    }
+
     // ── Ausfuehren ───────────────────────────────────────────────────────
     let rueckgaengig = null;     // { schritte: [fn], text }
     let zuletzt = null;          // Zusammenfassung fuer den Hinweis
 
     function ausfuehren(auftraege) {
         const undo = [];
-        const z = { neu: 0, doppelt: 0, geaendert: 0, geloescht: 0, unbekannt: 0, einstellungen: [] };
+        const z = { neu: 0, doppelt: 0, geaendert: 0, geloescht: 0, unbekannt: 0, einstellungen: [], aufgaben: 0, timer: '', klasse: '' };
         // Ueber der hoechsten vorhandenen id beginnen: zwei Laeufe in derselben
         // Millisekunde vergaben sonst dieselbe id, und Aendern traf den falschen Tag.
         let id = Math.max(Date.now(), ...(data.entries || []).map(x => Math.floor(+x.id) || 0)) + 1;
@@ -289,10 +516,28 @@
                     Object.assign(data.settings, vorher);
                     try { pdfVorher === null ? localStorage.removeItem('pdf_personal_cfg') : localStorage.setItem('pdf_personal_cfg', pdfVorher); } catch (e) { /* egal */ }
                 });
+                prot('Einstellungen', Object.keys(d.patch || {}).join(', ') + ' gesetzt');
+            } else if (d.art === 'timer') {
+                timerAuftrag(d, z, undo);
+            } else if (d.art === 'aufgaben') {
+                aufgabenAuftrag(d.operationen || [], z, undo);
+            } else if (d.art === 'meldungen') {
+                meldungenAuftrag(d.schalter || {}, z, undo);
             }
         }
+        // Zeit- und Datenauftraege gesammelt ins Protokoll (je Tag eine Zeile waere zu viel)
+        const zt = [];
+        if (z.neu) zt.push(z.neu + ' Tag(e) eingetragen');
+        if (z.doppelt) zt.push(z.doppelt + ' gab es schon (übersprungen — zum Korrigieren zeit_eintrag_aendern)');
+        if (z.geaendert) zt.push(z.geaendert + ' geändert');
+        if (z.geloescht) zt.push(z.geloescht + ' in den Papierkorb');
+        if (z.unbekannt) zt.push(z.unbekannt + ' passten nicht (id unbekannt, Datum ungültig oder Pfad gesperrt)');
+        if (zt.length) prot('Zeiterfassung', zt.join(', '));
         return { undo, z };
     }
+    // Arten, die die App selbst ausfuehrt (Berichtsheft-Arten macht bh-ki.js)
+    const APP_ARTEN = ['zeit', 'zeit_aendern', 'zeit_loeschen', 'einstellungen', 'daten', 'timer', 'aufgaben', 'meldungen', 'klasse'];
+    const BH_ARTEN = ['bericht', 'bericht_aendern', 'bericht_loeschen'];
 
     function einstellungenAnwenden(p, z) {
         const s = data.settings;
@@ -355,12 +600,20 @@
     }
 
     async function kiaAusfuehren() {
-        const auftraege = MWLKiApp.alle.filter(a => !a.fehler && a.daten && ['zeit', 'zeit_aendern', 'zeit_loeschen', 'einstellungen', 'daten'].includes(a.daten.art));
-        if (!auftraege.length || typeof mwlBuildPreview !== 'function' || typeof data === 'undefined') return;
+        const alle = MWLKiApp.alle.filter(a => !a.fehler && a.daten && APP_ARTEN.includes(a.daten.art));
+        if (!alle.length || typeof mwlBuildPreview !== 'function' || typeof data === 'undefined') return;
+        const auftraege = alle.filter(a => a.daten.art !== 'klasse');
         const { undo, z } = ausfuehren(auftraege);
+        // Klasse zuletzt: appAbgleich() speichert selbst und rechnet auf den
+        // eben gesetzten Einstellungen weiter.
+        const klasseFertig = [];
+        for (const a of alle.filter(x => x.daten.art === 'klasse')) {
+            try { await klasseAuftrag(a.daten, z); klasseFertig.push(a); }
+            catch (e) { console.warn('[KI-Assistent] Klasse:', e && e.message); }   // Netzfehler: Auftrag bleibt liegen
+        }
         nachAenderung();
         // Erst nach dem Speichern aus dem Briefkasten nehmen.
-        for (const a of auftraege) { try { await MWLKiApp.loeschen(a.id); } catch (e) { /* naechstes Mal wieder — Dubletten faengt der Import */ } }
+        for (const a of auftraege.concat(klasseFertig)) { try { await MWLKiApp.loeschen(a.id); } catch (e) { /* naechstes Mal wieder — Dubletten faengt der Import */ } }
         rueckgaengig = undo.length ? undo : null;
         zuletzt = z;
         if (typeof mwlEvent === 'function') mwlEvent('ki_ausgefuehrt', { neu: z.neu, geaendert: z.geaendert, geloescht: z.geloescht, einstellungen: z.einstellungen.length });
@@ -442,6 +695,59 @@
                 beschreibung: t.description || '', eigener: typeof isDefaultType === 'function' ? !isDefaultType(t.id) : false,
             })),
             app_daten: appDaten(),
+            klasse: klasseKopie(),
+            live_tracker: trackerKopie(),
+            aufgaben: aufgabenKopie(),
+            meldungen: Object.assign(Object.fromEntries(['master', 'saldoPositive', 'saldoNegative', 'shiftMax', 'vacationLow', 'weeklyOvertime', 'dailyReminders', 'milestones', 'exportReminder', 'klasse'].map(k => [k, true])), lsLesen(MELDUNG_KEY, {})),
+            protokoll: MWLKiApp.protokoll(),
+        };
+    }
+
+    // Klasse ohne Geraete-Merker und Push-Endpunkt (die gehen den Agenten nichts an).
+    function klasseKopie() {
+        const z = window.MWLKlasse ? MWLKlasse.zustand() : lsLesen('mwl_klasse', null);
+        if (!z || !z.code) return null;
+        const p = z.profil || {};
+        return {
+            name: z.name || p.name || '', code: z.code, beigetreten: z.beigetreten ? iso(new Date(z.beigetreten)) : '',
+            nicht_mehr_vorhanden: !!z.weg, schultage: p.schultage || [], rhythmus: p.rhythmus || [], bloecke: p.bloecke || [],
+            faecher: p.faecher || [], bundesland: p.bundesland || '', pruefungen: p.pruefungen || null,
+            stundenplan: p.stundenplan || null,
+            mitteilungen: (p.mitteilungen || []).slice(0, 10).map(m => ({ text: String(m.text || '').slice(0, 300), am: m.created_at || m.am || '' })),
+        };
+    }
+    function trackerKopie() {
+        if (typeof timer === 'undefined') return null;
+        const log = timer.log || [], erster = log.find(l => l.action === 'start');
+        if (!timer.running && !(timer.paused > 0)) return { zustand: 'aus' };
+        const pauseMs = (timer.breakTime || 0) + (!timer.running && log.length && log[log.length - 1].action === 'pause' ? Date.now() - log[log.length - 1].time : 0);
+        return {
+            zustand: timer.running ? 'läuft' : 'Pause',
+            seit: erster ? uhr(erster.time) : (timer.start ? uhr(timer.start) : ''),
+            pause_min: Math.round(pauseMs / 60000),
+            gearbeitet_h: Math.round(((timer.paused || 0) + (timer.running ? Date.now() - timer.start : 0)) / 36e3) / 100,
+        };
+    }
+    function aufgabenKopie() {
+        const cats = lsLesen(AG.cats, []), st = lsLesen(AG.states, {}) || {}, notes = lsLesen(AG.notes, []);
+        if (!Array.isArray(cats)) return null;
+        let n = 0;
+        return {
+            listen: cats.map(c => ({
+                id: c.id, name: c.name || '', tage: c.days || [],
+                aufgaben: (c.tasks || []).filter(() => n++ < 400).map(t => {
+                    const o = { id: t.id, name: String(t.name || '').slice(0, 200), erledigt: !!st[t.id] };
+                    if (t.due) o.faellig = t.due;
+                    if (t.priority) o.prioritaet = t.priority;
+                    if (t.recurring && t.recurring !== 'none') o.wiederholung = t.recurring;
+                    if (t.days && t.days.length) o.tage = t.days;
+                    if (t.note) o.notiz = String(t.note).slice(0, 300);
+                    if (t.subtasks && t.subtasks.length) o.unteraufgaben = t.subtasks.map(s => s.name + (s.done ? ' ✓' : ''));
+                    if (t.doneAt) o.erledigt_am = String(t.doneAt).slice(0, 10);
+                    return o;
+                }),
+            })),
+            notizen: (Array.isArray(notes) ? notes : []).slice(0, 100).map(x => ({ id: x.id, text: String(x.text || '').slice(0, 300) })),
         };
     }
 
@@ -479,8 +785,8 @@
         const box = document.getElementById('kiAppSection');
         if (!box) return;
         const lead = '<p class="kia-lead">' + L(
-            'Verbinde Claude, ChatGPT & Co. mit MyWorkLog. Sag deinem Assistenten einfach, wie dein Tag war — er trägt Arbeitszeiten ein, korrigiert sie, schreibt Berichtsheft-Wochen, richtet deine Einstellungen ein und schlägt deine Rechte als Azubi nach. Die App übernimmt das selbst; du kannst es rückgängig machen.',
-            'Connect Claude, ChatGPT & co. to MyWorkLog. Just tell your assistant how your day went — it adds and corrects working hours, writes report book weeks, sets up your settings and looks up your rights as an apprentice. The app applies it by itself; you can undo it.') + '</p>';
+            'Verbinde Claude, ChatGPT & Co. mit MyWorkLog. Sag deinem Assistenten einfach, wie dein Tag war — er trägt Arbeitszeiten ein, bedient die Stempeluhr, schreibt und ändert Berichtsheft-Wochen, verwaltet Aufgaben, tritt deiner Klasse bei, richtet deine Einstellungen ein und schlägt deine Rechte als Azubi nach. Die App übernimmt das selbst; du kannst es rückgängig machen.',
+            'Connect Claude, ChatGPT & co. to MyWorkLog. Just tell your assistant how your day went — it adds working hours, operates the time clock, writes and changes report book weeks, manages tasks, joins your class, sets up your settings and looks up your rights as an apprentice. The app applies it by itself; you can undo it.') + '</p>';
         let teil = '';
         if (status === 'konto') {
             teil = '<button class="settings-btn settings-btn-primary kia-voll" onclick="openCloudLoginModal()">' + L('Erst anmelden', 'Sign in first') + '</button>';
@@ -501,8 +807,8 @@
             const an = MWLKiApp.lesenAn();
             teil += '<label class="kia-schalter"><input type="checkbox" ' + (an ? 'checked ' : '') + 'onchange="kiaLesen(this.checked)">' +
                 '<span><b>' + L('Lesen erlauben', 'Allow reading') + '</b>' +
-                L('Dein Assistent sieht deine Einstellungen, Zeiteinträge und Berichtsheft-Wochen und weiß so, was fehlt. Dafür liegt eine lesbare Kopie davon auf dem Server — getrennt von deinem verschlüsselten Backup, ohne Schatten-Berichtsheft. Ausschalten löscht sie.',
-                  'Your assistant sees your settings, time entries and report book weeks and so knows what is missing. For this a readable copy is kept on the server — separate from your encrypted backup, without the shadow report book. Switching off deletes it.') + '</span></label>';
+                L('Dein Assistent sieht deine Einstellungen, Zeiteinträge, Berichtsheft-Wochen mit Text, Aufgaben und Klasse und weiß so, was fehlt. Dafür liegt eine lesbare Kopie davon auf dem Server — getrennt von deinem verschlüsselten Backup, ohne Schatten-Berichtsheft. Ausschalten löscht sie.',
+                  'Your assistant sees your settings, time entries, report book weeks with their text, tasks and class and so knows what is missing. For this a readable copy is kept on the server — separate from your encrypted backup, without the shadow report book. Switching off deletes it.') + '</span></label>';
             if (status === 'fremd') {
                 teil += '<p class="kia-note">' + L('Dein Wiederherstellungs-Code hat sich geändert. Beim Kopieren wird der Briefkasten neu eingerichtet; liegende Aufträge werden dabei gelöscht.',
                     'Your recovery code has changed. Copying sets the mailbox up again; waiting requests are deleted.') + '</p>';
@@ -578,13 +884,16 @@
         if (z.geaendert) t.push(z.geaendert === 1 ? L('einen Tag korrigiert', 'corrected one day') : L(z.geaendert + ' Tage korrigiert', 'corrected ' + z.geaendert + ' days'));
         if (z.geloescht) t.push(z.geloescht === 1 ? L('einen Tag gelöscht', 'deleted one day') : L(z.geloescht + ' Tage gelöscht', 'deleted ' + z.geloescht + ' days'));
         if (z.einstellungen.length) t.push(L('Einstellungen angepasst (', 'adjusted settings (') + z.einstellungen.join(', ') + ')');
+        if (z.aufgaben) t.push(z.aufgaben === 1 ? L('eine Aufgabe bearbeitet', 'edited one task') : L(z.aufgaben + ' Aufgaben bearbeitet', 'edited ' + z.aufgaben + ' tasks'));
+        if (z.timer) t.push(z.timer);
+        if (z.klasse) t.push(z.klasse);
         return t;
     }
 
     function kiaBanner() {
         const el = document.getElementById('kiAppBanner');
         if (!el) return;
-        const bericht = MWLKiApp.status === 'an' ? MWLKiApp.entwuerfe('bericht') : [];
+        const bericht = MWLKiApp.status === 'an' ? BH_ARTEN.flatMap(a => MWLKiApp.entwuerfe(a)) : [];
         let titel = '', text = '', knoepfe = '';
 
         if (zuletzt && zuletzt.zurueck) {
@@ -608,9 +917,14 @@
                 '<button class="umf-banner-btn umf-banner-btn--quiet" onclick="kiaLesenNein()">' + L('Nein danke', 'No thanks') + '</button>';
         }
         if (bericht.length && !titel) {
-            titel = L(bericht.length === 1 ? 'Eine Berichtsheft-Woche ist fertig' : bericht.length + ' Berichtsheft-Wochen sind fertig',
-                      bericht.length === 1 ? 'One report book week is ready' : bericht.length + ' report book weeks are ready');
-            text = L('Sie wird beim Öffnen des Berichtshefts angelegt.', 'It is created when you open the report book.');
+            const nurNeu = bericht.every(b => b.daten.art === 'bericht');
+            titel = nurNeu
+                ? L(bericht.length === 1 ? 'Eine Berichtsheft-Woche ist fertig' : bericht.length + ' Berichtsheft-Wochen sind fertig',
+                    bericht.length === 1 ? 'One report book week is ready' : bericht.length + ' report book weeks are ready')
+                : L(bericht.length === 1 ? 'Ein Auftrag fürs Berichtsheft wartet' : bericht.length + ' Aufträge fürs Berichtsheft warten',
+                    bericht.length === 1 ? 'One report book request is waiting' : bericht.length + ' report book requests are waiting');
+            text = nurNeu ? L('Sie wird beim Öffnen des Berichtshefts angelegt.', 'It is created when you open the report book.')
+                          : L('Dein Assistent hat Wochen geändert oder gelöscht. Das Berichtsheft führt es beim Öffnen aus.', 'Your assistant changed or deleted weeks. The report book applies it when you open it.');
             knoepfe = '<a class="umf-banner-btn" href="' + L('/berichtsheft/', '/en/berichtsheft/') + '">' + L('Zum Berichtsheft', 'Open report book') + '</a>';
         }
         if (!titel) { el.style.display = 'none'; el.innerHTML = ''; return; }
@@ -689,6 +1003,12 @@
             window.save._kiKopie = true;
         }
         if (MWLKiApp.lesenAn()) setTimeout(kiaSpiegelBald, 3000);
+        if (/^#export=/.test(location.hash)) setTimeout(exportAusAnker, 600);
+    });
+    // Aenderungen anderer Tabs (Aufgaben, Klasse, Berichtsheft, Meldungen) in
+    // die Kopie — sonst liest der Agent dort den Stand vom letzten save().
+    window.addEventListener('storage', e => {
+        if (e.key && /^(mwl_tasks_(cats|states|notes)|mwl_klasse|berichtsheft_reports|timetracker_alert_settings_v2|mwl_ki_protokoll)$/.test(e.key)) kiaSpiegelBald();
     });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) kiaPruefen(); });
 
@@ -714,5 +1034,5 @@
     window.kiaLesenNein = kiaLesenNein;
     window.kiaPruefen = kiaPruefen;
     // fuer tools/ki-app.test.mjs
-    window.__kia = { kiaBaue, ausfuehren, kiaSpiegel, standardPause, nutzerNotiz, infoTeile, appDaten };
+    window.__kia = { kiaBaue, ausfuehren, kiaSpiegel, standardPause, nutzerNotiz, infoTeile, appDaten, klasseAuftrag, exportAusAnker };
 })();
