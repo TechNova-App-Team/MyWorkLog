@@ -501,6 +501,9 @@
         letzter = Date.now();
         await MWLKiApp.laden(false);
         if (MWLKiApp.status === 'an') await kiaAusfuehren();
+        // Erste Kopie auch dann, wenn „Lesen" auf der Zustimmungsseite gesetzt
+        // wurde und beim Start die Cloud-Anbindung noch nicht bereit war.
+        if (MWLKiApp.lesenAn()) kiaSpiegelBald();
         kiaBanner();
         kiaChip();
     }

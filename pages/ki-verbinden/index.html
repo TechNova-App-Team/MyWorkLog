@@ -72,6 +72,10 @@
             border-left: 2px solid var(--primary); background: rgba(var(--primary-rgb), 0.06);
             padding: 10px 12px; border-radius: 0 var(--r-2) var(--r-2) 0; margin-bottom: 18px;
         }
+        .kv-lesen { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; padding: 12px; cursor: pointer;
+            border: 1px solid var(--border-strong); border-radius: var(--r-2); font-size: 0.82rem; line-height: 1.55; color: var(--text-1); }
+        .kv-lesen input { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--primary); cursor: pointer; }
+        .kv-lesen b { display: block; color: var(--text-0); font-size: 0.88rem; margin-bottom: 2px; }
         .kv-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 22px; }
         .kv-btn {
             display: inline-flex; align-items: center; justify-content: center;
@@ -177,30 +181,40 @@
             '<div class="kv-actions"><a class="kv-btn kv-btn--ja" href="/?cloud=login&amp;back=ki-verbinden">' + T('Anmelden', 'Sign in') + '</a></div>');
     }
 
-    function zustimmungZeigen(sb, id, d, user, briefkastenAn) {
+    function zustimmungZeigen(sb, id, d, user) {
         var name = (d.client && (d.client.client_name || d.client.name)) || T('Ein KI-Assistent', 'An AI assistant');
         var adresse = d.client && (d.client.client_uri || d.client.uri);
         zeige(
             '<p class="kv-who">' + T('Angemeldet als ', 'Signed in as ') + esc(user.email || '') + '</p>' +
-            '<h1>' + T(esc(name) + ' möchte Entwürfe in dein Schatten-Berichtsheft legen', esc(name) + ' wants to drop drafts into your shadow report book') + '</h1>' +
-            '<p class="kv-lead">' + T('Danach kannst du dem Assistenten erzählen, was in der Ausbildung passiert ist, und er legt einen Entwurf für dich ab.',
-                'After that you can tell the assistant what happened during your training, and it drops a draft for you.') +
+            // Seit v9.0.0 FUEHRT die App aus, was der Assistent schickt — die Liste
+            // muss das sagen. „Darf nicht" nur, was der Server wirklich sperrt
+            // (Pre-Request-Riegel, Schatten-Tresor, E2E-Backup).
+            '<h1>' + T(esc(name) + ' möchte MyWorkLog für dich führen', esc(name) + ' wants to run MyWorkLog for you') + '</h1>' +
+            '<p class="kv-lead">' + T('Danach erzählst du dem Assistenten einfach, wie dein Tag war, und er erledigt den Rest. Die App übernimmt es selbst; du kannst alles rückgängig machen.',
+                'After that you just tell the assistant how your day went, and it does the rest. The app applies it by itself; you can undo everything.') +
                 (adresse ? ' <span style="color:var(--text-2)">(' + esc(adresse) + ')</span>' : '') + '</p>' +
             '<p class="kv-h">' + T('Der Assistent darf', 'The assistant may') + '</p>' +
             '<ul class="kv-list kv-list--ja">' +
-                '<li>' + ICON_JA + '<span>' + T('Entwürfe verschlüsselt in deinen Briefkasten legen', 'drop encrypted drafts into your mailbox') + '</span></li>' +
-                '<li>' + ICON_JA + '<span>' + T('die Kategorien des Schatten-Berichtshefts abrufen', 'look up the categories of the shadow report book') + '</span></li>' +
+                '<li>' + ICON_JA + '<span>' + T('Arbeitszeiten eintragen, korrigieren und löschen', 'add, correct and delete working hours') + '</span></li>' +
+                '<li>' + ICON_JA + '<span>' + T('Berichtsheft-Wochen anlegen und deine Einstellungen einrichten', 'create report book weeks and set up your settings') + '</span></li>' +
+                '<li>' + ICON_JA + '<span>' + T('Vorfälle als Entwurf ins Schatten-Berichtsheft legen (die bestätigst du im Tresor)', 'drop incidents into the shadow report book as drafts (you confirm them in the vault)') + '</span></li>' +
             '</ul>' +
             '<p class="kv-h">' + T('Der Assistent darf nicht', 'The assistant may not') + '</p>' +
             '<ul class="kv-list kv-list--nein">' +
-                '<li>' + ICON_NEIN + '<span>' + T('deine Einträge lesen — der Tresor bleibt verschlossen', 'read your entries — the vault stays locked') + '</span></li>' +
-                '<li>' + ICON_NEIN + '<span>' + T('Einträge anlegen, ändern oder löschen — das machst nur du', 'create, change or delete entries — only you do that') + '</span></li>' +
-                '<li>' + ICON_NEIN + '<span>' + T('an andere Daten deines Kontos: Arbeitszeiten, Berichtsheft, Einstellungen', 'access other data in your account: working hours, report book, settings') + '</span></li>' +
+                '<li>' + ICON_NEIN + '<span>' + T('dein Schatten-Berichtsheft lesen — der Tresor bleibt verschlossen', 'read your shadow report book — the vault stays locked') + '</span></li>' +
+                '<li>' + ICON_NEIN + '<span>' + T('dein verschlüsseltes Cloud-Backup lesen', 'read your encrypted cloud backup') + '</span></li>' +
+                '<li>' + ICON_NEIN + '<span>' + T('an Betrieb, Klassen oder dein Konto (z. B. Konto löschen)', 'touch your company, classes or account (e.g. delete it)') + '</span></li>' +
             '</ul>' +
-            (briefkastenAn ? '' : '<p class="kv-note">' + T('Dein Briefkasten ist noch aus. Schalte ihn danach im Schatten-Berichtsheft ein: Tresor entsperren, Tresor-Menü, „KI-Entwürfe".',
-                'Your mailbox is still off. Switch it on afterwards in the shadow report book: unlock the vault, vault menu, "AI drafts".') + '</p>') +
-            '<p class="kv-lead" style="font-size:0.82rem;margin:0">' + T('Trennen kannst du die Verbindung jederzeit im Schatten-Berichtsheft unter „KI-Entwürfe".',
-                'You can disconnect at any time in the shadow report book under "AI drafts".') + '</p>' +
+            // Lesen gleich hier anbieten — als Schalter in den Einstellungen
+            // fand ihn niemand (Nutzer 24.10.). Vorausgewaehlt, aber offen
+            // beschriftet: das ist der Moment, in dem man ohnehin zustimmt.
+            '<label class="kv-lesen"><input type="checkbox" id="kvLesen" checked>' +
+                '<span><b>' + T('Mein Assistent darf sehen, was ich eingetragen habe', 'My assistant may see what I have recorded') + '</b>' +
+                T('Zeiten, Einstellungen und Berichtsheft-Wochen — so weiß er, was fehlt, und muss nicht nachfragen. Dafür liegt eine lesbare Kopie davon auf dem Server. Dein Backup und das Schatten-Berichtsheft bleiben verschlüsselt. Abschalten kannst du das jederzeit in den Einstellungen unter Cloud.',
+                  'Hours, settings and report book weeks — so it knows what is missing and doesn\'t have to ask. A readable copy of these is kept on the server for this. Your backup and the shadow report book stay encrypted. You can switch this off at any time in the settings under Cloud.') +
+                '</span></label>' +
+            '<p class="kv-lead" style="font-size:0.82rem;margin:0">' + T('Trennen kannst du die Verbindung jederzeit in den Einstellungen unter Cloud → KI-Assistent.',
+                'You can disconnect at any time in the settings under Cloud → AI assistant.') + '</p>' +
             '<div class="kv-actions">' +
                 '<button class="kv-btn" id="kvNein">' + T('Ablehnen', 'Deny') + '</button>' +
                 '<button class="kv-btn kv-btn--ja" id="kvJa">' + T('Erlauben', 'Allow') + '</button>' +
@@ -215,7 +229,17 @@
             var p = ja ? sb.auth.oauth.approveAuthorization(id) : sb.auth.oauth.denyAuthorization(id);
             p.then(function (r) {
                 if (r.error || !r.data || !r.data.redirect_url) throw r.error || new Error('keine Weiterleitung');
-                try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
+                try {
+                    localStorage.removeItem(MERK);
+                    if (ja) {
+                        // Die App legt beim naechsten Oeffnen Briefkasten (Wunsch) und
+                        // ggf. die Lese-Kopie an (components/core/ki-assistent.js).
+                        localStorage.setItem('mwl_ki_app_wunsch', '1');
+                        localStorage.setItem('mwl_ki_lesen_gefragt', '1');
+                        if (document.getElementById('kvLesen').checked) localStorage.setItem('mwl_ki_lesen', '1');
+                        else localStorage.removeItem('mwl_ki_lesen');
+                    }
+                } catch (e) { /* egal */ }
                 ereignis('ki_verbindung', { erlaubt: !!ja });
                 location.href = r.data.redirect_url;
             }).catch(function () {
@@ -262,12 +286,7 @@
             location.replace(r.data.redirect_url);
             return;
         }
-        var an = false;
-        try {
-            var k = await sb.from('schatten_ki_schluessel').select('user_id').eq('user_id', user.id).maybeSingle();
-            an = !!(k.data);
-        } catch (e) { /* Hinweis ist nur Komfort */ }
-        zustimmungZeigen(sb, id, r.data, user, an);
+        zustimmungZeigen(sb, id, r.data, user);
     }
 
     start().catch(function () {

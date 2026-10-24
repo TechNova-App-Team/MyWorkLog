@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.1.0-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.1.1-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.1.0** · 2026-10-24
+Aktuelle Version: **v9.1.1** · 2026-10-24
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.1.0** | 2026-10-24 | Dein KI-Assistent füllt das Deckblatt aus und gibt dir die Woche als PDF |
+| **9.1.1** | 2026-10-24 | Dein KI-Assistent fragt beim Verbinden gleich, ob er sehen darf, was du eingetragen hast |
+| 9.1.0 | 2026-10-24 | Dein KI-Assistent füllt das Deckblatt aus und gibt dir die Woche als PDF |
 | 9.0.0 | 2026-10-24 | Dein KI-Assistent erledigt jetzt alles selbst |
 | 8.9.0 | 2026-10-24 | Dein KI-Assistent trägt jetzt auch Arbeitszeiten und Berichtsheft-Wochen ein |
 | 8.8.0 | 2026-10-23 | Das Schatten-Berichtsheft nimmt Entwürfe von KI-Assistenten an |
-| 8.7.1 | 2026-10-21 | Fahrtkosten, Diagramme und Untis-Import sind aus der App entfernt |
 
 <!-- changelog:end -->
 
