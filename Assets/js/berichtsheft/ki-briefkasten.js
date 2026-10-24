@@ -6,8 +6,9 @@
 //      verschluesselten Entwurf ein (workers/mcp-proxy, gitignored).
 //   2. Aus Chat einfuegen: jeder Chatbot liefert einen JSON-Block nach unserer
 //      Vorlage, der Nutzer fuegt ihn hier ein. Ohne Konto, ohne Server.
-// Beide enden im normalen Eintragsformular. Ein Eintrag entsteht nur durch
-// „Speichern" dort — nie automatisch.
+// Weg 1 legt Eintraege und Kategorien beim Oeffnen des Tresors selbst an
+// (kiEintraegeUebernehmen, seit 24.10.2026). Weg 2 endet im normalen
+// Eintragsformular und entsteht erst durch „Speichern" dort.
 //
 // 🔴 SCHLUESSEL: ECDH P-256. Der oeffentliche Teil liegt im Klartext in
 // `schatten_ki_schluessel`, der private mit dem Tresor-Hauptschluessel
@@ -116,12 +117,105 @@ async function kiEntwuerfeHolen() {
             continue;
         }
         try {
-            out.push({ id: z.id, created_at: z.created_at, daten: kiNormalisieren(await kiEntwurfEntschluesseln(z.payload, kiPrivKey)) });
+            out.push({ id: z.id, created_at: z.created_at, roh: await kiEntwurfEntschluesseln(z.payload, kiPrivKey) });
         } catch (e) {
             out.push({ id: z.id, created_at: z.created_at, fehler: true });
         }
     }
-    kiEntwuerfe = out;
+    // Erst die neuen Kategorien anlegen, dann normalisieren: ein Eintrag darf
+    // auf eine Kategorie zeigen, die im selben Schwung entsteht.
+    await kiKategorienAnlegen(out.filter(x => x.roh && x.roh.art === 'kategorie'),
+        out.filter(x => x.roh && x.roh.art !== 'kategorie' && x.roh.neue_kategorie).map(x => ({ label: kiText(x.roh.neue_kategorie, 40), hint: kiText(x.roh.neue_kategorie_hinweis, 200) })));
+    kiEntwuerfe = out.filter(x => !(x.roh && x.roh.art === 'kategorie')).map(x => {
+        if (!x.roh) return x;
+        const roh = Object.assign({}, x.roh, { kategorie: kiKategorieFinden(x.roh) });
+        return { id: x.id, created_at: x.created_at, daten: kiNormalisieren(roh) };
+    });
+    await kiEintraegeUebernehmen();
+}
+
+// ── Selbst uebernehmen ────────────────────────────────────────────────────
+// 🔴 Seit 24.10.2026 (Wunsch des Nutzers: „im Schatten nur Kategorien und
+// Eintraege ERSTELLEN, nichts lesen, nichts loeschen — das aber selbst"):
+// Entwuerfe vom verbundenen Assistenten werden beim Oeffnen des Tresors
+// gespeichert, ohne Formular. Der Server bleibt blind (er sieht nur
+// verschluesselte Entwuerfe), der Assistent kann weiterhin nichts lesen,
+// aendern oder loeschen. Was eingefuegt wird (Weg 2, Chat-Block) geht
+// weiter durchs Formular — dort weiss niemand, woher der Text kommt.
+let kiZuletztUebernommen = { eintraege: 0, kategorien: 0 };
+
+function kiKategorieFinden(roh) {
+    const k = typeof roh.kategorie === 'string' ? roh.kategorie : '';
+    if (k && categoryExists(k)) return k;
+    // Eigene Kategorien kennt der Assistent nur beim Namen (er kann sie nicht lesen).
+    const name = String(roh.kategorie_name || roh.neue_kategorie || k || '').trim().toLowerCase();
+    if (!name) return k;
+    const treffer = allCategoryEntries().find(({ cat }) => String(cat.label || '').trim().toLowerCase() === name);
+    return treffer ? treffer.key : k;
+}
+
+// `ausEintraegen`: Kategorien, die ein Eintrag per `neue_kategorie` mitbringt.
+async function kiKategorienAnlegen(liste, ausEintraegen) {
+    let neu = 0;
+    const namen = liste.map(x => ({ label: kiText(x.roh.name, 40), hint: kiText(x.roh.hinweis, 200) })).concat(ausEintraegen || []);
+    for (const n of namen) {
+        if (!n.label) continue;
+        const da = allCategoryEntries().some(({ cat }) => String(cat.label || '').trim().toLowerCase() === n.label.toLowerCase());
+        if (!da) {
+            customCategories.push({ id: 'custom_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7),
+                label: n.label, hint: n.hint || '', createdAt: new Date().toISOString(), source: 'ai_assisted' });
+            neu++;
+        }
+    }
+    if (neu) {
+        try { await saveVault(); }
+        catch (e) { console.warn('[KI-Briefkasten] Kategorie nicht gespeichert:', e && e.message); return; }
+        if (typeof populateCategorySelects === 'function') populateCategorySelects();
+    }
+    kiZuletztUebernommen.kategorien += neu;
+    for (const x of liste) { try { await window.vcKi.entwurfLoeschen(x.id); } catch (e) { /* naechstes Mal, Dublette faengt der Namensvergleich */ } }
+}
+
+async function kiEintraegeUebernehmen() {
+    const fertig = kiEntwuerfe.filter(x => x.daten && !x.fehler && x.daten.beschreibung);
+    if (!fertig.length || !derivedKey) return;
+    const vorher = entries.map(e => Object.assign({}, e));
+    const vorherJournal = vaultJournal.slice();
+    const jetzt = new Date().toISOString();
+    for (const x of fertig) {
+        const d = x.daten;
+        const e = {
+            id: crypto.randomUUID(),
+            date: d.datum, time: d.uhrzeit,
+            severity: d.schwere, category: d.kategorie, text: d.beschreibung,
+            witnesses: d.zeugen, attachments: [], status: 'open', details: d.details,
+            history: [], createdAt: jetzt, updatedAt: jetzt, source: 'ai_assisted',
+        };
+        // Ohne Vorfallsdatum traegt der Erfassungszeitpunkt die Chronologie —
+        // wie im Formular, wo ein leeres Datum nur bei „Erfasst am" geht.
+        const basis = d.datum ? 'occurred' : 'created';
+        if (basis !== getTimeBasis()) e.timeBasis = basis;
+        e.contentHash = await contentFingerprint(e);
+        entries.push(e);
+        await journalRecord('create', e);
+    }
+    try {
+        await saveVault();
+    } catch (e) {
+        entries = vorher;
+        vaultJournal = vorherJournal;
+        console.warn('[KI-Briefkasten] Uebernahme gescheitert, Entwuerfe bleiben:', e && e.message);
+        return;
+    }
+    kiEntwuerfe = kiEntwuerfe.filter(x => !fertig.includes(x));
+    for (const x of fertig) { try { await window.vcKi.entwurfLoeschen(x.id); } catch (e) { console.warn('[KI-Briefkasten] Entwurf bleibt liegen:', e && e.message); } }
+    kiZuletztUebernommen.eintraege += fertig.length;
+    if (typeof renderEntries === 'function') renderEntries();
+    if (typeof updateStats === 'function') updateStats();
+    const n = fertig.length, k = kiZuletztUebernommen.kategorien;
+    showToast(L((n === 1 ? 'Dein Assistent hat einen Eintrag angelegt' : 'Dein Assistent hat ' + n + ' Einträge angelegt') + (k ? ' und ' + (k === 1 ? 'eine Kategorie' : k + ' Kategorien') : ''),
+                (n === 1 ? 'Your assistant added one entry' : 'Your assistant added ' + n + ' entries') + (k ? ' and ' + (k === 1 ? 'one category' : k + ' categories') : '')), 'success');
+    kiZuletztUebernommen = { eintraege: 0, kategorien: 0 };
 }
 
 function kiVergessen() {
@@ -387,7 +481,7 @@ function kiRenderBanner() {
         '<span class="ki-inbox-ico">' + KI_ICON + '</span>' +
         '<div class="ki-connect-text">' +
             '<p class="ki-connect-title">' + L('Verbinde dein Schatten-Berichtsheft mit deinem KI-Assistenten', 'Connect your shadow report book to your AI assistant') + '</p>' +
-            '<p class="ki-connect-sub ki-connect-sub--vorher">' + L('Erzähl dem Assistenten, was passiert ist — er legt den Entwurf hier ab, du bestätigst.', 'Tell the assistant what happened — it drops the draft here, you confirm.') + '</p>' +
+            '<p class="ki-connect-sub ki-connect-sub--vorher">' + L('Erzähl dem Assistenten, was passiert ist — er trägt es hier für dich ein.', 'Tell the assistant what happened — it records it here for you.') + '</p>' +
             '<p class="ki-connect-sub ki-connect-sub--nachher">' + L('Fertig. Füg den Text bei Claude, ChatGPT & Co. ein — den Rest richtet der Assistent selbst ein.', 'Done. Paste the text into Claude, ChatGPT & co. — the assistant sets up the rest.') + '</p>' +
         '</div>' +
         kiKopierKnopf('kiCopyBanner') +
@@ -521,11 +615,11 @@ function kiRenderEinrichten() {
         '<li>' + KI_ICON + '<span>' + L('Erzähl einem KI-Assistenten, was passiert ist. Er fragt nach, was fehlt, und legt einen Entwurf in diesen Briefkasten.',
             'Tell an AI assistant what happened. It asks about what is missing and drops a draft into this mailbox.') + '</span></li>' +
         '<li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg><span>' +
-            L('Der Assistent kann nur einwerfen. Deine Einträge lesen, ändern oder löschen kann er nicht — der Server sieht nur verschlüsselte Entwürfe, aufschließen kann sie nur dieser Tresor.',
-              'The assistant can only drop drafts in. It cannot read, change or delete your entries — the server only sees encrypted drafts, and only this vault can open them.') + '</span></li>' +
+            L('Der Assistent kann nur Einträge und Kategorien anlegen. Deine Einträge lesen, ändern oder löschen kann er nicht — der Server sieht nur verschlüsselte Entwürfe, aufschließen kann sie nur dieser Tresor.',
+              'The assistant can only add entries and categories. It cannot read, change or delete your entries — the server only sees encrypted drafts, and only this vault can open them.') + '</span></li>' +
         '<li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="9"></circle></svg><span>' +
-            L('Ein Eintrag entsteht erst, wenn du den Entwurf hier prüfst und speicherst. Er trägt dann den Vermerk „mit KI formuliert".',
-              'An entry only exists once you review and save the draft here. It is then marked "worded with AI".') + '</span></li>' +
+            L('Sobald du den Tresor öffnest, landet es als Eintrag im Heft, mit dem Vermerk „mit KI formuliert". Bearbeiten oder löschen kannst du ihn wie jeden anderen.',
+              'As soon as you open the vault, it becomes an entry, marked "worded with AI". You can edit or delete it like any other.') + '</span></li>' +
         '</ul>';
     const paste =
         '<div class="ki-paste-row"><div><p class="ki-sub">' + L('Ohne Verbindung', 'Without a connection') + '</p><p class="ki-small">' +

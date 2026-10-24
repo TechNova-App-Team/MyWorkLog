@@ -41,13 +41,21 @@
     const TYP_ZU_ART = Object.fromEntries(Object.entries(ART_ZU_TYP).map(([a, t]) => [t, a]));
     const TAGE = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];   // Index = getDay()
 
-    // Was der Nutzer geschrieben hat, ohne den System-Vorspann („07:30 - 16:15 (30m Pause) | …").
-    // Nicht activityUserNote() (charts.js): die liefert bei nur EINEM Abschnitt ''
-    // — die Notiz eines Schultags vom Assistenten (info = reine Notiz) ginge verloren.
-    function nutzerNotiz(info) {
-        const teile = String(info || '').split('|').map(s => s.trim()).filter(Boolean);
-        return teile.length > 1 ? teile.slice(1).join(' · ') : (teile[0] || '');
+    // entry.info ist ein Pipe-String: Vermerke der App (handleEntry, Schulregeln,
+    // Import) plus die Notiz des Nutzers. Die Vermerke werden am MUSTER erkannt,
+    // nicht an der Position: ein Schultag vom Assistenten hat gar keinen, ein
+    // Schultag aus handleEntry ohne Notiz hat NUR einen. 🔴 „Keine Berufsschule
+    // (Regulär)" ist so ein Vermerk (Schultag ausserhalb Mi/ungeraden Do) — der
+    // Agent las ihn als Aussage des Nutzers und meldete „Schule gebucht, obwohl
+    // keine Schule war" (24.10.2026).
+    const VERMERK = /^(\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}|Manuell|Live-Tracker|Berufsschule|Keine Berufsschule|Gleittag|Urlaubstag|Krankmeldung|Feiertag|Import|Korrektur|↪)/;
+    function infoTeile(info) {
+        const vermerk = [], notiz = [];
+        String(info || '').split('|').map(s => s.trim()).filter(Boolean)
+            .forEach(t => (VERMERK.test(t) ? vermerk : notiz).push(t));
+        return { vermerk: vermerk.join(' · '), notiz: notiz.join(' · ') };
     }
+    function nutzerNotiz(info) { return infoTeile(info).notiz; }
 
     function standardPause(datum, von, bis) {
         const brk = (typeof getJobBreak === 'function') ? getJobBreak('primary') : (data.settings && data.settings.break) || {};
@@ -61,10 +69,19 @@
     // der Eintrag selbst nicht als Dublette und belegt kein Tagessoll.
     function kiaBaue(liste, ausnahmeId) {
         const rows = [['Datum', 'Von', 'Bis', 'Stunden', 'Pause', 'Typ', 'Notiz']];
-        liste.forEach(e => {
-            const art = e.art || 'arbeit';
+        // Eigene Eintragstypen (data.customEntryTypes) kennt der Import nicht:
+        // als Arbeitszeit rechnen lassen, danach den Typ umsetzen.
+        const eigen = [];
+        liste.forEach(e0 => {
+            let e = e0;
+            let art = e.art || 'arbeit';
+            const istEigen = !ART_ZU_TYP[art];
+            eigen.push(istEigen ? art : null);
+            if (istEigen) art = 'arbeit';
             let p = e.pause_min;
-            if (e.von && e.bis && (p === null || p === undefined)) p = standardPause(e.datum, e.von, e.bis);
+            // Eigene Typen: keine Standardpause, wie in handleEntry() (Pause nur, wenn genannt).
+            if (e.von && e.bis && (p === null || p === undefined)) p = istEigen ? 0 : standardPause(e.datum, e.von, e.bis);
+            if (istEigen && !e.von && e.stunden == null) e = Object.assign({}, e, { stunden: 0 });
             // Notiz wie handleEntry(): Zeitspanne vorn, Text des Nutzers hinter „ | "
             const info = (art === 'arbeit' && e.von)
                 ? e.von + ' - ' + e.bis + (p ? ' (' + p + 'm Pause)' : '') + ' | ' + (e.notiz || '')
@@ -83,11 +100,104 @@
             bestehend.add(x.date + '|' + jid);
             if ((parseFloat(x.expected) || 0) > 0) soll.push(x.date + '|' + jid);
         });
-        return mwlBuildPreview(an.body, an.mapping, {
+        const vorschau = mwlBuildPreview(an.body, an.mapping, {
             jobId: 'primary', defaultType: 'work',
             expectedFor: (typeof mwlExpectedFor === 'function') ? mwlExpectedFor : () => 0,
             bestehend, sollBelegtVorher: soll,
         });
+        // handleEntry(): ein eigener Typ zaehlt nur mit countsAsWork gegen das
+        // Soll, sonst ist er neutral (diff 0).
+        vorschau.forEach((r, i) => {
+            if (!r.ok || !eigen[i]) return;
+            r.entry.type = eigen[i];
+            const info = typeof getEntryTypeInfo === 'function' ? getEntryTypeInfo(eigen[i]) : null;
+            if (!(info && info.countsAsWork === true)) r.entry.diff = 0;
+        });
+        return vorschau;
+    }
+
+    // ── Freier Zugriff auf die App-Daten ─────────────────────────────────
+    // Wunsch des Nutzers 24.10.2026: „der Agent soll ALLES koennen". Statt je
+    // Einstellung ein Werkzeug: Operationen auf Pfade in `data`. Tage laufen
+    // trotzdem NUR ueber die Zeit-Werkzeuge (Rechnung wie handleEntry), deshalb
+    // sind entries/trash hier gesperrt. Schutz gegen Kaputtschreiben: ein Wert
+    // darf seinen Typ nicht wechseln (Zahl bleibt Zahl, Liste bleibt Liste) —
+    // sonst wirft die App beim naechsten Rendern. Rueckgaengig: Schnappschuss.
+    const GESPERRT_WURZEL = new Set(['entries', 'trash']);
+    const GESPERRT_TEIL = /^(__proto__|prototype|constructor|navVersion)$|key|token|secret|passw/i;
+    function pfadTeile(pfad) {
+        const t = String(pfad || '').split('.').filter(x => x !== '');
+        if (!t.length || t.length > 8) return null;
+        if (t.some(x => !/^[A-Za-z0-9_-]{1,60}$/.test(x) || GESPERRT_TEIL.test(x))) return null;
+        if (GESPERRT_WURZEL.has(t[0])) return null;
+        return t;
+    }
+    const sorte = v => Array.isArray(v) ? 'liste' : (v === null ? 'leer' : typeof v);
+    const INDEX = /^[0-9]+$/;
+    function datenOp(o) {
+        const t = o && pfadTeile(o.pfad);
+        if (!t) return false;
+        let el = data;
+        for (let i = 0; i < t.length - 1; i++) {
+            if (el[t[i]] === undefined || el[t[i]] === null) {
+                if (o.op === 'loeschen') return true;
+                el[t[i]] = INDEX.test(t[i + 1]) ? [] : {};
+            }
+            el = el[t[i]];
+            if (!el || typeof el !== 'object') return false;
+        }
+        const k = t[t.length - 1], alt = el[k];
+        if (o.op === 'loeschen') {
+            if (Array.isArray(el) && INDEX.test(k)) el.splice(+k, 1); else delete el[k];
+            return true;
+        }
+        if (o.op === 'anhaengen') {
+            if (alt === undefined) el[k] = [];
+            if (!Array.isArray(el[k])) return false;
+            el[k].push(o.wert);
+            return true;
+        }
+        if (o.op === 'zusammenfuehren') {
+            if (!o.wert || typeof o.wert !== 'object' || Array.isArray(o.wert)) return false;
+            if (alt === undefined || alt === null) el[k] = {};
+            if (sorte(el[k]) !== 'object') return false;
+            Object.assign(el[k], o.wert);
+            return true;
+        }
+        if (o.op === 'setzen') {
+            if (alt !== undefined && alt !== null && o.wert !== null && sorte(alt) !== sorte(o.wert)) return false;
+            el[k] = o.wert;
+            return true;
+        }
+        return false;
+    }
+    // Eigene Eintragstypen nach jeder Aenderung in Form bringen — ein Typ ohne
+    // id oder Namen zerlegt Filter und Legende.
+    function typenPflegen() {
+        if (!Array.isArray(data.customEntryTypes)) { data.customEntryTypes = []; return; }
+        const def = typeof isDefaultType === 'function' ? isDefaultType : () => false;
+        const ids = new Set();
+        data.customEntryTypes = data.customEntryTypes.filter(t => t && typeof t === 'object' && String(t.label || '').trim()).map(t => {
+            let id = String(t.id || '').trim() || 'custom_' + String(t.label).toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 30);
+            while (def(id) || ids.has(id)) id += '_2';
+            ids.add(id);
+            // Felder wie createCustomType() (custom-types-fields.js)
+            return Object.assign({ iconMode: 'svg', icon: '', description: '', countsAsWork: false, createdAt: new Date().toISOString() }, t, {
+                id, label: String(t.label).trim().slice(0, 40), emoji: t.emoji || '',
+                color: /^#[0-9a-f]{3,8}$/i.test(t.color || '') ? t.color : '#64748b' });
+        });
+    }
+    function appDaten() {
+        const kopie = (v, tiefe) => {
+            if (tiefe > 8 || v === null || typeof v !== 'object') return v;
+            if (Array.isArray(v)) return v.map(x => kopie(x, tiefe + 1));
+            const o = {};
+            Object.keys(v).forEach(k => { if (!GESPERRT_TEIL.test(k)) o[k] = kopie(v[k], tiefe + 1); });
+            return o;
+        };
+        const o = {};
+        Object.keys(data || {}).forEach(k => { if (!GESPERRT_WURZEL.has(k) && !GESPERRT_TEIL.test(k)) o[k] = kopie(data[k], 0); });
+        return o;
     }
 
     // ── Ausfuehren ───────────────────────────────────────────────────────
@@ -97,7 +207,9 @@
     function ausfuehren(auftraege) {
         const undo = [];
         const z = { neu: 0, doppelt: 0, geaendert: 0, geloescht: 0, unbekannt: 0, einstellungen: [] };
-        let id = Date.now();
+        // Ueber der hoechsten vorhandenen id beginnen: zwei Laeufe in derselben
+        // Millisekunde vergaben sonst dieselbe id, und Aendern traf den falschen Tag.
+        let id = Math.max(Date.now(), ...(data.entries || []).map(x => Math.floor(+x.id) || 0)) + 1;
 
         for (const a of auftraege) {
             const d = a.daten;
@@ -119,7 +231,7 @@
                     const zeitGeaendert = ('von' in c) || ('bis' in c);
                     const m = {
                         datum: alt.date,
-                        art: TYP_ZU_ART[alt.type] || 'arbeit',
+                        art: TYP_ZU_ART[alt.type] || alt.type || 'arbeit',
                         von: alt.start || '', bis: alt.end || '',
                         pause_min: alt.start ? (alt.breakMins || 0) : null,
                         stunden: alt.start ? null : alt.worked,
@@ -149,6 +261,21 @@
                     undo.push(() => { data.trash = data.trash.filter(x => x !== t); data.entries.push(weg); });
                     z.geloescht++;
                 });
+            } else if (d.art === 'daten') {
+                // Schnappschuss als echte Tiefkopie MIT gesperrten Schluesseln,
+                // sonst wuerde Rueckgaengig sie loeschen.
+                const vorher = {};
+                Object.keys(data).forEach(k => { if (!GESPERRT_WURZEL.has(k)) vorher[k] = JSON.stringify(data[k]); });
+                let n = 0;
+                (d.operationen || []).forEach(o => { if (datenOp(o)) n++; else z.unbekannt++; });
+                typenPflegen();
+                if (n) {
+                    z.einstellungen.push(n === 1 ? L('eine Änderung', 'one change') : L(n + ' Änderungen', n + ' changes'));
+                    undo.push(() => {
+                        Object.keys(data).forEach(k => { if (!GESPERRT_WURZEL.has(k) && !(k in vorher)) delete data[k]; });
+                        Object.keys(vorher).forEach(k => { data[k] = vorher[k] === undefined ? undefined : JSON.parse(vorher[k]); });
+                    });
+                }
             } else if (d.art === 'einstellungen') {
                 const s = data.settings;
                 const vorher = JSON.parse(JSON.stringify({
@@ -228,7 +355,7 @@
     }
 
     async function kiaAusfuehren() {
-        const auftraege = MWLKiApp.alle.filter(a => !a.fehler && a.daten && ['zeit', 'zeit_aendern', 'zeit_loeschen', 'einstellungen'].includes(a.daten.art));
+        const auftraege = MWLKiApp.alle.filter(a => !a.fehler && a.daten && ['zeit', 'zeit_aendern', 'zeit_loeschen', 'einstellungen', 'daten'].includes(a.daten.art));
         if (!auftraege.length || typeof mwlBuildPreview !== 'function' || typeof data === 'undefined') return;
         const { undo, z } = ausfuehren(auftraege);
         nachAenderung();
@@ -259,15 +386,20 @@
         const opt = sel && s.job ? [...sel.options].find(o => o.value === s.job) : null;
         const beruf = s.job === 'sonstige' ? (s.jobCustom || '') : (opt ? opt.textContent.trim() : (s.job || ''));
         const heute = new Date();
-        const grenze = iso(new Date(heute.getTime() - 400 * 864e5));
-        const eintraege = (data.entries || []).filter(e => e.date >= grenze)
+        // ALLE Eintraege: der Server rechnet daraus die Auswertung und reicht
+        // roh nur die letzten Wochen weiter. Mit einem Zeitfenster hier stimmte
+        // die Summe der diff nicht mehr mit dem Saldo der App ueberein.
+        const eintraege = (data.entries || []).slice()
             .sort((a, b) => String(a.date).localeCompare(String(b.date)))
-            .map(e => ({
-                id: String(e.id), datum: e.date, art: TYP_ZU_ART[e.type] || e.type,
-                von: e.start || '', bis: e.end || '', pause_min: e.breakMins || 0,
-                stunden: +e.worked || 0, soll: +e.expected || 0, diff: +e.diff || 0,
-                notiz: nutzerNotiz(e.info).slice(0, 200), job: e.jobId || 'primary',
-            }));
+            .map(e => {
+                const t = infoTeile(e.info);
+                return {
+                    id: String(e.id), datum: e.date, art: TYP_ZU_ART[e.type] || e.type,
+                    von: e.start || '', bis: e.end || '', pause_min: e.breakMins || 0,
+                    stunden: +e.worked || 0, soll: +e.expected || 0, diff: +e.diff || 0,
+                    notiz: t.notiz.slice(0, 200), vermerk: t.vermerk.slice(0, 120), job: e.jobId || 'primary',
+                };
+            });
         // Fehlende Arbeitstage: Soll > 0, kein Eintrag, kein Feiertag, die
         // letzten sechs Wochen bis gestern, nie vor dem ersten Eintrag.
         const daten = new Set((data.entries || []).map(e => e.date));
@@ -305,6 +437,11 @@
             },
             eintraege,
             berichte: MWLKiApp.berichteUeberblick(),
+            eintragstypen: (typeof getAllEntryTypes === 'function' ? getAllEntryTypes() : []).map(t => ({
+                id: t.id, art: TYP_ZU_ART[t.id] || t.id, name: String(t.label || '').trim(), farbe: t.color || '',
+                beschreibung: t.description || '', eigener: typeof isDefaultType === 'function' ? !isDefaultType(t.id) : false,
+            })),
+            app_daten: appDaten(),
         };
     }
 
@@ -577,5 +714,5 @@
     window.kiaLesenNein = kiaLesenNein;
     window.kiaPruefen = kiaPruefen;
     // fuer tools/ki-app.test.mjs
-    window.__kia = { kiaBaue, ausfuehren, kiaSpiegel, standardPause, nutzerNotiz };
+    window.__kia = { kiaBaue, ausfuehren, kiaSpiegel, standardPause, nutzerNotiz, infoTeile, appDaten };
 })();

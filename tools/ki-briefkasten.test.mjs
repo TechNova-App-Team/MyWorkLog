@@ -32,7 +32,10 @@ function funktion(name) {
 // Scope fuer const/let — im Browser teilen sich alle <script> einen. Der
 // Zugang __ki ist ein direktes eval IN diesem Scope, damit der Test auch
 // let-Zustand (kiStatus, derivedKey) setzen kann.
-w.eval(schatten.slice(0, schnitt) + '\nlet derivedKey = null;\n' +
+w.eval(schatten.slice(0, schnitt) + '\nlet derivedKey = null;\nlet entries = [];\nlet vaultJournal = [];\nlet vaultMeta = null;\n' +
+    'async function contentFingerprint(e) { return "fp-" + e.id; }\nasync function journalRecord(a, e) { vaultJournal.push([a, e.id]); }\n' +
+    'async function saveVault() { window.__saved = (window.__saved || 0) + 1; if (window.__saveFehler) throw new Error("voll"); }\n' +
+    'function renderEntries() {}\nfunction updateStats() {}\nfunction populateCategorySelects() {}\n' +
     ['strToU8', 'u8ToB64', 'b64ToU8', 'encrypt', 'decrypt'].map(funktion).join('\n') +
     '\nfunction escapeHtml(s){return String(s);}\nfunction openModal(){}\nfunction closeModal(){}\nfunction showToast(){}\n' +
     lies('Assets/js/ki-krypto.js') + '\n' +
@@ -107,6 +110,39 @@ ok(n2.details.frequency === undefined && n2.details.erfunden === undefined && n2
 ok(Object.keys(n2.details).length === 1, 'Gegenprobe: genau ein Feld uebrig');
 const n3 = norm({ kategorie: 'verbal', schwere: 'high', beschreibung: 'x', vorfall_datum: '22.10.2026', vorfall_uhrzeit: '25:00' });
 ok(n3.datum === '' && n3.uhrzeit === '', 'falsches Datums- und Zeitformat verworfen');
+
+console.log('5b. Selbst uebernehmen (Agent legt an, liest nie)');
+const geloescht = [];
+let briefkasten = [];
+w.vcKi = {
+    entwuerfe: async () => briefkasten,
+    entwurfLoeschen: async id => { geloescht.push(id); },
+};
+const zeile = async (id, inhalt) => ({ id, created_at: '2026-10-24T10:00:00Z', expires_at: '2099-01-01T00:00:00Z', payload: await workerFormat(JSON.stringify(inhalt), p.publicKey) });
+briefkasten = [
+    await zeile('k1', { v: 1, art: 'kategorie', name: 'Mobbing durch Kollegen', hinweis: 'Sprueche' }),
+    await zeile('e1', { v: 1, kategorie: 'Mobbing durch Kollegen', neue_kategorie: 'Mobbing durch Kollegen', schwere: 'high', beschreibung: 'Kollege B. hat mich vor allen ausgelacht.', vorfall_datum: '2026-10-20', zeugen: ['Azubi K.'] }),
+    await zeile('e2', { v: 1, kategorie: 'Neue Sache', neue_kategorie: 'Neue Sache', schwere: 'low', beschreibung: 'Ohne Datum erzaehlt, nur dass es war.' }),
+    await zeile('e3', { v: 1, kategorie: 'breaks', schwere: 'medium', beschreibung: 'Pause gestrichen.', vorfall_datum: '2026-10-21' }),
+];
+E('(function (m, k) { derivedKey = m; kiPrivKey = k; })')(master, priv);
+await E('kiEntwuerfeHolen')();
+const ein = E('entries'), kats = E('customCategories');
+ok(kats.filter(c => c.label === 'Mobbing durch Kollegen').length === 1 && kats.some(c => c.label === 'Neue Sache'), 'Kategorien angelegt, doppelte (Kategorie + neue_kategorie) nur einmal');
+ok(ein.length === 3 && ein.every(e => e.source === 'ai_assisted' && e.status === 'open'), 'drei Eintraege selbst angelegt, mit Vermerk');
+const mob = ein.find(e => e.text.startsWith('Kollege'));
+ok(mob.category === kats.find(c => c.label === 'Mobbing durch Kollegen').id && mob.date === '2026-10-20' && mob.witnesses[0] === 'Azubi K.', 'Eintrag in der eigenen Kategorie (per Name aufgeloest)');
+ok(ein.find(e => e.category === 'breaks') && ein.find(e => e.text.startsWith('Ohne')).timeBasis === undefined && ein.find(e => e.category === 'breaks').timeBasis === 'occurred', 'mit Datum: Vorfallszeit, ohne Datum: Erfassungszeit (Standard)');
+ok(E('vaultJournal').filter(j => j[0] === 'create').length === 3, 'jeder Eintrag steht in der Hash-Kette');
+ok(['k1', 'e1', 'e2', 'e3'].every(id => geloescht.includes(id)) && E('kiEntwuerfe').length === 0, 'alle Entwuerfe nach dem Speichern geloescht');
+// Gegenprobe: scheitert das Speichern, bleibt alles, wie es war — und die Entwuerfe liegen weiter.
+geloescht.length = 0;
+briefkasten = [await zeile('e9', { v: 1, kategorie: 'breaks', schwere: 'low', beschreibung: 'Noch ein Vorfall.' })];
+w.__saveFehler = true;
+await E('kiEntwuerfeHolen')();
+w.__saveFehler = false;
+ok(E('entries').length === 3 && !geloescht.includes('e9') && E('kiEntwuerfe').length === 1, 'Speicherfehler: nichts angelegt, Entwurf bleibt liegen');
+ok(!/entwuerfeLesen|eintraegeLesen|entries\s*=\s*await/.test(lies('Assets/js/berichtsheft/ki-briefkasten.js')), 'kein Weg, Eintraege zum Server zu lesen');
 
 console.log('6. Hash-Kette');
 const J = w.VaultJournal;

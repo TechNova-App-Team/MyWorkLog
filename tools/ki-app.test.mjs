@@ -186,6 +186,39 @@ ok(app.localStorage.getItem('pdf_personal_cfg') === null, 'Rueckgaengig nimmt da
 undoLoeschen.forEach(f => f());
 ok(!!E('2026-10-23') && !app.__a('data').trash.some(t => t.entry.id === fr.id), 'Rueckgaengig holt den geloeschten Tag zurueck');
 
+console.log('2b. Alles aendern (freie Pfade, eigene Typen)');
+app.__a('data.settings.weather = { apiKey: "GEHEIM", ort: "Ulm" }; data.settings.goals = [{ t: "a" }, { t: "b" }]');
+r = A.ausfuehren([auftrag('daten', { operationen: [
+    { op: 'setzen', pfad: 'settings.break.thresh', wert: 4 },
+    { op: 'setzen', pfad: 'settings.hours', wert: 'kaputt' },                 // Typwechsel → uebersprungen
+    { op: 'setzen', pfad: 'entries.0.worked', wert: 99 },                    // gesperrt
+    { op: 'setzen', pfad: 'settings.weather.apiKey', wert: 'X' },            // gesperrt
+    { op: 'loeschen', pfad: 'settings.goals.0' },
+    { op: 'zusammenfuehren', pfad: 'settings.ihk', wert: { exam_zwischen: '2027-03-10' } },
+    { op: 'anhaengen', pfad: 'customEntryTypes', wert: { id: 'custom-ki-homeoffice', label: 'Homeoffice', color: 'rot', countsAsWork: false } },
+] })]);
+const D = app.__a('data');
+ok(r.z.unbekannt === 3 && D.settings.break.thresh === 4 && Array.isArray(D.settings.hours), 'vier Operationen angewandt, Typwechsel und gesperrte Pfade uebersprungen');
+ok(D.entries.every(x => x.worked !== 99) && D.settings.weather.apiKey === 'GEHEIM', 'entries und Schluessel unberuehrt');
+ok(D.settings.goals.length === 1 && D.settings.goals[0].t === 'b' && D.settings.ihk.exam_zwischen === '2027-03-10', 'loeschen per Index und zusammenfuehren');
+ok(D.customEntryTypes[0].color === '#64748b' && D.customEntryTypes[0].iconMode === 'svg', 'eigener Typ in Form gebracht (Farbe, Felder wie createCustomType)');
+ok(!JSON.stringify(A.appDaten()).includes('GEHEIM') && A.appDaten().settings.weather.ort === 'Ulm' && !('entries' in A.appDaten()), 'Lese-Kopie ohne Schluessel und ohne entries');
+const undoDaten = r.undo;
+app.__a('function getEntryTypeInfo(id) { return (data.customEntryTypes || []).find(t => t.id === id); }');
+r = A.ausfuehren([auftrag('zeit', { eintraege: [{ datum: '2026-10-16', art: 'custom-ki-homeoffice', von: '08:00', bis: '16:00', pause_min: null, stunden: null, notiz: 'Tickets' }] })]);
+const ho = E('2026-10-16');
+ok(r.z.neu === 1 && ho.type === 'custom-ki-homeoffice' && ho.worked === 8 && ho.breakMins === 0 && ho.diff === 0, 'eigener Typ: keine Standardpause, neutral ohne countsAsWork');
+r = A.ausfuehren([auftrag('zeit_aendern', { aenderungen: [{ id: String(ho.id), bis: '15:00' }] })]);
+ok(E('2026-10-16').type === 'custom-ki-homeoffice' && E('2026-10-16').worked === 7, 'Aendern behaelt den eigenen Typ');
+undoDaten.forEach(f => f());
+ok(app.__a('data').settings.break.thresh === 6 && app.__a('data').settings.goals.length === 2 && app.__a('data').settings.weather.apiKey === 'GEHEIM', 'Rueckgaengig stellt den Schnappschuss wieder her, Schluessel bleiben');
+
+console.log('2c. Vermerke der App sind keine Notizen');
+ok(A.infoTeile('Keine Berufsschule (Regulär) | ').notiz === '' && A.infoTeile('Keine Berufsschule (Regulär) | ').vermerk === 'Keine Berufsschule (Regulär)', 'Schul-Etikett ohne Notiz → leere Notiz');
+ok(A.infoTeile('Berufsschule (automatisch vorgeschlagen)').notiz === '', 'Schulregel-Etikett → leere Notiz');
+ok(A.infoTeile('07:00 - 12:15 (15m Pause) | putzen').notiz === 'putzen', 'echte Notiz bleibt');
+ok(A.infoTeile('Urlaubstag | Mallorca').notiz === 'Mallorca' && A.infoTeile('LF 4').notiz === 'LF 4', 'Gegenprobe: Notizen ohne und mit Vermerk');
+
 console.log('3. Lese-Kopie');
 const sp = A.kiaSpiegel();
 ok(sp.einstellungen.sollstunden.montag === 8 && sp.einstellungen.sollstunden.sonntag === 0, 'Sollstunden je Wochentag benannt');
