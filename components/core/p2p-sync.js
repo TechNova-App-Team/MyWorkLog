@@ -27,12 +27,11 @@
 
         const team = data.settings.team;
         
-        // P2P Sync Settings (nur diese existieren noch)
+        // Einziger P2P-Schalter. "Offline vormerken" (team.offlineQueue) ist am
+        // 25.10.2026 entfallen: gespeichert, aber nie ausgewertet — eine
+        // Warteschlange gibt es in dieser Datei nicht.
         const autoSyncEl = document.getElementById('p2pAutoSync');
-        const offlineQueueEl = document.getElementById('p2pOfflineQueue');
-        
         if (autoSyncEl) autoSyncEl.checked = team.autoSync !== false;
-        if (offlineQueueEl) offlineQueueEl.checked = team.offlineQueue !== false;
 
         // Verschluesselung ist kein Schalter, sondern ein Zustand: sie laeuft oder
         // sie laeuft nicht, und der Nutzer erfaehrt welches von beidem. Vorher

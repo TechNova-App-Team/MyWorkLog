@@ -1,9 +1,9 @@
 // ═══ DATA-NOTICE MODULE ═══
-// Der Hinweis "Deine Daten liegen nur auf diesem Gerät" steht an vier Stellen
-// im DOM: Dashboard-Fuss, Settings/Profil, Settings/Cloud und Recovery Center.
+// Der Hinweis "Deine Daten liegen nur auf diesem Gerät" steht an drei Stellen
+// im DOM: Dashboard-Fuss, Einstellungen > Daten und Sicherung, Recovery Center.
 // "Nicht mehr anzeigen" blendet ALLE gleichzeitig aus — egal, an welcher Stelle
 // geklickt wurde. Zustand haengt an data.settings.hideDataNotice und ist ueber
-// den Schalter in Settings/Profil jederzeit zurueckholbar.
+// den Schalter auf derselben Einstellungsseite jederzeit zurueckholbar.
 
     function isDataNoticeHidden() {
         try { return !!(data && data.settings && data.settings.hideDataNotice); }
@@ -35,7 +35,7 @@
         if (typeof showToast === 'function') {
             showToast(
                 'Hinweis ausgeblendet',
-                'Du findest ihn in den Einstellungen unter Profil wieder — deine Daten liegen weiterhin nur auf diesem Gerät.',
+                'Du findest ihn in den Einstellungen unter Daten und Sicherung wieder. Deine Daten liegen weiterhin nur auf diesem Gerät.',
                 'info'
             );
         }

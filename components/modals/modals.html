@@ -447,135 +447,161 @@
         }
     </style>
 
+    <!-- ═══ EINSTELLUNGEN — Neubau 25.10.2026 ═══
+         Seitenleiste + Seiten statt sieben Reiter in einer Zeile. Die Seiten-Ids
+         (settings-tab-<name>) und die Reiter-Namen bleiben: api-cloud-sync.js und
+         ki-assistent.js haengen sich per Wrapper an switchSettingsTab('cloud'),
+         das Dashboard ruft switchSettingsTab('work'). Neu dazu: appearance,
+         vacation, data. Unter 761 px ist die Leiste eine Liste, die eine Seite
+         oeffnet (data-view="list" | "page" an .st-shell, settings-panel.js). -->
     <div class="modal" id="settingsModal">
-        <div class="modal-box" style="display:flex; flex-direction:column; height:90vh; max-height:90vh; width:900px; padding:0;">
-            
-            <!-- Header -->
-            <div class="settings-header">
-                <h2 class="settings-header-title">
-                    <span class="settings-header-icon">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
-                    </span>
-                    Einstellungen
-                </h2>
-                <button onclick="closeSettings()" class="settings-close-btn" title="Schließen">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
+        <div class="modal-box st-box" role="dialog" aria-modal="true" aria-labelledby="stTitel">
 
-            <!-- Tab Navigation -->
-            <div class="settings-nav">
-                <button class="settings-tab active" onclick="switchSettingsTab('profile')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Profil
-                </button>
-                <button class="settings-tab" onclick="switchSettingsTab('work')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
-                    Arbeitszeiten
-                </button>
-                <button class="settings-tab" onclick="switchSettingsTab('school')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                    Berufsschule
-                </button>
-                <button class="settings-tab" onclick="switchSettingsTab('custom')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>
-                    Custom
-                </button>
-                <button class="settings-tab" onclick="switchSettingsTab('shortcuts')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0M10 10h0M14 10h0M18 10h0M7 14h10"/></svg>
-                    Shortcuts
-                </button>
-                <button class="settings-tab" onclick="switchSettingsTab('team')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-                    Team
-                </button>
-                <button class="settings-tab" onclick="switchSettingsTab('cloud')">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
-                    Cloud
-                </button>
-            </div>
-            
-            <!-- Content Area -->
-            <div class="settings-body" style="flex:1; overflow-y:auto; padding:1.5rem; display:flex; flex-direction:column;">
-                
-                <!-- Tab: Profil -->
-                <div id="settings-tab-profile" class="settings-tab-content">
-                    
-                    <!-- Profile (Name + Beruf + Bundesland) -->
-                    <div class="settings-section profile-card">
-                        <div class="settings-section-title">Profil</div>
+            <button type="button" onclick="closeSettings()" class="settings-close-btn st-close" title="Schließen" aria-label="Schließen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
 
-                        <!-- Hero -->
-                        <div class="profile-hero">
-                            <div class="profile-hero-avatar" data-profile-avatar aria-hidden="true">?</div>
-                            <div class="profile-hero-info">
-                                <div class="profile-hero-name is-empty" data-profile-name>Noch kein Name</div>
-                                <div class="profile-hero-job" data-profile-job>Beruf nicht ausgewählt</div>
-                                <div class="profile-hero-meta">
-                                    <span class="profile-hero-region" data-profile-region>
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        <span>Region offen</span>
-                                    </span>
-                                    <span class="profile-hero-badge" data-profile-badge hidden></span>
-                                </div>
-                            </div>
+            <div class="st-shell" id="stShell" data-view="page">
+
+                <aside class="st-side">
+                    <h2 class="st-title" id="stTitel">Einstellungen</h2>
+
+                    <!-- Sucht in Beschriftung UND data-such (Stichworte, DE + EN): wer
+                         "Pause" tippt, landet bei Arbeitszeit, obwohl das Wort dort
+                         nicht im Reiter steht. -->
+                    <label class="st-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <input type="search" id="stSuche" placeholder="Suchen" autocomplete="off" spellcheck="false" aria-label="Einstellungen durchsuchen" oninput="stSuchen(this.value)" onkeydown="stSucheTaste(event)">
+                    </label>
+
+                    <nav class="st-nav settings-nav" aria-label="Bereiche der Einstellungen">
+                        <div class="st-nav-group" id="stNavDu">
+                            <span class="st-nav-label">Du</span>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="profile" data-such="profil name kürzel avatar beruf ausbildungsberuf bundesland feiertage profile job state holidays initials" onclick="switchSettingsTab('profile')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <span>Profil</span>
+                            </button>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="appearance" data-such="darstellung farbe akzent theme hell dunkel modus dashboard layout stimmung tarnung tab camo appearance color dark light mood" onclick="switchSettingsTab('appearance')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.55C21.97 6.01 17.46 2 12 2z"/></svg>
+                                <span>Darstellung</span>
+                            </button>
                         </div>
 
-                        <!-- Fields
-                             🔴 EINE Liste, keine drei Kacheln — und das
-                             Bedienelement deckt die GANZE Zeile ab.
-                             Vorher: die Karte trug cursor:pointer ueber
-                             766x86 px, das <select> darin belegte 620x23 px.
-                             79 % der Flaeche sahen klickbar aus und taten
-                             nichts; am optischen Mittelpunkt lag der
-                             Hinweistext. Dazu oeffnet ein Klick auf ein
-                             <label> zwar den Fokus eines <select>, aber NICHT
-                             dessen Liste — der Rest der Zeile war also auch
-                             im Fokus-Fall tot.
-                             Das <select> liegt jetzt als unsichtbare Schicht
-                             ueber der Zeile (.pfield-control). Der offene
-                             Zustand bleibt nativ: auf dem Handy das Systemrad,
-                             Tastaturbedienung und Screenreader gratis. Der
-                             GESCHLOSSENE Zustand wird gespiegelt gerendert
-                             (.pfield-value) — nur so laesst er sich ueberhaupt
-                             gestalten, ein <select> ist unter Windows nicht
-                             stylbar. -->
-                        <div class="pfield-list">
-                            <!-- Name -->
-                            <label class="pfield">
-                                <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-                                <span class="pfield-text">
-                                    <span class="pfield-label">Dein Name</span>
-                                    <span class="pfield-hint">Für Begrüßung und Support-Formular</span>
-                                </span>
-                                <input type="text" id="confName" class="pfield-value pfield-input"
-                                       placeholder="Nicht gesetzt" autocomplete="off" spellcheck="false">
-                                <span class="pfield-affix" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
-                            </label>
+                        <div class="st-nav-group" id="stNavArbeit">
+                            <span class="st-nav-label">Arbeit</span>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="work" data-such="arbeitszeit soll sollstunden stunden pause pausen job jobs rundung taktung verdienst gehalt lohn wochenplan hours break rounding wage salary" onclick="switchSettingsTab('work')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                                <span>Arbeitszeit</span>
+                            </button>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="vacation" data-such="urlaub urlaubstage anspruch übertrag resturlaub jahreswechsel vacation leave carry" onclick="switchSettingsTab('vacation')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+                                <span>Urlaub</span>
+                            </button>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="school" data-such="berufsschule schule schultage turnus block blockunterricht klasse school class" onclick="switchSettingsTab('school')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                                <span>Berufsschule</span>
+                            </button>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="custom" data-such="eintragstypen typen kategorien felder eigene felder custom fields types categories" onclick="switchSettingsTab('custom')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14v7M14 17.5h7"/></svg>
+                                <span>Eintragstypen</span>
+                            </button>
+                        </div>
 
-                            <!-- Avatar-Kürzel -->
-                            <label class="pfield">
-                                <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg></span>
-                                <span class="pfield-text">
-                                    <span class="pfield-label">Avatar-Kürzel</span>
-                                    <span class="pfield-hint">Max. 2 Buchstaben (leer = automatisch aus Name)</span>
-                                </span>
-                                <input type="text" id="confAvatarInitials" class="pfield-value pfield-input"
-                                       placeholder="Auto" maxlength="2" autocomplete="off" spellcheck="false"
-                                       style="text-transform:uppercase;">
-                                <span class="pfield-affix" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
-                            </label>
+                        <div class="st-nav-group" id="stNavDaten">
+                            <span class="st-nav-label">Daten und Geräte</span>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="cloud" data-such="cloud sync anmelden login passkey ki assistent claude hochladen wiederherstellen konto upload restore ai" onclick="switchSettingsTab('cloud')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/></svg>
+                                <span>Cloud</span>
+                            </button>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="team" data-such="geräte sync gerät verbinden p2p handy laptop übertragen device pair transfer" onclick="switchSettingsTab('team')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="13" height="10" rx="1.5"/><path d="M5 18h7"/><rect x="17" y="8" width="5" height="12" rx="1.2"/></svg>
+                                <span>Geräte-Sync</span>
+                            </button>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="data" data-such="daten sicherung backup recovery wiederherstellen export löschen konto gefahrenzone app installieren pwa data delete account install" onclick="switchSettingsTab('data')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 11v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6"/></svg>
+                                <span>Daten und Sicherung</span>
+                            </button>
+                        </div>
 
-                            <!-- Job -->
-                            <label class="pfield">
-                                <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
-                                <span class="pfield-text">
-                                    <span class="pfield-label">Ausbildungsberuf</span>
-                                </span>
-                                <span class="pfield-value is-empty" data-pvalue-for="confJob">Nicht gewählt</span>
-                                <span class="pfield-affix pfield-affix--chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-                                <select id="confJob" class="pfield-control" aria-label="Ausbildungsberuf"
-                                        onchange="data.settings.job = this.value; save();">
+                        <div class="st-nav-group" id="stNavBedienung">
+                            <span class="st-nav-label">Bedienung</span>
+                            <button type="button" class="settings-tab st-nav-item" data-tab="shortcuts" data-such="tastenkürzel tastatur shortcuts kürzel keyboard hotkeys" onclick="switchSettingsTab('shortcuts')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+                                <span>Tastenkürzel</span>
+                            </button>
+                        </div>
+
+                        <p class="st-nav-leer" id="stSucheLeer" hidden>Nichts gefunden</p>
+                    </nav>
+                </aside>
+
+                <!-- Scroll-Container. Die Klasse settings-body und overflow-y inline
+                     bleiben: tools/settings-scroll.test.mjs prueft beides (Compositing
+                     beim Scrollen, siehe Kopf von settings.css). -->
+                <div class="st-main settings-body" style="overflow-y:auto;">
+
+                    <button type="button" class="st-back" onclick="stZurListe()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                        <span>Einstellungen</span>
+                    </button>
+
+                    <!-- ═══ Profil ═══ -->
+                    <section id="settings-tab-profile" class="settings-tab-content st-page" aria-labelledby="stHProfile">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHProfile">Profil</h3>
+                            <p class="st-page-desc" id="stDProfile">Wie dich MyWorkLog anspricht und welche Feiertage für dich gelten.</p>
+                        </header>
+
+                        <!-- .profile-card + data-profile-* + data-pvalue-for: daran haengt das
+                             Skript direkt darunter. Die Felder MUESSEN in dieser Karte liegen,
+                             es sucht sie per card.querySelector. -->
+                        <div class="st-group profile-card">
+                            <div class="st-hero">
+                                <div class="st-avatar" data-profile-avatar aria-hidden="true">?</div>
+                                <div class="st-hero-text">
+                                    <div class="st-hero-name is-empty" data-profile-name>Noch kein Name</div>
+                                    <div class="st-hero-job" data-profile-job>Beruf nicht ausgewählt</div>
+                                    <div class="st-hero-meta">
+                                        <span class="st-hero-region" data-profile-region>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            <span>Region offen</span>
+                                        </span>
+                                        <span class="st-hero-badge" data-profile-badge hidden></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 🔴 Das Bedienelement deckt die GANZE Zeile ab (CSS-Notiz,
+                                 "<select> in einer grossen Klickflaeche"): Texteingaben
+                                 liegen in einem <label>, das <select> liegt als
+                                 unsichtbare Schicht ueber der Zeile (.st-select-overlay),
+                                 der geschlossene Zustand wird daneben gespiegelt
+                                 (.st-select-value) — ein <select> ist unter Windows nicht
+                                 stylbar. opacity:0, nie display:none, sonst kein Klick. -->
+                            <div class="st-list">
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Name</span>
+                                        <span class="st-row-desc">Für Begrüßung und Support-Formular</span>
+                                    </span>
+                                    <input type="text" id="confName" class="st-field" placeholder="Nicht gesetzt" autocomplete="off" spellcheck="false">
+                                </label>
+
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Kürzel</span>
+                                        <span class="st-row-desc">Zwei Buchstaben im Avatar, leer heißt aus dem Namen</span>
+                                    </span>
+                                    <input type="text" id="confAvatarInitials" class="st-field st-field--kurz" placeholder="Auto" maxlength="2" autocomplete="off" spellcheck="false">
+                                </label>
+
+                                <label class="st-row st-row--select">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Ausbildungsberuf</span>
+                                    </span>
+                                    <span class="st-select-value is-empty" data-pvalue-for="confJob">Nicht gewählt</span>
+                                    <svg class="st-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                                    <select id="confJob" class="st-select-overlay" aria-label="Ausbildungsberuf" onchange="data.settings.job = this.value; save();">
                                     <option value="">Nicht gewählt</option>
                                         <optgroup label="IT-Berufe">
                                             <option value="fachinformatiker-anwendung">Fachinformatiker Anwendungsentwicklung</option>
@@ -608,35 +634,29 @@
                                         <optgroup label="Sonstige">
                                             <option value="sonstige">Eigenen Beruf eintragen …</option>
                                         </optgroup>
-                                </select>
-                            </label>
+                                    </select>
+                                </label>
 
-                            <!-- Eigener Beruf: nur bei "sonstige" sichtbar. Ein- und
-                                 ausgeblendet per style.display, nicht per [hidden] —
-                                 .pfield setzt display:grid und schluege das Attribut.
-                                 Der Berichtsheft-Assistent liest den Text als Beruf. -->
-                            <label class="pfield" id="confJobCustomRow" style="display:none">
-                                <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg></span>
-                                <span class="pfield-text">
-                                    <span class="pfield-label">Dein Beruf</span>
-                                    <span class="pfield-hint">Übernimmt auch der Berichtsheft-Assistent</span>
-                                </span>
-                                <input type="text" id="confJobCustom" class="pfield-value pfield-input"
-                                       placeholder="z. B. Bäcker/in" maxlength="80" autocomplete="off">
-                                <span class="pfield-affix" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
-                            </label>
+                                <!-- Eigener Beruf: nur bei "sonstige" sichtbar. Ein- und
+                                     ausgeblendet per style.display, nicht per [hidden] —
+                                     .st-row setzt display:grid und schluege das Attribut.
+                                     Der Berichtsheft-Assistent liest den Text als Beruf. -->
+                                <label class="st-row st-row--field" id="confJobCustomRow" style="display:none">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Dein Beruf</span>
+                                        <span class="st-row-desc">Übernimmt auch der Berichtsheft-Assistent</span>
+                                    </span>
+                                    <input type="text" id="confJobCustom" class="st-field" placeholder="z. B. Bäcker/in" maxlength="80" autocomplete="off">
+                                </label>
 
-                            <!-- Bundesland -->
-                            <label class="pfield">
-                                <span class="pfield-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
-                                <span class="pfield-text">
-                                    <span class="pfield-label">Bundesland</span>
-                                    <span class="pfield-hint">Für lokale Feiertage</span>
-                                </span>
-                                <span class="pfield-value is-empty" data-pvalue-for="confBundesland">Nicht gewählt</span>
-                                <span class="pfield-affix pfield-affix--chevron" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-                                <select id="confBundesland" class="pfield-control" aria-label="Bundesland"
-                                        onchange="data.settings.bundesland = this.value; save();">
+                                <label class="st-row st-row--select">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Bundesland</span>
+                                        <span class="st-row-desc">Für die Feiertage</span>
+                                    </span>
+                                    <span class="st-select-value is-empty" data-pvalue-for="confBundesland">Nicht gewählt</span>
+                                    <svg class="st-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                                    <select id="confBundesland" class="st-select-overlay" aria-label="Bundesland" onchange="data.settings.bundesland = this.value; save();">
                                     <option value="">Nicht gewählt</option>
                                         <option value="BW">Baden-Württemberg</option>
                                         <option value="BY">Bayern</option>
@@ -654,10 +674,10 @@
                                         <option value="ST">Sachsen-Anhalt</option>
                                         <option value="SH">Schleswig-Holstein</option>
                                         <option value="TH">Thüringen</option>
-                                </select>
-                            </label>
+                                    </select>
+                                </label>
+                            </div>
                         </div>
-                    </div>
                     <script>
                     (function(){
                         function init(){
@@ -858,25 +878,21 @@
                         else init();
                     })();
                     </script>
+                    </section>
 
-                    <!-- Accent Color -->
-                    <div class="settings-section accent-picker">
-                        <div class="settings-section-title">Akzentfarbe</div>
+                    <!-- ═══ Darstellung ═══ -->
+                    <section id="settings-tab-appearance" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHAppearance">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHAppearance">Darstellung</h3>
+                            <p class="st-page-desc" id="stDAppearance">Farbe, hell oder dunkel und was das Dashboard zeigt.</p>
+                        </header>
 
-                        <!-- Live hero preview -->
-                        <div class="accent-hero">
-                            <div class="accent-hero-swatch" aria-hidden="true"></div>
-                            <div class="accent-hero-info">
-                                <div class="accent-hero-label">Aktive Farbe</div>
-                                <div class="accent-hero-hex" data-accent-hex>#A855F7</div>
-                                <div class="accent-hero-meta">Wird in Buttons, Links & Highlights verwendet</div>
-                            </div>
-                        </div>
-
-                        <!-- Theme Mode -->
-                        <div class="accent-block">
-                            <div class="accent-block-label">Design-Modus</div>
-                            <div class="accent-segment" role="group" aria-label="Design-Modus">
+                        <!-- .accent-picker, .accent-segment-btn[data-mode], .accent-palette,
+                             .accent-swatch[data-color], [data-accent-hex]: daran haengt das
+                             Skript darunter. contain + will-change: tools/settings-scroll.test.mjs -->
+                        <div class="st-group accent-picker">
+                            <h4 class="st-group-title">Modus</h4>
+                            <div class="st-seg st-seg--voll accent-segment" role="group" aria-label="Design-Modus">
                                 <button type="button" class="accent-segment-btn" data-mode="system">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                                     <span>System</span>
@@ -890,11 +906,11 @@
                                     <span>Hell</span>
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- Palette -->
-                        <div class="accent-block">
-                            <div class="accent-block-label">Voreinstellungen</div>
+                            <div class="st-akzent-kopf">
+                                <h4 class="st-group-title">Akzentfarbe</h4>
+                                <span class="st-akzent-hex" data-accent-hex>#5578A8</span>
+                            </div>
                             <div class="accent-palette">
                                 <button type="button" class="accent-swatch" data-color="#a78bfa" style="background:#a78bfa" title="Lila-Hell" aria-label="Lila-Hell"></button>
                                 <button type="button" class="accent-swatch" data-color="#a855f7" style="background:#a855f7" title="Lila" aria-label="Lila"></button>
@@ -930,31 +946,26 @@
                                 <button type="button" class="accent-swatch" data-color="#9ca3af" style="background:#9ca3af" title="Silber" aria-label="Silber"></button>
                                 <button type="button" class="accent-swatch" data-color="#78716c" style="background:#78716c" title="Stone" aria-label="Stone"></button>
                             </div>
-                        </div>
 
-                        <!-- Custom color -->
-                        <div class="accent-block">
-                            <div class="accent-block-label">Eigene Farbe</div>
                             <div class="accent-custom">
-                                <label class="accent-custom-picker" title="Klick zum Wählen">
+                                <label class="accent-custom-picker" title="Farbe wählen">
                                     <input type="color" id="customColorPicker" aria-label="Farbe auswählen">
                                 </label>
                                 <div class="accent-custom-input-wrap">
                                     <span class="accent-custom-hash" aria-hidden="true">#</span>
-                                    <input type="text" id="customColorHex" placeholder="A855F7" maxlength="6" autocomplete="off" spellcheck="false" aria-label="Hex-Code">
+                                    <input type="text" id="customColorHex" placeholder="5578A8" maxlength="6" autocomplete="off" spellcheck="false" aria-label="Hex-Code">
                                 </div>
-                                <button type="button" id="btnApplyCustomColor" class="accent-custom-btn accent-custom-btn-apply">
-                                    <span>Speichern</span>
+                                <button type="button" id="btnApplyCustomColor" class="st-btn">
+                                    <span>Übernehmen</span>
                                 </button>
-                                <button type="button" id="btnResetCustomColor" class="accent-custom-btn accent-custom-btn-icon" title="Reset" aria-label="Reset">
+                                <button type="button" id="btnResetCustomColor" class="st-btn st-btn--icon" title="Standardfarbe" aria-label="Standardfarbe">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- Hidden legacy node for theme-colors.js compat -->
-                        <div id="colorPreview" hidden></div>
-                    </div>
+                            <!-- Leerer Knoten fuer theme-colors.js (setzt dort style.background). -->
+                            <div id="colorPreview" hidden></div>
+                        </div>
                     <script>
                     (function(){
                         function init(){
@@ -980,7 +991,9 @@
                                     return '#5578a8';
                                 }
                                 function getCurrentMode(){
-                                    try { return (window.data && data.settings && data.settings.themeMode) || 'system'; } catch(e){ return 'system'; }
+                                    // Nicht window.data: data ist ein let-Global und steht nie auf window —
+                                    // der Modus-Schalter zeigte deshalb bis 25.10.2026 immer "System" als aktiv.
+                                    try { return (typeof data !== 'undefined' && data && data.settings && data.settings.themeMode) || 'system'; } catch(e){ return 'system'; }
                                 }
                                 var lastHex = '', lastMode = '';
                                 function sync(){
@@ -1073,828 +1086,709 @@
                     })();
                     </script>
 
-                    <!-- PWA Installation -->
-                    <div class="settings-section" id="pwaInstallSection">
-                        <div class="settings-section-title">App Installation (PWA)</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Installiere MyWorkLog als App für schnelleren Zugriff und Offline-Support.</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                            <button class="settings-btn settings-btn-primary" onclick="triggerInstallPrompt();"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Installieren</span></button>
-                            <button class="settings-btn" onclick="checkPWAStatus();"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Status prüfen</span></button>
-                        </div>
-                        <small id="pwaStatus" style="color:var(--text-muted); display:block; margin-top:8px; font-size:0.8rem;"></small>
-                    </div>
-
-                    <!-- Dashboard Layout: oeffnet das Dashboard im Anpassen-Modus (dashboard-neu.js).
-                         Reihenfolge, Breite und Sichtbarkeit je Modul, gespeichert in data.settings.dashLayout. -->
-                    <div class="tool-row">
-                        <div class="tool-row-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
-                        </div>
-                        <div class="tool-row-body">
-                            <div class="tool-row-title">Dashboard Layout</div>
-                            <div class="tool-row-desc">Module umsortieren, ein- und ausblenden, breiter oder schmaler stellen.</div>
-                            <div class="tool-row-actions">
-                                <button id="btnEditLayout" class="tool-action tool-action-primary" onclick="closeSettings(); dnSetEdit(true)" title="Dashboard anpassen">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
-                                    <span>Anpassen</span>
-                                </button>
-                                <button id="btnResetLayout" class="tool-action tool-action-danger" onclick="dnResetLayout()" title="Standard-Layout wiederherstellen">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                                    <span>Standard</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Toggle-Group (Tab-Tarnung + Mood Feedback) -->
-                    <div class="toggle-stack">
-                        <label class="toggle-row" for="confTabCamo">
-                            <div class="toggle-row-icon" aria-hidden="true"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="7" r="4"/><path d="M10.3 15H7a4 4 0 0 0-4 4v2"/><circle cx="17" cy="17" r="3"/><path d="m21 21-1.9-1.9"/></svg></div>
-                            <div class="toggle-row-body">
-                                <div class="toggle-row-title">Tab-Tarnung</div>
-                                <div class="toggle-row-desc">Verkleidet deinen Tab als Stack Overflow, Outlook & Co. wenn du weg-tabbst — Chef sieht nur Code.</div>
-                            </div>
-                            <span class="switch">
-                                <input type="checkbox" id="confTabCamo" onchange="data.settings.tabCamo = this.checked; save(); updateCamoState();">
-                                <span class="switch-track"></span>
-                                <span class="switch-thumb"></span>
-                            </span>
-                        </label>
-                        <label class="toggle-row" for="confMoodSelector">
-                            <div class="toggle-row-icon" aria-hidden="true"><svg class="mwl-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg></div>
-                            <div class="toggle-row-body">
-                                <div class="toggle-row-title">Stimmungs-Feedback</div>
-                                <div class="toggle-row-desc">Nach jedem neuen Eintrag erscheint ein Emoji-Fenster für deine Tagesstimmung — Daten landen im Mood-Tracker.</div>
-                            </div>
-                            <span class="switch">
-                                <input type="checkbox" id="confMoodSelector" onchange="data.settings.moodSelectorEnabled = this.checked; save();">
-                                <span class="switch-track"></span>
-                                <span class="switch-thumb"></span>
-                            </span>
-                        </label>
-                        <label class="toggle-row" for="confDataNotice">
-                            <div class="toggle-row-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
-                            </div>
-                            <div class="toggle-row-body">
-                                <div class="toggle-row-title">Hinweis zur Datensicherung</div>
-                                <div class="toggle-row-desc">Erinnert daran, dass deine Daten nur auf diesem Gerät liegen — auf dem Dashboard und hier in den Einstellungen.</div>
-                            </div>
-                            <span class="switch">
-                                <input type="checkbox" id="confDataNotice" checked onchange="setDataNoticeVisible(this.checked)">
-                                <span class="switch-track"></span>
-                                <span class="switch-thumb"></span>
-                            </span>
-                        </label>
-                    </div>
-
-                    <!-- Recovery -->
-                    <div class="tool-row tool-row-inline">
-                        <div class="tool-row-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-                        </div>
-                        <div class="tool-row-body">
-                            <div class="tool-row-title">Recovery Center</div>
-                            <div class="tool-row-desc">Backups verwalten, Daten wiederherstellen & sicher importieren.</div>
-                        </div>
-                        <div class="tool-row-actions">
-                            <button class="tool-action tool-action-primary" onclick="openRecoveryModal()">
-                                <span>Öffnen</span>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Datensicherheits-Hinweis -->
-                    <div class="data-note">
-                        <div class="data-note-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
-                        </div>
-                        <div class="data-note-body">
-                            <div class="data-note-title">Deine Daten liegen nur auf diesem Gerät</div>
-                            <p class="data-note-text">MyWorkLog speichert alles lokal im Browser. Wir haben keine Kopie davon und können nichts für dich wiederherstellen.</p>
-                            <p class="data-note-text">Die Einträge gehen verloren, wenn du die Browserdaten löschst, im privaten Modus arbeitest oder die Seite in Safari auf iPhone und iPad 7 Tage lang nicht öffnest. Als App auf dem Home-Bildschirm gilt diese Frist nicht. Sicher dich ab: regelmäßig exportieren oder Cloud-Sync einschalten.</p>
-                            <!-- Dieselben zwei Wege wie im Dashboard-Hinweis: ein Rat ohne
-                                 Knopf daneben wurde als "reiner Text" gemeldet. -->
-                            <div class="data-note-actions">
-                                <button type="button" class="data-note-action" onclick="openRecoveryModal()">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                    <span>Backup sichern</span>
-                                </button>
-                                <button type="button" class="data-note-action" onclick="openSettingsCloudTab()">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-                                    <span>Cloud-Sync einrichten</span>
-                                </button>
-                                <button type="button" class="data-note-dismiss" onclick="dismissDataNotice()">Nicht mehr anzeigen</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Danger Zone -->
-                    <div class="danger-zone">
-                        <div class="danger-zone-header">
-                            <div class="danger-zone-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            </div>
-                            <div class="danger-zone-title">Gefahrenzone</div>
-                        </div>
-                        <!-- Zwei Knoepfe, weil es zwei verschiedene Dinge sind. Bis 10/2026 hiess
-                             der erste „Konto und Daten löschen“ und loeschte nur den LocalStorage. -->
-                        <p class="danger-zone-desc">Lokale Daten unwiderruflich löschen. Betrifft nur dieses Gerät — ein Cloud-Konto bleibt bestehen.</p>
-                        <button id="btnDeleteLocal" class="danger-zone-action" onclick="confirmAndClearLocalData()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                            <span>Lokale Daten löschen</span>
-                        </button>
-                        <p class="danger-zone-desc danger-zone-desc--konto" id="dzKontoDesc">Cloud-Konto endgültig löschen: Anmeldung, verschlüsselte Cloud-Kopie und Berichtsheft-Freigaben. Die Daten auf diesem Gerät bleiben erhalten.</p>
-                        <button id="btnDeleteAccount" class="danger-zone-action" onclick="confirmAndDeleteAccount()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a7 7 0 0 1 11-5.7"/><line x1="16" y1="16" x2="22" y2="22"/><line x1="22" y1="16" x2="16" y2="22"/></svg>
-                            <span>Konto löschen</span>
-                        </button>
-                        <div class="danger-zone-footer">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                            <span>Tipp: Erstelle vorher ein Backup über Export oder das Recovery-Center.</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tab: Arbeitszeiten -->
-                <div id="settings-tab-work" class="settings-tab-content" style="display:none;">
-
-                    <!-- Jobs -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Jobs</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Mehrere Arbeitsverhältnisse mit eigenem Soll, eigener Pause &amp; getrenntem Saldo. Jeder Job kann ein Zeitfenster haben — beim Eintragen wird der Job dann automatisch anhand der Startzeit vorgewählt (manuell änderbar).</p>
-                        <div id="jobManagerContainer"></div>
-                    </div>
-
-                    <!-- Break Threshold -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Automatische Pause</div>
-                        <label class="settings-label">Pause ab (Stunden)</label>
-                        <input type="number" id="confBreakThresh" class="glass-input" style="max-width:160px;" value="6">
-                    </div>
-
-                    <!-- Break Minutes per Day -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Pausenzeiten pro Wochentag</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Minuten pro Tag</p>
-                        <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:8px;">
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_0" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Sonntag">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">So</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_1" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Montag">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Mo</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_2" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Dienstag">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Di</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_3" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Mittwoch">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Mi</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_4" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Donnerstag">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Do</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_5" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Freitag">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Fr</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="breakMin_6" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Samstag">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Sa</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Target Hours -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Soll-Stunden pro Tag</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Montag bis Freitag</p>
-                        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:8px;">
-                            <div style="text-align:center;">
-                                <input type="number" id="h1" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Mo</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="h2" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Di</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="h3" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Mi</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="h4" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Do</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="h5" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Fr</small>
-                            </div>
-                        </div>
-                        <p class="settings-hint" style="margin-top:1rem; margin-bottom:0.5rem;">Wochenende (optional)</p>
-                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; max-width:200px;">
-                            <div style="text-align:center;">
-                                <input type="number" id="h6" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" min="0" step="any" placeholder="0">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">Sa</small>
-                            </div>
-                            <div style="text-align:center;">
-                                <input type="number" id="h0" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" min="0" step="any" placeholder="0">
-                                <small style="color:var(--text-muted); font-size:0.75rem;">So</small>
-                            </div>
-                        </div>
-                        <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Auf 0 lassen wenn du nicht am Wochenende arbeitest.</p>
-                    </div>
-
-                    <!-- Live-Verdienst-Zähler -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Live-Verdienst-Zähler</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Zeigt beim Eintrag erfassen live, was du seit dem Start verdienst — reine Motivation, rechnet mit deinem Netto-Gehalt und den Soll-Stunden oben.</p>
-
-                        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer; margin-bottom:1rem;">
-                            <input type="checkbox" id="confWageEnabled" style="accent-color:var(--primary); width:18px; height:18px;" onchange="onWageEnabledChange()">
-                            <div style="flex:1;">
-                                <div style="font-size:0.9rem; font-weight:600; color:var(--text-main);">Zähler aktivieren</div>
-                                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Ohne Aktivierung bleibt dein Gehalt ungenutzt und wird nirgends angezeigt.</div>
-                            </div>
-                        </label>
-
-                        <div id="wageFieldsBlock" style="display:none;">
-                            <label class="settings-label">Netto-Gehalt / Monat (€)</label>
-                            <input type="number" id="confWageNetMonthly" class="glass-input" style="max-width:200px;" min="0" step="10" placeholder="z.B. 1150" oninput="if(typeof refreshWageUI==='function')refreshWageUI()">
-                            <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Stundensatz = Netto-Gehalt ÷ Ø Monatsstunden (Soll-Stunden/Woche × 4,33).</p>
-                            <p class="settings-hint" id="wageRateHint" style="font-size:0.7rem; color:var(--text-main); font-weight:600;"></p>
-
-                            <label class="settings-label" style="margin-top:0.85rem;">Anzeige-Tempo</label>
-                            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:0.5rem;">
-                                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                    <input type="radio" name="wageUnit" id="wageUnitSecond" value="second" style="accent-color:var(--primary);">
-                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main);">Sekunde</span>
-                                </label>
-                                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                    <input type="radio" name="wageUnit" id="wageUnitMinute" value="minute" style="accent-color:var(--primary);">
-                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main);">Minute</span>
-                                </label>
-                                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                    <input type="radio" name="wageUnit" id="wageUnitHour" value="hour" style="accent-color:var(--primary);">
-                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main);">Stunde</span>
-                                </label>
-                            </div>
-                            <p class="settings-hint" style="font-size:0.7rem;">Bestimmt, wie fein der Zähler tickt — Sekunde zeigt 4 Nachkommastellen und aktualisiert alle 100ms (jede Änderung sichtbar), Stunde ist ruhiger (2 Nachkommastellen, alle 5s).</p>
-                        </div>
-                    </div>
-
-                    <!-- Urlaub -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Urlaub</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Wie rechnet dein Arbeitgeber Urlaub ab?</p>
-
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:1rem;">
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;" id="vacModeDaysLabel">
-                                <input type="radio" name="vacationMode" id="vacModeDays" value="days" style="accent-color:var(--primary);" onchange="onVacationModeChange()">
-                                <div>
-                                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Tage-Modus</div>
-                                    <div style="font-size:0.72rem; color:var(--text-muted);">1 Eintrag = 1 Urlaubstag</div>
-                                </div>
-                            </label>
-                            <label style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;" id="vacModeHoursLabel">
-                                <input type="radio" name="vacationMode" id="vacModeHours" value="hours" style="accent-color:var(--primary);" onchange="onVacationModeChange()">
-                                <div>
-                                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Stunden-Modus</div>
-                                    <div style="font-size:0.72rem; color:var(--text-muted);">Sollstunden des Tags zählen</div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div id="vacModeHoursHint" style="display:none; margin-bottom:1rem; padding:10px 12px; background:rgba(var(--primary-rgb),0.06); border:1px solid rgba(var(--primary-rgb),0.18); border-radius:10px; font-size:0.76rem; color:var(--text-muted); line-height:1.5;">
-                            Referenz: <strong id="vacRefHoursDisplay" style="color:var(--text-main);">—</strong> pro Tag (⌀ deiner Werktage). Ein 4.5h-Freitag verbraucht dann nur 4.5h aus deinem Konto, nicht einen ganzen Tag.
-                        </div>
-
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                            <div>
-                                <label class="settings-label"><span id="vacTotalLabel">Jahresanspruch (Tage)</span></label>
-                                <input type="number" id="confVacationTotal" class="glass-input" min="0" step="0.5" value="30" oninput="refreshVacationModeUI()">
-                            </div>
-                            <div>
-                                <label class="settings-label"><span id="vacUsedManualLabel">Bereits genommen (manuell)</span></label>
-                                <input type="number" id="confVacationUsedManual" class="glass-input" min="0" step="0.5" value="0">
-                            </div>
-                        </div>
-                        <p class="settings-hint" style="margin-top:0.75rem; font-size:0.72rem;">
-                            <span id="vacProRataLine">Pro-Rata für dieses Eintrittsjahr: <strong id="vacationProRata" style="color:var(--text-main);">—</strong></span>
-                        </p>
-
-                        <!-- Übertrag & Jahreswechsel -->
-                        <div style="margin-top:1rem; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:12px;">
-                            <div style="font-size:0.78rem; font-weight:700; color:var(--text-main); margin-bottom:10px;">Jahreswechsel &amp; Übertrag</div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
-                                <div>
-                                    <label class="settings-label" style="font-size:0.7rem;">Übertrag aus Vorjahr</label>
-                                    <input type="number" id="confVacationCarriedOver" class="glass-input" min="0" step="0.5" value="0" placeholder="0" title="Wird bei Jahreswechsel automatisch berechnet">
-                                </div>
-                                <div>
-                                    <label class="settings-label" style="font-size:0.7rem;">Max. Übertrag <span style="color:var(--text-muted); font-weight:400;">(leer = unbegrenzt)</span></label>
-                                    <input type="number" id="confVacationCarryOverMax" class="glass-input" min="0" step="0.5" placeholder="z.B. 10" title="Wie viele Tage/Stunden maximal ins nächste Jahr übertragen werden dürfen">
-                                </div>
-                            </div>
-                            <p class="settings-hint" style="font-size:0.7rem; margin-bottom:0.75rem;">Beim Jahreswechsel berechnet die App automatisch den Resturlaub und überträgt ihn ins neue Jahr.</p>
-
-                            <!-- Jahreshistorie -->
-                            <div style="font-size:0.72rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px;">Jahreshistorie</div>
-                            <div id="vacYearHistoryTable"></div>
-                            <style>
-                            .vac-hist-table{width:100%;border-collapse:collapse;font-size:.74rem;}
-                            .vac-hist-table th{font-size:.66rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;padding:4px 6px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.07);}
-                            .vac-hist-table td{padding:6px 6px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text-main);}
-                            .vac-hist-yr{font-weight:700;color:var(--primary);}
-                            .vac-hist-co{margin-left:4px;font-size:.68rem;color:var(--text-muted);}
-                            .vac-hist-row:last-child td{border-bottom:none;}
-                            </style>
-                        </div>
-                    </div>
-
-                    <!-- Zeit-Rundung -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Zeit-Rundung</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Falls die Zahlen deines Betriebs minimal von deinen abweichen — gleich deine Anzeige an. Default: aus (exakte Werte).</p>
-
-                        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer; margin-bottom:1rem;">
-                            <input type="checkbox" id="confRoundingEnabled" style="accent-color:var(--primary); width:18px; height:18px;" onchange="onRoundingEnabledChange()">
-                            <div style="flex:1;">
-                                <div style="font-size:0.9rem; font-weight:600; color:var(--text-main);">Rundung aktivieren</div>
-                                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Wirkt auf Dashboard-Anzeigen (Gleitzeit, Wochen-/Monatssumme, Schnitt).</div>
-                            </div>
-                        </label>
-
-                        <div id="roundingModeBlock" style="display:none;">
-                            <label class="settings-label" style="margin-top:0.25rem;">Modus</label>
-                            <div style="display:grid; grid-template-columns: 1fr; gap:8px; margin-bottom:1rem;">
-                                <label style="display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                    <input type="radio" name="roundingMode" id="roundModeCommercial" value="commercial" style="accent-color:var(--primary); margin-top:2px;" onchange="onRoundingModeChange()">
-                                    <span style="flex-shrink:0; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; background:rgba(var(--primary-rgb),0.12); border-radius:8px; color:var(--primary);" aria-hidden="true">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M3 12l4-8 4 8z"/><path d="M13 12l4-8 4 8z"/><path d="M3 12a4 4 0 008 0"/><path d="M13 12a4 4 0 008 0"/></svg>
+                        <div class="st-group">
+                            <h4 class="st-group-title">Dashboard</h4>
+                            <div class="st-list">
+                                <!-- Oeffnet das Dashboard im Anpassen-Modus (dashboard-neu.js);
+                                     gespeichert in data.settings.dashLayout. -->
+                                <div class="st-row">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Anordnung</span>
+                                        <span class="st-row-desc">Module umsortieren, ein- und ausblenden, breiter oder schmaler stellen</span>
                                     </span>
-                                    <div>
-                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Kaufmännisch (Standard)</div>
-                                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">8,164h → 8,16h · 8,165h → 8,17h. Was die meisten Lohnabrechnungen nutzen.</div>
-                                    </div>
-                                </label>
-                                <label style="display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                    <input type="radio" name="roundingMode" id="roundModeDown" value="down" style="accent-color:var(--primary); margin-top:2px;" onchange="onRoundingModeChange()">
-                                    <span style="flex-shrink:0; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; background:rgba(var(--primary-rgb),0.12); border-radius:8px; color:var(--primary);" aria-hidden="true">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+                                    <span class="st-row-ctrl">
+                                        <button type="button" id="btnResetLayout" class="st-btn st-btn--leise" onclick="dnResetLayout()" title="Standard-Layout wiederherstellen"><span>Zurücksetzen</span></button>
+                                        <button type="button" id="btnEditLayout" class="st-btn" onclick="closeSettings(); dnSetEdit(true)"><span>Anpassen</span></button>
                                     </span>
-                                    <div>
-                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Immer abrunden (Abschneiden)</div>
-                                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">8,169h → 8,16h. Wenn deine Firma zu deinen Lasten abschneidet.</div>
-                                    </div>
-                                </label>
-                                <label style="display:flex; align-items:flex-start; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                    <input type="radio" name="roundingMode" id="roundModeTaktung" value="taktung" style="accent-color:var(--primary); margin-top:2px;" onchange="onRoundingModeChange()">
-                                    <span style="flex-shrink:0; width:28px; height:28px; display:inline-flex; align-items:center; justify-content:center; background:rgba(var(--primary-rgb),0.12); border-radius:8px; color:var(--primary);" aria-hidden="true">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                                </div>
+                                <label class="st-row st-row--toggle" for="confMoodSelector">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Stimmung abfragen</span>
+                                        <span class="st-row-desc">Nach jedem neuen Eintrag fragt die App kurz nach deiner Tagesstimmung</span>
                                     </span>
-                                    <div>
-                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Taktung (Minuten-Raster)</div>
-                                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Rundet auf das nächste Raster. Klassiker: 15-Minuten-Takt — viele Betriebe rechnen so.</div>
-                                    </div>
+                                    <span class="switch">
+                                        <input type="checkbox" id="confMoodSelector" onchange="data.settings.moodSelectorEnabled = this.checked; save();">
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
+                                </label>
+                                <label class="st-row st-row--toggle" for="confTabCamo">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Tab-Tarnung</span>
+                                        <span class="st-row-desc">Verkleidet den Tab als Stack Overflow, Outlook und Co., sobald du wegklickst</span>
+                                    </span>
+                                    <span class="switch">
+                                        <input type="checkbox" id="confTabCamo" onchange="data.settings.tabCamo = this.checked; save(); updateCamoState();">
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ═══ Arbeitszeit ═══ -->
+                    <section id="settings-tab-work" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHWork">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHWork">Arbeitszeit</h3>
+                            <p class="st-page-desc" id="stDWork">Soll, Pausen und wie genau die App rechnet.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Wochenplan</h4>
+                            <p class="st-group-desc" id="stWochenDesc">Soll-Stunden und Pause je Wochentag. Ein Tag mit 0 Stunden ist frei.</p>
+                            <!-- Ein Raster statt zwei: Soll und Pause gehoeren zum selben Tag.
+                                 Reihenfolge Mo bis So; die ids bleiben h0..h6 und breakMin_0..6
+                                 (0 = Sonntag, wie Date.getDay()), settings.js liest sie so. -->
+                            <div class="st-woche" role="group" aria-labelledby="stWochenDesc">
+                                <span class="st-woche-ecke" aria-hidden="true"></span>
+                                <span class="st-woche-tag">Mo</span>
+                                <span class="st-woche-tag">Di</span>
+                                <span class="st-woche-tag">Mi</span>
+                                <span class="st-woche-tag">Do</span>
+                                <span class="st-woche-tag">Fr</span>
+                                <span class="st-woche-tag st-woche-tag--we">Sa</span>
+                                <span class="st-woche-tag st-woche-tag--we">So</span>
+
+                                <!-- Wort und Einheit je in eigenem Element: Text neben einem
+                                     Element im selben Knoten ueberspringt die i18n-Pipeline. -->
+                                <span class="st-woche-zeile"><span>Soll</span> <small>h</small></span>
+                                <input type="number" id="h1" class="st-zelle" min="0" step="any" aria-label="Soll-Stunden Montag">
+                                <input type="number" id="h2" class="st-zelle" min="0" step="any" aria-label="Soll-Stunden Dienstag">
+                                <input type="number" id="h3" class="st-zelle" min="0" step="any" aria-label="Soll-Stunden Mittwoch">
+                                <input type="number" id="h4" class="st-zelle" min="0" step="any" aria-label="Soll-Stunden Donnerstag">
+                                <input type="number" id="h5" class="st-zelle" min="0" step="any" aria-label="Soll-Stunden Freitag">
+                                <input type="number" id="h6" class="st-zelle" min="0" step="any" placeholder="0" aria-label="Soll-Stunden Samstag">
+                                <input type="number" id="h0" class="st-zelle" min="0" step="any" placeholder="0" aria-label="Soll-Stunden Sonntag">
+
+                                <span class="st-woche-zeile"><span>Pause</span> <small>min</small></span>
+                                <input type="number" id="breakMin_1" class="st-zelle" min="0" step="1" aria-label="Pause Montag in Minuten">
+                                <input type="number" id="breakMin_2" class="st-zelle" min="0" step="1" aria-label="Pause Dienstag in Minuten">
+                                <input type="number" id="breakMin_3" class="st-zelle" min="0" step="1" aria-label="Pause Mittwoch in Minuten">
+                                <input type="number" id="breakMin_4" class="st-zelle" min="0" step="1" aria-label="Pause Donnerstag in Minuten">
+                                <input type="number" id="breakMin_5" class="st-zelle" min="0" step="1" aria-label="Pause Freitag in Minuten">
+                                <input type="number" id="breakMin_6" class="st-zelle" min="0" step="1" aria-label="Pause Samstag in Minuten">
+                                <input type="number" id="breakMin_0" class="st-zelle" min="0" step="1" aria-label="Pause Sonntag in Minuten">
+                            </div>
+                            <div class="st-list st-list--nach-woche">
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Pause abziehen ab</span>
+                                        <span class="st-row-desc">Kürzere Tage laufen ohne Pause</span>
+                                    </span>
+                                    <span class="st-zahl">
+                                        <input type="number" id="confBreakThresh" class="st-field st-field--zahl" min="0" step="0.25" value="6">
+                                        <span class="st-einheit">Std.</span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Jobs</h4>
+                            <p class="st-group-desc">Mehrere Arbeitsverhältnisse mit eigenem Soll, eigener Pause und getrenntem Saldo. Mit Zeitfenster wählt die App den Job beim Eintragen anhand der Startzeit vor.</p>
+                            <div id="jobManagerContainer"></div>
+                        </div>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Rundung</h4>
+                            <div class="st-list">
+                                <label class="st-row st-row--toggle" for="confRoundingEnabled">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Zeiten runden</span>
+                                        <span class="st-row-desc">Falls dein Betrieb anders rundet als die exakten Werte. Wirkt auf Gleitzeit, Summen und Schnitt</span>
+                                    </span>
+                                    <span class="switch">
+                                        <input type="checkbox" id="confRoundingEnabled" onchange="onRoundingEnabledChange()">
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
                                 </label>
                             </div>
 
-                            <div id="roundingTaktungBlock" style="display:none; margin-top:0.5rem;">
-                                <label class="settings-label">Raster</label>
-                                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
-                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                        <input type="radio" name="roundingTaktung" value="5" style="accent-color:var(--primary);">
-                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">5 min</span>
+                            <div id="roundingModeBlock" style="display:none;">
+                                <div class="st-wahl" role="radiogroup" aria-label="Rundungsmodus">
+                                    <label class="st-wahl-item">
+                                        <input type="radio" name="roundingMode" id="roundModeCommercial" value="commercial" onchange="onRoundingModeChange()">
+                                        <span class="st-wahl-text">
+                                            <span class="st-wahl-titel">Kaufmännisch</span>
+                                            <span class="st-wahl-desc">8,164 h wird 8,16 h, 8,165 h wird 8,17 h. So rechnen die meisten Lohnabrechnungen.</span>
+                                        </span>
                                     </label>
-                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                        <input type="radio" name="roundingTaktung" value="10" style="accent-color:var(--primary);">
-                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">10 min</span>
+                                    <label class="st-wahl-item">
+                                        <input type="radio" name="roundingMode" id="roundModeDown" value="down" onchange="onRoundingModeChange()">
+                                        <span class="st-wahl-text">
+                                            <span class="st-wahl-titel">Immer abrunden</span>
+                                            <span class="st-wahl-desc">8,169 h wird 8,16 h. Wenn dein Betrieb zu deinen Lasten abschneidet.</span>
+                                        </span>
                                     </label>
-                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                        <input type="radio" name="roundingTaktung" value="15" style="accent-color:var(--primary);">
-                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">15 min</span>
+                                    <label class="st-wahl-item">
+                                        <input type="radio" name="roundingMode" id="roundModeTaktung" value="taktung" onchange="onRoundingModeChange()">
+                                        <span class="st-wahl-text">
+                                            <span class="st-wahl-titel">Minuten-Raster</span>
+                                            <span class="st-wahl-desc">Rundet auf das nächste Raster, zum Beispiel den 15-Minuten-Takt.</span>
+                                        </span>
                                     </label>
-                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
-                                        <input type="radio" name="roundingTaktung" value="30" style="accent-color:var(--primary);">
-                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">30 min</span>
-                                    </label>
+                                </div>
+
+                                <div id="roundingTaktungBlock" style="display:none;">
+                                    <div class="st-list">
+                                        <div class="st-row">
+                                            <span class="st-row-text">
+                                                <span class="st-row-label">Raster</span>
+                                            </span>
+                                            <span class="st-seg" role="radiogroup" aria-label="Raster in Minuten">
+                                                <label><input type="radio" name="roundingTaktung" value="5"><span>5 min</span></label>
+                                                <label><input type="radio" name="roundingTaktung" value="10"><span>10 min</span></label>
+                                                <label><input type="radio" name="roundingTaktung" value="15"><span>15 min</span></label>
+                                                <label><input type="radio" name="roundingTaktung" value="30"><span>30 min</span></label>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Tab: Berufsschule -->
-                <div id="settings-tab-school" class="settings-tab-content" style="display:none;">
+                        <div class="st-group">
+                            <h4 class="st-group-title">Live-Verdienst</h4>
+                            <div class="st-list">
+                                <label class="st-row st-row--toggle" for="confWageEnabled">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Verdienst mitzählen</span>
+                                        <span class="st-row-desc">Zeigt beim Erfassen, was du seit dem Start verdienst. Ohne Schalter bleibt dein Gehalt ungenutzt</span>
+                                    </span>
+                                    <span class="switch">
+                                        <input type="checkbox" id="confWageEnabled" onchange="onWageEnabledChange()">
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
+                                </label>
+                            </div>
 
-                    <!-- Weekly Day Chips -->
-                    <div class="school-settings-section">
-                        <div class="school-settings-label"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg><span>Wöchentliche Schultage</span></div>
-                        <div class="school-day-chips">
-                            <label class="school-day-chip" data-day="1">
-                                <input type="checkbox" id="sch_week_1"><span>Mo</span>
-                            </label>
-                            <label class="school-day-chip" data-day="2">
-                                <input type="checkbox" id="sch_week_2"><span>Di</span>
-                            </label>
-                            <label class="school-day-chip" data-day="3">
-                                <input type="checkbox" id="sch_week_3"><span>Mi</span>
-                            </label>
-                            <label class="school-day-chip" data-day="4">
-                                <input type="checkbox" id="sch_week_4"><span>Do</span>
-                            </label>
-                            <label class="school-day-chip" data-day="5">
-                                <input type="checkbox" id="sch_week_5"><span>Fr</span>
-                            </label>
-                            <label class="school-day-chip" data-day="6">
-                                <input type="checkbox" id="sch_week_6"><span>Sa</span>
-                            </label>
-                            <label class="school-day-chip" data-day="0">
-                                <input type="checkbox" id="sch_week_0"><span>So</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Biweekly Rules -->
-                    <div class="school-settings-section">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div class="school-settings-label"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><span>Turnus-Regeln</span></div>
-                            <button class="school-settings-add-btn" onclick="addBiweeklyRule()">
-                                <span>+</span> Regel
-                            </button>
-                        </div>
-                        <div id="biweeklyRulesList" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
-                        <p class="school-settings-hint" style="margin-top:8px;">Für z.B. alle 2 Wochen: Wochentag + Intervall + Startdatum festlegen.</p>
-                    </div>
-
-                    <!-- Blockunterricht + Klasse (/klasse/). Bloecke kommen nur ueber eine Klasse
-                         herein; ohne diese Liste waeren sie wirksam, aber nirgends zu sehen. -->
-                    <div class="school-settings-section">
-                        <div class="school-settings-label"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Blockunterricht und Klasse</span></div>
-                        <div id="schoolKlasseInfo" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
-                    </div>
-
-                    <!-- Quick Check -->
-                    <div class="school-settings-section">
-                        <div class="school-settings-label"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Datum prüfen</span></div>
-                        <div class="school-check-row">
-                            <input type="date" id="checkVocDate" class="glass-input">
-                            <button class="school-settings-check-btn" onclick="checkDateVocFromInput()">Prüfen</button>
-                            <button class="school-settings-check-btn school-settings-check-today" onclick="checkTodayVocSchool()">Heute</button>
-                        </div>
-                        <div id="schoolCheckResult" class="school-inline-result" style="display:none;"></div>
-                    </div>
-
-                    <div style="display:flex; justify-content:flex-end; margin-top:1rem;">
-                        <button id="schoolSaveBtn" class="btn btn-primary school-save-btn" onclick="saveSchoolRulesAndNotify()">
-                            Speichern
-                        </button>
-                    </div>
-
-                    <div class="school-settings-footer">
-                        <span><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></span> Feiertage & Urlaub werden automatisch berücksichtigt.
-                    </div>
-                </div>
-
-                <!-- Tab: Shortcuts -->
-                <div id="settings-tab-shortcuts" class="settings-tab-content" style="display:none;">
-                    
-                    <!-- Toggle -->
-                    <div class="settings-section" style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <div class="settings-section-title" style="margin-bottom:4px;">Tastenkürzel</div>
-                            <span class="settings-hint">Aktiviert alle Tastenkürzel (S/P/E, Ctrl+Enter, Ctrl+K) — standardmäßig aus</span>
-                        </div>
-                        <label style="position:relative; display:inline-block; width:52px; height:28px; flex-shrink:0;">
-                            <input type="checkbox" id="confShortcuts" style="opacity:0; width:0; height:0;" />
-                            <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.06); transition:0.4s; border-radius:14px; border:1px solid rgba(255,255,255,0.1);"></span>
-                            <span style="position:absolute; cursor:pointer; height:22px; width:22px; left:3px; bottom:3px; background-color:rgba(255,255,255,0.5); transition:0.4s; border-radius:11px;"></span>
-                            <style>
-                                #confShortcuts:checked + span { background-color: rgba(var(--primary-rgb), 0.3); border-color: rgba(var(--primary-rgb), 0.5); }
-                                #confShortcuts:checked + span + span { transform:translateX(24px); background-color:#fff; }
-                            </style>
-                        </label>
-                    </div>
-                    
-                    <!-- Shortcuts Panel -->
-                    <div id="shortcutsPanel" style="transition:opacity 0.3s ease;">
-                        <div class="settings-info">
-                            Passe deine Tastenkürzel an. Klicke auf einen Shortcut, um ihn zu ändern.
-                        </div>
-
-                        <div id="shortcutsContainer" style="display:grid; gap:8px; margin-bottom:1.25rem;"></div>
-
-                        <div id="shortcutConflictWarning" style="display:none; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); border-radius:10px; padding:1rem; margin-bottom:1.25rem; border-left:3px solid #ef4444;">
-                            <p style="margin:0; color:#ef4444; font-weight:600; font-size:0.85rem;"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Shortcut-Konflikt erkannt!</span></p>
-                            <p id="conflictMessage" style="margin:0.5rem 0 0 0; color:var(--text-muted); font-size:0.85rem;"></p>
-                        </div>
-
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <button class="settings-btn settings-btn-primary" onclick="saveAllShortcuts()"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg><span>Speichern</span></button>
-                            <button class="settings-btn" onclick="resetShortcutsToDefaults()">↺ Standard</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab: Custom -->
-                <div id="settings-tab-custom" class="settings-tab-content" style="display:none;">
-                    
-                    <div class="settings-info">
-                        <strong>Eigene Eintrag-Typen</strong> — z.B. Fitness, Training, Meetings<br>
-                        <strong>Custom Fields</strong> — z.B. Projekt, Client, Billable<br>
-                        <strong>Workflow Rules</strong> — Automatische Validierung &amp; Auto-Fill
-                    </div>
-
-                    <!-- Entry Types -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Eintrag-Typen</div>
-                        <div id="customTypesContainer"></div>
-                    </div>
-
-                    <!-- Custom Fields -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Custom Fields</div>
-                        <div id="customFieldsContainer"></div>
-                    </div>
-
-                    <!-- Workflow Rules -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Workflow Rules</div>
-                        <div style="text-align:center; padding:1rem;">
-                            <p class="settings-hint" style="margin:0;">ℹ️ Workflow Rules sind noch in Entwicklung. Automatische Validierung & Auto-Fill pro Eintrag-Typ.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab: Team -->
-                <div id="settings-tab-team" class="settings-tab-content" style="display:none;">
-                    
-                    <div class="settings-info">
-                        Überträgt deine Einträge direkt zwischen zwei Geräten — zum Beispiel vom Handy
-                        auf den Laptop. Es gibt kein gemeinsames Konto und keine Benachrichtigungen an
-                        andere: die Daten bleiben bei dir, es kommt nur ein zweites Gerät dazu.
-                    </div>
-
-                    <!-- P2P Sync -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Geräte-Sync</div>
-
-                        <!-- Verbindungsstatus -->
-                        <div class="p2p-status-card">
-                            <div class="p2p-status-row">
-                                <div class="p2p-status-left">
-                                    <div class="p2p-status-dot" id="p2pStatusDot"></div>
-                                    <div>
-                                        <div class="p2p-status-name" id="p2pStatus">Nicht verbunden</div>
-                                        <div class="p2p-status-sub" id="p2pDeviceInfo" style="display:none;"></div>
+                            <div id="wageFieldsBlock" style="display:none;">
+                                <div class="st-list">
+                                    <label class="st-row st-row--field">
+                                        <span class="st-row-text">
+                                            <span class="st-row-label">Netto im Monat</span>
+                                            <span class="st-row-desc" id="wageRateHint"></span>
+                                        </span>
+                                        <span class="st-zahl">
+                                            <input type="number" id="confWageNetMonthly" class="st-field st-field--zahl" min="0" step="10" placeholder="1150" oninput="if(typeof refreshWageUI==='function')refreshWageUI()">
+                                            <span class="st-einheit">€</span>
+                                        </span>
+                                    </label>
+                                    <div class="st-row">
+                                        <span class="st-row-text">
+                                            <span class="st-row-label">Zählt pro</span>
+                                            <span class="st-row-desc">Sekunde tickt alle 100 ms mit vier Nachkommastellen, Stunde alle 5 s mit zwei</span>
+                                        </span>
+                                        <span class="st-seg" role="radiogroup" aria-label="Anzeige-Tempo">
+                                            <label><input type="radio" name="wageUnit" id="wageUnitSecond" value="second"><span>Sekunde</span></label>
+                                            <label><input type="radio" name="wageUnit" id="wageUnitMinute" value="minute"><span>Minute</span></label>
+                                            <label><input type="radio" name="wageUnit" id="wageUnitHour" value="hour"><span>Stunde</span></label>
+                                        </span>
                                     </div>
                                 </div>
-                                <span class="p2p-status-badge" id="connectedPeers">Offline</span>
+                                <p class="st-foot">Stundensatz = Netto ÷ durchschnittliche Monatsstunden (Soll pro Woche × 4,33).</p>
                             </div>
-                            <div class="p2p-status-foot" id="p2pLastSync" style="display:none;">
-                                Letzte Übertragung: <span id="p2pLastSyncTime">—</span>
+                        </div>
+                    </section>
+
+                    <!-- ═══ Urlaub ═══ -->
+                    <section id="settings-tab-vacation" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHVacation">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHVacation">Urlaub</h3>
+                            <p class="st-page-desc" id="stDVacation">Wie dein Betrieb Urlaub abrechnet und was ins neue Jahr mitgeht.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Abrechnung</h4>
+                            <div class="st-wahl st-wahl--zwei" role="radiogroup" aria-label="Urlaubs-Abrechnung">
+                                <label class="st-wahl-item" id="vacModeDaysLabel">
+                                    <input type="radio" name="vacationMode" id="vacModeDays" value="days" onchange="onVacationModeChange()">
+                                    <span class="st-wahl-text">
+                                        <span class="st-wahl-titel">In Tagen</span>
+                                        <span class="st-wahl-desc">Ein Urlaubseintrag ist ein Urlaubstag</span>
+                                    </span>
+                                </label>
+                                <label class="st-wahl-item" id="vacModeHoursLabel">
+                                    <input type="radio" name="vacationMode" id="vacModeHours" value="hours" onchange="onVacationModeChange()">
+                                    <span class="st-wahl-text">
+                                        <span class="st-wahl-titel">In Stunden</span>
+                                        <span class="st-wahl-desc">Es zählt das Soll des jeweiligen Tages</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <p class="st-foot" id="vacModeHoursHint" style="display:none;"><span>Bezug:</span> <strong id="vacRefHoursDisplay">—</strong> <span>pro Tag, der Schnitt deiner Werktage. Ein Freitag mit 4,5 h verbraucht dann 4,5 h, keinen ganzen Tag.</span></p>
+                        </div>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Anspruch</h4>
+                            <div class="st-list">
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label" id="vacTotalLabel">Jahresanspruch (Tage)</span>
+                                        <span class="st-row-desc" id="vacProRataLine"><span>Anteilig im Eintrittsjahr:</span> <strong id="vacationProRata">—</strong></span>
+                                    </span>
+                                    <input type="number" id="confVacationTotal" class="st-field st-field--zahl" min="0" step="0.5" value="30" oninput="refreshVacationModeUI()">
+                                </label>
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label" id="vacUsedManualLabel">Bereits genommen (Tage)</span>
+                                        <span class="st-row-desc">Urlaub, der nicht als Eintrag in der App steht</span>
+                                    </span>
+                                    <input type="number" id="confVacationUsedManual" class="st-field st-field--zahl" min="0" step="0.5" value="0">
+                                </label>
                             </div>
                         </div>
 
-                        <button class="p2p-btn" onclick="openP2PWizard()">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                            Gerät verbinden
-                        </button>
+                        <div class="st-group">
+                            <h4 class="st-group-title">Jahreswechsel</h4>
+                            <div class="st-list">
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Übertrag aus dem Vorjahr</span>
+                                        <span class="st-row-desc">Rechnet die App zum Jahreswechsel selbst aus</span>
+                                    </span>
+                                    <input type="number" id="confVacationCarriedOver" class="st-field st-field--zahl" min="0" step="0.5" value="0" placeholder="0">
+                                </label>
+                                <label class="st-row st-row--field">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Höchstens übertragen</span>
+                                        <span class="st-row-desc">Leer heißt ohne Grenze</span>
+                                    </span>
+                                    <input type="number" id="confVacationCarryOverMax" class="st-field st-field--zahl" min="0" step="0.5" placeholder="—">
+                                </label>
+                            </div>
+                            <div class="st-verlauf">
+                                <h5 class="st-unter">Bisherige Jahre</h5>
+                                <div id="vacYearHistoryTable"></div>
+                            </div>
+                        </div>
+                    </section>
 
-                        <!-- Nur bei bestehender Verbindung -->
-                        <div class="p2p-btn-row" id="p2pQuickActions" style="display:none; margin-top:10px;">
-                            <button class="p2p-btn" onclick="p2pManualSync()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                                <span>Übertragen</span>
+                    <!-- ═══ Berufsschule ═══ -->
+                    <section id="settings-tab-school" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHSchool">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHSchool">Berufsschule</h3>
+                            <p class="st-page-desc" id="stDSchool">An welchen Tagen Schule ist. Feiertage und Urlaub rechnet die App selbst heraus.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Jede Woche</h4>
+                            <div class="school-day-chips">
+                                <label class="school-day-chip" data-day="1"><input type="checkbox" id="sch_week_1"><span>Mo</span></label>
+                                <label class="school-day-chip" data-day="2"><input type="checkbox" id="sch_week_2"><span>Di</span></label>
+                                <label class="school-day-chip" data-day="3"><input type="checkbox" id="sch_week_3"><span>Mi</span></label>
+                                <label class="school-day-chip" data-day="4"><input type="checkbox" id="sch_week_4"><span>Do</span></label>
+                                <label class="school-day-chip" data-day="5"><input type="checkbox" id="sch_week_5"><span>Fr</span></label>
+                                <label class="school-day-chip" data-day="6"><input type="checkbox" id="sch_week_6"><span>Sa</span></label>
+                                <label class="school-day-chip" data-day="0"><input type="checkbox" id="sch_week_0"><span>So</span></label>
+                            </div>
+                        </div>
+
+                        <div class="st-group">
+                            <div class="st-group-kopf">
+                                <h4 class="st-group-title">Im Turnus</h4>
+                                <button type="button" class="st-btn st-btn--leise" onclick="addBiweeklyRule()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                                    <span>Regel</span>
+                                </button>
+                            </div>
+                            <p class="st-group-desc">Zum Beispiel alle zwei Wochen: Wochentag, Abstand und ersten Termin festlegen.</p>
+                            <div id="biweeklyRulesList" class="st-regeln"></div>
+                        </div>
+
+                        <!-- Bloecke kommen nur ueber eine Klasse (/klasse/) herein; ohne diese
+                             Liste waeren sie wirksam, aber nirgends zu sehen. -->
+                        <div class="st-group">
+                            <h4 class="st-group-title">Blockunterricht und Klasse</h4>
+                            <div id="schoolKlasseInfo" class="st-regeln"></div>
+                        </div>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Tag prüfen</h4>
+                            <div class="school-check-row">
+                                <input type="date" id="checkVocDate" class="st-field st-field--datum" aria-label="Datum">
+                                <button type="button" class="st-btn" onclick="checkDateVocFromInput()">Prüfen</button>
+                                <button type="button" class="st-btn st-btn--leise" onclick="checkTodayVocSchool()">Heute</button>
+                            </div>
+                            <div id="schoolCheckResult" class="school-inline-result" style="display:none;"></div>
+                        </div>
+
+                        <div class="st-aktionen">
+                            <button type="button" id="schoolSaveBtn" class="st-btn st-btn--haupt school-save-btn" onclick="saveSchoolRulesAndNotify()">Speichern</button>
+                        </div>
+                    </section>
+
+                    <!-- ═══ Eintragstypen ═══ -->
+                    <section id="settings-tab-custom" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHCustom">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHCustom">Eintragstypen</h3>
+                            <p class="st-page-desc" id="stDCustom">Eigene Arten von Einträgen und Felder, die du bei jedem Eintrag ausfüllst.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Typen</h4>
+                            <p class="st-group-desc">Neben Arbeit, Schule und Urlaub, zum Beispiel Training oder Meeting.</p>
+                            <div id="customTypesContainer"></div>
+                        </div>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Eigene Felder</h4>
+                            <p class="st-group-desc">Zum Beispiel Projekt, Kunde oder abrechenbar.</p>
+                            <div id="customFieldsContainer"></div>
+                        </div>
+                    </section>
+
+                    <!-- ═══ Cloud ═══ -->
+                    <section id="settings-tab-cloud" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHCloud">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHCloud">Cloud</h3>
+                            <p class="st-page-desc" id="stDCloud">Eine Ende-zu-Ende verschlüsselte Kopie auf dem Server (Supabase, EU). Den Schlüssel bildet dein Wiederherstellungs-Code: ohne ihn kann niemand die Kopie lesen, auch MyWorkLog nicht.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Konto</h4>
+                            <div class="st-status" id="cloudSyncStatus">
+                                <p>Wird geladen …</p>
+                            </div>
+                            <!-- Sichtbarkeit und disabled setzt updateCloudSyncUI() (api-cloud-sync.js)
+                                 inline: display block|none, opacity 1|0.5. Deshalb stehen die
+                                 Startwerte hier inline und nicht im CSS. -->
+                            <div class="st-cloud-knoepfe">
+                                <button id="cloudSyncLoginBtn" class="settings-btn settings-btn-primary" style="display:none;" onclick="openCloudLoginModal()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 14.9"/></svg>
+                                    <span>Cloud Login</span>
+                                </button>
+                                <button id="cloudSyncUploadBtn" class="settings-btn" style="opacity:0.5;" disabled onclick="handleCloudUpload()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+                                    <span>In Cloud hochladen</span>
+                                </button>
+                                <button id="cloudSyncDownloadBtn" class="settings-btn" style="opacity:0.5;" disabled onclick="handleCloudDownload()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+                                    <span>Von Cloud wiederherstellen</span>
+                                </button>
+                            </div>
+                            <p class="st-foot">Die App gleicht nicht von selbst ab. Hoch- und Herunterladen startest du hier.</p>
+                            <div class="st-cloud-knoepfe st-cloud-knoepfe--neben">
+                                <button id="cloudSyncLogoutBtn" class="settings-btn" style="display:none;" onclick="handleCloudLogout()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                    <span>Logout</span>
+                                </button>
+                                <!-- Art. 17 DSGVO in Reichweite statt per E-Mail: entfernt den
+                                     Cloud-Spiegel dieses Kontos. Bewusst "Cloud-Daten", nicht
+                                     "Konto" — was er NICHT anfasst, steht bei deleteCloudData(). -->
+                                <button id="cloudSyncDeleteBtn" class="settings-btn settings-btn-danger" style="display:none;" onclick="handleCloudDeleteData()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    <span>Cloud-Daten löschen</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Nur sichtbar, wenn angemeldet UND das Geraet WebAuthn kann —
+                             renderPasskeySection() entscheidet das. Anlegen geht nur mit
+                             bestehendem Konto, deshalb steht der Abschnitt hier. -->
+                        <div class="st-group" id="passkeySection" style="display:none;">
+                            <h4 class="st-group-title">Passkeys</h4>
+                            <p class="st-group-desc">Anmelden mit Fingerabdruck, Gesicht oder Geräte-PIN, ohne Passwort und ohne E-Mail. Der Schlüssel bleibt auf dem Gerät.</p>
+                            <div id="passkeyList" class="st-regeln"></div>
+                            <button id="passkeyAddBtn" class="settings-btn st-btn-voll" onclick="handlePasskeyRegister()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M10.9 12.1A6 6 0 0 0 4 18v2h7"/><circle cx="17.5" cy="14.5" r="2.5"/><path d="M17.5 17v5l1.5-1.5L17.5 19"/></svg>
+                                <span>Passkey auf diesem Gerät einrichten</span>
                             </button>
-                            <button class="p2p-btn p2p-btn--danger" onclick="p2pDisconnect()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
-                                Trennen
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Sync-Einstellungen -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Übertragung</div>
-
-                        <div class="p2p-toggle-row">
-                            <input type="checkbox" id="p2pAutoSync" checked>
-                            <label for="p2pAutoSync">Sofort übertragen, sobald die Verbindung steht</label>
+                            <div id="passkeyMessage" style="display:none;" class="cl-message"></div>
                         </div>
 
-                        <div class="p2p-toggle-row">
-                            <input type="checkbox" id="p2pOfflineQueue" checked>
-                            <label for="p2pOfflineQueue">Änderungen bei Verbindungsverlust vormerken</label>
-                        </div>
+                        <!-- KI-Assistent (components/core/ki-assistent.js). Inhalt kommt per
+                             JS beim Oeffnen der Seite, Texte dort mit L() — so braucht die
+                             Huelle keine i18n-Schluessel. -->
+                        <div class="st-group" id="kiAppSection" style="display:none;"></div>
 
-                        <div class="p2p-crypto-row">
-                            <svg class="p2p-crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <div class="p2p-crypto-text">
-                                <div class="p2p-crypto-name">Ende-zu-Ende-Verschlüsselung</div>
-                                <div class="p2p-crypto-sub" id="p2pCryptoSub">Wird beim Verbinden ausgehandelt.</div>
-                            </div>
-                            <span class="p2p-status-badge" id="p2pCryptoBadge">Bereit</span>
-                        </div>
-
-                        <div class="settings-hint" style="margin-top:0.85rem;">
-                            Die Übertragung läuft direkt zwischen deinen Geräten, ohne zentralen Server.
-                            Ablauf: Code erzeugen, Code eingeben, Antwort-Code zurückgeben. Klappt der Aufbau
-                            nicht, sind meist strenge Firewalls oder ein VPN im Weg.
-                        </div>
-                    </div>
-
-                    <!-- P2P Hilfe & Troubleshooting -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Hilfe & Problembehebung</div>
-                        <details style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px 14px;">
-                            <summary style="font-weight:600; color:var(--text-main); font-size:0.9rem; cursor:pointer;">
-                                Verbindung schlägt immer fehl?
+                        <!-- Diagnose fuer Fehlersuche, kein Alltagsbedienelement: deshalb
+                             eingeklappt. apiStatusMonitor.render() (api-cloud-sync.js) fuellt
+                             die ids auch im eingeklappten Zustand. -->
+                        <details class="st-group st-diagnose">
+                            <summary class="st-diagnose-kopf">
+                                <span id="apiStatusDot" class="st-diagnose-punkt"></span>
+                                <span class="st-diagnose-titel">Verbindungsdiagnose</span>
+                                <span id="apiStatusText" class="st-diagnose-sub">Alle Systeme erreichbar</span>
+                                <svg class="st-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
                             </summary>
-                            <div style="margin-top:12px; font-size:0.8rem; color:var(--text-muted); line-height:1.6; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
-                                <p style="margin-bottom:8px;">Damit sich deine Geräte im WLAN direkt verbinden können (P2P), darf <b>WebRTC (lokale IP)</b> nicht blockiert werden. Checke folgende Punkte auf beiden Geräten:</p>
-                                <ul style="padding-left:20px; margin-bottom:0;">
-                                    <li style="margin-bottom:6px;"><strong style="color:var(--text-main)">VPNs (z.B. NordVPN):</strong> Erlaube den lokalen Netzwerkzugriff! Am PC heißt das <em>"Unsichtbarkeit im LAN"</em> <b>ausschalten</b>. Am Handy heißt es oft <em>"Lokale Netzwerk-Erkennung"</em> <b>einschalten</b>.</li>
-                                    <li style="margin-bottom:6px;"><strong style="color:var(--text-main)">Ad-Blocker (z.B. AdGuard):</strong> Funktionen wie <em>"IP-Adresse-Lecks durch WebRTC verhindern"</em> blockieren den Aufbau und müssen zwingend deaktiviert sein.</li>
-                                    <li style="margin-bottom:6px;"><strong style="color:var(--text-main)">iPhone / Apple-Geräte:</strong> Das <em>iCloud Privat-Relay</em> sowie die Safari-Option <em>"IP-Adresse verbergen"</em> filtern lokale Verbindungen gnadenlos heraus. Bitte für den Sync kurz deaktivieren.</li>
-                                    <li><strong style="color:var(--text-main)">Netzwerk:</strong> Dein Handy darf nicht versehentlich im Mobilfunknetz (LTE/5G) sein, sondern muss im selben WLAN (Heimnetz) wie der PC stecken.</li>
+                            <div class="st-diagnose-inhalt">
+                                <div class="st-diagnose-leiste">
+                                    <div class="st-seg st-seg--klein" role="group" aria-label="Zeitraum">
+                                        <button type="button" class="api-range-tab active" data-range="1h" onclick="setApiRange('1h',this)">1 h</button>
+                                        <button type="button" class="api-range-tab" data-range="24h" onclick="setApiRange('24h',this)">24 h</button>
+                                        <button type="button" class="api-range-tab" data-range="7d" onclick="setApiRange('7d',this)">7 Tage</button>
+                                        <button type="button" class="api-range-tab" data-range="30d" onclick="setApiRange('30d',this)">30 Tage</button>
+                                    </div>
+                                    <button type="button" class="st-btn st-btn--leise" onclick="refreshApiStatus()">Neu prüfen</button>
+                                </div>
+                                <div class="st-diagnose-zeile">
+                                    <span>Erreichbarkeit</span>
+                                    <span id="apiUptimePercent" class="st-mono">100%</span>
+                                </div>
+                                <div id="apiUptimeBar" class="st-uptime"></div>
+                                <div class="st-diagnose-zeile st-diagnose-zeile--klein">
+                                    <span id="apiRangeStart">—</span>
+                                    <span id="apiRangeEnd">Jetzt</span>
+                                </div>
+                                <div id="apiDiagBanner" style="display:none;"></div>
+                                <h5 class="st-unter">Statuscodes</h5>
+                                <div id="apiStatusCodes" class="st-diagnose-pillen"></div>
+                                <h5 class="st-unter">Endpunkte</h5>
+                                <div id="apiEndpointList" class="st-diagnose-liste"></div>
+                                <div class="st-diagnose-zeile">
+                                    <h5 class="st-unter">Letzte Anfragen</h5>
+                                    <span id="apiTotalRequests" class="st-mono">0 total</span>
+                                </div>
+                                <div id="apiRequestLog" class="st-diagnose-log"></div>
+                                <div class="st-diagnose-zeile st-diagnose-zeile--klein">
+                                    <span id="apiLastChecked">Zuletzt geprüft: —</span>
+                                    <span>Supabase Edge Logs</span>
+                                </div>
+                            </div>
+                        </details>
+                    </section>
+
+                    <!-- ═══ Geraete-Sync ═══ -->
+                    <section id="settings-tab-team" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHTeam">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHTeam">Geräte-Sync</h3>
+                            <p class="st-page-desc" id="stDTeam">Überträgt deine Einträge direkt von einem Gerät aufs andere, zum Beispiel vom Handy auf den Laptop. Kein Konto, kein Server dazwischen.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Verbindung</h4>
+                            <div class="p2p-status-card">
+                                <div class="p2p-status-row">
+                                    <div class="p2p-status-left">
+                                        <div class="p2p-status-dot" id="p2pStatusDot"></div>
+                                        <div>
+                                            <div class="p2p-status-name" id="p2pStatus">Nicht verbunden</div>
+                                            <div class="p2p-status-sub" id="p2pDeviceInfo" style="display:none;"></div>
+                                        </div>
+                                    </div>
+                                    <span class="p2p-status-badge" id="connectedPeers">Offline</span>
+                                </div>
+                                <div class="p2p-status-foot" id="p2pLastSync" style="display:none;">
+                                    <span>Letzte Übertragung:</span> <span id="p2pLastSyncTime">—</span>
+                                </div>
+                            </div>
+
+                            <button type="button" class="p2p-btn" onclick="openP2PWizard()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                <span>Gerät verbinden</span>
+                            </button>
+
+                            <!-- Nur bei bestehender Verbindung -->
+                            <div class="p2p-btn-row" id="p2pQuickActions" style="display:none; margin-top:10px;">
+                                <button type="button" class="p2p-btn" onclick="p2pManualSync()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                                    <span>Übertragen</span>
+                                </button>
+                                <button type="button" class="p2p-btn p2p-btn--danger" onclick="p2pDisconnect()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                                    <span>Trennen</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="st-group">
+                            <h4 class="st-group-title">Übertragung</h4>
+                            <!-- Bis 25.10.2026 stand hier ein zweiter Schalter "Aenderungen bei
+                                 Verbindungsverlust vormerken" (p2pOfflineQueue). Er wurde gespeichert,
+                                 aber nie ausgewertet — p2p-sync.js kennt keine Warteschlange. Nicht
+                                 zurueckholen, bevor es eine gibt (bedienelemente.md). -->
+                            <div class="st-list">
+                                <label class="st-row st-row--toggle" for="p2pAutoSync">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Sofort übertragen</span>
+                                        <span class="st-row-desc">Sobald die Verbindung steht, ohne extra Klick</span>
+                                    </span>
+                                    <span class="switch">
+                                        <input type="checkbox" id="p2pAutoSync" checked>
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
+                                </label>
+                                <div class="st-row">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Ende-zu-Ende-Verschlüsselung</span>
+                                        <span class="st-row-desc" id="p2pCryptoSub">Wird beim Verbinden ausgehandelt.</span>
+                                    </span>
+                                    <span class="p2p-status-badge" id="p2pCryptoBadge">Bereit</span>
+                                </div>
+                            </div>
+                            <p class="st-foot">Ablauf: Code erzeugen, auf dem anderen Gerät eingeben, Antwort-Code zurückgeben. Klappt der Aufbau nicht, sind meist eine strenge Firewall oder ein VPN im Weg.</p>
+                        </div>
+
+                        <details class="st-group st-hilfe">
+                            <summary>
+                                <span>Verbindung schlägt immer fehl?</span>
+                                <svg class="st-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                            </summary>
+                            <div class="st-hilfe-text">
+                                <!-- Je Satz ein Element ohne Unterknoten: so entsteht pro Satz ein
+                                     i18n-Schluessel. Die Fassung davor mischte Text mit <em>/<b> und
+                                     blieb auf /en/ komplett deutsch. -->
+                                <p>Die Geräte verbinden sich direkt im WLAN. Dafür darf WebRTC mit lokaler IP nicht blockiert sein. Prüf auf beiden Geräten:</p>
+                                <ul>
+                                    <li><strong>VPN, zum Beispiel NordVPN:</strong> <span>Lokalen Netzwerkzugriff erlauben. Am PC heißt das meist „Unsichtbarkeit im LAN“ ausschalten, am Handy „Lokale Netzwerk-Erkennung“ einschalten.</span></li>
+                                    <li><strong>Werbeblocker, zum Beispiel AdGuard:</strong> <span>Funktionen wie „IP-Adresse-Lecks durch WebRTC verhindern“ blockieren den Aufbau und müssen aus sein.</span></li>
+                                    <li><strong>iPhone und iPad:</strong> <span>iCloud Privat-Relay und die Safari-Option „IP-Adresse verbergen“ filtern lokale Verbindungen heraus. Für den Abgleich kurz ausschalten.</span></li>
+                                    <li><strong>Netzwerk:</strong> <span>Das Handy muss im selben WLAN sein wie der PC, nicht im Mobilfunknetz.</span></li>
                                 </ul>
                             </div>
                         </details>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- Tab: Cloud -->
-                <div id="settings-tab-cloud" class="settings-tab-content" style="display:none;">
-                    
-                    <div class="settings-info">
-                        Mit Cloud-Sync liegt eine Ende-zu-Ende verschlüsselte Kopie deiner Daten auf dem Server (Supabase, EU) und lässt sich auf ein anderes Gerät holen. Den Schlüssel bildet dein Wiederherstellungs-Code: Ohne ihn kann niemand die Kopie lesen, auch MyWorkLog nicht.
-                    </div>
+                    <!-- ═══ Daten und Sicherung ═══ -->
+                    <section id="settings-tab-data" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHData">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHData">Daten und Sicherung</h3>
+                            <p class="st-page-desc" id="stDData">Was auf diesem Gerät liegt, wie du es sicherst und wie du es löschst.</p>
+                        </header>
 
-                    <div class="data-note data-note-compact">
-                        <div class="data-note-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
-                        </div>
-                        <p class="data-note-text">Ohne Cloud oder Export liegen deine Einträge ausschließlich in diesem Browser — geht der Speicher verloren, lassen sie sich von niemandem wiederherstellen.</p>
-                        <button type="button" class="data-note-dismiss" onclick="dismissDataNotice()">Nicht mehr anzeigen</button>
-                    </div>
-
-                    <!-- Cloud Status -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Status</div>
-                        <div id="cloudSyncStatus" style="color:var(--text-muted); font-size:0.85rem; line-height:1.8;">
-                            <p style="margin:0;">Wird geladen...</p>
-                        </div>
-                    </div>
-                    
-                    <!-- Cloud Buttons -->
-                    <div style="display:flex; flex-direction:column; gap:10px;">
-                        <button id="cloudSyncLoginBtn" class="settings-btn settings-btn-primary" style="width:100%; display:none;" onclick="openCloudLoginModal()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 14.9"/></svg>
-                            <span>Cloud Login</span>
-                        </button>
-
-                        <button id="cloudSyncLogoutBtn" class="settings-btn" style="width:100%; display:none;" onclick="handleCloudLogout()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                            <span>Logout</span>
-                        </button>
-
-                        <button id="cloudSyncUploadBtn" class="settings-btn" style="width:100%; opacity:0.5;" disabled onclick="handleCloudUpload()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
-                            <span>In Cloud hochladen</span>
-                        </button>
-
-                        <button id="cloudSyncDownloadBtn" class="settings-btn" style="width:100%; opacity:0.5;" disabled onclick="handleCloudDownload()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
-                            <span>Von Cloud wiederherstellen</span>
-                        </button>
-
-                        <!-- Art. 17 DSGVO in Reichweite statt per E-Mail: der
-                             Knopf entfernt den Cloud-Spiegel dieses Kontos.
-                             Bewusst „Cloud-Daten", nicht „Konto" — was er NICHT
-                             anfasst, steht bei deleteCloudData(). -->
-                        <button id="cloudSyncDeleteBtn" class="settings-btn settings-btn-danger" style="width:100%; display:none;" onclick="handleCloudDeleteData()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                            <span>Cloud-Daten löschen</span>
-                        </button>
-                    </div>
-
-                    <!-- Passkeys. Nur sichtbar, wenn angemeldet UND das Geraet
-                         WebAuthn kann — renderPasskeySection() entscheidet das.
-                         Anlegen geht nur mit bestehendem Konto, deshalb steht der
-                         Abschnitt hier und nicht im Anmelde-Dialog. -->
-                    <div class="settings-section" id="passkeySection" style="margin-top:1.5rem; display:none;">
-                        <div class="settings-section-title">Passkeys</div>
-                        <p style="color:var(--text-muted); font-size:0.85rem; line-height:1.6; margin:0 0 0.9rem;">
-                            Melde dich künftig mit Fingerabdruck, Gesicht oder Geräte-PIN an — ohne
-                            Passwort und ohne E-Mail. Der Schlüssel bleibt auf dem Gerät.
-                        </p>
-                        <div id="passkeyList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:0.9rem;"></div>
-                        <button id="passkeyAddBtn" class="settings-btn" style="width:100%;" onclick="handlePasskeyRegister()">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="8" r="4"/><path d="M10.9 12.1A6 6 0 0 0 4 18v2h7"/><circle cx="17.5" cy="14.5" r="2.5"/><path d="M17.5 17v5l1.5-1.5L17.5 19"/></svg>
-                            <span>Passkey auf diesem Gerät einrichten</span>
-                        </button>
-                        <div id="passkeyMessage" style="display:none; margin-top:0.7rem;" class="cl-message"></div>
-                    </div>
-
-                    <!-- KI-Assistent (components/core/ki-assistent.js). Inhalt kommt
-                         per JS beim Oeffnen des Tabs, Texte dort mit L() — so
-                         braucht die Huelle keine i18n-Schluessel. -->
-                    <div class="settings-section" id="kiAppSection" style="margin-top:1.5rem; display:none;"></div>
-
-                    <div class="settings-hint" style="margin-top:1.25rem; display:flex; align-items:flex-start; gap:8px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:3px; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        <span>Daten werden <strong>nicht</strong> automatisch synchronisiert. Nutze die Buttons zum manuellen Hoch- oder Runterladen.</span>
-                    </div>
-
-                    <!-- ═══════════ API STATUS MONITOR ═══════════ -->
-                    <div class="settings-section" style="margin-top:1.5rem; padding:0; overflow:hidden;">
-                        
-                        <!-- Header -->
-                        <div style="padding:1.25rem 1.25rem 0.75rem; display:flex; justify-content:space-between; align-items:center;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <div id="apiStatusDot" style="width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px rgba(16,185,129,0.5); animation:pulse-dot 2s infinite;"></div>
-                                <div>
-                                    <div style="font-size:0.9rem; font-weight:700; color:#fff;">API Status</div>
-                                    <div id="apiStatusText" style="font-size:0.72rem; color:rgba(255,255,255,0.4); margin-top:1px;">Alle Systeme operational</div>
+                        <!-- .data-note: data-notice.js setzt display grid|none an ALLEN
+                             Hinweisen gleichzeitig, der Schalter weiter unten holt sie zurueck. -->
+                        <div class="data-note">
+                            <div class="data-note-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg>
+                            </div>
+                            <div class="data-note-body">
+                                <div class="data-note-title">Ohne Sicherung liegen deine Daten nur hier</div>
+                                <p class="data-note-text">MyWorkLog speichert im Browser. Löschst du die Browserdaten, arbeitest du im privaten Modus oder öffnest die Seite in Safari auf iPhone und iPad sieben Tage lang nicht, sind die Einträge weg. Als App auf dem Home-Bildschirm gilt die Frist nicht.</p>
+                                <div class="data-note-actions">
+                                    <button type="button" class="data-note-action" onclick="openRecoveryModal()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                        <span>Backup sichern</span>
+                                    </button>
+                                    <button type="button" class="data-note-action" onclick="openSettingsCloudTab()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                                        <span>Cloud-Sync einrichten</span>
+                                    </button>
+                                    <button type="button" class="data-note-dismiss" onclick="dismissDataNotice()">Nicht mehr anzeigen</button>
                                 </div>
                             </div>
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <button onclick="refreshApiStatus()" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); padding:5px 10px; border-radius:8px; font-size:0.7rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='rgba(255,255,255,0.5)'">↻ Refresh</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Time Range Tabs -->
-                        <div style="display:flex; gap:0; padding:0 1.25rem; margin-bottom:0.75rem;">
-                            <button class="api-range-tab active" data-range="1h" onclick="setApiRange('1h',this)">1h</button>
-                            <button class="api-range-tab" data-range="24h" onclick="setApiRange('24h',this)">24h</button>
-                            <button class="api-range-tab" data-range="7d" onclick="setApiRange('7d',this)">7 Tage</button>
-                            <button class="api-range-tab" data-range="30d" onclick="setApiRange('30d',this)">30 Tage</button>
                         </div>
 
-                        <!-- Uptime Bar (like BetterUptime/Instatus) -->
-                        <div style="padding:0 1.25rem 0.75rem;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                                <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">Uptime</span>
-                                <span id="apiUptimePercent" style="font-size:0.68rem; color:#10b981; font-weight:700; font-family:var(--font-mono);">100%</span>
-                            </div>
-                            <div id="apiUptimeBar" style="display:flex; gap:1.5px; height:28px; border-radius:6px; overflow:hidden;">
-                                <!-- Uptime segments rendered by JS -->
-                            </div>
-                            <div style="display:flex; justify-content:space-between; margin-top:4px;">
-                                <span id="apiRangeStart" style="font-size:0.62rem; color:rgba(255,255,255,0.2);">—</span>
-                                <span id="apiRangeEnd" style="font-size:0.62rem; color:rgba(255,255,255,0.2);">Jetzt</span>
-                            </div>
-                        </div>
-
-                        <!-- Diagnose Banner (AdBlocker / 503 / Netzwerk) -->
-                        <div id="apiDiagBanner" style="display:none; padding:0 1.25rem 0.75rem;"></div>
-
-                        <!-- Status Code Breakdown -->
-                        <div style="padding:0 1.25rem 1rem;">
-                            <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; font-weight:600;">Status Codes</div>
-                            <div id="apiStatusCodes" style="display:flex; flex-wrap:wrap; gap:6px;">
-                                <!-- Status code pills rendered by JS -->
+                        <div class="st-group">
+                            <h4 class="st-group-title">Sichern</h4>
+                            <div class="st-list">
+                                <div class="st-row">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Recovery Center</span>
+                                        <span class="st-row-desc">Backups anlegen und verwalten, Daten wiederherstellen und sicher importieren</span>
+                                    </span>
+                                    <span class="st-row-ctrl">
+                                        <button type="button" class="st-btn" onclick="openRecoveryModal()"><span>Öffnen</span></button>
+                                    </span>
+                                </div>
+                                <label class="st-row st-row--toggle" for="confDataNotice">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Hinweis zur Datensicherung</span>
+                                        <span class="st-row-desc">Erinnert auf dem Dashboard und hier daran, dass die Daten im Browser liegen</span>
+                                    </span>
+                                    <span class="switch">
+                                        <input type="checkbox" id="confDataNotice" checked onchange="setDataNoticeVisible(this.checked)">
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
+                                </label>
                             </div>
                         </div>
 
-                        <!-- Endpoint Health -->
-                        <div style="padding:0 1.25rem 1rem;">
-                            <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; font-weight:600;">Endpoints</div>
-                            <div id="apiEndpointList" style="display:flex; flex-direction:column; gap:4px;">
-                                <!-- Endpoint rows rendered by JS -->
+                        <!-- onboarding.js blendet den Abschnitt aus, wenn die App schon
+                             installiert ist oder die Installation abgelehnt wurde. -->
+                        <div class="st-group" id="pwaInstallSection">
+                            <h4 class="st-group-title">Als App installieren</h4>
+                            <div class="st-list">
+                                <div class="st-row">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Auf den Home-Bildschirm</span>
+                                        <span class="st-row-desc" id="pwaStatus">Startet wie eine App, schneller und auch offline</span>
+                                    </span>
+                                    <span class="st-row-ctrl">
+                                        <button type="button" class="st-btn st-btn--leise" onclick="checkPWAStatus();"><span>Status</span></button>
+                                        <button type="button" class="st-btn" onclick="triggerInstallPrompt();"><span>Installieren</span></button>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Recent Requests Log -->
-                        <div style="padding:0 1.25rem 1rem;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Letzte Requests</div>
-                                <span id="apiTotalRequests" style="font-size:0.65rem; color:rgba(255,255,255,0.25); font-family:var(--font-mono);">0 total</span>
+                        <!-- Zwei Knoepfe, weil es zwei verschiedene Dinge sind. Bis 10/2026 hiess
+                             der erste "Konto und Daten loeschen" und loeschte nur den LocalStorage. -->
+                        <div class="st-group st-gefahr">
+                            <h4 class="st-group-title">Löschen</h4>
+                            <div class="st-list">
+                                <div class="st-row">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Lokale Daten</span>
+                                        <span class="st-row-desc">Alles auf diesem Gerät, unwiderruflich. Ein Cloud-Konto bleibt bestehen</span>
+                                    </span>
+                                    <span class="st-row-ctrl">
+                                        <button type="button" id="btnDeleteLocal" class="st-btn st-btn--gefahr" onclick="confirmAndClearLocalData()"><span>Löschen</span></button>
+                                    </span>
+                                </div>
+                                <div class="st-row">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Cloud-Konto</span>
+                                        <span class="st-row-desc" id="dzKontoDesc">Anmeldung, verschlüsselte Cloud-Kopie und Berichtsheft-Freigaben. Die Daten auf diesem Gerät bleiben</span>
+                                    </span>
+                                    <span class="st-row-ctrl">
+                                        <button type="button" id="btnDeleteAccount" class="st-btn st-btn--gefahr" onclick="confirmAndDeleteAccount()"><span>Konto löschen</span></button>
+                                    </span>
+                                </div>
                             </div>
-                            <div id="apiRequestLog" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
-                                <!-- Request log rows rendered by JS -->
+                            <p class="st-foot">Vorher ein Backup im Recovery Center anlegen.</p>
+                        </div>
+                    </section>
+
+                    <!-- ═══ Tastenkuerzel ═══ -->
+                    <section id="settings-tab-shortcuts" class="settings-tab-content st-page" style="display:none;" aria-labelledby="stHShortcuts">
+                        <header class="st-page-head">
+                            <h3 class="st-page-title" id="stHShortcuts">Tastenkürzel</h3>
+                            <p class="st-page-desc" id="stDShortcuts">S, P und E für die Stempeluhr, Strg+Enter zum Speichern, Strg+K für die Suche.</p>
+                        </header>
+
+                        <div class="st-group">
+                            <div class="st-list">
+                                <label class="st-row st-row--toggle" for="confShortcuts">
+                                    <span class="st-row-text">
+                                        <span class="st-row-label">Tastenkürzel verwenden</span>
+                                        <span class="st-row-desc">Standardmäßig aus, damit Tippen in Feldern nichts auslöst</span>
+                                    </span>
+                                    <span class="switch">
+                                        <input type="checkbox" id="confShortcuts">
+                                        <span class="switch-track"></span>
+                                        <span class="switch-thumb"></span>
+                                    </span>
+                                </label>
                             </div>
                         </div>
 
-                        <!-- Footer -->
-                        <div style="padding:0.75rem 1.25rem; background:rgba(255,255,255,0.015); border-top:1px solid rgba(255,255,255,0.04); display:flex; justify-content:space-between; align-items:center;">
-                            <span id="apiLastChecked" style="font-size:0.65rem; color:rgba(255,255,255,0.2);">Zuletzt geprüft: —</span>
-                            <span style="font-size:0.62rem; color:rgba(255,255,255,0.15);">Supabase Edge Logs</span>
+                        <!-- display/opacity setzt updateShortcutsPanelVisibility() inline. -->
+                        <div id="shortcutsPanel" class="st-group">
+                            <h4 class="st-group-title">Belegung</h4>
+                            <p class="st-group-desc">Klick auf ein Kürzel und drück die neue Kombination.</p>
+                            <div id="shortcutsContainer" class="st-regeln"></div>
+
+                            <div id="shortcutConflictWarning" class="st-warnung" style="display:none;">
+                                <p class="st-warnung-titel"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Zwei Aktionen haben dasselbe Kürzel</span></p>
+                                <p id="conflictMessage"></p>
+                            </div>
+
+                            <div class="st-aktionen">
+                                <button type="button" class="st-btn st-btn--leise" onclick="resetShortcutsToDefaults()"><span>Standard</span></button>
+                                <button type="button" class="st-btn st-btn--haupt" onclick="saveAllShortcuts()"><span>Speichern</span></button>
+                            </div>
                         </div>
-                    </div>
-                    <!-- ═══════════ END API STATUS MONITOR ═══════════ -->
+                    </section>
 
                 </div>
-                
             </div>
-            
         </div>
     </div>
 

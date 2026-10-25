@@ -35,8 +35,8 @@ const sidebarDoc = new JSDOM(sidebarHtml).window.document;
 const input = modalDoc.getElementById('confAvatarInitials');
 ok(!!input, '#confAvatarInitials im Modals-Markup vorhanden');
 ok(input && input.getAttribute('maxlength') === '2', '#confAvatarInitials hat maxlength="2"');
-ok(input && input.classList.contains('pfield-input'), '#confAvatarInitials nutzt .pfield-input');
-ok(input && input.classList.contains('pfield-value'), '#confAvatarInitials nutzt .pfield-value');
+ok(input && input.classList.contains('st-field'), '#confAvatarInitials nutzt .st-field (Zeilen-Eingabe der Einstellungen)');
+ok(input && input.closest('.profile-card') !== null, '#confAvatarInitials liegt in der Profilkarte (das Skript sucht es dort)');
 
 const sidebarAvatar = sidebarDoc.getElementById('sidebarAvatar');
 ok(!!sidebarAvatar, '#sidebarAvatar in sidebar.html vorhanden');

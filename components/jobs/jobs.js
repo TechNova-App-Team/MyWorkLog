@@ -165,7 +165,7 @@
                 '<input type="time" class="glass-input jm-win-end" data-job="' + job.id + '" value="' + ((job.window && job.window.end) || '') + '">' +
                 '</div></div>';
             if (isPrimary) {
-                html += '<p class="jm-hint">' + L('Soll-Stunden &amp; Pausen des Hauptjobs stellst du unten in „Soll-Stunden pro Tag" &amp; „Pausenzeiten pro Wochentag" ein.', 'Set the main job\'s target hours &amp; breaks below under “Target hours per day” &amp; “Break times per weekday”.') + '</p>';
+                html += '<p class="jm-hint">' + L('Soll und Pausen des Hauptjobs stehen oben im Wochenplan.', 'The main job\'s target hours and breaks are set in the weekly plan above.') + '</p>';
             } else {
                 html += '<div class="jm-grid-block"><span class="jm-lbl">' + L('Soll-Stunden pro Tag', 'Target hours per day') + '</span><div class="jm-grid">' + jobDayGrid(job, 'hours') + '</div></div>';
                 html += '<div class="jm-grid-block"><span class="jm-lbl">' + L('Pause ab (Std)', 'Break from (hrs)') + '</span>' +
@@ -174,7 +174,7 @@
             }
             html += '</div>';
         });
-        html += '<button type="button" class="btn btn-ghost jm-add" onclick="addJob()">+ ' + L('Job hinzufügen', 'Add job') + '</button>';
+        html += '<button type="button" class="st-btn jm-add" onclick="addJob()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>' + L('Job hinzufügen', 'Add job') + '</span></button>';
         host.innerHTML = html;
     }
 
@@ -319,14 +319,16 @@
         s.id = 'jobsModuleStyle';
         s.textContent = [
             '#jobSelectRow{margin:0 0 2px;}',
-            '.jm-card{border:1px solid var(--border,rgba(255,255,255,.08));border-radius:14px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,.02);}',
+            // Der Job-Manager steht nur in den Einstellungen: --st-* kommen aus
+            // settings.css (#settingsModal) und kippen mit dem hellen Theme.
+            '.jm-card{border:1px solid var(--st-linie);border-radius:12px;padding:14px 16px;margin-bottom:10px;background:var(--st-feld);}',
             '.jm-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}',
-            '.jm-color{width:38px;height:38px;padding:0;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px;background:none;cursor:pointer;flex-shrink:0;}',
+            '.jm-color{width:34px;height:34px;padding:0;border:1px solid var(--st-linie-stark);border-radius:8px;background:none;cursor:pointer;flex-shrink:0;}',
             '.jm-name{flex:1;min-width:0;}',
-            '.jm-badge{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:4px 10px;border-radius:20px;background:rgba(var(--primary-rgb),.15);color:var(--primary);white-space:nowrap;}',
-            '.jm-del{width:32px;height:32px;border-radius:8px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.1);color:#ef4444;cursor:pointer;font-size:.9rem;flex-shrink:0;transition:all .2s;}',
-            '.jm-del:hover{background:rgba(239,68,68,.2);}',
-            '.jm-lbl{display:block;font-size:.72rem;font-weight:600;color:var(--text-muted);margin-bottom:8px;}',
+            '.jm-badge{font-size:.78rem;color:var(--text-muted);padding:0 6px;white-space:nowrap;}',
+            '.jm-del{display:grid;place-items:center;width:32px;height:32px;border-radius:8px;border:0;background:transparent;color:var(--text-muted);cursor:pointer;flex-shrink:0;transition:background-color .15s,color .15s;}',
+            '.jm-del:hover{background:color-mix(in srgb,var(--danger) 12%,transparent);color:var(--danger);}',
+            '.jm-lbl{display:block;font-size:.8rem;font-weight:500;color:var(--text-muted);margin-bottom:8px;}',
             '.jm-window{margin-bottom:12px;}',
             '.jm-window-inputs{display:flex;align-items:center;gap:8px;}',
             '.jm-window-inputs input{max-width:130px;}',
@@ -335,8 +337,8 @@
             '.jm-cell{text-align:center;}',
             '.jm-cell input{padding:8px 4px;text-align:center;margin-bottom:3px;}',
             '.jm-cell small{color:var(--text-muted);font-size:.7rem;}',
-            '.jm-hint{font-size:.75rem;color:var(--text-muted);margin:4px 0 0;line-height:1.5;}',
-            '.jm-add{width:100%;margin-top:4px;}',
+            '.jm-hint{font-size:.8rem;color:var(--text-muted);margin:2px 0 0;line-height:1.5;}',
+            '.jm-add{margin-top:2px;}',
             '.js-title{font-size:.95rem;font-weight:700;margin:0 0 12px;color:var(--text-main);}',
             '#jobStatsContainer{margin-top:22px;}',
             '.js-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}',

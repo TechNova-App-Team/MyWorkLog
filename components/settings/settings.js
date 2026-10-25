@@ -5,7 +5,12 @@
         if (typeof stopLiveEarnings === 'function') stopLiveEarnings();
 
         document.getElementById('settingsModal').classList.add('active');
-        switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
+        const suche = document.getElementById('stSuche');
+        if (suche && suche.value) { suche.value = ''; stSuchen(''); }
+        switchSettingsTab('profile');
+        // Am Handy beginnt man in der Liste der Bereiche, nicht im Profil. Wer eine
+        // bestimmte Seite will, ruft danach switchSettingsTab (Dashboard, Cloud-Hinweis).
+        if (stAlsListe()) stZurListe();
 
         // Ohne den Rueckfall schreibt der Browser bei einem frischen Profil
         // die Zeichenkette "undefined" ins Namensfeld — und speichert sie
@@ -116,11 +121,6 @@
         // Load trashAutoEmptyDays setting
         const confTrashEl = document.getElementById('confTrashAutoEmptyDays');
         if(confTrashEl) confTrashEl.value = data.settings.trashAutoEmptyDays || 30;
-
-        // Theme Mode radio state
-        const themeMode = data.settings.themeMode || 'dark';
-        const themeRadios = document.querySelectorAll('input[name="themeMode"]');
-        themeRadios.forEach(r => r.checked = (r.value === themeMode));
 
         // Render school rules UI
         try { renderSchoolRules(); } catch(e) { console.warn('renderSchoolRules error', e); }
@@ -240,19 +240,11 @@
         // School rules save
         try { saveSchoolSettingsToData(); } catch(e) { console.warn('saveSchoolSettingsToData error', e); }
 
-        // Theme mode (persist selection if present)
-        const selectedThemeRadio = document.querySelector('input[name="themeMode"]:checked');
-        if (selectedThemeRadio) data.settings.themeMode = selectedThemeRadio.value;
-
-        // === P2P Team Settings speichern ===
+        // Der Design-Modus speichert sich beim Klick selbst (setThemeMode).
         if (!data.settings.team) data.settings.team = {};
-        
         const autoSyncEl = document.getElementById('p2pAutoSync');
-        const offlineQueueEl = document.getElementById('p2pOfflineQueue');
-        
         if (autoSyncEl) data.settings.team.autoSync = autoSyncEl.checked;
-        if (offlineQueueEl) data.settings.team.offlineQueue = offlineQueueEl.checked;
-        
+
         save();
         // Welche Einstellungen ueberhaupt jemand benutzt — nur Schalterstellungen, keine Werte.
         if (typeof mwlEvent === 'function') mwlEvent('einstellungen_gespeichert', {
@@ -280,10 +272,6 @@
             const metaTheme = document.querySelector('meta[name="theme-color"]');
             if (metaTheme && data.settings.theme) metaTheme.content = data.settings.theme;
             save();
-
-            // Update UI radio selection (if present)
-            const radios = document.querySelectorAll('input[name="themeMode"]');
-            radios.forEach(r => r.checked = (r.value === mode));
         } catch (e) {
             console.warn('setThemeMode error', e);
         }

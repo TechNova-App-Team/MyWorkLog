@@ -69,7 +69,9 @@ console.log('── Knoepfe in der Gefahrenzone ──');
 {
   // Kommentare raus: der Kopf der Gefahrenzone ERKLAERT den alten Namen.
   const html = lies('components/modals/modals.html').replace(/<!--[\s\S]*?-->/g, '');
-  const zone = html.slice(html.indexOf('class="danger-zone"'), html.indexOf('danger-zone-footer'));
+  // Seit dem Neubau 25.10.2026: Gruppe .st-gefahr auf der Seite Daten und Sicherung.
+  const ab = html.indexOf('st-group st-gefahr');
+  const zone = ab < 0 ? '' : html.slice(ab, html.indexOf('</section>', ab));
   ok(/id="btnDeleteAccount"[^>]*onclick="confirmAndDeleteAccount\(\)"/.test(zone), 'btnDeleteAccount → confirmAndDeleteAccount()');
   ok(/id="btnDeleteLocal"[^>]*onclick="confirmAndClearLocalData\(\)"/.test(zone), 'btnDeleteLocal → confirmAndClearLocalData()');
   ok(!zone.includes('Konto und Daten löschen'), 'keine Beschriftung mehr, die Konto verspricht und nur lokal loescht');

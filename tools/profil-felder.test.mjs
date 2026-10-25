@@ -22,6 +22,10 @@
 // gespiegelt gerendert — anders liesse er sich gar nicht gestalten, ein
 // <select> ist unter Windows nicht stylbar.
 //
+// Seit dem Neubau der Einstellungen (25.10.2026) heissen die Klassen
+// .st-row / .st-row--select / .st-select-overlay / .st-select-value statt
+// .pfield*; die Pruefungen sind dieselben geblieben.
+//
 // Aufruf: node tools/profil-felder.test.mjs
 
 import fs from 'node:fs';
@@ -45,62 +49,71 @@ const markupRein = markup.replace(/<!--[\s\S]*?-->/g, '');
 
 // ─────────────────────────────────────────────────────────────────────────
 console.log('\n── Aufbau der Zeilen ──────────────────────────────────────────');
-const zeilen = [...doc.querySelectorAll('.pfield')];
+const zeilen = [...doc.querySelectorAll('.profile-card .st-row')];
 // Fuenfte Zeile "Dein Beruf" (#confJobCustomRow) ist nur bei "Eigenen Beruf eintragen" sichtbar.
 ok(zeilen.length === 5, `fuenf Zeilen, gezaehlt: ${zeilen.length}`);
 
 // CLAUDE.md: Kinderzahl gegen Spurenzahl. Die Klickschicht ist absolut
-// positioniert und faellt aus dem Raster — es bleiben genau vier Rasterkinder.
-for (const z of zeilen) {
-    const raster = [...z.children].filter((c) => !c.classList.contains('pfield-control'));
-    const label = z.querySelector('.pfield-label').textContent.trim();
-    ok(raster.length === 4, `"${label}": vier Rasterkinder, gezaehlt: ${raster.length}`);
+// positioniert und faellt aus dem Raster.
+const auswahl = zeilen.filter((z) => z.classList.contains('st-row--select'));
+ok(auswahl.length === 2, `zwei Auswahlzeilen, gezaehlt: ${auswahl.length}`);
+for (const z of auswahl) {
+    const raster = [...z.children].filter((c) => !c.classList.contains('st-select-overlay'));
+    const label = z.querySelector('.st-row-label').textContent.trim();
+    ok(raster.length === 3, `"${label}": drei Rasterkinder, gezaehlt: ${raster.length}`);
 }
-const spuren = (cssRein.match(/\.pfield\s*\{[^}]*grid-template-columns:\s*([^;]+);/) || [])[1] || '';
-ok(spuren.trim().split(/\s+(?![^(]*\))/).length === 4, `vier Rasterspuren, gelesen: "${spuren.trim()}"`);
+const spuren = (cssRein.match(/\.st-row--select\s*\{[^}]*grid-template-columns:\s*([^;]+);/) || [])[1] || '';
+ok(spuren.trim().split(/\s+(?![^(]*\))/).length === 3, `drei Rasterspuren, gelesen: "${spuren.trim()}"`);
+for (const z of zeilen.filter((z) => z.classList.contains('st-row--field'))) {
+    const label = z.querySelector('.st-row-label').textContent.trim();
+    ok(z.children.length === 2, `"${label}": Text und Eingabe, gezaehlt: ${z.children.length}`);
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 console.log('\n── Die ganze Zeile traegt den Klick ───────────────────────────');
 for (const id of ['confJob', 'confBundesland']) {
     const sel = doc.getElementById(id);
-    ok(!!sel && sel.classList.contains('pfield-control'),
+    ok(!!sel && sel.classList.contains('st-select-overlay'),
         `#${id} ist die Klickschicht der Zeile`);
-    ok(!!sel && sel.closest('.pfield') !== null, `#${id} liegt in einer .pfield-Zeile`);
+    ok(!!sel && sel.closest('.st-row--select') !== null, `#${id} liegt in einer Auswahlzeile`);
     ok(!!doc.querySelector(`[data-pvalue-for="${id}"]`), `#${id} hat ein sichtbares Wertfeld`);
 }
-const ctrl = (cssRein.match(/\.pfield-control\s*\{([^}]*)\}/) || [])[1] || '';
-ok(/position:\s*absolute/.test(ctrl), '.pfield-control liegt absolut ueber der Zeile');
-ok(/inset:\s*0/.test(ctrl), '.pfield-control deckt die ganze Zeile ab (inset: 0)');
+const ctrl = (cssRein.match(/\.st-select-overlay\s*\{([^}]*)\}/) || [])[1] || '';
+ok(/position:\s*absolute/.test(ctrl), '.st-select-overlay liegt absolut ueber der Zeile');
+ok(/inset:\s*0/.test(ctrl), '.st-select-overlay deckt die ganze Zeile ab (inset: 0)');
 // opacity:0 statt display/visibility — sonst waere sie nicht mehr bedienbar.
-ok(/opacity:\s*0\b/.test(ctrl), '.pfield-control ist unsichtbar, aber bedienbar (opacity: 0)');
+ok(/opacity:\s*0\b/.test(ctrl), '.st-select-overlay ist unsichtbar, aber bedienbar (opacity: 0)');
 ok(!/display:\s*none|visibility:\s*hidden/.test(ctrl),
-    '.pfield-control ist NICHT per display/visibility versteckt (das nimmt ihr den Klick)');
+    '.st-select-overlay ist NICHT per display/visibility versteckt (das nimmt ihr den Klick)');
 // Alles unter 16px laesst iOS beim Fokus in die Seite zoomen.
-ok(/font-size:\s*16px/.test(ctrl), '.pfield-control hat 16px (sonst zoomt iOS beim Fokus)');
+ok(/font-size:\s*16px/.test(ctrl), '.st-select-overlay hat 16px (sonst zoomt iOS beim Fokus)');
+ok(/\.st-row\s*\{[^}]*position:\s*relative/.test(cssRein), 'die Zeile ist der Bezugsrahmen der Schicht');
 
 // ─────────────────────────────────────────────────────────────────────────
 console.log('\n── Der Zeiger sagt die Wahrheit ───────────────────────────────');
-ok(/\.pfield\s*\{[^}]*cursor:\s*pointer/.test(cssRein), 'die Auswahlzeilen zeigen einen Zeigefinger');
-ok(/\.pfield:has\(\.pfield-input\)\s*\{[^}]*cursor:\s*text/.test(cssRein),
+ok(/\.st-row--select\s*\{[^}]*cursor:\s*pointer/.test(cssRein), 'die Auswahlzeilen zeigen einen Zeigefinger');
+ok(/\.st-row--field\s*\{[^}]*cursor:\s*text/.test(cssRein),
     'die Namenszeile zeigt einen Textcursor, keinen Zeigefinger');
 
 // ─────────────────────────────────────────────────────────────────────────
-console.log('\n── Was der Umbau beseitigt hat ────────────────────────────────');
-ok(!/profile-field/.test(cssRein), 'die alten .profile-field-Regeln sind weg');
-ok(!/profile-field/.test(markupRein), 'das alte Markup ist weg');
+console.log('\n── Was die Umbauten beseitigt haben ───────────────────────────');
+ok(!/profile-field|pfield/.test(cssRein), 'die alten .profile-field- und .pfield-Regeln sind weg');
+ok(!/profile-field|class="pfield/.test(markupRein), 'das alte Markup ist weg');
 // Ein leerer Zustand ist kein Inhalt und darf nicht aussehen wie einer.
 ok(!/— Bitte wählen —/.test(markupRein), '"— Bitte wählen —" ist weg');
 ok((markupRein.match(/>Nicht gewählt</g) || []).length >= 2, 'der leere Zustand heisst "Nicht gewählt"');
-ok(/\.pfield-value\.is-empty/.test(cssRein), 'und ist als leer gekennzeichnet, nicht wie ein Wert gesetzt');
+ok(/\.st-select-value\.is-empty/.test(cssRein), 'und ist als leer gekennzeichnet, nicht wie ein Wert gesetzt');
 // Fuellung im Akzentton, nie Weiss — Weiss auf Dunkel entsaettigt (CLAUDE.md).
-ok(!/\.pfield[^{]*\{[^}]*background:\s*rgba\(255,\s*255,\s*255/.test(cssRein),
+ok(!/\.st-row[^{]*\{[^}]*background:\s*rgba\(255,\s*255,\s*255/.test(cssRein),
     'keine weisse Hover-Fuellung');
-ok(!/\.pfield[^{]*\{[^}]*background:\s*rgba\(0,\s*0,\s*0/.test(cssRein),
+ok(!/\.st-row[^{]*\{[^}]*background:\s*rgba\(0,\s*0,\s*0/.test(cssRein),
     'keine feste schwarze Fuellung (die stand im Light-Theme als dunkler Kasten da)');
-ok(/\.pfield:hover\s*\{[^}]*var\(--hover-fill\)/.test(cssRein), 'Hover nutzt das Akzent-Token');
-ok(/\.pfield:active\s*\{/.test(cssRein), 'es gibt eine Rueckmeldung beim Druecken');
+ok(/--st-hover:\s*var\(--hover-fill\)/.test(cssRein), 'Hover nutzt das Akzent-Token');
+ok(/\.st-row--select:hover\s*\{[^}]*var\(--st-hover\)/.test(cssRein), 'die Auswahlzeile nutzt es beim Hover');
+ok(/\.st-row--select:active\s*\{/.test(cssRein), 'es gibt eine Rueckmeldung beim Druecken');
 // Nichts bewegt sich beim Hover (CLAUDE.md).
-const hoverRegel = (cssRein.match(/\.pfield:hover\s*\{([^}]*)\}/) || [])[1] || '';
+const hoverRegel = (cssRein.match(/\.st-row--select:hover\s*\{([^}]*)\}/) || [])[1] || '';
+ok(hoverRegel.length > 0, 'Gegenprobe: Hover-Regel gefunden');
 ok(!/transform|translate|scale|padding/.test(hoverRegel), 'beim Hover bewegt sich nichts');
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -120,10 +133,10 @@ for (const t of ['Noch kein Name', 'Beruf nicht ausgewählt', 'Region offen']) {
 const en = path.join(ROOT, 'pages/en/index.html');
 if (fs.existsSync(en)) {
     const d = new JSDOM(fs.readFileSync(en, 'utf8')).window.document;
-    const liste = d.querySelector('.pfield-list');
+    const liste = d.querySelector('.profile-card .st-list');
     ok(!!liste, '/en/ hat die Profilliste');
     const txt = liste ? liste.textContent : '';
-    const deutsch = ['Dein Name', 'Avatar-Kürzel', 'Ausbildungsberuf', 'Bundesland', 'Nicht gewählt', 'Für lokale Feiertage']
+    const deutsch = ['Kürzel', 'Ausbildungsberuf', 'Bundesland', 'Nicht gewählt', 'Für die Feiertage', 'Zwei Buchstaben']
         .filter((w) => txt.includes(w));
     ok(deutsch.length === 0, `/en/ traegt keinen deutschen Feldtext${deutsch.length ? ': ' + deutsch.join(', ') : ''}`);
     ok(d.getElementById('confName').placeholder === 'Not set',

@@ -17,32 +17,28 @@
             categories[cat].push({ id, shortcut: sc });
         }
         
-        // Render jede Kategorie
+        // Je Kategorie eine Liste im Stil der Einstellungen (.st-list/.st-row aus
+        // settings.css). Der interne Funktionsname (shortcut.action) stand frueher als
+        // Beschreibung da — fuer Nutzer ohne Aussage, deshalb nur noch, ob das Kuerzel
+        // auch beim Tippen in Feldern greift.
+        const en = document.documentElement.lang === 'en';
+        const sicher = s => (typeof esc === 'function') ? esc(String(s)) : String(s);
         let html = '';
         for (const [category, items] of Object.entries(categories).sort()) {
-            html += `<div style="margin-bottom:2rem;">
-                <h5 style="color:var(--primary); margin:0 0 12px 0; font-size:0.9rem; text-transform:uppercase; letter-spacing:0.5px;">${category}</h5>
-                <div style="display:grid; gap:8px;">`;
-            
+            html += `<h5 class="st-unter">${sicher(category)}</h5><div class="st-list">`;
             for (const { id, shortcut } of items) {
                 const displayKeys = shortcutManager.getShortcutDisplay(shortcut.keys);
+                const name = sicher(shortcut.name);
                 html += `
-                    <div class="shortcut-item" style="background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:12px 15px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:0.2s;" data-shortcut-id="${id}">
-                        <div style="flex:1;">
-                            <div style="color:var(--text-main); font-weight:500; font-size:0.95rem;">${shortcut.name}</div>
-                            <div style="color:var(--text-muted); font-size:0.8rem; margin-top:4px;">${shortcut.action}${shortcut.args ? ' (' + shortcut.args.join(', ') + ')' : ''}</div>
-                        </div>
-                        <div style="display:flex; gap:8px; align-items:center;">
-                            <div class="shortcut-keys" style="background:rgba(var(--primary-rgb),0.15); border:1px solid rgba(var(--primary-rgb),0.3); border-radius:8px; padding:8px 12px; font-family:var(--font-mono); font-size:0.85rem; font-weight:600; color:var(--primary); white-space:nowrap; cursor:pointer;" onclick="editShortcut('${id}', event)">
-                                ${displayKeys}
-                            </div>
-                            <div style="font-size:0.72rem; color:var(--text-muted); padding:4px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.03);">${shortcut.allowInInput ? 'In Eingabefeldern' : 'nicht in Eingaben'}</div>
-                        </div>
-                    </div>
-                `;
+                    <div class="st-row" data-shortcut-id="${id}">
+                        <span class="st-row-text">
+                            <span class="st-row-label">${name}</span>
+                            <span class="st-row-desc">${shortcut.allowInInput ? (en ? 'Also works while typing in a field' : 'Greift auch beim Tippen in einem Feld') : ''}</span>
+                        </span>
+                        <button type="button" class="st-kbd" onclick="editShortcut('${id}', event)" aria-label="${(en ? 'Change shortcut: ' : 'Kürzel ändern: ') + name}">${displayKeys}</button>
+                    </div>`;
             }
-            
-            html += `</div></div>`;
+            html += `</div>`;
         }
         
         container.innerHTML = html;
@@ -57,7 +53,7 @@
                 const sc2 = shortcuts[c.shortcuts[1]];
                 return `"${sc1.name}" und "${sc2.name}"`;
             }).join(', ');
-            document.getElementById('conflictMessage').textContent = `Es gibt Konflikte zwischen: ${conflictDesc}`;
+            document.getElementById('conflictMessage').textContent = (document.documentElement.lang === 'en' ? 'Conflict between: ' : 'Betroffen: ') + conflictDesc;
         } else {
             warningEl.style.display = 'none';
         }
@@ -223,37 +219,84 @@
     // ============================================
     
     
+    // Seiten der Einstellungen. Die Namen sind Schnittstelle: api-cloud-sync.js und
+    // ki-assistent.js wickeln window.switchSettingsTab ein und reagieren auf 'cloud',
+    // das Dashboard ruft 'work'. Einen Namen umbenennen heisst, diese mitzuziehen.
     function switchSettingsTab(tabName) {
-        // Fuer die Einrichtungs-Karte: erst wer den Reiter gesehen hat, hat
+        // Fuer die Einrichtungs-Karte: erst wer die Seite gesehen hat, hat
         // seine Zeiten eingerichtet (saveSettings setzt daraus den Merker).
         if (tabName === 'work') window._mwlArbeitszeitGesehen = true;
-        // Alle Tab-Contents verstecken
         document.querySelectorAll('.settings-tab-content').forEach(el => el.style.display = 'none');
-        // Alle Tab-Buttons deaktivieren
-        document.querySelectorAll('.settings-tab').forEach(el => el.classList.remove('active'));
-
-        // Aktiven Tab zeigen
         const contentEl = document.getElementById('settings-tab-' + tabName);
-        if (contentEl) {
-            contentEl.style.display = 'block';
-        }
+        if (contentEl) contentEl.style.display = 'block';
 
-        // Aktiven Button markieren - finde Button mit onclick für diesen Tab
-        const tabBtn = document.querySelector(`.settings-tab[onclick*="'${tabName}'"]`);
-        if (tabBtn) {
-            tabBtn.classList.add('active');
-        } else if (event && event.target) {
-            // Fallback für Event-basierte Aufrufe
-            event.target.classList.add('active');
-        }
+        document.querySelectorAll('.settings-tab').forEach(el => {
+            const an = el.dataset.tab === tabName;
+            el.classList.toggle('active', an);
+            if (an) el.setAttribute('aria-current', 'page');
+            else el.removeAttribute('aria-current');
+        });
 
-        // Spezielle Rendering für bestimmte Tabs
+        // Am Handy ist die Leiste eine eigene Ansicht: eine Seite zu oeffnen heisst,
+        // die Liste zu verlassen. Neue Seite beginnt oben.
+        const shell = document.getElementById('stShell');
+        if (shell) shell.dataset.view = 'page';
+        const body = document.querySelector('#settingsModal .settings-body');
+        if (body) body.scrollTop = 0;
+
         if (tabName === 'shortcuts') {
             renderShortcutsPanel();
         }
         if (tabName === 'custom') {
             renderCustomTypesManager();
             if (typeof renderCustomFieldsManager === 'function') renderCustomFieldsManager();
+        }
+    }
+
+    // Handy: zurueck zur Liste der Bereiche (Knopf .st-back). Am Desktop ist die
+    // Leiste immer sichtbar, der Knopf per CSS ausgeblendet.
+    function stZurListe() {
+        const shell = document.getElementById('stShell');
+        if (shell) shell.dataset.view = 'list';
+        const aktiv = document.querySelector('.st-nav-item.active');
+        if (aktiv) aktiv.focus({ preventScroll: true });
+    }
+
+    function stAlsListe() {
+        return window.matchMedia('(max-width: 760px)').matches;
+    }
+
+    // Suche in der Leiste: Beschriftung (auch die uebersetzte) plus data-such.
+    // Alle Woerter muessen vorkommen, Reihenfolge egal.
+    function stSuchen(eingabe) {
+        const woerter = String(eingabe || '').toLowerCase().trim().split(/\s+/).filter(Boolean);
+        let treffer = 0;
+        document.querySelectorAll('.st-nav-group').forEach(gruppe => {
+            let sichtbar = 0;
+            gruppe.querySelectorAll('.st-nav-item').forEach(item => {
+                const text = (item.textContent + ' ' + (item.dataset.such || '')).toLowerCase();
+                const passt = woerter.every(w => text.includes(w));
+                item.hidden = !passt;
+                if (passt) sichtbar++;
+            });
+            gruppe.hidden = sichtbar === 0;
+            treffer += sichtbar;
+        });
+        const leer = document.getElementById('stSucheLeer');
+        if (leer) leer.hidden = treffer > 0;
+    }
+
+    // Enter oeffnet den ersten Treffer, Escape leert die Suche (und schliesst
+    // damit nicht gleich den ganzen Dialog).
+    function stSucheTaste(e) {
+        if (e.key === 'Enter') {
+            const erster = document.querySelector('.st-nav-item:not([hidden])');
+            if (erster) { e.preventDefault(); erster.click(); }
+        } else if (e.key === 'Escape' && e.target.value) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.target.value = '';
+            stSuchen('');
         }
     }
     
