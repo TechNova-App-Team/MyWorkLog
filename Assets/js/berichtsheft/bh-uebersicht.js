@@ -320,12 +320,15 @@ function renderNow() {
     }
 
     const fokusKw = getWeekNumber(fokusMo);
+    // Yin-Yang-Naht (schreibtisch.css) nur fuer genau Hauptaktion + eine Nebenaktion.
+    const yinYang = aktionen.startsWith('<button type="button" class="hf-cta"') &&
+        (aktionen.match(/<button /g) || []).length === 2;
     box.innerHTML =
         `<div class="hf-now-kopf"><span class="hf-now-kw">${escapeHtml(L(`KW ${fokusKw}`, `CW ${fokusKw}`))}</span>` +
         `<span>${escapeHtml(hfZeitraumText(fokusMo))}</span></div>` +
         `<h2 class="hf-now-titel">${titel}</h2>` +
         `<p class="hf-now-text">${escapeHtml(text)}</p>` + extra +
-        `<div class="hf-now-aktionen">${aktionen}</div>`;
+        `<div class="hf-now-aktionen${yinYang ? ' hf-yy' : ''}">${aktionen}</div>`;
     const riesen = document.getElementById('hfRiesen');
     if (riesen) riesen.textContent = L(`KW ${fokusKw}`, `CW ${fokusKw}`);
     renderStapel(fokusMo, fokusR);
