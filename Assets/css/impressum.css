@@ -1,0 +1,245 @@
+/* ═══ IMPRESSUM (/Impressum/) ═══
+   Neu gebaut am 25.10.2026 (vorher: Stand Dezember 2025 mit Blobs, Gitter, fliegenden
+   Linien und Eckklammern — genau der "Terminal"-Look, den der Nutzer abgelehnt hat).
+   Bildsprache wie /preise/ und das Berichtsheft: Papier auf dunkler Buehne. Das
+   Impressum ist ein Briefkopf, also liegt oben EIN Briefbogen mit den Pflichtangaben.
+   EIN Effekt: das Blatt landet beim Laden — nur Bewegung, keine Deckkraft (eine
+   Einblendung ab opacity 0 nimmt dem Inhalt den LCP, CLAUDE.md).
+   Laedt KEIN core.css: eigener :root mit den Werten aus Assets/css/preise.css. */
+
+:root {
+    --buehne-1: #131428;
+    --buehne-2: #1a1830;
+    --buehne-3: #23182b;
+    --primary: #6d7fd1;
+    --primary-rgb: 109, 127, 209;
+    --text-main: #f1f0f7;
+    --text-2: #b9b6cb;
+    --text-3: #8b87a2;
+    --linie: rgba(255, 255, 255, 0.1);
+    --papier: #ecebf4;
+    --papier-tinte: #15131d;
+    --papier-tinte-2: rgba(21, 19, 29, 0.58);
+    --papier-linie: rgba(21, 19, 29, 0.14);
+    --papier-rand: rgba(214, 86, 86, 0.5);
+    --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
+    --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --font-vordruck: 'Martian Mono', ui-monospace, monospace;
+    --spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+}
+a { color: inherit; }
+::selection { background: rgba(var(--primary-rgb), 0.4); }
+
+/* ── Kopf ─────────────────────────────────────────────────────────── */
+.im-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 28px;
+}
+.im-marke { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
+.im-marke svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.im-top-link { font-size: 0.92rem; color: var(--text-2); text-decoration: none; transition: color 0.2s ease; }
+.im-top-link:hover { color: var(--text-main); }
+.im-marke:focus-visible, .im-top-link:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 4px; border-radius: 4px; }
+
+/* ── Knoepfe ─────────────────────────────────────────────────────── */
+.im-knopf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    padding: 0 22px;
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    color: var(--text-main);
+    font-size: 0.97rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.14s ease;
+}
+.im-knopf svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.im-knopf:hover { border-color: rgba(255, 255, 255, 0.28); }
+.im-knopf:active { transform: scale(0.97); }
+.im-knopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 3px; }
+/* Papierweiss auf der Buehne — der Hauptweg sieht aus wie ein Blatt (wie /preise/) */
+.im-knopf.is-haupt { background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
+.im-knopf.is-haupt:hover { background: #fff; border-color: #fff; }
+
+/* ── Hero: links Titel, rechts der Briefbogen ───────────────────── */
+.im-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 56px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 28px 96px;
+}
+.im-titel {
+    margin: 0;
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 96;
+    font-size: clamp(3rem, 1.6rem + 5vw, 5.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+}
+.im-lede { margin: 22px 0 0; max-width: 34ch; font-size: 1.1rem; color: var(--text-2); text-wrap: pretty; }
+.im-cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+
+/* Der Briefbogen. Roter Randstrich wie auf den Blaettern von /preise/; leicht
+   schraeg, damit er auf der Buehne liegt statt zu kleben. */
+.im-bogen {
+    position: relative;
+    margin: 0;
+    padding: 30px 34px 32px 64px;
+    border-radius: 5px;
+    background: var(--papier);
+    color: var(--papier-tinte);
+    box-shadow: var(--papier-schatten);
+    transform: rotate(-0.8deg);
+    animation: imLanden 0.9s var(--spring) both;
+}
+.im-bogen::before { content: ''; position: absolute; left: 44px; top: 0; bottom: 0; width: 1.5px; background: var(--papier-rand); }
+@keyframes imLanden {
+    from { transform: translateY(-28px) rotate(-3deg); }
+}
+@media (prefers-reduced-motion: reduce) { .im-bogen { animation: none; } }
+
+.im-vk {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--papier-linie);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.62rem;
+    color: var(--papier-tinte-2);
+}
+.im-name {
+    margin: 26px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 1.4rem + 1.4vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+.im-adresse { margin: 12px 0 0; font-style: normal; font-size: 1.02rem; line-height: 1.5; }
+
+/* Angaben als Zeilen auf der Heftlinie: Begriff links in der Vordruck-Schrift */
+.im-angaben { margin: 26px 0 0; display: grid; }
+.im-angaben > div {
+    display: grid;
+    grid-template-columns: 11.5rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: 4px 16px;
+    padding: 9px 0;
+    border-top: 1px solid var(--papier-linie);
+}
+.im-angaben > div:last-child { border-bottom: 1px solid var(--papier-linie); }
+.im-angaben dt {
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-weight: 300;
+    font-size: 0.66rem;
+    color: var(--papier-tinte-2);
+}
+.im-angaben dd { margin: 0; font-size: 0.98rem; overflow-wrap: anywhere; }
+.im-angaben a {
+    color: var(--kuli);
+    font-weight: 500;
+    text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--kuli) 35%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s ease;
+}
+.im-angaben a:hover { text-decoration-color: currentColor; }
+.im-angaben a:focus-visible { outline: 2px solid var(--kuli); outline-offset: 2px; border-radius: 2px; }
+.im-nur-zahl { font-variant-numeric: tabular-nums; }
+
+/* ── Rechtliche Hinweise: Zwei Spalten, keine Karten ────────────── */
+.im-hinweise { max-width: 1180px; margin: 0 auto; padding: 24px 28px 112px; }
+.im-h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 1.2rem + 1.8vw, 2.6rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+}
+.im-abschnitt {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 12px 56px;
+    padding: 30px 0;
+    border-bottom: 1px solid var(--linie);
+}
+.im-abschnitt:first-of-type { margin-top: 32px; border-top: 1px solid var(--linie); }
+.im-abschnitt h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+}
+.im-abschnitt h3 small {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-main);
+    font-size: 0.86rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--text-3);
+}
+.im-text { max-width: 65ch; color: var(--text-2); line-height: 1.72; }
+.im-text p { margin: 0 0 14px; text-wrap: pretty; }
+.im-text p:last-child { margin-bottom: 0; }
+.im-text a {
+    color: var(--text-main);
+    text-decoration: underline;
+    text-decoration-color: rgba(var(--primary-rgb), 0.6);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s ease;
+}
+.im-text a:hover { text-decoration-color: currentColor; }
+.im-text a:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 2px; border-radius: 2px; }
+
+/* ── Schmal ─────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .im-hero { grid-template-columns: minmax(0, 1fr); gap: 40px; padding: 24px 20px 72px; }
+    .im-abschnitt { grid-template-columns: minmax(0, 1fr); }
+    .im-hinweise { padding: 16px 20px 88px; }
+    .im-top { padding: 18px 20px; }
+}
+@media (max-width: 520px) {
+    /* Randstrich naeher an die Kante, sonst bleiben am Handy ~230 px fuer die Angaben */
+    .im-bogen { padding: 24px 20px 26px 40px; transform: rotate(-0.5deg); }
+    .im-bogen::before { left: 26px; }
+    .im-angaben > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+    .im-vk { flex-direction: column; gap: 4px; }
+}
