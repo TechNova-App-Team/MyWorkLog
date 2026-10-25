@@ -132,6 +132,75 @@
     .hf-now-aktionen .hf-chip--gross:hover { background: var(--bg-hover); }
 }
 
+/* ── Zwei Knoepfe als Yin und Yang (Wunsch 25.10.2026) ──
+   Die helle Fuellung ist EINE Flaeche, die zwischen beiden Knoepfen wandert:
+   an der Naht greifen zwei Zacken ineinander, beim Zeigen auf die Nebenaktion
+   fliesst die Fuellung hinueber. Jede Fuellung ist ein 10-Punkt-Polygon mit
+   linker Zackenkante A und rechter Zackenkante B (Zacke 12 px, je zwei);
+   gleiche Punktzahl in allen Zustaenden, sonst interpoliert clip-path nicht.
+   Naht-Geometrie: CTA-Fuellung ragt 6 px nach rechts, Chip-Fuellung 6 px nach
+   links — Basis CTA (100% - 12px) und Basis Chip (0) liegen so auf demselben x.
+   Nur mit Maus und nur bei genau CTA + Chip; am Handy stehen die Knoepfe
+   untereinander, da gibt es keine senkrechte Naht. */
+@media (hover: hover) and (pointer: fine) and (min-width: 641px) {
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) { gap: 0; }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-cta,
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-chip--gross {
+        position: relative;
+        isolation: isolate;
+        background: transparent;
+        box-shadow: none;
+        transition: color 0.3s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-cta { padding-right: 26px; }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-chip--gross { padding-left: 24px; }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-cta::before,
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-chip--gross::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: -1;
+        background: var(--ink);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        transition: clip-path 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-cta::before {
+        left: 0;
+        right: -6px;
+        border-radius: 999px 0 0 999px;
+        clip-path: polygon(-30px 0, calc(100% - 12px) 0, 100% 25%, calc(100% - 12px) 50%, 100% 75%, calc(100% - 12px) 100%, -30px 100%, -18px 75%, -30px 50%, -18px 25%);
+    }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-chip--gross::before {
+        left: -6px;
+        right: 0;
+        border-radius: 0 999px 999px 0;
+        clip-path: polygon(0 0, 0 0, 12px 25%, 0 50%, 12px 75%, 0 100%, 0 100%, 12px 75%, 0 50%, 12px 25%);
+    }
+    .hf-now-aktionen:has(> .hf-cta:first-child + .hf-chip--gross:last-child) > .hf-chip--gross .icon {
+        color: inherit;
+        transition: opacity 0.3s ease;
+    }
+
+    /* Zeigen oder Tab auf die Nebenaktion: die CTA leert sich von links zur
+       Naht hin, der Chip fuellt sich von der Naht nach rechts. */
+    .hf-now-aktionen:has(> .hf-chip--gross:last-child:is(:hover, :focus-visible)) > .hf-cta:first-child { color: var(--text-main); }
+    .hf-now-aktionen:has(> .hf-chip--gross:last-child:is(:hover, :focus-visible)) > .hf-cta:first-child::before {
+        clip-path: polygon(calc(100% - 12px) 0, calc(100% - 12px) 0, 100% 25%, calc(100% - 12px) 50%, 100% 75%, calc(100% - 12px) 100%, calc(100% - 12px) 100%, 100% 75%, calc(100% - 12px) 50%, 100% 25%);
+    }
+    .hf-now-aktionen:has(> .hf-cta:first-child) > .hf-chip--gross:last-child:is(:hover, :focus-visible) {
+        background: transparent;
+        color: var(--on-ink);
+    }
+    .hf-now-aktionen:has(> .hf-cta:first-child) > .hf-chip--gross:last-child:is(:hover, :focus-visible) .icon { opacity: 1; }
+    .hf-now-aktionen:has(> .hf-cta:first-child) > .hf-chip--gross:last-child:is(:hover, :focus-visible)::before {
+        clip-path: polygon(0 0, calc(100% + 30px) 0, calc(100% + 42px) 25%, calc(100% + 30px) 50%, calc(100% + 42px) 75%, calc(100% + 30px) 100%, 0 100%, 12px 75%, 0 50%, 12px 25%);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hf-now-aktionen .hf-cta::before, .hf-now-aktionen .hf-chip--gross::before { transition: none; }
+}
+
 /* ── Kennzahlen: vier schmale Kacheln nebeneinander ──
    Oben die Zahl mit einem kleinen Zeichen daneben (Strichliste, Haken bzw.
    Rotstift-Kringel, Stempel), beim Fortschritt ein Lineal darunter. Die obere
