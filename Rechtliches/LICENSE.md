@@ -4,6 +4,9 @@
 **Repository:** https://myworklog.de/
 **SPDX-License-Identifier:** MIT
 
+The plain license text also lives in `/LICENSE` at the repository root, so that
+GitHub detects it. This file adds the scope below.
+
 ---
 
 ## MIT License
@@ -82,6 +85,6 @@ preferred:
 ## Contact
 
 Licensing and trademark inquiries:
-https://myworklog.de/impressum/
+https://myworklog.de/Impressum/
 
 Security disclosures are handled under `SECURITY.md` in this directory.
