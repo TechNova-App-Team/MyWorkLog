@@ -287,6 +287,8 @@ t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeld
     const ohne = I.systemPrompt();
     t.ok(!ohne.includes('<<<VORWISSEN'), 'ohne Vorwissen: kein Vorwissen-Block im Prompt');
     t.ok(ohne.includes('mit typischen Tätigkeiten für seinen Beruf und sein Lehrjahr'), 'ohne Vorwissen: Auffuellen wie bisher (Beruf + Lehrjahr)');
+    t.ok(ohne.includes('kannst du mir für diese Woche einen Eintrag schreiben?') && ohne.includes('NICHT erst fragen, was er gemacht hat'),
+        'blosse Bitte um einen Eintrag zaehlt als Auffuellen (26.10.2026: fragte erst zurueck)');
 
     const text = 'Typisch: Etikettendrucker warten (Zebra); Tickets bearbeiten (Jira)';
     t.ok(I.vorwissenSetzen('  ' + text + '  ') === text, 'Speichern schneidet Leerraum ab');

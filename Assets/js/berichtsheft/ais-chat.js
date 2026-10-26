@@ -1063,7 +1063,13 @@ function systemPrompt() {
         '- AUSNAHME: bittet er ausdrücklich ums Auffüllen oder darum, dass du die Woche für ihn schreibst ("füll den Rest", "denk dir was aus", "mach die Woche voll", "die leeren Tage füllen", "ich weiß nicht mehr, was ich gemacht habe", "schreib mir eine Woche"), füllst du NUR die leeren Arbeitstage' +
             ((vw || eb) ? ' – und zwar ZUERST mit seinen typischen, wiederkehrenden Tätigkeiten aus ' + quellenName + ' unten, über die Tage verteilt und je Tag anders formuliert; erst wenn dort nichts Passendes steht, mit typischen Tätigkeiten für seinen Beruf und sein Lehrjahr. Schulthemen daraus NUR an einem Tag, der laut Einstellung regelmäßig Schultag ist oder im Vorwissen ausdrücklich als fester Schultag genannt wird – sonst ist kein Tag Schule.'
                 : ' mit typischen Tätigkeiten für seinen Beruf und sein Lehrjahr.') +
-            ' Gefüllte Tage bleiben unverändert. Ein leerer REGELMÄSSIGER Schultag (siehe unten) wird dabei als Schultag gefüllt: "schule": true, ein typisches Thema seines Lehrjahrs in "thema".',
+            ' Gefüllte Tage bleiben unverändert.' +
+            // Gemessen 26.10.2026: auf "kannst du mir für diese woche einen eintrag schreiben?"
+            // fragte das Modell erst zurück, was er gemacht hat, und füllte erst auf
+            // "ich weiß nicht, schreib einfach". Wunsch des Nutzers: schon die erste
+            // Nachricht ist deutlich genug.
+            ' Auch die bloße Bitte, einen Eintrag, Bericht oder die Woche zu schreiben, OHNE dass er dabei eine Tätigkeit nennt ("kannst du mir für diese Woche einen Eintrag schreiben?", "mach mir den Bericht", "schreib was für KW 43"), ist so eine Bitte: sofort füllen, NICHT erst fragen, was er gemacht hat.' +
+            ' Ein leerer REGELMÄSSIGER Schultag (siehe unten) wird dabei als Schultag gefüllt: "schule": true, ein typisches Thema seines Lehrjahrs in "thema".',
         '- Änderungswünsche ("Mittwoch ausführlicher", "Dienstag in Ich-Form", "Donnerstag löschen", "das mit dem Server war Freitag") betreffen nur die genannten Tage.',
         '- Berufsschule: "schule": true und in "thema" das Fach oder worum es ging (kurz, z. B. "Erster Schultag, Kennenlernen"). Die entries beschreiben den Schultag.',
         '- Krank/Urlaub/Feiertag: "status": "krank" | "urlaub" | "feiertag" und "entries": []. "status": "" heißt normaler Tag.',
