@@ -660,7 +660,7 @@ function menueZeichnen() {
         // Einziger Weg aus dem Assistenten zur Preisseite: hier sieht man das Tageslimit,
         // und genau das hebt der Ausbildungs-Pass auf.
         '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#hefte', '/en/preise/#hefte') + '">' +
-        esc(Lx('Ohne Tageslimit? Ausbildungs-Pass vormerken', 'No daily limit? Count me in for the Pass')) + '</a>';
+        esc(Lx('Mehr am Tag? Ausbildungs-Pass vormerken', 'More per day? Count me in for the Pass')) + '</a>';
     if (fokus) { const b = m.querySelector('[data-stufe="' + fokus + '"]'); if (b) b.focus(); }
 }
 function modellMenue(auf) {
