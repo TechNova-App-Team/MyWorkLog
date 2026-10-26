@@ -192,9 +192,11 @@ function hfZeitraumText(montag) {
     fr.setDate(fr.getDate() + 4);
     const loc = window.mwlLocale ? window.mwlLocale() : (document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
     const tm = { day: 'numeric', month: 'long' };
-    const a = montag.toLocaleDateString(loc, montag.getMonth() === fr.getMonth() ? { day: 'numeric' } : tm);
+    let a = montag.toLocaleDateString(loc, montag.getMonth() === fr.getMonth() ? { day: 'numeric' } : tm);
     const b = fr.toLocaleDateString(loc, tm);
-    // de: "5." bzw. "29. September" — der Punkt kommt aus toLocaleDateString.
+    // Nur mit Monat setzt toLocaleDateString den Punkt ("29. September"); { day } allein
+    // gibt in Chrome "5" — gemessen 26.10.2026, der Satz stand als "19 bis 23. Oktober" da.
+    if (loc.startsWith('de') && /^\d+$/.test(a)) a += '.';
     return L(`${a} bis ${b}`, `${a} to ${b}`);
 }
 
@@ -220,8 +222,20 @@ document.addEventListener('keydown', (e) => {
 // DIESE WOCHE
 // ═══════════════════════════════════════
 // Beantwortet "was ist jetzt dran?" mit EINER Hauptaktion. Reihenfolge nach
-// Dringlichkeit: Rueckgabe des Ausbilders > laufende Woche leer/angefangen >
-// fehlende Woche > alles fertig.
+// Dringlichkeit: Rueckgabe des Ausbilders > Entwurf im Assistenten >
+// laufende Woche leer/angefangen > fehlende Woche > alles fertig.
+// Der Entwurf steht so weit oben, weil er die einzige Arbeit ist, die verloren
+// gehen kann: er liegt nur im Chat, nicht im Heft (Trichter 27.09.–26.10.2026:
+// 96 schrieben dem Assistenten, 15 uebernahmen).
+
+// Entwurf aus dem Assistenten, dessen Woche noch keinen fertigen Bericht hat.
+function hfOffenerEntwurf() {
+    const e = (typeof AISChat !== 'undefined' && AISChat.offenerEntwurf) ? AISChat.offenerEntwurf() : null;
+    if (!e) return null;
+    const mo = hfAusDatum(getWeekDates(e.kw, e.jahr).monday);
+    const da = hfBerichtFuer(mo);
+    return da && da.status !== 'incomplete' ? null : Object.assign({ montag: mo }, e);
+}
 
 function renderNow() {
     const box = document.getElementById('hfNow');
@@ -232,6 +246,7 @@ function renderNow() {
     const jahr = isoWeekYear(mo);
     const r = hfBerichtFuer(mo);
     const luecken = hfLuecken();
+    const entwurf = hfOffenerEntwurf();
     const zurueck = reports
         .filter(x => x.approval && x.approval.state === 'rejected')
         .sort((a, b) => String(b.dateFrom || '').localeCompare(String(a.dateFrom || '')))[0];
@@ -240,6 +255,8 @@ function renderNow() {
     // data-mess: Klick-Messpunkt (bh-start.js). Der Name kommt aus dem Ziel, nicht
     // aus dem Text — der wechselt je Lage und Sprache.
     const messName = (onclick) => 'hero_' + (onclick === 'AISChat.oeffnen()' ? 'assistent'
+        : onclick.startsWith('AISChat.entwurfUebernehmen') ? 'entwurf_uebernehmen'
+        : onclick.startsWith('AISChat.nachtragen') ? 'nachtragen'
         : /^openWeek|^hfLuecke/.test(onclick) ? 'selbst' : /^editReport/.test(onclick) ? 'weiter'
         : /^viewReport/.test(onclick) ? 'ansehen' : /PDF/i.test(onclick) ? 'pdf' : 'sonst');
     const cta = (text, onclick, icon) =>
@@ -266,6 +283,18 @@ function renderNow() {
             : L(`${wer} möchte, dass du die Woche überarbeitest.`, `${wer} would like you to revise this week.`);
         aktionen = cta(L('Überarbeiten', 'Revise'), `editReport('${zurueck.id}')`, 'pen') +
             chip(L('Mit dem Assistenten', 'With the assistant'), assistent, 'sparkles');
+    } else if (entwurf) {
+        fokusMo = entwurf.montag;
+        fokusR = null;
+        const n = entwurf.voll.filter(Boolean).length;
+        titel = L(t(`Dein Entwurf für KW ${entwurf.kw} `, 'wartet'), t(`Your draft for week ${entwurf.kw} is `, 'waiting'));
+        text = L('Der Assistent hat ihn geschrieben, im Heft steht er noch nicht. Übernimm ihn, dann ist die Woche gesichert.',
+            'The assistant wrote it, but it is not in your report book yet. Add it to keep the week.');
+        extra = `<div class="hf-tage" role="img" aria-label="${escapeHtml(L(`${n} von ${entwurf.voll.length} Tagen im Entwurf`, `${n} of ${entwurf.voll.length} days in the draft`))}">` +
+            entwurf.voll.map(v => `<span class="hf-tag-strich${v ? ' is-voll' : ''}"></span>`).join('') +
+            `<span class="hf-tage-text" aria-hidden="true">${escapeHtml(L(`${n} von ${entwurf.voll.length} Tagen`, `${n} of ${entwurf.voll.length} days`))}</span></div>`;
+        aktionen = cta(L('Entwurf übernehmen', 'Add draft'), 'AISChat.entwurfUebernehmen()', 'check') +
+            chip(L('Im Assistenten weiter', 'Continue in the assistant'), assistent, 'sparkles');
     } else if (!reports.length) {
         titel = L(t('Dein erstes ', 'Berichtsheft'), t('Your first ', 'report book'));
         text = L('Erzähl dem Assistenten in ein paar Sätzen, was diese Woche los war. Er schreibt daraus den Bericht, du prüfst ihn nur noch.',
@@ -304,8 +333,10 @@ function renderNow() {
             ? L(`Diese Woche ist fertig. Nur KW ${gkw} (${hfZeitraumText(g)}) ist noch leer.`, `This week is done. Only week ${gkw} (${hfZeitraumText(g)}) is still empty.`)
             : L(`Diese Woche ist fertig. Insgesamt fehlen noch ${luecken.length} Wochen, das ist die älteste.`,
                 `This week is done. ${luecken.length} weeks are still missing in total, this is the oldest.`);
+        // Nachtragen ist der Fall, fuer den der Assistent am meisten hilft ("weiss nicht
+        // mehr genau") — deshalb als zweite Aktion statt "Diese Woche ansehen".
         aktionen = cta(L(`KW ${gkw} nachtragen`, `Add week ${gkw}`), 'hfLueckeOeffnen()', 'plus') +
-            chip(L('Diese Woche ansehen', 'View this week'), `viewReport('${r.id}')`, 'eye');
+            chip(L('Mit dem Assistenten', 'With the assistant'), `AISChat.nachtragen(${gkw}, ${isoWeekYear(g)})`, 'sparkles');
     } else {
         const frei = r.approval && r.approval.state === 'approved' && !r.approval.stale;
         titel = frei ? L(t('Diese Woche ist ', 'freigegeben'), t('This week is ', 'approved'))

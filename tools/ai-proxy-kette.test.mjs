@@ -143,6 +143,15 @@ const rg = await worker.fetch(neueAnfrage(), env);
 pruefe(aufrufe.length === MODELS.length && rg.headers.get('X-MWL-Salvage') === '1',
   `Gegenprobe: ohne days alle ${MODELS.length} Modelle probiert (${aufrufe.length})`);
 
+// Worker v5.1: DERSELBE Text als Chat (X-MWL-Art: chat) reicht dem ersten Modell —
+// der Client braucht nur "antwort". Bis dahin schrieb bei "hallo" jedes Mal die
+// Gratis-Kette, obwohl Turbo gewaehlt war (36 von 134 Turbo-Aufrufen, 20.–26.10.).
+aufrufe.length = 0;
+const chatAnfrage = new Request(neueAnfrage(), { headers: { Origin: 'https://myworklog.de', 'Content-Type': 'application/json', 'X-MWL-Art': 'chat' } });
+const rc = await worker.fetch(chatAnfrage, env);
+pruefe(rc.status === 200 && aufrufe.length === 1 && !rc.headers.get('X-MWL-Salvage'),
+  `Chat ohne days: erstes Modell genuegt (${aufrufe.length} Aufruf/e)`);
+
 // ── v4.8: Rettung nur mit Wochen-Spur ─────────────────────────────────
 // Ohne die Sperre gab der Proxy JEDE Antwort zurueck — mit gefaelschtem Origin ein
 // freier Chatbot. Ein Gedicht ohne days/entries/antwort darf nicht durchkommen.

@@ -384,4 +384,61 @@ t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeld
     t.ok(!!aussen && aussen[1].includes('[data-modell-auf]'), 'der Aussen-Klick-Handler nimmt [data-modell-auf] aus', aussen && aussen[1]);
 }
 
+// ── Wochenwechsel, Startseite, Kurzwege (v9.3.2) ──────────────────────────
+// Bis v9.3.1 warf oeffnen() nach dem Wochenwechsel einen nicht uebernommenen
+// Entwurf still weg. Jetzt bleibt er mit seiner KW, nur die Nachrichten gehen.
+t.gruppe('Entwurf ueberlebt den Wochenwechsel');
+{
+    const e = frisch({});
+    e.sandbox.getWeekNumber = () => 44;
+    const I = e.sandbox.AISChat._intern;
+    const vorwoche = I.wochenSchluessel(new Date(Date.now() - 7 * 864e5));
+    const roh = {
+        nachrichten: [{ rolle: 'nutzer', text: 'bin Koch' }, { rolle: 'assistent', text: 'Montag steht drin.' }],
+        woche: vorwoche, erledigt: false,
+        entwurf: { kw: 0, tage: [{ index: 0, entries: ['Server im Rack verbaut'] }] },
+    };
+    e.sandbox.localStorage.setItem('bh_chat_v1', JSON.stringify(roh));
+    const o = e.sandbox.AISChat.offenerEntwurf();
+    t.ok(!!o && o.kw === parseInt(vorwoche.split('-W')[1], 10), 'Startseite sieht den Entwurf mit der KW seines Gespraechs', o && o.kw);
+    t.ok(!!o && o.voll.filter(Boolean).length === 1 && o.voll.length === 5, '1 von 5 Tagen voll', o && o.voll.join(','));
+
+    I.setzeEntwurf(I.entwurfLesen(roh.entwurf));
+    const g = I.gespraech();
+    g.nachrichten = roh.nachrichten; g.woche = vorwoche;
+    t.ok(I.istAbgelaufen(g, new Date()), 'Vorbedingung: das Gespraech gilt als abgelaufen');
+    I.wochenwechsel();
+    const n = I.gespraech();
+    t.ok(n.entwurf.tage[0].entries[0] === 'Server im Rack verbaut', 'Entwurf ist noch da (vorher: weg)');
+    t.ok(n.entwurf.kw === parseInt(vorwoche.split('-W')[1], 10), 'Entwurf behaelt seine KW', n.entwurf.kw);
+    t.ok(!JSON.stringify(n.nachrichten).includes('Koch'), 'der alte Kontext ("bin Koch") geht nicht in die neue Woche');
+    t.ok(n.nachrichten.length === 1 && n.nachrichten[0].rolle === 'assistent', 'eine Nachricht sagt, dass der Entwurf noch offen ist');
+    t.ok(!I.istAbgelaufen(n, new Date()), 'danach nicht mehr abgelaufen (kein zweites Retten beim naechsten Oeffnen)');
+
+    // Gegenprobe: uebernommen bzw. leer → frisch wie bisher.
+    const g2 = I.gespraech(); g2.erledigt = true;
+    I.wochenwechsel();
+    t.ok(!I.gespraech().nachrichten.length && !I.gespraech().entwurf.tage.some(x => x.entries.length), 'uebernommene Woche: frisch angefangen');
+    t.ok(e.sandbox.AISChat.offenerEntwurf() === null || I.gespraech().nachrichten.length === 0, 'ohne Entwurf meldet die Startseite nichts aus dem Gespraech');
+}
+
+t.gruppe('Kurzwege unter dem Entwurf');
+{
+    const e = frisch({});
+    e.sandbox.getWeekNumber = () => 44;
+    const I = e.sandbox.AISChat._intern;
+    e.AIStudio.konfigSetzen({ beruf: 'sysadmin', lehrjahr: 2, umfang: 'mittel' });
+    I.setzeEntwurf(I.entwurfLesen({ kw: 44, tage: [{ index: 0, entries: ['Server verbaut'] }, { index: 2, isSchoolDay: true, entries: ['Subnetting'] }] }));
+    const h = I.schnellHTML();
+    const tage = [...h.matchAll(/AISChat\.tagBeginnen\((\d)\)/g)].map(m => +m[1]);
+    t.ok(tage.length === 3 && tage.join() === '1,3,4', 'je leerer Arbeitstag ein Kurzweg (Di, Do, Fr)', tage.join());
+    t.ok(h.includes('AISChat.ausfuehrlicher()'), '"Ausführlicher" bei gefuellten Tagen und Umfang mittel');
+    e.AIStudio.konfigSetzen({ umfang: 'ausfuehrlich' });
+    t.ok(!I.schnellHTML().includes('ausfuehrlicher()'), 'bei Umfang ausfuehrlich kein "Ausführlicher"');
+    I.setzeEntwurf(I.entwurfLesen({ kw: 44, tage: [0, 1, 2, 3, 4].map(i => ({ index: i, entries: ['x' + i] })) }));
+    t.ok(I.schnellHTML() === '', 'volle Woche, ausfuehrlich: keine Kurzwege (Hauptaktion bleibt Übernehmen)');
+    t.ok(/onclick="AISChat\.tagBeginnen\(/.test(CHAT) && /tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen/.test(CHAT),
+        'Kurzwege und Startseiten-Helfer sind oeffentlich (onclick ruft sie ueber AISChat)');
+}
+
 t.abschluss('ais-chat');

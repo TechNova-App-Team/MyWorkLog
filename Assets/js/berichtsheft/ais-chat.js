@@ -95,6 +95,27 @@ function frischAnfangen() {
     zuletztGeaendert = [];
     if (studioDa()) AIStudio.konfigSetzen({ kw: kwVon(new Date()) });
 }
+// 🔴 Bis v9.3.1 warf der Wochenwechsel einen NICHT uebernommenen Entwurf still
+// weg (frischAnfangen): wer Freitag erzaehlte und Montag wiederkam, fand nichts.
+// PostHog 27.09.–26.10.2026: 96 Besucher schrieben dem Assistenten, 15
+// uebernahmen eine Woche, rund 100 schlossen den Chat nie. Jetzt bleibt der
+// Entwurf mit SEINER KW stehen; nur das Hin und Her davor geht (alter Kontext
+// wie "bin Koch" soll nicht in die neue Woche laufen, Grund oben).
+function wochenwechsel() {
+    const alt = gespraech;
+    if (alt.erledigt || !entwurfHatInhalt(alt.entwurf)) { frischAnfangen(); return; }
+    const kw = alt.entwurf.kw || parseInt(String(alt.woche).split('-W')[1], 10) || kwVon(new Date());
+    gespraech = leeresGespraech();
+    gespraech.entwurf = alt.entwurf;
+    gespraech.entwurf.kw = kw;
+    gespraech.woche = wochenSchluessel(new Date());
+    gespraech.nachrichten = [{ rolle: 'assistent', text: Lx(
+        'Dein Entwurf für KW ' + kw + ' ist noch nicht im Berichtsheft. Übernimm ihn oder ergänz ihn hier. Für eine andere Woche fängst du mit „Neue Woche“ frisch an.',
+        'Your draft for week ' + kw + ' is not in your report book yet. Add it, or complete it here. For another week, start fresh with “New week”.') }];
+    zuletztGeaendert = [];
+    if (studioDa()) AIStudio.konfigSetzen({ kw });
+    if (typeof bhMess === 'function') bhMess('assistent_entwurf_gerettet');
+}
 const tagHatInhalt = (t) => !!(t && (t.entries.length || t.dayStatus));
 const entwurfHatInhalt = (e) => !!(e && e.tage.some(tagHatInhalt));
 
@@ -481,6 +502,38 @@ function entwurfHTML() {
         '</footer></article>';
 }
 
+// Kurzwege unter der Karte: je leerer Arbeitstag ein Satzanfang, dazu
+// "Ausführlicher". Ein Tag-Knopf SCHICKT nichts — er setzt nur "Donnerstag "
+// ins Feld, denn was an dem Tag war, weiss nur der Azubi (Erfinden verboten,
+// Entscheidung 27.09.2026). Hoechstens drei Tage: bei fuenf leeren ist "Leere
+// Tage füllen" in der Karte der bessere Weg.
+function schnellHTML() {
+    const e = gespraech.entwurf;
+    const k = studioDa() ? AIStudio.konfig() : { tage: [0, 1, 2, 3, 4], umfang: 'mittel' };
+    const leer = e.tage.filter(t => k.tage.includes(t.index) && !tagHatInhalt(t)).slice(0, 3);
+    const knoepfe = leer.map(t =>
+        '<button type="button" class="aic-schnell-k" onclick="AISChat.tagBeginnen(' + t.index + ')">' + esc(TAGE()[t.index]) + ' …</button>');
+    if (k.umfang !== 'ausfuehrlich' && e.tage.some(t => t.entries.length))
+        knoepfe.push('<button type="button" class="aic-schnell-k" onclick="AISChat.ausfuehrlicher()">' + esc(Lx('Ausführlicher', 'More detail')) + '</button>');
+    return knoepfe.length ? '<div class="aic-schnell" role="group" aria-label="' + esc(Lx('Weiter erzählen', 'Keep telling')) + '">' + knoepfe.join('') + '</div>' : '';
+}
+function tagBeginnen(i) {
+    const f = $('aicText');
+    if (!f || !(i >= 0 && i <= 4)) return;
+    if (typeof bhMess === 'function') bhMess('assistent_kurzweg_tag');
+    const anfang = TAGE()[i] + ' ';
+    if (!f.value.trim()) f.value = anfang;
+    else if (!f.value.startsWith(anfang)) f.value = anfang + f.value;
+    feldGroesse();
+    knopfZustand();
+    f.focus();
+    f.setSelectionRange(f.value.length, f.value.length);
+}
+function ausfuehrlicher() {
+    if (typeof bhMess === 'function') bhMess('assistent_kurzweg_ausfuehrlicher');
+    senden(null, Lx('Schreib die eingetragenen Tage ausführlicher.', 'Write the filled-in days in more detail.'));
+}
+
 // Karte einer frueheren Woche aus dem Verlauf — fest, nicht der Entwurf.
 function wocheHTML(w, nr) {
     if (!w || !Array.isArray(w.days) || !w.days.length) return '';
@@ -683,7 +736,8 @@ function zeichnen() {
     } else {
         let letzte = -1;
         n.forEach((x, i) => { if (x.rolle === 'assistent' && !x.woche) letzte = i; });
-        const karte = entwurfHatInhalt(gespraech.entwurf) && !gespraech.erledigt ? entwurfHTML() : '';
+        const karte = entwurfHatInhalt(gespraech.entwurf) && !gespraech.erledigt
+            ? entwurfHTML() + (beschaeftigt ? '' : schnellHTML()) : '';
         let html = '';
         n.forEach((x, i) => {
             html += nachrichtHTML(x, i);
@@ -1315,7 +1369,7 @@ function oeffnen() {
     v.hidden = false;
     if (typeof bhMess === 'function') bhMess('assistent_offen', { laufend: gespraech.nachrichten.length > 0 && !gespraech.erledigt });
     // Die Seite kann tagelang offen stehen — deshalb hier pruefen, nicht nur beim Laden.
-    if (istAbgelaufen(gespraech, new Date())) { frischAnfangen(); speichern(); }
+    if (istAbgelaufen(gespraech, new Date())) { wochenwechsel(); speichern(); }
     document.body.classList.add('aic-offen');
     zeichnen();
     verlaufZeichnen();
@@ -1334,6 +1388,8 @@ function schliessen() {
     v.hidden = true;
     v.classList.remove('rail-auf');
     document.body.classList.remove('aic-offen');
+    // Die Startseite nennt einen offenen Entwurf (renderNow, bh-uebersicht.js).
+    if (typeof renderNow === 'function') renderNow();
 }
 
 // Die alten Regler als Sheet UEBER dem Chat. Das Textfeld "Was ist diese
@@ -1349,6 +1405,9 @@ function einstellungen(tab) {
 function entwurfUebernehmen() {
     if (!entwurfHatInhalt(gespraech.entwurf)) return;
     if (typeof bhMess === 'function') bhMess('assistent_uebernommen');
+    // Von der Startseite aus kann der Chat seit dem Wochenwechsel ungeoeffnet sein:
+    // ohne eigene KW fiele der Entwurf sonst in die Woche der Einstellungen.
+    if (!gespraech.entwurf.kw) { const o = offenerEntwurf(); if (o) gespraech.entwurf.kw = o.kw; }
     AIStudio.wocheSetzen(entwurfAlsWoche(gespraech.entwurf, AIStudio.konfig()));
     // Uebernommen = diese Woche ist fertig; beim naechsten Oeffnen geht es frisch los.
     gespraech.erledigt = true;
@@ -1357,6 +1416,57 @@ function entwurfUebernehmen() {
     AIStudio.insertAll();
     verlaufZeichnen();
 }
+// Fuer die Startseite (renderNow): liegt ein nicht uebernommener Entwurf?
+// { kw, jahr, voll:[bool je sichtbarem Tag] } oder null. Liest notfalls selbst
+// aus dem Speicher — init() kann nach dem ersten renderNow() laufen.
+function offenerEntwurf() {
+    let g = gespraech;
+    if (!g.nachrichten.length) {
+        try {
+            const roh = JSON.parse(localStorage.getItem(SPEICHER) || 'null');
+            if (roh && Array.isArray(roh.nachrichten)) g = { nachrichten: roh.nachrichten, woche: String(roh.woche || ''), erledigt: !!roh.erledigt, entwurf: entwurfLesen(roh.entwurf) };
+        } catch (e) { /* kaputter Stand: kein Entwurf */ }
+    }
+    if (!g || g.erledigt || !entwurfHatInhalt(g.entwurf)) return null;
+    const k = studioDa() ? AIStudio.konfig() : { tage: [0, 1, 2, 3, 4] };
+    const [j, w] = String(g.woche).split('-W').map(Number);
+    const kw = g.entwurf.kw || w || kwVon(new Date());
+    // Die Woche des Gespraechs gibt das Jahr; eine KW weit DAHINTER liegt im Vorjahr
+    // (Gespraech in KW 2, Entwurf fuer KW 52).
+    const jahr = (j || new Date().getFullYear()) - (w && kw > w + 26 ? 1 : 0);
+    return { kw, jahr, voll: g.entwurf.tage.filter(t => tagHatInhalt(t) || k.tage.includes(t.index)).map(tagHatInhalt) };
+}
+
+// "KW 41 fehlt" → mit dem Assistenten nachtragen. Ein offener Entwurf wird wie
+// bei "Neue Woche" nur nach Rueckfrage verworfen.
+async function nachtragen(kw, jahr) {
+    kw = parseInt(kw, 10);
+    if (!(kw >= 1 && kw <= 53) || !studioDa()) return;
+    if (entwurfHatInhalt(gespraech.entwurf) && !gespraech.erledigt && (gespraech.entwurf.kw || 0) !== kw) {
+        const ok = await frag({
+            title: Lx('KW ' + kw + ' nachtragen?', 'Add week ' + kw + '?'),
+            text: Lx('Der Entwurf für KW ' + (gespraech.entwurf.kw || kwVon(new Date())) + ' ist noch nicht übernommen und wird verworfen.',
+                     'The draft for week ' + (gespraech.entwurf.kw || kwVon(new Date())) + ' has not been added yet and will be discarded.'),
+            confirmText: Lx('Verwerfen', 'Discard'),
+        });
+        if (!ok) return;
+    }
+    if (typeof bhMess === 'function') bhMess('assistent_nachtragen');
+    if (!(gespraech.entwurf.kw === kw && entwurfHatInhalt(gespraech.entwurf) && !gespraech.erledigt)) {
+        frischAnfangen();
+        gespraech.entwurf.kw = kw;
+        AIStudio.konfigSetzen({ kw });
+        const mo = (typeof getWeekDates === 'function') ? getWeekDates(kw, jahr).monday : '';
+        const zeitraum = mo && typeof hfZeitraumText === 'function' ? ' (' + hfZeitraumText(new Date(mo + 'T12:00:00')) + ')' : '';
+        gespraech.nachrichten.push({ rolle: 'assistent', text: Lx(
+            'Wir tragen KW ' + kw + zeitraum + ' nach. Was war da los? Ein paar Stichworte reichen, auch wenn du nicht mehr jeden Tag weißt.',
+            'Let’s add week ' + kw + zeitraum + '. What happened that week? A few keywords are enough, even if you no longer remember every day.') });
+        gespraech.woche = wochenSchluessel(new Date());
+        speichern();
+    }
+    oeffnen();
+}
+
 function entwurfBearbeiten() {
     if (!entwurfHatInhalt(gespraech.entwurf)) return;
     if (typeof bhMess === 'function') bhMess('assistent_bearbeiten');
@@ -1757,6 +1867,7 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg,
+    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
@@ -1765,7 +1876,7 @@ return {
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
-        leererEntwurf, entwurfLesen, werHatGeschrieben, hinweisHTML, HINWEIS_KEY, stilStufe, stilNaechster,
+        leererEntwurf, entwurfLesen, wochenwechsel, schnellHTML, werHatGeschrieben, hinweisHTML, HINWEIS_KEY, stilStufe, stilNaechster,
         gespraech: () => gespraech, setzeEntwurf: (e) => { gespraech.entwurf = e; },
     },
 };

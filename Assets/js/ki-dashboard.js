@@ -125,6 +125,20 @@
         var wochen = auf.filter(function (e) { return e.a === 'woche' && e.s !== 'fehler'; });
         var wocheSchnitt = wochen.length ? wochen.reduce(function (s, e) { return s + e.pt + e.ct; }, 0) / wochen.length : null;
         var dauern = auf.filter(function (e) { return e.s !== 'fehler'; }).map(function (e) { return e.ms; });
+        // Turbo (?stufe=schnell) seit Worker v4.7: e.st 's' = gewaehlt. Wer gewaehlt hat und
+        // trotzdem Gratis bekam, steht hier mit Grund — die Frage "warum nutzen so viele
+        // das Gratis-Modell?" war am 26.10. ohne diese Zahl nicht zu beantworten
+        // (134 von 139 hatten Turbo gewaehlt, 55 bekamen Gratis, Grund fast immer 'form' im Chat).
+        var BEZAHLT = (d.modelleSchnell || []).filter(function (m) { return (d.modelle || []).indexOf(m) < 0; });
+        var turbo = auf.filter(function (e) { return e.st === 's' && e.s !== 'fehler'; });
+        var turboOk = turbo.filter(function (e) { return BEZAHLT.indexOf(e.m) >= 0; }).length;
+        var turboGruende = {};
+        turbo.forEach(function (e) {
+            if (BEZAHLT.indexOf(e.m) >= 0) return;
+            var p0 = fehlerPlaetze(e).filter(function (x) { return x.j === 0; })[0];
+            var g = p0 ? (FEHLER_KURZ[p0.code] || p0.code) : (fehlerPlaetze(e).length ? 'langsamer' : 'Kontingent');
+            turboGruende[g] = (turboGruende[g] || 0) + 1;
+        });
         var amLimit = d.geraeteHeute.filter(function (g) { return g.t >= d.kontingent.tokensTag || g.n >= d.kontingent.anfragenTag; }).length;
 
         var kpis = [
@@ -133,6 +147,8 @@
             ['Ø je Woche', wocheSchnitt == null ? '—' : zahl(wocheSchnitt), wochen.length ? 'Tokens, ' + zahl(wochen.length) + ' Wochen' : 'keine Woche im Zeitraum'],
             ['Geliefert', auf.length ? Math.round(n.ok / auf.length * 100) + ' %' : '—', zahl(n.rettung) + ' gerettet · ' + zahl(n.fehler) + ' fehlgeschlagen'],
             ['Dauer, Median', dauern.length ? sek(quantil(dauern, 0.5)) : '—', dauern.length ? '90 % unter ' + sek(quantil(dauern, 0.9)) : ''],
+            ['Turbo geliefert', turbo.length ? Math.round(turboOk / turbo.length * 100) + ' %' : '—',
+                turbo.length ? zahl(turbo.length) + ' gewählt' + Object.keys(turboGruende).map(function (g) { return ' · ' + zahl(turboGruende[g]) + '× ' + g; }).join('') : 'im Zeitraum nicht gewählt'],
             ['Geräte heute', zahl(d.geraeteHeute.length), amLimit + ' am Limit · ' + zahl(d.ipsHeute) + ' IP-Adressen'],
         ];
         $('kdKpis').innerHTML = kpis.map(function (k) {
@@ -309,11 +325,12 @@
         setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
     }
     function zeile(e) {
-        var f = fehlerListe(e);
         return {
             zeit: teile(e.ts).tag + ' ' + teile(e.ts).text.slice(-5), ts: e.ts, art: e.a, ergebnis: e.s,
             modell: e.m || '', tokens_ein: e.pt || 0, tokens_aus: e.ct || 0, dauer_ms: e.ms || 0,
-            fehlversuche: f.join(','),
+            fehlversuche: fehlerPlaetze(e).map(function (x) { return x.j + ':' + x.code; }).join(','),
+            stufe: e.st === 's' ? 'turbo' : e.st === 'f' ? 'marathon' : '',
+            befund: e.fb || '',
         };
     }
     function exportJson() {
@@ -329,7 +346,7 @@
     }
     function exportCsv() {
         if (!daten) return;
-        var spalten = ['zeit', 'ts', 'art', 'ergebnis', 'modell', 'tokens_ein', 'tokens_aus', 'dauer_ms', 'fehlversuche'];
+        var spalten = ['zeit', 'ts', 'art', 'stufe', 'ergebnis', 'modell', 'tokens_ein', 'tokens_aus', 'dauer_ms', 'fehlversuche', 'befund'];
         var feld = function (v) { v = String(v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
         // Semikolon + BOM: so oeffnet ein deutsches Excel die Datei ohne Import-Dialog in Spalten.
         var csv = String.fromCharCode(0xFEFF) + [spalten.join(';')].concat(auswahl().auf.map(function (e) {
