@@ -596,7 +596,7 @@ function leerHTML() {
                        'Have you been writing your reports with Gemini or ChatGPT? Bring along what that AI knows about your reports and I will write like you.')) + '</p>' +
         '<button type="button" class="aic-knopf" onclick="AISChat.vorwissen()">' + esc(Lx('Vorwissen hinterlegen', 'Add background')) + '</button>' +
         '</div>';
-    return '<div class="aic-leer">' + preisHinweisHTML() +
+    return '<div class="aic-leer">' +
         '<span class="aic-leer-marke">' + MARKE + '</span>' +
         '<h3 class="aic-leer-t">' + esc(titel) + '</h3>' +
         '<p class="aic-leer-s">' + esc(text) + '</p>' +
@@ -772,7 +772,9 @@ function zeichnen() {
     if (!box) return;
     const n = gespraech.nachrichten;
     if (!n.length && !entwurfHatInhalt(gespraech.entwurf)) {
-        box.innerHTML = hinweisHTML() + leerHTML();
+        // Preis-Hinweis VOR dem Leerzustand, nicht darin: .aic-leer zentriert sich
+        // senkrecht, der Hinweis soll aber oben am Rand stehen (Wunsch 26.10.2026).
+        box.innerHTML = hinweisHTML() + preisHinweisHTML() + leerHTML();
     } else {
         let letzte = -1;
         n.forEach((x, i) => { if (x.rolle === 'assistent' && !x.woche) letzte = i; });
