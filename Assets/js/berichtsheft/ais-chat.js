@@ -606,12 +606,14 @@ function leerHTML() {
 }
 
 // ── Modellwahl + Ankuendigung (seit v8.5.12) ─────────────────────────
-// Zwei Stufen aus AIS_CLOUD (Stufe/STUFEN): Turbo = bezahltes Modell zuerst,
-// kleineres Tageskontingent; Marathon = Gratis-Kette, grosses Kontingent.
+// Drei Stufen aus AIS_CLOUD (Stufe/STUFEN): Turbo = bezahlt, Denken aus;
+// Thinking (v9.4.0) = bezahlt, Denken an, zaehlt doppelt; Marathon = Gratis-Kette.
 // Die Zeiten im Menue sind GEMESSEN (KI-Dashboard 13.-16.10.2026: Gratis-Kette
-// Median 20,5 s, p90 54 s; Ling 3.0 Flash im September 2-6 s) — wer die Kette
-// im Worker aendert, prueft die Saetze hier.
+// Median 20,5 s, p90 54 s; 26.10.2026 mit dem echten Chat-Prompt: Turbo
+// Median 1,8 s, bis 6 s beim Auffuellen; Thinking 3,3-8,7 s, hoechstens 11 s) —
+// wer die Kette im Worker aendert, prueft die Saetze hier.
 const NACHRICHT_TOKENS = 3900;   // gemessen: ein Chat-Aufruf ~2.700 ein + ~1.200 aus
+const DENKEN_FAKTOR = 2;         // wie DENKEN_FAKTOR im Worker (ai-proxy v5.2)
 const WOCHE_TOKENS = 3433;       // wie KONT_WOCHE_TOKENS in ais-studio.js
 const HINWEIS_KEY = 'bh_ki_stufen_hinweis_v1';
 const kc = () => window.AIS_CLOUD;
@@ -639,15 +641,19 @@ function menueZeichnen() {
     const eintrag = (s, unter, zeit, rest, marke) =>
         '<button type="button" class="aic-modell-opt" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
         '<span class="aic-modell-opt-kopf"><span class="aic-modell-opt-name">' + esc(stufeName(s)) + '</span>' +
-        '<span class="aic-modell-marke' + (s === 'schnell' ? ' is-turbo' : '') + '">' + esc(marke) + '</span></span>' +
+        '<span class="aic-modell-marke' + (s === 'schnell' ? ' is-turbo' : s === 'denken' ? ' is-denken' : '') + '">' + esc(marke) + '</span></span>' +
         '<span class="aic-modell-opt-unter">' + esc(unter) + '</span>' +
         '<span class="aic-modell-opt-meta"><span>' + esc(zeit) + '</span>' + (rest ? '<span>' + esc(rest) + '</span>' : '') + '</span>' +
         '<svg class="aic-modell-haken" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>' +
         '</button>';
     m.innerHTML =
-        eintrag('schnell', Lx('Schnell und präzise. Kleineres Tageskontingent.', 'Fast and precise. Smaller daily quota.'),
-            Lx('Antwort in wenigen Sekunden', 'Answers in a few seconds'),
+        eintrag('schnell', Lx('Antwortet sofort. Für den Alltag: erzählen, eintragen, fertig.', 'Answers right away. For everyday use: tell it, it’s in, done.'),
+            Lx('Antwort in 2 bis 6 Sekunden', 'Answers in 2 to 6 seconds'),
             restText(K.Kontingent.schnell(), NACHRICHT_TOKENS, ['Nachricht', 'message'], ['Nachrichten', 'messages']), 'Turbo') +
+        eintrag('denken', Lx('Denkt erst nach, dann schreibt es. Für ganze Wochen, wirre Notizen und knifflige Fragen. Zählt doppelt vom Turbo-Kontingent.',
+                             'Thinks first, then writes. For whole weeks, messy notes and tricky questions. Counts double against the Turbo quota.'),
+            Lx('Antwort in 4 bis 12 Sekunden', 'Answers in 4 to 12 seconds'),
+            restText(K.Kontingent.schnell(), NACHRICHT_TOKENS * DENKEN_FAKTOR, ['Nachricht', 'message'], ['Nachrichten', 'messages']), 'Thinking') +
         eintrag('frei', Lx('Kostenlos und ausdauernd. Großes Tageskontingent.', 'Free and enduring. Large daily quota.'),
             Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
             restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free')) +
@@ -673,7 +679,7 @@ function modellMenue(auf) {
 function modellWaehlen(s) {
     const K = kc(); if (!K) return;
     K.Stufe.set(s);
-    if (typeof bhMess === 'function') bhMess('modell_gewaehlt', { stufe: s === 'frei' ? 'frei' : 'schnell' });
+    if (typeof bhMess === 'function') bhMess('modell_gewaehlt', { stufe: s === 'frei' || s === 'denken' ? s : 'schnell' });
     modellMenue(false);
     hinweisGelesen();
     if (offen) zeichnen();
@@ -683,14 +689,17 @@ function modellWaehlen(s) {
 // gewaehlte Stufe war (ohne Guthaben ausgewichen, Turbo fuer heute leer).
 function werHatGeschrieben() {
     const K = kc();
-    if (!K || !K.Stufe || K.Stufe.get() !== 'schnell') return '';
+    const gewaehlt = K && K.Stufe ? K.Stufe.get() : 'frei';
+    if (gewaehlt === 'frei') return '';
     const z = K.Stufe.zuletzt;
-    if (!z || z === 'schnell') return '';
+    if (!z || z === gewaehlt) return '';
+    // Thinking ausgefallen, Turbo hat geschrieben (Worker: DENKER → SOFORT → Gratis).
+    const statt = z === 'schnell' ? 'schnell' : 'frei';
     return z === 'frei-kontingent'
-        ? Lx(stufeName('schnell') + ' ist für heute aufgebraucht, deshalb hat ' + stufeName('frei') + ' geschrieben.',
-             stufeName('schnell') + ' is used up for today, so ' + stufeName('frei') + ' wrote this.')
-        : Lx(stufeName('schnell') + ' ' + turboGrundText(K.Stufe.grund)[0] + ', deshalb hat ' + stufeName('frei') + ' geschrieben.',
-             stufeName('schnell') + ' ' + turboGrundText(K.Stufe.grund)[1] + ', so ' + stufeName('frei') + ' wrote this.');
+        ? Lx(stufeName(gewaehlt) + ' ist für heute aufgebraucht, deshalb hat ' + stufeName('frei') + ' geschrieben.',
+             stufeName(gewaehlt) + ' is used up for today, so ' + stufeName('frei') + ' wrote this.')
+        : Lx(stufeName(gewaehlt) + ' ' + turboGrundText(K.Stufe.grund)[0] + ', deshalb hat ' + stufeName(statt) + ' geschrieben.',
+             stufeName(gewaehlt) + ' ' + turboGrundText(K.Stufe.grund)[1] + ', so ' + stufeName(statt) + ' wrote this.');
 }
 // Der Grund kommt vom Worker (X-MWL-Turbo-Grund, v4.9) — nichts raten: ohne Grund der
 // neutrale Satz. 402 = Guthaben bei OpenRouter leer, 4xx/5xx = Anbieter ausgelastet.
@@ -759,7 +768,9 @@ function zeichnen() {
 // Schwelle 12 s ist RENNEN_STAFFEL_MS im Worker (ab da schreibt dort ein
 // zweites Modell parallel) — wer sie dort aendert, aendert sie hier mit.
 // 95 s = Zeitlimit in denken().
-const WARTE_STAFFEL_S = 12, WARTE_LIMIT_S = 95;
+// Thinking: der Worker gibt dem Denker DENKEN_STAFFEL_MS = 20 s Vorsprung.
+const WARTE_STAFFEL_S = 12, WARTE_STAFFEL_DENKEN_S = 20, WARTE_LIMIT_S = 95;
+const denktGerade = () => { const K = kc(); return !!(K && K.Stufe && K.Stufe.get() === 'denken'); };
 const TAG_KURZ = [['Mo', 'Mon'], ['Di', 'Tue'], ['Mi', 'Wed'], ['Do', 'Thu'], ['Fr', 'Fri']];
 // Feste Strichlaengen je Zeile: sieht nach Handschrift aus, springt aber nicht
 // bei jedem Neuzeichnen.
@@ -768,6 +779,7 @@ let wartenSeit = 0, warteUhr = null;
 
 function warteSatz(sek) {
     if (beschaeftigt === 'lokal') return Lx('Schreibt deine Woche aus der Vorlage …', 'Writing your week from the template …');
+    if (denktGerade() && sek < WARTE_STAFFEL_DENKEN_S) return Lx('Denkt nach …', 'Thinking …');
     if (sek < WARTE_STAFFEL_S) return Lx('Formuliert deine Woche …', 'Writing your week …');
     if (sek < 40) return Lx('Dauert länger als sonst. Ein zweites Modell schreibt jetzt parallel mit.',
                             'Taking longer than usual. A second model is now writing in parallel.');

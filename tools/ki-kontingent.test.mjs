@@ -123,7 +123,15 @@ console.log('── Stufen ──');
   ok(e.sandbox.localStorage.getItem('bh_ki_stufe') === 'frei', 'Wahl bleibt gespeichert');
   await e.CLOUD.generateWithCloud('software', optionen);
   ok(!/stufe=/.test(url || '') && /\/$/.test(url || ''), `Marathon schickt KEINEN Parameter: ${url}`);
-  ok(Object.keys(e.CLOUD.STUFEN).join() === 'schnell,frei' && e.CLOUD.STUFEN.schnell.name && e.CLOUD.STUFEN.frei.name, 'zwei benannte Stufen');
+  ok(Object.keys(e.CLOUD.STUFEN).join() === 'schnell,denken,frei' && Object.values(e.CLOUD.STUFEN).every(s => s.name), 'drei benannte Stufen (v9.4.0: Thinking)');
+  // v9.4.0: Thinking = ?stufe=denken, teilt sich das bezahlte Kontingent mit Turbo
+  e.CLOUD.Stufe.set('denken');
+  ok(e.CLOUD.Stufe.get() === 'denken' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'denken', 'Thinking wird gespeichert');
+  await e.CLOUD.generateWithCloud('software', optionen);
+  ok(/\?stufe=denken$/.test(url || ''), `Thinking schickt ?stufe=denken: ${url}`);
+  ok(e.CLOUD.Stufe.bezahlt() === true, 'Thinking zaehlt als bezahlte Stufe');
+  e.CLOUD.Stufe.set('frei');
+  ok(e.CLOUD.Stufe.bezahlt() === false, 'Marathon ist nicht bezahlt');
   // Keine fremden Markennamen fuer unsere Stufen (Taeuschung, siehe Kommentar in ais-cloud.js)
   const namen = Object.values(e.CLOUD.STUFEN).map((s) => s.name).join(' ');
   ok(!/gemini|gpt|claude|opus|sonnet|llama|mistral|ling|nemotron/i.test(namen), `eigene Namen, keine fremden Marken: ${namen}`);

@@ -148,14 +148,23 @@ const Kontingent = {
 // Ankuendigung), der Name, den der Nutzer kennt, bleibt. Und ein fremder
 // Markenname ("Gemini …") fuer ein anderes Modell waere eine Taeuschung.
 const STUFE_SPEICHER = 'bh_ki_stufe';
+// "denken" (v9.4.0, Worker v5.2) = Wunsch des Nutzers 26.10.2026: ein Schalter
+// wie bei ChatGPT/Gemini, der nachdenken laesst und dafuer mehr Kontingent nimmt.
+// Gleiches bezahltes Kontingent wie "schnell", der Worker bucht es doppelt.
 const STUFEN = {
     schnell: { name: 'Kestrel 3.1 Turbo' },
+    denken:  { name: 'Kestrel 3.1 Thinking' },
     frei:    { name: 'Albatros 2.5 Marathon' },
 };
 const Stufe = {
-    get() { try { return localStorage.getItem(STUFE_SPEICHER) === 'frei' ? 'frei' : 'schnell'; } catch (e) { return 'schnell'; } },
+    get() {
+        try { const v = localStorage.getItem(STUFE_SPEICHER); return v === 'frei' || v === 'denken' ? v : 'schnell'; }
+        catch (e) { return 'schnell'; }
+    },
+    // Beide bezahlten Stufen teilen sich das Turbo-Kontingent.
+    bezahlt() { return this.get() !== 'frei'; },
     set(s) {
-        const neu = s === 'frei' ? 'frei' : 'schnell';
+        const neu = s === 'frei' || s === 'denken' ? s : 'schnell';
         try { localStorage.setItem(STUFE_SPEICHER, neu); } catch (e) { }
         try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: neu } })); } catch (e) { }
     },
@@ -163,9 +172,10 @@ const Stufe = {
     // Worker vor v4.7 ignoriert ihn einfach (= Gratis-Kette wie bisher).
     url(basis) {
         const b = String(basis || CLOUD_PROXY).replace(/\/$/, '') + '/';
-        return this.get() === 'schnell' ? b + '?stufe=schnell' : b;
+        const s = this.get();
+        return s === 'frei' ? b : b + '?stufe=' + s;
     },
-    // Was WIRKLICH geantwortet hat (Kopf X-MWL-Stufe): "schnell", "frei" (z. B.
+    // Was WIRKLICH geantwortet hat (Kopf X-MWL-Stufe): "denken", "schnell", "frei" (z. B.
     // ohne Guthaben ausgewichen) oder "frei-kontingent" (Turbo fuer heute leer).
     zuletzt: null,
     ausKopf(response) {

@@ -443,4 +443,29 @@ t.gruppe('Kurzwege unter dem Entwurf');
         'Kurzwege und Startseiten-Helfer sind oeffentlich (onclick ruft sie ueber AISChat)');
 }
 
+// ── Thinking (v9.4.0, Worker v5.2) ─────────────────────────────────────────
+// Wer schreibt wirklich? Thinking kann auf Turbo ausweichen, Turbo auf Marathon.
+t.gruppe('Thinking: wer hat geschrieben');
+{
+    const e = frisch();
+    const I = e.sandbox.AISChat._intern;
+    const S = e.sandbox.AIS_CLOUD.Stufe;
+    S.set('denken'); S.zuletzt = 'denken'; S.grund = '';
+    t.ok(I.werHatGeschrieben() === '', 'Thinking hat geschrieben: kein Hinweis');
+    S.zuletzt = 'schnell'; S.grund = 'form';
+    const h = I.werHatGeschrieben();
+    t.ok(h.startsWith('Kestrel 3.1 Thinking hat keine brauchbare Antwort geliefert') && h.includes('Kestrel 3.1 Turbo geschrieben'),
+        'Thinking scheitert, Turbo schreibt: Hinweis nennt beide', h);
+    S.zuletzt = 'frei'; S.grund = '429';
+    t.ok(I.werHatGeschrieben().includes('Albatros 2.5 Marathon geschrieben'), 'Thinking und Turbo aus: Marathon genannt', I.werHatGeschrieben());
+    S.zuletzt = 'frei-kontingent';
+    t.ok(I.werHatGeschrieben().startsWith('Kestrel 3.1 Thinking ist für heute aufgebraucht'), 'Kontingent leer: ehrlich gesagt', I.werHatGeschrieben());
+    S.set('schnell'); S.zuletzt = 'schnell';
+    t.ok(I.werHatGeschrieben() === '', 'Turbo gewaehlt und geschrieben: kein Hinweis (Gegenprobe)');
+    S.set('frei'); S.zuletzt = 'frei';
+    t.ok(I.werHatGeschrieben() === '', 'Marathon gewaehlt: nie ein Hinweis');
+    t.ok(CHAT.includes("eintrag('denken'") && CHAT.includes('NACHRICHT_TOKENS * DENKEN_FAKTOR'),
+        'Menue hat den Thinking-Eintrag und rechnet seinen Rest mit dem Faktor des Workers');
+}
+
 t.abschluss('ais-chat');
