@@ -596,7 +596,7 @@ function leerHTML() {
                        'Have you been writing your reports with Gemini or ChatGPT? Bring along what that AI knows about your reports and I will write like you.')) + '</p>' +
         '<button type="button" class="aic-knopf" onclick="AISChat.vorwissen()">' + esc(Lx('Vorwissen hinterlegen', 'Add background')) + '</button>' +
         '</div>';
-    return '<div class="aic-leer">' +
+    return '<div class="aic-leer">' + preisHinweisHTML() +
         '<span class="aic-leer-marke">' + MARKE + '</span>' +
         '<h3 class="aic-leer-t">' + esc(titel) + '</h3>' +
         '<p class="aic-leer-s">' + esc(text) + '</p>' +
@@ -715,6 +715,37 @@ function turboGrundText(g) {
 // OpenRouter gewechselt" (cv2-hinweis, bis v8.5.11). Kein Countdown, kein Dialog
 // ueber der Seite: sie steht dort, wo die KI benutzt wird, und geht mit der
 // ersten Nachricht, einer Modellwahl oder "Alles klar" weg.
+// ── Hinweis auf die Preisliste (v9.4.0, Wunsch des Nutzers 26.10.2026) ──
+// Steht im leeren Start ueber der Begruessung. Kernaussage zuerst: was heute geht,
+// bleibt kostenlos (Zusage auf /preise/, siehe .claude/notes/bezahlplan.md); Pass
+// und Plus sind dort nur vormerkbar, NICHT kaufbar — deshalb kein "jetzt kaufen".
+// Nie gleichzeitig mit der Stufen-Ankuendigung (hinweisHTML), sonst stehen zwei
+// Hinweise uebereinander. Wegklicken merkt sich nur dieses Geraet.
+const PREIS_HINWEIS_KEY = 'bh_preise_hinweis_v1';
+const GESCHENK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>' +
+    '<path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>';
+function preisHinweisOffen() { try { return !localStorage.getItem(PREIS_HINWEIS_KEY); } catch (e) { return false; } }
+function preisHinweisHTML() {
+    if (!preisHinweisOffen() || hinweisOffen()) return '';
+    return '<aside class="aic-preis" id="aicPreis" aria-label="' + esc(Lx('Hinweis zu den Preisen', 'Note about pricing')) + '">' +
+        '<span class="aic-preis-icon">' + GESCHENK_ICON + '</span>' +
+        '<p class="aic-preis-text"><strong>' + esc(Lx('Alles, was du heute nutzt, bleibt kostenlos.', 'Everything you use today stays free.')) + '</strong>' +
+        '<span>' + esc(Lx('Für mehr Funktionen kommen Pass und Plus. Die Preise stehen schon fest.', 'Pass and Plus will add more features. Their prices are already set.')) + '</span></p>' +
+        '<a class="aic-preis-link" href="' + Lx('/preise/', '/en/preise/') + '">' + esc(Lx('Preise ansehen', 'See prices')) + '</a>' +
+        '<button type="button" class="aic-preis-zu" onclick="AISChat.preisHinweisWeg()" aria-label="' + esc(Lx('Hinweis schließen', 'Close note')) + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
+        '</aside>';
+}
+function preisHinweisWeg() {
+    try { localStorage.setItem(PREIS_HINWEIS_KEY, new Date().toISOString().slice(0, 10)); } catch (e) { }
+    const el = $('aicPreis');
+    // Ausblenden statt Sprung: der Rest des Leerzustands rutscht danach nach oben.
+    if (el && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        el.classList.add('is-weg');
+        setTimeout(() => { if (offen) zeichnen(); }, 160);
+    } else if (offen) zeichnen();
+}
 function hinweisOffen() { try { return !localStorage.getItem(HINWEIS_KEY); } catch (e) { return false; } }
 function hinweisGelesen() { try { localStorage.setItem(HINWEIS_KEY, new Date().toISOString().slice(0, 10)); } catch (e) { } }
 function hinweisWeg() { hinweisGelesen(); if (offen) zeichnen(); }
@@ -1884,7 +1915,7 @@ return {
     oeffnen, schliessen, senden, einstellungen, uebernehmen, bearbeiten,
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
-    modellMenue, modellWaehlen, hinweisWeg,
+    modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
     tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
@@ -1894,7 +1925,7 @@ return {
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
-        leererEntwurf, entwurfLesen, wochenwechsel, schnellHTML, werHatGeschrieben, hinweisHTML, HINWEIS_KEY, stilStufe, stilNaechster,
+        leererEntwurf, entwurfLesen, wochenwechsel, schnellHTML, werHatGeschrieben, hinweisHTML, HINWEIS_KEY, preisHinweisHTML, PREIS_HINWEIS_KEY, stilStufe, stilNaechster,
         gespraech: () => gespraech, setzeEntwurf: (e) => { gespraech.entwurf = e; },
     },
 };

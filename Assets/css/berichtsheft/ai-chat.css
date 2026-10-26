@@ -599,6 +599,71 @@ body.aic-offen > :is(.bg-mesh, .page-wrap, .site-footer) { animation: aicVerdeck
     flex: 1 1 auto;
     padding: 6vh 0 2vh;
 }
+/* Hinweis auf die Preisliste (v9.4.0). Wunsch des Nutzers: modern, rund, nicht der
+   eckige Standard-Banner — deshalb Kapsel mit grossem Radius und Symbol im Kreis,
+   ohne Einblend-Animation (steht bei jedem leeren Start, das waere Laerm). */
+.aic-preis {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin-bottom: 28px;
+    padding: 10px 8px 10px 10px;
+    border: 1px solid rgba(var(--primary-rgb), 0.22);
+    border-radius: 18px;
+    background: rgba(var(--primary-rgb), 0.07);
+    transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+.aic-preis.is-weg { opacity: 0; transform: translateY(-4px); }
+.aic-preis-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(var(--primary-rgb), 0.16);
+    color: var(--primary);
+}
+.aic-preis-icon svg { width: 18px; height: 18px; }
+.aic-preis-text { display: grid; gap: 2px; margin: 0; min-width: 0; line-height: 1.45; }
+.aic-preis-text strong { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+.aic-preis-text span { font-size: 0.82rem; color: var(--text-secondary); text-wrap: pretty; }
+.aic-preis-link {
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--primary-rgb), 0.4);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-main);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, transform 0.12s ease-out;
+}
+.aic-preis-link:hover { background: rgba(var(--primary-rgb), 0.16); }
+.aic-preis-link:active { transform: scale(0.97); }
+.aic-preis-zu {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+.aic-preis-zu svg { width: 15px; height: 15px; }
+.aic-preis-zu:hover { background: var(--bg-hover); color: var(--text-main); }
+.aic-preis-link:focus-visible, .aic-preis-zu:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.8); outline-offset: 2px; }
+/* Am Handy: Link unter den Text, das X bleibt oben rechts. */
+@media (max-width: 560px) {
+    .aic-preis { grid-template-columns: auto 1fr auto; align-items: start; padding: 12px 8px 12px 12px; }
+    .aic-preis-link { grid-column: 2; grid-row: 2; justify-self: start; }
+    .aic-preis-zu { grid-column: 3; grid-row: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .aic-preis { transition: none; } }
 .aic-leer-marke { width: 40px; height: 40px; border-radius: 12px; margin-bottom: 18px; }
 .aic-leer-marke .icon { width: 19px; height: 19px; }
 .aic-leer-t {
