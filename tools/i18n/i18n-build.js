@@ -200,6 +200,14 @@ function buildLinkMap() {
       map['/rechte-checker/' + id + '/'] = '/en/rechte-checker/' + id + '/';
     }
   }
+  // Dasselbe fuer tools/beispiel-seiten.mjs (Uebersicht + je Beruf, immer DE + EN).
+  const bb = path.join(__dirname, '../../pages/berichtsheft-beispiele');
+  if (fs.existsSync(path.join(bb, 'index.html'))) {
+    map['/berichtsheft-beispiele/'] = '/en/berichtsheft-beispiele/';
+    for (const id of fs.readdirSync(bb)) {
+      if (fs.existsSync(path.join(bb, id, 'index.html'))) map['/berichtsheft-beispiele/' + id + '/'] = '/en/berichtsheft-beispiele/' + id + '/';
+    }
+  }
   return map;
 }
 

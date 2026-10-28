@@ -62,6 +62,17 @@ if echo "$changed" | grep -qE '^(Assets/js/rechte-checker/|tools/rechte-seiten\.
   git add -A -- 'pages/rechte-checker/*/index.html' sitemap.xml 2>/dev/null
 fi
 
+# ═══ 1c. BERICHTSHEFT-BEISPIELE: Berufsseiten + Sitemap aus tools/beispiele/*.json ═══
+# Gleiches Muster wie 1b. Der Vordruck kommt aus ihk-formulare.js — aendert der sich,
+# muessen die Blaetter neu gezeichnet werden, deshalb steht er mit im Ausloeser.
+if echo "$changed" | grep -qE '^(tools/beispiele/|tools/beispiel-seiten\.mjs|Assets/js/berichtsheft/ihk-formulare\.js)'; then
+  if ! node tools/beispiel-seiten.mjs > /dev/null; then
+    echo "[beispiel-seiten] ✗ Berufsseiten konnten nicht gebaut werden — Commit abgebrochen."
+    exit 1
+  fi
+  git add -A -- pages/berichtsheft-beispiele sitemap.xml 2>/dev/null
+fi
+
 # ═══ 2. ASSET-STAMPING ═══
 # Cloudflare liefert /Assets/* mit max-age=86400 aus (Dashboard-Regel, NICHT _headers).
 # Ohne Versions-Query im HTML sehen Nutzer nach einem Deploy bis zu 24h altes JS/CSS.

@@ -234,6 +234,7 @@ var EVENT_LABELS = {
     'vertrags_manager': ['Vertrags-Manager', 'Contract manager'],
     'rechte_checker':   ['Rechte-Checker', 'Rights checker'],
     'berichtsheft_vorlage': ['Berichtsheft-Vorlage', 'Training log template'],
+    'berichtsheft_beispiel': ['Berichtsheft-Beispiele', 'Training log examples'],
     'deep_dive':        ['Deep Dive', 'Deep dive'],
     'b2b_freischaltung_angefragt': ['Betrieb: Freischaltung angefragt', 'Company: verification requested'],
     'b2b_firma_angefragt': ['Betrieb: Firma angefragt', 'Company: requested'],

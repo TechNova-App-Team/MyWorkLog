@@ -288,6 +288,7 @@
     'Daten übernehmen': 'Import your data',
     'Anbieter-Vergleich': 'Compare providers',
     'Berichtsheft-Vorlage': 'Training log template',
+    'Berichtsheft-Beispiele': 'Training log examples',
     'Über uns': 'About us',
     'So funktioniert MyWorkLog': 'How MyWorkLog works',
     'Mein Reisetraum': 'My travel dream',
@@ -803,6 +804,10 @@
     var cut = href.search(/[?#]/);
     var pathOnly = cut < 0 ? href : href.slice(0, cut);
     var target = LINKS[pathOnly];
+    // Rechte-Checker-Faelle und Berichtsheft-Beispiele baut je ein eigener Generator
+    // (tools/rechte-seiten.mjs, tools/beispiel-seiten.mjs) IMMER auch auf Englisch —
+    // sie stehen aber nicht in pages.config.json und damit nicht in der Link-Karte.
+    if (!target && (pathOnly.indexOf('/rechte-checker/') === 0 || pathOnly.indexOf('/berichtsheft-beispiele/') === 0)) target = '/en' + pathOnly;
     if (target) el.setAttribute('href', target + (cut < 0 ? '' : href.slice(cut)));
   }
 
