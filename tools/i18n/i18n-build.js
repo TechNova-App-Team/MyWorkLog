@@ -190,6 +190,16 @@ function buildLinkMap() {
     const bare = de.replace(/\/+$/, '');
     if (bare) map[bare] = en;
   }
+  // Rechte-Checker-Fallseiten stehen nicht in pages.config.json: tools/rechte-seiten.mjs
+  // baut zu JEDER DE-Fallseite die EN-Fassung (nach i18n:build). Ohne diesen Zweig
+  // fuehrten die Fall-Links von /en/berichtsheft-vorlage/ ins Deutsche.
+  const rc = path.join(__dirname, '../../pages/rechte-checker');
+  if (fs.existsSync(rc)) {
+    for (const id of fs.readdirSync(rc)) {
+      if (!fs.existsSync(path.join(rc, id, 'index.html'))) continue;
+      map['/rechte-checker/' + id + '/'] = '/en/rechte-checker/' + id + '/';
+    }
+  }
   return map;
 }
 

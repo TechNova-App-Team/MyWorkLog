@@ -1,0 +1,237 @@
+/* ═══ BERICHTSHEFT-VORLAGE (/berichtsheft-vorlage/) ═══
+   Bildsprache wie /preise/ und /berichtsheft/ (Papier auf dunkler Buehne, Kuli-Blau —
+   generischer SaaS-Look war dort abgelehnt). Der einzige Blickfang ist der echte
+   Vordruck rechts, der sich beim Tippen fuellt; keine Lade-Animation.
+   Laedt KEIN core.css: eigener Reset, :root-Werte wie Assets/css/preise.css.
+   Die Vordruck-Vorschau (.pdf-doc.style-form, .fm-*) kommt aus
+   Assets/css/berichtsheft/pdf-studio.css — dort nur gescopte Klassen, keine Basis-Regeln. */
+
+:root {
+    --buehne-1: #131428;
+    --buehne-2: #1a1830;
+    --buehne-3: #23182b;
+    --primary: #6d7fd1;
+    --primary-rgb: 109, 127, 209;
+    --text-main: #f1f0f7;
+    --text-2: #b9b6cb;
+    --text-3: #8b87a2;
+    --linie: rgba(255, 255, 255, 0.1);
+    --feld: rgba(255, 255, 255, 0.04);
+    --papier: #ecebf4;
+    --papier-tinte: #15131d;
+    --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
+    --kuli-hell: color-mix(in srgb, var(--primary) 80%, #ffffff);
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --font-hand: 'Caveat', 'Segoe Script', cursive;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+button, input, select, textarea { font-family: inherit; }
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+}
+a { color: inherit; }
+
+/* ── Kopf ─────────────────────────────────────────────────────────── */
+.bv-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 22px 28px;
+}
+.bv-marke { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
+.bv-marke svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.bv-top-link { font-size: 0.92rem; color: var(--text-2); text-decoration: none; }
+.bv-top-link:hover { color: var(--text-main); }
+
+.bv-main { max-width: 1180px; margin: 0 auto; padding: 0 28px 72px; }
+
+/* ── Werkbank: links Steuerung, rechts das Blatt ─────────────────── */
+.bv-werkbank {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    gap: 56px;
+    align-items: start;
+    padding-top: 28px;
+}
+.bv-titel {
+    margin: 0 0 14px;
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 4.4vw, 3.3rem);
+    font-weight: 750;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    max-width: 14ch;
+}
+.bv-lede { margin: 0 0 30px; color: var(--text-2); font-size: 1.05rem; max-width: 52ch; }
+
+.bv-form { display: grid; gap: 18px; max-width: 560px; }
+.bv-feld { display: grid; gap: 7px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.bv-feld label, .bv-feld legend { font-size: 0.88rem; font-weight: 600; color: var(--text-main); padding: 0; }
+.bv-feld label span + span, #bvNameO, #bvStartO { font-weight: 400; color: var(--text-3); }
+.bv-reihe { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 14px; }
+
+.bv-feld input, .bv-feld select {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--linie);
+    border-radius: 8px;
+    background: var(--feld);
+    color: var(--text-main);
+    font-size: 0.97rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.bv-feld select option { background: var(--buehne-2); color: var(--text-main); }
+.bv-feld input:hover, .bv-feld select:hover { border-color: rgba(255, 255, 255, 0.22); }
+.bv-feld input:focus-visible, .bv-feld select:focus-visible {
+    outline: none;
+    border-color: rgba(var(--primary-rgb), 0.9);
+    background: rgba(var(--primary-rgb), 0.08);
+}
+.bv-feld input[type="date"] { color-scheme: dark; }
+
+.bv-wahl { display: flex; flex-wrap: wrap; gap: 8px; }
+.bv-wahl label {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+.bv-wahl input { position: absolute; opacity: 0; pointer-events: none; }
+.bv-wahl label:hover { color: var(--text-main); border-color: rgba(255, 255, 255, 0.24); }
+.bv-wahl label:has(input:checked) {
+    color: var(--papier-tinte);
+    background: var(--papier);
+    border-color: var(--papier);
+}
+.bv-wahl label:has(input:focus-visible) { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 2px; }
+.bv-hinweis { margin: 2px 0 0; font-size: 0.84rem; color: var(--text-3); max-width: 60ch; }
+
+.bv-haken { display: inline-flex; align-items: center; gap: 10px; font-size: 0.93rem; cursor: pointer; }
+.bv-haken input { width: 18px; height: 18px; accent-color: var(--primary); }
+.bv-haken[hidden] { display: none; }
+
+.bv-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 6px; }
+.bv-status { margin: 0; font-size: 0.88rem; color: var(--text-3); }
+
+.bv-knopf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 24px;
+    border: 1px solid var(--linie);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-main);
+    font-size: 0.98rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.14s ease;
+}
+.bv-knopf:hover { border-color: rgba(255, 255, 255, 0.3); }
+.bv-knopf:active { transform: scale(0.97); }
+.bv-knopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 3px; }
+/* Papierweiss auf der Buehne: der Hauptweg sieht aus wie ein Blatt */
+.bv-knopf.is-haupt { background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
+.bv-knopf.is-haupt:hover { background: #fff; }
+.bv-knopf[disabled] { opacity: 0.6; cursor: progress; }
+
+/* ── Das Blatt ───────────────────────────────────────────────────── */
+.bv-buehne { position: sticky; top: 24px; margin: 0; }
+.bv-notiz {
+    margin: 0 0 8px 6px;
+    font-family: var(--font-hand);
+    font-size: 1.45rem;
+    line-height: 1;
+    color: var(--kuli-hell);
+    transform: rotate(-2deg);
+    transform-origin: left center;
+}
+.bv-blatt { max-width: 460px; margin: 0 auto; }
+/* Werte im Vordruck in Kuli-Blau: so sieht man, was man selbst eingetragen hat */
+.bv-blatt .fm-val { color: var(--kuli); font-weight: 600; }
+
+/* ── Weg ins Berichtsheft ────────────────────────────────────────── */
+.bv-weiter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px 40px;
+    margin: 72px 0 0;
+    padding: 28px 32px;
+    border: 1px solid var(--linie);
+    border-radius: 16px;
+    background: rgba(var(--primary-rgb), 0.07);
+}
+.bv-weiter-t { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.01em; }
+.bv-weiter p { margin: 0; color: var(--text-2); max-width: 62ch; }
+.bv-weiter .bv-knopf { flex: 0 0 auto; }
+
+/* ── Lesetext ────────────────────────────────────────────────────── */
+.bv-text { max-width: 720px; margin: 64px 0 0; }
+.bv-text section + section { margin-top: 44px; }
+.bv-text h2 { margin: 0 0 12px; font-family: var(--font-display); font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
+.bv-text p { margin: 0 0 12px; color: var(--text-2); }
+.bv-liste { margin: 0; padding-left: 20px; color: var(--text-2); display: grid; gap: 6px; }
+.bv-liste strong { color: var(--text-main); font-weight: 600; }
+
+.bv-frage { border-top: 1px solid var(--linie); }
+.bv-frage:last-child { border-bottom: 1px solid var(--linie); }
+.bv-frage summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 2px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+.bv-frage summary::-webkit-details-marker { display: none; }
+.bv-frage summary::after { content: '+'; color: var(--text-3); font-weight: 400; font-size: 1.2rem; line-height: 1; }
+.bv-frage[open] summary::after { content: '–'; }
+.bv-frage summary:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.9); outline-offset: 2px; border-radius: 4px; }
+.bv-frage p { padding: 0 2px 6px; }
+.bv-frage a { color: var(--kuli-hell); text-underline-offset: 3px; }
+
+/* ── Schmal ──────────────────────────────────────────────────────── */
+@media (max-width: 920px) {
+    .bv-werkbank { grid-template-columns: minmax(0, 1fr); gap: 36px; }
+    .bv-buehne { position: static; }
+    .bv-weiter { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 480px) {
+    .bv-top { padding: 16px; }
+    .bv-main { padding: 0 16px 56px; }
+    .bv-reihe { grid-template-columns: minmax(0, 1fr) 128px; gap: 10px; }
+    .bv-weiter { padding: 22px 20px; }
+    .bv-knopf { width: 100%; }
+}
+@media (max-width: 360px) {
+    .bv-reihe { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bv-knopf, .bv-feld input, .bv-feld select, .bv-wahl label { transition: none; }
+}

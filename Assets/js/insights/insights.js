@@ -233,6 +233,7 @@ var EVENT_LABELS = {
     'fahrtkosten':      ['Fahrtkosten', 'Travel costs'],
     'vertrags_manager': ['Vertrags-Manager', 'Contract manager'],
     'rechte_checker':   ['Rechte-Checker', 'Rights checker'],
+    'berichtsheft_vorlage': ['Berichtsheft-Vorlage', 'Training log template'],
     'deep_dive':        ['Deep Dive', 'Deep dive'],
     'b2b_freischaltung_angefragt': ['Betrieb: Freischaltung angefragt', 'Company: verification requested'],
     'b2b_firma_angefragt': ['Betrieb: Firma angefragt', 'Company: requested'],
@@ -257,6 +258,7 @@ var EVENT_LABELS = {
     'problem_ki':             ['KI nicht verfügbar', 'AI unavailable'],
     'problem_route':          ['Route nicht berechnet', 'Route not calculated'],
     'problem_suche_ohne_treffer': ['Suche ohne Treffer', 'Search without results'],
+    'problem_vorlage':        ['Vorlage-PDF gescheitert', 'Template PDF failed'],
     'klasse_push':            ['Klassen-Mitteilungen aufs Handy geschaltet', 'Class messages to phone toggled']
 };
 // Unterart (Property 'aktion'/'grund', vom Worker als '<event>::<unterart>' angehaengt).
@@ -327,6 +329,8 @@ var SUB_LABELS = {
     'gehaltszettel_gedruckt': ['Gehaltszettel gedruckt', 'payslip printed'], 'vertrag_angelegt': ['Vertrag angelegt', 'contract created'],
     'zusatzleistung_gespeichert': ['Zusatzleistung gespeichert', 'benefit saved'],
     'gesucht': ['gesucht', 'searched'], 'fall_geoeffnet': ['Fall geöffnet', 'case opened'], 'mustermail_kopiert': ['Mustermail kopiert', 'template email copied'],
+    'weiter_klick': ['weiter in die App', 'on into the app'], 'pdf': ['PDF erstellt', 'PDF created'],
+    'weiter_berichtsheft': ['weiter zum Berichtsheft', 'on to the training log'],
     'zur_haelfte': ['bis zur Hälfte gelesen', 'read halfway'], 'zu_ende': ['zu Ende gelesen', 'read to the end'],
     // Gruende der Probleme
     'magic_link': ['Anmeldelink', 'sign-in link'], 'passkey': ['Passkey', 'passkey'], 'passkey_anlegen': ['Passkey anlegen', 'creating passkey'],
@@ -342,6 +346,7 @@ var SUB_LABELS = {
     'tageslimit': ['Tageslimit', 'daily limit'], 'burst_limit': ['Kurzzeit-Limit', 'burst limit'],
     'proxy_offline': ['Proxy nicht erreichbar', 'proxy unreachable'], 'generierung_fehlgeschlagen': ['Erzeugung abgebrochen', 'generation failed'],
     'sonstiges': ['sonstiges', 'other'], 'routing_dienst': ['Routing-Dienst', 'routing service'],
+    'pdf_fehler': ['PDF-Erstellung', 'PDF creation'],
     'rechte_checker': ['Rechte-Checker', 'rights checker']
 };
 // 'feature_genutzt' liefert der Worker als 'feature_genutzt::<view>' (und mit

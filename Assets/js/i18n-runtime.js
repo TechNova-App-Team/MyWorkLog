@@ -287,6 +287,7 @@
     'App öffnen': 'Open app',
     'Daten übernehmen': 'Import your data',
     'Anbieter-Vergleich': 'Compare providers',
+    'Berichtsheft-Vorlage': 'Training log template',
     'Über uns': 'About us',
     'So funktioniert MyWorkLog': 'How MyWorkLog works',
     'Mein Reisetraum': 'My travel dream',
