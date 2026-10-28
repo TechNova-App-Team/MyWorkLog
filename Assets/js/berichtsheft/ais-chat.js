@@ -1327,6 +1327,13 @@ async function senden(e, vorgabeText) {
 
     if (!ergebnis) {
         if (typeof bhMess === 'function') bhMess('assistent_ohne_antwort_' + (grund === 'aus' || grund === 'limit' ? grund : 'fehler'));
+        // Art des Fehlers als eigener Name (der Analytics-Proxy zeigt nur 'aktion'),
+        // nie die Meldung selbst.
+        if (grund !== 'aus' && grund !== 'limit' && typeof bhMess === 'function') {
+            const g = String(grund || '');
+            bhMess('assistent_fehlerart_' + (g === 'unlesbar' ? 'unlesbar' : /abort/i.test(g) ? 'zeit'
+                : /^HTTP 5/.test(g) ? 'server' : /^HTTP /.test(g) ? 'http' : /fetch|network|netz/i.test(g) ? 'netz' : 'sonst'));
+        }
         ohneAntwort(grund); return;
     }
 
@@ -1341,6 +1348,9 @@ async function senden(e, vorgabeText) {
     gespraech.entwurf = zus.entwurf;
     zuletztGeaendert = zus.geaendert;
     if (typeof bhMess === 'function') bhMess('assistent_antwort', { tage: zus.geaendert.length });
+    // Antwort ohne einen einzigen eingetragenen Tag (Rueckfrage o. ae.): eigener Name,
+    // weil der Proxy die Eigenschaft 'tage' nicht auswertet.
+    if (!entwurfHatInhalt(gespraech.entwurf) && typeof bhMess === 'function') bhMess('assistent_antwort_ohne_entwurf');
     sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert), wer: werHatGeschrieben() });
     knopfZustand();
 }
@@ -1909,6 +1919,21 @@ function init() {
         AIStudio.close = function () { zu.apply(this, arguments); if (offen) zeichnen(); };
     }
 }
+
+// Wer geht, schliesst den Chat selten ueber den Knopf (Messung 28.10.2026: 42 von
+// 159). pagehide feuert auch beim Neuladen und beim Wechsel in eine andere App am
+// Handy — einmal je Seitenleben reicht, sonst zaehlt ein Hin-und-her mehrfach.
+let wegGemeldet = false;
+// typeof-Pruefung: tools/ais-chat.test.mjs laedt die Datei mit einem window ohne Ereignisse.
+if (typeof window.addEventListener === 'function') window.addEventListener('pagehide', () => {
+    if (wegGemeldet || typeof bhMess !== 'function' || !gespraech || gespraech.erledigt) return;
+    const mitEntwurf = entwurfHatInhalt(gespraech.entwurf);
+    const name = mitEntwurf ? (offen ? 'assistent_weg_mit_entwurf' : 'assistent_weg_entwurf_zu')
+        : (offen && gespraech.nachrichten.length ? 'assistent_weg_ohne_entwurf' : '');
+    if (!name) return;
+    wegGemeldet = true;
+    bhMess(name, null, { transport: 'sendBeacon' });
+});
 
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
 else init();

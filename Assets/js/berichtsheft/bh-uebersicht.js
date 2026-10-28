@@ -237,6 +237,9 @@ function hfOffenerEntwurf() {
     return da && da.status !== 'incomplete' ? null : Object.assign({ montag: mo }, e);
 }
 
+// Einmal je Seitenaufruf: Kam jemand zurueck, waehrend ein Entwurf wartet?
+// (Gegenstueck zu assistent_weg_mit_entwurf in ais-chat.js, Messung 28.10.2026.)
+let hfEntwurfGemeldet = false;
 function renderNow() {
     const box = document.getElementById('hfNow');
     if (!box) return;
@@ -293,6 +296,7 @@ function renderNow() {
         extra = `<div class="hf-tage" role="img" aria-label="${escapeHtml(L(`${n} von ${entwurf.voll.length} Tagen im Entwurf`, `${n} of ${entwurf.voll.length} days in the draft`))}">` +
             entwurf.voll.map(v => `<span class="hf-tag-strich${v ? ' is-voll' : ''}"></span>`).join('') +
             `<span class="hf-tage-text" aria-hidden="true">${escapeHtml(L(`${n} von ${entwurf.voll.length} Tagen`, `${n} of ${entwurf.voll.length} days`))}</span></div>`;
+        if (!hfEntwurfGemeldet && typeof bhMess === 'function') { hfEntwurfGemeldet = true; bhMess('entwurf_wartet_gesehen'); }
         aktionen = cta(L('Entwurf übernehmen', 'Add draft'), 'AISChat.entwurfUebernehmen()', 'check') +
             chip(L('Im Assistenten weiter', 'Continue in the assistant'), assistent, 'sparkles');
     } else if (!reports.length) {

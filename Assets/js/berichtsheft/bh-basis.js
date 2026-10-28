@@ -34,11 +34,11 @@ let reports = [];
 // EINEM Ereignis 'berichtsheft' mit 'aktion' — der Analytics-Proxy zeigt es als
 // "berichtsheft::<aktion>". Nur Kategorien, Zahlen, Booleans, NIE Text des Nutzers.
 // 'neu' = noch kein Bericht gespeichert: trennt Erstbesucher von Bestandsnutzern.
-function bhMess(aktion, props) {
+function bhMess(aktion, props, opts) {
     if (typeof mwlEvent !== 'function') return;
     const p = { aktion: aktion, neu: !reports.length };
     if (props) for (const k in props) p[k] = props[k];
-    mwlEvent('berichtsheft', p);
+    mwlEvent('berichtsheft', p, opts);
 }
 let editingId = null;
 let bulkMode = false;
