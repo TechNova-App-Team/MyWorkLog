@@ -34,11 +34,13 @@ function lade() {
   vm.createContext(c);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'Assets/js/rechte-checker/faelle.js'), 'utf8'), c);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'Assets/js/rechte-checker/faelle.en.js'), 'utf8'), c);
-  return { faelle: c.window.RC_FAELLE, en: c.window.RC_EN.scenarios, stand: c.window.RC_STAND };
+  return { faelle: c.window.RC_FAELLE, en: c.window.RC_EN.scenarios, stand: c.window.RC_STAND, seo: { de: c.window.RC_SEO || {}, en: c.window.RC_EN.seo || {} } };
 }
-const { faelle, en: EN, stand: STAND } = lade();
+const { faelle, en: EN, stand: STAND, seo: SEO } = lade();
 if (!faelle || faelle.length < 50) { console.error('[rechte-seiten] Daten nicht geladen'); process.exit(1); }
 if (!/^\d{4}-\d{2}-\d{2}$/.test(STAND || '')) { console.error('[rechte-seiten] RC_STAND fehlt in faelle.js'); process.exit(1); }
+const seoKaputt = [...Object.keys(SEO.de), ...Object.keys(SEO.en)].filter((id) => !faelle.some((s) => s.id === id) || !SEO.de[id] || !SEO.en[id]);
+if (seoKaputt.length) { console.error('[rechte-seiten] RC_SEO ohne Fall oder ohne DE/EN: ' + [...new Set(seoKaputt)].join(', ')); process.exit(1); }
 const fehltEn = faelle.filter((s) => !EN[s.id]).map((s) => s.id);
 if (fehltEn.length) { console.error('[rechte-seiten] ohne Englisch: ' + fehltEn.join(', ')); process.exit(1); }
 
@@ -155,6 +157,9 @@ function seite(s, lang) {
   const urlDe = SITE + '/rechte-checker/' + s.id + '/';
   const urlEn = SITE + '/en/rechte-checker/' + s.id + '/';
   const titel = ohneAnf(d.title);
+  const seo = SEO[lang][s.id];
+  // Google kuerzt ab ~60 Zeichen; dann lieber ohne Markenzusatz als mit abgeschnittener Frage.
+  const kopfTitel = seo ? (seo.length <= 52 ? seo + ' | MyWorkLog' : seo) : t.titel(titel);
   const beschreibung = kurz(d.verdictShort + ' ' + ohneFett(d.verdictDetail), 158);
   const kat = KAT[lang][s.cat];
   const standText = lang === 'de' ? datumDe(STAND) : datumEn(STAND);
@@ -164,7 +169,7 @@ function seite(s, lang) {
 
   const faq = {
     '@context': 'https://schema.org', '@type': 'FAQPage', inLanguage: lang,
-    mainEntity: [{ '@type': 'Question', name: t.frage(titel), acceptedAnswer: { '@type': 'Answer', text: antwort } }],
+    mainEntity: [{ '@type': 'Question', name: seo || t.frage(titel), acceptedAnswer: { '@type': 'Answer', text: antwort } }],
   };
   const crumbs = {
     '@context': 'https://schema.org', '@type': 'BreadcrumbList',
@@ -213,7 +218,7 @@ function seite(s, lang) {
 <script>
 (function(){if(/^\\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-    <title>${esc(t.titel(titel))}</title>
+    <title>${esc(kopfTitel)}</title>
     <meta name="description" content="${esc(beschreibung)}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${url}">
@@ -223,7 +228,7 @@ function seite(s, lang) {
     <meta property="og:type" content="article">
     <meta property="og:locale" content="${lang === 'de' ? 'de_DE' : 'en_GB'}">
     <meta property="og:site_name" content="MyWorkLog">
-    <meta property="og:title" content="${esc(titel)}">
+    <meta property="og:title" content="${esc(seo || titel)}">
     <meta property="og:description" content="${esc(beschreibung)}">
     <meta property="og:url" content="${url}">
     <meta property="og:image" content="${SITE}/Grafiken/icon-512.png">

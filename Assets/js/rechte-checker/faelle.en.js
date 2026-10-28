@@ -3433,9 +3433,47 @@ Kind regards
                                                          'employee meeting': ['betriebsversammlung']
     };
 
+    // Google titles, same keys as window.RC_SEO in faelle.js.
+    var seo = {
+        'weihnachtsgeld-azubi': 'Do trainees get a Christmas bonus? What applies',
+        'pruefungsfreistellung': 'Exams during training: do I have to take leave?',
+        'krank-berufsschule': 'On sick leave: do I still have to go to school?',
+        'krankmeldung-ab-tag-eins': 'Sick note from day one – can my employer demand it?',
+        'nachtarbeit': 'Can trainees work nights? Night work under 18',
+        'berichtsheft-zuhause': 'Writing the training log at home – do I have to?',
+        'berufsschule-fahrtkosten': 'Travel to vocational school: who pays?',
+        'arzttermin': 'Doctor’s appointment during work hours as a trainee',
+        'schulbuecher-kosten': 'School books during training: who pays?',
+        'akkordarbeit': 'Piece-rate work during training – is it allowed?',
+        'kuendigung-wegen-krankheit': 'Dismissed for sickness during training – is that allowed?',
+        'berichtsheft-unterschrift': 'Who has to sign the training log – and when?',
+        'urlaub-schulzeit': 'Taking leave on school days – do I have to?',
+        'blockunterricht': 'Block teaching: do I have to go to work afterwards?',
+        'kassenfehlbetrag': 'Till shortfall as a trainee: do I have to pay?',
+        'nebenjob': 'Side job during training – is it allowed?',
+        'probezeit-verlaengert': 'Extending probation during training – is it allowed?',
+        'fahrtkosten-arbeit': 'Commuting costs as a trainee: who pays?',
+        'ausbildungskosten-zurueck': 'Quitting training: do I have to pay money back?',
+        'feiertagsarbeit': 'Working on public holidays as a trainee – allowed?',
+        'urlaubsabgeltung': 'Leftover leave at the end of training: paid out?',
+        'lehrgeld': 'Paying a fee for your training place – is that legal?',
+        'wochenende': 'Working Saturdays as a trainee – is it allowed?',
+        'jav-wahlrecht': 'Trainee representation (JAV): when is a vote required?',
+        'putzen': 'Cleaning as a trainee – do I have to?',
+        'verguetung-zu-spaet': 'Training pay is late – when must it arrive?',
+        'umkleidezeit': 'Is changing clothes working time? Rules for trainees',
+        'handyverbot': 'Phone ban during training – is it allowed?',
+        'berufsschule-fehlen': 'Skipping vocational school: what are the consequences?',
+        'sicherheitsbelehrung': 'Safety briefing for trainees: when is it required?',
+        'zwischenpruefung': 'Does the intermediate exam count? Do I have to sit it?',
+        'sechs-tage-woche': 'Six-day week as a trainee – is it allowed?',
+        'selbst-kuendigen': 'Quitting your apprenticeship: notice periods and options',
+    };
+
     window.RC_EN = {
         scenarios: scenarios,
         keywords: keywords,
+        seo: seo,
         // Mutate SCENARIOS + KEYWORD_MAP in place with the English data.
         apply: function (SCENARIOS, KEYWORD_MAP) {
             var sc = this.scenarios;

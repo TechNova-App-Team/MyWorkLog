@@ -131,6 +131,19 @@ t(wege.length === F.length && wege.length > 0, 'Gegenprobe: jede Fallseite geles
 const wegKaputt = wege.filter((w) => !w.ok).map((w) => w.id);
 t(wegKaputt.length === 0, 'jede Fallseite hat Kasten, Knopf aufs passende Ziel und Klick-Messung', wegKaputt.join(','));
 t(wege.filter((w) => w.cat === 'kuendigung' || w.cat === 'mobbing').every((w) => w.weg === 'schatten'), 'Kündigung/Mobbing führen ins Schatten-Berichtsheft');
+// ── 6. Google-Titel (RC_SEO): Search Console 10/2026, CTR 0,8 % bei Position 6,8 ──
+gruppe('Google-Titel');
+const SEO = c.window.RC_SEO || {}, SEOEN = c.window.RC_EN.seo || {};
+const seoIds = Object.keys(SEO);
+t(seoIds.length > 0, 'Gegenprobe: RC_SEO hat Einträge');
+t(seoIds.every((id) => ids.has(id) && SEOEN[id]) && Object.keys(SEOEN).every((id) => SEO[id]), 'jeder Google-Titel gehört zu einem Fall und hat DE + EN');
+const zuLang = [...seoIds.map((id) => SEO[id]), ...seoIds.map((id) => SEOEN[id] || '')].filter((x) => x.length > 62);
+t(zuLang.length === 0, 'kein Google-Titel über 62 Zeichen', zuLang.join(' / '));
+const seoSeite = seoIds.filter((id) => {
+  const html = fs.readFileSync(`pages/rechte-checker/${id}/index.html`, 'utf8');
+  return !html.includes('<title>' + SEO[id].replace(/&/g, '&amp;')) || !html.includes('"name": "' + SEO[id] + '"');
+});
+t(seoSeite.length === 0, 'Fallseiten tragen den Google-Titel in <title> und FAQ-Frage', seoSeite.join(','));
 const enAbm = fs.readFileSync('tools/rechte-seiten.mjs', 'utf8');
 t(enAbm.includes("'Open the shadow training log'"), 'EN-Kasten hat eigene Beschriftung');
 

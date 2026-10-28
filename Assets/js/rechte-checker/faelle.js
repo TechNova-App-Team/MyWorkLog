@@ -4144,3 +4144,45 @@ window.RC_STICHWORTE = {
     'versammlung': ['betriebsversammlung'],
     'belegschaftsversammlung': ['betriebsversammlung']
 };
+
+// Titel fuer Google (<title>, og:title, FAQ-Frage) — die H1 bleibt das Chef-Zitat.
+// Grund (Search Console 29.09.–26.10.2026): Fallseiten standen im Schnitt auf
+// Position 6,8, aber die CTR lag bei 0,8 %. Wer "bekommen azubis weihnachtsgeld"
+// sucht, sah "Weihnachtsgeld bekommen nur die Festangestellten." — klingt wie die
+// falsche Antwort. Formuliert nach den echten Suchanfragen; nur Faelle mit
+// nennenswerten Impressionen. Fehlt ein Fall hier, bleibt der alte Titel.
+window.RC_SEO = {
+    'weihnachtsgeld-azubi': 'Bekommen Azubis Weihnachtsgeld? Was gilt in der Ausbildung',
+    'pruefungsfreistellung': 'Prüfung in der Ausbildung: Muss ich dafür Urlaub nehmen?',
+    'krank-berufsschule': 'Krankgeschrieben: Muss ich als Azubi in die Berufsschule?',
+    'krankmeldung-ab-tag-eins': 'Krankschreibung ab dem ersten Tag – darf der Betrieb das?',
+    'nachtarbeit': 'Dürfen Azubis nachts arbeiten? Nachtarbeit unter 18',
+    'berichtsheft-zuhause': 'Berichtsheft zuhause schreiben – muss ich das?',
+    'berufsschule-fahrtkosten': 'Fahrtkosten zur Berufsschule: Wer zahlt beim Azubi?',
+    'arzttermin': 'Arzttermin während der Arbeitszeit – was gilt für Azubis?',
+    'schulbuecher-kosten': 'Schulbücher in der Ausbildung: Wer muss sie zahlen?',
+    'akkordarbeit': 'Akkordarbeit in der Ausbildung – ist das erlaubt?',
+    'kuendigung-wegen-krankheit': 'Kündigung wegen Krankheit in der Ausbildung – geht das?',
+    'berichtsheft-unterschrift': 'Wer muss das Berichtsheft unterschreiben – und wann?',
+    'urlaub-schulzeit': 'Urlaub an Berufsschultagen nehmen – muss ich das?',
+    'blockunterricht': 'Blockunterricht: Muss ich danach noch in den Betrieb?',
+    'kassenfehlbetrag': 'Kassendifferenz als Azubi: Muss ich das Minus zahlen?',
+    'nebenjob': 'Nebenjob in der Ausbildung – ist das erlaubt?',
+    'probezeit-verlaengert': 'Probezeit in der Ausbildung verlängern – geht das?',
+    'fahrtkosten-arbeit': 'Fahrtkosten zur Arbeit als Azubi: Wer zahlt?',
+    'ausbildungskosten-zurueck': 'Ausbildung abbrechen: Muss ich Geld zurückzahlen?',
+    'feiertagsarbeit': 'Arbeiten am Feiertag als Azubi – ist das erlaubt?',
+    'urlaubsabgeltung': 'Resturlaub am Ende der Ausbildung: Wird er ausgezahlt?',
+    'lehrgeld': 'Lehrgeld für die Ausbildung zahlen – ist das erlaubt?',
+    'wochenende': 'Samstags arbeiten als Azubi – ist das erlaubt?',
+    'jav-wahlrecht': 'JAV-Wahl im Betrieb: Ab wann ist sie Pflicht?',
+    'putzen': 'Putzen als Azubi – muss ich das machen?',
+    'verguetung-zu-spaet': 'Ausbildungsvergütung zu spät – wann muss sie da sein?',
+    'umkleidezeit': 'Ist Umziehen Arbeitszeit? Was für Azubis gilt',
+    'handyverbot': 'Handyverbot in der Ausbildung – ist das erlaubt?',
+    'berufsschule-fehlen': 'Berufsschule schwänzen als Azubi: Welche Folgen drohen?',
+    'sicherheitsbelehrung': 'Sicherheitsunterweisung für Azubis: Wann ist sie Pflicht?',
+    'zwischenpruefung': 'Zählt die Zwischenprüfung? Muss ich teilnehmen?',
+    'sechs-tage-woche': '6-Tage-Woche als Azubi – ist das erlaubt?',
+    'selbst-kuendigen': 'Ausbildung selbst kündigen: Fristen und Wege',
+};
