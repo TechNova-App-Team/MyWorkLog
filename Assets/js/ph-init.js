@@ -15,10 +15,13 @@
    Regeln: nur Zaehl-Events, NIE Inhalte (keine Zeiten, Notizen, Namen, Betraege).
    Steht bewusst VOR dem Localhost-Ausstieg unten: die Funktion existiert dann immer,
    und ohne posthog faellt sie still durch — sonst muesste jede Aufrufstelle raten. */
-window.mwlEvent = function (name, props) {
+// opts: { transport: 'sendBeacon' } bei Klicks, die sofort die Seite verlassen —
+// sonst bricht der Seitenwechsel den Versand ab.
+window.mwlEvent = function (name, props, opts) {
     try {
         if (typeof posthog === 'undefined' || !posthog.capture) return;
-        posthog.capture(name, props || {});
+        if (opts) posthog.capture(name, props || {}, opts);
+        else posthog.capture(name, props || {});
     } catch (e) { /* Tracking darf die Seite nie kippen */ }
 };
 

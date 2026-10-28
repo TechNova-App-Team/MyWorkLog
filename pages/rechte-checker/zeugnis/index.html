@@ -69,8 +69,8 @@
   ]
 }
     </script>
-    <link rel="stylesheet" href="/Assets/css/rechte-checker.css?v=e0083b1242">
-    <script defer src="/Assets/js/ph-init.js?v=fdd6df24b6"></script>
+    <link rel="stylesheet" href="/Assets/css/rechte-checker.css">
+    <script defer src="/Assets/js/ph-init.js"></script>
 </head>
 <body class="fall-seite" data-fall="zeugnis">
     <div class="ambient"></div>
@@ -140,10 +140,10 @@ Mit freundlichen Grüßen
 [Dein Name]</div>
                 </div>
             </details>
-            <aside class="fall-werbung">
-                <p class="fall-werbung-titel">Zeiten und Berichtsheft sauber festhalten?</p>
-                <p>Die meisten Streitfälle hier entscheiden sich an Nachweisen. Mit MyWorkLog erfasst du deine Arbeitszeit kostenlos und führst dein Berichtsheft so, dass dein Ausbilder es digital abzeichnen kann.</p>
-                <p class="fall-werbung-links"><a href="/berichtsheft/">Zum Berichtsheft</a><a href="/">Zur Zeiterfassung</a></p>
+            <aside class="fall-werbung" data-weg="schatten">
+                <p class="fall-werbung-titel">Schreib mit, was passiert</p>
+                <p>Am Ende zählt, was du belegen kannst: Datum, Uhrzeit, wer was gesagt oder verlangt hat. Das Schatten-Berichtsheft ist dein privates Protokoll dafür – verschlüsselt, nur auf deinem Gerät, kostenlos.</p>
+                <p class="fall-werbung-links"><a class="fall-werbung-knopf" href="/schatten-berichtsheft/" data-ziel="schatten">Schatten-Berichtsheft öffnen</a><a href="/" data-ziel="zeit">Arbeitszeit erfassen</a></p>
             </aside>
 
             <section class="fall-block fall-mehr" aria-labelledby="h-mehr">
@@ -183,6 +183,11 @@ Mit freundlichen Grüßen
         if (navigator.clipboard) navigator.clipboard.writeText(text).then(fertig, function () {});
         if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'mustermail_kopiert', fall: document.body.getAttribute('data-fall'), ort: 'fallseite' });
     }
+    document.querySelectorAll('.fall-werbung a[data-ziel]').forEach(function (a) {
+        a.addEventListener('click', function () {
+            if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'weiter_klick', ziel: a.getAttribute('data-ziel'), fall: document.body.getAttribute('data-fall') }, { transport: 'sendBeacon' });
+        });
+    });
     </script>
 
     <!-- Theme-Sync: Akzent aus den App-Einstellungen (Pflicht fuer Standalone-Seiten) -->

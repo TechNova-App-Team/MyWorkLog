@@ -118,5 +118,21 @@ t(haupt.includes(`id="statTotal">${F.length}<`), 'Fallzahl steht im Markup (ohne
 t(haupt.includes('function fett(') && haupt.includes('fett(s.verdictDetail)'), 'Detailfenster rendert **fett** als <strong>');
 t(haupt.includes('fallUrl(s.id)'), 'Karten verlinken auf die Fallseite');
 
+// ── 5. Fallseiten: Weg in die App passt zum Thema (gemessen 28.10.2026: Einstiege ≈ Ausstiege) ──
+gruppe('Weg in die App');
+const ZIEL = { schatten: '/schatten-berichtsheft/', zeit: '/', heft: '/berichtsheft/' };
+const wege = F.map((s) => {
+  const html = fs.readFileSync(`pages/rechte-checker/${s.id}/index.html`, 'utf8');
+  const weg = html.match(/class="fall-werbung" data-weg="([a-z]+)"/)?.[1];
+  const knopf = html.match(/class="fall-werbung-knopf" href="([^"]+)" data-ziel="([a-z]+)"/);
+  return { id: s.id, cat: s.cat, weg, ok: !!weg && !!knopf && knopf[1] === ZIEL[weg] && knopf[2] === weg && html.includes("aktion: 'weiter_klick'") };
+});
+t(wege.length === F.length && wege.length > 0, 'Gegenprobe: jede Fallseite gelesen');
+const wegKaputt = wege.filter((w) => !w.ok).map((w) => w.id);
+t(wegKaputt.length === 0, 'jede Fallseite hat Kasten, Knopf aufs passende Ziel und Klick-Messung', wegKaputt.join(','));
+t(wege.filter((w) => w.cat === 'kuendigung' || w.cat === 'mobbing').every((w) => w.weg === 'schatten'), 'Kündigung/Mobbing führen ins Schatten-Berichtsheft');
+const enAbm = fs.readFileSync('tools/rechte-seiten.mjs', 'utf8');
+t(enAbm.includes("'Open the shadow training log'"), 'EN-Kasten hat eigene Beschriftung');
+
 console.log(`\nRechte-Checker: ${ok} ok, ${fehl} fehlgeschlagen`);
 process.exit(fehl ? 1 : 0);

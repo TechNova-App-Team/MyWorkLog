@@ -46,6 +46,20 @@ const KAT = {
   de: { arbeitszeit: 'Arbeitszeit', taetigkeit: 'Tätigkeiten', urlaub: 'Urlaub', schule: 'Berufsschule', pruefung: 'Prüfung', geld: 'Vergütung', gesundheit: 'Krankheit', kuendigung: 'Kündigung', mobbing: 'Mobbing', sicherheit: 'Sicherheit', ausbildung: 'Ausbildung', mitbestimmung: 'Mitbestimmung', privat: 'Privates' },
   en: { arbeitszeit: 'Working hours', taetigkeit: 'Duties', urlaub: 'Vacation', schule: 'Vocational school', pruefung: 'Exams', geld: 'Pay', gesundheit: 'Sickness', kuendigung: 'Termination', mobbing: 'Bullying', sicherheit: 'Safety', ausbildung: 'Training', mitbestimmung: 'Co-determination', privat: 'Private life' },
 };
+// Welcher Weg in die App zu welchem Thema passt. Gemessen 28.10.2026: Fallseiten
+// bekommen Google-Einstiege, aber Einstiege ≈ Ausstiege — der alte Kasten war auf
+// allen Seiten gleich und nannte das Schatten-Berichtsheft nie, obwohl genau die
+// Kündigungs-/Mobbing-Leser es brauchen. Klicks messen: rechte_checker/weiter_klick.
+const WEITER = {
+  kuendigung: 'schatten', mobbing: 'schatten', sicherheit: 'schatten', mitbestimmung: 'schatten', privat: 'schatten', taetigkeit: 'schatten',
+  arbeitszeit: 'zeit', urlaub: 'zeit', geld: 'zeit', gesundheit: 'zeit',
+  schule: 'heft', pruefung: 'heft', ausbildung: 'heft',
+};
+const WEITER_ZIEL = { schatten: '/schatten-berichtsheft/', zeit: '/', heft: '/berichtsheft/' };
+// Zweiter Link: der naheliegende Nachbar, damit niemand in eine Sackgasse läuft.
+const WEITER_NEBEN = { schatten: 'zeit', zeit: 'schatten', heft: 'zeit' };
+const ohneWeg = Object.keys(KAT.de).filter((k) => !WEITER[k]);
+if (ohneWeg.length) { console.error('[rechte-seiten] Kategorie ohne Weg in die App: ' + ohneWeg.join(', ')); process.exit(1); }
 const unbekannt = faelle.filter((s) => !KAT.de[s.cat]).map((s) => s.id + ':' + s.cat);
 if (unbekannt.length) { console.error('[rechte-seiten] unbekannte Kategorie: ' + unbekannt.join(', ')); process.exit(1); }
 
@@ -58,9 +72,11 @@ const T = {
     titel: (t) => t + ' – Azubi-Rechte | MyWorkLog',
     stand: (d) => 'Rechtsstand: ' + d,
     hinweis: 'Diese Informationen dienen zur allgemeinen Orientierung und ersetzen keine Rechtsberatung. Bei konkreten Problemen hilft die Ausbildungsberatung deiner IHK/HWK, deine Gewerkschaft oder ein Fachanwalt für Arbeitsrecht.',
-    werbung: 'Zeiten und Berichtsheft sauber festhalten?',
-    werbungText: 'Die meisten Streitfälle hier entscheiden sich an Nachweisen. Mit MyWorkLog erfasst du deine Arbeitszeit kostenlos und führst dein Berichtsheft so, dass dein Ausbilder es digital abzeichnen kann.',
-    zumBerichtsheft: 'Zum Berichtsheft', zurApp: 'Zur Zeiterfassung',
+    weiter: {
+      schatten: { titel: 'Schreib mit, was passiert', text: 'Am Ende zählt, was du belegen kannst: Datum, Uhrzeit, wer was gesagt oder verlangt hat. Das Schatten-Berichtsheft ist dein privates Protokoll dafür – verschlüsselt, nur auf deinem Gerät, kostenlos.', knopf: 'Schatten-Berichtsheft öffnen' },
+      zeit: { titel: 'Deine Stunden als Beleg', text: 'Überstunden, Pausen, Urlaubs- und Krankheitstage kannst du später nur nachweisen, wenn du sie festgehalten hast. MyWorkLog erfasst deine Arbeitszeit kostenlos und rechnet Saldo und Urlaubsrest mit.', knopf: 'Arbeitszeit erfassen' },
+      heft: { titel: 'Berichtsheft ohne Zettelwirtschaft', text: 'Ohne vollständiges Berichtsheft keine Zulassung zur Abschlussprüfung. Mit MyWorkLog schreibst du es Woche für Woche, auf Wunsch mit KI-Hilfe, und dein Ausbilder kann es digital abzeichnen.', knopf: 'Berichtsheft schreiben' },
+    },
   },
   en: {
     urteil: { nein: 'The boss may NOT do that', jein: 'It depends …', ja: 'This is allowed' },
@@ -70,9 +86,11 @@ const T = {
     titel: (t) => t + ' – Trainee rights | MyWorkLog',
     stand: (d) => 'Legal status: ' + d,
     hinweis: 'This information is for general guidance only and is not legal advice. For specific problems, contact the training advisers at your IHK/HWK, your union or a lawyer specialising in employment law.',
-    werbung: 'Keep your hours and training log properly recorded?',
-    werbungText: 'Most disputes here are decided by evidence. With MyWorkLog you record your working time for free and keep your training log so your trainer can sign it off digitally.',
-    zumBerichtsheft: 'Go to the training log', zurApp: 'Go to time tracking',
+    weiter: {
+      schatten: { titel: 'Write down what happens', text: 'In the end, what counts is what you can prove: date, time, who said or demanded what. The shadow training log is your private record for exactly that – encrypted, only on your device, free.', knopf: 'Open the shadow training log' },
+      zeit: { titel: 'Your hours as evidence', text: 'Overtime, breaks, vacation and sick days can only be proven later if you recorded them. MyWorkLog tracks your working time for free and keeps your balance and remaining vacation up to date.', knopf: 'Track working time' },
+      heft: { titel: 'A training log without the paperwork', text: 'Without a complete training log there is no admission to the final exam. With MyWorkLog you write it week by week, with AI help if you like, and your trainer can sign it off digitally.', knopf: 'Write your training log' },
+    },
   },
 };
 
@@ -140,6 +158,7 @@ function seite(s, lang) {
   const beschreibung = kurz(d.verdictShort + ' ' + ohneFett(d.verdictDetail), 158);
   const kat = KAT[lang][s.cat];
   const standText = lang === 'de' ? datumDe(STAND) : datumEn(STAND);
+  const weg = WEITER[s.cat], neben = WEITER_NEBEN[weg];
   const nachbarn = faelle.filter((x) => x.cat === s.cat && x.id !== s.id);
   const antwort = ohneFett(d.verdictShort + ' ' + d.verdictDetail);
 
@@ -258,10 +277,10 @@ ${lang === 'en' ? '    <script type="application/json" id="i18nLinkMap">' + LINK
                 </ol>
             </section>
 ${mail}
-            <aside class="fall-werbung">
-                <p class="fall-werbung-titel">${esc(t.werbung)}</p>
-                <p>${esc(t.werbungText)}</p>
-                <p class="fall-werbung-links"><a href="${pre}/berichtsheft/">${esc(t.zumBerichtsheft)}</a><a href="${pre}/">${esc(t.zurApp)}</a></p>
+            <aside class="fall-werbung" data-weg="${weg}">
+                <p class="fall-werbung-titel">${esc(t.weiter[weg].titel)}</p>
+                <p>${esc(t.weiter[weg].text)}</p>
+                <p class="fall-werbung-links"><a class="fall-werbung-knopf" href="${pre}${WEITER_ZIEL[weg]}" data-ziel="${weg}">${esc(t.weiter[weg].knopf)}</a><a href="${pre}${WEITER_ZIEL[neben]}" data-ziel="${neben}">${esc(t.weiter[neben].knopf)}</a></p>
             </aside>
 ${nachbarn.length ? `
             <section class="fall-block fall-mehr" aria-labelledby="h-mehr">
@@ -286,6 +305,11 @@ ${nachbarn.length ? `
         if (navigator.clipboard) navigator.clipboard.writeText(text).then(fertig, function () {});
         if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'mustermail_kopiert', fall: document.body.getAttribute('data-fall'), ort: 'fallseite' });
     }
+    document.querySelectorAll('.fall-werbung a[data-ziel]').forEach(function (a) {
+        a.addEventListener('click', function () {
+            if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'weiter_klick', ziel: a.getAttribute('data-ziel'), fall: document.body.getAttribute('data-fall') }, { transport: 'sendBeacon' });
+        });
+    });
     </script>
 
     <!-- Theme-Sync: Akzent aus den App-Einstellungen (Pflicht fuer Standalone-Seiten) -->

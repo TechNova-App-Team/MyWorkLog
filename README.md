@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.4.0-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.4.1-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.4.0** · 2026-10-26
+Aktuelle Version: **v9.4.1** · 2026-10-28
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.4.0** | 2026-10-26 | Der Berichtsheft-Assistent bekommt die Stufe Kestrel 3.1 Thinking |
+| **9.4.1** | 2026-10-28 | Jede Rechte-Checker-Seite zeigt den passenden nächsten Schritt |
+| 9.4.0 | 2026-10-26 | Der Berichtsheft-Assistent bekommt die Stufe Kestrel 3.1 Thinking |
 | 9.3.2 | 2026-10-26 | Der Berichtsheft-Assistent verliert keinen Entwurf mehr |
 | 9.3.1 | 2026-10-25 | Die Einstellungen sind neu aufgebaut |
 | 9.3.0 | 2026-10-24 | Dein KI-Assistent bedient jetzt auch Berichtsheft, Klasse, Stempeluhr und Aufgaben |
-| 9.2.0 | 2026-10-24 | Dein KI-Assistent kann jetzt jede Einstellung ändern und eigene Eintragstypen anlegen |
 
 <!-- changelog:end -->
 
