@@ -271,7 +271,7 @@ function renderNow() {
 
     // fokus = die Woche, um die es im Satz geht; sie liegt oben auf dem Stapel.
     let fokusMo = mo, fokusR = r;
-    let titel, text, aktionen, extra = '';
+    let titel, text, aktionen, extra = '', nach = '';
 
     if (zurueck) {
         fokusMo = zurueck.dateFrom ? hfMontag(hfAusDatum(zurueck.dateFrom)) : mo;
@@ -301,6 +301,9 @@ function renderNow() {
             'Tell the assistant in a few sentences what happened this week. It writes the report, you just check it.');
         aktionen = cta(L('Mit dem Assistenten schreiben', 'Write with the assistant'), assistent, 'sparkles') +
             chip(L('Selbst schreiben', 'Write it myself'), `openWeek(${kw}, ${jahr})`, 'pen');
+        // Wer noch nie eine Woche geschrieben hat, will oft erst sehen, wie eine aussieht
+        // (Wunsch 28.10.2026). Bewusst Textlink unter den Knoepfen, kein dritter Knopf.
+        nach = `<p class="hf-now-bsp"><a href="${L('/berichtsheft-beispiele/', '/en/berichtsheft-beispiele/')}" data-mess="hero_beispiele">${escapeHtml(L('Erst mal sehen, wie eine fertige Woche aussieht', 'See what a finished week looks like first'))}</a></p>`;
     } else if (!r) {
         titel = L(t('Diese Woche ist noch ', 'leer'), t('This week is still ', 'empty'));
         text = L('Ein paar Stichworte reichen. Der Assistent macht daraus den Bericht in deinem Stil, du prüfst ihn nur noch.',
@@ -359,7 +362,7 @@ function renderNow() {
         `<span>${escapeHtml(hfZeitraumText(fokusMo))}</span></div>` +
         `<h2 class="hf-now-titel">${titel}</h2>` +
         `<p class="hf-now-text">${escapeHtml(text)}</p>` + extra +
-        `<div class="hf-now-aktionen${yinYang ? ' hf-yy' : ''}">${aktionen}</div>`;
+        `<div class="hf-now-aktionen${yinYang ? ' hf-yy' : ''}">${aktionen}</div>` + nach;
     const riesen = document.getElementById('hfRiesen');
     if (riesen) riesen.textContent = L(`KW ${fokusKw}`, `CW ${fokusKw}`);
     renderStapel(fokusMo, fokusR);

@@ -310,6 +310,8 @@ var SUB_LABELS = {
     'assistent_nachtragen': ['Fehlende Woche mit dem Assistenten', 'missing week with assistant'],
     'klick_hero_entwurf_uebernehmen': ['Klick: Entwurf übernehmen (oben)', 'click: apply draft (top)'], 'klick_hero_nachtragen': ['Klick: Woche nachtragen mit Assistent (oben)', 'click: add week with assistant (top)'],
     'klick_hero_assistent': ['Klick: Mit dem Assistenten (oben)', 'click: with assistant (top)'],
+    'klick_beispiel_beruf': ['Klick: Beispiel eines Berufs', 'click: occupation example'], 'klick_beispiele_alle': ['Klick: Alle Beispiele', 'click: all examples'],
+    'klick_beispiel_vorlage': ['Klick: Leere Vorlage (Beispiele)', 'click: blank template (examples)'], 'klick_hero_beispiele': ['Klick: Beispiele ansehen (oben)', 'click: view examples (top)'],
     'klick_hero_selbst': ['Klick: Selbst schreiben (oben)', 'click: write myself (top)'],
     'klick_hero_weiter': ['Klick: Weiterschreiben (oben)', 'click: continue (top)'],
     'klick_hero_ansehen': ['Klick: Ansehen (oben)', 'click: view (top)'], 'klick_hero_pdf': ['Klick: PDF (oben)', 'click: PDF (top)'],
