@@ -287,7 +287,37 @@
             location.replace(r.data.redirect_url);
             return;
         }
+        if (!zielErlaubt(r.data.redirect_uri)) {
+            try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
+            ereignis('ki_verbindung_ziel_gesperrt', {});
+            fehlerSeite(T('Unbekannter Assistent', 'Unknown assistant'),
+                T('Diese Anfrage würde den Zugang an eine Website schicken, die kein bekannter KI-Assistent ist (' + zielHost(r.data.redirect_uri) + '). Zu deinem Schutz lässt MyWorkLog das nicht zu. Hat dir jemand diesen Link geschickt, schließ die Seite einfach. Benutzt du selbst einen anderen Assistenten, schreib uns über den Support, dann nehmen wir ihn auf.',
+                  'This request would send access to a website that is not a known AI assistant (' + zielHost(r.data.redirect_uri) + '). To protect you, MyWorkLog does not allow this. If someone sent you this link, just close the page. If you use a different assistant yourself, contact support and we will add it.'));
+            return;
+        }
         zustimmungZeigen(sb, id, r.data, user);
+    }
+
+    // 🔴 Schutz vor Zustimmungs-Phishing (gemessen 29.10.2026): ein KI-Token darf an
+    // GoTrue das Passwort ändern (PUT /auth/v1/user), der DB-Riegel ki_zugriff_pruefen
+    // sieht das nicht. Jeder kann per Dynamic Client Registration ein Programm namens
+    // „Claude" anlegen. Zustimmen kann aber nur der Nutzer selbst, auf dieser Seite —
+    // also entscheidet das Rückleitungsziel: localhost und App-Schemata (cursor://,
+    // vscode://) landen auf SEINEM Gerät, eine fremde https-Seite beim Angreifer.
+    // Deshalb nur bekannte https-Hosts; neue Assistenten hier eintragen.
+    var KI_HOSTS = ['claude.ai', 'claude.com', 'anthropic.com', 'chatgpt.com', 'openai.com',
+        'mistral.ai', 'perplexity.ai', 'cursor.com', 'cursor.sh', 'vscode.dev', 'github.com', 'microsoft.com', 'google.com'];
+    function zielHost(uri) { try { return new URL(uri).host; } catch (e) { return '?'; } }
+    function zielErlaubt(uri) {
+        var u;
+        try { u = new URL(uri); } catch (e) { return false; }
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+            var h = u.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+            if (h === 'localhost' || h === '127.0.0.1' || h === '::1') return true;
+            if (u.protocol === 'http:') return false;
+            return KI_HOSTS.some(function (k) { return h === k || h.slice(-(k.length + 1)) === '.' + k; });
+        }
+        return /^[a-z][a-z0-9+.-]*:$/.test(u.protocol) && ['javascript:', 'data:', 'file:', 'blob:'].indexOf(u.protocol) < 0;
     }
 
     start().catch(function () {
