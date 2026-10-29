@@ -221,6 +221,10 @@ r = A.ausfuehren([auftrag('daten', { operationen: [
 ] })]);
 const D = app.__a('data');
 ok(r.z.unbekannt === 3 && D.settings.break.thresh === 4 && Array.isArray(D.settings.hours), 'vier Operationen angewandt, Typwechsel und gesperrte Pfade uebersprungen');
+const prot2b = app.__a('MWLKiApp.protokoll()').map(p => p.art + ': ' + p.text);
+ok(prot2b.some(t => t.startsWith('App-Daten:') && t.includes('customEntryTypes') && t.includes('settings.break.thresh') && t.endsWith('geändert'))
+    && prot2b.some(t => t.startsWith('App-Daten:') && t.includes('settings.weather.apiKey') && t.includes('übersprungen'))
+    && !prot2b.slice(0, 2).some(t => t.startsWith('Zeiterfassung:')), 'App-Daten im Protokoll, nicht unter Zeiterfassung');
 ok(D.entries.every(x => x.worked !== 99) && D.settings.weather.apiKey === 'GEHEIM', 'entries und Schluessel unberuehrt');
 ok(D.settings.goals.length === 1 && D.settings.goals[0].t === 'b' && D.settings.ihk.exam_zwischen === '2027-03-10', 'loeschen per Index und zusammenfuehren');
 ok(D.customEntryTypes[0].color === '#64748b' && D.customEntryTypes[0].iconMode === 'svg', 'eigener Typ in Form gebracht (Farbe, Felder wie createCustomType)');

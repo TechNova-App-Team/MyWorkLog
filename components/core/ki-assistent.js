@@ -433,7 +433,7 @@
 
     function ausfuehren(auftraege) {
         const undo = [];
-        const z = { neu: 0, doppelt: 0, geaendert: 0, geloescht: 0, unbekannt: 0, einstellungen: [], aufgaben: 0, timer: '', klasse: '' };
+        const z = { neu: 0, doppelt: 0, geaendert: 0, geloescht: 0, unbekannt: 0, datenNein: 0, einstellungen: [], aufgaben: 0, timer: '', klasse: '' };
         // Ueber der hoechsten vorhandenen id beginnen: zwei Laeufe in derselben
         // Millisekunde vergaben sonst dieselbe id, und Aendern traf den falschen Tag.
         let id = Math.max(Date.now(), ...(data.entries || []).map(x => Math.floor(+x.id) || 0)) + 1;
@@ -494,8 +494,13 @@
                 const vorher = {};
                 Object.keys(data).forEach(k => { if (!GESPERRT_WURZEL.has(k)) vorher[k] = JSON.stringify(data[k]); });
                 let n = 0;
-                (d.operationen || []).forEach(o => { if (datenOp(o)) n++; else z.unbekannt++; });
+                const ok = [], nein = [];
+                (d.operationen || []).forEach(o => { if (datenOp(o)) { n++; ok.push(o.pfad); } else { z.unbekannt++; z.datenNein++; nein.push(o.pfad); } });
                 typenPflegen();
+                // Eigene Zeile: ohne sie sah der Agent im Protokoll nicht, dass sein
+                // Typ/seine Einstellung ankam, und Abgelehntes stand unter „Zeiterfassung".
+                if (ok.length) prot('App-Daten', ok.join(', ') + ' geändert');
+                if (nein.length) prot('App-Daten', nein.join(', ') + ' übersprungen (Pfad gesperrt oder Typ passt nicht)');
                 if (n) {
                     z.einstellungen.push(n === 1 ? L('eine Änderung', 'one change') : L(n + ' Änderungen', n + ' changes'));
                     undo.push(() => {
@@ -531,7 +536,7 @@
         if (z.doppelt) zt.push(z.doppelt + ' gab es schon (übersprungen — zum Korrigieren zeit_eintrag_aendern)');
         if (z.geaendert) zt.push(z.geaendert + ' geändert');
         if (z.geloescht) zt.push(z.geloescht + ' in den Papierkorb');
-        if (z.unbekannt) zt.push(z.unbekannt + ' passten nicht (id unbekannt, Datum ungültig oder Pfad gesperrt)');
+        if (z.unbekannt - z.datenNein) zt.push((z.unbekannt - z.datenNein) + ' passten nicht (id unbekannt, Datum ungültig oder Pfad gesperrt)');
         if (zt.length) prot('Zeiterfassung', zt.join(', '));
         return { undo, z };
     }
