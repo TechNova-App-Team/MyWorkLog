@@ -211,7 +211,6 @@
         showCustomMessage('Aktualisiert', 'Änderungen gespeichert', 'success');
         renderCustomTypesManager();
         if (typeof refreshTypeAffectedUI === 'function') refreshTypeAffectedUI();
-        if (typeof refreshTypeAffectedUI === 'function') refreshTypeAffectedUI();
         return true;
     }
 
@@ -225,7 +224,6 @@
                 save();
                 showCustomMessage('Zurückgesetzt', 'Werkseinstellung wiederhergestellt', 'success');
                 renderCustomTypesManager();
-                if (typeof refreshTypeAffectedUI === 'function') refreshTypeAffectedUI();
                 if (typeof refreshTypeAffectedUI === 'function') refreshTypeAffectedUI();
             }
         );
@@ -339,12 +337,18 @@
         `;
         const form = ctTypeForm();
         _ctActiveForm = form;
+        // Jeder Render beginnt im Anlege-Modus. Frueher stellte er einen offenen
+        // Bearbeiten-Zustand in das (geschlossene) Formular zurueck — das Formular trug
+        // dann still editingId 'work'.
+        _ctEditingId = null;
         addBtn.onclick = () => {
-            if (form.classList.contains('ct-form-open') && _ctEditingId === null) {
+            const inCreate = form._ctState.editingId === null && form.previousElementSibling === addBtn;
+            if (form.classList.contains('ct-form-open') && inCreate) {
                 form.classList.remove('ct-form-open');
                 return;
             }
             ctFormSetMode('create');
+            addBtn.after(form);
             form.classList.add('ct-form-open');
             setTimeout(() => form.querySelector('.ct-input')?.focus(), 60);
         };
@@ -352,9 +356,21 @@
         customSection.appendChild(form);
 
         container.appendChild(customSection);
+    }
 
-        // Wenn vorher Form offen war → wieder befüllen (state-preserving render).
-        if (_ctEditingId) ctFormSetMode('edit', _ctEditingId);
+    // Bearbeiten klappt das Formular direkt unter der Liste auf, zu der der Typ gehoert.
+    // Vorher oeffnete es immer unter „Neuer Eintrag-Typ“ und sah dort aus wie das
+    // Anlege-Formular: Nutzer tippten einen neuen Namen hinein und ueberschrieben damit
+    // „Arbeit“ (Meldung 30.10.2026, „Messe“ stand statt „Arbeit“ unter Standard).
+    function ctOpenEditForm(typeId, row) {
+        const form = _ctActiveForm;
+        if (!form) return;
+        _ctEditingId = typeId;
+        ctFormSetMode('edit', typeId);
+        (row.parentElement || row).after(form);
+        form.classList.add('ct-form-open');
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setTimeout(() => form.querySelector('.ct-input')?.focus(), 60);
     }
 
     // ═══ Type Row ═══
@@ -392,14 +408,7 @@
             editBtn.type = 'button';
             editBtn.title = 'Bearbeiten';
             editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-            editBtn.onclick = () => {
-                _ctEditingId = type.id;
-                if (_ctActiveForm) {
-                    ctFormSetMode('edit', type.id);
-                    _ctActiveForm.classList.add('ct-form-open');
-                    _ctActiveForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            };
+            editBtn.onclick = () => ctOpenEditForm(type.id, row);
             actions.appendChild(editBtn);
 
             if (hasOverride) {
@@ -419,14 +428,7 @@
             editBtn.type = 'button';
             editBtn.title = 'Bearbeiten';
             editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-            editBtn.onclick = () => {
-                _ctEditingId = type.id;
-                if (_ctActiveForm) {
-                    ctFormSetMode('edit', type.id);
-                    _ctActiveForm.classList.add('ct-form-open');
-                    _ctActiveForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            };
+            editBtn.onclick = () => ctOpenEditForm(type.id, row);
             const delBtn = ctEl('button', 'ct-icon-btn ct-icon-btn-danger');
             delBtn.type = 'button';
             delBtn.title = 'Löschen';
@@ -446,6 +448,7 @@
             <div class="ct-form-head">
                 <div class="ct-form-title" data-field="form-title">Neuer Eintrag-Typ</div>
             </div>
+            <p class="ct-form-note" data-field="form-note" hidden>Du änderst einen Standard-Typ. Für einen zusätzlichen Typ nimm „Neuer Eintrag-Typ“ unter „Deine Typen“.</p>
 
             <div class="ct-form-row">
                 <div class="ct-field">
@@ -693,6 +696,7 @@
         disp.innerHTML = CT_EMOJI_PLACEHOLDER_SVG;
         form.querySelector('[data-field="emoji-trigger"] .ct-emoji-hint').textContent = ctL('Klick zum Auswählen', 'Click to choose');
         form.querySelector('[data-field="form-title"]').textContent = 'Neuer Eintrag-Typ';
+        form.querySelector('[data-field="form-note"]').hidden = true;
         form.querySelector('[data-field="save-label"]').textContent = 'Speichern';
         form.querySelectorAll('.ct-color-swatch').forEach(sw => sw.classList.toggle('ct-color-active', sw.dataset.color === '#a855f7'));
     }
@@ -749,7 +753,8 @@
         form.querySelector('[data-field="color-custom"]').value = sanitizeColor(info.color);
         if (form._ctApplyColor) form._ctApplyColor(sanitizeColor(info.color));
 
-        form.querySelector('[data-field="form-title"]').textContent = isStd ? `„${cleanLabel}" anpassen` : `„${cleanLabel}" bearbeiten`;
+        form.querySelector('[data-field="form-title"]').textContent = isStd ? `„${cleanLabel}“ anpassen` : `„${cleanLabel}“ bearbeiten`;
+        form.querySelector('[data-field="form-note"]').hidden = !isStd;
         form.querySelector('[data-field="save-label"]').textContent = 'Übernehmen';
     }
 
@@ -1218,6 +1223,12 @@
             });
             histSel.value = prev;
         }
+
+        // „Gilt für“ im Feld-Formular wird beim Bauen aus den Typen gefuellt — ohne
+        // Neubau fehlte ein gerade angelegter Typ dort bis zum naechsten Oeffnen. Ein
+        // offenes Feld-Formular bleibt stehen, sonst waere Getipptes weg.
+        if (document.getElementById('customFieldsContainer')
+            && !document.querySelector('#customFieldsContainer .ct-form-open')) renderCustomFieldsManager();
 
         // Entry-Form select
         refreshEntryTypeSelect();
