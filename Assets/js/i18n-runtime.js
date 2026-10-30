@@ -201,6 +201,7 @@
     'Du änderst einen Standard-Typ. Für einen zusätzlichen Typ nimm „Neuer Eintrag-Typ“ unter „Deine Typen“.':
       'You are changing a built-in type. To add another type, use "New entry type" under "Your types".',
     'Deine Felder': 'Your fields',
+    'Neues Feld': 'New field',
     'Noch keine Custom Fields': 'No custom fields yet',
     'Erweitere Einträge um eigene Felder wie „Client", „Billable" oder „Projekt-Code".':
       'Extend entries with your own fields such as "client", "billable" or "project code".',

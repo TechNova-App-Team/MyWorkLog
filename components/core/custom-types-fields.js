@@ -316,25 +316,19 @@
         const customSection = ctEl('div', 'ct-section');
         customSection.appendChild(ctSectionHead('Deine Typen', custom.length, false));
 
-        if (custom.length === 0) {
-            customSection.appendChild(ctEmptyState(
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
-                'Noch keine eigenen Typen',
-                'Erstelle z.B. „Fitness", „Coaching" oder „Pendeln" für genauere Tracking-Kategorien.'
-            ));
-        } else {
+        if (custom.length > 0) {
             const grid = ctEl('div', 'ct-grid');
             custom.forEach(t => grid.appendChild(ctTypeRow(t, 'custom')));
             customSection.appendChild(grid);
         }
 
-        // — Add Button + Inline Form (re-used für Edit) —
-        const addBtn = ctEl('button', 'ct-add-btn');
-        addBtn.type = 'button';
-        addBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Neuer Eintrag-Typ</span>
-        `;
+        // — Anlege-Kasten + Inline Form (re-used für Edit) —
+        const addBtn = ctAddBox(
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+            'Neuer Eintrag-Typ',
+            'Erstelle z.B. „Fitness", „Coaching" oder „Pendeln" für genauere Tracking-Kategorien.',
+            custom.length > 0
+        );
         const form = ctTypeForm();
         _ctActiveForm = form;
         // Jeder Render beginnt im Anlege-Modus. Frueher stellte er einen offenen
@@ -814,24 +808,18 @@
         const section = ctEl('div', 'ct-section');
         section.appendChild(ctSectionHead('Deine Felder', fields.length, false));
 
-        if (fields.length === 0) {
-            section.appendChild(ctEmptyState(
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h10"/><path d="M7 16h6"/></svg>',
-                'Noch keine Custom Fields',
-                'Erweitere Einträge um eigene Felder wie „Client", „Billable" oder „Projekt-Code".'
-            ));
-        } else {
+        if (fields.length > 0) {
             const grid = ctEl('div', 'ct-grid');
             fields.forEach(f => grid.appendChild(ctFieldRow(f)));
             section.appendChild(grid);
         }
 
-        const addBtn = ctEl('button', 'ct-add-btn');
-        addBtn.type = 'button';
-        addBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>Neues Custom Field</span>
-        `;
+        const addBtn = ctAddBox(
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+            'Neues Feld',
+            'Erweitere Einträge um eigene Felder wie „Client", „Billable" oder „Projekt-Code".',
+            fields.length > 0
+        );
         const form = ctFieldCreateForm();
         addBtn.onclick = () => {
             const isOpen = form.classList.toggle('ct-form-open');
@@ -1158,14 +1146,18 @@
         return head;
     }
 
-    function ctEmptyState(iconSvg, text, hint) {
-        const wrap = ctEl('div', 'ct-empty');
-        wrap.innerHTML = `
-            <div class="ct-empty-icon">${iconSvg}</div>
-            <div class="ct-empty-text">${esc(text)}</div>
-            <div class="ct-empty-hint">${esc(hint)}</div>
+    // Der gestrichelte Kasten IST der Anlege-Knopf — Wunsch des Nutzers (30.10.2026):
+    // kein zweiter Knopf darunter. Mit Eintraegen darueber schrumpft er auf eine Zeile
+    // (compact), bleibt aber derselbe Kasten.
+    function ctAddBox(iconSvg, text, hint, compact) {
+        const box = ctEl('button', 'ct-empty ct-add-box' + (compact ? ' ct-add-box--compact' : ''));
+        box.type = 'button';
+        box.innerHTML = `
+            <span class="ct-empty-icon">${iconSvg}</span>
+            <span class="ct-empty-text">${esc(text)}</span>
+            ${compact ? '' : `<span class="ct-empty-hint">${esc(hint)}</span>`}
         `;
-        return wrap;
+        return box;
     }
 
     // ═══ Entry-Form-Select Sync ═══

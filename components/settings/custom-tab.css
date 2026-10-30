@@ -129,12 +129,21 @@
         .ct-icon-btn:focus-visible { outline: none; box-shadow: var(--st-ring); }
         .ct-icon-btn-danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 
-        /* — Leerzustand — */
+        /* — Anlege-Kasten: gestrichelter Kasten = Knopf (kein zweiter Knopf darunter) — */
         .ct-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
             padding: 1.5rem 1rem;
             border: 1px dashed var(--st-linie-stark);
             border-radius: 12px;
+            background: transparent;
+            color: inherit;
+            font-family: inherit;
             text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
         }
         .ct-empty-icon {
             display: inline-flex;
@@ -146,6 +155,7 @@
             border-radius: 10px;
             background: var(--st-feld-stark);
             color: var(--text-muted);
+            transition: color 0.2s ease, background-color 0.2s ease;
         }
         .ct-empty-icon svg { width: 17px; height: 17px; }
         .ct-empty-text {
@@ -159,28 +169,30 @@
             line-height: 1.45;
             color: var(--text-muted);
         }
-
-        /* — Hinzufuegen — */
-        .ct-add-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            height: 34px;
-            margin-top: 12px;
-            padding: 0 14px;
-            border: 1px solid var(--st-linie-stark);
-            border-radius: 8px;
-            background: var(--st-feld-stark);
-            color: var(--text-main);
-            font-family: inherit;
-            font-size: 0.85rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.15s ease;
+        @media (hover: hover) and (pointer: fine) {
+            .ct-empty:hover {
+                border-color: rgba(var(--primary-rgb), 0.5);
+                background: rgba(var(--primary-rgb), 0.04);
+            }
+            .ct-empty:hover .ct-empty-icon {
+                background: rgba(var(--primary-rgb), 0.14);
+                color: var(--primary);
+            }
         }
-        .ct-add-btn svg { width: 15px; height: 15px; }
-        .ct-add-btn:hover { background: color-mix(in srgb, var(--text-main) 12%, transparent); }
-        .ct-add-btn:focus-visible { outline: none; box-shadow: var(--st-ring); }
+        .ct-empty:active { background: rgba(var(--primary-rgb), 0.07); }
+        .ct-empty:focus-visible { outline: none; box-shadow: var(--st-ring); }
+
+        /* Mit Eintraegen darueber: eine Zeile, Abstand zur Liste. */
+        .ct-add-box--compact {
+            flex-direction: row;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px 1rem;
+        }
+        .ct-add-box--compact .ct-empty-icon { width: 28px; height: 28px; margin: 0; border-radius: 8px; }
+        .ct-add-box--compact .ct-empty-icon svg { width: 15px; height: 15px; }
+        .ct-add-box--compact .ct-empty-text { margin: 0; }
 
         /* — Inline create form (kein nested Modal!) — */
         .ct-form {
