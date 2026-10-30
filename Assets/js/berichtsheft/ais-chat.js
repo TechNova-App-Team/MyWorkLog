@@ -567,6 +567,8 @@ function nachrichtHTML(n, nr) {
         knoepfe.push('<button type="button" class="aic-knopf" onclick="AISChat.ohneKi()">' + Lx('Ohne KI schreiben', 'Write without AI') + '</button>');
     if (n.knopf === 'einstellungen' || n.knopf === 'ohneKi+einstellungen')
         knoepfe.push('<button type="button" class="aic-knopf" onclick="AISChat.einstellungen()">' + Lx('Einstellungen öffnen', 'Open settings') + '</button>');
+    if (n.knopf === 'mehrwochen')
+        knoepfe.push('<button type="button" class="aic-knopf is-haupt" onclick="AISChat.mehrwochen(' + nr + ')">' + Lx('Mehrere Wochen öffnen', 'Open several weeks') + '</button>');
     return '<div class="aic-n is-assistent"><span class="aic-avatar">' + MARKE + '</span><div class="aic-inhalt">' +
         (n.text ? '<p class="aic-text">' + esc(n.text) + '</p>' : '') + chips +
         (n.wer ? '<p class="aic-wer">' + esc(n.wer) + '</p>' : '') +
@@ -1298,6 +1300,31 @@ function einstellungenAus(ergebnis, datum, nachricht) {
     return e;
 }
 
+// ── Mehrere Wochen ───────────────────────────────────────────────────
+// Erkennt den Auftrag, MEHR als eine Woche zu schreiben: ein Auftragswort (schreib,
+// nachtragen, fuell …) plus „mehrere/alle/letzten/fehlenden … Wochen" oder eine Zahl
+// ab 2 vor „Wochen". „Vor 2 Wochen war ich krank" ist KEIN Auftrag (Rueckblick auf
+// eine Woche, Lookbehind auf „vor") — dafuer gibt es wocheAusText().
+// → { anzahl: 2…8 | null } oder null.
+const ZAHLWORT = { zwei: 2, drei: 3, vier: 4, 'fünf': 5, fuenf: 5, sechs: 6, sieben: 7, acht: 8, neun: 9, zehn: 10, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8 };
+function mehrwochenWunsch(text) {
+    const t = String(text || '').toLowerCase();
+    if (!/\b(wochen|weeks)\b/.test(t)) return null;
+    if (!/(schreib|nachtrag|füll|fuell|erstell|mach|brauch|hol|write|fill|catch up)/.test(t)) return null;
+    const z = /(?<!vor\s)(?<!vor\s\s)\b(\d+|zwei|drei|vier|fünf|fuenf|sechs|sieben|acht|neun|zehn|two|three|four|five|six|seven|eight)\s+(?:(?:fehlenden?|offenen?|letzten?|restlichen?|missing|last)\s+)?(wochen|weeks)\b/.exec(t);
+    const anzahl = z ? (parseInt(z[1], 10) || ZAHLWORT[z[1]] || null) : null;
+    const mehr = /\b(mehrere|alle|letzten|fehlenden|offenen|restlichen|übrigen|uebrigen|several|all|last|missing)\b[^.?!]{0,30}\b(wochen|weeks)\b/.test(t);
+    if (anzahl && anzahl >= 2) return { anzahl: Math.min(anzahl, 8) };
+    return mehr ? { anzahl: null } : null;
+}
+function mehrwochen(nr) {
+    const n = gespraech.nachrichten[nr];
+    const mw = (n && n.mw) || {};
+    if (typeof bhMess === 'function') bhMess('assistent_mehrwochen_offen');
+    schliessen();
+    BHMehrwochen.oeffnen({ allgemein: mw.text || '', anzahl: mw.anzahl || null });
+}
+
 // ── Senden ───────────────────────────────────────────────────────────
 async function senden(e, vorgabeText) {
     if (e) e.preventDefault();
@@ -1311,6 +1338,20 @@ async function senden(e, vorgabeText) {
     hinweisGelesen();
     gespraech.nachrichten.push({ rolle: 'nutzer', text });
     if (typeof bhMess === 'function') bhMess('assistent_nachricht', { nr: gespraech.nachrichten.filter(n => n.rolle === 'nutzer').length });
+    // „Schreib mir die letzten 3 Wochen" → nicht EINE Woche raten, sondern den Tisch
+    // fuer mehrere Wochen anbieten (bh-mehrwochen.js, Pass). Kein KI-Aufruf hier.
+    const mw = window.BHMehrwochen ? mehrwochenWunsch(text) : null;
+    if (mw) {
+        const offenFrei = !!(window.MWLVorschau && MWLVorschau.frei());
+        sagen({ rolle: 'assistent', knopf: 'mehrwochen', mw: { text, anzahl: mw.anzahl }, text: offenFrei
+            ? Lx('Mehrere Wochen schreibe ich auf einem eigenen Tisch: dort liegen deine fehlenden Wochen nebeneinander, ich fülle sie nacheinander, und du liest jede, bevor sie ins Heft kommt. Was du gerade geschrieben hast, steht dort schon als Stichwort.',
+                 'I write several weeks on a separate table: your missing weeks lie side by side, I fill them one after another, and you read each before it goes into the book. What you just wrote is already there as a keyword.')
+            : Lx('Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass, und der ist noch versiegelt. Ich schreibe dir gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
+                 'Several weeks at once are part of the training pass, which is still sealed. I am happy to write one week after another: tell me which one to start with.') });
+        if (typeof bhMess === 'function') bhMess('assistent_mehrwochen', { frei: offenFrei, anzahl: mw.anzahl || 0 });
+        knopfZustand();
+        return;
+    }
     beschaeftigt = 'denken';
     wartenBeginnen();
     speichern();
@@ -1454,6 +1495,7 @@ function oeffnen() {
     // Die Seite kann tagelang offen stehen — deshalb hier pruefen, nicht nur beim Laden.
     if (istAbgelaufen(gespraech, new Date())) { wochenwechsel(); speichern(); }
     document.body.classList.add('aic-offen');
+    if (window.MWLDiktat) MWLDiktat.einsetzen();   // Mikrofon am Eingabefeld (Pass) — erst hier, der Code kann inzwischen eingeloest sein
     zeichnen();
     verlaufZeichnen();
     knopfZustand();
@@ -1614,6 +1656,20 @@ function vorwissen() {
     feld.value = vorwissenText();
     feld.addEventListener('input', vorwissenZaehler);
     vorwissenZaehler();
+    // Diktieren (Pass, mwl-diktat.js): Vorwissen einsprechen statt von einer anderen
+    // KI holen — Wunsch des Nutzers 30.10.2026. Ein Satz, was man erzaehlen soll,
+    // weil ein leeres Mikrofon sonst nur „aeh" aufnimmt.
+    if (window.MWLDiktat && MWLDiktat.verfuegbar()) {
+        MWLDiktat.einsetzen();
+        if (!$('aicVwSprich')) {
+            const p = document.createElement('p');
+            p.id = 'aicVwSprich';
+            p.className = 'aic-vw-sprich';
+            p.textContent = Lx('Oder einfach einsprechen: dein Beruf und Lehrjahr, die Abteilungen, in denen du warst, was du dort typischerweise machst, welche Programme und Geräte du benutzt und welche Fächer du in der Berufsschule hast.',
+                'Or just speak it: your occupation and year, the departments you have been in, what you typically do there, which programs and tools you use and which subjects you have at school.');
+            feld.parentNode.insertBefore(p, feld);
+        }
+    }
     blatt.hidden = false;
     setTimeout(() => feld.focus(), 30);
 }
@@ -1965,12 +2021,12 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
-    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen,
+    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
     _intern: {
-        vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
+        mehrwochenWunsch, vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,
