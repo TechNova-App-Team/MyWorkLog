@@ -232,6 +232,36 @@ function bhEntriesAlsText(entries) {
     return (entries || []).map(e => bhIstUnterpunkt(e) ? '   - ' + bhUnterpunktText(e) : e).join('\n');
 }
 
+// ═══ Abschrift der Form-Beispiele ═══
+// Die Schreibformen in ais-cloud.js (CLOUD_FORM) zeigen dem Modell Beispielsaetze.
+// Gemessen am 30.10.2026: „Dokumentenmanagement in ELO betreut" (Gliederungs-Beispiel),
+// „Rechtsformen von Unternehmen im Unterricht behandelt" und „Zusammenfassung fuer die
+// Klassenarbeit erstellt" (Schultag-Beispiel) standen als Taetigkeiten in Wochen, die
+// damit nichts zu tun hatten. Assistent (ais-chat.js) und „Mehrere Wochen"
+// (bh-mehrwochen.js) werfen solche Zeilen deshalb weg — AUSSER der Satz steht in einer
+// Quelle des Azubis (Nachricht, Stichworte, Vorwissen, Lernprofil): wer wirklich mit
+// ELO arbeitet, behaelt das.
+function bhBeispielSaetze(F) {
+    const out = new Set();
+    const rein = (s) => { const n = String(s || '').replace(/^\s*-\s*/, '').trim().toLowerCase(); if (n.length > 8) out.add(n); };
+    [F && F.beispiel, F && F.schulBeispiel].forEach(b => { try { (JSON.parse(b || '[]') || []).forEach(rein); } catch (e) { } });
+    // An JEDEM Anfuehrungszeichen zerlegen, nicht paarweise matchen: im Text steht
+    // `"- " davor. Beispiel: "…"` — paarweise rutschte das ELO-Beispiel aus dem Raster.
+    // Ein Satz beginnt und endet ohne Leerzeichen und hat keinen Doppelpunkt.
+    ((F && F.stil) || []).forEach(z => String(z).split('"').forEach(seg => {
+        if (seg.length > 8 && /^\S/.test(seg) && /\S$/.test(seg) && !seg.includes(':')) rein(seg);
+    }));
+    return out;
+}
+// Die Saetze, die als Abschrift gelten: Beispielsaetze, die in keiner Quelle stehen.
+function bhAbschriftVerbote(F, quellen) {
+    const q = String(quellen || '').toLowerCase();
+    return new Set([...bhBeispielSaetze(F)].filter(s => !q.includes(s)));
+}
+function bhIstAbschrift(eintrag, verbote) {
+    return !!(verbote && verbote.size && verbote.has(String(eintrag || '').replace(/^\s*[-•*]\s*/, '').trim().toLowerCase()));
+}
+
 function bhAusbildungsZeitraum() {
     let beginn = null, ende = null;
     try {

@@ -132,7 +132,9 @@ function tagIndex(name) {
 // aenderst, kopierst du" haelt sich nicht jedes Modell dran, und ein still
 // verschwundener Tag waere Datenverlust.
 // Liefert { entwurf, geaendert: [Index …] }.
-function entwurfZusammenfuehren(alt, tage, form, erlaubt) {
+// verbote: Abschrift der Form-Beispiele (bhAbschriftVerbote in bh-basis.js) — solche
+// Zeilen fliegen raus. Optional; ohne bleibt alles wie bisher.
+function entwurfZusammenfuehren(alt, tage, form, erlaubt, verbote) {
     const neu = JSON.parse(JSON.stringify(alt || leererEntwurf()));
     const geaendert = [];
     if (!Array.isArray(tage)) return { entwurf: neu, geaendert };
@@ -151,6 +153,7 @@ function entwurfZusammenfuehren(alt, tage, form, erlaubt) {
             .filter(x => typeof x === 'string')
             .map(x => x.replace(/^\s*(?:[•*]|\d+[.)])\s+/, '').trim())
             .filter(x => x && bhUnterpunktText(x).replace(/[.…\s]/g, ''))
+            .filter(x => !(verbote && typeof bhIstAbschrift === 'function' && bhIstAbschrift(x, verbote)))
             .map(x => x.slice(0, 600))
             .slice(0, 14));
         if (form === 'fliesstext' && entries.length > 1) entries = [entries.map(bhUnterpunktText).join(' ')];
@@ -1125,6 +1128,10 @@ function systemPrompt() {
         ...F.stil.map(s => '- ' + s),
         '- Umfang: ' + (umfang || 'wie im Beispiel') + ', aber nur so viel, wie sich aus seinen Angaben ohne Erfinden ergibt.',
         k.vorgabe ? '- Vorgabe des Ausbilders: ' + k.vorgabe : '',
+        // Gemessen 30.10.2026: „Dokumentenmanagement in ELO betreut" aus der Gliederungs-
+        // regel stand als Taetigkeit in fremden Wochen. Zusaetzlich zur Regel filtert
+        // entwurfZusammenfuehren() solche Zeilen (abschriftVerbote).
+        'Die Beispiele zeigen NUR die Form. Ihren Inhalt (Systeme, Tätigkeiten, Namen daraus) übernimmst du NIE, wenn der Azubi ihn nicht selbst genannt hat.',
         'Beispiel für entries eines Arbeitstags: ' + F.beispiel,
         'Beispiel für entries eines Schultags: ' + F.schulBeispiel,
         seinWortlaut ? 'SEIN Wortlaut, so hat er deine Entwürfe korrigiert – das geht den Beispielen oben vor, schreib jeden Eintrag in genau diesem Stil (Satzbau, Wortwahl, Länge): ' + seinWortlaut : '',
@@ -1343,7 +1350,7 @@ async function senden(e, vorgabeText) {
     const geaendert = AIStudio.konfigSetzen(einstellungenAus(ergebnis, kwDatum, text));
     const k = AIStudio.konfig();
     const zus = entwurfZusammenfuehren(gespraech.entwurf, ergebnis.days, k.form,
-        erlaubteTage(text, datum, geaendert));
+        erlaubteTage(text, datum, geaendert), abschriftVerbote(k));
     zus.entwurf.kw = kwDatum ? kwVon(kwDatum) : (geaendert.includes('kw') ? k.kw : (gespraech.entwurf.kw || k.kw));
     gespraech.entwurf = zus.entwurf;
     zuletztGeaendert = zus.geaendert;
@@ -1353,6 +1360,21 @@ async function senden(e, vorgabeText) {
     if (!entwurfHatInhalt(gespraech.entwurf) && typeof bhMess === 'function') bhMess('assistent_antwort_ohne_entwurf');
     sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert), wer: werHatGeschrieben() });
     knopfZustand();
+}
+
+// Saetze aus den Form-Beispielen, die als Abschrift gelten (bh-basis.js). Quellen des
+// Azubis — seine Nachrichten, das Vorwissen, das Lernprofil, der bisherige Entwurf —
+// heben das Verbot auf: wer wirklich mit ELO arbeitet, behaelt das.
+function abschriftVerbote(k) {
+    if (typeof bhAbschriftVerbote !== 'function') return null;
+    const C = window.AIS_CLOUD || {};
+    const F = C.CLOUD_FORM && (C.CLOUD_FORM[k.form] || C.CLOUD_FORM.stichpunkte);
+    if (!F) return null;
+    let lp = '';
+    try { const p = lernDa() ? lernProfil(new Date()) : null; lp = p ? BHLernen.promptText(p) : ''; } catch (e) { lp = ''; }
+    const quellen = gespraech.nachrichten.filter(n => n.rolle === 'nutzer').map(n => n.text).join('\n') + '\n' +
+        vorwissenText() + '\n' + lp + '\n' + JSON.stringify(gespraech.entwurf.tage.map(t => t.entries));
+    return bhAbschriftVerbote(F, quellen);
 }
 
 // Ohne KI: nichts erfinden, nichts still weiterrechnen. Die Nachricht bleibt
