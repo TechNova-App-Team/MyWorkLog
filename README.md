@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.4.6-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.4.7-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.4.6** · 2026-10-30
+Aktuelle Version: **v9.4.7** · 2026-10-30
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.4.6** | 2026-10-30 | Neue eigene Eintragstypen landen wieder unter „Deine Typen“ |
+| **9.4.7** | 2026-10-30 | Prüfungs-Check fürs Berichtsheft, vorerst als versiegelte Vorschau |
+| 9.4.6 | 2026-10-30 | Neue eigene Eintragstypen landen wieder unter „Deine Typen“ |
 | 9.4.5 | 2026-10-29 | Das Protokoll des KI-Assistenten nennt auch geänderte Einstellungen und neue Typen |
 | 9.4.4 | 2026-10-28 | Die Berichtsheft-Seite zeigt Beispiele für jeden Beruf |
 | 9.4.3 | 2026-10-28 | Berichtsheft-Beispiele für 17 Ausbildungsberufe |
-| 9.4.2 | 2026-10-28 | Leere Berichtsheft-Vorlage als PDF zum Herunterladen |
 
 <!-- changelog:end -->
 
