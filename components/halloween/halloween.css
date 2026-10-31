@@ -1,12 +1,15 @@
 /* ═══ HALLOWEEN MODULE ═══
    Gilt nur vom 31.10. 0 Uhr bis 01.11. 13 Uhr (Torwaechter Schritt 7 im
    Pre-Apply-Skript von index.template.html):
-   html.mwl-halloween        → Marken kuerbisorange
+   html.mwl-halloween        → Geisterhaus: ganze App in Kuerbis/Nacht
    html.mwl-halloween-karte  → Laternen-Karte oben im Dashboard
-   Wie beim Geburtstag bleibt --primary des Nutzers unangetastet: orange werden
-   nur die MyWorkLog-Zeichen und die Karte, nicht die Bedienelemente der App.
-   Bewusst EIN Effekt (die Fledermaeuse, nur auf Klick) — Nutzer-Feedback
-   „eine Stufe ruhiger" (Cloud-Login v8.2.3). Kein Dauer-Partikelregen. */
+   html.mwl-halloween-ruhe   → „Spuk aus": Farben bleiben, nichts bewegt sich mehr
+   v9.4.9 war bewusst leise (nur Marken orange, --primary unangetastet). Der
+   Nutzer wollte danach ausdruecklich „die ganze App richtig gruselig"
+   (31.10.2026) — deshalb ueberschreibt Halloween jetzt --primary (mit
+   !important, weil applyTheme() es inline auf <html> setzt) und legt Nacht,
+   Nebel, Netz, Augen, Geister und Flackern ueber jede Ansicht. Damit das beim
+   Arbeiten nicht nervt, schaltet „Spuk aus" auf der Karte alles Bewegte ab. */
 
 html.mwl-halloween {
     --hw-kuerbis:     #ee8433;
@@ -305,4 +308,247 @@ html.mwl-halloween[data-theme="light"] .hw-fm { filter: none; }
 @media (max-width: 1023px) {
     html.mwl-halloween-karte .hw-card { margin-top: 56px; }
     html.mwl-halloween-karte .hw-card ~ .setup-card { margin-top: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GEISTERHAUS — die ganze App (seit v9.4.10)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ─── Farben ────────────────────────────────────────────────────────── */
+/* !important: applyTheme() (settings.js) schreibt --primary inline auf <html>,
+   und nur ein !important im Stylesheet schlaegt einen Inline-Wert. Die
+   gespeicherte Nutzerfarbe bleibt dabei unberuehrt — am 01.11. 13 Uhr ist sie
+   ohne Zutun wieder da. */
+html.mwl-halloween {
+    --primary:     #ee8433 !important;
+    --primary-rgb: 238, 132, 51 !important;
+    --primary-dim: rgba(238, 132, 51, 0.15) !important;
+
+    --hw-nacht-rgb:  124, 72, 196;    /* Violett der Nacht */
+    --hw-sumpf-rgb:  110, 180, 90;    /* Irrlicht-Gruen */
+    --hw-mond:       #f3e9cf;
+    --hw-mond-rgb:   243, 233, 207;
+    --hw-nebel-rgb:  150, 130, 190;
+    --hw-nebel-a:    0.22;
+    --hw-auge:       #ffb347;
+    --hw-geist:      #efeaf8;
+    --hw-geist-schatten: rgba(160, 120, 255, 0.55);
+    --hw-netz:       rgba(255, 255, 255, 0.16);
+
+    --bg-deep:       #070409;
+    --bg-sidebar:    rgba(12, 7, 16, 0.95);
+    --bg-glass:      rgba(24, 16, 30, 0.66);
+    --bg-surface:    rgba(25, 19, 31, 0.92);
+    --bg-surface-grad: linear-gradient(180deg, rgba(33, 24, 40, 0.88), rgba(19, 14, 24, 0.92));
+    --bg-surface-hover: rgba(33, 25, 40, 0.96);
+    --bg-elevated:   rgba(30, 22, 37, 0.95);
+    --border:        rgba(255, 190, 140, 0.07);
+    --border-subtle: rgba(255, 190, 140, 0.06);
+    --border-default: rgba(255, 190, 140, 0.10);
+    --edge-top:      inset 0 1px 0 rgba(255, 200, 150, 0.08);
+    --ambient-warm:  var(--hw-nacht-rgb);
+    --ambient-cool:  var(--hw-sumpf-rgb);
+    --ambient-a1:    0.20;
+    --ambient-a2:    0.20;
+    --ambient-a3:    0.09;
+}
+html.mwl-halloween[data-theme="light"] {
+    --primary:     #c2560f !important;
+    --primary-rgb: 194, 86, 15 !important;
+    --primary-dim: rgba(194, 86, 15, 0.10) !important;
+    --hw-nebel-rgb:  120, 100, 160;
+    --hw-nebel-a:    0.10;
+    --hw-auge:       #c2560f;
+    --hw-geist:      #ffffff;
+    --hw-geist-schatten: rgba(90, 60, 160, 0.45);
+    --hw-netz:       rgba(7, 16, 35, 0.18);
+    --bg-deep:       #f7f3f9;
+    --bg-sidebar:    rgba(253, 251, 255, 0.98);
+    --bg-glass:      rgba(255, 255, 255, 0.86);
+    --bg-surface:    #ffffff;
+    --bg-surface-grad: #ffffff;
+    --bg-surface-hover: #ffffff;
+    --bg-elevated:   rgba(250, 247, 252, 0.96);
+    --border:        rgba(60, 20, 80, 0.07);
+    --border-subtle: rgba(60, 20, 80, 0.06);
+    --border-default: rgba(60, 20, 80, 0.10);
+    --edge-top:      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    --ambient-a1:    0.12;
+    --ambient-a2:    0.14;
+    --ambient-a3:    0.10;
+}
+
+html.mwl-halloween ::selection { background: rgba(var(--hw-kuerbis-rgb), 0.35); }
+html.mwl-halloween { scrollbar-color: rgba(var(--hw-kuerbis-rgb), 0.35) transparent; }
+
+/* ─── Mond ──────────────────────────────────────────────────────────── */
+/* Steht im Body-Hintergrund, also HINTER jeder Karte: kein Element, keine
+   Ebene, kostet nichts. Vollmond statt Sichel: eine Scheibe in Nachtfarbe
+   als „Biss" stach auf dem violetten Himmel als schwarzer Kreis heraus
+   (gemessen 31.10.2026), die Hintergrundfarbe dort ist nie --bg-deep. */
+html.mwl-halloween:not([data-theme="light"]) body {
+    background-image:
+        radial-gradient(circle 11px at calc(100% - 144px) 90px, rgba(150, 130, 100, 0.22) 90%, transparent 100%),
+        radial-gradient(circle 7px at calc(100% - 120px) 110px, rgba(150, 130, 100, 0.18) 90%, transparent 100%),
+        radial-gradient(circle 38px at calc(100% - 132px) 98px, var(--hw-mond) 70%, rgba(var(--hw-mond-rgb), 0.85) 96%, transparent 100%),
+        radial-gradient(circle 190px at calc(100% - 132px) 98px, rgba(var(--hw-mond-rgb), 0.10), transparent 70%),
+        radial-gradient(ellipse 60vmax 50vmax at 8% 0%, rgba(var(--primary-rgb), var(--ambient-a1)), transparent 70%),
+        radial-gradient(ellipse 45vmax 40vmax at 100% 45%, rgba(var(--ambient-warm), var(--ambient-a2)), transparent 70%),
+        radial-gradient(ellipse 45vmax 35vmax at 45% 105%, rgba(var(--ambient-cool), var(--ambient-a3)), transparent 70%);
+}
+
+/* ─── Spuk-Ebene (halloween.js haengt sie an <body>) ─────────────────── */
+.hw-spuk {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 8000;          /* ueber dem Inhalt, unter den Fledermaeusen (9000) und Modals */
+    overflow: hidden;
+}
+
+/* Nebel: EIN breiter Streifen, nur transform animiert, kein filter:blur
+   (die Weichheit steckt in den Verlaeufen). Vgl. css-layout.md: jede
+   Daueranimation ist eine GPU-Ebene, also genau eine. */
+.hw-nebel {
+    position: absolute;
+    left: 0; bottom: -4vh;
+    width: 200vw; height: 30vh;
+    background:
+        radial-gradient(ellipse 22vw 13vh at 10% 70%, rgba(var(--hw-nebel-rgb), var(--hw-nebel-a)), transparent 70%),
+        radial-gradient(ellipse 28vw 16vh at 32% 80%, rgba(var(--hw-nebel-rgb), calc(var(--hw-nebel-a) * 0.8)), transparent 70%),
+        radial-gradient(ellipse 20vw 12vh at 47% 66%, rgba(var(--hw-nebel-rgb), var(--hw-nebel-a)), transparent 70%),
+        radial-gradient(ellipse 22vw 13vh at 60% 70%, rgba(var(--hw-nebel-rgb), var(--hw-nebel-a)), transparent 70%),
+        radial-gradient(ellipse 28vw 16vh at 82% 80%, rgba(var(--hw-nebel-rgb), calc(var(--hw-nebel-a) * 0.8)), transparent 70%),
+        radial-gradient(ellipse 20vw 12vh at 97% 66%, rgba(var(--hw-nebel-rgb), var(--hw-nebel-a)), transparent 70%);
+    animation: hwNebel 70s linear infinite;
+    will-change: transform;
+}
+/* Das Muster wiederholt sich nach 50 % der Breite → nahtlose Schleife */
+@keyframes hwNebel {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-100vw, 0, 0); }
+}
+
+/* Spinnennetz oben rechts; eine Spinne seilt sich ab und klettert wieder hoch */
+.hw-netz {
+    position: absolute;
+    top: 0; right: 0;
+    width: 150px; height: 150px;
+    color: var(--hw-netz);
+}
+.hw-netz svg { width: 100%; height: 100%; display: block; }
+.hw-abseil {
+    position: absolute;
+    top: 0; right: 46px;
+    width: 16px; height: 210px;
+    color: var(--hw-spinne);
+    transform-origin: 50% 0;
+    animation: hwAbseil 19s ease-in-out infinite;
+}
+.hw-abseil::before {
+    content: '';
+    position: absolute;
+    left: 50%; top: 0;
+    width: 1px; height: calc(100% - 14px);
+    background: var(--hw-faden);
+}
+.hw-abseil svg { position: absolute; left: 0; bottom: 0; width: 16px; height: 16px; display: block; }
+/* scaleY auf dem Faden verzerrt die Spinne — daher translate: Spinne samt
+   Faden faehrt aus dem Netz heraus und wieder hinein. */
+@keyframes hwAbseil {
+    0%, 12%   { transform: translateY(-170px); }
+    30%       { transform: translateY(-20px) rotate(2deg); }
+    34%       { transform: translateY(-36px) rotate(-2deg); }
+    38%, 62%  { transform: translateY(-28px) rotate(0deg); }
+    82%, 100% { transform: translateY(-170px); }
+}
+
+/* Augen im Dunkeln: halloween.js setzt sie an zufaellige Stellen im Nebel */
+.hw-augen {
+    position: absolute;
+    display: flex; gap: 9px;
+    opacity: 0;
+    transition: opacity 1.4s ease;
+}
+.hw-augen.is-da { opacity: 1; }
+.hw-augen i {
+    width: 9px; height: 5px;
+    background: var(--hw-auge);
+    border-radius: 50% 50% 45% 45% / 70% 70% 30% 30%;
+    box-shadow: 0 0 8px 2px rgba(var(--hw-kuerbis-rgb), 0.55);
+    animation: hwBlinzeln 4.2s ease-in-out infinite;
+}
+.hw-augen i + i { transform: scaleX(-1); }
+@keyframes hwBlinzeln {
+    0%, 44%, 52%, 100% { scale: 1 1; }
+    48%                { scale: 1 0.1; }
+}
+html.mwl-halloween[data-theme="light"] .hw-augen i { box-shadow: none; }
+
+/* Geist: fliegt per WAAPI, laesst sich fangen (einziges klickbares Element hier) */
+.hw-geist {
+    position: absolute;
+    left: 0; top: 0;
+    width: 54px; height: 64px;
+    padding: 0; border: 0; background: transparent;
+    color: var(--hw-geist);
+    cursor: pointer;
+    pointer-events: auto;
+    filter: drop-shadow(0 0 14px var(--hw-geist-schatten));
+    -webkit-tap-highlight-color: transparent;
+    will-change: transform, opacity;
+}
+.hw-geist svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.hw-geist-saum { animation: hwSaum 1.1s ease-in-out infinite alternate; transform-origin: 50% 0; }
+.hw-geist-augen { fill: #1c1024; }
+@keyframes hwSaum {
+    from { transform: skewX(-6deg); }
+    to   { transform: skewX(6deg); }
+}
+.hw-geist:focus-visible { outline: 2px solid var(--hw-kuerbis); outline-offset: 4px; border-radius: 50%; }
+
+/* Licht flackert: kurz, selten, ganzflaechig; liegt nur waehrend des Flackerns im DOM */
+.hw-flacker {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    pointer-events: none;
+    z-index: 8500;
+    opacity: 0;
+}
+html.mwl-halloween[data-theme="light"] .hw-flacker { background: #1a0f22; }
+
+/* Ruhe: Farben, Mond, Netz und Nebel bleiben, alles Bewegte steht */
+html.mwl-halloween-ruhe .hw-nebel { animation: none; }
+html.mwl-halloween-ruhe .hw-abseil,
+html.mwl-halloween-ruhe .hw-augen,
+html.mwl-halloween-ruhe .hw-geist { display: none; }
+
+.hw-btn--leise { border-color: transparent; color: var(--text-muted); }
+.hw-btn--leise[aria-pressed="false"] { color: var(--hw-kuerbis); }
+
+/* Druck: keine Gespenster auf dem Stundenzettel */
+@media print {
+    .hw-spuk, .hw-flug, .hw-flacker { display: none !important; }
+}
+
+@media (max-width: 767px) {
+    .hw-netz { width: 84px; height: 84px; }   /* der Schliessen-Knopf der Karte sitzt darunter */
+    .hw-abseil { right: 30px; }
+    .hw-nebel { height: 22vh; }
+    /* Mond kleiner und unter dem schwebenden Menueknopf vorbei */
+    html.mwl-halloween:not([data-theme="light"]) body {
+        background-image:
+            radial-gradient(circle 7px at calc(100% - 80px) 116px, rgba(150, 130, 100, 0.22) 90%, transparent 100%),
+            radial-gradient(circle 25px at calc(100% - 72px) 122px, var(--hw-mond) 70%, rgba(var(--hw-mond-rgb), 0.85) 96%, transparent 100%),
+            radial-gradient(circle 120px at calc(100% - 72px) 122px, rgba(var(--hw-mond-rgb), 0.09), transparent 70%),
+            radial-gradient(ellipse 60vmax 50vmax at 8% 0%, rgba(var(--primary-rgb), var(--ambient-a1)), transparent 70%),
+            radial-gradient(ellipse 45vmax 40vmax at 100% 45%, rgba(var(--ambient-warm), var(--ambient-a2)), transparent 70%),
+            radial-gradient(ellipse 45vmax 35vmax at 45% 105%, rgba(var(--ambient-cool), var(--ambient-a3)), transparent 70%);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hw-nebel, .hw-abseil, .hw-augen i, .hw-geist-saum { animation: none; }
+    .hw-abseil { display: none; }
 }

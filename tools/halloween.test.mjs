@@ -96,6 +96,40 @@ ok('Schliessen nimmt nur die Karten-Klasse', d.documentElement.classList.contain
 ok('Ereignisse ueber mwlEvent', events.includes('halloween:suesses') && events.includes('halloween:saures') && events.includes('halloween:weg'));
 
 // ═════════════════════════════════════════════════════════════════════
+console.log('\n2b. Geisterhaus (ganze App)');
+{
+    const SPUK_HTML = '<p id="dnGreet">Guten Abend,</p><p id="dnName">Sven<span class="dn-dotmark">.</span></p><p id="dnQuote">x</p>' + KARTE;
+    const dom2 = new JSDOM('<!doctype html><html class="mwl-halloween mwl-halloween-karte"><head></head><body>' + SPUK_HTML + '</body></html>',
+        { url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true });
+    const w2 = dom2.window, d2 = w2.document;
+    w2.matchMedia = () => ({ matches: true });
+    const ev2 = [];
+    w2.mwlEvent = (n, p) => ev2.push(p.aktion);
+    w2.mwlAnzeigeName = () => 'Sven';
+    let heroAufrufe = 0;
+    w2.eval('function dnRenderHero(){ window.__hero = (window.__hero||0) + 1; document.getElementById("dnGreet").textContent = "Guten Abend,"; }');
+    w2.eval(JS);
+    await new Promise(r => setTimeout(r, 30));
+    ok('Spuk-Ebene haengt am body', !!d2.querySelector('body > .hw-spuk .hw-nebel') && !!d2.querySelector('.hw-netz svg'));
+    const gruss = d2.getElementById('dnGreet').textContent;
+    ok('Begruessung ist gruselig (nicht „Guten …")', !gruss.startsWith('Guten') && gruss.endsWith(','));
+    w2.dnRenderHero();
+    heroAufrufe = w2.__hero;
+    ok('dnRenderHero laeuft weiter und wird danach ueberschrieben', heroAufrufe === 1 && !d2.getElementById('dnGreet').textContent.startsWith('Guten'));
+    ok('Zitat ersetzt', d2.getElementById('dnQuote').textContent.startsWith('„'));
+    const spukBtn = d2.getElementById('hwSpuk');
+    ok('Spuk-Knopf startet als „Spuk aus"', d2.getElementById('hwSpukText').textContent === 'Spuk aus' && spukBtn.getAttribute('aria-pressed') === 'true');
+    spukBtn.click();
+    ok('Spuk aus: Klasse + Speicher', d2.documentElement.classList.contains('mwl-halloween-ruhe') && w2.localStorage.getItem('mwl_halloween_ruhe_' + new Date().getFullYear()) === '1');
+    ok('Spuk aus: Knopf sagt „Spuk an"', d2.getElementById('hwSpukText').textContent === 'Spuk an' && spukBtn.getAttribute('aria-pressed') === 'false');
+    spukBtn.click();
+    ok('Spuk wieder an', !d2.documentElement.classList.contains('mwl-halloween-ruhe'));
+    ok('Ereignisse ruhe/spuk', ev2.includes('ruhe') && ev2.includes('spuk'));
+}
+ok('--primary mit !important ueberschrieben (schlaegt applyTheme inline)', /html\.mwl-halloween \{[^}]*--primary:\s*#[0-9a-f]{6} !important/.test(CSS));
+ok('Spuk liegt nicht im Druck', /@media print[^}]*\.hw-spuk/.test(CSS));
+
+// ═════════════════════════════════════════════════════════════════════
 console.log('\n3. Englisch');
 const strings = [...JS.matchAll(/^\s*'([^']{20,})',?$/gm)].map(m => m[1]);
 const saures = (JS.match(/const SAURES = '([^']+)'/) || [])[1];
