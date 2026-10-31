@@ -469,5 +469,187 @@ const THEME_ACTIVITIES = {
     ],
 };
 
-return { PROFESSIONS, APP_BERUFE, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, THEME_ACTIVITIES };
+// ═══════════════════════════════════════
+// BEISPIELSAETZE IM ASSISTENTEN — je Beruf
+// ═══════════════════════════════════════
+// Die Vorschlags-Knoepfe im leeren Chat (leerHTML in ais-chat.js). Bis 31.10.2026
+// standen dort drei feste IT-Saetze („Rechner aufgesetzt") — fuer jeden Beruf
+// (Meldung des Nutzers mit Bildschirmfoto: Kaufmann bekam IT-Vorschlaege).
+// So formuliert, wie ein Azubi es einem Kollegen ERZAEHLT: umgangssprachlich,
+// mit Wochentagen, mal Berufsschule, mal krank/Urlaub — sie zeigen, was der
+// Assistent versteht. Je Woche eine andere Auswahl (vorschlaegeFuer in ais-chat.js).
+// Wer schon eigene Wochen hat, bekommt seine eigenen Taetigkeiten (Lernprofil);
+// diese Liste ist der Anfang.
+// Test: tools/ais-vorschlaege.test.mjs (jeder Beruf hat Saetze, keine Dubletten).
+const CHAT_SAETZE = {
+    software: [
+        'Montag und Dienstag am Login-Formular weitergebaut, Mittwoch Berufsschule',
+        'Diese Woche Bugs aus dem Ticketsystem gefixt und Unit-Tests geschrieben',
+        'Donnerstag Code-Review mit meinem Ausbilder, Freitag Datenbankabfragen optimiert',
+        'Neue API-Schnittstelle angebunden und dokumentiert, Dienstag Berufsschule',
+        'Die ganze Woche an der Projektarbeit gesessen, Freitag Sprint-Planung',
+        'Montag Urlaub, danach einen Fehler im Bestellprozess gesucht und behoben',
+    ],
+    sysadmin: [
+        'Mittwoch war Berufsschule, sonst habe ich die ganze Woche Rechner aufgesetzt',
+        'Montag und Dienstag Tickets im Helpdesk, Donnerstag Switch im Lager getauscht',
+        'Neue Mitarbeiter eingerichtet: Konten, Laptops, Drucker',
+        'Backups geprüft und eine Wiederherstellung getestet, Freitag war ich krank',
+        'Windows-Updates verteilt und Firewall-Regeln mit dem Admin durchgesprochen',
+        'Dienstag Berufsschule, den Rest der Woche Netzwerkdosen im Neubau verkabelt',
+    ],
+    kaufmann: [
+        'Montag und Dienstag Rechnungen gebucht, Donnerstag Inventur',
+        'Diese Woche im Einkauf: Angebote eingeholt und Bestellungen geschrieben',
+        'Mittwoch Berufsschule, sonst Kundenanfragen per Mail und Telefon bearbeitet',
+        'Mahnungen erstellt und offene Posten mit der Buchhaltung abgeglichen',
+        'Ein Angebot für einen Großkunden vorbereitet, Freitag Messe-Nachbereitung',
+        'Dienstag Urlaub, sonst Reisekostenabrechnungen geprüft',
+    ],
+    elektro: [
+        'Montag bis Mittwoch auf der Baustelle Leitungen verlegt, Donnerstag Berufsschule',
+        'Verteilerschrank verdrahtet und mit dem Gesellen geprüft',
+        'Steckdosen und Schalter im Neubau gesetzt, Freitag Messprotokolle geschrieben',
+        'Fehlersuche an einer Maschinensteuerung, Dienstag Berufsschule',
+        'Die Beleuchtung in der Halle auf LED umgebaut',
+        'Mittwoch krank, sonst E-Check bei einem Kunden gemacht',
+    ],
+    kfz: [
+        'Montag und Dienstag Inspektionen gemacht, Mittwoch Berufsschule',
+        'Bremsen vorne gewechselt und einen Ölwechsel gemacht',
+        'Diese Woche viele Reifenwechsel, Donnerstag den Fehlerspeicher an einem Golf ausgelesen',
+        'Klimaanlage befüllt und mit dem Gesellen eine Kupplung getauscht',
+        'Freitag Urlaub, sonst Fahrzeuge für die HU vorbereitet',
+        'Auspuffanlage erneuert und eine Probefahrt gemacht',
+    ],
+    gastronomie: [
+        'Montag bis Mittwoch kalte Küche, Donnerstag Berufsschule',
+        'Diese Woche Saucen angesetzt und Fleisch portioniert',
+        'Mise en place für eine Hochzeit mit 80 Gästen vorbereitet',
+        'Warenannahme gemacht und das Kühlhaus aufgeräumt, Freitag frei',
+        'Am Beilagenposten gearbeitet und den Mittagstisch mitgekocht',
+        'Dienstag Berufsschule, den Rest der Woche Patisserie: Desserts und Teige',
+    ],
+    pflege: [
+        'Frühdienst auf Station: Grundpflege, Vitalzeichen gemessen, dokumentiert',
+        'Montag und Dienstag Spätdienst, Mittwoch Pflegeschule',
+        'Diese Woche Wundversorgung gelernt und Medikamente mit gestellt',
+        'Eine Patientenaufnahme begleitet und das Aufnahmegespräch geführt',
+        'Mobilisation nach einer Hüft-OP unterstützt, Freitag frei',
+        'Theorieblock in der Pflegeschule: Hygiene und Anatomie',
+    ],
+    einzelhandel: [
+        'Montag Ware eingeräumt, Dienstag und Mittwoch an der Kasse',
+        'Kunden beraten und eine Reklamation aufgenommen',
+        'Diese Woche Inventur in der Abteilung, Donnerstag Berufsschule',
+        'Neue Ware ausgezeichnet und das Schaufenster dekoriert',
+        'Mit der Filialleitung eine Bestellung beim Lieferanten vorbereitet',
+        'Freitag Urlaub, sonst die Verkaufsfläche umgebaut',
+    ],
+    handwerk_bau: [
+        'Montag bis Mittwoch Mauerwerk im Erdgeschoss hochgezogen, Donnerstag Berufsschule',
+        'Schalung für die Bodenplatte gebaut und Beton eingebracht',
+        'Diese Woche Kellerwände abgedichtet',
+        'Baustelle eingerichtet und Material abgeladen, Freitag wegen Regen in der Halle',
+        'Fensterstürze gesetzt und Mörtel angemischt',
+        'Dienstag krank, sonst Innenwände gemauert',
+    ],
+    handwerk_holz: [
+        'Montag bis Mittwoch Korpusse für eine Küche gebaut, Donnerstag Berufsschule',
+        'Türen beim Kunden eingebaut und angepasst',
+        'Diese Woche an der CNC Zuschnitte gemacht und Kanten angeleimt',
+        'Ein Regal nach Zeichnung gebaut und geölt',
+        'Eine Treppe vermessen und mit dem Gesellen montiert',
+        'Freitag Urlaub, sonst die Werkstatt aufgeräumt und Maschinen gewartet',
+    ],
+    friseur: [
+        'Montag und Dienstag Haare gewaschen und geföhnt, Mittwoch Berufsschule',
+        'Am Übungskopf Herrenschnitte geübt',
+        'Diese Woche zum ersten Mal selbst eine Farbe aufgetragen',
+        'Kundinnen beraten und Termine vergeben',
+        'Strähnen mit Folie geübt und Pflegeprodukte verkauft',
+        'Donnerstag frei, sonst eine Dauerwelle am Modell gemacht',
+    ],
+    lager: [
+        'Montag bis Mittwoch Wareneingang, Donnerstag Berufsschule',
+        'Aufträge kommissioniert und für den Versand verpackt',
+        'Diese Woche Inventur im Hochregal',
+        'Staplerfahren geübt und Paletten eingelagert',
+        'Lieferscheine geprüft und Fehlmengen gemeldet',
+        'Freitag krank, sonst Retouren bearbeitet',
+    ],
+    medien: [
+        'Montag und Dienstag Flyer für einen Kunden gestaltet, Mittwoch Berufsschule',
+        'Social-Media-Grafiken für die neue Kampagne erstellt',
+        'Diese Woche eine Broschüre gesetzt und für den Druck vorbereitet',
+        'Logo-Entwürfe überarbeitet und dem Kunden präsentiert',
+        'Bilder freigestellt und Farbkorrekturen gemacht',
+        'Donnerstag ein Fotoshooting begleitet, Freitag die Bilder ausgewählt',
+    ],
+    metall: [
+        'Montag bis Mittwoch in der Lehrwerkstatt gefeilt und gebohrt, Donnerstag Berufsschule',
+        'Eine Pumpe zerlegt, gereinigt und wieder montiert',
+        'Diese Woche mit dem Instandhalter die Fräsmaschine gewartet',
+        'Teile nach Zeichnung gedreht und vermessen',
+        'Hydraulikschläuche gewechselt und die Anlage getestet',
+        'Freitag Urlaub, sonst Fehlersuche an einer Förderanlage',
+    ],
+    garten: [
+        'Montag bis Mittwoch Pflaster verlegt, Donnerstag Berufsschule',
+        'Hecken geschnitten und Laub geräumt',
+        'Diese Woche ein Beet neu angelegt und bepflanzt',
+        'Rasen vertikutiert und nachgesät',
+        'Bäume gepflanzt und angebunden, Freitag die Maschinen gereinigt',
+        'Dienstag krank, sonst Grabpflege auf dem Friedhof',
+    ],
+    chemie: [
+        'Montag bis Mittwoch Titrationen gemacht, Donnerstag Berufsschule',
+        'Proben vorbereitet und an der HPLC gemessen',
+        'Diese Woche eine Synthese nach Vorschrift durchgeführt',
+        'Lösungen angesetzt und das Laborjournal geführt',
+        'Geräte kalibriert und Messwerte ausgewertet',
+        'Freitag Sicherheitsunterweisung, sonst Wasserproben untersucht',
+    ],
+    mfa: [
+        'Montag und Dienstag Empfang und Terminvergabe, Mittwoch Berufsschule',
+        'Blut abgenommen und EKGs geschrieben',
+        'Diese Woche Rezepte und Überweisungen vorbereitet',
+        'Behandlungszimmer vorbereitet und Instrumente aufbereitet',
+        'Mit dem Praxisteam die Quartalsabrechnung gemacht, Freitag frei',
+        'Impfungen dokumentiert und Laborbefunde einsortiert',
+    ],
+    hotel: [
+        'Montag bis Mittwoch Rezeption, Check-in und Check-out, Donnerstag Berufsschule',
+        'Frühstücksservice gemacht und Tische eingedeckt',
+        'Diese Woche im Housekeeping: Zimmer gereinigt und kontrolliert',
+        'Eine Tagung mit vorbereitet und betreut',
+        'Reservierungen aufgenommen und Gäste beraten',
+        'Freitag Spätdienst an der Bar, sonst Bankettservice',
+    ],
+    dachdecker: [
+        'Montag bis Mittwoch Ziegel auf einem Einfamilienhaus gedeckt, Donnerstag Berufsschule',
+        'Dachlatten montiert und Unterspannbahn verlegt',
+        'Diese Woche ein Flachdach abgedichtet',
+        'Dachrinnen angebracht und Fallrohre montiert',
+        'Gerüst mit aufgebaut und Material aufs Dach gebracht, Freitag Regen',
+        'Dienstag krank, sonst Reparaturen nach einem Sturmschaden',
+    ],
+    sanitaer: [
+        'Montag bis Mittwoch Leitungen im Neubau verlegt, Donnerstag Berufsschule',
+        'Mit dem Gesellen eine Gastherme gewartet',
+        'Diese Woche ein Bad montiert: WC, Waschtisch, Dusche',
+        'Heizkörper getauscht und die Anlage entlüftet',
+        'Eine Druckprobe gemacht und das Protokoll geschrieben',
+        'Freitag Urlaub, sonst Notdienst-Einsätze begleitet',
+    ],
+};
+// Ohne bekannten Beruf (Freitext) und auf /en/: berufsneutral, nur die Form zeigen.
+const CHAT_SAETZE_NEUTRAL = {
+    de: ['Mittwoch war Berufsschule, sonst die üblichen Aufgaben im Betrieb', 'Montag Urlaub, danach eine ganz normale Woche', 'Freitag war ich krank',
+         'Montag und Dienstag in einer anderen Abteilung ausgeholfen', 'Donnerstag Unterweisung zum Arbeitsschutz'],
+    en: ['Wednesday was vocational school, the rest of the week the usual tasks', 'Monday off, then a normal week', 'I was sick on Friday',
+         'Monday and Tuesday I helped out in another department', 'Thursday safety briefing'],
+};
+
+return { PROFESSIONS, APP_BERUFE, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, THEME_ACTIVITIES, CHAT_SAETZE, CHAT_SAETZE_NEUTRAL };
 })();

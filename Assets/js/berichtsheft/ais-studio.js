@@ -1566,16 +1566,6 @@ function toggleLocalOnly(localOnly) {
 
 // ─── NEW v2: Azubi-First UX functions ───────────────────────────────────
 
-function selectMood(mood, el) {
-    document.querySelectorAll('.ais-mood-card').forEach(c => c.classList.remove('sel'));
-    el.classList.add('sel');
-    state.activeTheme = mood === 'normal' ? null : mood;
-    // Kein Automatismus auf den Berufsschultag: der ist ein Multi-Select in
-    // den erweiterten Optionen und gehoert dem Nutzer. Hier stand bis v6.4.14
-    // ein Haken `#aisIncludeSchool`, den es seit dem Umbau nicht mehr gibt —
-    // `if (cb)` hat das vollstaendig verborgen.
-}
-
 // Schreibform waehlen. Ein Regler, eine Groesse — und die Wirkung steht
 // direkt darunter als echtes Beispiel, damit niemand raten muss.
 function setForm(form, el) {
@@ -2822,7 +2812,6 @@ function konfig() {
         umfang: state.umfang,
         vorgabe: state.formHint || '',
         abteilung: document.getElementById('aisDepartment')?.value?.trim() || '',
-        stimmung: state.activeTheme || 'normal',
         tage: [...state.selectedDays],
         schultage: [...state.schoolDayIndices],
         tagStatus: { ...state.dayStatus },
@@ -2878,11 +2867,6 @@ function konfigSetzen(k) {
         _saveProfile();
         geaendert.push('abteilung');
     }
-    if (typeof k.stimmung === 'string' && k.stimmung !== vorher.stimmung) {
-        const karte = document.querySelector(`.ais-mood-card[data-mood="${k.stimmung}"]`);
-        if (karte) { selectMood(k.stimmung, karte); geaendert.push('stimmung'); }
-    }
-
     const tagListe = (a) => Array.isArray(a)
         ? [...new Set(a.map(Number).filter(i => Number.isInteger(i) && i >= 0 && i <= 4))].sort()
         : null;
@@ -2982,7 +2966,6 @@ return {
     confirmDeleteHistory,
     toggleLocalOnly,
     // v2 Azubi-First API
-    selectMood,
     setForm,
     setUmfang,
     toggleCollapse,

@@ -76,7 +76,7 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/foto-import.css?v=6d593ff0f0">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/pdf-studio.css?v=fe25dd0ada">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/pdf-stile.css?v=d0d3a39657">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-eingaben.css?v=6db624947a">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-eingaben.css?v=df534a691a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-quellen.css?v=2369ef12fd">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-generieren.css?v=1474275118">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-kontingent.css?v=3118daa1b5">
@@ -1861,9 +1861,13 @@ Beispiel:
                         <div class="ais-profil-zeile">
                             <span class="ais-profil-kl" id="aisLjKl">Lehrjahr</span>
                             <div class="ais-seg ais-lehrjahr-row" role="group" aria-labelledby="aisLjKl">
-                                <button type="button" class="ais-lj-btn sel" data-lj="1" onclick="AIStudio.setLehrjahr(1,this)">1.</button>
-                                <button type="button" class="ais-lj-btn" data-lj="2" onclick="AIStudio.setLehrjahr(2,this)">2.</button>
+                                <!-- „sel" auf 2 wie state.lehrjahr in ais-studio.js: vorher stand es auf 1,
+                                     die KI schrieb aber fuers 2. Lehrjahr (gesehen 31.10.2026). Den 4. Knopf
+                                     brauchen 3,5-jaehrige Berufe (Elektroniker, Industriemechaniker, SHK). -->
+                                <button type="button" class="ais-lj-btn" data-lj="1" onclick="AIStudio.setLehrjahr(1,this)">1.</button>
+                                <button type="button" class="ais-lj-btn sel" data-lj="2" onclick="AIStudio.setLehrjahr(2,this)">2.</button>
                                 <button type="button" class="ais-lj-btn" data-lj="3" onclick="AIStudio.setLehrjahr(3,this)">3.</button>
+                                <button type="button" class="ais-lj-btn" data-lj="4" onclick="AIStudio.setLehrjahr(4,this)">4.</button>
                             </div>
                         </div>
                         <div class="ais-profil-zeile">
@@ -1879,29 +1883,31 @@ Beispiel:
                 <section class="ais-gruppe" aria-labelledby="aisWocheT">
                     <h3 class="ais-gruppe-t" id="aisWocheT">Deine Woche</h3>
 
+                    <!-- Regelmaessige Woche (seit 31.10.2026 hier statt unter „Mehr"): Arbeitstage
+                         und Berufsschultag wirken JEDE Woche — im Chat-Prompt (konfig().tage /
+                         .schultage), in „Mehrere Wochen" und in der Vorlage-Engine. Vorher stand
+                         hier „Wie war die Woche?" (Normal/Projekt/Schule/Support/Pruefung): das
+                         ging nur in den alten Generator-Weg, der Assistent schickte es nie an die
+                         KI — eine Wahl ohne Wirkung (Hinweis des Nutzers), deshalb entfernt. -->
                     <div class="ais-section">
-                        <p class="ais-sec-lbl" id="aisMoodLbl">Wie war die Woche?</p>
-                        <div class="ais-mood-row" role="group" aria-labelledby="aisMoodLbl">
-                            <button type="button" class="ais-mood-card sel" data-mood="normal" onclick="AIStudio.selectMood('normal',this)">
-                                <svg class="mood-icon-svg" aria-hidden="true"><use href="#i-calendar" /></svg>
-                                <span class="mood-label">Normal</span>
-                            </button>
-                            <button type="button" class="ais-mood-card" data-mood="projekt" onclick="AIStudio.selectMood('projekt',this)">
-                                <svg class="mood-icon-svg" aria-hidden="true"><use href="#i-rocket" /></svg>
-                                <span class="mood-label">Projekt</span>
-                            </button>
-                            <button type="button" class="ais-mood-card" data-mood="schule" onclick="AIStudio.selectMood('schule',this)">
-                                <svg class="mood-icon-svg" aria-hidden="true"><use href="#i-school" /></svg>
-                                <span class="mood-label">Schule</span>
-                            </button>
-                            <button type="button" class="ais-mood-card" data-mood="wartung" onclick="AIStudio.selectMood('wartung',this)">
-                                <svg class="mood-icon-svg" aria-hidden="true"><use href="#i-wrench" /></svg>
-                                <span class="mood-label">Support</span>
-                            </button>
-                            <button type="button" class="ais-mood-card" data-mood="pruefung" onclick="AIStudio.selectMood('pruefung',this)">
-                                <svg class="mood-icon-svg" aria-hidden="true"><use href="#i-bookopen" /></svg>
-                                <span class="mood-label">Prüfung</span>
-                            </button>
+                        <p class="ais-sec-lbl" id="aisTageLbl">Deine Arbeitstage</p>
+                        <div class="ais-days-selector" id="aisDaysSelector" role="group" aria-labelledby="aisTageLbl">
+                            <button type="button" class="ais-day-chip selected" data-day="0" onclick="AIStudio.toggleDay(this)">Mo</button>
+                            <button type="button" class="ais-day-chip selected" data-day="1" onclick="AIStudio.toggleDay(this)">Di</button>
+                            <button type="button" class="ais-day-chip selected" data-day="2" onclick="AIStudio.toggleDay(this)">Mi</button>
+                            <button type="button" class="ais-day-chip selected" data-day="3" onclick="AIStudio.toggleDay(this)">Do</button>
+                            <button type="button" class="ais-day-chip selected" data-day="4" onclick="AIStudio.toggleDay(this)">Fr</button>
+                        </div>
+                    </div>
+                    <div class="ais-section">
+                        <p class="ais-sec-lbl" id="aisSchulLbl">Berufsschultag</p>
+                        <div class="ais-school-selector" id="aisSchoolSelector" role="group" aria-labelledby="aisSchulLbl">
+                            <button type="button" class="ais-school-chip selected" data-school="-1" onclick="AIStudio.setSchoolDay(-1)">Kein</button>
+                            <button type="button" class="ais-school-chip" data-school="0" onclick="AIStudio.setSchoolDay(0)">Mo</button>
+                            <button type="button" class="ais-school-chip" data-school="1" onclick="AIStudio.setSchoolDay(1)">Di</button>
+                            <button type="button" class="ais-school-chip" data-school="2" onclick="AIStudio.setSchoolDay(2)">Mi</button>
+                            <button type="button" class="ais-school-chip" data-school="3" onclick="AIStudio.setSchoolDay(3)">Do</button>
+                            <button type="button" class="ais-school-chip" data-school="4" onclick="AIStudio.setSchoolDay(4)">Fr</button>
                         </div>
                     </div>
                     <!-- "Was hast du gemacht?" (Taetigkeits-Chips) ist seit v8.0.9 raus:
@@ -1978,33 +1984,12 @@ Beispiel:
                             <span class="ais-collapse-hdr-icon"><svg class="icon" aria-hidden="true"><use href="#i-gear" /></svg></span>
                             <span class="ais-collapse-hdr-text">
                                 <span class="ais-collapse-hdr-title" id="aisErwT">Erweiterte Optionen</span>
-                                <span class="ais-collapse-hdr-sub" id="aisErwSub">Tage, Berufsschule, Woche, KI</span>
+                                <span class="ais-collapse-hdr-sub" id="aisErwSub">Kalenderwoche, Erinnerung, KI</span>
                             </span>
                             <svg class="ais-collapse-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
                         </button>
                         <div class="ais-collapse-body" id="advancedCollapse">
                             <div class="ais-collapse-inner">
-                                <div class="ais-section">
-                                    <p class="ais-sec-lbl" id="aisTageLbl">Tage generieren</p>
-                                    <div class="ais-days-selector" id="aisDaysSelector" role="group" aria-labelledby="aisTageLbl">
-                                        <button type="button" class="ais-day-chip selected" data-day="0" onclick="AIStudio.toggleDay(this)">Mo</button>
-                                        <button type="button" class="ais-day-chip selected" data-day="1" onclick="AIStudio.toggleDay(this)">Di</button>
-                                        <button type="button" class="ais-day-chip selected" data-day="2" onclick="AIStudio.toggleDay(this)">Mi</button>
-                                        <button type="button" class="ais-day-chip selected" data-day="3" onclick="AIStudio.toggleDay(this)">Do</button>
-                                        <button type="button" class="ais-day-chip selected" data-day="4" onclick="AIStudio.toggleDay(this)">Fr</button>
-                                    </div>
-                                </div>
-                                <div class="ais-section">
-                                    <p class="ais-sec-lbl" id="aisSchulLbl">Berufsschultag</p>
-                                    <div class="ais-school-selector" id="aisSchoolSelector" role="group" aria-labelledby="aisSchulLbl">
-                                        <button type="button" class="ais-school-chip selected" data-school="-1" onclick="AIStudio.setSchoolDay(-1)">Kein</button>
-                                        <button type="button" class="ais-school-chip" data-school="0" onclick="AIStudio.setSchoolDay(0)">Mo</button>
-                                        <button type="button" class="ais-school-chip" data-school="1" onclick="AIStudio.setSchoolDay(1)">Di</button>
-                                        <button type="button" class="ais-school-chip" data-school="2" onclick="AIStudio.setSchoolDay(2)">Mi</button>
-                                        <button type="button" class="ais-school-chip" data-school="3" onclick="AIStudio.setSchoolDay(3)">Do</button>
-                                        <button type="button" class="ais-school-chip" data-school="4" onclick="AIStudio.setSchoolDay(4)">Fr</button>
-                                    </div>
-                                </div>
                                 <div class="ais-section">
                                     <label class="ais-sec-lbl" for="aisCalendarWeek" id="aisKwLbl">Kalenderwoche</label>
                                     <input type="number" class="ais-week-input" id="aisCalendarWeek" min="1" max="53"
@@ -2331,14 +2316,14 @@ Beispiel:
     <script src="/Assets/js/ki-app-briefkasten.js?v=33cbc27e85"></script>
     <script src="/Assets/js/berichtsheft/bh-ki.js?v=b391cbf859"></script>
     <script defer src="/Assets/js/berichtsheft/bh-stapel.js?v=3e72ccfbed"></script>
-    <script src="/Assets/js/berichtsheft/ais-berufe.js?v=63216ea178"></script>
+    <script src="/Assets/js/berichtsheft/ais-berufe.js?v=061e547173"></script>
     <script src="/Assets/js/berichtsheft/ais-sprache.js?v=9239193e4a"></script>
     <!-- Stundenplan der Klasse: welche Fassung (Woche B, Block, Sondertag) an einem Datum gilt -->
     <script src="/Assets/js/klasse-profil.js?v=831755c754"></script>
     <script src="/Assets/js/berichtsheft/ais-cloud.js?v=796642e82e"></script>
-    <script src="/Assets/js/berichtsheft/ais-studio.js?v=4479f15d16"></script>
+    <script src="/Assets/js/berichtsheft/ais-studio.js?v=89d2249130"></script>
     <script src="/Assets/js/berichtsheft/bh-lernen.js?v=d27a4fcea2"></script>
-    <script src="/Assets/js/berichtsheft/ais-chat.js?v=f536a192d6"></script>
+    <script src="/Assets/js/berichtsheft/ais-chat.js?v=7f72a9c3d1"></script>
     <script>
         // Secret access: 5x rapid click on title → Schatten-Berichtsheft
         (function () {

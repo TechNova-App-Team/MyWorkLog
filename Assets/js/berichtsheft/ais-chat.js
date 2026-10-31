@@ -576,6 +576,67 @@ function nachrichtHTML(n, nr) {
         (n.woche ? wocheHTML(n.woche, nr) : '') + '</div></div>';
 }
 
+// Die Vorschlags-Knoepfe im leeren Chat — passend zu DIESEM Azubi, je Woche andere.
+// Bis 31.10.2026 drei feste IT-Saetze fuer jeden Beruf (Meldung des Nutzers).
+// Reihenfolge der Quellen:
+// 1. seine eigenen wiederkehrenden Taetigkeiten (Lernprofil, ab 3) — am naechsten dran;
+// 2. die Saetze seines Berufs (CHAT_SAETZE in ais-berufe.js);
+// 3. berufsneutral — bei einem frei eingetragenen Beruf, der nur NAEHERUNGSWEISE auf
+//    eine Liste abgebildet ist (Baecker → gastronomie bekaeme sonst „kalte Kueche"),
+//    und auf /en/ (die Berufslisten sind deutsch).
+// Gedreht wird ueber die Kalenderwoche: dieselbe Woche zeigt dasselbe (kein Flackern
+// beim Neuzeichnen), die naechste Woche andere.
+function vorschlaegeFuer(k, kw, lp, en) {
+    const B = window.AIS_BERUFE || {};
+    // Je Woche ein BLOCK aus einer gemischten Reihenfolge: aufeinanderfolgende Wochen
+    // zeigen verschiedene Saetze (nur weiterruecken liess 2 von 3 stehen), und nach
+    // jedem Durchlauf wird neu gemischt — kein starres Abwechseln zweier Dreiergruppen.
+    const drehen = (liste, n) => {
+        if (!liste || !liste.length) return [];
+        n = Math.min(n, liste.length);
+        const ordnungFuer = (w) => {
+            let s = (Math.floor((w * n) / liste.length) * 2654435761 + 97) >>> 0;
+            const zufall = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+            const o = liste.map((_, i) => i);
+            for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(zufall() * (i + 1)); [o[i], o[j]] = [o[j], o[i]]; }
+            return o;
+        };
+        const block = (w) => { const o = ordnungFuer(w), pos = (w * n) % liste.length; return Array.from({ length: n }, (_, i) => o[(pos + i) % liste.length]); };
+        // An der Grenze zweier Durchlaeufe kann die neue Mischung die Saetze der
+        // Vorwoche wiederholen — dann zuerst die nehmen, die letzte Woche nicht dran
+        // waren. Verglichen wird mit dem, was letzte Woche WIRKLICH zu sehen war (selbst
+        // evtl. schon ausgewichen) — deshalb vorwaerts ab KW 1 gerechnet (hoechstens 53
+        // Schritte). Eine rekursive Fassung mit Tiefe lieferte je nach Tiefe fuer
+        // DIESELBE Woche verschiedene Auswahlen (gemessen: KW 13 → 14 dreimal gleich).
+        const ziel = Math.min(53, Math.max(1, Math.abs(parseInt(kw, 10) || 1)));
+        let wahl = block(1);
+        for (let w = 2; w <= ziel; w++) {
+            const b = block(w);
+            const vorher = new Set(wahl);
+            wahl = (liste.length >= 2 * n && b.filter(i => vorher.has(i)).length > 1)
+                ? ordnungFuer(w).filter(i => !vorher.has(i)).slice(0, n)
+                : b;
+        }
+        return wahl.map(i => liste[i]);
+    };
+    const eigene = ((lp && lp.taetigkeiten) || []).map(t => String(t.text || '').trim()).filter(t => t && t.length <= 70 && !/^\s*-/.test(t));
+    if (!en && eigene.length >= 3) {
+        const [a, b, c] = drehen(eigene, 3);
+        const schul = Array.isArray(k.schultage) ? k.schultage.find(i => i >= 2) : undefined;
+        return [
+            'Montag und Dienstag ' + a + (schul !== undefined ? ', ' + TAG_DE[schul] + ' Berufsschule' : ''),
+            b + ', Freitag war ich krank',
+            'Diese Woche ' + c,
+        ];
+    }
+    const prof = B.PROFESSIONS && B.PROFESSIONS[k.beruf];
+    const freierName = prof && k.berufName && k.berufName !== prof.name;
+    const liste = !en && !freierName && B.CHAT_SAETZE ? B.CHAT_SAETZE[k.beruf] : null;
+    if (liste && liste.length) return drehen(liste, 3);
+    const neutral = (B.CHAT_SAETZE_NEUTRAL && B.CHAT_SAETZE_NEUTRAL[en ? 'en' : 'de']) || [];
+    return drehen(neutral, 3);
+}
+
 function leerHTML() {
     const k = studioDa() ? AIStudio.konfig() : { bereit: false };
     const titel = k.bereit
@@ -587,9 +648,7 @@ function leerHTML() {
         : Lx('Beruf, Lehrjahr und wie dein Ausbilder die Berichte haben will. Danach erzählst du nur noch, was los war.',
              'Occupation, year and how your trainer wants the reports. After that you only tell me what happened.');
     const vorschlaege = k.bereit
-        ? [Lx('Mittwoch war Berufsschule, sonst habe ich die ganze Woche Rechner aufgesetzt', 'Wednesday was vocational school, the rest of the week I set up computers'),
-           Lx('Montag und Dienstag Kundentermine, Donnerstag Inventur', 'Monday and Tuesday customer appointments, Thursday stocktaking'),
-           Lx('Freitag war ich krank', 'I was sick on Friday')]
+        ? vorschlaegeFuer(k, k.kw, (lernDa() && studioDa()) ? lernProfil(new Date()) : null, istEn())
         : [Lx('Ich bin Bäcker im 1. Lehrjahr, mein Ausbilder ist streng, nur Stichpunkte', 'I am a baker in year 1, my trainer is strict, bullet points only'),
            Lx('Fachinformatiker Systemintegration, 2. Lehrjahr, ganze Sätze', 'IT specialist for system integration, year 2, full sentences'),
            Lx('Kauffrau für Büromanagement, 3. Jahr, kurz und in Ich-Form', 'Office management clerk, year 3, short and in first person')];
@@ -1276,7 +1335,6 @@ function chipsFuer(geaendert) {
         else if (f === 'schultage') c.push(k.schultage.length ? Lx('Schule immer: ', 'School always: ') + k.schultage.map(i => TAGE()[i]).join(', ') : Lx('Kein fester Schultag', 'No fixed school day'));
         else if (f === 'tage') c.push(Lx('Tage: ', 'Days: ') + k.tage.map(i => TAGE()[i].slice(0, 2)).join(' '));
         else if (f === 'kw') c.push(Lx('KW ', 'Week ') + k.kw);
-        else if (f === 'stimmung') c.push(Lx('Woche: ', 'Week: ') + k.stimmung);
     });
     return c.filter(Boolean);
 }
@@ -2026,7 +2084,7 @@ return {
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
     _intern: {
-        mehrwochenWunsch, vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
+        vorschlaegeFuer, mehrwochenWunsch, vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,

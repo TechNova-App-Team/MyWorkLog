@@ -157,7 +157,10 @@ console.log('\n3 · Abhaken zaehlt kumuliert und schreibt doneAt');
 console.log('\n4 · Wiederholte Aufgaben stehen in der naechsten Periode wieder offen');
 {
     const yesterday = isoOf(shift(-1)) + 'T18:00:00';
-    const lastMonth = new Date(NOW); lastMonth.setMonth(lastMonth.getMonth() - 1);
+    // Der 15. des Vormonats — NICHT setMonth(-1): am 31.10. ergibt das den „31.09.",
+    // den JS zum 01.10. macht, also DENSELBEN Monat; der Test fiel deshalb am 29.–31.
+    // jedes Monats durch, ohne dass an der App etwas falsch war (gemessen 31.10.2026).
+    const lastMonth = new Date(NOW.getFullYear(), NOW.getMonth() - 1, 15, 12);
     const s = base();
     s.mwl_tasks_cats = [{ id: 'c1', name: 'Betrieb', icon: 'briefcase', days: [], autoReset: '', tasks: [
         { id: 'd', name: 'Täglich', days: [], due: '', recurring: 'daily', doneAt: yesterday, subtasks: [] },
