@@ -1376,7 +1376,7 @@ function mehrwochenWunsch(text) {
     return mehr ? { anzahl: null } : null;
 }
 // Der Assistent schreibt die Wochen SELBST (Wunsch des Nutzers 31.10.2026: „warum
-// sollte ein User extra da rueber?"). Gleiche Arbeit wie der Tisch (bh-mehrwochen.js:
+// sollte ein User extra da rueber?"). Gleiche Arbeit wie der Tisch (BHMehrwochen im Pass-Paket:
 // gleicher Proxy, gleiches Kontingent, feste Tage durchgesetzt, Abschrift verworfen);
 // die Nachricht ist das Stichwort fuer den ganzen Zeitraum, aufgefuellt wird aus
 // Vorwissen/Lernprofil — wer „schreib mir 3 Wochen" sagt, will volle Wochen.
@@ -1456,7 +1456,7 @@ function mehrwochen(nr) {
     const mw = (n && n.mw) || {};
     if (typeof bhMess === 'function') bhMess('assistent_mehrwochen_offen');
     schliessen();
-    BHMehrwochen.oeffnen({ allgemein: mw.text || '', anzahl: mw.anzahl || null });
+    if (window.MWLPass) MWLPass.oeffnen('mehrwochen', { allgemein: mw.text || '', anzahl: mw.anzahl || null });
 }
 
 // ── Senden ───────────────────────────────────────────────────────────
@@ -1473,10 +1473,11 @@ async function senden(e, vorgabeText) {
     gespraech.nachrichten.push({ rolle: 'nutzer', text });
     if (typeof bhMess === 'function') bhMess('assistent_nachricht', { nr: gespraech.nachrichten.filter(n => n.rolle === 'nutzer').length });
     // „Schreib mir die letzten 3 Wochen" → nicht EINE Woche raten, sondern den Tisch
-    // fuer mehrere Wochen anbieten (bh-mehrwochen.js, Pass). Kein KI-Aufruf hier.
-    const mw = window.BHMehrwochen ? mehrwochenWunsch(text) : null;
+    // fuer mehrere Wochen anbieten (Pass). Kein KI-Aufruf hier. Die Funktion selbst
+    // (BHMehrwochen) kommt erst mit dem Pass-Paket vom Server (mwl-pass.js).
+    const mw = mehrwochenWunsch(text);
     if (mw) {
-        const offenFrei = !!(window.MWLVorschau && MWLVorschau.frei());
+        const offenFrei = !!(window.MWLPass && MWLPass.frei() && await MWLPass.laden() && window.BHMehrwochen);
         if (typeof bhMess === 'function') bhMess('assistent_mehrwochen', { frei: offenFrei, anzahl: mw.anzahl || 0 });
         if (!offenFrei) {
             sagen({ rolle: 'assistent', knopf: 'mehrwochen', mw: { text, anzahl: mw.anzahl }, text: Lx(

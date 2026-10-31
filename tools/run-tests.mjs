@@ -9,13 +9,19 @@
  * `npm run test:all` — dieselbe Liste wie in der GitHub Action.
  */
 
-import { readdirSync } from 'node:fs';
+import { readdirSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const TOOLS = path.dirname(fileURLToPath(import.meta.url));
-const tests = readdirSync(TOOLS).filter(f => f.endsWith('.test.mjs')).sort();
+// pass/tests/ liegt gitignored (Code der Pass-Funktionen geht nie ins Repo) — lokal
+// laufen die Tests mit, in CI gibt es den Ordner nicht.
+const PASS = path.join(TOOLS, '..', 'pass', 'tests');
+const tests = [
+  ...readdirSync(TOOLS).filter(f => f.endsWith('.test.mjs')).sort(),
+  ...(existsSync(PASS) ? readdirSync(PASS).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join('..', 'pass', 'tests', f)) : []),
+];
 
 // Exit 2 heisst "uebersprungen, mit Begruendung" — aktuell nur
 // umfrage-worker.test.mjs, dessen Quelle (workers/) gitignored ist und auf einem

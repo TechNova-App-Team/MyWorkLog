@@ -43,14 +43,23 @@
         });
 
         const knopf = $('kfKaufen');
-        const lokal = window.MWLVorschau && MWLVorschau.lokal();
+        // Die Kasse schaltet selbst nichts frei: lokal tippt man den Pass-Code, und den
+        // prueft der Server (MWLPass.einloesen). Live ist sie aus.
+        const lokal = window.MWLPass && MWLPass.lokal();
         if (!lokal) {
             knopf.disabled = true;
             $('kfMeldung').textContent = 'Der Pass ist noch nicht kaufbar. Die Demo läuft nur auf dem Entwicklungsrechner.';
+        } else {
+            $('kfCodeFeld').hidden = false;
         }
-        knopf.addEventListener('click', () => {
-            if (!MWLVorschau.demoFreischalten()) {
-                $('kfMeldung').textContent = 'Freischalten hat nicht geklappt (nur auf localhost möglich).';
+        knopf.addEventListener('click', async () => {
+            knopf.disabled = true;
+            $('kfMeldung').textContent = 'Wird geprüft …';
+            const r = await MWLPass.einloesen($('kfCode').value);
+            knopf.disabled = false;
+            if (!r.ok) {
+                $('kfMeldung').textContent = r.fehler === 'falsch' ? 'Der Code stimmt nicht. Groß- und Kleinschreibung zählt.'
+                    : r.fehler === 'netz' ? 'Keine Verbindung zum Server.' : 'Freischalten hat gerade nicht geklappt.';
                 return;
             }
             zeigen('fertig');

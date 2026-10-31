@@ -8,9 +8,9 @@
 // lief die Versionszeile („v9.4.8 · SW v9.4.8“) in das Etikett, und der Fuss war dem
 // Nutzer „viel zu voll“ (31.10.2026). Oben neben „MyWorkLog“ ist auch kein Platz
 // (Kopfzeile 220 px).
-// Klick fuehrt zur Pass-Karte im Berichtsheft (bh-pass.js liest ?pass=karte).
+// Klick fuehrt zur Pass-Karte im Berichtsheft (Pass-Paket liest ?pass=karte).
 //
-// Welche Stufe jemand hat, entscheidet NUR stufe(). Heute: Vorschau-Code → 'pass'.
+// Welche Stufe jemand hat, entscheidet NUR stufe(). Heute: Freischaltung vom Server (mwl-pass.js) → 'pass'.
 // Spaeter liefert die Konto-Berechtigung 'pass' oder 'plus'; Aufrufer bleiben gleich.
 
 window.MWLPassMarke = (function () {
@@ -23,7 +23,7 @@ window.MWLPassMarke = (function () {
     const en = () => document.documentElement.lang === 'en';
 
     function stufe() {
-        return (window.MWLVorschau && MWLVorschau.frei()) ? 'pass' : null;
+        return (window.MWLPass && MWLPass.frei()) ? 'pass' : null;
     }
 
     function marke(wo) {
@@ -51,7 +51,7 @@ window.MWLPassMarke = (function () {
     document.addEventListener('DOMContentLoaded', einsetzen);
     window.addEventListener('mwl-pass-frei', einsetzen);
     // Freigeschaltet/entfernt in einem anderen Tab (z. B. im Berichtsheft)
-    window.addEventListener('storage', (e) => { if (e.key === 'mwl_vorschau') einsetzen(); });
+    window.addEventListener('storage', (e) => { if (e.key === 'mwl_pass') einsetzen(); });
 
     return { stufe, einsetzen, STUFEN };
 })();
