@@ -573,7 +573,7 @@ function nachrichtHTML(n, nr) {
         (n.text ? '<p class="aic-text">' + esc(n.text) + '</p>' : '') + chips +
         (n.wer ? '<p class="aic-wer">' + esc(n.wer) + '</p>' : '') +
         (knoepfe.length ? '<div class="aic-knoepfe">' + knoepfe.join('') + '</div>' : '') +
-        (n.woche ? wocheHTML(n.woche, nr) : '') + '</div></div>';
+        (n.woche ? wocheHTML(n.woche, nr) : '') + (n.stapel ? stapelHTML(n, nr) : '') + '</div></div>';
 }
 
 // Die Vorschlags-Knoepfe im leeren Chat — passend zu DIESEM Azubi, je Woche andere.
@@ -1375,6 +1375,82 @@ function mehrwochenWunsch(text) {
     if (anzahl && anzahl >= 2) return { anzahl: Math.min(anzahl, 8) };
     return mehr ? { anzahl: null } : null;
 }
+// Der Assistent schreibt die Wochen SELBST (Wunsch des Nutzers 31.10.2026: „warum
+// sollte ein User extra da rueber?"). Gleiche Arbeit wie der Tisch (bh-mehrwochen.js:
+// gleicher Proxy, gleiches Kontingent, feste Tage durchgesetzt, Abschrift verworfen);
+// die Nachricht ist das Stichwort fuer den ganzen Zeitraum, aufgefuellt wird aus
+// Vorwissen/Lernprofil — wer „schreib mir 3 Wochen" sagt, will volle Wochen.
+// Das Ergebnis steht als Stapel in der Nachricht (stapelHTML) und geht per Klick
+// ins Heft oder auf den Tisch zum Nachbearbeiten.
+async function mehrereSchreiben(text, anzahl) {
+    if (!AIStudio.konfig().cloud) { ohneAntwort('aus'); return; }
+    const liste = BHMehrwochen.wochenFuer(anzahl || 3);
+    if (!liste.length) {
+        sagen({ rolle: 'assistent', text: Lx('Dir fehlt gerade keine Woche: Dein Heft ist bis zur Vorwoche vollständig.', 'No week is missing right now: your book is complete up to last week.') });
+        knopfZustand();
+        return;
+    }
+    beschaeftigt = 'denken';
+    wartenBeginnen();
+    speichern();
+    zeichnen();
+    knopfZustand();
+    try {
+        await BHMehrwochen.schreibeAlle(liste, { allgemein: text, fuellen: true });
+    } finally {
+        beschaeftigt = false;
+        wartenEnden();
+    }
+    const fertig = liste.filter(w => w.status === 'fertig');
+    const fehler = liste.find(w => w.status === 'fehler');
+    const von = liste[0], bis = liste[liste.length - 1];
+    const zeitraum = liste.length > 1 ? 'KW ' + von.kw + ' ' + Lx('bis', 'to') + ' KW ' + bis.kw : 'KW ' + von.kw;
+    sagen({
+        rolle: 'assistent', stapel: liste,
+        text: fertig.length
+            ? Lx(fertig.length + (fertig.length === 1 ? ' Woche steht' : ' Wochen stehen') + ': ' + zeitraum + '. Lies sie kurz durch, dann kommen sie mit einem Klick ins Heft.',
+                 fertig.length + (fertig.length === 1 ? ' week is' : ' weeks are') + ' ready: ' + zeitraum + '. Have a quick read, then add them to the book in one click.')
+              + (fehler ? ' ' + fehler.fehler : '')
+            : (fehler ? fehler.fehler : Lx('Das hat gerade nicht geklappt.', 'That did not work just now.')),
+        wer: werHatGeschrieben(),
+    });
+    knopfZustand();
+}
+// Der Stapel in der Nachricht: je Woche eine Zeile je Tag, knapp.
+function stapelHTML(n, nr) {
+    const liste = n.stapel || [];
+    const fertig = liste.filter(w => w.status === 'fertig' && w.tage);
+    if (!fertig.length) return '';
+    const status = { urlaub: Lx('Urlaub', 'Vacation'), krank: Lx('Krank', 'Sick'), feiertag: Lx('Feiertag', 'Public holiday'), gleittag: Lx('Gleittag', 'Flexi day') };
+    const wochen = fertig.map(w => '<div class="aic-stapel-woche"><b>KW ' + w.kw + '</b>' +
+        w.tage.map(t => {
+            const inhalt = t.status ? status[t.status] || t.status : (t.entries[0] || (t.schule && t.thema) || '');
+            return inhalt ? '<p><span>' + esc(TAGE()[t.i].slice(0, 2)) + '</span><em>' + esc(String(inhalt).replace(/^\s*-\s*/, '')) +
+                (!t.status && t.entries.length > 1 ? ' <i>+' + (t.entries.length - 1) + '</i>' : '') + '</em></p>' : '';
+        }).join('') + '</div>').join('');
+    const fuss = n.stapelImHeft
+        ? '<p class="aic-stapel-ok"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>' + esc(Lx('Im Heft', 'In the book')) + '</p>'
+        : '<button type="button" class="aic-knopf is-haupt" onclick="AISChat.stapelInsHeft(' + nr + ')"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>' +
+          esc(fertig.length === 1 ? Lx('Ins Heft übernehmen', 'Add to the book') : Lx('Alle ' + fertig.length + ' ins Heft übernehmen', 'Add all ' + fertig.length + ' to the book')) + '</button>' +
+          '<button type="button" class="aic-knopf" onclick="AISChat.stapelAufTisch(' + nr + ')">' + esc(Lx('Auf dem Tisch bearbeiten', 'Edit on the table')) + '</button>';
+    return '<article class="aic-stapel"><div class="aic-stapel-wochen">' + wochen + '</div><footer class="aic-woche-fuss">' + fuss + '</footer></article>';
+}
+function stapelInsHeft(nr) {
+    const n = gespraech.nachrichten[nr];
+    if (!n || !n.stapel || n.stapelImHeft) return;
+    const { n: anzahl, doppelt } = BHMehrwochen.insHeft(n.stapel);
+    n.stapelImHeft = true;
+    if (typeof bhMess === 'function') bhMess('assistent_stapel_uebernommen', { anzahl, doppelt });
+    sagen({ rolle: 'assistent', text: Lx(anzahl + (anzahl === 1 ? ' Woche liegt' : ' Wochen liegen') + ' jetzt im Heft.' + (doppelt ? ' ' + doppelt + ' gab es inzwischen schon, die blieben unverändert.' : ''),
+        anzahl + (anzahl === 1 ? ' week is' : ' weeks are') + ' now in the book.' + (doppelt ? ' ' + doppelt + ' already existed and stayed unchanged.' : '')) });
+}
+function stapelAufTisch(nr) {
+    const n = gespraech.nachrichten[nr];
+    if (!n || !n.stapel) return;
+    schliessen();
+    BHMehrwochen.aufDenTisch(n.stapel, { allgemein: '' });
+}
+
 function mehrwochen(nr) {
     const n = gespraech.nachrichten[nr];
     const mw = (n && n.mw) || {};
@@ -1401,13 +1477,15 @@ async function senden(e, vorgabeText) {
     const mw = window.BHMehrwochen ? mehrwochenWunsch(text) : null;
     if (mw) {
         const offenFrei = !!(window.MWLVorschau && MWLVorschau.frei());
-        sagen({ rolle: 'assistent', knopf: 'mehrwochen', mw: { text, anzahl: mw.anzahl }, text: offenFrei
-            ? Lx('Mehrere Wochen schreibe ich auf einem eigenen Tisch: dort liegen deine fehlenden Wochen nebeneinander, ich fülle sie nacheinander, und du liest jede, bevor sie ins Heft kommt. Was du gerade geschrieben hast, steht dort schon als Stichwort.',
-                 'I write several weeks on a separate table: your missing weeks lie side by side, I fill them one after another, and you read each before it goes into the book. What you just wrote is already there as a keyword.')
-            : Lx('Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass, und der ist noch versiegelt. Ich schreibe dir gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
-                 'Several weeks at once are part of the training pass, which is still sealed. I am happy to write one week after another: tell me which one to start with.') });
         if (typeof bhMess === 'function') bhMess('assistent_mehrwochen', { frei: offenFrei, anzahl: mw.anzahl || 0 });
-        knopfZustand();
+        if (!offenFrei) {
+            sagen({ rolle: 'assistent', knopf: 'mehrwochen', mw: { text, anzahl: mw.anzahl }, text: Lx(
+                'Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass, und der ist noch versiegelt. Ich schreibe dir gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
+                'Several weeks at once are part of the training pass, which is still sealed. I am happy to write one week after another: tell me which one to start with.') });
+            knopfZustand();
+            return;
+        }
+        await mehrereSchreiben(text, mw.anzahl);
         return;
     }
     beschaeftigt = 'denken';
@@ -2079,7 +2157,7 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
-    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen,
+    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
