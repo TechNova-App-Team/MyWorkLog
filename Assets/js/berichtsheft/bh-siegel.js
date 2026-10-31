@@ -27,6 +27,13 @@ const TEXTE = {
                  ['Aus Zeiterfassung, Stichworten und deinem Stil', 'From time tracking, keywords and your style'],
                  ['Du liest jede Woche, bevor sie ins Heft kommt', 'You read every week before it goes into the book']],
     },
+    rahmenplan: {
+        titel: ['Rahmenplan', 'Training framework'],
+        satz: ['Was laut Verordnung dran war und noch fehlt.', 'What the regulation says was due, and what is missing.'],
+        punkte: [['Der Ausbildungsrahmenplan deines Berufs, für jeden dualen Beruf', 'The training framework of your occupation, for every dual apprenticeship'],
+                 ['Abgleich mit deinem Heft, Woche für Woche', 'Compared with your record book, week by week'],
+                 ['Was bis jetzt fehlt, als Liste fürs Gespräch mit dem Ausbilder', 'What is missing so far, as a list for your trainer']],
+    },
 };
 const FEHLER = {
     falsch: ['Der Code stimmt nicht. Groß- und Kleinschreibung zählt.', 'That code is not right. Upper and lower case matter.'],
