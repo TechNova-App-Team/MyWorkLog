@@ -1,59 +1,30 @@
-/* mwl-pass-marke.css — kleine Pass-Marke der App (mwl-pass-marke.js).
-   Gold aus vorhandenen Tokens (--audit-warn, --holiday), keine eigenen Hex-Werte.
-   Ruhig: kein Dauerglanz, nur ein Lichtreflex beim Erscheinen. */
+/* mwl-pass-marke.css — Pass-Etikett der App (mwl-pass-marke.js).
+   🔴 Absichtlich unauffaellig wie „Pro“ bei Claude/ChatGPT: grau, Haarlinie, kein
+   Gold, kein Icon, keine Animation (Gold-Fassung vom Nutzer abgelehnt, 31.10.2026). */
 
 .mwl-pass-marke {
-    --pm-hell: color-mix(in srgb, var(--audit-warn) 55%, white);
-    --pm-tief: color-mix(in srgb, var(--holiday) 70%, black);
-    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
     flex: none;
-    height: 20px;
-    padding: 0 8px 0 6px;
-    border-radius: 6px;
-    background: linear-gradient(115deg, var(--pm-hell) 0%, var(--audit-warn) 38%, var(--pm-tief) 70%, var(--pm-hell) 100%);
-    color: color-mix(in srgb, var(--pm-tief) 35%, black);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    height: 18px;
+    padding: 0 6px;
+    border: 1px solid color-mix(in srgb, var(--text-muted) 35%, transparent);
+    border-radius: 5px;
+    color: var(--text-muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
     line-height: 1;
     text-decoration: none;
-    overflow: hidden;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, white 55%, transparent);
-    transition: transform 0.16s cubic-bezier(0.23, 1, 0.32, 1), filter 0.16s ease;
+    transition: color 0.15s ease, border-color 0.15s ease;
 }
-.mwl-pass-marke svg { width: 12px; height: 12px; flex: none; }
-.mwl-pass-marke::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(105deg, transparent 30%, color-mix(in srgb, white 70%, transparent) 50%, transparent 70%);
-    translate: -120% 0;
-    animation: mwlPassMarkeGlanz 1.3s cubic-bezier(0.3, 0.6, 0.3, 1) 0.8s both;
-    pointer-events: none;
+@media (hover: hover) and (pointer: fine) {
+    .mwl-pass-marke:hover { color: var(--text-main); border-color: color-mix(in srgb, var(--text-muted) 60%, transparent); }
 }
-@keyframes mwlPassMarkeGlanz { to { translate: 120% 0; } }
-.mwl-pass-marke:active { transform: scale(0.95); }
-@media (hover: hover) and (pointer: fine) { .mwl-pass-marke:hover { filter: brightness(1.08); } }
-.mwl-pass-marke:focus-visible { outline: 2px solid var(--audit-warn); outline-offset: 3px; }
+.mwl-pass-marke:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* Sidebar-Fuss: rechts neben Version, Avatar bekommt den Goldring */
-.mwl-pass-marke.is-sidebar { margin-left: auto; }
+.mwl-pass-marke.is-fuss { margin-left: auto; }
 #sidebarFooter .sidebar-footer-info { min-width: 0; }
-.sidebar.collapsed .mwl-pass-marke.is-sidebar { display: none; }
-.sidebar-footer-avatar.is-pass {
-    box-shadow: 0 0 0 2px var(--bg-sidebar), 0 0 0 3.5px var(--audit-warn);
-}
+.sidebar.collapsed .mwl-pass-marke.is-fuss { display: none; }
 
-/* Handy: Menueknopf mit demselben Ring wie der Avatar */
-/* Rand statt box-shadow: der Knopf hat schon einen Schatten (core.css), den ein
-   Ring ueberschreiben wuerde */
-#mobileMenuToggle.is-pass {
-    border-color: color-mix(in srgb, var(--audit-warn) 75%, transparent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .mwl-pass-marke::after { animation: none; display: none; }
-}
+.mwl-pass-marke.is-menue { margin-left: auto; }
