@@ -1,0 +1,121 @@
+/* ═══ KAUFEN (/kaufen/) ═══
+   Wegwerf-Demo, Wunsch des Nutzers 31.10.2026: „seeeehr minimalistisch weiß". Laedt KEIN
+   core.css (dessen body sperrt das Scrollen) — eigener kleiner :root wie bei /preise/.
+   Die echte Kasse wird neu gestaltet, hier also bewusst nichts Aufwendiges. */
+
+:root {
+    --primary: #5578a8;
+    --text-main: #0f1115;
+    --text-muted: #6b7079;
+    --linie: rgba(15, 17, 21, 0.1);
+    --flaeche: #f6f7f9;
+    --weiss: #ffffff;
+    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+button, input { font-family: inherit; }
+
+body.kf {
+    min-height: 100dvh;
+    background: var(--weiss);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+.kf-seite { max-width: 440px; margin: 0 auto; padding: 40px 20px 80px; }
+
+.kf-zurueck { color: var(--text-muted); font-size: 0.85rem; text-decoration: none; }
+.kf-zurueck:hover { color: var(--text-main); }
+
+.kf-demo {
+    margin: 28px 0 36px;
+    padding: 10px 14px;
+    border: 1px dashed var(--linie);
+    border-radius: 10px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.kf-titel { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
+.kf-unter { margin-top: 4px; color: var(--text-muted); }
+
+.kf-schritte { display: flex; gap: 6px; margin: 32px 0 28px; list-style: none; counter-reset: s; }
+.kf-schritte li {
+    flex: 1;
+    padding-top: 10px;
+    border-top: 2px solid var(--linie);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+.kf-schritte li.is-fertig { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+.kf-schritte li.is-jetzt { border-color: var(--primary); color: var(--text-main); font-weight: 500; }
+
+.kf-schritt h2 { margin-bottom: 14px; font-size: 1.05rem; font-weight: 600; outline: none; }
+.kf-schritt p + p { margin-top: 8px; }
+.kf-klein { margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; }
+
+.kf-wahl { display: grid; gap: 8px; }
+.kf-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--linie);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+.kf-option span { flex: 1; }
+.kf-option b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.kf-option input { accent-color: var(--primary); width: 16px; height: 16px; }
+.kf-option:has(input:checked) { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 5%, var(--weiss)); }
+.kf-option:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.kf-reihe { display: flex; gap: 8px; margin-top: 24px; }
+.kf-reihe .kf-knopf { margin-top: 0; }
+.kf-knopf {
+    flex: 1;
+    width: 100%;
+    min-height: 46px;
+    margin-top: 24px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--text-main);
+    color: var(--weiss);
+    font-size: 0.92rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+.kf-knopf:active { transform: scale(0.98); }
+.kf-knopf:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.kf-knopf:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.kf-knopf.is-leise { flex: 0 0 auto; width: auto; background: var(--flaeche); color: var(--text-main); }
+
+.kf-summe { display: grid; gap: 10px; padding: 16px; border-radius: 12px; background: var(--flaeche); }
+.kf-summe div { display: flex; justify-content: space-between; gap: 16px; font-size: 0.9rem; }
+.kf-summe dd { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kf-summe .is-gesamt { padding-top: 10px; border-top: 1px solid var(--linie); font-weight: 600; }
+.kf-summe small { color: var(--text-muted); font-weight: 400; }
+
+.kf-platzhalter {
+    margin-top: 12px;
+    padding: 22px 16px;
+    border: 1px dashed var(--linie);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    text-align: center;
+}
+.kf-meldung { min-height: 1.2em; margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; }
+
+@media (prefers-reduced-motion: reduce) {
+    .kf-knopf, .kf-option, .kf-schritte li { transition: none; }
+}
