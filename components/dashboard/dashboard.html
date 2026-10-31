@@ -1,5 +1,93 @@
 <div id="view-dashboard" class="view-section active">
 
+            <!-- ═══ HALLOWEEN (31.10. 0 Uhr bis 01.11. 13 Uhr) ═══
+                 Wie #gbCard: sichtbar nur mit html.mwl-halloween-karte (Torwaechter im
+                 Pre-Apply-Skript, Schritt 7), ausserhalb von #dn. Gesicht der Laterne =
+                 das Markenzeichen (Bogen + Punkt aus favicon.svg), nicht Dreiecksaugen.
+                 Verhalten und Gestaltung: components/halloween/ -->
+            <section id="hwCard" class="hw-card" aria-labelledby="hwTitle">
+                <span class="hw-spinne" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <g class="hw-spinne-beine" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                            <path d="M9.5 11 5 8.5 3 5"/><path d="M9.3 13 4.5 12.5 2 10.5"/><path d="M9.5 15 5.5 17 4 20"/><path d="M10.5 16 8.5 20.5 8 23"/>
+                            <path d="M14.5 11 19 8.5 21 5"/><path d="M14.7 13 19.5 12.5 22 10.5"/><path d="M14.5 15 18.5 17 20 20"/><path d="M13.5 16 15.5 20.5 16 23"/>
+                        </g>
+                        <ellipse cx="12" cy="10" rx="2.6" ry="2.3" fill="currentColor"/>
+                        <ellipse cx="12" cy="14.6" rx="3.4" ry="3.9" fill="currentColor"/>
+                    </svg>
+                </span>
+
+                <button type="button" class="hw-laterne" id="hwLaterne" aria-label="Fledermäuse rauslassen">
+                    <svg viewBox="0 0 140 132" aria-hidden="true" focusable="false">
+                        <defs>
+                            <radialGradient id="hwHaut" cx="0.38" cy="0.32" r="0.8">
+                                <stop offset="0" stop-color="var(--hw-haut-a)"/>
+                                <stop offset="0.6" stop-color="var(--hw-haut-b)"/>
+                                <stop offset="1" stop-color="var(--hw-haut-c)"/>
+                            </radialGradient>
+                            <radialGradient id="hwAura" cx="0.5" cy="0.5" r="0.5">
+                                <stop offset="0" stop-color="#ffb648" stop-opacity="0.5"/>
+                                <stop offset="0.5" stop-color="#ff8a2a" stop-opacity="0.14"/>
+                                <stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/>
+                            </radialGradient>
+                            <filter id="hwWeich" x="-40%" y="-40%" width="180%" height="180%">
+                                <feGaussianBlur stdDeviation="3.2"/>
+                            </filter>
+                        </defs>
+                        <ellipse class="hw-aura" cx="70" cy="80" rx="70" ry="56" fill="url(#hwAura)"/>
+                        <ellipse class="hw-boden" cx="70" cy="123" rx="44" ry="4.5"/>
+                        <g class="hw-koerper">
+                            <ellipse class="hw-rippe" cx="47" cy="82" rx="30" ry="39" fill="url(#hwHaut)"/>
+                            <ellipse class="hw-rippe" cx="93" cy="82" rx="30" ry="39" fill="url(#hwHaut)"/>
+                            <ellipse class="hw-rippe" cx="59" cy="81" rx="24" ry="41" fill="url(#hwHaut)"/>
+                            <ellipse class="hw-rippe" cx="81" cy="81" rx="24" ry="41" fill="url(#hwHaut)"/>
+                            <ellipse class="hw-rippe" cx="70" cy="80" rx="19" ry="42" fill="url(#hwHaut)"/>
+                        </g>
+                        <path class="hw-stiel" d="M65 41 C 64 31, 67 23, 75 18 L 79.5 21.5 C 73.5 26, 72 32, 74 41.5 Z"/>
+                        <path class="hw-ranke" d="M76 22 C 84 18, 91 22, 89 28 C 87.5 32, 82 31, 83 27.5"/>
+                        <!-- Geschnitztes Markenzeichen: erst die dunkle Hoehlung, dann die Glut
+                             darauf, dann dieselbe Glut weichgezeichnet als Schein nach aussen -->
+                        <g transform="translate(70 84) scale(0.78) translate(-32 -32)">
+                            <g class="hw-hoehle">
+                                <path d="M32 9.5A22.5 22.5 0 1 1 9.5 32" stroke-width="14" stroke-linecap="round" fill="none"/>
+                                <circle cx="16.1" cy="16.1" r="8"/>
+                            </g>
+                            <g class="hw-glut hw-glut--schein" filter="url(#hwWeich)">
+                                <path d="M32 9.5A22.5 22.5 0 1 1 9.5 32" stroke-width="11" stroke-linecap="round" fill="none"/>
+                                <circle cx="16.1" cy="16.1" r="6.6"/>
+                            </g>
+                            <g class="hw-glut">
+                                <path d="M32 9.5A22.5 22.5 0 1 1 9.5 32" stroke-width="9" stroke-linecap="round" fill="none"/>
+                                <circle cx="16.1" cy="16.1" r="5.4"/>
+                            </g>
+                            <g class="hw-kern">
+                                <path d="M32 9.5A22.5 22.5 0 1 1 9.5 32" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+                                <circle cx="16.1" cy="16.1" r="2.4"/>
+                            </g>
+                        </g>
+                    </svg>
+                </button>
+
+                <div class="hw-text">
+                    <h3 class="hw-title" id="hwTitle">Geisterstunde im Stundenzettel.</h3>
+                    <p class="hw-lead" id="hwLead" aria-live="polite">Süßes gibt einen Spruch, Saures lässt die Fledermäuse raus.</p>
+                    <div class="hw-actions">
+                        <button type="button" class="hw-btn" id="hwSuess">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 7v10.9"/><path d="M14 6.1V17"/><path d="M16 7V3a1 1 0 0 1 1.707-.707 2.5 2.5 0 0 0 2.152.717 1 1 0 0 1 1.131 1.131 2.5 2.5 0 0 0 .717 2.152A1 1 0 0 1 21 8h-4"/><path d="M16.536 7.465a5 5 0 0 0-7.072 0l-2 2a5 5 0 0 0 0 7.07 5 5 0 0 0 7.072 0l2-2a5 5 0 0 0 0-7.07"/><path d="M8 17v4a1 1 0 0 1-1.707.707 2.5 2.5 0 0 0-2.152-.717 1 1 0 0 1-1.131-1.131 2.5 2.5 0 0 0-.717-2.152A1 1 0 0 1 3 16h4"/></svg>
+                            <span>Süßes</span>
+                        </button>
+                        <button type="button" class="hw-btn hw-btn--primary" id="hwSauer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.66 17.67a1.08 1.08 0 0 1-.04 1.6A12 12 0 0 1 4.73 2.38a1.1 1.1 0 0 1 1.61-.04z"/><path d="M19.65 15.66A8 8 0 0 1 8.35 4.34"/><path d="m14 10-5.5 5.5"/><path d="M14 17.85V10H6.15"/></svg>
+                            <span>Saures</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" class="hw-close" id="hwClose" aria-label="Ausblenden" title="Ausblenden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </section>
+
             <!-- ═══ GEBURTSTAG (12.09. 0 Uhr bis 13.09. 13 Uhr) ═══
                  Sichtbar nur mit html.mwl-geburtstag-karte — den Torwaechter setzt das
                  Pre-Apply-Skript im <head> VOR dem ersten Zeichnen, sonst schoebe die

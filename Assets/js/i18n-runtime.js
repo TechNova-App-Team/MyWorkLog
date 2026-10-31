@@ -13,6 +13,13 @@
 
   // Deutsch → Englisch. Nur ANZEIGE-Strings (App-Logik keyt auf IDs, nicht Labels).
   var MAP = {
+    // ── Halloween (31.10., components/halloween/halloween.js) ──
+    'Geister machen keine Pause. Du schon: Ab sechs Stunden Arbeit stehen dir 30 Minuten zu, unter 18 schon ab viereinhalb.': 'Ghosts never take a break. You do: after six hours of work you are owed 30 minutes, under 18 already after four and a half.',
+    'Untote arbeiten umsonst. Du nicht: Überstunden in der Ausbildung werden bezahlt oder mit Freizeit ausgeglichen.': 'The undead work for free. You do not: overtime during an apprenticeship is paid or made up with time off.',
+    'Wer heute Nacht vergisst auszustempeln, hat morgen eine 30-Stunden-Schicht. Die Stempeluhr spukt nicht, sie zählt nur weiter.': 'Forget to clock out tonight and tomorrow you have a 30-hour shift. The time clock is not haunted, it just keeps counting.',
+    'Das Gruseligste an Halloween ist ein Berichtsheft, das drei Wochen hinterherhängt.': 'The scariest thing about Halloween is a training log three weeks behind.',
+    'Kürbis schnitzen zählt leider nicht als Arbeitszeit. Außer du lernst Gartenbau.': 'Carving pumpkins does not count as working time. Unless you are training in horticulture.',
+    'Ausgeflogen. Angefasst haben sie nichts, deine Einträge sind alle noch da.': 'Flown off. They touched nothing, all your entries are still there.',
     // ── Geburtstag (12.09., components/geburtstag/geburtstag.js) ──
     'Die Kerze ist aus.': 'The candle is out.',
     'Der Mensch hinter MyWorkLog hatte gestern Geburtstag. Die Kerze brennt noch.': 'The person behind MyWorkLog had their birthday yesterday. The candle is still burning.',

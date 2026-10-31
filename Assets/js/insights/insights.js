@@ -243,6 +243,7 @@ var EVENT_LABELS = {
     'ausbilder_einladung': ['Ausbilder-Einladung', 'Trainer invitation'],
     'geburtstag_kerze': ['Geburtstag: Kerze ausgepustet', 'Birthday: candle blown out'],
     'geburtstag_wunsch': ['Geburtstag: Wunsch geschickt', 'Birthday: wish sent'],
+    'halloween':        ['Halloween-Laterne', 'Halloween lantern'],   // aktion: suesses | saures | laterne | weg
     'traum_antwort':    ['Reisetraum: Frage beantwortet', 'Travel dream: question answered'],
     'traum_teilen':     ['Reisetraum: Seite geteilt', 'Travel dream: page shared'],
     // aktion: gezeigt | geklickt — Einladung zum Betriebskonto nach dem Abzeichnen per Link

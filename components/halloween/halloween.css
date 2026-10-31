@@ -1,0 +1,308 @@
+/* ═══ HALLOWEEN MODULE ═══
+   Gilt nur vom 31.10. 0 Uhr bis 01.11. 13 Uhr (Torwaechter Schritt 7 im
+   Pre-Apply-Skript von index.template.html):
+   html.mwl-halloween        → Marken kuerbisorange
+   html.mwl-halloween-karte  → Laternen-Karte oben im Dashboard
+   Wie beim Geburtstag bleibt --primary des Nutzers unangetastet: orange werden
+   nur die MyWorkLog-Zeichen und die Karte, nicht die Bedienelemente der App.
+   Bewusst EIN Effekt (die Fledermaeuse, nur auf Klick) — Nutzer-Feedback
+   „eine Stufe ruhiger" (Cloud-Login v8.2.3). Kein Dauer-Partikelregen. */
+
+html.mwl-halloween {
+    --hw-kuerbis:     #ee8433;
+    --hw-kuerbis-rgb: 238, 132, 51;
+    --hw-kuerbis-hell:#ffc06b;
+    --hw-haut-a:      #ffa64a;
+    --hw-haut-b:      #e9732a;
+    --hw-haut-c:      #a9431a;
+    --hw-rippe-kante: rgba(80, 22, 4, 0.6);
+    --hw-stiel:       #6f7f3e;
+    --hw-hoehle:      #3a1607;
+    --hw-glut:        #ffd27a;
+    --hw-boden:       rgba(0, 0, 0, 0.35);
+    --hw-faden:       rgba(255, 255, 255, 0.22);
+    --hw-spinne:      #cfd3dc;
+    --hw-fledermaus:  #4a2a16;   /* auf Dunkel: vom Laternenlicht angestrahlt, sonst unsichtbar (gemessen) */
+    --hw-schein:      0.13;
+}
+html.mwl-halloween[data-theme="light"] {
+    /* Auf Weiss braucht das Orange mehr Tiefe (Grafik >= 3:1 ab ~#c2560f) */
+    --hw-kuerbis:     #c2560f;
+    --hw-kuerbis-rgb: 194, 86, 15;
+    --hw-kuerbis-hell:#e98a3a;
+    --hw-rippe-kante: rgba(90, 30, 6, 0.28);
+    --hw-boden:       rgba(40, 20, 10, 0.16);
+    --hw-faden:       rgba(7, 16, 35, 0.25);
+    --hw-spinne:      #2b2c33;
+    --hw-fledermaus:  #1f1915;
+    --hw-schein:      0.10;
+}
+
+/* ─── Marken ────────────────────────────────────────────────────────── */
+/* Logo-Attribute schlaegt CSS (siehe geburtstag.css). Steht NACH geburtstag.css
+   im Template — falls beide Fenster je zusammenfallen, gewinnt Halloween. */
+html.mwl-halloween .brand-logo svg path,
+html.mwl-halloween .brand-logo svg circle { stroke: var(--hw-kuerbis); }
+html.mwl-halloween .brand-logo svg circle[fill] { fill: var(--hw-kuerbis); }
+html.mwl-halloween .brand-logo svg { filter: drop-shadow(0 0 5px rgba(var(--hw-kuerbis-rgb), 0.45)); }
+html.mwl-halloween .brand {
+    background-image: linear-gradient(135deg, #fff 0%, var(--hw-kuerbis) 60%, var(--hw-kuerbis-hell) 100%);
+}
+html.mwl-halloween[data-theme="light"] .brand {
+    background-image: linear-gradient(135deg, var(--text-main) 0%, var(--hw-kuerbis) 100%);
+}
+html.mwl-halloween .vi-logo { text-shadow: 0 0 80px rgba(var(--hw-kuerbis-rgb), 0.42); }
+html.mwl-halloween .vi-caret { color: var(--hw-kuerbis); }
+
+/* ─── Karte ─────────────────────────────────────────────────────────── */
+.hw-card { display: none; }
+html.mwl-halloween-karte .hw-card {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 0 22px;
+    align-items: center;
+    position: relative;
+    margin-bottom: 1.25rem;
+    padding: 14px 56px 14px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 18px;
+    box-shadow: var(--edge-top), var(--shadow-sm);
+    overflow: hidden;
+}
+/* Warmer Schein von der Laterne in die Karte */
+.hw-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(280px 190px at 78px 55%, rgba(var(--hw-kuerbis-rgb), var(--hw-schein)), transparent 70%);
+    pointer-events: none;
+    transition: opacity 300ms ease;
+}
+.hw-card.is-flackert::before { animation: hwAufflammen 900ms var(--ease-out, ease-out); }
+
+.hw-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border: 0; border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 1;
+    transition: background-color 160ms ease, color 160ms ease, transform 120ms ease-out;
+}
+.hw-close svg { width: 14px; height: 14px; display: block; }
+.hw-close:hover { background: var(--hover-fill); color: var(--text-main); }
+.hw-close:active { transform: scale(0.94); }
+.hw-close:focus-visible { outline: 2px solid var(--hw-kuerbis); outline-offset: 2px; }
+
+/* ─── Spinne am Faden ───────────────────────────────────────────────── */
+/* Haengt neben dem Schliessen-Knopf; Pendel um den Aufhaengepunkt oben. */
+.hw-spinne {
+    position: absolute;
+    top: 0; right: 58px;
+    width: 18px;
+    height: 52px;
+    transform-origin: 50% 0;
+    animation: hwPendel 5.5s ease-in-out infinite;
+    pointer-events: none;
+    color: var(--hw-spinne);
+}
+.hw-spinne::before {
+    content: '';
+    position: absolute;
+    left: 50%; top: 0;
+    width: 1px; height: 36px;
+    background: var(--hw-faden);
+}
+.hw-spinne svg {
+    position: absolute;
+    left: 0; top: 33px;
+    width: 18px; height: 18px;
+    display: block;
+}
+.hw-spinne-beine { animation: hwZappeln 2.8s ease-in-out infinite; transform-origin: 12px 13px; }
+@keyframes hwPendel {
+    0%, 100% { transform: rotate(-4deg); }
+    50%      { transform: rotate(4deg); }
+}
+@keyframes hwZappeln {
+    0%, 86%, 100% { transform: scaleX(1); }
+    90%           { transform: scaleX(0.86); }
+    94%           { transform: scaleX(1.05); }
+}
+
+/* ─── Laterne ───────────────────────────────────────────────────────── */
+.hw-laterne {
+    width: 132px; height: 124px;
+    padding: 0; border: 0; background: transparent;
+    cursor: pointer;
+    display: block;
+    border-radius: 14px;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 120ms ease-out;
+}
+.hw-laterne:active { transform: scale(0.97); }
+.hw-laterne:focus-visible { outline: 2px solid var(--hw-kuerbis); outline-offset: 2px; }
+.hw-laterne svg { width: 100%; height: 100%; display: block; overflow: visible; }
+
+.hw-boden  { fill: var(--hw-boden); }
+.hw-rippe  { stroke: var(--hw-rippe-kante); stroke-width: 1.6; }
+.hw-stiel  { fill: var(--hw-stiel); }
+.hw-ranke  { fill: none; stroke: var(--hw-stiel); stroke-width: 2; stroke-linecap: round; }
+.hw-hoehle path   { stroke: var(--hw-hoehle); }
+.hw-hoehle circle { fill: var(--hw-hoehle); }
+.hw-glut path     { stroke: var(--hw-glut); }
+.hw-glut circle   { fill: var(--hw-glut); }
+.hw-kern path     { stroke: #fff3cf; opacity: 0.85; }
+.hw-kern circle   { fill: #fff3cf; opacity: 0.85; }
+
+/* Kerzenlicht flackert unregelmaessig: zwei Ebenen mit teilerfremden Laengen */
+.hw-glut--schein { animation: hwFlackern 2.3s steps(1, end) infinite; }
+.hw-aura         { animation: hwAtmen 3.7s ease-in-out infinite; transform-origin: 70px 80px; }
+.hw-card.is-flackert .hw-glut--schein { animation: hwLodern 900ms ease-out; }
+.hw-card.is-flackert .hw-aura         { animation: hwLodernAura 900ms var(--ease-out, ease-out); }
+
+@keyframes hwFlackern {
+    0%   { opacity: 0.95; }
+    13%  { opacity: 0.7; }
+    21%  { opacity: 1; }
+    48%  { opacity: 0.82; }
+    55%  { opacity: 0.98; }
+    77%  { opacity: 0.66; }
+    84%  { opacity: 0.92; }
+}
+@keyframes hwAtmen {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.04); }
+}
+@keyframes hwLodern {
+    0%   { opacity: 1; }
+    20%  { opacity: 0.35; }
+    45%  { opacity: 1; }
+    100% { opacity: 0.95; }
+}
+@keyframes hwLodernAura {
+    0%   { opacity: 1; transform: scale(1.18); }
+    100% { opacity: 0.85; transform: scale(1); }
+}
+@keyframes hwAufflammen {
+    0%   { filter: brightness(2.2) saturate(1.3); }
+    100% { filter: none; }
+}
+
+/* ─── Text ──────────────────────────────────────────────────────────── */
+.hw-text { position: relative; min-height: 96px; display: grid; align-content: center; }
+.hw-title {
+    font-size: 1.05rem;
+    font-weight: 650;
+    letter-spacing: -0.012em;
+    line-height: 1.3;
+    color: var(--text-main);
+    margin: 0 0 6px;
+    max-width: 44ch;
+}
+.hw-lead {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0;
+    max-width: 58ch;
+    min-height: 3em;   /* Sprueche sind 1–2 Zeilen; ohne Mindesthoehe springen die Knoepfe */
+}
+.hw-lead.is-neu { animation: hwRein 260ms var(--ease-out, ease-out) both; }
+@keyframes hwRein {
+    from { opacity: 0; transform: translateY(4px); filter: blur(2px); }
+    to   { opacity: 1; transform: none; filter: none; }
+}
+.hw-actions {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    margin-top: 10px;
+}
+
+.hw-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-main);
+    font-family: inherit; font-size: 0.86rem; font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease-out;
+}
+.hw-btn svg { width: 15px; height: 15px; display: block; flex-shrink: 0; }
+.hw-btn:active { transform: scale(0.97); }
+.hw-btn:focus-visible { outline: 2px solid var(--hw-kuerbis); outline-offset: 2px; }
+.hw-btn--primary {
+    background: var(--hw-kuerbis);
+    border-color: var(--hw-kuerbis);
+    color: #1e0d03;
+    box-shadow: 0 6px 18px -8px rgba(var(--hw-kuerbis-rgb), 0.85);
+}
+html.mwl-halloween[data-theme="light"] .hw-btn--primary { color: #fff; }
+@media (hover: hover) and (pointer: fine) {
+    .hw-btn:hover { background: rgba(var(--hw-kuerbis-rgb), 0.08); border-color: rgba(var(--hw-kuerbis-rgb), 0.45); }
+    .hw-btn--primary:hover {
+        background: color-mix(in srgb, var(--hw-kuerbis) 88%, #fff);
+        border-color: color-mix(in srgb, var(--hw-kuerbis) 88%, #fff);
+    }
+}
+
+/* ─── Fledermaeuse (fliegen ueber die ganze Seite, liegen am <body>) ─── */
+.hw-flug {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9000;
+    overflow: hidden;
+}
+.hw-fm {
+    position: absolute;
+    left: 0; top: 0;
+    color: var(--hw-fledermaus);
+    filter: drop-shadow(0 0 1.5px rgba(var(--hw-kuerbis-rgb), 0.95)) drop-shadow(0 0 12px rgba(var(--hw-kuerbis-rgb), 0.5));
+    will-change: transform, opacity;
+}
+html.mwl-halloween[data-theme="light"] .hw-fm { filter: none; }
+.hw-fm svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.hw-fm-fluegel { transform-origin: 20px 10px; animation: hwSchlag var(--schlag, 150ms) ease-in-out infinite alternate; }
+@keyframes hwSchlag {
+    from { transform: scaleY(1); }
+    to   { transform: scaleY(-0.35); }
+}
+
+/* ─── Schmal ────────────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    html.mwl-halloween-karte .hw-card {
+        grid-template-columns: 84px minmax(0, 1fr);
+        gap: 0 12px;
+        padding: 12px 40px 12px 8px;
+    }
+    .hw-card::before { background: radial-gradient(190px 150px at 50px 50%, rgba(var(--hw-kuerbis-rgb), var(--hw-schein)), transparent 70%); }
+    .hw-laterne { width: 84px; height: 80px; }
+    .hw-title { font-size: 0.98rem; padding-right: 8px; }
+    .hw-lead { font-size: 0.86rem; min-height: 4.5em; }
+    .hw-spinne { right: 44px; height: 40px; }
+    .hw-spinne::before { height: 26px; }
+    .hw-spinne svg { top: 23px; width: 15px; height: 15px; }
+}
+
+/* ─── Weniger Bewegung ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .hw-spinne, .hw-spinne-beine, .hw-aura, .hw-glut--schein { animation: none; }
+    .hw-card.is-flackert .hw-glut--schein, .hw-card.is-flackert .hw-aura { animation: none; }
+    .hw-lead.is-neu { animation: none; }
+}
+
+/* Unter 1024 px schwebt #mobileMenuToggle oben links ueber der Laterne
+   (gemessen 384 px: Knopf 16..56, Karte ab 8) — wie .setup-card in
+   dashboard.css Platz lassen; die Einrichtungskarte darunter braucht ihn dann nicht. */
+@media (max-width: 1023px) {
+    html.mwl-halloween-karte .hw-card { margin-top: 56px; }
+    html.mwl-halloween-karte .hw-card ~ .setup-card { margin-top: 0; }
+}

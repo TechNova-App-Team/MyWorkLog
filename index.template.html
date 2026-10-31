@@ -182,6 +182,14 @@
     if(gbTag){document.documentElement.classList.add('mwl-geburtstag');
       if(localStorage.getItem('mwl_geburtstag_'+gbD.getFullYear())!=='weg')document.documentElement.classList.add('mwl-geburtstag-karte');}
   }catch(e){}
+  // 7. Halloween (31.10. 0 Uhr bis 01.11. 13 Uhr): Marken kuerbisorange + Laternen-Karte, aus
+  //    demselben Grund VOR dem ersten Zeichnen. Test: localStorage.mwl_halloween_test = '1'.
+  //    Details: components/halloween/
+  try{
+    var hwD=new Date(),hwTag=(hwD.getMonth()===9&&hwD.getDate()===31)||(hwD.getMonth()===10&&hwD.getDate()===1&&hwD.getHours()<13)||localStorage.getItem('mwl_halloween_test')==='1';
+    if(hwTag){document.documentElement.classList.add('mwl-halloween');
+      if(localStorage.getItem('mwl_halloween_'+hwD.getFullYear())!=='weg')document.documentElement.classList.add('mwl-halloween-karte');}
+  }catch(e){}
 })();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
@@ -227,7 +235,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
 <meta name="rating" content="general">
 <meta name="referrer" content="origin-when-cross-origin">
 <meta name="format-detection" content="telephone=no">
-<meta name="generator" content="MyWorkLog v9.4.8">
+<meta name="generator" content="MyWorkLog v9.4.9">
 
 <!-- ===== CANONICAL & ALTERNATE ===== -->
 <link rel="canonical" href="https://myworklog.de/">
@@ -317,9 +325,9 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "applicationSubCategory": "Zeiterfassung",
       "operatingSystem": "Web, Windows, macOS, Linux, iOS, Android",
       "browserRequirements": "Requires Chrome 90+, Firefox 88+, Safari 14+ or Edge 90+",
-      "softwareVersion": "9.4.8",
+      "softwareVersion": "9.4.9",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-10-30",
+      "dateModified": "2026-10-31",
       "inLanguage": "de",
       "isAccessibleForFree": true,
       "license": "https://opensource.org/licenses/MIT",
@@ -405,7 +413,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "about": { "@id": "https://myworklog.de/#app" },
       "inLanguage": "de",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-10-30",
+      "dateModified": "2026-10-31",
       "breadcrumb": {
         "@type": "BreadcrumbList",
         "itemListElement": [
@@ -568,7 +576,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <link rel="stylesheet" href="/components/core/misc.css?v=ba70232063">
     <link rel="stylesheet" href="/components/mobile-nav/mobile-nav.css?v=c535b6b8c4">
     <link rel="stylesheet" href="/components/core/layout-fix.css?v=390fcef03d">
-    <link rel="stylesheet" href="/components/geburtstag/geburtstag.css?v=aec7ac4b81">
+    <link rel="stylesheet" href="/components/geburtstag/geburtstag.css?v=939b92ab2a">
+    <link rel="stylesheet" href="/components/halloween/halloween.css?v=eaf89f1a4e">
     <!-- Non-critical — async load (view-specific, not needed for first paint) -->
     <link rel="stylesheet" href="/components/performance/performance.css?v=a221f30df8" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="/components/performance/performance.css?v=a221f30df8"></noscript>
@@ -795,7 +804,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
           </button>
           <!-- Zweiter Weg fuer die zweite Zielgruppe (Ausbilder aus der Suche). -->
           <a class="vi-alt" href="/ausbilder/" onclick="if(typeof mwlEvent==='function')mwlEvent('intro',{aktion:'ausbilder'})">Ich bin Ausbilder</a>
-          <span class="vi-ver" data-app-version translate="no">v9.4.8</span>
+          <span class="vi-ver" data-app-version translate="no">v9.4.9</span>
         </div>
       </div>
 
@@ -975,6 +984,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script defer src="/components/umfrage/umfrage.js?v=612003b426"></script>
     <script defer src="/components/core/play-tester.js?v=60d4c4434e"></script>
     <script defer src="/components/geburtstag/geburtstag.js?v=17357dea01"></script>
+    <script defer src="/components/halloween/halloween.js?v=3e54d7aef1"></script>
     <script defer src="/components/bbig-scanner/bbig-scanner.js?v=2d0e84dc0b"></script>
     <script defer src="/components/settings/settings.js?v=3f57237901"></script>
     <script defer src="/components/sidebar/sidebar.js?v=754d60fe6c"></script>
