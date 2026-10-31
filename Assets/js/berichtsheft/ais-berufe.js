@@ -397,77 +397,6 @@ const UNIVERSAL_SCHULFAECHER = [
     'Qualitätsmanagement', 'Datenschutz und Datensicherheit', 'Englisch im Beruf',
 ];
 
-// Theme-specific activity pools for thematic generation
-const THEME_ACTIVITIES = {
-    projekt: [
-        'Sprint-Ziele besprochen und Aufgaben im Team aufgeteilt',
-        'Projekt-Status im Daily Stand-up präsentiert',
-        'Technische Konzeption für neues Feature erarbeitet',
-        'Aufwandsschätzung für anstehende Aufgaben erstellt',
-        'Retrospektive durchgeführt und Verbesserungspotenzial identifiziert',
-        'Projekt-Dokumentation aktualisiert und strukturiert',
-        'Feature-Branch erstellt und erste Implementierung begonnen',
-        'Review-Meeting mit Ausbilder zu Projektfortschritt abgehalten',
-    ],
-    kunde: [
-        'Kundengespräch vorbereitet und Präsentation erstellt',
-        'Anforderungen des Kunden aufgenommen und dokumentiert',
-        'Kundenmeeting durchgeführt und Protokoll verfasst',
-        'Feedback des Kunden ausgewertet und in Maßnahmen überführt',
-        'Angebotserstellung für Kundenauftrag unterstützt',
-        'Rückfragen des Kunden schriftlich beantwortet',
-        'Kundendaten im CRM-System aktualisiert',
-        'Auftragsbestätigung geprüft und weiterverarbeitet',
-    ],
-    einarbeitung: [
-        'Neue Technologie studiert und erste Beispiele umgesetzt',
-        'Onboarding-Unterlagen durchgearbeitet und Fragen notiert',
-        'Einführungsgespräch mit Teamkollegen geführt',
-        'Interne Prozesse und Abläufe kennengelernt',
-        'Dokumentation zum Themenbereich durchgelesen',
-        'Tutorial absolviert und Erkenntnisse festgehalten',
-        'Fragen aus der Einarbeitung mit Ausbilder geklärt',
-        'Eigene Notizen und Lernpfad erstellt',
-    ],
-    messe: [
-        'Messestand vorbereitet und Präsentationsmaterial zusammengestellt',
-        'Produktvorstellung geübt und Argumentation erarbeitet',
-        'Fachgespräche auf der Messe geführt und Kontakte geknüpft',
-        'Impressionen und Erkenntnisse von der Messe dokumentiert',
-        'Nachbereitungsmail an Messekontakte verfasst',
-        'Mitbewerber-Angebote auf der Messe beobachtet und analysiert',
-        'Team-Briefing nach Messetag durchgeführt',
-        'Messebericht für das Management erstellt',
-    ],
-    pruefung: [
-        'Prüfungsrelevante Themen wiederholt und Lücken identifiziert',
-        'Karteikarten zu wichtigen Fachbegriffen erstellt',
-        'Übungsaufgaben aus vergangenen Prüfungen bearbeitet',
-        'Lerngruppe organisiert und gemeinsam geübt',
-        'Prüfungsstoff mit Ausbilder besprochen und Fragen geklärt',
-        'Zusammenfassung zu komplexem Thema angefertigt',
-        'Zeitplan für Prüfungsvorbereitung erstellt',
-        'Mündliche Prüfungsszenarien geübt',
-    ],
-    wartung: [
-        'Routinecheck durchgeführt und Ergebnisse protokolliert',
-        'Wartungsplan abgearbeitet und Abweichungen dokumentiert',
-        'Support-Ticket bearbeitet und Problem gelöst',
-        'Systeme auf Aktualität überprüft und Updates eingespielt',
-        'Fehleranalyse durchgeführt und Ursache identifiziert',
-        'Präventivmaßnahmen umgesetzt um Ausfälle zu vermeiden',
-        'Wartungsprotokoll erstellt und archiviert',
-        'Kollegen bei dringendem Problem unterstützt',
-    ],
-    schule: [
-        'Berufsschulunterricht aufmerksam verfolgt und Mitschriften erstellt',
-        'Gruppenarbeit im Unterricht aktiv mitgestaltet',
-        'Fachaufgaben selbstständig bearbeitet und abgegeben',
-        'Unterrichtsstoff mit eigenem Vorwissen verknüpft',
-        'Nach dem Unterricht Lernmaterial organisiert',
-        'Prüfungsvorbereitung für nächste Berufsschule begonnen',
-    ],
-};
 
 // ═══════════════════════════════════════
 // BEISPIELSAETZE IM ASSISTENTEN — je Beruf
@@ -651,5 +580,5 @@ const CHAT_SAETZE_NEUTRAL = {
          'Monday and Tuesday I helped out in another department', 'Thursday safety briefing'],
 };
 
-return { PROFESSIONS, APP_BERUFE, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, THEME_ACTIVITIES, CHAT_SAETZE, CHAT_SAETZE_NEUTRAL };
+return { PROFESSIONS, APP_BERUFE, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, CHAT_SAETZE, CHAT_SAETZE_NEUTRAL };
 })();

@@ -21,8 +21,7 @@ const AIStudio = (() => {
 // Aufruf darunter weiter so, wie er hiess: PROFESSIONS[id], pickRandom(...),
 // RateLimit.status(). Kein Praefix, kein Suchen-und-Ersetzen ueber 2600 Zeilen.
 // Reihenfolge im HTML: berufe → sprache → cloud → studio.
-const { PROFESSIONS, APP_BERUFE, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER,
-    THEME_ACTIVITIES } = window.AIS_BERUFE;
+const { PROFESSIONS, APP_BERUFE, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER } = window.AIS_BERUFE;
 const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     UNIVERSAL_ACTIVITIES_EXTENDED, FORM_PATTERNS, partizipDoppelt, alsFliesstext,
     UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, schulSaetze, LERN_AKTIVITAETEN, UMFANG_COUNT,
@@ -68,7 +67,6 @@ const state = {
     form: 'stichpunkte',      // Schreibform: stichpunkte|saetze|ichform|fliesstext
     umfang: 'mittel',         // Textmenge pro Tag: kurz|mittel|ausfuehrlich
     formHint: '',             // "So will es mein Ausbilder" — Freitext, geht in den Prompt
-    activeTheme: null,
     lehrjahr: 2,
     useAufgaben: false,         // ✦ Aufgaben-Pipe: Tasks aus /pages/aufgaben/ in Prompt einspeisen
     useTracking: false,         // ✦ Tracking-Pipe: Projekt/Notizen aus der Zeiterfassung nutzen
@@ -359,7 +357,6 @@ function generateDayEntries(professionId, options = {}) {
         season = getCurrentSeason(),
         excludePhrases = [],
         department = '',
-        activeTheme = null,
         customPrompt = '',
         aufgabenForDay = null,  // ✦ Aufgaben-Pipe: ["Switch konfigurieren", ...] für diesen Tag
         trackingForDay = null,  // ✦ Tracking-Pipe: ["Projekt: Alpha", "Notiz: Bugfix …"] für diesen Tag
@@ -521,15 +518,6 @@ function generateDayEntries(professionId, options = {}) {
         }
     }
 
-    // 5. Add theme activity (if activeTheme set, 60% chance)
-    if (!nurMuster && activeTheme && THEME_ACTIVITIES[activeTheme] && Math.random() > 0.4) {
-        const themeAct = pickRandom(THEME_ACTIVITIES[activeTheme], excludePhrases);
-        if (themeAct && !entries.some(e => e.includes(themeAct.substring(0, 20)))) {
-            entries.unshift('• ' + themeAct); // Put theme activity first
-            excludePhrases.push(themeAct);
-        }
-    }
-
     // 6. Add universal activity (40% chance)
     if (!nurMuster && entries.length < numEntries + 1 && Math.random() > 0.6) {
         const universal = pickRandom(UNIVERSAL_ACTIVITIES_EXTENDED, excludePhrases);
@@ -654,7 +642,6 @@ function generateWeek(professionId, options = {}) {
         schoolDayIndices: optSchoolDayIndices = [],
         department = '',
         calendarWeek = null,
-        activeTheme = null,
         customPrompt = '',
     } = options;
 
@@ -746,7 +733,6 @@ function generateWeek(professionId, options = {}) {
             planForDay: _plan.perDay[dayIdx] || null,
             aufgabenForDay: aufgabenData ? aufgabenData.perDay[dayIdx] : null,
             trackingForDay: trackingData ? trackingData.perDay[dayIdx] : null,
-            activeTheme,
         });
 
         // Fliesstext: die Ich-Form-Saetze des Tages werden zu EINEM Absatz.
@@ -2507,7 +2493,6 @@ async function generate() {
             department,
             calendarWeek,
             customPrompt,
-            activeTheme: state.activeTheme || null,
             // ✦ Aufgaben-Pipe + Tracking-Pipe + Krank/Urlaub: an Cloud + Local weiterreichen
             useAufgaben: !!state.useAufgaben,
             useTracking: !!state.useTracking,
@@ -2681,7 +2666,6 @@ async function regenerateDayCloud(dayIdx) {
             department: state.generatedEntries.department || '',
             calendarWeek: state.generatedEntries.calendarWeek,
             customPrompt: _buildEnrichedPrompt(),
-            activeTheme: state.activeTheme || null,
             useTracking: !!state.useTracking,
         });
 

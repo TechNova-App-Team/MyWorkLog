@@ -359,19 +359,6 @@ function _buildCloudPrompt(professionId, options) {
     // nennen statt "Rahmenlehrplan", sonst erfindet das Modell sich eines.
     const schoolTopicsHint = ((prof?.schoolTopics?.length ? prof.schoolTopics : UNIVERSAL_SCHULFAECHER) || []).slice(0, 5).join(', ');
 
-    // Wochen-Stimmung (UI: Mood-Cards Normal/Projekt/Schule/Support/Prüfung)
-    const themeMap = {
-        projekt: 'Aktive Projekt-Phase: Sprint-Meetings, Konzeption, Implementierung, Code-Reviews als roter Faden durch die Woche.',
-        kunde: 'Kunden-orientierte Woche: Kundengespräche, Anforderungsaufnahme, Präsentationen, Auftragsbearbeitung.',
-        einarbeitung: 'Einarbeitungsphase: Neue Technologien studieren, Dokumentation lesen, Tutorials, Onboarding-Gespräche.',
-        messe: 'Messe-Woche: Standvorbereitung, Produktvorstellungen, Networking, Nachbereitung.',
-        wartung: 'Support/Wartung-Woche: Routinechecks, Tickets bearbeiten, Fehleranalyse, Updates einspielen.',
-        schule: 'Schul-fokussierte Woche: viel Lern-Aktivität, Mitschriften, Gruppenarbeit, Prüfungsvorbereitung.',
-        pruefung: 'Prüfungsvorbereitung: Wiederholung, Karteikarten, Übungsaufgaben, Lerngruppen.',
-    };
-    const themeBlock = (options.activeTheme && themeMap[options.activeTheme])
-        ? `\n[WOCHEN-THEMA] ${themeMap[options.activeTheme]} — mindestens 2-3 Einträge in diese Richtung über die Woche verteilen.`
-        : '';
 
     // Eigene Vorgabe ("So will es mein Ausbilder"). Steht bewusst NACH den
     // Formregeln und darf sie ueberschreiben — der Nutzer kennt seine Kammer.
@@ -495,7 +482,7 @@ ${F.stil.map(r => '- ' + r).join('\n')}
 - ${mengeText}, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
 - ${options.yearNum}. Lehrjahr. ${ljHint}
 - Kein Tag wiederholt sich. Bleibe an Betriebstagen strikt im Beruf "${profName}" — kein bereichsfremder Inhalt. An Schultagen zählt stattdessen der Unterrichtsstoff (siehe [SCHULE]).
-- Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}${themeBlock}
+- Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}
 
 [SCHULE] ${_hatSchule
             ? `Schultage sind EXAKT: ${_schulIdxs.map(i => DAY_NAMES[i]).join(', ')} — keine anderen Tage. Der User hat das selbst eingestellt; es ist keine Empfehlung.
@@ -949,7 +936,6 @@ async function generateWithCloud(professionId, options) {
                 season: getCurrentSeason(),
                 excludePhrases: [],
                 department: week.department,
-                activeTheme: options.activeTheme || null,
                 customPrompt: options.customPrompt || '',
             });
             cloudEntries = options.form === 'fliesstext'
@@ -978,7 +964,7 @@ async function generateWithCloud(professionId, options) {
                 const _neu = generateDayEntries(professionId, {
                     yearNum: options.yearNum, umfang: options.umfang, form: options.form, dayIndex: dayIdx, calendarWeek: options.calendarWeek,
                     isSchoolDay: true, season: getCurrentSeason(), excludePhrases: [], department: week.department,
-                    activeTheme: options.activeTheme || null, customPrompt: options.customPrompt || '',
+                    customPrompt: options.customPrompt || '',
                     planForDay: _planFaecher(_plan),
                 });
                 cloudEntries = options.form === 'fliesstext' ? alsFliesstext(_neu.entries, dayName) : _neu.entries;
@@ -1034,7 +1020,6 @@ async function generateWithCloud(professionId, options) {
                     season,
                     excludePhrases: [],
                     department: week.department,
-                    activeTheme: options.activeTheme || null,
                     customPrompt: options.customPrompt || '',
                 });
                 week.days.push({
