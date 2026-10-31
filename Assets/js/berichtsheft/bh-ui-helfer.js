@@ -1,43 +1,7 @@
 // ═══ BH-UI-HELFER ═══
-// Vorlagen, Entwurfs-Autospeicher, Abteilungs-Vorschlaege, Konfetti,
+// Entwurfs-Autospeicher, Abteilungs-Vorschlaege, Konfetti,
 // Theme-Umschalter, Toasts, Speicher-Anzeige.
 // Herausgeloest aus pages/berichtsheft/index.html.
-
-// ═══════════════════════════════════════
-// TEMPLATES
-// ═══════════════════════════════════════
-
-function showTemplates() {
-    const grid = document.getElementById('templateGrid');
-    grid.innerHTML = templates.map(t => `
-                <div class="template-card" onclick="applyTemplate('${t.id}')">
-                    <div class="template-icon">${t.icon}</div>
-                    <div class="template-name">${t.name}</div>
-                    <div class="template-desc">${t.description}</div>
-                </div>
-            `).join('');
-
-    document.getElementById('templatesModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function applyTemplate(templateId) {
-    const template = templates.find(t => t.id === templateId);
-    if (!template) return;
-    bhMess('vorlage_genutzt');
-
-    closeTemplatesModal();
-    openNewReportModal();
-
-    // Slight delay so modal is visible
-    setTimeout(() => {
-        document.getElementById('reportActivities').value = template.content;
-        document.getElementById('charCount').textContent = template.content.length + L(' Zeichen', ' characters');
-        updateQualityMeter(template.content);
-    }, 100);
-
-    showToast(L(`Vorlage "${template.name}" geladen`, `Template "${template.name}" loaded`), 'success');
-}
 
 // ═══════════════════════════════════════
 // AUTO-SAVE DRAFTS

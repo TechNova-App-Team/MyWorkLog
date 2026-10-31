@@ -167,11 +167,6 @@ function closeViewModal() {
     document.body.style.overflow = '';
 }
 
-function closeTemplatesModal() {
-    document.getElementById('templatesModal').classList.remove('active');
-    document.body.style.overflow = '';
-}
-
 // ═══════════════════════════════════════
 // SAVE REPORT
 // ═══════════════════════════════════════

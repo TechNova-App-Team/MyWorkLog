@@ -1,6 +1,6 @@
 // ═══ BH-BASIS ═══
 // Sprach-Helfer L(), Speicher-Schluessel, gemeinsamer Zustand,
-// Stichworte zur Berufserkennung (AI_BRAIN) und die Vorlagen.
+// Stichworte zur Berufserkennung (AI_BRAIN).
 // Muss ZUERST laden: reports/editingId/currentMode sind let-Bindungen im
 // Skript-Scope, die alle folgenden Dateien lesen.
 // Herausgeloest aus pages/berichtsheft/index.html.
@@ -73,70 +73,6 @@ const AI_BRAIN = {
     },
     universalVerbs: ['durchführen', 'erledigen', 'bearbeiten', 'vorbereiten', 'nachbereiten', 'organisieren', 'kontrollieren', 'dokumentieren', 'besprechen', 'unterstützen', 'überprüfen', 'koordinieren', 'planen', 'fertigstellen', 'optimieren'],
 };
-
-// ===== TEMPLATES =====
-const templates = [
-    {
-        id: 'it-dev',
-        name: 'IT-Entwicklung',
-        icon: '<svg class="icon"><use href="#i-wrench" /></svg>',
-        description: 'Für Fachinformatiker Anwendungsentwicklung',
-        content: `• Entwicklung und Implementierung von Software-Komponenten
-• Code-Review und Qualitätssicherung
-• Debugging und Fehlerbehebung
-• Dokumentation der Entwicklungsprozesse
-• Teilnahme an Team-Meetings und Planungen
-• Unit-Tests erstellt und durchgeführt`
-    },
-    {
-        id: 'it-admin',
-        name: 'IT-Systemadministration',
-        icon: '<svg class="icon"><use href="#i-gear" /></svg>',
-        description: 'Für Fachinformatiker Systemintegration',
-        content: `• Wartung und Administration von IT-Systemen
-• Benutzer- und Rechteverwaltung
-• Installation und Konfiguration von Software
-• Netzwerk-Monitoring und Troubleshooting
-• Erstellung von technischen Dokumentationen
-• Backup-Systeme überprüft und gewartet`
-    },
-    {
-        id: 'business',
-        name: 'Kaufmännisch',
-        icon: '<svg class="icon"><use href="#i-chart" /></svg>',
-        description: 'Für kaufmännische Berufe',
-        content: `• Bearbeitung von Geschäftsvorfällen
-• Kundenkommunikation und -betreuung
-• Erstellung von Angeboten und Rechnungen
-• Büroorganisation und Verwaltung
-• Mitarbeit an Projekten und Präsentationen
-• Datenerfassung und Pflege im ERP-System`
-    },
-    {
-        id: 'design',
-        name: 'Mediengestaltung',
-        icon: '<svg class="icon"><use href="#i-pen" /></svg>',
-        description: 'Für Mediengestalter',
-        content: `• Konzeption und Gestaltung von Medienprodukten
-• Bildbearbeitung und Layout-Erstellung
-• Abstimmung mit Kunden und Kollegen
-• Qualitätsprüfung und Korrekturschleifen
-• Recherche und Trend-Analyse
-• Reinzeichnung und Druckvorbereitung`
-    },
-    {
-        id: 'data',
-        name: 'Daten & KI',
-        icon: '<svg class="icon"><use href="#i-sparkles" /></svg>',
-        description: 'Für Fachinformatiker Daten & Prozesse',
-        content: `• Analyse und Aufbereitung von Datensätzen
-• Entwicklung und Training von ML-Modellen
-• Datenbankabfragen und -optimierung
-• Prozessanalyse und Automatisierung
-• Erstellung von Dashboards und Reportings
-• Qualitätssicherung der Datenbestände`
-    }
-];
 
 // ═══════════════════════════════════════
 // AUSBILDUNGSJAHR-BERECHNUNG

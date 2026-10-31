@@ -21,7 +21,6 @@ document.addEventListener('keydown', (e) => {
         if (inModal) {
             closeReportModal();
             closeViewModal();
-            closeTemplatesModal();
             if (typeof closeTrashModal === 'function') closeTrashModal();
         }
         if (bulkMode) toggleBulkMode();
@@ -53,10 +52,6 @@ document.addEventListener('keydown', (e) => {
         case 'e':
             e.preventDefault();
             openPDFModal(null);
-            break;
-        case 't':
-            e.preventDefault();
-            showTemplates();
             break;
         case 'f':
             if (e.ctrlKey) {
