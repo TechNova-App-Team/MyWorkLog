@@ -84,6 +84,20 @@ function geraetId() {
     } catch (e) { return ''; }
 }
 
+// Kopfzeilen fuer JEDEN KI-Aufruf: Geraete-ID, und mit Ausbildungs-Pass dessen Token
+// (mwl-pass.js legt es in mwl_pass ab). Der ai-proxy prueft die Signatur selbst und gibt
+// dann das 5-fache Kontingent (Worker v5.5) — ein gefaelschtes Token bringt nichts.
+// Ein Aufruf ohne diesen Helfer bekommt still nur das normale Kontingent; deshalb nehmen
+// ihn alle Stellen (ais-chat, Pass-Paket), nicht nur dieser Datei.
+function kiKopf() {
+    const k = { 'X-MWL-Geraet': geraetId() };
+    try {
+        const p = JSON.parse(localStorage.getItem('mwl_pass') || 'null');
+        if (p && p.token && p.bis > Date.now()) k.Authorization = 'Bearer ' + p.token;
+    } catch (e) { }
+    return k;
+}
+
 const Kontingent = {
     // Der Server rechnet den Tag in Berliner Zeit — hier genauso, sonst gaelte
     // ein gemerkter Stand zwischen 0 und 2 Uhr noch als "heute".
@@ -127,7 +141,7 @@ const Kontingent = {
     },
     async abrufen() {
         try {
-            const r = await fetch(CLOUD_PROXY + '/kontingent', { headers: { 'X-MWL-Geraet': geraetId() }, cache: 'no-store' });
+            const r = await fetch(CLOUD_PROXY + '/kontingent', { headers: kiKopf(), cache: 'no-store' });
             if (!r.ok) return null;
             const j = await r.json();
             if (j && j.schnell && j.schnell.limit > 0) this._schnellSchreib(j.schnell.verbraucht | 0, j.schnell.limit, j.schnell.erschoepft);
@@ -654,7 +668,7 @@ async function generateWithCloud(professionId, options) {
     const fetchHeaders = {
         'Content-Type': 'application/json',
         'X-MyWorkLog-Token': 'FISI-Berichtsheft-2026',
-        'X-MWL-Geraet': geraetId(),
+        ...kiKopf(),
         // Nur fuer das interne Protokoll (/ki-dashboard/): Woche oder einzelner Tag.
         'X-MWL-Art': options && options.art === 'tag' ? 'tag' : 'woche',
     };
@@ -1076,7 +1090,7 @@ async function generateWithCloud(professionId, options) {
 
 return {
     verbinde, GEBRAUCHT,
-    CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId, Stufe, STUFEN,
+    CLOUD_PROXY, RATE_LIMIT_COOLDOWN_MS, RateLimit, Kontingent, geraetId, kiKopf, Stufe, STUFEN,
     CLOUD_FORM, CLOUD_UMFANG, _buildCloudPrompt,
     _klassenPlanFuer, _planFaecher, _kwDatum,
     _repairJSON, _sliceRootJSON, _deEscapeStructural,

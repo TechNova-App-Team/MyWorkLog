@@ -1296,7 +1296,7 @@ async function denken(nachricht, hinweis) {
         const res = await fetch(KC && KC.Stufe ? KC.Stufe.url(proxy) : proxy.replace(/\/$/, '') + '/', {
             method: 'POST',
             signal: ctrl.signal,
-            headers: { 'Content-Type': 'application/json', 'X-MWL-Art': 'chat', ...(KC ? { 'X-MWL-Geraet': KC.geraetId() } : {}) },
+            headers: { 'Content-Type': 'application/json', 'X-MWL-Art': 'chat', ...(KC ? (KC.kiKopf ? KC.kiKopf() : { 'X-MWL-Geraet': KC.geraetId() }) : {}) },
             body: JSON.stringify({
                 systemInstruction: { parts: [{ text: systemPrompt() }] },
                 contents: runden,
