@@ -4,9 +4,10 @@
 // Siegel, Glanz, Goldring um Avatar und Menueknopf) war dem Nutzer „schrecklich,
 // zu aufdringlich" (31.10.2026). Nicht wieder aufhuebschen.
 //
-// Steht unten in der Sidebar neben der Version und im Profil-Menue neben dem Namen.
-// Oben neben „MyWorkLog“ ist kein Platz (Kopfzeile 220 px, gemessen 31.10.2026).
-// Am Handy ist die Sidebar eine Schublade — die Marke steht dann eben dort.
+// Steht NUR im Profil-Menue neben dem Namen. Nicht unten im Sidebar-Fuss: dort
+// lief die Versionszeile („v9.4.8 · SW v9.4.8“) in das Etikett, und der Fuss war dem
+// Nutzer „viel zu voll“ (31.10.2026). Oben neben „MyWorkLog“ ist auch kein Platz
+// (Kopfzeile 220 px).
 // Klick fuehrt zur Pass-Karte im Berichtsheft (bh-pass.js liest ?pass=karte).
 //
 // Welche Stufe jemand hat, entscheidet NUR stufe(). Heute: Vorschau-Code → 'pass'.
@@ -32,7 +33,7 @@ window.MWLPassMarke = (function () {
         a.href = (en() ? '/en' : '') + '/berichtsheft/?pass=karte';
         a.title = en() ? 'Your pass' : 'Dein Pass';
         a.textContent = en() ? s.en : s.de;
-        // Fuss und Menue reagieren selbst auf Klicks — die Marke soll nur navigieren
+        // Das Menue schliesst sich bei Klicks selbst — die Marke soll nur navigieren
         a.addEventListener('click', (e) => e.stopPropagation());
         return a;
     }
@@ -41,8 +42,6 @@ window.MWLPassMarke = (function () {
     function einsetzen() {
         document.querySelectorAll('.mwl-pass-marke').forEach(m => m.remove());
         if (!stufe()) return;
-        const info = document.querySelector('#sidebarFooter .sidebar-footer-info');
-        if (info) info.after(marke('fuss'));
         const nutzer = document.querySelector('#profilePopover .profile-popover-user');
         if (nutzer) nutzer.after(marke('menue'));
     }
