@@ -135,6 +135,7 @@ window.MWLPass = (function () {
         pruefcheck: (o) => window.BHPruefbogen && BHPruefbogen.oeffnen(o),
         mehrwochen: (o) => window.BHMehrwochen && BHMehrwochen.oeffnen(o),
         rahmenplan: (o) => window.BHRahmenplan && BHRahmenplan.oeffnen(o),
+        wochenvorschlag: (o) => window.BHWochenvorschlag && BHWochenvorschlag.oeffnen(o),
     };
     async function oeffnen(name, opt) {
         if (frei() && await laden() && OEFFNER[name]) { OEFFNER[name](opt); return; }

@@ -34,6 +34,13 @@ const TEXTE = {
                  ['Abgleich mit deinem Heft, Woche für Woche', 'Compared with your record book, week by week'],
                  ['Was bis jetzt fehlt, als Liste fürs Gespräch mit dem Ausbilder', 'What is missing so far, as a list for your trainer']],
     },
+    wochenvorschlag: {
+        titel: ['Woche vorschlagen', 'Suggest the week'],
+        satz: ['Dein Kalender weiß, was diese Woche war.', 'Your calendar knows what happened this week.'],
+        punkte: [['Termine aus Outlook oder Google, als Datei eingelesen', 'Events from Outlook or Google, imported as a file'],
+                 ['Zusammen mit Zeiterfassung und Stundenplan, Tag für Tag', 'Together with time tracking and timetable, day by day'],
+                 ['Du hakst ab, der Assistent schreibt daraus die Woche', 'You tick, the assistant writes the week from it']],
+    },
 };
 const FEHLER = {
     falsch: ['Der Code stimmt nicht. Groß- und Kleinschreibung zählt.', 'That code is not right. Upper and lower case matter.'],

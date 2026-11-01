@@ -373,6 +373,9 @@ function profilZeichnen() {
         teile.map(t => '<button type="button" class="aic-profil-teil" onclick="AISChat.einstellungen()" title="' + esc(Lx('In den Einstellungen ändern', 'Change in settings')) + '">' + esc(t) + '</button>').join('') +
         '<button type="button" class="aic-profil-einst" onclick="AISChat.einstellungen()"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>' +
         Lx('Einstellungen', 'Settings') + '</button>' +
+        // Woche aus Kalender + Zeiterfassung + Stundenplan (Pass; ohne Pass das Siegel-Blatt)
+        '<button type="button" class="aic-profil-knopf" onclick="MWLPass.oeffnen(&quot;wochenvorschlag&quot;)">' +
+        Lx('Woche vorschlagen', 'Suggest week') + '</button>' +
         '<button type="button" class="aic-profil-knopf' + (vorwissenText() ? ' is-an' : '') + '" onclick="AISChat.vorwissen()">' +
         (vorwissenText() ? Lx('Vorwissen an', 'Background on') : Lx('Vorwissen hinterlegen', 'Add background')) + '</button>' +
         // "is-an" nur, wenn das Profil auch etwas an die KI gibt — sonst
