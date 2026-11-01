@@ -143,7 +143,8 @@ a { color: inherit; }
     width: 1.5px;
     background: var(--papier-rand);
 }
-.pr-mini.is-2, .pr-mini.is-3 { background: var(--papier-2); color: var(--papier-tinte-2); }
+/* Nur Plus liegt noch grau: der Pass ist fertig (01.11.2026) und liegt hell wie das offene Heft */
+.pr-mini.is-3 { background: var(--papier-2); color: var(--papier-tinte-2); }
 .pr-mini-kopf { display: block; padding-bottom: 12px; border-bottom: 1px solid rgba(21, 19, 29, 0.18); font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
 .pr-mini i { display: block; height: 30px; border-bottom: 1px solid var(--papier-linie); }
 .pr-mini.is-1 { z-index: 3; transform: rotate(-1.5deg); }
@@ -264,6 +265,10 @@ a { color: inherit; }
 .pr-vormerken:hover { background: #000; border-color: #000; }
 .pr-vormerken.is-gemerkt { background: transparent; border-color: var(--kuli); color: var(--kuli); cursor: default; }
 .pr-vormerken svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+/* Pass fertig, aber nicht kaeuflich: Knopf in Bleistiftgrau, nicht anklickbar. Kein
+   Siegel, kein Band — das Blatt liegt wie das offene Heft, nur der Weg zur Kasse fehlt. */
+.pr-bald, .pr-bald:hover { background: transparent; border: 1.5px dashed rgba(21, 19, 29, 0.32); color: var(--papier-tinte-2); cursor: not-allowed; }
+.pr-bald-unter { margin: -6px 0 0; font-size: 0.8rem; color: var(--papier-tinte-2); text-align: center; }
 .pr-fuss-hinweis { margin: 22px 0 0; font-size: 0.86rem; color: var(--text-3); }
 
 /* ── Alles nebeneinander ─────────────────────────────────────────
@@ -290,12 +295,13 @@ a { color: inherit; }
 .pr-vgl thead th:first-child > span { font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.6rem; font-weight: 300; letter-spacing: 0; color: var(--papier-tinte-2); }
 .pr-vgl thead small { display: block; margin-top: 2px; font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.58rem; font-weight: 300; color: var(--papier-tinte-2); }
 .pr-vgl thead th.is-zu small { color: var(--rotstift); }
+.pr-vgl thead th.is-fertig small { color: var(--kuli); }
 .pr-vgl th:not(:first-child), .pr-vgl td { width: 7.5rem; text-align: center; }
 .pr-vgl td { font-size: 0.84rem; color: var(--papier-tinte); }
 /* Bezahl-Spalten ausgegraut — Zeile 2 und 3 der Spalten, ueber nth-child, damit
    das Markup jeder Zelle schlank bleibt. */
-.pr-vgl td:nth-child(3), .pr-vgl td:nth-child(4),
-.pr-vgl thead th:nth-child(3), .pr-vgl thead th:nth-child(4) { background: rgba(21, 19, 29, 0.035); }
+.pr-vgl td:nth-child(4),
+.pr-vgl thead th:nth-child(4) { background: rgba(21, 19, 29, 0.035); }
 .pr-vgl-gruppe th {
     padding-top: 22px;
     padding-bottom: 8px;
@@ -311,7 +317,7 @@ a { color: inherit; }
 .pr-vgl td.is-ja::before, .pr-vgl td.is-nein::before { content: ''; display: inline-block; vertical-align: middle; }
 .pr-vgl td.is-ja::before { width: 11px; height: 6px; margin-top: -4px; border-left: 2px solid var(--kuli); border-bottom: 2px solid var(--kuli); transform: rotate(-45deg); }
 .pr-vgl td.is-nein::before { width: 12px; height: 1.5px; background: rgba(21, 19, 29, 0.3); }
-.pr-vgl td:nth-child(3).is-ja::before, .pr-vgl td:nth-child(4).is-ja::before { border-color: color-mix(in srgb, var(--kuli) 70%, var(--papier-2)); }
+.pr-vgl td:nth-child(4).is-ja::before { border-color: color-mix(in srgb, var(--kuli) 70%, var(--papier-2)); }
 .pr-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .pr-neu {
     display: inline-block;
@@ -325,6 +331,8 @@ a { color: inherit; }
     transform: rotate(-4deg);
     white-space: nowrap;
 }
+/* "geplant" = gibt es noch nicht: Bleistift statt Rotstift, damit es nicht wie ein Angebot leuchtet */
+.pr-neu.is-geplant { color: var(--papier-tinte-2); }
 
 /* ── Wuensche ────────────────────────────────────────────────── */
 .pr-balken { list-style: none; margin: 34px 0 0; padding: 0; display: grid; gap: 4px; max-width: 900px; }
