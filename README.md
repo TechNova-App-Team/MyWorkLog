@@ -249,7 +249,7 @@ Aktuelle Version: **v9.5.3** · 2026-11-01
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.5.3** | 2026-11-01 | Fachgespräch üben: ein Prüfer fragt nach den eigenen Berichten |
+| **9.5.3** | 2026-11-01 | Fachgespräch üben: Prüferfragen zum eigenen Projekt und zum eigenen Beruf |
 | 9.5.2 | 2026-11-01 | Woche aus Kalender und Stundenplan vorschlagen, Thinking im Ausbildungs-Pass |
 | 9.5.1 | 2026-11-01 | Der Berichtsheft-Assistent kennt alle 316 Ausbildungsberufe |
 | 9.5.0 | 2026-10-31 | Das Berichtsheft gleicht sich mit dem Ausbildungsrahmenplan des eigenen Berufs ab |
