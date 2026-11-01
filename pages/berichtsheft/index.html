@@ -70,7 +70,7 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/basis.css?v=aa3b95364d">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=3753e598e4">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=ee5adb0c5a">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=511236eece">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=e7706c634c">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/bh-text.css?v=4cb0f2fe3b">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-panel.css?v=967e29e7f8">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ai-studio-vorschau.css?v=e762d3004c">
@@ -85,7 +85,7 @@
     <link rel="stylesheet" href="/Assets/css/berichtsheft/b2b.css?v=aaa18a26b9">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/ihk-import.css?v=c026ac1991">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/siegel.css?v=75325cfa91">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/druck-responsive.css?v=39d3f8e68f">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/druck-responsive.css?v=ab2a423611">
     <script defer src="/Assets/js/ph-init.js?v=20079215ce"></script>
     <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=cc17946a25">
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
@@ -881,149 +881,155 @@
 
     <!-- ===== NEW/EDIT REPORT MODAL ===== -->
     <div class="modal" id="reportModal">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeReportModal()" aria-label="Bericht-Dialog schließen"><svg
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round" width="18" height="18" aria-hidden="true">
-                    <path d="M18 6L6 18M6 6l12 12" />
-                </svg></button>
-            <h2 class="modal-title">
-                <svg class="icon">
-                    <use href="#i-edit" />
-                </svg>
-                <span id="modalTitle">Neuen Bericht erstellen</span>
-            </h2>
-
+        <!-- Bericht-Dialog (Redesign 01.11.2026): Kopf und Fuß kleben, dazwischen drei Abschnitte
+             Woche / Tätigkeiten / Zusätzlich. Alle ids sind die alten — bh-bericht.js,
+             bh-tagesmodus.js (syncModeSliders, setMode) und der Entwurf lesen sie. Stil: .rm-*
+             in modal-formular.css, NUR unter .rm (die anderen sechs Dialoge teilen .modal). -->
+        <div class="modal-content rm">
+            <div class="rm-kopf">
+                <h2 class="modal-title rm-titel">
+                    <span id="modalTitle">Neuen Bericht erstellen</span>
+                </h2>
+                <p class="rm-zf" id="rmZusammenfassung" aria-live="polite"></p>
+                <button class="modal-close rm-zu" type="button" onclick="closeReportModal()" aria-label="Bericht-Dialog schließen"><svg
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg></button>
+            </div>
             <form id="reportForm" onsubmit="saveReport(event)">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Ausbildungsjahr</label>
-                        <select class="form-select" id="reportYear" required>
-                            <option value="1">1. Ausbildungsjahr</option>
-                            <option value="2">2. Ausbildungsjahr</option>
-                            <option value="3">3. Ausbildungsjahr</option>
-                            <option value="4">4. Ausbildungsjahr</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Kalenderwoche</label>
-                        <input type="number" class="form-input" id="reportWeek" min="1" max="53" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Datum von</label>
-                        <input type="date" class="form-input" id="reportDateFrom" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Datum bis</label>
-                        <input type="date" class="form-input" id="reportDateTo" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Abteilung / Bereich</label>
-                    <input type="text" class="form-input" id="reportDepartment"
-                        placeholder="z.B. IT-Entwicklung, Buchhaltung, etc." list="departmentList">
-                    <datalist id="departmentList"></datalist>
-                </div>
-
-                <!-- ===== INLINE MODE TOGGLE ===== -->
-                <div class="modal-mode-toggle">
-                    <span class="modal-mode-label">Format:</span>
-                    <div class="mode-toggle" style="flex:1;max-width:320px;">
-                        <div class="mode-toggle-slider" id="modeSliderModal"></div>
-                        <button type="button" class="mode-toggle-btn" id="btnWeeklyModal" onclick="setMode('weekly')">
-                            <svg class="icon icon-sm">
-                                <use href="#i-calendar" />
-                            </svg> <span>Wöchentlich</span>
-                        </button>
-                        <button type="button" class="mode-toggle-btn" id="btnDailyModal" onclick="setMode('daily')">
-                            <svg class="icon icon-sm">
-                                <use href="#i-list" />
-                            </svg> <span>Täglich</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- ===== WEEKLY FIELD ===== -->
-                <div class="form-group" id="weeklyFieldGroup">
-                    <label class="form-label">Ausgeführte Tätigkeiten / Beschreibung</label>
-                    <textarea class="form-textarea" id="reportActivities" rows="8" placeholder="Beschreibe detailliert deine Tätigkeiten in dieser Woche...
-
-Beispiel:
-• Entwicklung einer REST-API mit Node.js
-• Implementierung von Unit-Tests
-• Code Review und Bugfixing
-• Teilnahme an Daily Stand-up Meetings" required></textarea>
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-                        <small style="color: var(--text-muted);">Mind. 50 Zeichen empfohlen</small>
-                        <small style="color: var(--text-muted);" id="charCount">0 Zeichen</small>
-                    </div>
-                    <div class="quality-meter" id="qualityMeter">
-                        <span class="quality-text">Qualität:</span>
-                        <div class="quality-bar-bg">
-                            <div class="quality-bar-fill" id="qualityBarFill"></div>
+                <section class="rm-abschnitt" aria-labelledby="rmWocheT">
+                    <h3 class="rm-h" id="rmWocheT">Woche</h3>
+                    <div class="rm-woche">
+                        <div class="form-group rm-kw">
+                            <label class="form-label" for="reportWeek">KW</label>
+                            <input type="number" class="form-input" id="reportWeek" min="1" max="53" required>
                         </div>
-                        <span class="quality-label" id="qualityLabel">0%</span>
+                        <div class="form-group">
+                            <label class="form-label" for="reportDateFrom">Von</label>
+                            <input type="date" class="form-input" id="reportDateFrom" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reportDateTo">Bis</label>
+                            <input type="date" class="form-input" id="reportDateTo" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reportYear">Ausbildungsjahr</label>
+                            <select class="form-select" id="reportYear" required>
+                                <option value="1">1. Ausbildungsjahr</option>
+                                <option value="2">2. Ausbildungsjahr</option>
+                                <option value="3">3. Ausbildungsjahr</option>
+                                <option value="4">4. Ausbildungsjahr</option>
+                            </select>
+                        </div>
+                        <div class="form-group rm-breit">
+                            <label class="form-label" for="reportDepartment">Abteilung / Bereich</label>
+                            <input type="text" class="form-input" id="reportDepartment"
+                                placeholder="z. B. IT-Support, Buchhaltung, Werkstatt" list="departmentList">
+                            <datalist id="departmentList"></datalist>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- ===== DAILY FIELDS ===== -->
-                <div class="daily-fields" id="dailyFieldsGroup">
-                    <div class="daily-fields-head">
-                        <label class="form-label" style="margin-bottom:0;">Tägliche Tätigkeiten (IHK-Format)</label>
-                        <button type="button" class="daily-fill-btn" id="dailyFillBtn" onclick="fillDailyFromTracking()"
-                            title="Projekte, Notizen und Stunden dieser Woche aus der Zeiterfassung übernehmen">
-                            <svg class="icon icon-sm">
-                                <use href="#i-clock" />
-                            </svg>
-                            <span>Aus Zeiterfassung füllen</span>
+                <section class="rm-abschnitt" aria-labelledby="rmTatT">
+                    <div class="rm-h-zeile">
+                        <h3 class="rm-h" id="rmTatT">Tätigkeiten</h3>
+                        <!-- Format-Umschalter: Schieber per syncModeSliders() (bh-tagesmodus.js) -->
+                        <div class="mode-toggle rm-format" role="group" aria-label="Format">
+                            <div class="mode-toggle-slider" id="modeSliderModal"></div>
+                            <button type="button" class="mode-toggle-btn" id="btnWeeklyModal" onclick="setMode('weekly')">
+                                <svg class="icon icon-sm">
+                                    <use href="#i-calendar" />
+                                </svg> <span>Wöchentlich</span>
+                            </button>
+                            <button type="button" class="mode-toggle-btn" id="btnDailyModal" onclick="setMode('daily')">
+                                <svg class="icon icon-sm">
+                                    <use href="#i-list" />
+                                </svg> <span>Täglich</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===== WEEKLY FIELD ===== -->
+                    <div class="form-group" id="weeklyFieldGroup">
+                        <label class="form-label rm-vh" for="reportActivities">Ausgeführte Tätigkeiten</label>
+                        <textarea class="form-textarea" id="reportActivities" rows="9" placeholder="Was hast du diese Woche gemacht? Ein Punkt je Tätigkeit, z. B.:
+Neue Arbeitsplätze eingerichtet
+Fehler im Ticketsystem bearbeitet
+An der Teambesprechung teilgenommen" required></textarea>
+                        <div class="rm-mess">
+                            <div class="quality-meter" id="qualityMeter">
+                                <span class="quality-text">Qualität</span>
+                                <div class="quality-bar-bg">
+                                    <div class="quality-bar-fill" id="qualityBarFill"></div>
+                                </div>
+                                <span class="quality-label" id="qualityLabel">0%</span>
+                            </div>
+                            <small class="rm-zeichen" id="charCount">0 Zeichen</small>
+                        </div>
+                    </div>
+
+                    <!-- ===== DAILY FIELDS ===== -->
+                    <div class="daily-fields" id="dailyFieldsGroup">
+                        <div class="daily-fields-head">
+                            <span class="rm-hinweis">Ein Kasten je Tag, wie im IHK-Vordruck.</span>
+                            <button type="button" class="daily-fill-btn" id="dailyFillBtn" onclick="fillDailyFromTracking()"
+                                title="Projekte, Notizen und Stunden dieser Woche aus der Zeiterfassung übernehmen">
+                                <svg class="icon icon-sm">
+                                    <use href="#i-clock" />
+                                </svg>
+                                <span>Aus Zeiterfassung füllen</span>
+                            </button>
+                        </div>
+                        <div id="dailyFieldsContainer"></div>
+                        <div class="daily-total-bar">
+                            <span>Gesamt:</span>
+                            <span id="dailyTotalHours">0.0</span> <span>Std.</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="rm-abschnitt" aria-labelledby="rmZusatzT">
+                    <h3 class="rm-h" id="rmZusatzT">Zusätzlich</h3>
+                    <div class="form-group" id="instructionFieldGroup">
+                        <label class="form-label" for="reportInstruction"><span>Unterweisungen und Schulungen</span> <span class="rm-opt">optional</span></label>
+                        <textarea class="form-textarea" id="reportInstruction" rows="3"
+                            placeholder="Unterweisungen, betrieblicher Unterricht, Schulungen. Eigener Block im IHK-Vordruck."></textarea>
+                    </div>
+                    <div class="form-group" id="schoolFieldGroup">
+                        <label class="form-label" for="reportSchool"><span>Berufsschule</span> <span class="rm-opt">optional</span></label>
+                        <textarea class="form-textarea" id="reportSchool" rows="4"
+                            placeholder="Themen und Inhalte der Berufsschule in dieser Woche"></textarea>
+                    </div>
+                </section>
+
+                <!-- Fuß klebt unten: Speichern ist immer zu sehen, auch bei fünf vollen Tageskarten -->
+                <div class="rm-fuss">
+                    <div class="rm-fuss-felder">
+                        <div class="form-group">
+                            <label class="form-label" for="reportHours">Stunden</label>
+                            <input type="number" class="form-input" id="reportHours" step="any" placeholder="40">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reportStatus">Status</label>
+                            <select class="form-select" id="reportStatus">
+                                <option value="incomplete">In Bearbeitung</option>
+                                <option value="complete">Vollständig</option>
+                                <option value="signed">Unterschrieben</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-actions rm-aktionen">
+                        <button type="button" class="btn btn-secondary rm-abbrechen" onclick="closeReportModal()">
+                            Abbrechen <span class="kbd-hint"><span class="kbd">Esc</span></span>
+                        </button>
+                        <button type="submit" class="btn btn-primary rm-speichern">
+                            <svg class="icon">
+                                <use href="#i-save" />
+                            </svg> <span>Speichern</span>
+                            <span class="kbd-hint"><span class="kbd">Strg</span>+<span class="kbd">S</span></span>
                         </button>
                     </div>
-                    <div id="dailyFieldsContainer"></div>
-                    <div class="daily-total-bar">
-                        <span>Gesamt:</span>
-                        <span id="dailyTotalHours">0.0</span> <span>Std.</span>
-                    </div>
-                </div>
-
-                <div class="form-group" id="instructionFieldGroup">
-                    <label class="form-label">Unterweisungen &amp; Schulungen (optional)</label>
-                    <textarea class="form-textarea" id="reportInstruction" rows="3"
-                        placeholder="Unterweisungen, betrieblicher Unterricht, sonstige Schulungen — eigener Block im IHK-Vordruck"></textarea>
-                </div>
-
-                <div class="form-group" id="schoolFieldGroup">
-                    <label class="form-label">Berufsschule (optional)</label>
-                    <textarea class="form-textarea" id="reportSchool" rows="4"
-                        placeholder="Themen und Inhalte der Berufsschule in dieser Woche..."></textarea>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Gesamtstunden</label>
-                        <input type="number" class="form-input" id="reportHours" step="any" placeholder="40.0">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" id="reportStatus">
-                            <option value="incomplete">In Bearbeitung</option>
-                            <option value="complete">Vollständig</option>
-                            <option value="signed">Unterschrieben</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="submit" class="btn btn-success" style="flex: 1; min-width: 180px;">
-                        <svg class="icon">
-                            <use href="#i-save" />
-                        </svg> <span>Speichern</span>
-                        <span class="kbd-hint"><span class="kbd">Strg</span>+<span class="kbd">S</span></span>
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeReportModal()">
-                        Abbrechen <span class="kbd-hint"><span class="kbd">Esc</span></span>
-                    </button>
                 </div>
             </form>
         </div>
@@ -2284,13 +2290,13 @@ Beispiel:
     <script src="/config/supabase-config.js"></script>
     <script src="/Assets/js/berichtsheft/bh-b2b.js?v=3c85982477"></script>
     <script src="/Assets/js/berichtsheft/bh-b2b-ui.js?v=802c014c29"></script>
-    <script src="/Assets/js/berichtsheft/bh-bericht.js?v=bb305e01c2"></script>
+    <script src="/Assets/js/berichtsheft/bh-bericht.js?v=443380ff6f"></script>
     <script src="/Assets/js/berichtsheft/bh-pdf-modal.js?v=2f5fc59480"></script>
     <script src="/Assets/js/berichtsheft/bh-pdf-export.js?v=56d9868317"></script>
     <script src="/Assets/js/berichtsheft/bh-zeiterfassung.js?v=a3f37f603b"></script>
     <script src="/Assets/js/berichtsheft/bh-ui-helfer.js?v=49fe7fa57f"></script>
     <script src="/Assets/js/berichtsheft/bh-tagesmodus.js?v=38cf5513dc"></script>
-    <script src="/Assets/js/berichtsheft/bh-editor.js?v=47c88e414b"></script>
+    <script src="/Assets/js/berichtsheft/bh-editor.js?v=02b656ce38"></script>
     <script src="/Assets/js/berichtsheft/bh-ihk-import.js?v=1d7ff1b943"></script>
     <!-- Pruefungs-Check (Ausbildungs-Pass, Vorschau): Sperre, Kern, Ansicht -->
     <!-- Pass: nur Lader + Siegel liegen hier. Pruefungs-Check, Mehrere Wochen, Diktieren und

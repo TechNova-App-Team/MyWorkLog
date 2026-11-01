@@ -24,14 +24,14 @@ const nativ = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'va
 
 const SVG = (p) => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>';
 const KNOEPFE = [
-    { cmd: 'bold', de: 'Fett', en: 'Bold', taste: 'Strg+B', svg: SVG('<path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/>') },
-    { cmd: 'italic', de: 'Kursiv', en: 'Italic', taste: 'Strg+I', svg: SVG('<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>') },
-    { cmd: 'underline', de: 'Unterstrichen', en: 'Underline', taste: 'Strg+U', svg: SVG('<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>') },
+    { cmd: 'bold', de: 'Fett', en: 'Bold', taste: ['Strg+B', 'Ctrl+B'], svg: SVG('<path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8"/>') },
+    { cmd: 'italic', de: 'Kursiv', en: 'Italic', taste: ['Strg+I', 'Ctrl+I'], svg: SVG('<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>') },
+    { cmd: 'underline', de: 'Unterstrichen', en: 'Underline', taste: ['Strg+U', 'Ctrl+U'], svg: SVG('<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>') },
     { trenner: true },
     { cmd: 'ul', de: 'Aufzählung', en: 'Bulleted list', svg: SVG('<line x1="9" x2="20" y1="6" y2="6"/><line x1="9" x2="20" y1="12" y2="12"/><line x1="9" x2="20" y1="18" y2="18"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>') },
     { cmd: 'ol', de: 'Nummerierung', en: 'Numbered list', svg: SVG('<line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>') },
-    { cmd: 'ein', de: 'Unterpunkt (einrücken)', en: 'Sub-item (indent)', taste: 'Tab', svg: SVG('<polyline points="3 8 7 12 3 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/>') },
-    { cmd: 'aus', de: 'Ausrücken', en: 'Outdent', taste: 'Umschalt+Tab', svg: SVG('<polyline points="7 8 3 12 7 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/>') },
+    { cmd: 'ein', de: 'Unterpunkt (einrücken)', en: 'Sub-item (indent)', taste: ['Tab', 'Tab'], svg: SVG('<polyline points="3 8 7 12 3 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/>') },
+    { cmd: 'aus', de: 'Ausrücken', en: 'Outdent', taste: ['Umschalt+Tab', 'Shift+Tab'], svg: SVG('<polyline points="7 8 3 12 7 16"/><line x1="21" x2="11" y1="12" y2="12"/><line x1="21" x2="11" y1="6" y2="6"/><line x1="21" x2="11" y1="18" y2="18"/>') },
 ];
 
 let befehlsModusGesetzt = false;
@@ -109,7 +109,7 @@ function anbinden(ta) {
     leiste.setAttribute('role', 'toolbar');
     leiste.setAttribute('aria-label', L('Text formatieren', 'Format text'));
     leiste.innerHTML = KNOEPFE.map(k => k.trenner ? '<span class="bt-trenner" aria-hidden="true"></span>'
-        : '<button type="button" class="bt-knopf" data-cmd="' + k.cmd + '" aria-pressed="false" title="' + L(k.de, k.en) + (k.taste ? ' (' + k.taste + ')' : '') + '" aria-label="' + L(k.de, k.en) + '">' + k.svg + '</button>').join('');
+        : '<button type="button" class="bt-knopf" data-cmd="' + k.cmd + '" aria-pressed="false" title="' + L(k.de, k.en) + (k.taste ? ' (' + L(k.taste[0], k.taste[1]) + ')' : '') + '" aria-label="' + L(k.de, k.en) + '">' + k.svg + '</button>').join('');
     const feld = document.createElement('div');
     feld.className = 'bt-feld';
     feld.contentEditable = 'true';

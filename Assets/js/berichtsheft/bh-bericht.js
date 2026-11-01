@@ -1020,3 +1020,32 @@ if (typeof window !== 'undefined') {
 
 
 
+
+// Kopf des Bericht-Dialogs (Redesign 01.11.2026): „KW 44 · 26.–30. Okt." läuft beim Ausfüllen
+// mit. Beim Öffnen setzt bh-bericht.js die Werte per Code (kein input-Ereignis) — deshalb
+// zusätzlich beim Aktivwerden des Dialogs neu lesen.
+(function () {
+    const form = document.getElementById('reportForm');
+    const modal = document.getElementById('reportModal');
+    const el = document.getElementById('rmZusammenfassung');
+    if (!form || !modal || !el) return;
+    const loc = () => (window.mwlLocale ? window.mwlLocale() : document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
+    const datum = (s) => { const d = new Date(s + 'T12:00:00'); return isNaN(d) ? null : d; };
+    function zeichnen() {
+        const kw = document.getElementById('reportWeek').value;
+        const a = datum(document.getElementById('reportDateFrom').value);
+        const b = datum(document.getElementById('reportDateTo').value);
+        let zeit = '';
+        if (a && b) {
+            const gleich = a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear();
+            const bis = b.toLocaleDateString(loc(), { day: 'numeric', month: 'short', year: 'numeric' });
+            zeit = gleich ? a.getDate() + (document.documentElement.lang === 'en' ? '' : '.') + '–' + bis
+                : a.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) + ' – ' + bis;
+        }
+        el.textContent = [kw ? L('KW ', 'Week ') + kw : '', zeit].filter(Boolean).join(' · ');
+    }
+    form.addEventListener('input', zeichnen);
+    form.addEventListener('change', zeichnen);
+    new MutationObserver(() => { if (modal.classList.contains('active')) setTimeout(zeichnen, 0); })
+        .observe(modal, { attributes: true, attributeFilter: ['class'] });
+})();

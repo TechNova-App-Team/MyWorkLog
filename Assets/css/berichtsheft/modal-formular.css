@@ -535,3 +535,110 @@
     opacity: 0;
 }
 
+
+/* ═══ BERICHT-DIALOG (.rm, Redesign 01.11.2026) ═══
+   Kopf und Fuß kleben am Rand der scrollenden .modal-Ebene, dazwischen drei Abschnitte.
+   Vorher: eine lange Spalte mit GROSSBUCHSTABEN-Etiketten, „Speichern" erst unter allen
+   Feldern. Nur unter .rm — .modal/.modal-content teilen sich sieben Dialoge.
+   overflow: clip statt hidden: clip baut keinen Scroll-Container, sonst klebte nichts. */
+.modal-content.rm {
+    max-width: 760px;
+    padding: 0;
+    overflow: clip;
+}
+.rm-kopf {
+    position: sticky;
+    top: -40px;            /* = padding-top der .modal-Ebene: klebt bündig am oberen Rand */
+    z-index: 4;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 16px;
+    padding: 20px 24px 14px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+}
+.rm-titel {
+    grid-column: 1;
+    margin: 0;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+}
+.rm-zf {
+    grid-column: 1;
+    margin: 3px 0 0;
+    min-height: 1.2em;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.rm-zu { position: static; grid-column: 2; grid-row: 1 / span 2; }
+.rm form { padding: 0 24px; }
+
+.rm-abschnitt { padding: 22px 0 6px; border-bottom: 1px solid var(--border); }
+.rm-abschnitt:last-of-type { border-bottom: 0; }
+.rm-h {
+    margin: 0 0 14px;
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
+}
+.rm-h-zeile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.rm-h-zeile .rm-h { margin: 0; }
+.rm-format { flex: 0 0 240px; }
+
+/* Etiketten in Satzschreibung statt GROSSBUCHSTABEN */
+.rm .form-label {
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-secondary);
+}
+.rm-opt { margin-left: 6px; font-size: 0.74rem; font-weight: 400; color: var(--text-dim); }
+.rm-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.rm-woche {
+    display: grid;
+    grid-template-columns: 84px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.rm-woche .form-group { margin-bottom: 0; }
+.rm-breit { grid-column: 1 / -1; }
+.rm-kw .form-input { text-align: center; font-variant-numeric: tabular-nums; }
+
+.rm-mess { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+.rm-mess .quality-meter { flex: 1; margin: 0; padding: 0; }
+.rm-zeichen { font-size: 0.75rem; color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rm .daily-fields-head { margin-bottom: 10px; }
+.rm-hinweis { font-size: 0.8rem; color: var(--text-muted); }
+
+.rm-fuss {
+    position: sticky;
+    bottom: -40px;         /* = padding-bottom der .modal-Ebene */
+    z-index: 4;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin: 6px -24px 0;
+    padding: 14px 24px 18px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+}
+.rm-fuss-felder { display: grid; grid-template-columns: 92px 180px; gap: 10px; }
+.rm-fuss .form-group { margin: 0; }
+.rm-aktionen { margin: 0 0 0 auto; flex: 0 0 auto; gap: 10px; flex-wrap: nowrap; }
+.rm-aktionen .btn { flex: 0 0 auto; min-width: 0; }
+.rm-speichern { min-width: 148px !important; }
