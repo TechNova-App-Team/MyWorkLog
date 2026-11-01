@@ -1,5 +1,5 @@
 // ═══ HALLOWEEN MODULE ═══
-// Laternen-Karte vom 31.10. 0 Uhr bis 01.11. 13 Uhr (Fenster wie beim Geburtstag
+// Laternen-Karte vom 31.10. 0 Uhr bis 02.11. 7 Uhr (Fenster wie beim Geburtstag
 // ueber die Nacht hinaus, sonst sieht es kaum jemand). Markup: dashboard.html
 // (#hwCard), Klassen html.mwl-halloween / .mwl-halloween-karte setzt das
 // Pre-Apply-Skript im <head>. Hier nur, was JS braucht: Spruch wechseln

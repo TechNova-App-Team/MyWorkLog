@@ -4,7 +4,7 @@
 // still (document.hidden), deshalb jsdom.
 //
 // Geprueft wird:
-//   1. Torwaechter im <head>: Fenster 31.10. 0 Uhr – 01.11. 13 Uhr, Test-Schalter,
+//   1. Torwaechter im <head>: Fenster 31.10. 0 Uhr – 02.11. 7 Uhr, Test-Schalter,
 //      'weg' blendet nur die Karte aus (Marken bleiben)
 //   2. Suesses wechselt den Spruch ohne direkte Wiederholung, Saures setzt den
 //      Saures-Text, Schliessen speichert 'weg'
@@ -52,8 +52,9 @@ function gate({ now, ls = {} }) {
 const an = (c) => c.includes('mwl-halloween') && c.includes('mwl-halloween-karte');
 ok('31.10. 0:00: an',           an(gate({ now: '2026-10-31T00:00:00' })));
 ok('31.10. 23:59: an',          an(gate({ now: '2026-10-31T23:59:00' })));
-ok('01.11. 12:59: noch an',     an(gate({ now: '2026-11-01T12:59:00' })));
-ok('01.11. 13:00: aus',         !gate({ now: '2026-11-01T13:00:00' }).includes('mwl-halloween'));
+ok('01.11. 13:00: noch an',     an(gate({ now: '2026-11-01T13:00:00' })));
+ok('02.11. 6:59: noch an',      an(gate({ now: '2026-11-02T06:59:00' })));
+ok('02.11. 7:00: aus',          !gate({ now: '2026-11-02T07:00:00' }).includes('mwl-halloween'));
 ok('30.10. 23:59: noch nichts', !gate({ now: '2026-10-30T23:59:00' }).includes('mwl-halloween'));
 ok('31.12.: nichts',            !gate({ now: '2026-12-31T20:00:00' }).includes('mwl-halloween'));
 ok('31.05.: nichts',            !gate({ now: '2026-05-31T20:00:00' }).includes('mwl-halloween'));
