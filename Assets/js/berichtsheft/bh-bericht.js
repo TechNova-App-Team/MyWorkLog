@@ -347,6 +347,12 @@ async function editReport(id) {
     document.body.style.overflow = 'hidden';
 }
 
+// Formatierter Berichtstext (bh-text.js) — ohne das Modul der alte Klartext mit Zeilenumbrüchen
+function bhTextHtml(t) {
+    if (typeof BHText !== 'undefined') return BHText.zuHtml(t || '');
+    return '<div style="white-space:pre-wrap">' + escapeHtml(t || '') + '</div>';
+}
+
 function viewReport(id) {
     const report = reports.find(r => r.id === id);
     if (!report) return;
@@ -416,11 +422,11 @@ function viewReport(id) {
                                         <span>${day.name}</span>
                                         ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${bhStunden(hrs)} ${L('Std.', 'hrs')}</span>` : ''}
                                     </div>
-                                    <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(displayText)}</div>
+                                    <div class="bt-ansicht" style="padding:0.75rem 1rem;font-size:0.88rem;">${bhTextHtml(displayText)}</div>
                                 </div>`;
     }).join('')}
                         </div>
-                    ` : `<div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem;">${escapeHtml(report.activities)}</div>`}
+                    ` : `<div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 0.92rem;" class="bt-ansicht">${bhTextHtml(report.activities)}</div>`}
                 </div>
 
                 ${report.school ? `
@@ -428,7 +434,7 @@ function viewReport(id) {
                     <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--cyan); display: flex; align-items: center; gap: 8px;">
                         <svg class="icon" style="width:16px;height:16px"><use href="#i-book"/></svg> ${L('Berufsschule', 'Vocational school')}
                     </h3>
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem;">${escapeHtml(report.school)}</div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); font-size: 0.92rem;" class="bt-ansicht">${bhTextHtml(report.school)}</div>
                 </div>
                 ` : ''}
 

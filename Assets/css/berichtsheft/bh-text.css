@@ -1,0 +1,124 @@
+/* bh-text.css — Teil von /berichtsheft/
+   Formatierter Berichtstext: der Editor (bh-editor.js) und die Anzeige (BHText.zuHtml).
+   Beide nutzen DENSELBEN Zeilenaufbau (.bt-z mit data-art / data-ebene / data-nr), die
+   Listenzeichen setzt nur dieses CSS — so sieht der Text im Editor genau so aus wie in der
+   Berichtsansicht. Unterpunkte mit Strich wie im IHK-Portal. */
+
+/* ══════════ ZEILEN (Editor und Ansicht) ══════════ */
+.bt-z { position: relative; min-height: 1.6em; }
+.bt-z[data-art] { padding-left: 1.35em; }
+.bt-z[data-ebene="2"] { margin-left: 1.35em; }
+.bt-z[data-art]::before {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1.1em;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.bt-z[data-art="ul"]::before { content: '•'; text-align: center; }
+.bt-z[data-art="ul"][data-ebene="2"]::before { content: '–'; }
+.bt-z[data-art="ol"]::before { content: attr(data-nr) '.'; text-align: right; padding-right: 0.25em; width: 1.1em; }
+.bt-z strong { font-weight: 650; color: var(--text-main); }
+.bt-z u { text-underline-offset: 2px; }
+/* Ansicht: Zeilen eines Berichts (bh-bericht.js viewReport) */
+.bt-ansicht { line-height: 1.7; }
+.bt-ansicht .bt-z + .bt-z[data-art]:not([data-ebene]) { margin-top: 1px; }
+
+/* ══════════ EDITOR ══════════ */
+.bt {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-input);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.bt.ist-aktiv {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.08);
+}
+
+.bt-leiste {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.bt-leiste::-webkit-scrollbar { display: none; }
+/* Tagesfelder: die Leiste erst beim Schreiben — fünf Leisten untereinander wären Lärm */
+.bt-tag .bt-leiste { display: none; }
+.bt-tag.ist-aktiv .bt-leiste,
+.bt-tag:focus-within .bt-leiste { display: flex; }
+
+.bt-knopf {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 28px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+.bt-knopf svg { width: 16px; height: 16px; }
+@media (hover: hover) and (pointer: fine) {
+    .bt-knopf:hover { background: var(--bg-hover); color: var(--text-main); }
+}
+.bt-knopf[aria-pressed="true"] { background: rgba(var(--primary-rgb), 0.14); color: var(--primary); }
+.bt-knopf:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.bt-trenner { flex: 0 0 1px; align-self: stretch; margin: 4px 4px; background: var(--border); }
+
+.bt-feld {
+    position: relative;
+    padding: 10px 13px;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    font-family: var(--font-main);
+    line-height: 1.6;
+    max-height: 420px;
+    overflow-y: auto;
+    outline: none;
+    overflow-wrap: anywhere;
+    cursor: text;
+}
+.bt-tag .bt-feld { font-size: 0.85rem; line-height: 1.5; max-height: 320px; }
+/* Platzhalter: erste Zeile des alten placeholder-Textes */
+.bt-feld.ist-leer::before {
+    content: attr(data-platzhalter);
+    position: absolute;
+    pointer-events: none;
+    color: var(--text-dim);
+    white-space: pre-line;
+    max-width: calc(100% - 26px);
+    overflow: hidden;
+}
+
+/* Das echte Feld: unsichtbar, aber fokussierbar (Pflichtfeld-Hinweis des Browsers) */
+.bt-quelle {
+    position: absolute !important;
+    left: 12px;
+    bottom: 0;
+    width: 1px !important;
+    height: 1px !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0;
+    pointer-events: none;
+    resize: none;
+}
+
+@media (hover: none) {
+    /* Finger brauchen Platz: 36 px Knöpfe */
+    .bt-knopf { width: 36px; height: 34px; }
+    .bt-feld { font-size: 16px; }   /* iOS zoomt sonst beim Fokus */
+}
+@media (prefers-reduced-motion: reduce) {
+    .bt, .bt-knopf { transition: none; }
+}

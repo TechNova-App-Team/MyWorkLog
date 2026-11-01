@@ -264,21 +264,51 @@
     box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
 }
 
+/* Jeder Tag eine Karte (Redesign 01.11.2026): Kopf mit Tag, Schultag und Stunden oben,
+   darunter der Editor (bh-editor.js) bündig — Rahmen und Fokusring trägt die Karte,
+   nicht das Feld. Vorher klebte der Kopf des nächsten Tages am Feld darüber. */
+.daily-day-block {
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-input);
+    overflow: hidden;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.daily-day-block:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.08);
+}
+.daily-day-block .bt,
+.daily-day-block .bt.ist-aktiv {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+/* Fallback ohne Editor: das alte Feld bündig in der Karte */
+.daily-day-block > .daily-textarea { border: 0; border-radius: 0; background: transparent; }
+.daily-day-block > .daily-textarea:focus { box-shadow: none; }
+
+/* Schultag: Akzent als Innenkante, damit die Karte ihre Breite behält */
 .daily-day-block.is-school-day {
-    background: rgba(var(--primary-rgb), 0.03);
-    border-left: 3px solid var(--primary);
-    padding-left: 10px;
-    /* Optional, for visual inset */
-    border-radius: var(--radius-sm);
+    background: rgba(var(--primary-rgb), 0.04);
+    box-shadow: inset 3px 0 0 var(--primary);
+}
+.daily-day-block.is-school-day:focus-within {
+    box-shadow: inset 3px 0 0 var(--primary), 0 0 0 2px rgba(var(--primary-rgb), 0.08);
 }
 
 .daily-day-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 8px;
+    padding: 9px 12px 9px 14px;
+    border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
 }
+.daily-day-header .day-name { font-weight: 650; font-size: 0.9rem; color: var(--text-main); }
+.daily-day-header .day-date { font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-muted); }
 
 .daily-school-toggle {
     display: flex;

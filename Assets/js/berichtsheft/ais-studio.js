@@ -941,7 +941,7 @@ function renderPreview(week) {
                     <ul class="ais-day-entries">
                         ${day.entries.map((entry, j) => `
                             <li${bhIstUnterpunkt(entry) ? ' class="is-unterpunkt"' : ''}>
-                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, this.textContent)">${escapeHtml(bhUnterpunktText(entry.replace('• ', '')))}</span>
+                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, typeof BHText !== 'undefined' ? BHText.ausDom(this) : this.textContent)">${typeof BHText !== 'undefined' ? BHText.inlineHtml(bhUnterpunktText(entry.replace('• ', ''))) : escapeHtml(bhUnterpunktText(entry.replace('• ', '')))}</span>
                             </li>
                         `).join('')}
                     </ul>

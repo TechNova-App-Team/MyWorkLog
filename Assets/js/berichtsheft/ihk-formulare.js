@@ -467,6 +467,8 @@
 
     function linesHtml(lines) {
         if (!lines || !lines.length) return '';
+        // Formatiert wie im PDF (bh-text.js); Zeilen als <span>, damit das Layout der Vorschau bleibt
+        if (typeof BHText !== 'undefined') return '<span class="bt-ansicht">' + BHText.zuHtml(lines.join('\n'), { tag: 'span' }).replace(/<span class="bt-z"/g, '<span style="display:block" class="bt-z"') + '</span>';
         return lines.map(l => esc(l) || '&nbsp;').join('<br>');
     }
 
@@ -654,12 +656,25 @@
         const hw = model.hoursCol ? PDF.HOURS_W : 0;
         const aw = model.arpCol ? PDF.ARP_W : 0;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+        return textZeilen(doc, sec.lines, CW - hw - aw - 5);
+    }
+
+    // Formatierter Berichtstext (bh-text.js): fett, kursiv, unterstrichen, Listen, Unterpunkte.
+    // Die Zeilen sind dann Objekte statt Strings; '' bleibt die Leerzeile. Ohne BHText
+    // (z. B. in Tests, die nur diese Datei laden) der alte Umbruch, aber WinAnsi-sicher
+    // gemacht wäre er dort nicht — deshalb lädt die Seite bh-text.js VOR dieser Datei.
+    function textZeilen(doc, lines, breite) {
+        if (typeof BHText !== 'undefined') return BHText.pdfZeilen(doc, lines.join('\n'), breite);
         const out = [];
-        sec.lines.forEach(l => {
+        lines.forEach(l => {
             if (!l) { out.push(''); return; }
-            doc.splitTextToSize(l, CW - hw - aw - 5).forEach(w => out.push(w));
+            doc.splitTextToSize(l, breite).forEach(w => out.push(w));
         });
         return out;
+    }
+    function textZeichnen(doc, ln, x, y) {
+        if (typeof BHText !== 'undefined') BHText.pdfText(doc, ln, x, y);
+        else if (ln) doc.text(ln, x, y);
     }
 
     // Verteilt die Resthoehe der Seite auf die Textbloecke. Wer mehr Text hat
@@ -820,7 +835,7 @@
             if (aw) doc.line(PDF.ML + CW - hw - aw, y, PDF.ML + CW - hw - aw, y + boxH);
 
             doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-            chunk.forEach((ln, i) => doc.text(ln, PDF.ML + 2.5, y + 4.6 + i * PDF.LH));
+            chunk.forEach((ln, i) => textZeichnen(doc, ln, PDF.ML + 2.5, y + 4.6 + i * PDF.LH));
             if (first && hw && sec.hours) {
                 doc.text(String(sec.hours), PDF.ML + CW - hw / 2, y + 5.5, { align: 'center' });
             }
@@ -892,7 +907,7 @@
                 doc.text(sec.sumRow, PDF.ML + PDF.DAY_W + 1.8, y + 5.2);
             }
             doc.setFont('helvetica', 'normal');
-            chunk.forEach((ln, i) => doc.text(ln, PDF.ML + PDF.DAY_W + 1.8, y + 4.6 + i * PDF.LH));
+            chunk.forEach((ln, i) => textZeichnen(doc, ln, PDF.ML + PDF.DAY_W + 1.8, y + 4.6 + i * PDF.LH));
             if (hw && hours) doc.text(String(hours), PDF.ML + PDF.DAY_W + mainW + hw / 2, y + 5, { align: 'center' });
             // Zusatzspalten (ARP-Variante). Ohne diese Schleife stuenden die
             // Einzelstunden in der Vorschau, aber nicht auf dem Papier.
@@ -922,11 +937,7 @@
 
         sec.rows.forEach(r => {
             doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6);
-            let txt = [];
-            r.lines.forEach(l => {
-                if (!l) { txt.push(''); return; }
-                doc.splitTextToSize(l, mainW - 3).forEach(w => txt.push(w));
-            });
+            let txt = textZeilen(doc, r.lines, mainW - 3);
             let label = r.label;
             while (true) {
                 if (contentBottom - y < 12) y = breakPage();

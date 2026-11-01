@@ -288,11 +288,13 @@ function updatePDFPreview() {
     const statusLabel = { incomplete: 'Entwurf', complete: 'Vollständig', signed: 'Unterschrieben' }[report.status] || 'Entwurf';
     const zeitraum = `${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}`;
 
+    // Vorschau zeigt Klartext: die Formatierung (bh-text.js) sieht man im PDF selbst
+    const kt = (t) => (typeof BHText !== 'undefined' ? BHText.klartext(t || '') : String(t || ''));
     // Build activities rows
     let activityRows = '';
     if (report.mode === 'daily' && report.dailyActivities) {
         DAYS_ORDER.forEach(key => {
-            const text = report.dailyActivities[key];
+            const text = kt(report.dailyActivities[key]);
             if (!text) return;
             const hrs = report.dailyHours ? report.dailyHours[key] : null;
             const firstLine = text.split('\n')[0].replace(/^[•\-]\s*/, '').substring(0, 65);
@@ -303,7 +305,7 @@ function updatePDFPreview() {
                     </tr>`;
         });
     } else if (report.activities) {
-        const lines = report.activities.split('\n').slice(0, 5);
+        const lines = kt(report.activities).split('\n').slice(0, 5);
         lines.forEach((line, i) => {
             const day = DAYS_ORDER[i];
             const dayName = DAYS_MAP[day] || `Tag ${i + 1}`;
@@ -318,7 +320,7 @@ function updatePDFPreview() {
     const schoolHtml = showSchool && report.school ? `
                 <div class="doc-school">
                     <div class="doc-school-head">Berufsschule</div>
-                    <div class="doc-school-body">${escapeHtml(report.school.split('\n')[0].substring(0, 120))}${report.school.length > 120 ? '…' : ''}</div>
+                    <div class="doc-school-body">${escapeHtml(kt(report.school).split('\n')[0].substring(0, 120))}${report.school.length > 120 ? '…' : ''}</div>
                 </div>` : '';
 
     const sigHtml = showSig ? `

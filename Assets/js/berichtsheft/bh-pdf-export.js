@@ -5,6 +5,18 @@
 // Emojis in den Text geben, die kommen als falsches Glyph heraus.
 // Herausgeloest aus pages/berichtsheft/index.html.
 
+// Berichtstext ist formatiert (bh-text.js: fett, kursiv, unterstrichen, Listen) — umbrechen
+// und zeichnen nur über diese zwei, sonst stehen "**" im PDF und ein "◦" wird „%æ".
+function bhPdfZeilen(doc, text, breite) {
+    const t = String(text || '').replace(/^\n+|\s+$/g, '');
+    if (typeof BHText !== 'undefined') return BHText.pdfZeilen(doc, t, breite);
+    return doc.splitTextToSize(t.trim(), breite);
+}
+function bhPdfText(doc, ln, x, y) {
+    if (typeof BHText !== 'undefined') BHText.pdfText(doc, ln, x, y);
+    else if (ln) doc.text(ln, x, y);
+}
+
 // MAIN EXPORT FUNCTION — opens modal
 function exportReportPDF(id) {
     openPDFModal(id);
@@ -222,7 +234,7 @@ function renderSingleReportToDoc(doc, report) {
 
     function drawRow(dayName, text, hrs) {
         font('normal', T.body, T.text);
-        const lines = doc.splitTextToSize(text.trim(), textW);
+        const lines = bhPdfZeilen(doc, text, textW);
         const rH = Math.max(isClean ? 9 : 8, lines.length * T.lh + (isClean ? 4 : 3.5));
         if (y + rH > PH - 48) y = newPage();
 
@@ -244,7 +256,7 @@ function renderSingleReportToDoc(doc, report) {
         doc.text(dayName, ML + (isClean ? 1.5 : 0), base);
 
         font('normal', T.body, T.text);
-        lines.forEach((ln, li) => doc.text(ln, textX, base + li * T.lh));
+        lines.forEach((ln, li) => bhPdfText(doc, ln, textX, base + li * T.lh));
 
         if (optHours && hrs) {
             font('normal', isClean ? 7 : T.body - 1, T.muted);
@@ -278,7 +290,7 @@ function renderSingleReportToDoc(doc, report) {
         const sz = isClean ? 8.5 : T.body;
         const lh = isClean ? 5 : T.lh;
         font('normal', sz, T.text);
-        const sLines = doc.splitTextToSize(report.school.trim(), isClean ? CW - 6 : CW);
+        const sLines = bhPdfZeilen(doc, report.school, isClean ? CW - 6 : CW);
         const sH = Math.max(isClean ? 14 : 6, sLines.length * lh + (isClean ? 6 : 2));
         if (isClean) {
             doc.setDrawColor(...T.hair); doc.setLineWidth(0.12);
@@ -287,7 +299,7 @@ function renderSingleReportToDoc(doc, report) {
         const sx = isClean ? ML + 3 : ML;
         const sy = y + (isClean ? 5.5 : 3.5);
         sLines.forEach((ln, li) => {
-            if (sy + li * lh < PH - 10) doc.text(ln, sx, sy + li * lh);
+            if (sy + li * lh < PH - 10) bhPdfText(doc, ln, sx, sy + li * lh);
         });
         y += sH;
     }

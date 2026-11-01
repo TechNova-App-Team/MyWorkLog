@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.5.3-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.5.4-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.5.3** · 2026-11-01
+Aktuelle Version: **v9.5.4** · 2026-11-01
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.5.3** | 2026-11-01 | Fachgespräch üben: Prüferfragen zum eigenen Projekt und zum eigenen Beruf |
+| **9.5.4** | 2026-11-01 | Berichte lassen sich formatieren wie im IHK-Portal |
+| 9.5.3 | 2026-11-01 | Fachgespräch üben: Prüferfragen zum eigenen Projekt und zum eigenen Beruf |
 | 9.5.2 | 2026-11-01 | Woche aus Kalender und Stundenplan vorschlagen, Thinking im Ausbildungs-Pass |
 | 9.5.1 | 2026-11-01 | Der Berichtsheft-Assistent kennt alle 316 Ausbildungsberufe |
 | 9.5.0 | 2026-10-31 | Das Berichtsheft gleicht sich mit dem Ausbildungsrahmenplan des eigenen Berufs ab |
-| 9.4.10 | 2026-10-31 | Halloween: die ganze App wird zum Geisterhaus |
 
 <!-- changelog:end -->
 

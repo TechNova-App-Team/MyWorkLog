@@ -317,6 +317,12 @@ const CLOUD_FORM = {
         proTag: 'GENAU 1 Absatz (ein Array-Element)',
     },
 };
+// Formatierung wie im IHK-Portal (seit 01.11.2026, bh-text.js liest sie in Editor, Ansicht
+// und PDF). Gilt für JEDE Schreibform, deshalb hier angehängt statt viermal ausgeschrieben.
+// Sparsam: ein Bericht voller Fettdruck liest sich wie Werbung, der Ausbilder sucht die
+// Tätigkeit. Mehr nur, wenn der Azubi es ausdrücklich verlangt.
+const FORMAT_REGEL = 'FORMATIERUNG (wie im IHK-Portal): Den wichtigsten Fachbegriff, ein System oder Programm darfst du sparsam mit **fett** hervorheben — höchstens ein Wort oder Begriff je Eintrag und nicht in jedem Eintrag. Andere Formatierung nur, wenn der Nutzer sie verlangt: *kursiv*, __unterstrichen__, Nummerierung mit "1. " am Eintragsanfang. Keine Überschriften, keine Emojis, keine anderen Markdown-Zeichen.';
+Object.values(CLOUD_FORM).forEach(f => f.stil.push(FORMAT_REGEL));
 
 const CLOUD_UMFANG = {
     kurz: { stichpunkte: '3 Einträge pro Tag', fliesstext: '2-3 Sätze im Absatz' },
@@ -500,7 +506,7 @@ Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag
 ✗ FALSCH:  ["Montag: …","Dienstag: …"]        ← Strings statt Objekten
 ✗ FALSCH:  [["Tätigkeit 1","Tätigkeit 2"]]    ← nur entries ohne day-Feld
 
-Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
+Kein Markdown-Block um die Antwort (kein \`\`\`), Formatierung nur IN den Einträgen nach der Regel FORMATIERUNG. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
 
 [SPRACHE — NICHT VERHANDELBAR]
 - Jeder entries-Eintrag und jedes schoolTopic ist auf ${_zielSprache}. Kein einziger Eintrag in einer anderen Sprache.

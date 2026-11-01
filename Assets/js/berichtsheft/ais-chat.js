@@ -61,6 +61,8 @@ const Lx = (de, en) => (typeof L === 'function' ? L(de, en) : de);
 const esc = (s) => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+// Einträge können formatiert sein (**fett** u. a., bh-text.js) — so zeigt sie auch das Heft
+const eintragHtml = (s) => (typeof BHText !== 'undefined' ? BHText.inlineHtml(s) : esc(s));
 const istEn = () => document.documentElement.lang === 'en';
 
 // Die Tagesnamen im Entwurf und im Prompt sind SCHLUESSEL, immer deutsch
@@ -147,11 +149,13 @@ function entwurfZusammenfuehren(alt, tage, form, erlaubt, verbote) {
         const status = STATUS.includes(d.status) ? d.status : '';
         let entries = Array.isArray(d.entries) ? d.entries : [];
         // "- " bleibt stehen: das ist der Unterpunkt-Marker (bhGliederung in
-        // bh-basis.js entscheidet, ob er einer ist). Nur •, * und Nummern fliegen.
+        // bh-basis.js entscheidet, ob er einer ist). Nur • und * fliegen.
+        // Nummern ("1. ") bleiben seit 01.11.2026: sie sind jetzt eine Formatierung, die der
+        // Azubi verlangen kann (bh-text.js, FORMAT_REGEL in ais-cloud.js).
         // 14 statt 10: mit Oberpunkten hat ein ausfuehrlicher Tag mehr Zeilen.
         entries = bhGliederung(entries
             .filter(x => typeof x === 'string')
-            .map(x => x.replace(/^\s*(?:[•*]|\d+[.)])\s+/, '').trim())
+            .map(x => x.replace(/^\s*[•*]\s+/, '').trim())
             .filter(x => x && bhUnterpunktText(x).replace(/[.…\s]/g, ''))
             .filter(x => !(verbote && typeof bhIstAbschrift === 'function' && bhIstAbschrift(x, verbote)))
             .map(x => x.slice(0, 600))
@@ -480,8 +484,8 @@ function tagHTML(t, opt) {
     else if (!t.entries.length) rumpf = '<p class="aic-tag-leer">' + Lx('Noch nichts eingetragen', 'Nothing entered yet') + '</p>';
     else rumpf = (t.isSchoolDay && t.schoolTopic ? '<p class="aic-tag-thema">' + esc(t.schoolTopic) + '</p>' : '') +
         '<ul class="aic-tag-liste">' + t.entries.map(x => bhIstUnterpunkt(x)
-            ? '<li class="is-unterpunkt">' + esc(bhUnterpunktText(x)) + '</li>'
-            : '<li>' + esc(x) + '</li>').join('') + '</ul>';
+            ? '<li class="is-unterpunkt">' + eintragHtml(bhUnterpunktText(x)) + '</li>'
+            : '<li>' + eintragHtml(x) + '</li>').join('') + '</ul>';
     const kl = 'aic-tag' + (hatInhalt ? '' : ' is-leer') + (opt.neu && opt.neu.includes(t.index) ? ' is-neu' : '');
     return '<div class="' + kl + '">' + kopf + '<div class="aic-tag-rumpf">' + rumpf + '</div></div>';
 }
