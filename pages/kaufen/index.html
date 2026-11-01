@@ -6,9 +6,10 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/Grafiken/apple-touch-icon.png">
-    <!-- Kasse für den Ausbildungs-Pass (seit 01.11.2026 echt: Stripe Checkout über den ai-proxy,
-         /pass/kasse und /pass/kauf). Ohne Konto: wer kauft, bekommt einen Pass-Code und schaltet
-         damit jedes weitere Gerät frei — viele Azubis nutzen die App ohne Anmeldung.
+    <!-- Kasse für den Ausbildungs-Pass: Stripe Checkout über den ai-proxy (/pass/kasse, /pass/kauf).
+         Der Pass hängt am MyWorkLog-KONTO (Supabase, Tabelle pass_freischaltungen) — Entscheidung
+         des Nutzers 01.11.2026, keine teilbaren Kaufcodes. Darum: ohne Anmeldung kein Kauf, der
+         Knopf führt über /?cloud=login&back=kaufen zur Anmeldung und wieder hierher.
          Live verkauft die Seite erst, wenn im Worker ein LIVE-Schlüssel steckt; im Testbetrieb
          (sk_test_) lehnt der Worker jeden Aufruf außer localhost ab, die Seite sagt dann „bald".
          Bewusst noindex, ohne /en/-Fassung und ohne Sitemap: Einstieg nur über /preise/ und das Siegel.
@@ -18,10 +19,12 @@
     <meta name="theme-color" content="#ffffff">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap">
-    <link rel="stylesheet" href="/Assets/css/kaufen.css?v=87e84cefeb">
-    <script defer src="/Assets/js/mwl-pass.js?v=13a07c7ac6"></script>
-    <script defer src="/Assets/js/kaufen.js?v=1bd20363b8"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/Assets/css/kaufen.css?v=eee02386f7">
+    <!-- supabase-config lädt die Bibliothek nur, wenn eine Sitzung im Speicher liegt (loadSupabase) -->
+    <script src="/config/supabase-config.js"></script>
+    <script defer src="/Assets/js/mwl-pass.js?v=1a957ea4a5"></script>
+    <script defer src="/Assets/js/kaufen.js?v=8e57a3911d"></script>
 </head>
 <body class="kf">
 
@@ -32,6 +35,8 @@
     <section class="kf-schritt" data-ansicht="wahl">
         <h1 class="kf-titel">Ausbildungs-Pass</h1>
         <p class="kf-unter">Einmal zahlen, für die ganze Ausbildung. Kein Abo.</p>
+
+        <p class="kf-konto" id="kfKonto" hidden></p>
 
         <h2 class="kf-frage">Wie lange dauert deine Ausbildung?</h2>
         <div class="kf-wahl" role="radiogroup" aria-label="Ausbildungsdauer">
@@ -44,42 +49,25 @@
         <p class="kf-meldung" id="kfMeldung" role="status"></p>
 
         <ul class="kf-fakten">
-            <li><span>Kein Konto nötig.</span> Nach der Zahlung bekommst du einen Pass-Code. Damit schaltest du jedes weitere Gerät frei.</li>
+            <li><span>Hängt an deinem Konto.</span> Auf jedem Gerät, auf dem du mit deinem MyWorkLog-Konto angemeldet bist, ist der Pass sofort da.</li>
             <li><span>Bezahlt wird bei Stripe.</span> Karte, Apple Pay, Google Pay und mehr. MyWorkLog sieht keine Zahlungsdaten.</li>
             <li><span>Keine Umsatzsteuer.</span> Gemäß § 19 UStG (Kleinunternehmer). Die Quittung kommt per E-Mail von Stripe.</li>
         </ul>
-
-        <details class="kf-einloesen" id="kfEinloesen">
-            <summary>Ich habe schon einen Pass-Code</summary>
-            <form class="kf-code" id="kfCodeForm" novalidate>
-                <label class="kf-vh" for="kfCode">Pass-Code</label>
-                <input type="text" id="kfCode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="MWL-XXXX-XXXX-XXXX">
-                <button type="submit" class="kf-knopf is-leise">Freischalten</button>
-            </form>
-            <p class="kf-meldung" id="kfCodeMeldung" role="status"></p>
-        </details>
     </section>
 
     <!-- Rückkehr von Stripe, bezahlt -->
     <section class="kf-schritt" data-ansicht="fertig" hidden>
         <p class="kf-haken" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></p>
         <h1 class="kf-titel" tabindex="-1">Dein Pass ist aktiv.</h1>
-        <p class="kf-unter">Auf diesem Gerät ist alles freigeschaltet, gültig bis <span id="kfBis">…</span>.</p>
-
-        <div class="kf-codekarte">
-            <p class="kf-codekarte-titel">Dein Pass-Code</p>
-            <p class="kf-codewert" id="kfCodeWert">MWL-…</p>
-            <button type="button" class="kf-kopieren" id="kfKopieren">Kopieren</button>
-        </div>
-        <p class="kf-klein">Schreib ihn dir auf oder mach ein Foto. Mit dem Code schaltest du den Pass am Handy, am Laptop oder nach dem Löschen der Browserdaten wieder frei. Er steht auch hier auf diesem Gerät, solange du die Daten nicht löschst.</p>
-
+        <p class="kf-unter">Gültig bis <span class="kf-datum" id="kfBis">…</span>.</p>
+        <p class="kf-klein" id="kfFertigKonto">Er hängt an deinem Konto. Auf einem anderen Gerät meldest du dich einfach mit demselben Konto an.</p>
         <a class="kf-knopf" id="kfWeiter" href="/berichtsheft/?pass=neu">Zum Berichtsheft</a>
     </section>
 
     <!-- Rückkehr, Zahlung noch nicht bestätigt (z. B. Lastschrift) -->
     <section class="kf-schritt" data-ansicht="offen" hidden>
         <h1 class="kf-titel" tabindex="-1">Zahlung ist unterwegs.</h1>
-        <p class="kf-unter">Bei manchen Zahlarten bestätigt die Bank erst nach einigen Minuten bis Tagen. Sobald das passiert ist, bekommst du hier deinen Code. Lass die Seite offen oder öffne den Link aus der Bestätigung von Stripe später noch einmal.</p>
+        <p class="kf-unter">Bei manchen Zahlarten bestätigt die Bank erst nach einigen Minuten bis Tagen. Sobald das passiert ist, wird der Pass an deinem Konto freigeschaltet, auch wenn du diese Seite schließt.</p>
         <button type="button" class="kf-knopf is-leise" id="kfNochmal">Erneut prüfen</button>
         <p class="kf-meldung" id="kfOffenMeldung" role="status"></p>
     </section>

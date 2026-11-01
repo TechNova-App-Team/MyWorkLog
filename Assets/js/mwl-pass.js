@@ -18,6 +18,12 @@
 // Laden: <script src="/Assets/js/mwl-pass.js" data-laden> — mit data-laden holt die
 // Seite das Paket beim Start, wenn eine Freischaltung da ist (nur /berichtsheft/).
 // Ohne (App, /kaufen/) nur frei()/einloesen() fuer Etikett und Kasse.
+//
+// Seit 01.11.2026 haengt der gekaufte Pass am Supabase-KONTO (Tabelle pass_freischaltungen,
+// Entscheidung des Nutzers: keine teilbaren Kaufcodes). Wer angemeldet ist, holt sich das
+// Pass-Token still beim Laden (kontoFreischalten) — es gilt 7 Tage und wird vor Ablauf
+// erneuert. Ohne Pass merkt sich die Seite das 12 Stunden, damit nicht jeder Seitenaufruf
+// eines Kontos ohne Pass den Worker (und GoTrue) fragt. Der Haupt-Code ({code}) bleibt.
 
 window.MWLPass = (function () {
     'use strict';
@@ -40,8 +46,36 @@ window.MWLPass = (function () {
         try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
     }
 
+    const SB_SCHLUESSEL = 'sb-fouucibowmukxvweratn-auth-token';
+    const KEIN_PASS = 'mwl_pass_kein';     // Zeitpunkt der letzten Antwort „kein Pass am Konto“
+    const angemeldet = () => { try { return !!localStorage.getItem(SB_SCHLUESSEL); } catch (e) { return false; } };
+
+    // Supabase-Zugangstoken. Erst ueber den EINEN Client der Seite (frischt abgelaufene Tokens
+    // auf), sonst die gespeicherte Sitzung, solange sie noch gilt. Eine Seite ohne eigenen
+    // Client kann MWLPass.tokenQuelle setzen (/kaufen/).
+    let tokenQuelle = null;
+    async function kontoToken() {
+        const ausClient = async (sb) => { const { data } = await sb.auth.getSession(); return (data && data.session && data.session.access_token) || ''; };
+        try {
+            if (tokenQuelle) return (await tokenQuelle()) || '';
+            if (window.BHB2B && typeof BHB2B.client === 'function' && angemeldet()) return await ausClient(await BHB2B.client());
+            if (window.cloudSync && cloudSync.client) return await ausClient(cloudSync.client);
+        } catch (e) { /* weiter mit der gespeicherten Sitzung */ }
+        try {
+            const s = JSON.parse(localStorage.getItem(SB_SCHLUESSEL) || 'null');
+            if (s && s.access_token && s.expires_at * 1000 > Date.now() + 60000) return s.access_token;
+        } catch (e) {}
+        return '';
+    }
+    async function mitKonto(pfad, init = {}) {
+        const t = await kontoToken();
+        if (!t) return null;
+        return fetch(API + pfad, { ...init, headers: { ...(init.headers || {}), Authorization: 'Bearer ' + t } });
+    }
+
     function merken(d) {
-        try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ token: d.token, bis: d.bis, code: d.code || undefined })); } catch (e) { return false; }
+        try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ token: d.token, bis: d.bis, passBis: d.passBis || d.bis })); } catch (e) { return false; }
+        try { localStorage.removeItem(KEIN_PASS); } catch (e) {}
         try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
         return true;
     }
@@ -55,35 +89,64 @@ window.MWLPass = (function () {
         return { ok: true };
     }
 
-    // Kasse (Stripe Checkout, seit 01.11.2026). → { ok, url } | { ok:false, fehler: 'test'|'zu'|'netz'|'server' }
-    // 'zu' = Worker hat noch keinen Stripe-Schluessel, 'test' = Testbetrieb, nur von localhost.
+    // Kasse (Stripe Checkout). → { ok, url } | { ok:false, fehler: 'anmelden'|'test'|'zu'|'netz'|'server' }
+    // 'zu' = Worker ohne Stripe-/Service-Schluessel, 'test' = Testbetrieb, nur von localhost.
     async function kasse(dauer) {
         let r;
         try {
-            r = await fetch(API + '/pass/kasse', {
+            r = await mitKonto('/pass/kasse', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dauer: Number(dauer) }),
             });
         } catch (e) { return { ok: false, fehler: 'netz' }; }
+        if (!r) return { ok: false, fehler: 'anmelden' };
         const d = await r.json().catch(() => null);
+        if (r.status === 401) return { ok: false, fehler: 'anmelden' };
         if (r.status === 503) return { ok: false, fehler: 'zu' };
         if (r.status === 403 && d && d.test) return { ok: false, fehler: 'test' };
         if (!r.ok || !d || !/^https:\/\/checkout\.stripe\.com\//.test(d.url || '')) return { ok: false, fehler: 'server' };
         return { ok: true, url: d.url };
     }
 
-    // Nach der Rueckkehr von Stripe: Zahlung pruefen lassen, Code + Token holen.
-    // → { ok, code, bis } | { ok:false, fehler: 'offen'|'kein'|'netz'|'server' }
+    // Nach der Rueckkehr von Stripe: Zahlung pruefen lassen, Token holen.
+    // → { ok, passBis } | { ok:false, fehler: 'anmelden'|'fremd'|'offen'|'kein'|'netz'|'server' }
     async function kaufAbholen(sitzung) {
         let r;
-        try { r = await fetch(API + '/pass/kauf?sitzung=' + encodeURIComponent(sitzung), { cache: 'no-store' }); }
+        try { r = await mitKonto('/pass/kauf?sitzung=' + encodeURIComponent(sitzung), { cache: 'no-store' }); }
         catch (e) { return { ok: false, fehler: 'netz' }; }
+        if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
         const d = await r.json().catch(() => null);
+        if (r.status === 403) return { ok: false, fehler: 'fremd' };
         if (r.status === 202) return { ok: false, fehler: 'offen' };
         if (r.status === 404 || r.status === 400) return { ok: false, fehler: 'kein' };
         if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
         if (!merken(d)) return { ok: false, fehler: 'speicher' };
         const n = await nachFreischalten();
-        return n.ok ? { ok: true, code: d.code, bis: d.bis } : n;
+        return n.ok ? { ok: true, passBis: d.passBis || d.bis } : n;
+    }
+
+    // Pass des angemeldeten Kontos auf dieses Geraet holen. → { ok } | { ok:false, fehler: 'anmelden'|'kein'|'netz'|'server' }
+    async function kontoFreischalten() {
+        let r;
+        try {
+            r = await mitKonto('/pass/freischalten', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        } catch (e) { return { ok: false, fehler: 'netz' }; }
+        if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
+        if (r.status === 404) { try { localStorage.setItem(KEIN_PASS, String(Date.now())); } catch (e) {} return { ok: false, fehler: 'kein' }; }
+        const d = await r.json().catch(() => null);
+        if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
+        if (!merken(d)) return { ok: false, fehler: 'speicher' };
+        return nachFreischalten();
+    }
+
+    // Still beim Laden: angemeldet, aber kein (oder bald ablaufendes) Token → beim Konto nachfragen
+    function stillErneuern() {
+        if (!angemeldet()) return;
+        const g = gespeichert();
+        if (g && g.token && g.bis - Date.now() > 2 * 86400000) return;
+        let zuletzt = 0;
+        try { zuletzt = Number(localStorage.getItem(KEIN_PASS)) || 0; } catch (e) {}
+        if (!(g && g.token) && Date.now() - zuletzt < 12 * 3600000) return;
+        kontoFreischalten().catch(() => {});
     }
 
     // Pass-Code gegen den Server pruefen. → { ok, fehler }
@@ -198,8 +261,14 @@ window.MWLPass = (function () {
         else laden();
     }
 
-    // Gekaufter Code, falls auf diesem Geraet gekauft — fuer die Anzeige „dein Code“
-    const code = () => { const g = gespeichert(); return (g && g.code) || ''; };
+    // Bis wann der Pass laeuft (nicht das 7-Tage-Token) — fuer Anzeigen
+    const passBis = () => { const g = gespeichert(); return (g && (g.passBis || g.bis)) || 0; };
 
-    return { frei, einloesen, sperren, laden, oeffnen, lokal, kasse, kaufAbholen, code };
+    // Nach dem Laden der Seite, damit BHB2B / cloudSync schon stehen
+    window.addEventListener('load', () => setTimeout(stillErneuern, 1200));
+
+    return {
+        frei, einloesen, sperren, laden, oeffnen, lokal, kasse, kaufAbholen, kontoFreischalten, angemeldet, passBis,
+        set tokenQuelle(f) { tokenQuelle = typeof f === 'function' ? f : null; },
+    };
 })();

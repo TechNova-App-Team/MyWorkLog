@@ -82,7 +82,9 @@ function zeigen(name, opt) {
             '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass. Der ist noch nicht erhältlich.', 'Part of the training pass, which is not available yet.')) + '</p>' +
             '<div class="bs-aktion">' +
                 (lokal
-                    ? '<a class="bs-knopf" href="/kaufen/?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>'
+                    ? '<a class="bs-knopf" href="/kaufen/?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>' +
+                      // Der Pass hängt am Konto: wer gekauft hat und hier abgemeldet ist, muss nur sich anmelden
+                      ((window.MWLPass && MWLPass.angemeldet()) ? '' : '<p class="bs-hinweis">' + esc(L('Schon gekauft? ', 'Already bought? ')) + '<a href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Mit deinem Konto anmelden', 'Sign in with your account')) + '</a></p>')
                     : '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/preise/' : '/preise/') + '">' + esc(L('Pass vormerken', 'Register interest')) + '</a>') +
             '</div>' +
             '<details class="bs-code">' +

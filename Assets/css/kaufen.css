@@ -1,8 +1,7 @@
 /* ═══ KAUFEN (/kaufen/) ═══
    Wunsch des Nutzers 31.10.2026: „seeeehr minimalistisch weiß". Lädt KEIN core.css (dessen
    body sperrt das Scrollen) — eigener kleiner :root wie bei /preise/.
-   Der einzige Akzent ist der Pass-Code nach dem Kauf: der muss abgeschrieben werden, also
-   Mono-Schrift und groß; alles andere bleibt leise. */
+   Einziger Effekt: der grüne Haken nach dem Kauf. */
 
 :root {
     --primary: #5578a8;
@@ -13,7 +12,6 @@
     --weiss: #ffffff;
     --erfolg: #2f8a57;
     --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -38,6 +36,9 @@ body.kf {
 .kf-titel { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; outline: none; text-wrap: balance; }
 .kf-unter { margin-top: 6px; color: var(--text-muted); text-wrap: pretty; }
 .kf-frage { margin: 32px 0 12px; font-size: 1rem; font-weight: 600; }
+.kf-konto { margin-top: 18px; padding: 10px 14px; border-radius: 10px; background: var(--flaeche); color: var(--text-muted); font-size: 0.84rem; text-wrap: pretty; }
+.kf-konto[hidden] { display: none; }
+.kf-datum { white-space: nowrap; }
 .kf-klein { margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; text-wrap: pretty; }
 
 .kf-wahl { display: grid; gap: 8px; }
@@ -87,28 +88,6 @@ body.kf {
 .kf-fakten { display: grid; gap: 10px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--linie); list-style: none; color: var(--text-muted); font-size: 0.84rem; }
 .kf-fakten span { color: var(--text-main); font-weight: 500; }
 
-.kf-einloesen { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--linie); font-size: 0.86rem; }
-.kf-einloesen summary { color: var(--text-muted); cursor: pointer; list-style-position: inside; }
-.kf-einloesen summary:hover { color: var(--text-main); }
-.kf-einloesen[open] summary { color: var(--text-main); margin-bottom: 12px; }
-.kf-code { display: flex; gap: 8px; }
-.kf-code input {
-    flex: 1;
-    min-width: 0;
-    height: 44px;
-    padding: 0 12px;
-    border: 1px solid var(--linie);
-    border-radius: 10px;
-    color: var(--text-main);
-    font-family: var(--font-mono);
-    font-size: 0.88rem;
-    letter-spacing: 0.02em;
-}
-.kf-code input:focus { outline: 2px solid var(--primary); outline-offset: 0; border-color: transparent; }
-.kf-code .kf-knopf { flex: 0 0 auto; width: auto; min-height: 44px; margin-top: 0; }
-
-.kf-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
 /* Nach dem Kauf */
 .kf-haken {
     display: grid;
@@ -120,47 +99,7 @@ body.kf {
     background: color-mix(in srgb, var(--erfolg) 12%, var(--weiss));
     color: var(--erfolg);
 }
-.kf-codekarte {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 4px 12px;
-    margin-top: 28px;
-    padding: 18px 18px 18px 20px;
-    border-radius: 14px;
-    background: var(--flaeche);
-}
-.kf-codekarte-titel { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.78rem; }
-.kf-codewert {
-    font-family: var(--font-mono);
-    font-size: clamp(1.05rem, 4.6vw, 1.3rem);
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-    user-select: all;
-}
-.kf-kopieren {
-    min-height: 36px;
-    padding: 0 14px;
-    border: 1px solid var(--linie);
-    border-radius: 8px;
-    background: var(--weiss);
-    color: var(--text-main);
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: border-color 0.15s var(--ease);
-}
-.kf-kopieren:hover { border-color: color-mix(in srgb, var(--text-main) 30%, transparent); }
-.kf-kopieren:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-
-@media (max-width: 360px) {
-    .kf-codekarte { grid-template-columns: 1fr; }
-    .kf-kopieren { justify-self: start; }
-}
-
 @media (prefers-reduced-motion: reduce) {
-    .kf-knopf, .kf-option, .kf-kopieren { transition: none; }
+    .kf-knopf, .kf-option { transition: none; }
 }
 
-#kfBis { white-space: nowrap; }
