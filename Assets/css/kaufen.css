@@ -1,7 +1,8 @@
 /* ═══ KAUFEN (/kaufen/) ═══
-   Wegwerf-Demo, Wunsch des Nutzers 31.10.2026: „seeeehr minimalistisch weiß". Laedt KEIN
-   core.css (dessen body sperrt das Scrollen) — eigener kleiner :root wie bei /preise/.
-   Die echte Kasse wird neu gestaltet, hier also bewusst nichts Aufwendiges. */
+   Wunsch des Nutzers 31.10.2026: „seeeehr minimalistisch weiß". Lädt KEIN core.css (dessen
+   body sperrt das Scrollen) — eigener kleiner :root wie bei /preise/.
+   Der einzige Akzent ist der Pass-Code nach dem Kauf: der muss abgeschrieben werden, also
+   Mono-Schrift und groß; alles andere bleibt leise. */
 
 :root {
     --primary: #5578a8;
@@ -10,7 +11,9 @@
     --linie: rgba(15, 17, 21, 0.1);
     --flaeche: #f6f7f9;
     --weiss: #ffffff;
+    --erfolg: #2f8a57;
     --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
     --ease: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -29,36 +32,13 @@ body.kf {
 
 .kf-seite { max-width: 440px; margin: 0 auto; padding: 40px 20px 80px; }
 
-.kf-zurueck { color: var(--text-muted); font-size: 0.85rem; text-decoration: none; }
+.kf-zurueck { display: inline-block; margin-bottom: 36px; color: var(--text-muted); font-size: 0.85rem; text-decoration: none; }
 .kf-zurueck:hover { color: var(--text-main); }
 
-.kf-demo {
-    margin: 28px 0 36px;
-    padding: 10px 14px;
-    border: 1px dashed var(--linie);
-    border-radius: 10px;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-}
-
-.kf-titel { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; }
-.kf-unter { margin-top: 4px; color: var(--text-muted); }
-
-.kf-schritte { display: flex; gap: 6px; margin: 32px 0 28px; list-style: none; counter-reset: s; }
-.kf-schritte li {
-    flex: 1;
-    padding-top: 10px;
-    border-top: 2px solid var(--linie);
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
-}
-.kf-schritte li.is-fertig { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
-.kf-schritte li.is-jetzt { border-color: var(--primary); color: var(--text-main); font-weight: 500; }
-
-.kf-schritt h2 { margin-bottom: 14px; font-size: 1.05rem; font-weight: 600; outline: none; }
-.kf-schritt p + p { margin-top: 8px; }
-.kf-klein { margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; }
+.kf-titel { font-size: 1.75rem; font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; outline: none; text-wrap: balance; }
+.kf-unter { margin-top: 6px; color: var(--text-muted); text-wrap: pretty; }
+.kf-frage { margin: 32px 0 12px; font-size: 1rem; font-weight: 600; }
+.kf-klein { margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; text-wrap: pretty; }
 
 .kf-wahl { display: grid; gap: 8px; }
 .kf-option {
@@ -77,13 +57,13 @@ body.kf {
 .kf-option:has(input:checked) { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 5%, var(--weiss)); }
 .kf-option:has(input:focus-visible) { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-.kf-reihe { display: flex; gap: 8px; margin-top: 24px; }
-.kf-reihe .kf-knopf { margin-top: 0; }
 .kf-knopf {
-    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    min-height: 46px;
-    margin-top: 24px;
+    min-height: 48px;
+    margin-top: 20px;
     padding: 0 20px;
     border: 0;
     border-radius: 10px;
@@ -91,44 +71,96 @@ body.kf {
     color: var(--weiss);
     font-size: 0.92rem;
     font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    text-decoration: none;
     cursor: pointer;
     transition: transform 0.15s var(--ease), opacity 0.15s var(--ease);
 }
 .kf-knopf:active { transform: scale(0.98); }
 .kf-knopf:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.kf-knopf:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-.kf-knopf.is-leise { flex: 0 0 auto; width: auto; background: var(--flaeche); color: var(--text-main); }
+.kf-knopf:disabled { opacity: 0.4; cursor: progress; transform: none; }
+.kf-knopf.is-leise { background: var(--flaeche); color: var(--text-main); }
 
-.kf-summe { display: grid; gap: 10px; padding: 16px; border-radius: 12px; background: var(--flaeche); }
-.kf-summe div { display: flex; justify-content: space-between; gap: 16px; font-size: 0.9rem; }
-.kf-summe dd { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.kf-summe .is-gesamt { padding-top: 10px; border-top: 1px solid var(--linie); font-weight: 600; }
-.kf-summe small { color: var(--text-muted); font-weight: 400; }
+.kf-meldung { min-height: 1.2em; margin-top: 10px; color: var(--text-muted); font-size: 0.82rem; }
+.kf-meldung:empty { margin-top: 0; }
 
-.kf-platzhalter {
-    margin-top: 12px;
-    padding: 22px 16px;
-    border: 1px dashed var(--linie);
-    border-radius: 12px;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    text-align: center;
-}
-.kf-meldung { min-height: 1.2em; margin-top: 12px; color: var(--text-muted); font-size: 0.82rem; }
+.kf-fakten { display: grid; gap: 10px; margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--linie); list-style: none; color: var(--text-muted); font-size: 0.84rem; }
+.kf-fakten span { color: var(--text-main); font-weight: 500; }
 
-@media (prefers-reduced-motion: reduce) {
-    .kf-knopf, .kf-option, .kf-schritte li { transition: none; }
-}
-
-.kf-code { display: grid; gap: 6px; margin-top: 12px; font-size: 0.82rem; color: var(--text-muted); }
+.kf-einloesen { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--linie); font-size: 0.86rem; }
+.kf-einloesen summary { color: var(--text-muted); cursor: pointer; list-style-position: inside; }
+.kf-einloesen summary:hover { color: var(--text-main); }
+.kf-einloesen[open] summary { color: var(--text-main); margin-bottom: 12px; }
+.kf-code { display: flex; gap: 8px; }
 .kf-code input {
+    flex: 1;
+    min-width: 0;
     height: 44px;
     padding: 0 12px;
     border: 1px solid var(--linie);
     border-radius: 10px;
     color: var(--text-main);
-    font: inherit;
-    font-size: 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    letter-spacing: 0.02em;
 }
-.kf-code input:focus { outline: 2px solid var(--primary); outline-offset: 0; }
-.kf-code[hidden] { display: none; }
+.kf-code input:focus { outline: 2px solid var(--primary); outline-offset: 0; border-color: transparent; }
+.kf-code .kf-knopf { flex: 0 0 auto; width: auto; min-height: 44px; margin-top: 0; }
+
+.kf-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Nach dem Kauf */
+.kf-haken {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 18px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--erfolg) 12%, var(--weiss));
+    color: var(--erfolg);
+}
+.kf-codekarte {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 4px 12px;
+    margin-top: 28px;
+    padding: 18px 18px 18px 20px;
+    border-radius: 14px;
+    background: var(--flaeche);
+}
+.kf-codekarte-titel { grid-column: 1 / -1; color: var(--text-muted); font-size: 0.78rem; }
+.kf-codewert {
+    font-family: var(--font-mono);
+    font-size: clamp(1.05rem, 4.6vw, 1.3rem);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    user-select: all;
+}
+.kf-kopieren {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--linie);
+    border-radius: 8px;
+    background: var(--weiss);
+    color: var(--text-main);
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.15s var(--ease);
+}
+.kf-kopieren:hover { border-color: color-mix(in srgb, var(--text-main) 30%, transparent); }
+.kf-kopieren:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@media (max-width: 360px) {
+    .kf-codekarte { grid-template-columns: 1fr; }
+    .kf-kopieren { justify-self: start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kf-knopf, .kf-option, .kf-kopieren { transition: none; }
+}
+
+#kfBis { white-space: nowrap; }

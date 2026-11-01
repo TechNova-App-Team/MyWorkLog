@@ -40,6 +40,52 @@ window.MWLPass = (function () {
         try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
     }
 
+    function merken(d) {
+        try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ token: d.token, bis: d.bis, code: d.code || undefined })); } catch (e) { return false; }
+        try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
+        return true;
+    }
+    async function nachFreischalten() {
+        if (autoLaden) {
+            const geladen = await laden();
+            if (!geladen) return { ok: false, fehler: 'paket' };
+        }
+        // Abzeichen, Mikrofone, Pass-Karte (alle im Paket) hoeren hierauf
+        try { window.dispatchEvent(new CustomEvent('mwl-pass-frei')); } catch (e) {}
+        return { ok: true };
+    }
+
+    // Kasse (Stripe Checkout, seit 01.11.2026). → { ok, url } | { ok:false, fehler: 'test'|'zu'|'netz'|'server' }
+    // 'zu' = Worker hat noch keinen Stripe-Schluessel, 'test' = Testbetrieb, nur von localhost.
+    async function kasse(dauer) {
+        let r;
+        try {
+            r = await fetch(API + '/pass/kasse', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dauer: Number(dauer) }),
+            });
+        } catch (e) { return { ok: false, fehler: 'netz' }; }
+        const d = await r.json().catch(() => null);
+        if (r.status === 503) return { ok: false, fehler: 'zu' };
+        if (r.status === 403 && d && d.test) return { ok: false, fehler: 'test' };
+        if (!r.ok || !d || !/^https:\/\/checkout\.stripe\.com\//.test(d.url || '')) return { ok: false, fehler: 'server' };
+        return { ok: true, url: d.url };
+    }
+
+    // Nach der Rueckkehr von Stripe: Zahlung pruefen lassen, Code + Token holen.
+    // → { ok, code, bis } | { ok:false, fehler: 'offen'|'kein'|'netz'|'server' }
+    async function kaufAbholen(sitzung) {
+        let r;
+        try { r = await fetch(API + '/pass/kauf?sitzung=' + encodeURIComponent(sitzung), { cache: 'no-store' }); }
+        catch (e) { return { ok: false, fehler: 'netz' }; }
+        const d = await r.json().catch(() => null);
+        if (r.status === 202) return { ok: false, fehler: 'offen' };
+        if (r.status === 404 || r.status === 400) return { ok: false, fehler: 'kein' };
+        if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
+        if (!merken(d)) return { ok: false, fehler: 'speicher' };
+        const n = await nachFreischalten();
+        return n.ok ? { ok: true, code: d.code, bis: d.bis } : n;
+    }
+
     // Pass-Code gegen den Server pruefen. → { ok, fehler }
     async function einloesen(code) {
         const c = String(code || '').trim();
@@ -54,15 +100,8 @@ window.MWLPass = (function () {
         if (!r.ok) return { ok: false, fehler: 'server' };
         const d = await r.json().catch(() => null);
         if (!d || !d.token) return { ok: false, fehler: 'server' };
-        try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ token: d.token, bis: d.bis })); } catch (e) { return { ok: false, fehler: 'speicher' }; }
-        try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
-        if (autoLaden) {
-            const geladen = await laden();
-            if (!geladen) return { ok: false, fehler: 'paket' };
-        }
-        // Abzeichen, Mikrofone, Pass-Karte (alle im Paket) hoeren hierauf
-        try { window.dispatchEvent(new CustomEvent('mwl-pass-frei')); } catch (e) {}
-        return { ok: true };
+        if (!merken(d)) return { ok: false, fehler: 'speicher' };
+        return nachFreischalten();
     }
 
     function skript(text) {
@@ -159,5 +198,8 @@ window.MWLPass = (function () {
         else laden();
     }
 
-    return { frei, einloesen, sperren, laden, oeffnen, lokal };
+    // Gekaufter Code, falls auf diesem Geraet gekauft — fuer die Anzeige „dein Code“
+    const code = () => { const g = gespeichert(); return (g && g.code) || ''; };
+
+    return { frei, einloesen, sperren, laden, oeffnen, lokal, kasse, kaufAbholen, code };
 })();
