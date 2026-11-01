@@ -41,6 +41,14 @@ const TEXTE = {
                  ['Bleibt näher an dem, was du erzählt hast', 'Stays closer to what you actually said'],
                  ['Ohne Pass: 3 Antworten am Tag zum Ausprobieren', 'Without a pass: 3 answers a day to try it']],
     },
+    fachgespraech: {
+        plus: true,
+        titel: ['Fachgespräch üben', 'Practise the expert interview'],
+        satz: ['Der Prüfer fragt nach deinen eigenen Berichten.', 'The examiner asks about your own reports.'],
+        punkte: [['Fragen wie im echten Fachgespräch, zu dem, was in deinem Heft steht', 'Questions like in the real interview, about what is in your record book'],
+                 ['Rückmeldung zu jeder Antwort: was überzeugt, was fehlt', 'Feedback on every answer: what convinces, what is missing'],
+                 ['Die Nachfrage, die ein Prüfer jetzt stellen würde', 'The follow-up an examiner would ask next']],
+    },
     wochenvorschlag: {
         titel: ['Woche vorschlagen', 'Suggest the week'],
         satz: ['Dein Kalender weiß, was diese Woche war.', 'Your calendar knows what happened this week.'],
@@ -71,7 +79,7 @@ function zeigen(name, opt) {
             '<p class="bs-marke">' + SCHLOSS + '<span>' + esc(L(t.titel[0], t.titel[1])) + '</span></p>' +
             '<h2 class="bs-satz" id="bsTitel">' + esc(L(t.satz[0], t.satz[1])) + '</h2>' +
             '<ul class="bs-punkte">' + t.punkte.map(p => '<li>' + esc(L(p[0], p[1])) + '</li>').join('') + '</ul>' +
-            '<p class="bs-hinweis">' + esc(L('Gehört zum Ausbildungs-Pass. Der ist noch nicht erhältlich.', 'Part of the training pass, which is not available yet.')) + '</p>' +
+            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass. Der ist noch nicht erhältlich.', 'Part of the training pass, which is not available yet.')) + '</p>' +
             '<div class="bs-aktion">' +
                 (lokal
                     ? '<a class="bs-knopf" href="/kaufen/?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen (Demo-Kasse)', 'Get the pass (demo checkout)')) + '</a>'
