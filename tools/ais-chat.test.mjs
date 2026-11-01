@@ -450,6 +450,7 @@ t.gruppe('Thinking: wer hat geschrieben');
     const e = frisch();
     const I = e.sandbox.AISChat._intern;
     const S = e.sandbox.AIS_CLOUD.Stufe;
+    e.sandbox.MWLPass = { frei: () => true };   // Thinking seit 01.11.2026 nur mit Pass
     S.set('denken'); S.zuletzt = 'denken'; S.grund = '';
     t.ok(I.werHatGeschrieben() === '', 'Thinking hat geschrieben: kein Hinweis');
     S.zuletzt = 'schnell'; S.grund = 'form';

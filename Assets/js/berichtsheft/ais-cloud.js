@@ -170,14 +170,23 @@ const STUFEN = {
     denken:  { name: 'Kestrel 3.1 Thinking' },
     frei:    { name: 'Albatros 2.5 Marathon' },
 };
+// Thinking gehoert seit 01.11.2026 zum Ausbildungs-Pass (Entscheidung des Nutzers: die
+// staerkeren Modelle kosten ihn das Mehrfache). Ohne Pass liest sich eine gespeicherte
+// Wahl 'denken' als Turbo; der Worker setzt dasselbe durch (ai-proxy, X-MWL-Denken: pass).
+const passFrei = () => !!(window.MWLPass && MWLPass.frei());
 const Stufe = {
     get() {
-        try { const v = localStorage.getItem(STUFE_SPEICHER); return v === 'frei' || v === 'denken' ? v : 'schnell'; }
+        try {
+            const v = localStorage.getItem(STUFE_SPEICHER);
+            if (v === 'denken') return passFrei() ? 'denken' : 'schnell';
+            return v === 'frei' ? v : 'schnell';
+        }
         catch (e) { return 'schnell'; }
     },
     // Beide bezahlten Stufen teilen sich das Turbo-Kontingent.
     bezahlt() { return this.get() !== 'frei'; },
     set(s) {
+        if (s === 'denken' && !passFrei()) return;
         const neu = s === 'frei' || s === 'denken' ? s : 'schnell';
         try { localStorage.setItem(STUFE_SPEICHER, neu); } catch (e) { }
         try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: neu } })); } catch (e) { }

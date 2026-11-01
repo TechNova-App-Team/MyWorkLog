@@ -34,6 +34,13 @@ const TEXTE = {
                  ['Abgleich mit deinem Heft, Woche für Woche', 'Compared with your record book, week by week'],
                  ['Was bis jetzt fehlt, als Liste fürs Gespräch mit dem Ausbilder', 'What is missing so far, as a list for your trainer']],
     },
+    thinking: {
+        titel: ['Kestrel 3.1 Thinking', 'Kestrel 3.1 Thinking'],
+        satz: ['Denkt erst nach, dann schreibt es.', 'Thinks first, then writes.'],
+        punkte: [['Stärkere Modelle für ganze Wochen und wirre Notizen', 'Stronger models for whole weeks and messy notes'],
+                 ['Bleibt näher an dem, was du erzählt hast', 'Stays closer to what you actually said'],
+                 ['Turbo und Marathon bleiben kostenlos', 'Turbo and Marathon stay free']],
+    },
     wochenvorschlag: {
         titel: ['Woche vorschlagen', 'Suggest the week'],
         satz: ['Dein Kalender weiß, was diese Woche war.', 'Your calendar knows what happened this week.'],

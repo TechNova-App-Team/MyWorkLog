@@ -124,6 +124,12 @@ console.log('── Stufen ──');
   await e.CLOUD.generateWithCloud('software', optionen);
   ok(!/stufe=/.test(url || '') && /\/$/.test(url || ''), `Marathon schickt KEINEN Parameter: ${url}`);
   ok(Object.keys(e.CLOUD.STUFEN).join() === 'schnell,denken,frei' && Object.values(e.CLOUD.STUFEN).every(s => s.name), 'drei benannte Stufen (v9.4.0: Thinking)');
+  // Seit 01.11.2026 gehoert Thinking zum Pass: ohne Pass bleibt die Wahl bei Turbo
+  e.CLOUD.Stufe.set('denken');
+  ok(e.CLOUD.Stufe.get() === 'frei' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'frei', 'ohne Pass laesst sich Thinking nicht waehlen (vorige Wahl Marathon bleibt)');
+  e.sandbox.localStorage.setItem('bh_ki_stufe', 'denken');
+  ok(e.CLOUD.Stufe.get() === 'schnell', 'ohne Pass liest sich ein gespeichertes Thinking als Turbo');
+  e.sandbox.MWLPass = { frei: () => true };
   // v9.4.0: Thinking = ?stufe=denken, teilt sich das bezahlte Kontingent mit Turbo
   e.CLOUD.Stufe.set('denken');
   ok(e.CLOUD.Stufe.get() === 'denken' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'denken', 'Thinking wird gespeichert');

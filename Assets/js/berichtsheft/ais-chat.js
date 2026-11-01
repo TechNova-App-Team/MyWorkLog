@@ -705,8 +705,10 @@ function menueZeichnen() {
     // sonst faellt er nach dem Kontingent-Abruf auf <body> (gemessen headless).
     const fokus = m.contains(document.activeElement) && document.activeElement.getAttribute('data-stufe');
     const jetzt = K.Stufe.get();
+    // Ohne Pass steht Thinking mit Schloss da: Klick zeigt das Siegel-Blatt, waehlt nichts
+    const passFrei = !!(window.MWLPass && MWLPass.frei());
     const eintrag = (s, unter, zeit, rest, marke) =>
-        '<button type="button" class="aic-modell-opt" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
+        '<button type="button" class="aic-modell-opt' + (s === 'denken' && !passFrei ? ' is-pass' : '') + '" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
         '<span class="aic-modell-opt-kopf"><span class="aic-modell-opt-name">' + esc(stufeName(s)) + '</span>' +
         '<span class="aic-modell-marke' + (s === 'schnell' ? ' is-turbo' : s === 'denken' ? ' is-denken' : '') + '">' + esc(marke) + '</span></span>' +
         '<span class="aic-modell-opt-unter">' + esc(unter) + '</span>' +
@@ -720,14 +722,15 @@ function menueZeichnen() {
         eintrag('denken', Lx('Denkt erst nach, dann schreibt es. Für ganze Wochen, wirre Notizen und knifflige Fragen. Zählt doppelt vom Turbo-Kontingent.',
                              'Thinks first, then writes. For whole weeks, messy notes and tricky questions. Counts double against the Turbo quota.'),
             Lx('Antwort in 4 bis 12 Sekunden', 'Answers in 4 to 12 seconds'),
-            restText(K.Kontingent.schnell(), NACHRICHT_TOKENS * DENKEN_FAKTOR, ['Nachricht', 'message'], ['Nachrichten', 'messages']), 'Thinking') +
+            passFrei ? restText(K.Kontingent.schnell(), NACHRICHT_TOKENS * DENKEN_FAKTOR, ['Nachricht', 'message'], ['Nachrichten', 'messages']) : Lx('Im Ausbildungs-Pass', 'In the training pass'),
+            passFrei ? 'Thinking' : 'Pass') +
         eintrag('frei', Lx('Kostenlos und ausdauernd. Großes Tageskontingent.', 'Free and enduring. Large daily quota.'),
             Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
             restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free')) +
         // Einziger Weg aus dem Assistenten zur Preisseite: hier sieht man das Tageslimit,
         // und genau das hebt der Ausbildungs-Pass auf.
         '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#hefte', '/en/preise/#hefte') + '">' +
-        esc(Lx('Mehr am Tag? Ausbildungs-Pass vormerken', 'More per day? Count me in for the Pass')) + '</a>';
+        esc(Lx('Thinking und 5x so viel am Tag: Ausbildungs-Pass', 'Thinking and 5x more per day: training pass')) + '</a>';
     if (fokus) { const b = m.querySelector('[data-stufe="' + fokus + '"]'); if (b) b.focus(); }
 }
 function modellMenue(auf) {
@@ -745,6 +748,12 @@ function modellMenue(auf) {
 }
 function modellWaehlen(s) {
     const K = kc(); if (!K) return;
+    if (s === 'denken' && !(window.MWLPass && MWLPass.frei())) {
+        modellMenue(false);
+        if (window.BHSiegel) BHSiegel.zeigen('thinking');
+        if (typeof bhMess === 'function') bhMess('modell_gesperrt', { stufe: 'denken' });
+        return;
+    }
     K.Stufe.set(s);
     if (typeof bhMess === 'function') bhMess('modell_gewaehlt', { stufe: s === 'frei' || s === 'denken' ? s : 'schnell' });
     modellMenue(false);
