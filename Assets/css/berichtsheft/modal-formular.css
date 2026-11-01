@@ -657,6 +657,38 @@
    Die Seite soll ohnehin klar dahinter stehen, und jede Blur-Ebene kostet am Handy GPU. */
 #reportModal { background: rgba(6, 6, 12, 0.48); backdrop-filter: none; -webkit-backdrop-filter: none; }
 
+/* Nacht-Fassung (Rückmeldung des Nutzers: „ich bekomm hier nen Flashbang"): im dunklen Design
+   ist das Blatt dunkles Papier — gleiche Heft-Farbnamen, nur hier im Dialog umgelegt. Das helle
+   Design erbt die echten Papierfarben (inherit = Werte von :root, basis.css). Alle Regeln unten
+   nutzen nur diese Namen; feste Farben gibt es im Block nicht (rgba über --rm-tinte-rgb). */
+.modal-content.rm {
+    --papier: color-mix(in srgb, var(--bg-surface) 94%, var(--primary) 6%);
+    --papier-2: color-mix(in srgb, var(--papier) 88%, #000);   /* deckend: --bg-input hat Alpha, der Fuß schien durch */
+    --papier-tinte: var(--text-main);
+    --papier-tinte-2: var(--text-muted);
+    --papier-linie: rgba(var(--primary-rgb), 0.16);
+    --papier-rand: rgba(214, 86, 86, 0.38);
+    --papier-schatten: 0 30px 70px -28px rgba(0, 0, 0, 0.8);
+    --kuli: color-mix(in srgb, var(--primary) 62%, #ffffff);
+    --rotstift: #e0796f;
+    --rm-tinte-rgb: 235, 235, 245;
+    --rm-schema: dark;
+    --rm-auf-kuli: #0d1220;    /* Schrift auf dem hellen Nacht-Kuli (Speichern) */
+}
+[data-theme="light"] .modal-content.rm {
+    --papier: inherit;
+    --papier-2: inherit;
+    --papier-tinte: inherit;
+    --papier-tinte-2: inherit;
+    --papier-linie: inherit;
+    --papier-rand: inherit;
+    --papier-schatten: inherit;
+    --kuli: inherit;
+    --rotstift: inherit;
+    --rm-tinte-rgb: 21, 19, 29;
+    --rm-schema: light;
+    --rm-auf-kuli: #fff;
+}
 .modal-content.rm {
     --rm-einzug: 56px;          /* Text rechts vom roten Randstrich */
     background: var(--papier);
@@ -697,8 +729,8 @@
     color: var(--papier-tinte);
     white-space: nowrap;
 }
-.rm-zu { grid-column: 3; align-self: center; border-color: rgba(21, 19, 29, 0.18); color: var(--papier-tinte-2); }
-.rm-zu:hover { background: rgba(21, 19, 29, 0.06); color: var(--papier-tinte); border-color: rgba(21, 19, 29, 0.3); }
+.rm-zu { grid-column: 3; align-self: center; border-color: rgba(var(--rm-tinte-rgb), 0.18); color: var(--papier-tinte-2); }
+.rm-zu:hover { background: rgba(var(--rm-tinte-rgb), 0.06); color: var(--papier-tinte); border-color: rgba(var(--rm-tinte-rgb), 0.3); }
 .rm form { padding: 0 28px 0 var(--rm-einzug); }
 
 .rm-abschnitt { border-bottom-color: var(--papier-linie); }
@@ -722,11 +754,11 @@
 .rm .form-input::placeholder { color: color-mix(in srgb, var(--papier-tinte-2) 70%, transparent); }
 .rm .form-select option { background: var(--papier); color: var(--papier-tinte); }
 .rm-kw .form-input { text-align: left; }
-.rm input[type="date"] { color-scheme: light; }
+.rm input[type="date"] { color-scheme: var(--rm-schema); }
 
 /* Format-Umschalter auf Papier */
-.rm .mode-toggle { background: rgba(21, 19, 29, 0.05); border-color: rgba(21, 19, 29, 0.12); }
-.rm .mode-toggle-slider { background: var(--papier); opacity: 1; box-shadow: 0 1px 2px rgba(21, 19, 29, 0.18); }
+.rm .mode-toggle { background: rgba(var(--rm-tinte-rgb), 0.05); border-color: rgba(var(--rm-tinte-rgb), 0.12); }
+.rm .mode-toggle-slider { background: var(--papier); opacity: 1; box-shadow: 0 1px 2px rgba(var(--rm-tinte-rgb), 0.18); }
 .rm .mode-toggle-btn { color: var(--papier-tinte-2); }
 .rm .mode-toggle-btn.active { color: var(--papier-tinte); }
 
@@ -751,7 +783,7 @@
 /* Leiste: eigene Zeile über dem Feld, nie darüber gelegt */
 .rm .bt-leiste { padding: 3px 0; border-bottom: 1px dashed var(--papier-linie); }
 .rm .bt-knopf { color: var(--papier-tinte-2); }
-.rm .bt-knopf:hover { background: rgba(21, 19, 29, 0.06); color: var(--papier-tinte); }
+.rm .bt-knopf:hover { background: rgba(var(--rm-tinte-rgb), 0.06); color: var(--papier-tinte); }
 .rm .bt-knopf[aria-pressed="true"] { background: color-mix(in srgb, var(--kuli) 14%, transparent); color: var(--kuli); }
 .rm .bt-trenner { background: var(--papier-linie); }
 
@@ -792,7 +824,7 @@
     opacity: 0.85;
 }
 .rm .daily-school-toggle { color: var(--papier-tinte-2); }
-.rm .daily-school-toggle .toggle-track { background-color: rgba(21, 19, 29, 0.16); }
+.rm .daily-school-toggle .toggle-track { background-color: rgba(var(--rm-tinte-rgb), 0.16); }
 .rm .daily-school-input:checked + .toggle-track { background-color: var(--kuli); }
 .rm .daily-hours-input {
     background: transparent;
@@ -816,7 +848,7 @@
 .rm .daily-total-bar #dailyTotalHours { color: var(--kuli); }
 .rm .daily-fill-btn { background: transparent; border-color: color-mix(in srgb, var(--kuli) 35%, transparent); color: var(--kuli); }
 .rm .daily-fill-btn:hover { background: color-mix(in srgb, var(--kuli) 8%, transparent); }
-.rm .quality-bar-bg { background: rgba(21, 19, 29, 0.1); }
+.rm .quality-bar-bg { background: rgba(var(--rm-tinte-rgb), 0.1); }
 .rm .quality-text { color: var(--papier-tinte-2); }
 
 /* Fuß: gleiches Papier, eine Spur grauer; Speichern in Kuli-Blau */
@@ -826,8 +858,8 @@
     background: var(--papier-2);
     border-top: 1px solid var(--papier-linie);
 }
-.rm .rm-abbrechen { background: transparent; border: 1px solid rgba(21, 19, 29, 0.2); color: var(--papier-tinte); }
-.rm .rm-abbrechen:hover { background: rgba(21, 19, 29, 0.05); }
-.rm .rm-speichern { background: var(--kuli); border-color: var(--kuli); color: #fff; }
+.rm .rm-abbrechen { background: transparent; border: 1px solid rgba(var(--rm-tinte-rgb), 0.2); color: var(--papier-tinte); }
+.rm .rm-abbrechen:hover { background: rgba(var(--rm-tinte-rgb), 0.05); }
+.rm .rm-speichern { background: var(--kuli); border-color: var(--kuli); color: var(--rm-auf-kuli); }
 .rm .rm-speichern:hover { background: color-mix(in srgb, var(--kuli) 88%, #000); }
 .rm .kbd-hint .kbd { color: inherit; border-color: currentColor; background: transparent; }
