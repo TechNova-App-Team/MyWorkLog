@@ -457,6 +457,11 @@ t.gruppe('Thinking: wer hat geschrieben');
     const h = I.werHatGeschrieben();
     t.ok(h.startsWith('Kestrel 3.1 Thinking hat keine brauchbare Antwort geliefert') && h.includes('Kestrel 3.1 Turbo geschrieben'),
         'Thinking scheitert, Turbo schreibt: Hinweis nennt beide', h);
+    S.zuletzt = 'schnell'; S.grund = ''; S.denkenGrund = 'pass';
+    const hp = I.werHatGeschrieben();
+    t.ok(hp.startsWith('Deine 3 Thinking-Antworten für heute sind verbraucht') && hp.includes('Ausbildungs-Pass'),
+        'Schnupper-Thinking verbraucht: sagt das, nicht "hat keine brauchbare Antwort"', hp);
+    S.denkenGrund = '';
     S.zuletzt = 'frei'; S.grund = '429';
     t.ok(I.werHatGeschrieben().includes('Albatros 2.5 Marathon geschrieben'), 'Thinking und Turbo aus: Marathon genannt', I.werHatGeschrieben());
     S.zuletzt = 'frei-kontingent';

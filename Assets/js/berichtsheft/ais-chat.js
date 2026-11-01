@@ -705,10 +705,14 @@ function menueZeichnen() {
     // sonst faellt er nach dem Kontingent-Abruf auf <body> (gemessen headless).
     const fokus = m.contains(document.activeElement) && document.activeElement.getAttribute('data-stufe');
     const jetzt = K.Stufe.get();
-    // Ohne Pass steht Thinking mit Schloss da: Klick zeigt das Siegel-Blatt, waehlt nichts
+    // Ohne Pass: 3 Thinking-Antworten am Tag zum Ausprobieren (Worker zaehlt). Sind sie
+    // verbraucht, steht Thinking mit "Pass" da und der Klick zeigt das Siegel-Blatt.
     const passFrei = !!(window.MWLPass && MWLPass.frei());
+    const dk = !passFrei && K.Kontingent.denken ? K.Kontingent.denken() : null;
+    const denkenRest = passFrei ? null : dk ? Math.max(0, dk.frei - dk.verbraucht) : 3;
+    const denkenZu = !passFrei && denkenRest === 0;
     const eintrag = (s, unter, zeit, rest, marke) =>
-        '<button type="button" class="aic-modell-opt' + (s === 'denken' && !passFrei ? ' is-pass' : '') + '" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
+        '<button type="button" class="aic-modell-opt' + (s === 'denken' && denkenZu ? ' is-pass' : '') + '" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
         '<span class="aic-modell-opt-kopf"><span class="aic-modell-opt-name">' + esc(stufeName(s)) + '</span>' +
         '<span class="aic-modell-marke' + (s === 'schnell' ? ' is-turbo' : s === 'denken' ? ' is-denken' : '') + '">' + esc(marke) + '</span></span>' +
         '<span class="aic-modell-opt-unter">' + esc(unter) + '</span>' +
@@ -722,8 +726,10 @@ function menueZeichnen() {
         eintrag('denken', Lx('Denkt erst nach, dann schreibt es. Für ganze Wochen, wirre Notizen und knifflige Fragen. Zählt doppelt vom Turbo-Kontingent.',
                              'Thinks first, then writes. For whole weeks, messy notes and tricky questions. Counts double against the Turbo quota.'),
             Lx('Antwort in 4 bis 12 Sekunden', 'Answers in 4 to 12 seconds'),
-            passFrei ? restText(K.Kontingent.schnell(), NACHRICHT_TOKENS * DENKEN_FAKTOR, ['Nachricht', 'message'], ['Nachrichten', 'messages']) : Lx('Im Ausbildungs-Pass', 'In the training pass'),
-            passFrei ? 'Thinking' : 'Pass') +
+            passFrei ? restText(K.Kontingent.schnell(), NACHRICHT_TOKENS * DENKEN_FAKTOR, ['Nachricht', 'message'], ['Nachrichten', 'messages'])
+                : denkenZu ? Lx('Heute ausprobiert, mehr im Ausbildungs-Pass', 'Tried today, more in the training pass')
+                : Lx('Heute noch ' + denkenRest + ' von 3 kostenlos', denkenRest + ' of 3 free left today'),
+            denkenZu ? 'Pass' : 'Thinking') +
         eintrag('frei', Lx('Kostenlos und ausdauernd. Großes Tageskontingent.', 'Free and enduring. Large daily quota.'),
             Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
             restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free')) +
@@ -748,7 +754,8 @@ function modellMenue(auf) {
 }
 function modellWaehlen(s) {
     const K = kc(); if (!K) return;
-    if (s === 'denken' && !(window.MWLPass && MWLPass.frei())) {
+    const dk = K.Kontingent && K.Kontingent.denken ? K.Kontingent.denken() : null;
+    if (s === 'denken' && !(window.MWLPass && MWLPass.frei()) && dk && dk.verbraucht >= dk.frei) {
         modellMenue(false);
         if (window.BHSiegel) BHSiegel.zeigen('thinking');
         if (typeof bhMess === 'function') bhMess('modell_gesperrt', { stufe: 'denken' });
@@ -769,6 +776,11 @@ function werHatGeschrieben() {
     if (gewaehlt === 'frei') return '';
     const z = K.Stufe.zuletzt;
     if (!z || z === gewaehlt) return '';
+    // Die 3 freien Thinking-Antworten von heute sind weg (Worker-Kopf X-MWL-Denken: pass)
+    if (gewaehlt === 'denken' && K.Stufe.denkenGrund === 'pass' && z === 'schnell') {
+        return Lx('Deine 3 Thinking-Antworten für heute sind verbraucht, deshalb hat ' + stufeName('schnell') + ' geschrieben. Mehr Thinking gibt es mit dem Ausbildungs-Pass.',
+                  'Your 3 Thinking answers for today are used up, so ' + stufeName('schnell') + ' wrote this. More Thinking comes with the training pass.');
+    }
     // Thinking ausgefallen, Turbo hat geschrieben (Worker: DENKER → SOFORT → Gratis).
     const statt = z === 'schnell' ? 'schnell' : 'frei';
     return z === 'frei-kontingent'

@@ -124,12 +124,20 @@ console.log('── Stufen ──');
   await e.CLOUD.generateWithCloud('software', optionen);
   ok(!/stufe=/.test(url || '') && /\/$/.test(url || ''), `Marathon schickt KEINEN Parameter: ${url}`);
   ok(Object.keys(e.CLOUD.STUFEN).join() === 'schnell,denken,frei' && Object.values(e.CLOUD.STUFEN).every(s => s.name), 'drei benannte Stufen (v9.4.0: Thinking)');
-  // Seit 01.11.2026 gehoert Thinking zum Pass: ohne Pass bleibt die Wahl bei Turbo
-  e.CLOUD.Stufe.set('denken');
-  ok(e.CLOUD.Stufe.get() === 'frei' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'frei', 'ohne Pass laesst sich Thinking nicht waehlen (vorige Wahl Marathon bleibt)');
-  e.sandbox.localStorage.setItem('bh_ki_stufe', 'denken');
-  ok(e.CLOUD.Stufe.get() === 'schnell', 'ohne Pass liest sich ein gespeichertes Thinking als Turbo');
-  e.sandbox.MWLPass = { frei: () => true };
+  // Seit 01.11.2026: Thinking ohne Pass = 3 am Tag zum Ausprobieren. Zaehlen und Sperren
+  // macht der Worker; die App laesst die Wahl zu und merkt sich nur den Stand aus dem Kopf.
+  {
+    const e2 = engine(async () => antwort(200, geminiOk, { 'X-MWL-Denken-Frei': '2/3', 'X-MWL-Stufe': 'denken' }));
+    e2.CLOUD.Stufe.set('denken');
+    await e2.CLOUD.generateWithCloud('software', optionen);
+    const dk = e2.CLOUD.Kontingent.denken();
+    ok(dk && dk.verbraucht === 2 && dk.frei === 3, `Thinking-Stand ohne Pass aus dem Kopf gemerkt: ${JSON.stringify(dk)}`);
+    const e3 = engine(async () => antwort(200, geminiOk, { 'X-MWL-Stufe': 'schnell', 'X-MWL-Denken': 'pass' }));
+    e3.CLOUD.Stufe.set('denken');
+    await e3.CLOUD.generateWithCloud('software', optionen);
+    ok(e3.CLOUD.Stufe.zuletzt === 'schnell' && e3.CLOUD.Stufe.denkenGrund === 'pass', 'verbraucht: Turbo hat geschrieben, Grund "pass" gemerkt');
+    ok(e3.CLOUD.Stufe.get() === 'denken', 'die Wahl Thinking bleibt stehen (morgen gibt es wieder 3)');
+  }
   // v9.4.0: Thinking = ?stufe=denken, teilt sich das bezahlte Kontingent mit Turbo
   e.CLOUD.Stufe.set('denken');
   ok(e.CLOUD.Stufe.get() === 'denken' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'denken', 'Thinking wird gespeichert');

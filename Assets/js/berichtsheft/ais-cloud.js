@@ -60,6 +60,7 @@ const CLOUD_PROXY = 'https://ai-proxy.myworklog.de';
 const RATE_LIMIT_COOLDOWN_MS = 10000;  // Doppelklick-Schutz, kein Kontingent
 const KONTINGENT_SPEICHER = 'mwl_ki_kontingent';
 const SCHNELL_SPEICHER = 'mwl_ki_schnell';
+const DENKEN_SPEICHER = 'mwl_ki_denken';   // Thinking ohne Pass: verbraucht/frei heute
 const GERAET_SPEICHER = 'mwl_ki_geraet';
 
 // Altbestand der browserseitigen Zaehler — wird nirgends mehr gelesen.
@@ -125,10 +126,23 @@ const Kontingent = {
         const d = { tag: this._tag(), verbraucht, limit, erschoepft: !!erschoepft || verbraucht >= limit };
         try { localStorage.setItem(SCHNELL_SPEICHER, JSON.stringify(d)); } catch (e) { }
     },
+    // Thinking ohne Pass (Worker 01.11.2026, Kopf X-MWL-Denken-Frei "verbraucht/frei").
+    // null = kein Stand bekannt ODER Pass (dort gibt der Worker den Kopf nicht).
+    denken() {
+        try {
+            const d = JSON.parse(localStorage.getItem(DENKEN_SPEICHER) || 'null');
+            return d && d.tag === this._tag() && d.frei > 0 ? d : null;
+        } catch (e) { return null; }
+    },
+    _denkenSchreib(verbraucht, frei) {
+        try { localStorage.setItem(DENKEN_SPEICHER, JSON.stringify({ tag: this._tag(), verbraucht, frei })); } catch (e) { }
+    },
     ausKopf(response) {
         const h = response && response.headers;
         const s = h && h.get('X-MWL-Schnell'), sm = s && /^(\d+)\/(\d+)$/.exec(s);
         if (sm) this._schnellSchreib(+sm[1], +sm[2], false);
+        const dk = h && h.get('X-MWL-Denken-Frei'), dm = dk && /^(\d+)\/(\d+)$/.exec(dk);
+        if (dm) this._denkenSchreib(+dm[1], +dm[2]);
         Stufe.ausKopf(response);
         // Zuletzt: _schreib loest 'mwl-kontingent' aus, dann stehen beide Staende schon.
         const v = h && h.get('X-MWL-Kontingent');
@@ -145,6 +159,8 @@ const Kontingent = {
             if (!r.ok) return null;
             const j = await r.json();
             if (j && j.schnell && j.schnell.limit > 0) this._schnellSchreib(j.schnell.verbraucht | 0, j.schnell.limit, j.schnell.erschoepft);
+            if (j && j.denken && j.denken.frei > 0) this._denkenSchreib(j.denken.verbraucht | 0, j.denken.frei);
+            else if (j && j.denken === null) { try { localStorage.removeItem(DENKEN_SPEICHER); } catch (e) { } }
             if (j && j.limit > 0) this._schreib(j.verbraucht | 0, j.limit, j.erschoepft);
             return this.stand();
         } catch (e) { return null; }
@@ -170,23 +186,18 @@ const STUFEN = {
     denken:  { name: 'Kestrel 3.1 Thinking' },
     frei:    { name: 'Albatros 2.5 Marathon' },
 };
-// Thinking gehoert seit 01.11.2026 zum Ausbildungs-Pass (Entscheidung des Nutzers: die
-// staerkeren Modelle kosten ihn das Mehrfache). Ohne Pass liest sich eine gespeicherte
-// Wahl 'denken' als Turbo; der Worker setzt dasselbe durch (ai-proxy, X-MWL-Denken: pass).
-const passFrei = () => !!(window.MWLPass && MWLPass.frei());
+// Thinking gehoert seit 01.11.2026 zum Ausbildungs-Pass (die staerkeren Modelle kosten ein
+// Vielfaches). Ohne Pass gibt es 3 Antworten am Tag zum Ausprobieren — das ZAEHLT und
+// ENTSCHEIDET der Worker (ai-proxy KONTINGENT.denkenFreiTag); danach schreibt Turbo und der
+// Kopf X-MWL-Denken: pass sagt warum. Hier deshalb keine Sperre, nur Anzeige (Kontingent.denken).
 const Stufe = {
     get() {
-        try {
-            const v = localStorage.getItem(STUFE_SPEICHER);
-            if (v === 'denken') return passFrei() ? 'denken' : 'schnell';
-            return v === 'frei' ? v : 'schnell';
-        }
+        try { const v = localStorage.getItem(STUFE_SPEICHER); return v === 'frei' || v === 'denken' ? v : 'schnell'; }
         catch (e) { return 'schnell'; }
     },
     // Beide bezahlten Stufen teilen sich das Turbo-Kontingent.
     bezahlt() { return this.get() !== 'frei'; },
     set(s) {
-        if (s === 'denken' && !passFrei()) return;
         const neu = s === 'frei' || s === 'denken' ? s : 'schnell';
         try { localStorage.setItem(STUFE_SPEICHER, neu); } catch (e) { }
         try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: neu } })); } catch (e) { }
@@ -207,6 +218,8 @@ const Stufe = {
         this.zuletzt = v;
         // Warum nicht Turbo (Worker v4.9): '402', '429', 'zeit', 'form', 'langsamer' …
         this.grund = response.headers.get('X-MWL-Turbo-Grund') || '';
+        // 'pass' = Thinking war gewuenscht, die 3 freien Antworten von heute sind verbraucht
+        this.denkenGrund = response.headers.get('X-MWL-Denken') || '';
         try { window.dispatchEvent(new CustomEvent('mwl-stufe', { detail: { stufe: this.get(), geantwortet: v } })); } catch (e) { }
     },
 };
