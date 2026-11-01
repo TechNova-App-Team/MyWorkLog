@@ -445,12 +445,16 @@ a:hover {
 /* Bericht-Dialog am Handy: Woche zweispaltig, Fuß über die ganze Breite */
 @media (max-width: 560px) {
     .modal-content.rm { padding: 0; }
-    .rm-kopf { padding: 16px 16px 12px; }
-    .rm form { padding: 0 16px; }
     .rm-woche { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .rm-kw { grid-column: 1; }
     .rm-format { flex: 1 1 100%; }
-    .rm-fuss { margin: 6px -16px 0; padding: 12px 16px 14px; gap: 10px; }
+    /* Papier-Blatt (modal-formular.css): Randstrich näher an den Rand, Fuß bündig */
+    .modal-content.rm { --rm-einzug: 30px; }
+    .rm-kopf { padding: 16px 14px 12px var(--rm-einzug); }
+    .rm form { padding: 0 14px 0 var(--rm-einzug); }
+    .rm-kw-gross { font-size: 1.5rem; }
+    .rm .kbd-hint { display: none; }   /* Tastenkürzel am Handy sinnlos, und „Strg+S“ sprengte den Knopf */
+    .rm-fuss { margin: 6px -14px 0 calc(-1 * var(--rm-einzug)); padding: 12px 14px 14px var(--rm-einzug); gap: 10px; }
     .rm-fuss-felder { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); width: 100%; }
     .rm-aktionen { width: 100%; margin: 0; }
     .rm-aktionen .btn { flex: 1 1 0; }

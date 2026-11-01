@@ -1042,7 +1042,10 @@ if (typeof window !== 'undefined') {
             zeit = gleich ? a.getDate() + (document.documentElement.lang === 'en' ? '' : '.') + '–' + bis
                 : a.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) + ' – ' + bis;
         }
-        el.textContent = [kw ? L('KW ', 'Week ') + kw : '', zeit].filter(Boolean).join(' · ');
+        // Mit großer KW rechts (Vordruck-Kopf) steht unter dem Titel nur noch der Zeitraum
+        const gross = document.getElementById('rmKw');
+        if (gross) gross.textContent = kw ? L('KW ', 'Week ') + kw : '';
+        el.textContent = gross ? zeit : [kw ? L('KW ', 'Week ') + kw : '', zeit].filter(Boolean).join(' · ');
     }
     form.addEventListener('input', zeichnen);
     form.addEventListener('change', zeichnen);

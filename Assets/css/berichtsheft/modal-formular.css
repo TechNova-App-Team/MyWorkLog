@@ -642,3 +642,192 @@
 .rm-aktionen { margin: 0 0 0 auto; flex: 0 0 auto; gap: 10px; flex-wrap: nowrap; }
 .rm-aktionen .btn { flex: 0 0 auto; min-width: 0; }
 .rm-speichern { min-width: 148px !important; }
+
+/* ═══ BERICHT-DIALOG ALS HEFT-BLATT (01.11.2026, „ruhige Fassung“) ═══
+   Entwurf: pass/entwurf/bericht-dialog-ruhig.js. Gewählt vom Nutzer mit drei Auflagen:
+   1. Hintergrund durchscheinend — die Berichtsheft-Seite bleibt dahinter sichtbar.
+   2. Die Formatier-Leiste liegt NIE über dem Text (im Entwurf schwebte sie absolut darüber):
+      sie steht im Fluss zwischen Tageskopf und Schreibfeld.
+   3. Der Schultag-Stempel liegt NIE über dem Text: fester Platz hinter dem Tagesnamen.
+   Papier ist in beiden Themen hell → auf dem Blatt immer --papier-tinte / --kuli, nie
+   --text-main. EIN Effekt: der Stempel. Keine Tabellenrahmen, keine Schreibmaschinen-
+   Etiketten (die erste Fassung war „too much“, wirkte wie ein Amtsformular). */
+/* Ohne Weichzeichner: mit blur() schien die Seite im eingebetteten 384-px-Rahmen DURCH das
+   deckende Papier (gemessen: Hintergrund rgb(236,235,244), Deckkraft 1 — trotzdem sichtbar).
+   Die Seite soll ohnehin klar dahinter stehen, und jede Blur-Ebene kostet am Handy GPU. */
+#reportModal { background: rgba(6, 6, 12, 0.48); backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+.modal-content.rm {
+    --rm-einzug: 56px;          /* Text rechts vom roten Randstrich */
+    background: var(--papier);
+    color: var(--papier-tinte);
+    border: 0;
+    border-radius: 6px;
+    box-shadow: var(--papier-schatten);
+}
+.modal-content.rm::before {
+    content: '';
+    position: absolute;
+    z-index: 5;
+    left: calc(var(--rm-einzug) - 18px);
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--papier-rand);
+    pointer-events: none;
+}
+.rm-kopf {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    padding: 22px 24px 14px var(--rm-einzug);
+    background: var(--papier);
+    border-bottom: 1px solid var(--papier-tinte);
+}
+.rm-titel { color: var(--papier-tinte); font-size: 1.3rem; letter-spacing: -0.02em; }
+.rm-zf { color: var(--papier-tinte-2); }
+.rm-kw-gross {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--papier-tinte);
+    white-space: nowrap;
+}
+.rm-zu { grid-column: 3; align-self: center; border-color: rgba(21, 19, 29, 0.18); color: var(--papier-tinte-2); }
+.rm-zu:hover { background: rgba(21, 19, 29, 0.06); color: var(--papier-tinte); border-color: rgba(21, 19, 29, 0.3); }
+.rm form { padding: 0 28px 0 var(--rm-einzug); }
+
+.rm-abschnitt { border-bottom-color: var(--papier-linie); }
+.rm-h { color: var(--papier-tinte); }
+.rm .form-label { color: var(--papier-tinte-2); }
+.rm-opt, .rm-hinweis, .rm-zeichen { color: var(--papier-tinte-2); }
+
+/* Felder: Schreiblinie statt Kasten, Eingabe in Kuli-Blau */
+.rm .form-input,
+.rm .form-select {
+    padding: 6px 0 5px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--papier-linie);
+    border-radius: 0;
+    color: var(--kuli);
+    font-weight: 500;
+}
+.rm .form-input:focus,
+.rm .form-select:focus { border-bottom-color: var(--kuli); box-shadow: none; }
+.rm .form-input::placeholder { color: color-mix(in srgb, var(--papier-tinte-2) 70%, transparent); }
+.rm .form-select option { background: var(--papier); color: var(--papier-tinte); }
+.rm-kw .form-input { text-align: left; }
+.rm input[type="date"] { color-scheme: light; }
+
+/* Format-Umschalter auf Papier */
+.rm .mode-toggle { background: rgba(21, 19, 29, 0.05); border-color: rgba(21, 19, 29, 0.12); }
+.rm .mode-toggle-slider { background: var(--papier); opacity: 1; box-shadow: 0 1px 2px rgba(21, 19, 29, 0.18); }
+.rm .mode-toggle-btn { color: var(--papier-tinte-2); }
+.rm .mode-toggle-btn.active { color: var(--papier-tinte); }
+
+/* Schreibfeld: Kuli-Blau auf Linien. Zeilenhöhe fest, damit der Text AUF den Linien steht */
+.rm .bt,
+.rm .bt.ist-aktiv { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+.rm .bt-feld {
+    --rm-zeile: 26px;
+    padding: 2px 2px 6px;
+    color: var(--kuli);
+    font-size: 0.92rem;
+    line-height: var(--rm-zeile);
+    background: repeating-linear-gradient(transparent 0 calc(var(--rm-zeile) - 1px), var(--papier-linie) calc(var(--rm-zeile) - 1px) var(--rm-zeile));
+    background-attachment: local;
+    background-position: 0 2px;
+}
+.rm .bt-tag .bt-feld { font-size: 0.9rem; line-height: var(--rm-zeile); }
+.rm .bt-z { min-height: 26px; }
+.rm .bt-z strong { color: inherit; }
+.rm .bt-z[data-art]::before { color: var(--papier-tinte-2); }
+.rm .bt-feld.ist-leer::before { color: color-mix(in srgb, var(--papier-tinte-2) 75%, transparent); }
+/* Leiste: eigene Zeile über dem Feld, nie darüber gelegt */
+.rm .bt-leiste { padding: 3px 0; border-bottom: 1px dashed var(--papier-linie); }
+.rm .bt-knopf { color: var(--papier-tinte-2); }
+.rm .bt-knopf:hover { background: rgba(21, 19, 29, 0.06); color: var(--papier-tinte); }
+.rm .bt-knopf[aria-pressed="true"] { background: color-mix(in srgb, var(--kuli) 14%, transparent); color: var(--kuli); }
+.rm .bt-trenner { background: var(--papier-linie); }
+
+/* Tage: keine Karten, getrennt durch eine feine Linie */
+.rm .daily-day-block,
+.rm .daily-day-block:focus-within,
+.rm .daily-day-block.is-school-day,
+.rm .daily-day-block.is-school-day:focus-within {
+    margin: 0;
+    padding: 14px 0 6px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--papier-linie);
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+}
+.rm .daily-day-header { padding: 0 0 6px; border-bottom: 0; }
+.rm .daily-day-header .day-name { color: var(--papier-tinte); font-size: 0.95rem; }
+.rm .daily-day-header .day-date { color: var(--papier-tinte-2); font-family: var(--font-main); font-size: 0.8rem; }
+/* Schultag-Stempel: hinter dem Tagesnamen, nicht über dem Text */
+.rm .daily-day-block.is-school-day .day-name::after {
+    content: 'Berufsschule';
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 7px;
+    border: 2px double var(--rotstift);
+    border-radius: 4px;
+    color: var(--rotstift);
+    font-family: var(--font-vordruck);
+    font-stretch: 112.5%;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: 2px;
+    transform: rotate(-4deg);
+    opacity: 0.85;
+}
+.rm .daily-school-toggle { color: var(--papier-tinte-2); }
+.rm .daily-school-toggle .toggle-track { background-color: rgba(21, 19, 29, 0.16); }
+.rm .daily-school-input:checked + .toggle-track { background-color: var(--kuli); }
+.rm .daily-hours-input {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--papier-linie);
+    border-radius: 0;
+    color: var(--kuli);
+    font-weight: 600;
+}
+.rm .daily-hours-input:focus { outline: none; border-bottom-color: var(--kuli); }
+.rm .day-hours span { color: var(--papier-tinte-2); }
+.rm .daily-total-bar {
+    margin-top: 0;
+    padding: 10px 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--papier-tinte-2);
+    justify-content: flex-end;
+}
+.rm .daily-total-bar #dailyTotalHours { color: var(--kuli); }
+.rm .daily-fill-btn { background: transparent; border-color: color-mix(in srgb, var(--kuli) 35%, transparent); color: var(--kuli); }
+.rm .daily-fill-btn:hover { background: color-mix(in srgb, var(--kuli) 8%, transparent); }
+.rm .quality-bar-bg { background: rgba(21, 19, 29, 0.1); }
+.rm .quality-text { color: var(--papier-tinte-2); }
+
+/* Fuß: gleiches Papier, eine Spur grauer; Speichern in Kuli-Blau */
+.rm-fuss {
+    margin: 6px -28px 0 calc(-1 * var(--rm-einzug));
+    padding: 14px 28px 18px var(--rm-einzug);
+    background: var(--papier-2);
+    border-top: 1px solid var(--papier-linie);
+}
+.rm .rm-abbrechen { background: transparent; border: 1px solid rgba(21, 19, 29, 0.2); color: var(--papier-tinte); }
+.rm .rm-abbrechen:hover { background: rgba(21, 19, 29, 0.05); }
+.rm .rm-speichern { background: var(--kuli); border-color: var(--kuli); color: #fff; }
+.rm .rm-speichern:hover { background: color-mix(in srgb, var(--kuli) 88%, #000); }
+.rm .kbd-hint .kbd { color: inherit; border-color: currentColor; background: transparent; }
