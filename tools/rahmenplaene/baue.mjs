@@ -45,6 +45,8 @@ function paar(p) {
   let best = null;
   for (const m of idx) {
     const a = p.slice(0, m.index), b = p.slice(m.index + m[0].length);
+    // "Holz- und Bautenschutzarbeiten": ein Ergaenzungsstrich ist kein Paar-Trenner
+    if (a.endsWith('-')) continue;
     const d = Math.abs(a.length - b.length);
     if (d <= 6 && (!best || d < best.d)) best = { a, b, d };
   }

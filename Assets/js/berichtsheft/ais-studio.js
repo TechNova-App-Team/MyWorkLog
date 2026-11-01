@@ -21,7 +21,7 @@ const AIStudio = (() => {
 // Aufruf darunter weiter so, wie er hiess: PROFESSIONS[id], pickRandom(...),
 // RateLimit.status(). Kein Praefix, kein Suchen-und-Ersetzen ueber 2600 Zeilen.
 // Reihenfolge im HTML: berufe → sprache → cloud → studio.
-const { PROFESSIONS, APP_BERUFE, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER } = window.AIS_BERUFE;
+const { PROFESSIONS, APP_BERUFE, amtlichSchluessel, AMTLICH_EXTRA, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER } = window.AIS_BERUFE;
 const { pickRandom, pickMultipleUnique, shuffleArray, conjugateVerb,
     UNIVERSAL_ACTIVITIES_EXTENDED, FORM_PATTERNS, partizipDoppelt, alsFliesstext,
     UNIVERSAL_OBJEKTE, FAKT_RAHMEN, SCHUL_FORMATE, schulSaetze, LERN_AKTIVITAETEN, UMFANG_COUNT,
@@ -1360,10 +1360,6 @@ function selectProfession(id) {
     const customInput = document.getElementById('aisCustomProf');
     if (customInput) customInput.value = '';
     localStorage.setItem(STORAGE_KEYS.profession, id);
-    // Update beruf grid selection
-    document.querySelectorAll('.ais-beruf-opt').forEach(c => {
-        c.classList.toggle('sel', c.dataset.prof === id);
-    });
     // Das Beispiel nutzt das Vokabular des Berufs — nach dem Wechsel neu bauen
     _renderFormBeispiel();
 }
@@ -1993,50 +1989,260 @@ function _scheduleSundayCheck() {
     doCheck(); // sofort beim Aktivieren prüfen
 }
 
+// ── Berufswahl: alle amtlichen Ausbildungsberufe ─────────────────────
+// Liste = Assets/data/rahmenplaene/verzeichnis.json (dieselbe Quelle wie der
+// Rahmenplan-Abgleich), erst beim ersten Oeffnen geladen. Gespeichert wird der
+// amtliche NAME als customProfession — genau den findet der Rahmenplan per
+// vorschlagen() wieder (exakter Name = 100 Punkte, Fachrichtung +5). Der
+// Wortschatz der lokalen Engine kommt aus amtlichSchluessel() in ais-berufe.js.
+// Ohne Netz (Liste nicht ladbar) zeigt die Wahl die 20 Engine-Berufe wie vorher.
+let _amtlich = null;          // [{ m, w, v, k?, notiz? }] alphabetisch
+let _amtlichLaedt = null;
+let _bwOffen = -1;            // Index der Zeile, deren Fachrichtungen offen stehen
+let _bwTreffer = [];          // aktuell gezeigte Liste [{ b, form, v }]
+
+function _amtlichLaden() {
+    if (_amtlich) return Promise.resolve(_amtlich);
+    if (_amtlichLaedt) return _amtlichLaedt;
+    _amtlichLaedt = fetch('/Assets/data/rahmenplaene/verzeichnis.json')
+        .then(r => { if (!r.ok) throw new Error('verzeichnis ' + r.status); return r.json(); })
+        .then(vz => {
+            _amtlich = [...(vz.berufe || []), ...AMTLICH_EXTRA]
+                .sort((a, b) => a.m.localeCompare(b.m, 'de'));
+            return _amtlich;
+        })
+        .catch(e => { _amtlichLaedt = null; throw e; });
+    return _amtlichLaedt;
+}
+
+function _bwNorm(s) {
+    return String(s || '').toLowerCase()
+        .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+        .replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+function _bwName(b, form, v) {
+    const basis = form === 'w' && b.w ? b.w : b.m;
+    return v ? basis + ' – ' + v : basis;
+}
+
 function toggleBerufPicker() {
     const picker = document.getElementById('aisBerufPicker');
     const display = document.getElementById('aisBerufDisplay');
     if (!picker) return;
     const isOpen = picker.classList.toggle('open');
+    if (display) display.setAttribute('aria-expanded', String(isOpen));
     if (isOpen) {
+        _bwVerdrahten();
+        const such = document.getElementById('aisBerufSearch');
+        if (such) such.value = '';
+        _bwOffen = -1;
         _renderBerufGrid('');
-        setTimeout(() => document.getElementById('aisBerufSearch')?.focus(), 100);
+        _amtlichLaden().then(() => {
+            if (!picker.classList.contains('open')) return;
+            const q = document.getElementById('aisBerufSearch')?.value || '';
+            // Gewaehlte Fachrichtung gleich aufgeklappt zeigen, sonst sieht man
+            // nur „Fachinformatiker" markiert und nicht, welche.
+            if (!q && state.customProfession) {
+                _bwTreffer = _bwTrefferListe('');
+                _bwOffen = _bwTreffer.findIndex(t => (t.b.v || []).length &&
+                    [t.b.m, t.b.w].filter(Boolean).some(n => t.b.v.some(x => state.customProfession === n + ' – ' + x)));
+            }
+            _renderBerufGrid(q);
+            _bwZumGewaehlten();
+        }).catch(() => { /* bleibt bei der kurzen Liste */ });
+        // Am Handy nicht sofort fokussieren: die Tastatur deckte sonst die halbe Liste zu
+        if (window.matchMedia('(hover: hover)').matches) {
+            setTimeout(() => document.getElementById('aisBerufSearch')?.focus(), 100);
+        }
     }
 }
 
 function filterBeruf(query) {
-    _renderBerufGrid(query.toLowerCase());
+    _bwOffen = -1;
+    _renderBerufGrid(query);
+    const grid = document.getElementById('aisBerufGrid');
+    if (grid) grid.scrollTop = 0;
 }
 
-function _renderBerufGrid(filter) {
+function _bwZumGewaehlten() {
+    const grid = document.getElementById('aisBerufGrid');
+    const sel = grid && grid.querySelector('.ais-bw-row.sel');
+    if (!sel) return;
+    // Direkt unter den klebenden Buchstaben, sonst lugt die Zeile davor halb hervor
+    const kopf = grid.querySelector('.ais-bw-buchstabe');
+    grid.scrollTop = Math.max(0, sel.offsetTop - (kopf ? kopf.offsetHeight : 0));
+}
+
+function _bwTrefferListe(query) {
+    const q = _bwNorm(query);
+    if (!q) return _amtlich.map(b => ({ b, form: 'm', v: null }));
+    const out = [];
+    for (const b of _amtlich) {
+        let rang = 9, form = 'm', v = null;
+        for (const f of ['m', 'w']) {
+            const n = _bwNorm(f === 'w' ? b.w : b.m);
+            if (!n) continue;
+            const r = n.startsWith(q) ? 0 : (' ' + n).includes(' ' + q) ? 1 : n.includes(q) ? 2 : 9;
+            if (r < rang) { rang = r; form = f; }
+        }
+        if (rang === 9) {
+            const hit = (b.v || []).find(x => _bwNorm(x).includes(q));
+            if (hit) { rang = 3; v = hit; }
+        }
+        if (rang < 9) out.push({ b, form, v, rang });
+    }
+    return out.sort((a, b) => a.rang - b.rang || a.b.m.localeCompare(b.b.m, 'de'));
+}
+
+const _BW_PFEIL = '<svg class="ais-bw-zeichen" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const _BW_HAKEN = '<svg class="ais-bw-zeichen ais-bw-haken" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+function _renderBerufGrid(query) {
     const grid = document.getElementById('aisBerufGrid');
     if (!grid) return;
-    const profs = Object.values(PROFESSIONS).filter(p =>
-        !filter || p.name.toLowerCase().includes(filter) || p.id.includes(filter) ||
-        (p.category || '').toLowerCase().includes(filter)
-    );
-    grid.innerHTML = profs.map(p => `
-                <div class="ais-beruf-opt${state.selectedProfession === p.id ? ' sel' : ''}"
-                     data-prof="${p.id}" onclick="AIStudio._pickBeruf('${p.id}')">
-                    <span class="ais-beruf-opt-icon">${p.icon}</span>
-                    <span class="ais-beruf-opt-name">${p.name}</span>
-                </div>
-            `).join('');
+    const such = document.getElementById('aisBerufSearch');
+
+    if (!_amtlich) {
+        // Kurze Liste, bis das Verzeichnis da ist (oder wenn es offline fehlt)
+        const f = _bwNorm(query);
+        const profs = Object.values(PROFESSIONS).filter(p => !f || _bwNorm(p.name).includes(f));
+        _bwTreffer = [];
+        grid.innerHTML = profs.map(p => `
+            <button type="button" class="ais-bw-row${state.selectedProfession === p.id && !state.customProfession ? ' sel' : ''}" data-prof="${p.id}">
+                <span class="ais-bw-text"><span class="ais-bw-name">${escapeHtml(p.name)}</span></span>${_BW_HAKEN}
+            </button>`).join('');
+        return;
+    }
+
+    if (such) {
+        const n = _amtlich.length.toLocaleString(L('de-DE', 'en-GB'));
+        such.placeholder = L(`In ${n} Ausbildungsberufen suchen`, `Search ${n} occupations`);
+    }
+
+    _bwTreffer = _bwTrefferListe(query);
+    if (!_bwTreffer.length) {
+        grid.innerHTML = `<p class="ais-bw-leer">${escapeHtml(L(
+            'Kein Ausbildungsberuf mit diesem Namen. Versuch einen Wortteil wie „mechan“ oder trag ihn unten selbst ein.',
+            'No occupation with that name. Try part of a word like “mechan”, or enter it yourself below.'))}</p>`;
+        return;
+    }
+
+    const aktuell = state.customProfession || '';
+    const ohneSuche = !_bwNorm(query);
+    let buchstabe = '';
+    grid.innerHTML = _bwTreffer.map((t, i) => {
+        const { b, form, v } = t;
+        let kopf = '';
+        if (ohneSuche) {
+            const l = b.m.charAt(0).toUpperCase().replace('Ä', 'A').replace('Ö', 'O').replace('Ü', 'U');
+            if (l !== buchstabe) { buchstabe = l; kopf = `<div class="ais-bw-buchstabe" aria-hidden="true">${l}</div>`; }
+        }
+        const varianten = b.v || [];
+        const basis = form === 'w' && b.w ? b.w : b.m;
+        // Gewaehlt ist die Zeile, wenn der gespeicherte Name zu ihr gehoert —
+        // in der maennlichen oder weiblichen Form, mit oder ohne Fachrichtung.
+        const namen = [b.m, b.w].filter(Boolean);
+        const sel = namen.some(n => aktuell === n || varianten.some(x => aktuell === n + ' – ' + x));
+        const offen = _bwOffen === i;
+        const meta = v
+            ? v
+            : varianten.length
+                ? L(`${varianten.length} Fachrichtungen oder Schwerpunkte`, `${varianten.length} specialisations`)
+                : b.notiz ? L(b.notiz[0], b.notiz[1]) : '';
+        const klappt = varianten.length && !v;
+        let teil = `${kopf}<button type="button" class="ais-bw-row${sel ? ' sel' : ''}${offen ? ' offen' : ''}" data-t="${i}"${klappt ? ` aria-expanded="${offen}"` : ''}>
+                <span class="ais-bw-text">
+                    <span class="ais-bw-name">${escapeHtml(basis)}</span>
+                    ${meta ? `<span class="ais-bw-meta">${escapeHtml(meta)}</span>` : ''}
+                </span>${klappt ? _BW_PFEIL : _BW_HAKEN}
+            </button>`;
+        if (offen) {
+            teil += `<div class="ais-bw-var" role="group" aria-label="${escapeHtml(L('Fachrichtung oder Schwerpunkt', 'Specialisation'))}">
+                <p class="ais-bw-var-hinweis">${escapeHtml(L('Welche steht in deinem Ausbildungsvertrag?', 'Which one is in your training contract?'))}</p>
+                ${varianten.map(x => `<button type="button" class="ais-bw-var-knopf${namen.some(n => aktuell === n + ' – ' + x) ? ' sel' : ''}" data-t="${i}" data-v="${escapeHtml(x)}">${escapeHtml(x)}</button>`).join('')}
+            </div>`;
+        }
+        return teil;
+    }).join('');
+}
+
+// Ein Listener fuer die ganze Liste statt onclick je Zeile: 317 Zeilen, und
+// Namen mit Anfuehrungszeichen gehoeren nicht in ein Attribut-Skript.
+let _bwVerdrahtet = false;
+function _bwVerdrahten() {
+    if (_bwVerdrahtet) return;
+    const grid = document.getElementById('aisBerufGrid');
+    const such = document.getElementById('aisBerufSearch');
+    if (!grid) return;
+    _bwVerdrahtet = true;
+    grid.addEventListener('click', (e) => {
+        const knopf = e.target.closest('button');
+        if (!knopf || !grid.contains(knopf)) return;
+        if (knopf.dataset.prof) { _pickBeruf(knopf.dataset.prof); return; }
+        const i = parseInt(knopf.dataset.t, 10);
+        const t = _bwTreffer[i];
+        if (!t) return;
+        if (knopf.dataset.v) { _waehleAmtlich(t.b, t.form, knopf.dataset.v); return; }
+        _bwZeileGewaehlt(i);
+    });
+    if (such) such.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (_bwTreffer.length) _bwZeileGewaehlt(0);
+    });
+}
+
+function _bwZeileGewaehlt(i) {
+    const t = _bwTreffer[i];
+    if (!t) return;
+    if (t.v || !(t.b.v || []).length) { _waehleAmtlich(t.b, t.form, t.v); return; }
+    _bwOffen = _bwOffen === i ? -1 : i;
+    const grid = document.getElementById('aisBerufGrid');
+    const oben = grid ? grid.scrollTop : 0;
+    _renderBerufGrid(document.getElementById('aisBerufSearch')?.value || '');
+    if (!grid) return;
+    grid.scrollTop = oben;
+    const box = grid.querySelector('.ais-bw-var');
+    if (!box) return;
+    if (box.offsetTop + box.offsetHeight > grid.scrollTop + grid.clientHeight) {
+        grid.scrollTop = box.offsetTop + box.offsetHeight - grid.clientHeight + 8;
+    }
+    box.querySelector('.ais-bw-var-knopf')?.focus({ preventScroll: true });
+}
+
+function _waehleAmtlich(b, form, v) {
+    const name = _bwName(b, form, v);
+    const schluessel = b.k || amtlichSchluessel(b.m, v);
+    selectProfession(schluessel);
+    state.customProfession = name;
+    const prof = PROFESSIONS[schluessel];
+    _berufAnzeigen(prof ? prof.icon : '<svg class="icon"><use href="#i-grad"/></svg>', name);
+    _bwSchliessen();
+    _saveProfile();
+    _updateProfileSummary();
+}
+
+function _berufAnzeigen(icon, name) {
+    const displayIcon = document.getElementById('aisBerufIcon');
+    const displayName = document.getElementById('aisBerufName');
+    const displayEl = document.getElementById('aisBerufDisplay');
+    if (displayIcon) displayIcon.innerHTML = icon;
+    if (displayName) { displayName.textContent = name; displayName.title = name; }
+    if (displayEl) displayEl.classList.add('has-prof');
+}
+
+function _bwSchliessen() {
+    const picker = document.getElementById('aisBerufPicker');
+    if (picker) picker.classList.remove('open');
+    document.getElementById('aisBerufDisplay')?.setAttribute('aria-expanded', 'false');
 }
 
 function _pickBeruf(id) {
     selectProfession(id);
-    // Close picker
-    const picker = document.getElementById('aisBerufPicker');
-    if (picker) picker.classList.remove('open');
-    // Update display
+    _bwSchliessen();
     const prof = PROFESSIONS[id];
-    const displayIcon = document.getElementById('aisBerufIcon');
-    const displayName = document.getElementById('aisBerufName');
-    const displayEl = document.getElementById('aisBerufDisplay');
-    if (displayIcon) displayIcon.innerHTML = prof.icon;
-    if (displayName) displayName.textContent = prof.name;
-    if (displayEl) displayEl.classList.add('has-prof');
+    _berufAnzeigen(prof.icon, prof.name);
     _updateProfileSummary();
     _saveProfile();
 }
@@ -2177,7 +2383,7 @@ function _loadProfile() {
             if (displayEl) displayEl.classList.add('has-prof');
         } else if (profile.profession === 'custom' && profile.customProfession) {
             state.selectedProfession = 'custom';
-            state.customProfession = String(profile.customProfession).slice(0, 80);
+            state.customProfession = String(profile.customProfession).slice(0, 120);
             const displayIcon = document.getElementById('aisBerufIcon');
             const displayName = document.getElementById('aisBerufName');
             const displayEl = document.getElementById('aisBerufDisplay');
@@ -2186,7 +2392,7 @@ function _loadProfile() {
             if (displayEl) displayEl.classList.add('has-prof');
         }
         if (profile.customProfession && state.selectedProfession !== 'custom') {
-            state.customProfession = String(profile.customProfession).slice(0, 80);
+            state.customProfession = String(profile.customProfession).slice(0, 120);
             const displayName = document.getElementById('aisBerufName');
             if (displayName) displayName.textContent = state.customProfession;
         }
@@ -2817,7 +3023,7 @@ function konfigSetzen(k) {
         _pickBeruf(k.beruf);
         geaendert.push('beruf');
     } else if (typeof k.berufFrei === 'string' && k.berufFrei.trim()) {
-        const text = k.berufFrei.trim().slice(0, 80);
+        const text = k.berufFrei.trim().slice(0, 120);
         if (text !== state.customProfession) {
             const inp = document.getElementById('aisCustomProf');
             if (inp) inp.value = text;
@@ -2978,7 +3184,7 @@ return {
     _intern: {
         generateWeek, generateDayEntries, generateSchoolEntry, validateIHKCompliance,
         _customContextEntries, _kontextTemplate, getCalendarWeek,
-        _berufAusApp, state,
+        _berufAusApp, _detectProfession, state,
     },
 };
 

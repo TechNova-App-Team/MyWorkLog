@@ -179,7 +179,10 @@ export function berufAus(t) {
   return m ? m[1].replace(/\s+/g, ' ').trim() : null;
 }
 const frAus = ctx => {
-  const m = (ctx || '').match(/(?:Fachrichtung|Schwerpunkt|Einsatzgebiet)(?:en)?\s+„?([^“:]+?)[“]?(?:\s*$|:|\s+-\s+|\s+im Ausbildungsberufsbild\b)/i);
+  // „Schwerpunkt A: Korbwaren" (FlechtwAusbV): der Buchstabe ist nur eine Nummer, der Name steht dahinter
+  const n = (ctx || '').match(/(?:Fachrichtung|Schwerpunkt|Einsatzgebiet)\s+[A-Z0-9]\s*:\s*([^:]+?)(?:\s*$|\s+-\s+)/);
+  if (n) return n[1].replace(/[.,;]$/, '').trim();
+  const m =(ctx || '').match(/(?:Fachrichtung|Schwerpunkt|Einsatzgebiet)(?:en)?\s+„?([^“:]+?)[“]?(?:\s*$|:|\s+-\s+|\s+im Ausbildungsberufsbild\b)/i);
   return m ? m[1].replace(/\s+im Ausbildungsberufsbild\b.*$/, '').replace(/[.,;]$/, '').trim() : null;
 };
 

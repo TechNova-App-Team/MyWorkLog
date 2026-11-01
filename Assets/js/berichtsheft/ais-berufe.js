@@ -343,6 +343,45 @@ const APP_BERUFE = {
     'gestaltungstechnischer-assistent': ['Gestaltungstechnische/r Assistent/in', 'medien'],
 };
 
+// Amtliche Berufe aus Assets/data/rahmenplaene/verzeichnis.json → Wortschatz der
+// lokalen Engine. Bewusst eine feste Liste statt _detectProfession(): die
+// Stichwortsuche machte aus "Binnenschifffahrtskapitaen" und
+// "Aufbereitungsmechaniker" einen Anwendungsentwickler (gemessen 01.11.2026,
+// 23 von 316 falsch bei 'software'). Ein falscher Wortschatz ist schlimmer als
+// keiner: was hier nicht steht, wird 'custom' (allgemeiner Wortschatz, die
+// Cloud-KI bekommt trotzdem den echten Namen). Reihenfolge zaehlt: erster Treffer gewinnt.
+const AMTLICH_ZUORDNUNG = [
+    [/^Fachinformatiker$/, (v) => /Systemintegration|Vernetzung/.test(v || '') ? 'sysadmin' : 'software'],
+    [/^(IT-System-Elektroniker|Informationselektroniker)$/, 'sysadmin'],
+    [/^(Kaufmann im Einzelhandel|Verkäufer)$/, 'einzelhandel'],
+    [/^(Kraftfahrzeugmechatroniker|Zweiradmechatroniker|Land- und Baumaschinenmechatroniker|Karosserie- und Fahrzeugbaumechaniker)$/, 'kfz'],
+    [/^Anlagenmechaniker für Sanitär/, 'sanitaer'],
+    [/^Elektroniker\b/, 'elektro'],
+    [/^(Koch|Fachkraft Küche)$/, 'gastronomie'],
+    [/^(Hotelfachmann|Kaufmann für Hotelmanagement|Fachmann für Restaurants und Veranstaltungsgastronomie)$/, 'hotel'],
+    [/^(Maurer|Hochbaufacharbeiter|Beton- und Stahlbetonbauer)$/, 'handwerk_bau'],
+    [/^(Tischler|Holzmechaniker)$/, 'handwerk_holz'],
+    [/^Friseur$/, 'friseur'],
+    [/^(Fachkraft für Lagerlogistik|Fachlagerist)$/, 'lager'],
+    [/^Mediengestalter\b/, 'medien'],
+    [/^(Industriemechaniker|Zerspanungsmechaniker|Mechatroniker|Werkzeugmechaniker|Konstruktionsmechaniker|Feinwerkmechaniker)$/, 'metall'],
+    [/^Gärtner$/, 'garten'],
+    [/^(Chemielaborant|Biologielaborant|Physiklaborant|Lacklaborant|Chemikant)$/, 'chemie'],
+    [/^(Medizinischer|Zahnmedizinischer|Tiermedizinischer) Fachangestellter$/, 'mfa'],
+    [/^Dachdecker$/, 'dachdecker'],
+    [/kaufmann\b|^Kaufmann |^(Steuerfachangestellter|Verwaltungsfachangestellter|Rechtsanwaltsfachangestellter)$/, 'kaufmann'],
+];
+function amtlichSchluessel(m, v) {
+    for (const [re, k] of AMTLICH_ZUORDNUNG) if (re.test(m)) return typeof k === 'function' ? k(v) : k;
+    return 'custom';
+}
+
+// Berufe ohne Rahmenplan nach BBiG/HwO (schulisch geregelt), die die Wahl trotzdem
+// anbieten muss — sonst verliert die Pflege ihren eigenen Wortschatz.
+const AMTLICH_EXTRA = [
+    { id: '', i: 0, m: 'Pflegefachmann', w: 'Pflegefachfrau', v: [], k: 'pflege', notiz: ['nach Pflegeberufegesetz', 'under the Nursing Professions Act'] },
+];
+
 // ═══════════════════════════════════════
 // SEASON & CALENDAR AWARENESS
 // ═══════════════════════════════════════
@@ -580,5 +619,5 @@ const CHAT_SAETZE_NEUTRAL = {
          'Monday and Tuesday I helped out in another department', 'Thursday safety briefing'],
 };
 
-return { PROFESSIONS, APP_BERUFE, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, CHAT_SAETZE, CHAT_SAETZE_NEUTRAL };
+return { PROFESSIONS, APP_BERUFE, amtlichSchluessel, AMTLICH_EXTRA, SEASONS, getCurrentSeason, SEASONAL_ACTIVITIES, UNIVERSAL_SCHULFAECHER, CHAT_SAETZE, CHAT_SAETZE_NEUTRAL };
 })();

@@ -75,11 +75,14 @@
     font-family: var(--font-display);
     font-size: 0.98rem;
     font-weight: 600;
+    line-height: 1.3;
     letter-spacing: -0.01em;
     color: var(--text-secondary);
+    /* Amtliche Namen sind lang („… – Systemintegration"): zwei Zeilen, dann Ellipse */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .ais-beruf-display.has-prof .ais-beruf-name { color: var(--text-main); }
@@ -153,57 +156,142 @@
     box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
 }
 
-.ais-beruf-grid2 {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    max-height: 264px;
+/* Liste aller amtlichen Ausbildungsberufe (ais-studio.js, _renderBerufGrid).
+   Eine Spalte statt Zwei-Spalten-Kacheln: die Namen sind bis 76 Zeichen lang
+   („Fachangestellter für Medien- und Informationsdienste") und wurden in den
+   Kacheln abgeschnitten. Zeilen umbrechen deshalb, statt zu kuerzen. */
+.ais-beruf-liste {
+    position: relative;
+    max-height: min(380px, 52vh);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 12px;
+    border: 1px solid var(--ais-rand);
+    background: var(--bg-surface);
     scrollbar-width: thin;
 }
 
-.ais-beruf-opt {
+.ais-bw-buchstabe {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 10px 14px 4px;
+    background: var(--bg-surface);
+    font: 600 0.72rem/1 var(--font-main);
+    color: var(--text-dim);
+}
+
+.ais-bw-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 0;
+    border-top: 1px solid var(--ais-rand);
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s var(--ease);
+}
+
+.ais-beruf-liste > .ais-bw-row:first-child,
+.ais-bw-buchstabe + .ais-bw-row { border-top: 0; }
+
+.ais-bw-row:hover { background: var(--ais-flaeche-hover); }
+
+.ais-bw-row:focus-visible,
+.ais-bw-var-knopf:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.ais-bw-row.sel { background: var(--ais-wahl); }
+
+.ais-bw-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
     min-width: 0;
-    padding: 9px 10px;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    background: var(--bg-surface);
+}
+
+.ais-bw-name {
+    font-size: 0.86rem;
+    line-height: 1.35;
+    color: var(--text-main);
+    overflow-wrap: anywhere;
+}
+
+.ais-bw-meta {
+    font-size: 0.74rem;
+    line-height: 1.35;
+    color: var(--text-muted);
+}
+
+.ais-bw-zeichen {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: var(--text-dim);
+    transition: transform 0.2s var(--ease);
+}
+
+.ais-bw-haken { visibility: hidden; color: var(--ais-wahl-text); }
+.ais-bw-row.sel .ais-bw-haken { visibility: visible; }
+.ais-bw-row.sel .ais-bw-name { color: var(--ais-wahl-text); font-weight: 600; }
+.ais-bw-row.offen .ais-bw-zeichen { transform: rotate(180deg); }
+
+.ais-bw-var {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 2px 14px 14px;
+    animation: ais-auf 0.18s var(--ease-out);
+}
+
+.ais-bw-var-hinweis {
+    flex: 1 0 100%;
+    margin: 0 0 2px;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+}
+
+.ais-bw-var-knopf {
+    min-height: 36px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--ais-rand);
+    background: var(--ais-flaeche);
+    color: var(--text-main);
+    font: 500 0.8rem/1.3 var(--font-main);
+    text-align: left;
     cursor: pointer;
     transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
 }
 
-.ais-beruf-opt:hover { border-color: var(--border-hover); }
+.ais-bw-var-knopf:hover { border-color: var(--border-hover); }
 
-.ais-beruf-opt.sel {
+.ais-bw-var-knopf.sel {
     background: var(--ais-wahl);
     border-color: var(--ais-wahl-rand);
+    color: var(--ais-wahl-text);
 }
 
-.ais-beruf-opt-icon {
-    display: grid;
-    place-items: center;
-    flex: 0 0 auto;
+.ais-bw-leer {
+    margin: 0;
+    padding: 18px 14px;
+    font-size: 0.82rem;
+    line-height: 1.5;
     color: var(--text-muted);
-}
-
-.ais-beruf-opt-icon svg {
-    width: 16px;
-    height: 16px;
-}
-
-.ais-beruf-opt.sel .ais-beruf-opt-icon { color: var(--ais-wahl-text); }
-
-.ais-beruf-opt-name {
-    min-width: 0;
-    font-size: 0.8rem;
-    line-height: 1.3;
-    color: var(--text-main);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 .ais-beruf-picker .ais-custom-input { background: var(--bg-surface); }
@@ -513,7 +601,6 @@
 
 @media (max-width: 420px) {
     .ais-form-row { grid-template-columns: minmax(0, 1fr); }
-    .ais-beruf-grid2 { grid-template-columns: minmax(0, 1fr); }
     .ais-profil-zeile { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
 
@@ -521,5 +608,7 @@
     .ais-collapse-body,
     .ais-collapse-inner,
     .ais-collapse-arrow { transition: none; }
-    .ais-beruf-picker.open { animation: none; }
+    .ais-beruf-picker.open,
+    .ais-bw-var { animation: none; }
+    .ais-bw-zeichen { transition: none; }
 }
