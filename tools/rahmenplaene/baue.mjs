@@ -2,6 +2,7 @@
 // Aufgerufen von bauen.mjs. Berufsnamen kommen aus § 1 der Verordnung (dort im Nominativ oder
 // Genitiv), NICHT aus der Rahmenplan-Überschrift (Dativ: "zum Chemielaboranten").
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { text } from './extrakt.mjs';
 
@@ -106,6 +107,7 @@ export function baue({ xmlDir, roh, zielDir }) {
 fs.mkdirSync(zielDir, { recursive: true });
 for (const f of fs.readdirSync(zielDir)) if (f.endsWith('.json')) fs.unlinkSync(path.join(zielDir, f));
 const verzeichnis = [];
+const inhalt = crypto.createHash("sha256");
 const probleme = [];
 let neuester = '';
 for (const r of roh) {
@@ -151,13 +153,19 @@ for (const r of roh) {
   }));
   // Varianten, die in den Abschnitten gar nicht vorkommen, verwerfen
   for (const b of bOut) b.varianten = b.varianten.filter(v => abschnitte.some(a => a.variante === v));
-  const datei = { id: r.id, titel: r.titel, abk: r.abk, stand: r.stand, quelle: r.quelle, berufe: bOut, abschnitte };
-  fs.writeFileSync(path.join(zielDir, r.id + '.json'), JSON.stringify(datei));
+  const datei = { id: r.id, titel: r.titel, abk: r.abk, stand: r.stand, quelle: r.quelle, berufe: bOut, abschnitte, fachgespraech: r.fachgespraech || [] };
+  const json = JSON.stringify(datei);
+  inhalt.update(r.id + '|' + json);
+  fs.writeFileSync(path.join(zielDir, r.id + '.json'), json);
   bOut.forEach((b, i) => verzeichnis.push({ id: r.id, i, m: b.m, w: b.w, v: b.varianten }));
 }
 verzeichnis.sort((a, b) => a.m.localeCompare(b.m, 'de'));
 // Stand = jüngste Fassung einer Verordnung (nicht "heute") — ein zweiter Lauf ohne Gesetzesänderung ändert nichts
 const stand = neuester ? `${neuester.slice(0, 4)}-${neuester.slice(4, 6)}-${neuester.slice(6, 8)}` : '';
-fs.writeFileSync(path.join(zielDir, 'verzeichnis.json'), JSON.stringify({ stand, quelle: 'https://www.gesetze-im-internet.de/', berufe: verzeichnis }));
+// v = Inhalts-Hash aller Pläne. Die Apps laden Pläne mit ?v=…, und der Service Worker hält
+// gestempelte Dateien DAUERHAFT im Cache. Hing der Stempel am Gesetzesstand, kamen eigene
+// Korrekturen (Flechtwerkgestalter-Schwerpunkte, Fachgespräch-Sätze, 01.11.2026) nie an.
+const v = inhalt.digest('hex').slice(0, 10);
+fs.writeFileSync(path.join(zielDir, 'verzeichnis.json'), JSON.stringify({ stand, v, quelle: 'https://www.gesetze-im-internet.de/', berufe: verzeichnis }));
 return { verordnungen: new Set(verzeichnis.map(v => v.id)).size, berufe: verzeichnis.length, varianten: verzeichnis.filter(v => v.v.length).length, probleme };
 }

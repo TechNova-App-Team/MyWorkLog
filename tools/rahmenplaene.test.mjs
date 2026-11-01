@@ -99,5 +99,20 @@ const varianten = vz.berufe.flatMap(b => b.v);
 ok('es gibt Varianten zu prüfen', varianten.length > 50);
 ok('Varianten nicht abgeschnitten (kein Ende auf „-")', varianten.every(v => !/-$/.test(v)));
 
+// Fachgespräch je Verordnung (bh-fachgespraech.js fragt in genau dieser Form, 01.11.2026)
+{
+  const R = (id) => JSON.parse(readFileSync('Assets/data/rahmenplaene/' + id + '.json', 'utf8')).fachgespraech || [];
+  ok('Fachinformatiker: Fachgespräch über die Projektarbeit', R('fiausbv').some(s => s.includes('Projektarbeit')));
+  ok('Koch: fallbezogen über die Menüplanung', R('kochausbv_2022').some(s => s.includes('Menüplanung')));
+  ok('Elektroniker: situatives Fachgespräch', R('elekausbv_2021').some(s => s.includes('situatives Fachgespräch')));
+  ok('Büromanagement: 20 Minuten', R('b_romkfausbv_2025').some(s => s.includes('20 Minuten')));
+  const alle = readdirSync('Assets/data/rahmenplaene').filter(f => f !== 'verzeichnis.json');
+  const mit = alle.filter(f => R(f.replace(/\.json$/, '')).length);
+  ok(`die meisten Verordnungen haben Sätze dazu (${mit.length} von ${alle.length})`, mit.length > 150 && mit.length < alle.length);
+  ok('jeder Satz handelt von einer mündlichen Prüfungsform', alle.every(f => R(f.replace(/\.json$/, '')).every(s => /Fachgespr|Gesprächssimulation|Gesprächsphase|Kundengespräch|Beratungsgespräch/.test(s))));
+  ok('Bankkaufleute: Gesprächssimulation wird erkannt', R('bankkflausbv').some(s => s.includes('Gesprächssimulation')));
+  ok('mündliche Ergänzungsprüfung zählt nicht', alle.every(f => R(f.replace(/\.json$/, '')).every(s => !/Ergänzungsprüfung/.test(s))));
+}
+
 console.log(`\n${pass} ok, ${fail} fehlgeschlagen`);
 process.exit(fail ? 1 : 0);

@@ -186,6 +186,38 @@ const frAus = ctx => {
   return m ? m[1].replace(/\s+im Ausbildungsberufsbild\b.*$/, '').replace(/[.,;]$/, '').trim() : null;
 };
 
+// Was die Verordnung zum Fachgespräch der Prüfung sagt (Form, Gegenstand, Dauer) — wörtlich,
+// aus den Paragraphen, nicht aus den Anlagen. 195 von 305 Verordnungen haben eins, und es ist
+// je Beruf verschieden (Fachinformatiker: Präsentation + Fachgespräch zur Projektarbeit, Koch:
+// fallbezogen über die Menüplanung, Elektroniker: situativ über die Arbeitsaufgabe).
+// bh-fachgespraech.js zeigt das an und gibt es der KI, damit sie wie DIESE Prüfung fragt.
+// Mündliche Prüfungsformen heißen nicht überall „Fachgespräch": Bankkaufleute haben eine
+// „Gesprächssimulation", andere „Gesprächsphasen" oder ein Kundengespräch. Die mündliche
+// ERGÄNZUNGSprüfung zählt bewusst nicht — die ist nur ein Notnagel zum Bestehen.
+export const MUENDLICH = /Fachgespr|Gesprächssimulation|Gesprächsphase|Kundengespräch|Beratungsgespräch|Kundenberatungsgespräch/;
+export function fachgespraechSaetze(norms) {
+  const out = [];
+  for (const n of norms) {
+    const enbez = text((n.match(/<enbez>([\s\S]*?)<\/enbez>/) || [])[1] || '');
+    if (!/^§/.test(enbez) || !MUENDLICH.test(n)) continue;
+    const t = text(n.replace(/<enbez>[\s\S]*?<\/enbez>/, '').replace(/<titel>[\s\S]*?<\/titel>/, ''));
+    for (const satz of t.split(/(?<=[.;])\s+(?=(?:\(\d+\)\s*)?[A-ZÄÖÜ0-9])/)) {
+      const s = satz.replace(/^\(\d+\)\s*/, '').replace(/^\d+\.\s*/, '').trim();
+      if (!MUENDLICH.test(s) || /Ergänzungsprüfung/.test(s) || s.length < 30) continue;
+      // Lange Sätze: Ausschnitt UM das Wort, nicht die ersten 340 Zeichen — sonst fiel
+      // „Fachgespräch" beim Änderungsschneider hinter den Schnitt
+      const i = s.search(MUENDLICH);
+      const k = s.length <= 340 ? s
+        : (i > 150 ? '…' + s.slice(i - 150, i + 190) : s.slice(0, 340)) + '…';
+      // Gleicher Satz, nur umgestellt (je Fachrichtung anders formuliert): gleiche Wortmenge = Doppel
+      const wm = (x) => x.toLowerCase().replace(/[^a-zäöüß0-9 ]+/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+      if (!out.some(x => wm(x) === wm(k))) out.push(k);
+      if (out.length >= 6) return out;
+    }
+  }
+  return out;
+}
+
 export function verarbeite(datei, kurz) {
   const s = fs.readFileSync(datei, 'utf8');
   const norms = s.split(/<norm\b/);
@@ -226,5 +258,5 @@ export function verarbeite(datei, kurz) {
       }
     }
   }
-  return { id: kurz, titel, abk, stand, quelle: `https://www.gesetze-im-internet.de/${kurz}/`, abschnitte };
+  return { id: kurz, titel, abk, stand, quelle: `https://www.gesetze-im-internet.de/${kurz}/`, abschnitte, fachgespraech: fachgespraechSaetze(norms) };
 }
