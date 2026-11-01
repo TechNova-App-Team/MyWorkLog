@@ -86,7 +86,7 @@ function geraetId() {
 
 // Kopfzeilen fuer JEDEN KI-Aufruf: Geraete-ID, und mit Ausbildungs-Pass dessen Token
 // (mwl-pass.js legt es in mwl_pass ab). Der ai-proxy prueft die Signatur selbst und gibt
-// dann das 5-fache Kontingent (Worker v5.5) — ein gefaelschtes Token bringt nichts.
+// dann das doppelte Kontingent (Worker v5.5, seit 01.11.2026 2x statt 5x) — ein gefaelschtes Token bringt nichts.
 // Ein Aufruf ohne diesen Helfer bekommt still nur das normale Kontingent; deshalb nehmen
 // ihn alle Stellen (ais-chat, Pass-Paket), nicht nur dieser Datei.
 function kiKopf() {
