@@ -50,6 +50,7 @@ window.MWLPassMarke = (function () {
 
     document.addEventListener('DOMContentLoaded', einsetzen);
     window.addEventListener('mwl-pass-frei', einsetzen);
+    window.addEventListener('mwl-pass-weg', einsetzen);
     // Freigeschaltet/entfernt in einem anderen Tab (z. B. im Berichtsheft)
     window.addEventListener('storage', (e) => { if (e.key === 'mwl_pass') einsetzen(); });
 

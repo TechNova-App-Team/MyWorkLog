@@ -48,6 +48,7 @@ window.MWLPass = (function () {
 
     const SB_SCHLUESSEL = 'sb-fouucibowmukxvweratn-auth-token';
     const KEIN_PASS = 'mwl_pass_kein';     // Zeitpunkt der letzten Antwort „kein Pass am Konto“
+    const GEPRUEFT = 'mwl_pass_geprueft';  // letzte Antwort des Kontos (für die stündliche Prüfung)
     const angemeldet = () => { try { return !!localStorage.getItem(SB_SCHLUESSEL); } catch (e) { return false; } };
 
     // Supabase-Zugangstoken. Erst ueber den EINEN Client der Seite (frischt abgelaufene Tokens
@@ -133,18 +134,34 @@ window.MWLPass = (function () {
             r = await mitKonto('/pass/freischalten', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
         } catch (e) { return { ok: false, fehler: 'netz' }; }
         if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
-        if (r.status === 404) { try { localStorage.setItem(KEIN_PASS, String(Date.now())); } catch (e) {} return { ok: false, fehler: 'kein' }; }
+        try { localStorage.setItem(GEPRUEFT, String(Date.now())); } catch (e) {}
+        if (r.status === 404) {
+            try { localStorage.setItem(KEIN_PASS, String(Date.now())); } catch (e) {}
+            // Erstattet/zurückgebucht: Konto-Freischaltung auf diesem Gerät sofort wegräumen.
+            // Der Haupt-Code ('code') hängt an keinem Konto und bleibt.
+            const g = gespeichert();
+            if (g && g.quelle === 'konto') {
+                sperren();
+                try { window.dispatchEvent(new CustomEvent('mwl-pass-weg')); } catch (e) {}
+            }
+            return { ok: false, fehler: 'kein' };
+        }
         const d = await r.json().catch(() => null);
         if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
         if (!merken(d, 'konto')) return { ok: false, fehler: 'speicher' };
         return nachFreischalten();
     }
 
-    // Still beim Laden: angemeldet, aber kein (oder bald ablaufendes) Token → beim Konto nachfragen
+    // Still beim Laden: angemeldet, aber kein (oder bald ablaufendes) Token → beim Konto nachfragen.
+    // Konto-Pass zusätzlich stündlich: lokal lädt die Seite das Paket direkt aus /pass/ und fragt
+    // den Server nie — ohne diese Prüfung bliebe ein erstatteter Pass dort bis zum Token-Ablauf.
     function stillErneuern() {
         if (!angemeldet()) return;
         const g = gespeichert();
-        if (g && g.token && g.bis - Date.now() > 2 * 86400000) return;
+        let geprueft = 0;
+        try { geprueft = Number(localStorage.getItem(GEPRUEFT)) || 0; } catch (e) {}
+        const stuendlich = g && g.quelle === 'konto' && Date.now() - geprueft > 3600000;
+        if (g && g.token && g.bis - Date.now() > 2 * 86400000 && !stuendlich) return;
         let zuletzt = 0;
         try { zuletzt = Number(localStorage.getItem(KEIN_PASS)) || 0; } catch (e) {}
         if (!(g && g.token) && Date.now() - zuletzt < 12 * 3600000) return;
@@ -212,7 +229,11 @@ window.MWLPass = (function () {
             fetch(API + '/pass/paket?art=js', { headers: kopf, cache: 'no-store' }),
             fetch(API + '/pass/paket?art=css', { headers: kopf, cache: 'no-store' }),
         ]);
-        if (js.status === 401 || css.status === 401) { sperren(); return false; }
+        if (js.status === 401 || css.status === 401) {
+            sperren();
+            try { window.dispatchEvent(new CustomEvent('mwl-pass-weg')); } catch (e) {}
+            return false;
+        }
         if (!js.ok || !css.ok) return false;
         stil(await css.text());
         skript(await js.text());
