@@ -135,7 +135,9 @@
         if (s && s.user) {
             konto.textContent = 'Angemeldet als ' + (s.user.email || 'MyWorkLog-Konto') + '.';
             konto.hidden = false;
-            const r = MWLPass.frei() ? { ok: true } : await MWLPass.kontoFreischalten();
+            // Nur ein Pass AM KONTO zählt — eine Freischaltung per Haupt-Code gilt nur für dieses
+            // Gerät und darf das Kaufen nicht verdecken (so passiert 02.11.2026: „aktiv“ ohne Kauf).
+            const r = MWLPass.vomKonto() ? { ok: true } : await MWLPass.kontoFreischalten();
             if (r.ok) fertig(MWLPass.passBis());
         } else if (!MWLPass.angemeldet()) {
             konto.textContent = 'Der Pass hängt an deinem MyWorkLog-Konto. Du meldest dich vor dem Bezahlen an oder legst eins an, kostenlos.';

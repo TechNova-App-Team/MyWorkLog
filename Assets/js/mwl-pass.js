@@ -73,8 +73,10 @@ window.MWLPass = (function () {
         return fetch(API + pfad, { ...init, headers: { ...(init.headers || {}), Authorization: 'Bearer ' + t } });
     }
 
-    function merken(d) {
-        try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ token: d.token, bis: d.bis, passBis: d.passBis || d.bis })); } catch (e) { return false; }
+    // quelle 'konto' = gekauft und am Konto gespeichert; 'code' = Haupt-Code, schaltet nur DIESES
+    // Geraet frei und steht in keiner Tabelle. /kaufen/ darf nur bei 'konto' „aktiv“ sagen.
+    function merken(d, quelle) {
+        try { localStorage.setItem(SCHLUESSEL, JSON.stringify({ token: d.token, bis: d.bis, passBis: d.passBis || d.bis, quelle })); } catch (e) { return false; }
         try { localStorage.removeItem(KEIN_PASS); } catch (e) {}
         try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
         return true;
@@ -119,7 +121,7 @@ window.MWLPass = (function () {
         if (r.status === 202) return { ok: false, fehler: 'offen' };
         if (r.status === 404 || r.status === 400) return { ok: false, fehler: 'kein' };
         if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
-        if (!merken(d)) return { ok: false, fehler: 'speicher' };
+        if (!merken(d, 'konto')) return { ok: false, fehler: 'speicher' };
         const n = await nachFreischalten();
         return n.ok ? { ok: true, passBis: d.passBis || d.bis } : n;
     }
@@ -134,7 +136,7 @@ window.MWLPass = (function () {
         if (r.status === 404) { try { localStorage.setItem(KEIN_PASS, String(Date.now())); } catch (e) {} return { ok: false, fehler: 'kein' }; }
         const d = await r.json().catch(() => null);
         if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
-        if (!merken(d)) return { ok: false, fehler: 'speicher' };
+        if (!merken(d, 'konto')) return { ok: false, fehler: 'speicher' };
         return nachFreischalten();
     }
 
@@ -163,7 +165,7 @@ window.MWLPass = (function () {
         if (!r.ok) return { ok: false, fehler: 'server' };
         const d = await r.json().catch(() => null);
         if (!d || !d.token) return { ok: false, fehler: 'server' };
-        if (!merken(d)) return { ok: false, fehler: 'speicher' };
+        if (!merken(d, 'code')) return { ok: false, fehler: 'speicher' };
         return nachFreischalten();
     }
 
@@ -262,13 +264,14 @@ window.MWLPass = (function () {
     }
 
     // Bis wann der Pass laeuft (nicht das 7-Tage-Token) — fuer Anzeigen
+    const vomKonto = () => { const g = gespeichert(); return !!(g && g.quelle === 'konto' && frei()); };
     const passBis = () => { const g = gespeichert(); return (g && (g.passBis || g.bis)) || 0; };
 
     // Nach dem Laden der Seite, damit BHB2B / cloudSync schon stehen
     window.addEventListener('load', () => setTimeout(stillErneuern, 1200));
 
     return {
-        frei, einloesen, sperren, laden, oeffnen, lokal, kasse, kaufAbholen, kontoFreischalten, angemeldet, passBis,
+        frei, vomKonto, einloesen, sperren, laden, oeffnen, lokal, kasse, kaufAbholen, kontoFreischalten, angemeldet, passBis,
         set tokenQuelle(f) { tokenQuelle = typeof f === 'function' ? f : null; },
     };
 })();
