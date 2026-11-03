@@ -13,7 +13,7 @@
         email: 'Please enter a valid email address.',
         senden: 'Sending…',
         fehlt: 'Please check the marked fields.',
-        netz: 'No connection to our server. Please try again, or send your withdrawal to info@myworklog.de — that counts just the same.',
+        netz: 'No connection to our server. Please try again, or send your withdrawal to support@myworklog.de — that counts just the same.',
         mailOk: 'A confirmation of receipt is on its way to {email}.',
         mailSpaeter: 'The email confirmation could not be sent right away; we will send it shortly. Your declaration has been received and is saved.',
     } : {
@@ -21,7 +21,7 @@
         email: 'Bitte geben Sie eine gültige E-Mail-Adresse an.',
         senden: 'Wird gesendet …',
         fehlt: 'Bitte prüfen Sie die markierten Felder.',
-        netz: 'Keine Verbindung zu unserem Server. Bitte versuchen Sie es noch einmal oder schreiben Sie Ihren Widerruf an info@myworklog.de, das gilt genauso.',
+        netz: 'Keine Verbindung zu unserem Server. Bitte versuchen Sie es noch einmal oder schreiben Sie Ihren Widerruf an support@myworklog.de, das gilt genauso.',
         mailOk: 'Eine Eingangsbestätigung ist per E-Mail an {email} unterwegs.',
         mailSpaeter: 'Die Bestätigung per E-Mail ließ sich gerade nicht senden, wir schicken sie in Kürze nach. Ihre Erklärung ist eingegangen und gespeichert.',
     };
