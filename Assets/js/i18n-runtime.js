@@ -312,6 +312,8 @@
     'Was ist MyWorkLog?': 'What is MyWorkLog?',
     'Datenschutz': 'Privacy',
     'Impressum': 'Legal notice',
+    'AGB': 'Terms',
+    'Vertrag widerrufen': 'Withdraw from contract',
     'Navigation': 'Navigation',
     'Kontakt': 'Contact',
     'Die kostenlose Zeiterfassung für Auszubildende. Open Source, DSGVO-konform & offline-first.':

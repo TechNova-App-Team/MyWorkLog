@@ -194,6 +194,7 @@ var EVENT_LABELS = {
     'timer_action':     ['Timer', 'Timer'],
     'data_exported':    ['Daten exportiert', 'Data exported'],
     'pwa_installiert':  ['App installiert', 'App installed'],
+    'widerruf_erklaert': ['Vertrag widerrufen', 'Contract withdrawn'],
     'installbanner':    ['Installations-Hinweis', 'Install prompt'],
     'data_imported':    ['Daten importiert', 'Data imported'],
     'woche_gewechselt': ['Woche gewechselt', 'Week switched'],

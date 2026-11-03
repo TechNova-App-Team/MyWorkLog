@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/Grafiken/apple-touch-icon.png">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+  <meta name="theme-color" content="#131428">
+  <meta name="description" content="Vertrag mit MyWorkLog online widerrufen, ohne Anmeldung. Sie erhalten sofort eine Eingangsbestätigung per E-Mail.">
+  <title>Vertrag widerrufen · MyWorkLog</title>
+  <link rel="canonical" href="https://myworklog.de/widerrufen/">
+  <link rel="alternate" hreflang="de" href="https://myworklog.de/widerrufen/">
+  <link rel="alternate" hreflang="en" href="https://myworklog.de/en/widerrufen/">
+  <link rel="alternate" hreflang="x-default" href="https://myworklog.de/widerrufen/">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Martian+Mono:wdth,wght@112.5,300&display=swap">
+
+  <link rel="stylesheet" href="/Assets/css/impressum.css?v=1ac72eced2">
+  <script defer src="/Assets/js/ph-init.js?v=20079215ce"></script>
+  <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
+  <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
+  <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
+  <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
+  <script defer src="/Assets/js/widerrufen.js?v=f86cb6828f"></script>
+</head>
+<body>
+
+<header class="im-top">
+  <a class="im-marke" href="/" translate="no">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    <span>MyWorkLog</span>
+  </a>
+  <a class="im-top-link" id="wrZurApp" href="/">Zur App</a>
+</header>
+
+<main>
+
+  <!-- § 356a BGB: OHNE Anmeldung erreichbar, zwei Schritte (diese Seite, dann
+       „Widerruf bestaetigen“), danach sofort Eingangsbestaetigung per E-Mail. Abgefragt
+       werden NUR Name, Vertrag und Adresse fuer die Bestaetigung; der Grund ist freiwillig.
+       Server: POST ai-proxy /widerruf (workers/ai-proxy, handleWiderruf). -->
+  <section class="im-hero" aria-labelledby="wrTitel">
+    <div>
+      <h1 class="im-titel" id="wrTitel">Vertrag widerrufen</h1>
+      <p class="im-lede" id="wrLede">Hier widerrufen Sie einen Vertrag mit MyWorkLog, zum Beispiel den Kauf des Ausbildungs-Passes. Eine Anmeldung ist nicht nötig.</p>
+      <div class="im-text" id="wrHinweise">
+        <p>Nach dem Absenden erhalten Sie sofort eine Eingangsbestätigung per E-Mail, mit dem Inhalt Ihrer Erklärung sowie Datum und Uhrzeit des Eingangs.</p>
+        <p>Ob und wann das Widerrufsrecht erlischt, steht in der <a href="/agb/#widerruf">Widerrufsbelehrung</a>.</p>
+      </div>
+    </div>
+
+    <article class="im-bogen is-gerade" aria-labelledby="wrFormTitel">
+      <div class="im-vk" id="wrVk"><span>Widerrufserklärung</span><span>§ 356a BGB</span></div>
+      <h2 class="im-name" id="wrFormTitel">Ihre Angaben</h2>
+
+      <form class="im-form" id="wrForm" novalidate>
+        <p class="im-meldung" id="wrMeldung" role="alert" hidden></p>
+        <div class="im-feld" id="wrFeldName">
+          <label for="wrName">Ihr Name</label>
+          <input id="wrName" name="name" autocomplete="name" maxlength="120" required>
+        </div>
+        <div class="im-feld" id="wrFeldVertrag">
+          <label for="wrVertrag">Welcher Vertrag?</label>
+          <input id="wrVertrag" name="vertrag" maxlength="160" required>
+          <small id="wrVertragHilfe">Zum Beispiel Rechnungsnummer, Kaufdatum oder die E-Mail-Adresse Ihres MyWorkLog-Kontos.</small>
+        </div>
+        <div class="im-feld" id="wrFeldEmail">
+          <label for="wrEmail">E-Mail für die Bestätigung</label>
+          <input id="wrEmail" name="email" type="email" autocomplete="email" maxlength="254" required>
+        </div>
+        <div class="im-feld" id="wrFeldGrund">
+          <label for="wrGrund">Grund (freiwillig)</label>
+          <textarea id="wrGrund" name="grund" maxlength="500"></textarea>
+        </div>
+        <button type="submit" id="wrSenden">Widerruf bestätigen</button>
+      </form>
+
+      <div class="im-quittung" id="wrQuittung" tabindex="-1" hidden>
+        <p id="wrQuittungText">Ihr Widerruf ist eingegangen.</p>
+        <p id="wrQuittungMail"></p>
+        <dl id="wrQuittungDaten">
+          <div><dt id="wrQVorgang">Vorgang</dt><dd id="wrDVorgang"></dd></div>
+          <div><dt id="wrQEingang">Eingang</dt><dd id="wrDEingang"></dd></div>
+          <div><dt id="wrQName">Name</dt><dd id="wrDName"></dd></div>
+          <div><dt id="wrQVertrag">Vertrag</dt><dd id="wrDVertrag"></dd></div>
+          <div><dt id="wrQEmail">E-Mail</dt><dd id="wrDEmail"></dd></div>
+        </dl>
+      </div>
+    </article>
+  </section>
+
+  <section class="im-hinweise" aria-labelledby="wrAndersTitel">
+    <h2 class="im-h2" id="wrAndersTitel">Andere Wege</h2>
+    <div class="im-abschnitt" id="wrAnders">
+      <h3>Per E-Mail oder Brief</h3>
+      <div class="im-text">
+        <p>Sie können auch formlos an info@myworklog.de schreiben oder einen Brief an Sven Kunz, Am Moosgraben 32, 91572 Bechhofen schicken. Das gilt genauso.</p>
+        <p>Eine Vorlage finden Sie im <a href="/agb/#formular">Muster-Widerrufsformular</a>.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="page-footer"></div>
+
+<!-- Theme-Farbe der App nachziehen (Pflicht fuer Standalone-Seiten) -->
+<script>
+(function () {
+  function applyTheme(hex) {
+    if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+    var s = document.documentElement.style;
+    var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    s.setProperty('--primary', hex);
+    s.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+  }
+  function sync() {
+    try {
+      var d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
+      if (d && d.settings && d.settings.theme) applyTheme(d.settings.theme);
+    } catch (e) {}
+  }
+  sync();
+  window.addEventListener('storage', function (e) { if (e.key === 'tg_pro_data') sync(); });
+})();
+</script>
+
+<script>
+/* Gemeinsamer Fussbereich */
+fetch('/pages/footer/footer.html')
+  .then(function (r) { return r.text(); })
+  .then(function (html) {
+    var ph = document.getElementById('page-footer');
+    if (!ph) return;
+    var t = document.createElement('template');
+    t.innerHTML = html;
+    ph.replaceWith(t.content);
+    if (typeof loadAppVersion === 'function') loadAppVersion();
+  })
+  .catch(function () {});
+</script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
+</html>
