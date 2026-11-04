@@ -70,7 +70,6 @@ function zeigen(name, opt) {
     if (!t) return;
     schliessen();
     vorFokus = document.activeElement;
-    const lokal = window.MWLPass && MWLPass.lokal();
     const el = document.createElement('div');
     el.className = 'bs-ebene';
     el.innerHTML =
@@ -79,13 +78,14 @@ function zeigen(name, opt) {
             '<p class="bs-marke">' + SCHLOSS + '<span>' + esc(L(t.titel[0], t.titel[1])) + '</span></p>' +
             '<h2 class="bs-satz" id="bsTitel">' + esc(L(t.satz[0], t.satz[1])) + '</h2>' +
             '<ul class="bs-punkte">' + t.punkte.map(p => '<li>' + esc(L(p[0], p[1])) + '</li>').join('') + '</ul>' +
-            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass. Der ist noch nicht erhältlich.', 'Part of the training pass, which is not available yet.')) + '</p>' +
+            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass: einmal zahlen ab 9,99 €, kein Abo.', 'Part of the training pass: pay once from €9.99, no subscription.')) + '</p>' +
             '<div class="bs-aktion">' +
-                (lokal
-                    ? '<a class="bs-knopf" href="/kaufen/?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>' +
+                // Plus ist nicht kaeuflich, der Kauf-Knopf wuerde dort den falschen Tarif verkaufen
+                (t.plus
+                    ? '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/preise/' : '/preise/') + '#hefte">' + esc(L('Plus vormerken', 'Count me in for Plus')) + '</a>'
+                    : '<a class="bs-knopf" href="/kaufen/?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>' +
                       // Der Pass hängt am Konto: wer gekauft hat und hier abgemeldet ist, muss nur sich anmelden
-                      ((window.MWLPass && MWLPass.angemeldet()) ? '' : '<p class="bs-hinweis">' + esc(L('Schon gekauft? ', 'Already bought? ')) + '<a href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Mit deinem Konto anmelden', 'Sign in with your account')) + '</a></p>')
-                    : '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/preise/' : '/preise/') + '">' + esc(L('Pass vormerken', 'Register interest')) + '</a>') +
+                      ((window.MWLPass && MWLPass.angemeldet()) ? '' : '<p class="bs-hinweis">' + esc(L('Schon gekauft? ', 'Already bought? ')) + '<a href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Mit deinem Konto anmelden', 'Sign in with your account')) + '</a></p>')) +
             '</div>' +
             '<details class="bs-code">' +
                 '<summary>' + esc(L('Ich habe einen Pass-Code', 'I have a pass code')) + '</summary>' +
