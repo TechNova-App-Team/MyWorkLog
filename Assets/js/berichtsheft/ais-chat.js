@@ -503,12 +503,16 @@ function entwurfHTML() {
         '<header class="aic-woche-kopf"><span>' + esc(Lx('KW ', 'Week ') + (e.kw || k.kw)) + '</span>' +
         '<span class="aic-woche-meta">' + esc(Lx(gefuellt + ' von ' + tage.length + ' Tagen eingetragen', gefuellt + ' of ' + tage.length + ' days filled in')) + '</span></header>' +
         '<div class="aic-woche-tage">' + tage.map(t => tagHTML(t, { stunden: sf, neu: zuletztGeaendert })).join('') + '</div>' +
-        '<footer class="aic-woche-fuss">' +
-        '<button type="button" class="aic-knopf is-haupt" onclick="AISChat.entwurfUebernehmen()"' + (gefuellt ? '' : ' disabled') + '>' +
-        '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>' + Lx('In den Bericht übernehmen', 'Add to report') + '</button>' +
-        (leer ? '<button type="button" class="aic-knopf" onclick="AISChat.fuellen()">' +
+        // Eigener Block vor dem Fuß: Klebte der ganze Fuß, blieben am Handy nur ~100 von 510 px für die Tage.
+        '<div class="aic-woche-haupt"><button type="button" class="aic-knopf is-haupt" onclick="AISChat.entwurfUebernehmen()"' + (gefuellt ? '' : ' disabled') + '>' +
+        '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>' + Lx('In den Bericht übernehmen', 'Add to report') + '</button></div>' +
+        '<footer class="aic-woche-fuss is-unter-haupt">' +
+        (leer ?'<button type="button" class="aic-knopf" onclick="AISChat.fuellen()">' +
             esc(leer === 1 ? Lx('Leeren Tag füllen', 'Fill the empty day') : Lx(leer + ' leere Tage füllen', 'Fill ' + leer + ' empty days')) + '</button>' : '') +
         '<button type="button" class="aic-knopf" onclick="AISChat.entwurfBearbeiten()"' + (gefuellt ? '' : ' disabled') + '>' + Lx('Bearbeiten', 'Edit') + '</button>' +
+        // Der Chat fragt nach leeren Tagen, und nichts sagte, dass man schon übernehmen darf.
+        // Gemessen 04.11.2026: 30 Personen gingen mit offenem Entwurf, 20 übernahmen.
+        (gefuellt && leer ? '<p class="aic-woche-hinweis">' + esc(Lx('Die leeren Tage kannst du auch später im Bericht nachtragen.', 'You can add the empty days to the report later.')) + '</p>' : '') +
         '</footer></article>';
 }
 
@@ -1694,7 +1698,8 @@ function einstellungen(tab) {
 
 function entwurfUebernehmen() {
     if (!entwurfHatInhalt(gespraech.entwurf)) return;
-    if (typeof bhMess === 'function') bhMess('assistent_uebernommen');
+    // Tage als Zahl: zeigt, ob halbe Wochen übernommen werden (Trichter, Messung ab 04.11.2026)
+    if (typeof bhMess === 'function') bhMess('assistent_uebernommen', { tage: gespraech.entwurf.tage.filter(tagHatInhalt).length });
     // Von der Startseite aus kann der Chat seit dem Wochenwechsel ungeoeffnet sein:
     // ohne eigene KW fiele der Entwurf sonst in die Woche der Einstellungen.
     if (!gespraech.entwurf.kw) { const o = offenerEntwurf(); if (o) gespraech.entwurf.kw = o.kw; }
