@@ -33,7 +33,7 @@
 (function () {
     'use strict';
 
-    const CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    const CDN = '/Assets/js/vendor/supabase-js-2.119.0.js?v=71e670ca67';
 
     let clientPromise = null;
     let statusCache = null;      // { at, wert }  — kurzlebiger Cache fuer bhb2bStatus()

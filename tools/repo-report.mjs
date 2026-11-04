@@ -1152,9 +1152,8 @@ new Chart(document.getElementById('cTimeline'),{
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${rn} — Code Intelligence</title>
 <meta name="robots" content="noindex,follow">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link href="/Assets/fonts/inter-jetbrains-mono-5a4dfd9a.css?v=0" rel="stylesheet">
+<script src="/Assets/js/vendor/chart-4.6.1.js?v=0"></script>
 <style>${CSS}</style>
 </head>
 <body>

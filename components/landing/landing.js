@@ -34,7 +34,7 @@
       if(document.getElementById('viFonts')) return;
       var l=document.createElement('link');
       l.id='viFonts'; l.rel='stylesheet';
-      l.href='https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@112.5,300..500&family=Bricolage+Grotesque:opsz,wght@12..96,500..700&family=Geist:wght@400;500;600&display=swap';
+      l.href='/Assets/fonts/bricolage-grotesque-geist-3546dbd9.css?v=cffab4f5eb';
       document.head.appendChild(l);
     })();
     var EN=document.documentElement.lang==='en';

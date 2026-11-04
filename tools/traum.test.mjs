@@ -30,8 +30,10 @@ ok(zeilen === slugs.size, `jedes Foto hat genau eine Nachweiszeile (${slugs.size
 ok(!/CC BY/.test(nachweis) || /rel="license/.test(nachweis), 'CC-Lizenzen sind verlinkt');
 
 // CJK: alles, was im Markup steht, muss in einer der beiden &text=-Teilmengen sein
-const teilmenge = [...ohneKommentare.matchAll(/family=Noto\+Serif\+(?:JP|SC)[^"]*&text=([^&"]+)/g)]
-    .map((m) => decodeURIComponent(m[1])).join('');
+// Die Teilmengen liegen seit 04.11.2026 fertig in Assets/fonts/noto-serif-{jp,sc}-*.css. Neues Zeichen =
+// neue woff2 nötig (Google css2?family=Noto+Serif+JP:wght@600&text=…), dann auch hier ergänzen.
+const teilmenge = '日本東京都富士山応援旅' + '中国北京张家界上海';
+ok(/Assets\/fonts\/noto-serif-jp-/.test(ohneKommentare) && /Assets\/fonts\/noto-serif-sc-/.test(ohneKommentare), 'beide CJK-Teilmengen sind eingebunden');
 const cjk = new Set((ohneKommentare.replace(/<head>[\s\S]*<\/head>/, '').match(/[一-鿿]/g) || []));
 ok(cjk.size > 5, `es gibt ueberhaupt CJK-Zeichen (${cjk.size})`);
 const ohneFont = [...cjk].filter((c) => !teilmenge.includes(c));

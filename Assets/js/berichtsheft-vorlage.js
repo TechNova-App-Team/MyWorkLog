@@ -6,7 +6,7 @@
 (function () {
     'use strict';
 
-    const JSPDF_URL = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    const JSPDF_URL = '/Assets/js/vendor/jspdf-2.5.1.umd.min.js?v=98ccf17aa1';
     const EN = document.documentElement.lang === 'en';
     const L = (de, en) => (EN ? en : de);
     const $ = (id) => document.getElementById(id);

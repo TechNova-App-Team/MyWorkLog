@@ -4077,9 +4077,7 @@ async function exportAsPDF() {
     // die System-UI-Schrift zurueck und sieht aus wie von einer anderen App.
     // Faellt die Verbindung aus, greift der Systemstapel; gedruckt wird erst,
     // wenn document.fonts.ready aufgeloest ist.
-    html += '<link rel="preconnect" href="https://fonts.googleapis.com">';
-    html += '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
-    html += '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">';
+    html += '<link href="/Assets/fonts/inter-jetbrains-mono-eb941792.css?v=526f7611ea" rel="stylesheet">';
     html += '<style>';
 
     html += '@page{margin:16mm 15mm 18mm}';

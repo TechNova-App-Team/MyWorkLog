@@ -20,7 +20,7 @@ function loadSupabase(callback) {
 
     _supabaseLoading = true;
     var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+    s.src = '/Assets/js/vendor/supabase-js-2.119.0.js?v=0';
     s.onload = _flushSupabase;
     s.onerror = function() { console.error('[Supabase] CDN konnte nicht geladen werden'); _supabaseLoading = false; };
     document.head.appendChild(s);

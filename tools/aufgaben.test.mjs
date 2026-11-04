@@ -307,7 +307,7 @@ console.log('\n9 · Statische Proben');
     ok('kein weisser Hover-Schleier', !/hover[^{]*\{[^}]*rgba\(255,\s*255,\s*255/i.test(CSS_CODE));
     ok('keine Entrance-Animation ab opacity 0 (LCP-Falle)', !/@keyframes/.test(CSS_CODE));
     ok('font-family: inherit fuer Bedienelemente', /button, input, select, textarea \{ font-family: inherit; \}/.test(HTML));
-    ok('Schrift ist die der App', /Plus\+Jakarta\+Sans/.test(HTML) && !/family=Inter/.test(HTML));
+    ok('Schrift ist die der App', /Assets\/fonts\/[a-z-]*plus-jakarta-sans/.test(HTML) && !/Assets\/fonts\/inter/.test(HTML));
     ok('Sidebar/Detail sind deckend (kein Alpha-Token)', /--bg-side: #[0-9a-f]{6};/.test(HTML) && /--bg-panel: #[0-9a-f]{6};/.test(HTML));
 
     // i18n: kein gemischter Textknoten (Element + nackter Text im selben Elternteil).

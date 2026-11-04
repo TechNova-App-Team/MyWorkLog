@@ -209,9 +209,7 @@ function kopf({ lang, titel, beschreibung, url, urlDe, urlEn, ld }) {
     <meta name="theme-color" content="#131428">
     <link rel="manifest" href="/manifest.json">
 ${ld.map((o) => `    <script type="application/ld+json">\n${ldJson(o)}\n    </script>`).join('\n')}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Caveat:wght@500;600&display=swap">
+    <link rel="stylesheet" href="/Assets/fonts/bricolage-grotesque-caveat-e34b5c44.css?v=0">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/pdf-studio.css">
     <link rel="stylesheet" href="/Assets/css/berichtsheft-vorlage.css">
     <link rel="stylesheet" href="/Assets/css/berichtsheft-beispiele.css">

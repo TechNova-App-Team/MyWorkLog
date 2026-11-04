@@ -55,7 +55,6 @@ const CACHEABLE_EXTS = new Set(['js', 'css', 'html', 'png', 'svg', 'jpg',
 const NO_CACHE_ORIGINS = [
   'static.cloudflareinsights.com',
   'cloudflareinsights.com',
-  'fonts.googleapis.com',   // dynamische Font-CSS, nicht cachen
 ];
 
 // Nur eigener Origin: ein CDN-?v= ist kein Hash von uns.

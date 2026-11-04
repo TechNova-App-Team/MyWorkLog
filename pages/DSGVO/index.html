@@ -1054,19 +1054,11 @@
                 widerrufen.
             </div>
 
-            <h4>b) Externe CDN-Ressourcen</h4>
-            <p>MyWorkLog lädt folgende Ressourcen von externen CDNs:</p>
-            <ul>
-                <li><strong>EmailJS SDK</strong> (cdn.jsdelivr.net) — nur für Feedback-Versand</li>
-                <li><strong>Supabase SDK</strong> (cdn.jsdelivr.net) — nur für Cloud-Sync</li>
-                <li><strong>DOMPurify</strong> (cdn.jsdelivr.net) — bei jedem Start der App, zum sicheren Anzeigen von Inhalten</li>
-                <li><strong>jsPDF</strong> (cdnjs.cloudflare.com) — beim Öffnen des Berichtshefts, für den PDF-Export</li>
-                <li><strong>simple-peer</strong> (cdn.jsdelivr.net) — nur für die direkte Synchronisation zwischen Geräten</li>
-                <li><strong>Chart.js</strong> (cdn.jsdelivr.net) — nur auf der Seite mit dem Projektbericht</li>
-            </ul>
-            <p>Beim Laden dieser Ressourcen kann der CDN-Betreiber technisch bedingt Ihre <strong>IP-Adresse</strong>
-                verarbeiten. Dies ist gemäß Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bereitstellung der
-                App-Funktionalität) gerechtfertigt.</p>
+            <!-- Selbst gehostet seit 04.11.2026 (Assets/fonts, Assets/js/vendor), Anlass: LG München 3 O 17493/20.
+                 Nur Tesseract bleibt extern und lädt erst auf Klick (~30 MB Sprachdaten + WASM). -->
+            <h4 id="dsCdnH">b) Schriften und Bibliotheken</h4>
+            <p id="dsCdnP1">Schriften und Programmbibliotheken liefert MyWorkLog von den eigenen Servern aus. Beim Aufruf der Seiten gehen dafür keine Daten an Google oder andere Anbieter solcher Dateien.</p>
+            <p id="dsCdnP2">Eine Ausnahme ist die Texterkennung beim Foto-Import im Berichtsheft: Erst wenn Sie diese Funktion starten, lädt Ihr Browser ihre Programmteile und Sprachdaten von cdn.jsdelivr.net. Der Betreiber kann dabei technisch bedingt Ihre IP-Adresse verarbeiten. Das Foto selbst bleibt auf Ihrem Gerät. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bereitstellung der angeforderten Funktion).</p>
 
             <h4>c) Feedback-Funktion &amp; EmailJS</h4>
             <p>Beim Senden von Feedback oder Feature-Anfragen werden Daten <strong>mit Ihrer ausdrücklichen
@@ -1197,10 +1189,11 @@
             <!-- Pass-Kauf: Kasse + Webhook im ai-proxy, Freischaltung + Kaufbuch in Supabase
                  (pass_freischaltungen, pass_kaeufe). Jede <li> nur Text (i18n). Muss zu den
                  Feldern passen, die handlePassKauf an Stripe schickt. -->
-            <h4 id="dsStripeH">h) Kauf des Ausbildungs-Passes (Stripe)</h4>
+            <h4 id="dsStripeH">h) Kauf des Ausbildungs-Passes (Stripe, PayPal)</h4>
             <p id="dsStripeP">Wenn Sie den Ausbildungs-Pass kaufen, wickelt unser Zahlungsdienstleister Stripe die Zahlung ab: Stripe Payments Europe, Limited, 1 Grand Canal Street Lower, Grand Canal Dock, Dublin, D02 H210, Irland. Ihre Zahlungsdaten geben Sie direkt bei Stripe ein; MyWorkLog sieht sie nicht.</p>
             <ul>
                 <li id="dsStripeL1">An Stripe übermitteln wir die Kennung Ihres MyWorkLog-Kontos, die E-Mail-Adresse des Kontos (für Quittung und Rechnung) sowie die gewählte Laufzeit und den Preis.</li>
+                <li id="dsStripeL6">Zahlen Sie mit PayPal, werden Sie zu PayPal weitergeleitet: PayPal (Europe) S.à r.l. et Cie, S.C.A., 22-24 Boulevard Royal, L-2449 Luxemburg. PayPal verarbeitet dort Ihre Anmelde- und Zahlungsdaten in eigener Verantwortung und meldet das Ergebnis an Stripe; MyWorkLog sieht diese Daten nicht.</li>
                 <li id="dsStripeL2">Von Stripe erhalten wir die Bestätigung der Zahlung, den Betrag und eine Kennung des Kaufs, bei einer Erstattung oder Rückbuchung auch deren Meldung. Damit schalten wir den Pass an Ihrem Konto frei oder ziehen ihn zurück.</li>
                 <li id="dsStripeL3">Freischaltung und Kauf speichern wir in unserer Datenbank bei Supabase (siehe a): Konto-Kennung, Laufzeit, Betrag, Kennung des Kaufs und Zeitpunkt.</li>
                 <li id="dsStripeL4">Stripe kann Daten an die Stripe, Inc. in den USA übermitteln. Die Übermittlung stützt sich auf das EU-U.S. Data Privacy Framework und Standardvertragsklauseln.</li>
@@ -1208,6 +1201,8 @@
             </ul>
             <p>Weitere Informationen: <a href="https://stripe.com/de/privacy" target="_blank" rel="noopener"
                     style="color: var(--primary);">Datenschutzerklärung von Stripe</a></p>
+            <p>Weitere Informationen: <a href="https://www.paypal.com/de/legalhub/paypal/privacy-full" target="_blank" rel="noopener"
+                    style="color: var(--primary);">Datenschutzerklärung von PayPal</a></p>
 
             <!-- Online-Widerruf (§ 356a BGB): ai-proxy /widerruf → Supabase public.widerrufe (loescht nach
                  4 Jahren selbst), IP nur als Tages-Hash in widerruf_zaehler fuer 2 Tage. -->

@@ -3,8 +3,8 @@
 // Lädt pdf.js dynamisch vom CDN, parst den Text und mappt die Struktur in das 
 // interne Berichtsheft-Datenmodell.
 
-const IHK_PDFJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-const IHK_WORKER_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const IHK_PDFJS_URL = '/Assets/js/vendor/pdf-3.11.174.min.js?v=5b5799e6f8';
+const IHK_WORKER_URL = '/Assets/js/vendor/pdf.worker-3.11.174.min.js?v=feabdf3097';
 
 let ihkParsedWeeks = [];
 let ihkParsedMeta = null;

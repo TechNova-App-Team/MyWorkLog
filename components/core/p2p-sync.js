@@ -72,7 +72,7 @@
     function _loadSimplePeer(callback) {
         if (typeof SimplePeer !== 'undefined') { callback(); return; }
         var s = document.createElement('script');
-        s.src = 'https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js';
+        s.src = '/Assets/js/vendor/simplepeer-9.11.1.min.js?v=de8330796a';
         s.onload = callback;
         s.onerror = function() { console.error('[P2P] SimplePeer konnte nicht geladen werden'); };
         document.head.appendChild(s);

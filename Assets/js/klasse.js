@@ -104,7 +104,7 @@
         sbPromise = new Promise(function (ok, fail) {
             if (window.supabase && window.supabase.createClient) return ok();
             const s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+            s.src = '/Assets/js/vendor/supabase-js-2.119.0.js?v=71e670ca67';
             s.onload = ok; s.onerror = function () { fail(new Error('offline')); };
             document.head.appendChild(s);
         }).then(function () { return window.supabase.createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY); })
