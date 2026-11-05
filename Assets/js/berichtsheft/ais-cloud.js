@@ -276,7 +276,7 @@ const CLOUD_FORM = {
             'GLIEDERUNG: Gehören mindestens ZWEI Tätigkeiten zu EINEM Oberthema (System, Projekt, Vorgang), steht zuerst der Oberpunkt als eigener Eintrag, danach jede Teilaufgabe als eigener Eintrag mit "- " davor. Beispiel: "Dokumentenmanagement in ELO betreut", "- Eingangsrechnungen erfasst und verschlagwortet", "- Lieferscheine den Bestellungen zugeordnet".',
             'Ein Unterpunkt gehört immer zum Oberpunkt direkt darüber. Höchstens eine Ebene. Einzelne Tätigkeiten ohne gemeinsames Thema bleiben normale Einträge OHNE "- ". Kein Oberpunkt mit nur einem Unterpunkt.',
         ],
-        beispiel: '["Wartung der Prüfstände durchgeführt","- Wartungsprotokolle der Vorwoche gesichtet","- Defekte Baugruppe ausgetauscht","Ergebnisse im Prüfbericht dokumentiert"]',
+        beispiel: '["Wartung der **Prüfstände** durchgeführt","- Wartungsprotokolle der Vorwoche gesichtet","- Defekte Baugruppe ausgetauscht","Ergebnisse im Prüfbericht dokumentiert"]',
         schulBeispiel: '["Rechtsformen von Unternehmen im Unterricht behandelt","Übungsaufgaben zur Kaufvertragsstörung bearbeitet","Zusammenfassung für die Klassenarbeit erstellt"]',
         proTag: '3-5 Stichpunkte',
     },
@@ -287,8 +287,11 @@ const CLOUD_FORM = {
             'Passiv oder unpersönlich, 3. Person: "Die Baugruppe wurde ausgetauscht." — Artikel gehören dazu.',
             'Max 20 Wörter pro Satz. Eine Tätigkeit pro Satz.',
             '✗ Verboten: Ich-Form ("Ich habe…"), Stichpunkte ohne Verb, Bewertungen.',
+            // Gemeldet 05.11.2026: in ganzen Sätzen kam nie eine Gliederung, die Regel stand nur bei den
+            // Stichpunkten, und das Beispiel wiegt schwerer als jede Regel.
+            'GLIEDERUNG: Gehören mindestens ZWEI Tätigkeiten zu EINEM Oberthema (System, Projekt, Vorgang), steht zuerst der Oberpunkt als eigener Satz, danach jede Teilaufgabe als eigener Satz mit "- " davor. Nutze das an jedem Tag, an dem zwei Tätigkeiten zusammengehören. Höchstens eine Ebene, kein Oberpunkt mit nur einem Unterpunkt. Einzelne Tätigkeiten ohne gemeinsames Thema bleiben normale Einträge.',
         ],
-        beispiel: '["Die Wartungsprotokolle der Vorwoche wurden gesichtet und ausgewertet.","Die defekte Baugruppe wurde ausgetauscht.","Die Ergebnisse wurden im Prüfbericht dokumentiert."]',
+        beispiel: '["Die **Prüfstände** wurden gewartet.","- Die Wartungsprotokolle der Vorwoche wurden gesichtet.","- Die defekte Baugruppe wurde ausgetauscht.","Die Ergebnisse wurden im Prüfbericht dokumentiert."]',
         schulBeispiel: '["Im Unterricht wurden die Rechtsformen von Unternehmen behandelt.","Übungsaufgaben zur Kaufvertragsstörung wurden bearbeitet.","Für die Klassenarbeit wurde eine Zusammenfassung erstellt."]',
         proTag: '3-5 Sätze',
     },
@@ -299,8 +302,11 @@ const CLOUD_FORM = {
             'Perfekt: "Ich habe … <Partizip>." Artikel gehören dazu ("die Baugruppe", nicht "Baugruppe").',
             'Max 20 Wörter pro Satz. Eine Tätigkeit pro Satz.',
             '✗ Verboten: Passiv, Stichpunkte ohne Verb, Bewertungen ("hat Spaß gemacht"), "Wir haben…".',
+            // Gemeldet 05.11.2026: in ganzen Sätzen kam nie eine Gliederung, die Regel stand nur bei den
+            // Stichpunkten, und das Beispiel wiegt schwerer als jede Regel.
+            'GLIEDERUNG: Gehören mindestens ZWEI Tätigkeiten zu EINEM Oberthema (System, Projekt, Vorgang), steht zuerst der Oberpunkt als eigener Satz, danach jede Teilaufgabe als eigener Satz mit "- " davor. Nutze das an jedem Tag, an dem zwei Tätigkeiten zusammengehören. Höchstens eine Ebene, kein Oberpunkt mit nur einem Unterpunkt. Einzelne Tätigkeiten ohne gemeinsames Thema bleiben normale Einträge.',
         ],
-        beispiel: '["Ich habe die Wartungsprotokolle der Vorwoche gesichtet.","Ich habe die defekte Baugruppe ausgetauscht.","Ich habe die Ergebnisse im Prüfbericht dokumentiert."]',
+        beispiel: '["Ich habe die **Prüfstände** gewartet.","- Ich habe die Wartungsprotokolle der Vorwoche gesichtet.","- Ich habe die defekte Baugruppe ausgetauscht.","Ich habe die Ergebnisse im Prüfbericht dokumentiert."]',
         schulBeispiel: '["Ich habe im Unterricht die Rechtsformen von Unternehmen behandelt.","Ich habe Übungsaufgaben zur Kaufvertragsstörung bearbeitet.","Ich habe für die Klassenarbeit eine Zusammenfassung erstellt."]',
         proTag: '3-5 Sätze',
     },
@@ -319,9 +325,9 @@ const CLOUD_FORM = {
 };
 // Formatierung wie im IHK-Portal (seit 01.11.2026, bh-text.js liest sie in Editor, Ansicht
 // und PDF). Gilt für JEDE Schreibform, deshalb hier angehängt statt viermal ausgeschrieben.
-// Sparsam: ein Bericht voller Fettdruck liest sich wie Werbung, der Ausbilder sucht die
-// Tätigkeit. Mehr nur, wenn der Azubi es ausdrücklich verlangt.
-const FORMAT_REGEL = 'FORMATIERUNG (wie im IHK-Portal): Den wichtigsten Fachbegriff, ein System oder Programm darfst du sparsam mit **fett** hervorheben — höchstens ein Wort oder Begriff je Eintrag und nicht in jedem Eintrag. Andere Formatierung nur, wenn der Nutzer sie verlangt: *kursiv*, __unterstrichen__, Nummerierung mit "1. " am Eintragsanfang. Keine Überschriften, keine Emojis, keine anderen Markdown-Zeichen.';
+// Ein bis zwei Begriffe je Tag: mit „sparsam, nicht in jedem Eintrag" kam gar nichts mehr
+// (gemeldet 05.11.2026), und ein Bericht voller Fettdruck liest sich wie Werbung.
+const FORMAT_REGEL = 'FORMATIERUNG (wie im IHK-Portal): Hebe je Tag die ein bis zwei wichtigsten Fachbegriffe, Systeme oder Programme mit **fett** hervor, je Eintrag höchstens einen. Andere Formatierung nur, wenn der Nutzer sie verlangt: *kursiv*, __unterstrichen__, Nummerierung mit "1. " am Eintragsanfang. Keine Überschriften, keine Emojis, keine anderen Markdown-Zeichen.';
 Object.values(CLOUD_FORM).forEach(f => f.stil.push(FORMAT_REGEL));
 
 const CLOUD_UMFANG = {

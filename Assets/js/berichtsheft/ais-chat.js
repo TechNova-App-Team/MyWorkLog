@@ -583,7 +583,7 @@ function nachrichtHTML(n, nr) {
     if (n.passLink && passWerben())
         knoepfe.push('<a class="aic-knopf" href="' + PASS_LINK() + '" onclick="' + PASS_KLICK('limit') + '">' + Lx('Doppelt so viel am Tag mit dem Pass', 'Twice as much per day with the pass') + '</a>');
     return '<div class="aic-n is-assistent"><span class="aic-avatar">' + MARKE + '</span><div class="aic-inhalt">' +
-        (n.text ? '<p class="aic-text">' + esc(n.text) + '</p>' : '') + chips +
+        (n.text ? '<p class="aic-text">' + eintragHtml(n.text) + '</p>' : '') + chips +
         (n.wer ? '<p class="aic-wer">' + esc(n.wer) + '</p>' : '') +
         (knoepfe.length ? '<div class="aic-knoepfe">' + knoepfe.join('') + '</div>' : '') +
         (n.woche ? wocheHTML(n.woche, nr) : '') + (n.stapel ? stapelHTML(n, nr) : '') + '</div></div>';
@@ -1085,6 +1085,30 @@ function wocheAusText(text, heute) {
     mo.setDate(mo.getDate() - ((mo.getDay() + 6) % 7) + treffer[1] * 7);
     return mo;
 }
+// „für KW44 Do noch einen Eintrag": gemeldet 05.11.2026, kam in KW 45 an. Die Tabelle im Prompt
+// kannte die KW, aber nichts setzte sie durch. Genau eine genannte KW zählt, zwei sind ein
+// Zeitraum und nichts, was hier zu raten wäre. Ohne Jahr gilt die nächstliegende Vergangenheit:
+// eine KW mehr als acht Wochen in der Zukunft meint das Vorjahr (im Januar „KW 50").
+function kwAusText(text, heute) {
+    const s = String(text || '');
+    const re = /\b(?:kw|kalenderwoche|cw|calendar week|week)\s*\.?\s*(\d{1,2})\b/gi;
+    const gefunden = new Set();
+    let m;
+    while ((m = re.exec(s)) !== null) gefunden.add(+m[1]);
+    if (gefunden.size !== 1) return null;
+    const kw = [...gefunden][0];
+    const h = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate());
+    const montagIn = (jahr) => {
+        const jan4 = new Date(jahr, 0, 4);
+        const mo = new Date(jahr, 0, 4 - ((jan4.getDay() + 6) % 7) + (kw - 1) * 7);
+        return kwVon(mo) === kw ? mo : null;
+    };
+    if (kw < 1 || kw > 53) return null;
+    const jahr = parseInt(wochenSchluessel(h).split('-W')[0], 10);
+    const dies = montagIn(jahr);
+    if (dies && dies - h <= 56 * 864e5) return dies;
+    return montagIn(jahr - 1);
+}
 function wocheHinweis(mo) {
     const so = new Date(mo); so.setDate(so.getDate() + 6);
     const f = (d) => d.getDate() + '.' + (d.getMonth() + 1) + '.';
@@ -1269,20 +1293,20 @@ function systemPrompt() {
         '- abteilung: Text',
         '- tage: REGELMÄSSIGE Arbeitstage als Liste 0=Montag bis 4=Freitag, nur wenn er sagt, dass er z. B. nie freitags arbeitet',
         '- schultage: REGELMÄSSIGE Berufsschultage 0 bis 4, nur bei "immer"/"jeden" ("Mittwoch ist immer Schule"). Ein einzelner Schultag gehört NUR in days.',
-        '- kw: Kalenderwoche aus der Tabelle unten, wenn er ein Datum oder "letzte Woche" nennt. Nicht selbst rechnen.',
+        '- kw: Kalenderwoche aus der Tabelle unten, wenn er ein Datum oder "letzte Woche" nennt; nennt er selbst eine KW, genau diese. Nicht selbst rechnen.',
         'Ändert er Schreibform oder Umfang, schreibst du die schon gefüllten Tage in der neuen Form neu.',
         vw ? 'Fehlen beruf oder lehrjahr im Stand der Einstellungen und stehen sie eindeutig im VORWISSEN, setzt du sie auch ohne Nennung in dieser Nachricht.' : '',
         '',
-        '[ANTWORT] antwort: deine Rückmeldung an den Azubi, 1 bis 2 kurze Sätze, Du-Form, ' + (istEn() ? 'Englisch' : 'Deutsch') + ', kein Markdown, keine Aufzählung.',
+        '[ANTWORT] antwort: deine Rückmeldung an den Azubi, 1 bis 2 kurze Sätze, Du-Form, ' + (istEn() ? 'Englisch' : 'Deutsch') + '. Hebe die genannten Tage mit **fett** hervor, sonst kein Markdown, keine Aufzählung.',
         '- Sag konkret, was du eingetragen oder geändert hast ("Mittwoch steht drin: erster Schultag in der 11c.").',
         '- HÖCHSTENS eine Frage, und nur, wenn noch Arbeitstage leer sind UND du in deiner letzten Antwort nicht schon gefragt hast. Dann nenne die leeren Tage und biete an, sie zu füllen.',
         '- KEINE Frage, wenn er signalisiert, dass das alles war ("nur", "sonst nichts", "das wars", "passt") oder alle Arbeitstage gefüllt sind. Dann sag, dass er die Woche übernehmen kann.',
         '- Fehlt der Beruf, schreib trotzdem ein, was er erzählt hat, und frag nebenbei nach dem Beruf.',
         '- Hast du aufgefüllt, sag in einem Halbsatz, woraus (' + (vw && eb ? 'aus seinem Vorwissen, aus seinem Lernprofil oder typisch für seinen Beruf' : vw ? 'aus seinem Vorwissen oder typisch für seinen Beruf' : eb ? 'aus seinem Lernprofil oder typisch für seinen Beruf' : 'typisch für seinen Beruf') + '), damit er prüft, ob es so stimmt.',
         'Beispiele (nur der Ton):',
-        '  "Mittwoch steht drin: erster Schultag in der 11c mit den neuen Lehrern. Montag, Dienstag, Donnerstag und Freitag sind noch leer – was war da, oder soll ich sie füllen?"',
-        '  "Erledigt: Montag, Dienstag, Donnerstag und Freitag stehen jetzt mit PCs reinigen drin. Die Woche ist komplett, du kannst sie übernehmen."',
-        '  "Freitag ist als krank eingetragen."',
+        '  "**Mittwoch** steht drin: erster Schultag in der 11c mit den neuen Lehrern. Montag, Dienstag, Donnerstag und Freitag sind noch leer – was war da, oder soll ich sie füllen?"',
+        '  "Erledigt: **Montag**, **Dienstag**, **Donnerstag** und **Freitag** stehen jetzt mit PCs reinigen drin. Die Woche ist komplett, du kannst sie übernehmen."',
+        '  "**Freitag** ist als krank eingetragen."',
         '',
         'Stand der Einstellungen: ' + JSON.stringify({
             beruf: k.beruf, berufName: k.berufName, lehrjahr: k.bereit ? k.lehrjahr : null, form: k.form, umfang: k.umfang,
@@ -1463,7 +1487,7 @@ function stapelHTML(n, nr) {
     const wochen = fertig.map(w => '<div class="aic-stapel-woche"><b>KW ' + w.kw + '</b>' +
         w.tage.map(t => {
             const inhalt = t.status ? status[t.status] || t.status : (t.entries[0] || (t.schule && t.thema) || '');
-            return inhalt ? '<p><span>' + esc(TAGE()[t.i].slice(0, 2)) + '</span><em>' + esc(String(inhalt).replace(/^\s*-\s*/, '')) +
+            return inhalt ? '<p><span>' + esc(TAGE()[t.i].slice(0, 2)) + '</span><em>' + eintragHtml(String(inhalt).replace(/^\s*-\s*/, '')) +
                 (!t.status && t.entries.length > 1 ? ' <i>+' + (t.entries.length - 1) + '</i>' : '') + '</em></p>' : '';
         }).join('') + '</div>').join('');
     const fuss = n.stapelImHeft
@@ -1535,7 +1559,19 @@ async function senden(e, vorgabeText) {
 
     const datum = datumAusText(text, new Date());
     // Ein genanntes Datum schlaegt "letzte Woche" — es ist genauer.
-    const woche = datum ? null : wocheAusText(text, new Date());
+    const woche = datum ? null : (kwAusText(text, new Date()) || wocheAusText(text, new Date()));
+    // Der Entwurf gehoert zu EINER Woche. Unten wuerde nur die Nummer umgeschrieben: was schon fuer
+    // KW 45 dasteht, stuende danach unter KW 44. Dann lieber anhalten; die Nachricht bleibt sichtbar.
+    const zielDatum = datum || woche;
+    if (zielDatum && entwurfHatInhalt(gespraech.entwurf) && gespraech.entwurf.kw && gespraech.entwurf.kw !== kwVon(zielDatum)) {
+        beschaeftigt = false;
+        wartenEnden();
+        sagen({ rolle: 'assistent', text: Lx(
+            'Dein Entwurf für KW ' + gespraech.entwurf.kw + ' ist noch nicht im Berichtsheft. Übernimm ihn oder fang mit „Neue Woche“ an, dann schick mir das für KW ' + kwVon(zielDatum) + ' noch einmal.',
+            'Your draft for week ' + gespraech.entwurf.kw + ' is not in your report book yet. Add it or choose “New week”, then send me that for week ' + kwVon(zielDatum) + ' again.') });
+        knopfZustand();
+        return;
+    }
     let ergebnis = null, grund = '';
     // "Cloud-KI aktiv" ist der einzige Ausstieg (Notiz). Bis v7.9.3 schickte
     // der Chat jede Nachricht trotzdem an /verstehen — wer die Cloud bewusst
@@ -2203,7 +2239,7 @@ return {
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
     _intern: {
-        vorschlaegeFuer, mehrwochenWunsch, vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
+        vorschlaegeFuer, mehrwochenWunsch, kwAusText, vorwissenText, vorwissenSetzen, vorwissenBitte, eigeneBerichte, berichteAlsVorwissen, VORWISSEN_MAX,
         lernProfil,
         ersterJsonWert, systemPrompt, chipsFuer, profilTeile, wochenSchluessel, istAbgelaufen,
         kwTabelle, datumAusText, datumHinweis, wocheAusText, wocheHinweis, entwurfZusammenfuehren, entwurfAlsWoche, einstellungenAus, erlaubteTage,

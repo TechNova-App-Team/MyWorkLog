@@ -179,7 +179,7 @@ function bhEntriesAlsText(entries) {
 // ELO arbeitet, behaelt das.
 function bhBeispielSaetze(F) {
     const out = new Set();
-    const rein = (s) => { const n = String(s || '').replace(/^\s*-\s*/, '').trim().toLowerCase(); if (n.length > 8) out.add(n); };
+    const rein = (s) => { const n = String(s || '').replace(/\*\*/g, '').replace(/^\s*-\s*/, '').trim().toLowerCase(); if (n.length > 8) out.add(n); };
     [F && F.beispiel, F && F.schulBeispiel].forEach(b => { try { (JSON.parse(b || '[]') || []).forEach(rein); } catch (e) { } });
     // An JEDEM Anfuehrungszeichen zerlegen, nicht paarweise matchen: im Text steht
     // `"- " davor. Beispiel: "…"` — paarweise rutschte das ELO-Beispiel aus dem Raster.
@@ -195,7 +195,7 @@ function bhAbschriftVerbote(F, quellen) {
     return new Set([...bhBeispielSaetze(F)].filter(s => !q.includes(s)));
 }
 function bhIstAbschrift(eintrag, verbote) {
-    return !!(verbote && verbote.size && verbote.has(String(eintrag || '').replace(/^\s*[-•*]\s*/, '').trim().toLowerCase()));
+    return !!(verbote && verbote.size && verbote.has(String(eintrag || '').replace(/\*\*/g, '').replace(/^\s*[-•*]\s*/, '').trim().toLowerCase()));
 }
 
 function bhAusbildungsZeitraum() {

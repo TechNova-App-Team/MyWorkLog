@@ -269,6 +269,20 @@ t.ok(wochenSchluessel(datumAusText(faelle[0][0], heute)) === '2026-W38', 'gemeld
     t.ok(kw('vorletzte Woche') === '2026-W38', '"vorletzte" ist nicht "letzte"');
     t.ok(kw('diese Woche') === '2026-W40' && kw('nächste Woche') === '2026-W41', '"diese", "naechste"');
     t.ok(kw('letzte Woche', new Date(2027, 0, 5)) === '2026-W53', 'Jahreswechsel: letzte Woche am 5.1.2027 = KW 53/2026');
+    // Gemeldet 05.11.2026: „für KW44 do noch einen eintrag" landete in KW 45.
+    const { kwAusText } = e.sandbox.AISChat._intern;
+    const do5 = new Date(2026, 10, 5);
+    const kwt = (txt, h) => { const d = kwAusText(txt, h || do5); return d ? wochenSchluessel(d) : null; };
+    t.ok(kwt('brauche für KW44 do noch einen eintrag') === '2026-W44', 'KW44 ohne Leerzeichen');
+    t.ok(kwt('schreib was für kw 43') === '2026-W43', 'kw 43 klein, mit Leerzeichen');
+    t.ok(kwt('Kalenderwoche 40 bitte') === '2026-W40', 'ausgeschrieben');
+    t.ok(kwAusText('KW44', do5).getDay() === 1, 'liefert den Montag');
+    t.ok(kwt('KW 50', new Date(2027, 0, 12)) === '2026-W50', 'im Januar meint KW 50 das Vorjahr');
+    t.ok(kwt('KW 52', do5) === '2026-W52', 'ein paar Wochen voraus bleibt dieses Jahr');
+    t.ok(kwt('KW 44 und KW 45') === null, 'zwei Wochen sind nichts zu raten');
+    t.ok(kwt('KW 44, das war KW 44') === '2026-W44', 'dieselbe KW zweimal zählt einmal');
+    t.ok(kwt('KW 99') === null && kwt('KW 0') === null, 'unmögliche KW');
+    t.ok(kwt('habe 44 Rechnungen erfasst') === null, 'Gegenprobe: eine nackte Zahl ist keine KW');
     t.ok(wocheAusText('letzte Woche', di).getDay() === 1, 'liefert den Montag, keinen einzelnen Tag (sonst griffe "nur dieser Tag")');
     t.ok(kw('Fachinformatiker, 2. Lehrjahr') === null && kw('die Woche war stressig') === null && kw('Wochenplan') === null, 'ohne relative Angabe: nichts');
     t.ok(/KW 39, 21\.9\.–27\.9\.2026/.test(wocheHinweis(wocheAusText('letzte Woche', di))), 'Hinweis nennt KW und Zeitraum', wocheHinweis(wocheAusText('letzte Woche', di)));
