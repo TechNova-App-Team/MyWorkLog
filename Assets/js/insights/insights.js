@@ -203,6 +203,7 @@ var EVENT_LABELS = {
     'jahresraster_modus': ['Jahresraster umgeschaltet', 'Year grid mode switched'],
     'performance_zeitraum': ['Performance: Zeitraum gewechselt', 'Performance: period switched'],
     'ihk_daten_gespeichert': ['IHK-Daten gespeichert', 'IHK data saved'],
+    'ihk_frist_klick': ['IHK-Frist: Hinweis geklickt', 'IHK deadline: prompt clicked'],
     'ziel_angelegt':    ['Ziel angelegt', 'Goal created'],
     'umfrage_geoeffnet': ['Umfrage geöffnet', 'Survey opened'],
     'umfrage_gesendet': ['Umfrage abgeschickt', 'Survey submitted'],

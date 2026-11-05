@@ -303,6 +303,7 @@
     'So funktioniert MyWorkLog': 'How MyWorkLog works',
     'Mein Reisetraum': 'My travel dream',
     'Für Berufsschulen': 'For vocational schools',
+    'IHK-Berichtsheft endet 2026': 'IHK report book ends in 2026',
     'Für Ausbilder': 'For trainers',
     'Produkt': 'Product',
     'Ausbildungs-Pass': 'Training pass',

@@ -168,6 +168,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize AI Studio
     AIStudio.init();
 
+    // Frist des IHK-Hefts. Das Datum steht hier und in der Terminliste, im Januar 2027 kann das raus.
+    try {
+        const frist = document.getElementById('bhIhkFrist');
+        const hatImport = reports.some(r => r && r.source === 'ihk-import');
+        if (frist && new Date() < new Date(2027, 0, 1) && !localStorage.getItem('bh_ihk_frist_weg') && !hatImport) {
+            frist.hidden = false;
+            document.getElementById('bhIhkFristZu').addEventListener('click', () => {
+                frist.hidden = true;
+                try { localStorage.setItem('bh_ihk_frist_weg', '1'); } catch (e) {}
+            });
+            document.getElementById('bhIhkFristK').addEventListener('click', () => {
+                if (typeof bhMess === 'function') bhMess('ihk_frist_klick');
+            });
+        }
+    } catch (e) { /* ohne Speicher eben ohne Hinweis */ }
+
     // Tiefer Einstieg von /ihk-berichtsheft/: ?import=ihk oeffnet den
     // IHK-PDF-Import direkt, damit niemand den Knopf in der Werkzeugleiste
     // suchen muss. Erst hier, nach loadReports(), sonst fehlt der
