@@ -186,7 +186,22 @@ a { color: inherit; }
 }
 
 /* ── Abschnitts-Ueberschriften ─────────────────────────────────── */
-.pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { max-width: 1180px; margin: 0 auto; padding: 72px 28px; }
+.pr-probe, .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { max-width: 1180px; margin: 0 auto; padding: 72px 28px; }
+#pass { scroll-margin-top: 20px; }
+
+/* Beispiel: Satz links, die zwei Blaetter daraus rechts. Der blaue Kuli-Text ist hier der Satz des
+   Azubis, der Rotstift markiert die Schultage: genau das, was je Woche anders ist. */
+.pr-probe-raster { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); gap: 44px; align-items: start; margin-top: 40px; }
+.pr-probe-wer { margin: 0 0 8px; color: var(--text-3); font-size: 0.86rem; }
+.pr-probe-satz { margin: 0 0 24px; font-family: var(--font-hand); font-size: 1.75rem; line-height: 1.25; color: var(--text-main); text-wrap: pretty; }
+.pr-probe-klein { margin: 16px 0 0; max-width: 42ch; color: var(--text-3); font-size: 0.82rem; line-height: 1.5; text-wrap: pretty; }
+.pr-probe-blaetter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.pr-probe-blatt:nth-child(2) { margin-top: 26px; }
+.pr-probe-blatt dl { display: grid; gap: 11px; margin: 4px 0 0; font-size: 0.86rem; line-height: 1.4; }
+.pr-probe-blatt dl > div { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px; }
+.pr-probe-blatt dt { color: var(--papier-tinte-2); font-weight: 600; }
+.pr-probe-blatt dd { margin: 0; text-wrap: pretty; }
+.pr-probe-blatt .is-schule dd, .pr-probe-blatt .is-schule dt { color: var(--rotstift); }
 .pr-h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.8rem, 1.2rem + 1.8vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
 .pr-h2-unter { margin: 12px 0 0; max-width: 60ch; color: var(--text-2); }
 
@@ -374,6 +389,7 @@ a { color: inherit; }
 
 /* ── Breakpoints ─────────────────────────────────────────────── */
 @media (max-width: 900px) {
+    .pr-probe-raster { grid-template-columns: 1fr; gap: 30px; }
     .pr-hero { grid-template-columns: 1fr; gap: 8px; min-height: 0; padding-bottom: 32px; }
     .pr-stapel { height: 380px; }
     .pr-reihe { grid-template-columns: 1fr; max-width: 520px; }
@@ -383,8 +399,10 @@ a { color: inherit; }
 }
 @media (max-width: 480px) {
     .pr-top { padding: 16px; }
-    .pr-hero, .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { padding-left: 16px; padding-right: 16px; }
-    .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { padding-top: 52px; padding-bottom: 52px; }
+    .pr-hero, .pr-probe, .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { padding-left: 16px; padding-right: 16px; }
+    .pr-probe, .pr-hefte, .pr-tabelle, .pr-wunsch, .pr-fragen { padding-top: 52px; padding-bottom: 52px; }
+    .pr-probe-blaetter { grid-template-columns: 1fr; }
+    .pr-probe-blatt:nth-child(2) { margin-top: 0; }
     /* Am Handy (375 px) ragte der Bogen 74 px ueber: "versiegelt" in der breiten
        Vordruck-Schrift setzte die Spaltenbreite. Der Zusatz faellt weg — die Toenung
        der Spalten und der Satz ueber der Tabelle sagen dasselbe. */

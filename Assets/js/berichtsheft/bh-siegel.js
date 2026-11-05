@@ -64,26 +64,47 @@ const FEHLER = {
     server: ['Der Server konnte gerade nicht freischalten. Versuch es gleich noch einmal.', 'The server could not unlock right now. Try again in a moment.'],
 };
 
+// Fehlende Wochen zaehlt schon der kostenlose Teil (bh-uebersicht.js). Keine geschaetzten Stunden:
+// der kostenlose Assistent schreibt eine Woche auch in Sekunden, die Arbeit ist das Erzaehlen.
+function luecken() {
+    try { return typeof hfLuecken === 'function' ? hfLuecken().length : 0; } catch (e) { return 0; }
+}
+function lage(name) {
+    const n = luecken();
+    if (n < 2) return null;
+    if (name === 'mehrwochen') return {
+        satz: L('Dir fehlen ' + n + ' Wochen. Ein Durchgang, und sie stehen.', 'You are missing ' + n + ' weeks. One pass and they are done.'),
+        zusatz: L('Einzeln heißt: ' + n + '-mal erzählen und prüfen. So erzählst du einmal und liest danach alle.', 'One by one means telling and checking ' + n + ' times. This way you tell once, then read them all.'),
+    };
+    if (name === 'pruefcheck') return {
+        zusatz: L('Dir fehlen gerade ' + n + ' Wochen. Der Check zeigt dir, was sonst noch auffällt.', 'You are missing ' + n + ' weeks right now. The check shows what else stands out.'),
+    };
+    return null;
+}
 let offen = null, vorFokus = null;
 function zeigen(name, opt) {
     const t = TEXTE[name];
     if (!t) return;
     schliessen();
     vorFokus = document.activeElement;
+    const ist = lage(name);
+    const en = document.documentElement.lang === 'en';
     const el = document.createElement('div');
     el.className = 'bs-ebene';
     el.innerHTML =
         '<div class="bs-blatt" role="dialog" aria-modal="true" aria-labelledby="bsTitel">' +
             '<button type="button" class="bs-zu" data-bs-zu aria-label="' + esc(L('Schließen', 'Close')) + '">×</button>' +
             '<p class="bs-marke">' + SCHLOSS + '<span>' + esc(L(t.titel[0], t.titel[1])) + '</span></p>' +
-            '<h2 class="bs-satz" id="bsTitel">' + esc(L(t.satz[0], t.satz[1])) + '</h2>' +
+            '<h2 class="bs-satz" id="bsTitel">' + esc(ist && ist.satz ? ist.satz : L(t.satz[0], t.satz[1])) + '</h2>' +
+            (ist && ist.zusatz ? '<p class="bs-lage">' + esc(ist.zusatz) + '</p>' : '') +
             '<ul class="bs-punkte">' + t.punkte.map(p => '<li>' + esc(L(p[0], p[1])) + '</li>').join('') + '</ul>' +
-            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass: einmal zahlen ab 9,99 €, kein Abo.', 'Part of the training pass: pay once from €9.99, no subscription.')) + '</p>' +
+            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass: einmal zahlen ab 9,99 €, kein Abo. Er finanziert die KI und die Weiterentwicklung, ohne Werbung und ohne Datenverkauf.', 'Part of the training pass: pay once from €9.99, no subscription. It funds the AI and further development, with no ads and no selling of data.')) + '</p>' +
             '<div class="bs-aktion">' +
                 // Plus ist nicht kaeuflich, der Kauf-Knopf wuerde dort den falschen Tarif verkaufen
                 (t.plus
                     ? '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/preise/' : '/preise/') + '#hefte">' + esc(L('Plus vormerken', 'Count me in for Plus')) + '</a>'
-                    : '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/kaufen/' : '/kaufen/') + '?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>' +
+                    : '<a class="bs-knopf" data-bs-kauf href="' + (en ? '/en/kaufen/' : '/kaufen/') + '?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen, ab 9,99 €', 'Get the pass, from €9.99')) + '</a>' +
+                      '<a class="bs-mehr" data-bs-kauf href="' + (en ? '/en/preise/' : '/preise/') + '#pass">' + esc(L('Alles im Pass ansehen', 'See everything in the pass')) + '</a>' +
                       // Der Pass hängt am Konto: wer gekauft hat und hier abgemeldet ist, muss nur sich anmelden
                       ((window.MWLPass && MWLPass.angemeldet()) ? '' : '<p class="bs-hinweis">' + esc(L('Schon gekauft? ', 'Already bought? ')) + '<a href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Mit deinem Konto anmelden', 'Sign in with your account')) + '</a></p>')) +
             '</div>' +
@@ -98,6 +119,7 @@ function zeigen(name, opt) {
             '</details>' +
         '</div>';
     el.addEventListener('click', (e) => {
+        if (e.target.closest && e.target.closest('[data-bs-kauf]') && typeof window.bhMess === 'function') { try { window.bhMess('pass_siegel_weiter', { wo: name }); } catch (x) {} }
         if (e.target === el || e.target.closest('[data-bs-zu]')) schliessen();
     });
     el.querySelector('form').addEventListener('submit', async (e) => {
@@ -114,7 +136,7 @@ function zeigen(name, opt) {
     });
     document.body.appendChild(el);
     offen = el;
-    if (typeof window.bhMess === 'function') { try { window.bhMess('pass_siegel', { wo: name }); } catch (x) {} }
+    if (typeof window.bhMess === 'function') { try { window.bhMess('pass_siegel', { wo: name, luecken: luecken() >= 2 }); } catch (x) {} }
     setTimeout(() => { const zu = el.querySelector('.bs-knopf'); if (zu) zu.focus({ preventScroll: true }); }, 30);
 }
 function schliessen() {

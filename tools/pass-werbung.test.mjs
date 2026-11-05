@@ -58,6 +58,19 @@ const alle = [TPL, NAV, DASH, CHAT, PH].join('\n');
 pruefe((alle.match(/pass_werbung/g) || []).length >= 5, 'Klicks der Flächen werden gemessen');
 pruefe(!/mwlEvent\('pass_werbung',\s*\{[^}]*(email|name|betrag)/i.test(alle), 'Messpunkte tragen nur den Ort');
 
+// Die Kaufrate muss messbar sein und die Flächen führen auf die Pass-Karte.
+const KASSE = lies('pages/kaufen/index.html');
+const KJS = lies('Assets/js/kaufen.js');
+pruefe(KASSE.includes('/Assets/js/ph-init.js'), 'die Kasse lädt die Messung');
+pruefe(['kauf_seite', 'kauf_los', 'kauf_fertig', 'kauf_abgebrochen'].every((n) => KJS.includes("ev('" + n + "'")), 'alle vier Schritte der Kasse werden gezählt');
+pruefe(!/ev\('kauf_[a-z]+',\s*\{[^}]*(preis|betrag|email)/i.test(KJS), 'Messpunkte tragen weder Betrag noch Adresse');
+const PREISE = lies('pages/preise/index.html');
+pruefe(/<article[^>]* id="pass"/.test(PREISE), 'die Pass-Karte ist das Sprungziel');
+pruefe(FUSS.includes('/preise/#pass') && NAV.includes('/preise/#pass') && DASH.includes('/preise/#pass') && TPL.includes('/preise/#pass'), 'Flächen springen direkt auf die Karte');
+pruefe(!(FUSS + NAV + DASH + TPL).includes('/preise/#hefte'), 'Gegenprobe: kein Link mehr auf den Kopf der Liste');
+const SIEGEL = lies('Assets/js/berichtsheft/bh-siegel.js');
+pruefe(SIEGEL.includes('hfLuecken') && !/Stunden|hours/.test(SIEGEL.slice(SIEGEL.indexOf('function lage'), SIEGEL.indexOf('let offen'))), 'Sperr-Blatt nennt echte fehlende Wochen, keine erfundene Zeitersparnis');
+
 // Der Preis auf den Flächen muss zum Worker passen.
 const WORKER = lies('workers/ai-proxy/worker.js');
 pruefe(/PASS_PREISE = \{ 2: 999,/.test(WORKER), 'Worker verkauft ab 9,99 €');

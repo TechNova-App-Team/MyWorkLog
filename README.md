@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.5.13-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.5.14-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.5.13** · 2026-11-05
+Aktuelle Version: **v9.5.14** · 2026-11-05
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.5.13** | 2026-11-05 | Der Assistent trifft die genannte Kalenderwoche und die Schultage jeder Woche |
+| **9.5.14** | 2026-11-05 | Die Preisseite zeigt an einem Beispiel, was der Ausbildungs-Pass schreibt |
+| 9.5.13 | 2026-11-05 | Der Assistent trifft die genannte Kalenderwoche und die Schultage jeder Woche |
 | 9.5.12 | 2026-11-05 | Der Ausbildungs-Pass lässt sich auch auf Englisch kaufen und ist in der App leichter zu finden |
 | 9.5.11 | 2026-11-04 | Der Assistent zeigt den Übernehmen-Knopf immer an |
 | 9.5.10 | 2026-11-04 | Schriften und Bibliotheken kommen jetzt von myworklog.de selbst |
-| 9.5.9 | 2026-11-04 | Pass-Funktionen führen direkt zum Kauf |
 
 <!-- changelog:end -->
 

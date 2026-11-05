@@ -24,6 +24,39 @@
     else { try { zurueck = eigen(sessionStorage.getItem(RUECK)); } catch (e) {} }
     if (!zurueck) zurueck = L('/berichtsheft/', '/en/berichtsheft/');
     const ANMELDEN = L('/', '/en/') + '?cloud=login&back=kaufen';
+    const ev = (name, props, opts) => { if (typeof mwlEvent === 'function') mwlEvent(name, props || {}, opts); };
+
+    // Der Pass gilt ab Kauf. Wer im 3. Lehrjahr kauft, braucht nur den Rest: die kleinste passende
+    // Laufzeit vorwaehlen, statt 14,99 € als Vorgabe stehen zu lassen. Ein ehrlicher Preis kostet
+    // hier ein paar Euro und ist der Grund, warum man den Link weitergibt.
+    function ausbildungsEnde() {
+        try {
+            const p = JSON.parse(localStorage.getItem('pdf_personal_cfg') || 'null');
+            const m = p && /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/.exec(String(p.ende || '').trim());
+            if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+        } catch (e) {}
+        try {
+            const d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
+            const m = d && d.settings && d.settings.ihk && /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d.settings.ihk.end || ''));
+            if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+        } catch (e) {}
+        return null;
+    }
+    function vorwaehlen() {
+        const ende = ausbildungsEnde();
+        if (!ende || ende <= new Date()) return;
+        const monate = (ende - new Date()) / (30.44 * 864e5);
+        if (monate > 48) return;
+        const dauer = monate <= 24 ? 2 : monate <= 36 ? 3 : 4;
+        const r = document.querySelector('input[name="dauer"][value="' + dauer + '"]');
+        if (!r) return;
+        r.checked = true;
+        const bis = ende.toLocaleDateString(L('de-DE', 'en-GB'), { month: 'long', year: 'numeric' });
+        const h = $('kfVorschlag');
+        h.textContent = L('Deine Ausbildung läuft laut deinen Angaben bis ' + bis + '. Dafür reicht „bis ' + dauer + ' Jahre“.',
+            'Your apprenticeship runs until ' + bis + ' according to your details. “Up to ' + dauer + ' years” is enough for that.');
+        h.hidden = false;
+    }
 
     // Der EINE Supabase-Client dieser Seite — nur, wenn eine Sitzung da ist. Er frischt
     // ein abgelaufenes Zugangstoken auf (wer vor Stunden angemeldet war, hat eins).
@@ -72,7 +105,13 @@
 
     async function abholen(sitzungId, meldung) {
         const r = await MWLPass.kaufAbholen(sitzungId);
-        if (r.ok) return fertig(r.passBis);
+        if (r.ok) {
+            // Neuladen der Dankeseite zaehlt nicht als zweiter Kauf
+            let schon = false;
+            try { schon = sessionStorage.getItem('mwl_kauf_gezaehlt') === sitzungId; sessionStorage.setItem('mwl_kauf_gezaehlt', sitzungId); } catch (e) {}
+            if (!schon) ev('kauf_fertig');
+            return fertig(r.passBis);
+        }
         if (r.fehler === 'offen') { zeigen('offen'); if (meldung) $('kfOffenMeldung').textContent = L('Noch nicht bestätigt. Versuch es später noch einmal.', 'Not confirmed yet. Try again later.'); return; }
         if (r.fehler === 'anmelden') return fehler(L('Bitte melde dich wieder an.', 'Please sign in again.'), L('Deine Zahlung ist nicht verloren: Sie hängt an dem Konto, mit dem du gekauft hast. Nach der Anmeldung ist der Pass da.', 'Your payment is not lost: it belongs to the account you bought with. The pass is there once you sign in.'));
         if (r.fehler === 'fremd') return fehler(L('Diese Zahlung gehört zu einem anderen Konto.', 'This payment belongs to a different account.'), L('Melde dich mit dem Konto an, mit dem du gekauft hast. Dort ist der Pass freigeschaltet.', 'Sign in with the account you bought with. The pass is active there.'));
@@ -91,6 +130,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         $('kfZurueck').href = zurueck;
         MWLPass.tokenQuelle = async () => { const s = await sitzung(); return s ? s.access_token : ''; };
+        vorwaehlen();
         preis();
         document.addEventListener('change', (e) => { if (e.target.name === 'dauer') preis(); });
 
@@ -101,8 +141,9 @@
 
         const knopf = $('kfKaufen');
         knopf.addEventListener('click', async () => {
-            if (!MWLPass.angemeldet()) { location.assign(ANMELDEN); return; }
             const r = document.querySelector('input[name="dauer"]:checked');
+            ev('kauf_los', { dauer: r ? +r.value : 0, angemeldet: MWLPass.angemeldet() }, { transport: 'sendBeacon' });
+            if (!MWLPass.angemeldet()) { location.assign(ANMELDEN); return; }
             knopf.disabled = true;
             $('kfMeldung').textContent = L('Die Kasse öffnet sich …', 'Opening checkout …');
             const k = await MWLPass.kasse(r ? r.value : 3);
@@ -128,10 +169,12 @@
             return;
         }
         if (q.get('abgebrochen')) {
+            ev('kauf_abgebrochen');
             fehler(L('Zahlung abgebrochen.', 'Payment cancelled.'), L('Es wurde nichts abgebucht. Du kannst es jederzeit noch einmal versuchen.', 'Nothing was charged. You can try again at any time.'));
             return;
         }
 
+        ev('kauf_seite', { sprache: EN ? 'en' : 'de' });
         // Wer angemeldet ist: Konto nennen, und wer schon einen Pass hat, nicht ein zweites Mal kaufen lassen
         const s = await sitzung().catch(() => null);
         const konto = $('kfKonto');

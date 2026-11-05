@@ -745,7 +745,7 @@ function menueZeichnen() {
             restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free')) +
         // Einziger Weg aus dem Assistenten zur Preisseite: hier sieht man das Tageslimit,
         // und genau das hebt der Ausbildungs-Pass auf.
-        '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#hefte', '/en/preise/#hefte') + '">' +
+        '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#pass', '/en/preise/#pass') + '">' +
         esc(Lx('Thinking und doppelt so viel am Tag: Ausbildungs-Pass', 'Thinking and twice as much per day: training pass')) + '</a>';
     if (fokus) { const b = m.querySelector('[data-stufe="' + fokus + '"]'); if (b) b.focus(); }
 }
@@ -822,7 +822,7 @@ function turboGrundText(g) {
 const PREIS_HINWEIS_KEY = 'bh_preise_hinweis_v2';
 // Ohne die Pruefung (Tests, altes Skript aus dem Cache) wird geworben; sie sperrt nur ausdruecklich.
 const passWerben = () => !(typeof window.mwlPassWerben === 'function' && !window.mwlPassWerben());
-const PASS_LINK = () => Lx('/preise/#hefte', '/en/preise/#hefte');
+const PASS_LINK = () => Lx('/preise/#pass', '/en/preise/#pass');
 const PASS_KLICK = (ort) => "if(typeof mwlEvent==='function')mwlEvent('pass_werbung',{ort:'" + ort + "'},{transport:'sendBeacon'})";
 const GESCHENK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>' +
@@ -1543,8 +1543,8 @@ async function senden(e, vorgabeText) {
         if (typeof bhMess === 'function') bhMess('assistent_mehrwochen', { frei: offenFrei, anzahl: mw.anzahl || 0 });
         if (!offenFrei) {
             sagen({ rolle: 'assistent', knopf: 'mehrwochen', mw: { text, anzahl: mw.anzahl }, text: Lx(
-                'Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass. Ich schreibe dir auch gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
-                'Several weeks at once are part of the training pass. I am also happy to write one week after another: tell me which one to start with.') });
+                'Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass, einmal zahlen ab 9,99 €. Ich schreibe dir auch gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
+                'Several weeks at once are part of the training pass, pay once from €9.99. I am also happy to write one week after another: tell me which one to start with.') });
             knopfZustand();
             return;
         }
