@@ -580,6 +580,8 @@ function nachrichtHTML(n, nr) {
         knoepfe.push('<button type="button" class="aic-knopf" onclick="AISChat.einstellungen()">' + Lx('Einstellungen öffnen', 'Open settings') + '</button>');
     if (n.knopf === 'mehrwochen')
         knoepfe.push('<button type="button" class="aic-knopf is-haupt" onclick="AISChat.mehrwochen(' + nr + ')">' + Lx('Mehrere Wochen öffnen', 'Open several weeks') + '</button>');
+    if (n.passLink && passWerben())
+        knoepfe.push('<a class="aic-knopf" href="' + PASS_LINK() + '" onclick="' + PASS_KLICK('limit') + '">' + Lx('Doppelt so viel am Tag mit dem Pass', 'Twice as much per day with the pass') + '</a>');
     return '<div class="aic-n is-assistent"><span class="aic-avatar">' + MARKE + '</span><div class="aic-inhalt">' +
         (n.text ? '<p class="aic-text">' + esc(n.text) + '</p>' : '') + chips +
         (n.wer ? '<p class="aic-wer">' + esc(n.wer) + '</p>' : '') +
@@ -812,23 +814,27 @@ function turboGrundText(g) {
 // ueber der Seite: sie steht dort, wo die KI benutzt wird, und geht mit der
 // ersten Nachricht, einer Modellwahl oder "Alles klar" weg.
 // ── Hinweis auf die Preisliste (v9.4.0, Wunsch des Nutzers 26.10.2026) ──
-// Steht im leeren Start ueber der Begruessung. Kernaussage zuerst: was heute geht,
-// bleibt kostenlos (Zusage auf /preise/, siehe .claude/notes/bezahlplan.md); Pass
-// und Plus sind dort nur vormerkbar, NICHT kaufbar — deshalb kein "jetzt kaufen".
+// Steht im leeren Start ueber der Begruessung. Seit v9.5.8 ist der Pass kaufbar, der Schluessel
+// ist deshalb neu: wer den alten Hinweis ("kommen bald") weggeklickt hat, sieht diesen einmal.
+// Die Zusage auf /preise/ bleibt im Text: was kostenlos ist, bleibt kostenlos.
 // Nie gleichzeitig mit der Stufen-Ankuendigung (hinweisHTML), sonst stehen zwei
 // Hinweise uebereinander. Wegklicken merkt sich nur dieses Geraet.
-const PREIS_HINWEIS_KEY = 'bh_preise_hinweis_v1';
+const PREIS_HINWEIS_KEY = 'bh_preise_hinweis_v2';
+// Ohne die Pruefung (Tests, altes Skript aus dem Cache) wird geworben; sie sperrt nur ausdruecklich.
+const passWerben = () => !(typeof window.mwlPassWerben === 'function' && !window.mwlPassWerben());
+const PASS_LINK = () => Lx('/preise/#hefte', '/en/preise/#hefte');
+const PASS_KLICK = (ort) => "if(typeof mwlEvent==='function')mwlEvent('pass_werbung',{ort:'" + ort + "'},{transport:'sendBeacon'})";
 const GESCHENK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
     '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>' +
     '<path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>';
 function preisHinweisOffen() { try { return !localStorage.getItem(PREIS_HINWEIS_KEY); } catch (e) { return false; } }
 function preisHinweisHTML() {
-    if (!preisHinweisOffen() || hinweisOffen()) return '';
+    if (!preisHinweisOffen() || hinweisOffen() || !passWerben()) return '';
     return '<aside class="aic-preis" id="aicPreis" aria-label="' + esc(Lx('Hinweis zu den Preisen', 'Note about pricing')) + '">' +
         '<span class="aic-preis-icon">' + GESCHENK_ICON + '</span>' +
-        '<p class="aic-preis-text"><strong>' + esc(Lx('Alles, was du heute nutzt, bleibt kostenlos.', 'Everything you use today stays free.')) + '</strong>' +
-        '<span>' + esc(Lx('Für mehr Funktionen kommen Pass und Plus. Die Preise stehen schon fest.', 'Pass and Plus will add more features. Their prices are already set.')) + '</span></p>' +
-        '<a class="aic-preis-link" href="' + Lx('/preise/', '/en/preise/') + '">' + esc(Lx('Preise ansehen', 'See prices')) + '</a>' +
+        '<p class="aic-preis-text"><strong>' + esc(Lx('Der Ausbildungs-Pass ist da.', 'The training pass is here.')) + '</strong>' +
+        '<span>' + esc(Lx('Mehrere Wochen auf einmal, diktieren, Prüfungs-Check und doppelt so viel KI am Tag. Was du heute kostenlos nutzt, bleibt kostenlos.', 'Several weeks at once, dictation, the exam check and twice as much AI per day. What you use for free today stays free.')) + '</span></p>' +
+        '<a class="aic-preis-link" href="' + PASS_LINK() + '" onclick="' + PASS_KLICK('assistent') + '">' + esc(Lx('Pass ansehen', 'See the pass')) + '</a>' +
         '<button type="button" class="aic-preis-zu" onclick="AISChat.preisHinweisWeg()" aria-label="' + esc(Lx('Hinweis schließen', 'Close note')) + '">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>' +
         '</aside>';
@@ -1513,8 +1519,8 @@ async function senden(e, vorgabeText) {
         if (typeof bhMess === 'function') bhMess('assistent_mehrwochen', { frei: offenFrei, anzahl: mw.anzahl || 0 });
         if (!offenFrei) {
             sagen({ rolle: 'assistent', knopf: 'mehrwochen', mw: { text, anzahl: mw.anzahl }, text: Lx(
-                'Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass, und der ist noch versiegelt. Ich schreibe dir gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
-                'Several weeks at once are part of the training pass, which is still sealed. I am happy to write one week after another: tell me which one to start with.') });
+                'Mehrere Wochen auf einmal gehören zum Ausbildungs-Pass. Ich schreibe dir auch gern eine Woche nach der anderen: Sag mir, mit welcher wir anfangen.',
+                'Several weeks at once are part of the training pass. I am also happy to write one week after another: tell me which one to start with.') });
             knopfZustand();
             return;
         }
@@ -1605,7 +1611,8 @@ function ohneAntwort(grund) {
         ? Lx(' Schick die Nachricht gleich noch einmal, oder lass die Woche ohne KI schreiben. Dann füllt eine Vorlage alle Tage auf, deine Angaben kommen wörtlich hinein.',
              ' Send the message again in a moment, or write the week without AI. A template then fills every day, with your details included word for word.')
         : Lx(' Stell deinen Beruf und dein Lehrjahr kurz per Hand ein, dann geht es weiter.', ' Set your occupation and year by hand, then we can continue.');
-    sagen({ rolle: 'assistent', text: warum + weiter, knopf: k.bereit ? 'ohneKi' : 'einstellungen' });
+    // Der Moment, in dem der Pass tatsaechlich hilft. Hat jemand schon einen, ist passWerben() falsch.
+    sagen({ rolle: 'assistent', text: warum + weiter, knopf: k.bereit ? 'ohneKi' : 'einstellungen', passLink: grund === 'limit' });
     knopfZustand();
 }
 

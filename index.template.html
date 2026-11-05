@@ -46,6 +46,24 @@
       else posthog.capture(name, props || {});
     } catch (e) { /* Tracking darf die App nie kippen */ }
   };
+  /* mwlPassWerben() — darf hier für den Ausbildungs-Pass geworben werden? Zwilling in
+     Assets/js/ph-init.js; ändert sich eine Fassung, die andere nachziehen (Test: tools/pass-werbung.test.mjs).
+     Nein bei gültigem Pass. Nein in der Play-Store-App: digitale Inhalte in einer Play-App laufen
+     nach Googles Zahlungsrichtlinie über Play Billing, der Pass aber über Stripe (Befund 05.11.2026).
+     mwl_twa allein reicht nicht: die TWA teilt den Speicher mit Chrome, deshalb zählt es nur zusammen
+     mit display-mode standalone. Eine aus dem Browser installierte PWA ohne die Marke sieht die Werbung. */
+  window.mwlPassWerben = function () {
+      try {
+          var g = JSON.parse(localStorage.getItem('mwl_pass') || 'null');
+          if (g && g.token && g.bis > Date.now()) return false;
+      } catch (e) {}
+      var app = document.referrer.indexOf('android-app://') === 0 || /[?&]utm_source=android(&|$)/.test(location.search);
+      try {
+          if (app) localStorage.setItem('mwl_twa', '1');
+          else if (localStorage.getItem('mwl_twa') && matchMedia('(display-mode: standalone)').matches) app = true;
+      } catch (e) {}
+      return !app;
+  };
   /* Unbehandelte Fehler zaehlen — damit „Probleme" im Analytics-Dashboard zeigt, WO es
      hakt. Bewusst ohne Fehlermeldung: die kann Nutzerdaten enthalten (JSON.parse zitiert
      den Text). Nur Fehlertyp, Dateiname, Zeile. "Script error." (fremde Herkunft, null
@@ -235,7 +253,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
 <meta name="rating" content="general">
 <meta name="referrer" content="origin-when-cross-origin">
 <meta name="format-detection" content="telephone=no">
-<meta name="generator" content="MyWorkLog v9.5.11">
+<meta name="generator" content="MyWorkLog v9.5.12">
 
 <!-- ===== CANONICAL & ALTERNATE ===== -->
 <link rel="canonical" href="https://myworklog.de/">
@@ -325,9 +343,9 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "applicationSubCategory": "Zeiterfassung",
       "operatingSystem": "Web, Windows, macOS, Linux, iOS, Android",
       "browserRequirements": "Requires Chrome 90+, Firefox 88+, Safari 14+ or Edge 90+",
-      "softwareVersion": "9.5.11",
+      "softwareVersion": "9.5.12",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-11-04",
+      "dateModified": "2026-11-05",
       "inLanguage": "de",
       "isAccessibleForFree": true,
       "license": "https://opensource.org/licenses/MIT",
@@ -413,7 +431,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "about": { "@id": "https://myworklog.de/#app" },
       "inLanguage": "de",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-11-04",
+      "dateModified": "2026-11-05",
       "breadcrumb": {
         "@type": "BreadcrumbList",
         "itemListElement": [
@@ -568,7 +586,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <link rel="stylesheet" href="/components/core/alerts.css?v=a8fecfb372">
     <link rel="stylesheet" href="/components/dashboard/dashboard.css?v=65a5e21086">
     <link rel="stylesheet" href="/components/dashboard/weather-live.css?v=9a0f54a818">
-    <link rel="stylesheet" href="/components/dashboard/dashboard-neu.css?v=8774d5a417">
+    <link rel="stylesheet" href="/components/dashboard/dashboard-neu.css?v=95a0b92c97">
     <link rel="stylesheet" href="/components/modals/modals.css?v=0614565051">
     <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=cc17946a25">
     <link rel="stylesheet" href="/components/sidebar/sidebar.css?v=62ce27261d">
@@ -802,7 +820,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
           </button>
           <!-- Zweiter Weg fuer die zweite Zielgruppe (Ausbilder aus der Suche). -->
           <a class="vi-alt" href="/ausbilder/" onclick="if(typeof mwlEvent==='function')mwlEvent('intro',{aktion:'ausbilder'})">Ich bin Ausbilder</a>
-          <span class="vi-ver" data-app-version translate="no">v9.5.11</span>
+          <!-- Sichtbarkeit: MWLPassMarke.einsetzen() -->
+          <a class="vi-alt" id="viPass" href="/preise/#hefte" hidden onclick="if(typeof mwlEvent==='function')mwlEvent('pass_werbung',{ort:'intro'},{transport:'sendBeacon'})">Ausbildungs-Pass ab 9,99 €</a>
+          <span class="vi-ver" data-app-version translate="no">v9.5.12</span>
         </div>
       </div>
 
@@ -824,7 +844,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     </div>
   </div>
 
-    <link rel="stylesheet" href="/components/landing/landing.css?v=396c58612c">
+    <link rel="stylesheet" href="/components/landing/landing.css?v=ae9bcee764">
 
     <script defer src="/components/landing/landing.js?v=b587ab5760"></script>
 </div>
@@ -966,7 +986,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script defer src="/components/core/onboarding-tour.js?v=8b8f3a1ae0"></script>
     <script defer src="/components/core/alerts-toasts.js?v=1554daf1e7"></script>
     <script defer src="/components/core/app-startup.js?v=c713682115"></script>
-    <script defer src="/components/core/navbar-sidebar.js?v=826e8eb6e7"></script>
+    <script defer src="/components/core/navbar-sidebar.js?v=2d435bd517"></script>
     <script defer src="/components/core/dashboard-extras.js?v=ea9ed1472f"></script>
     <script defer src="/components/core/mini-calendar-week.js?v=1abbe4f4cb"></script>
     <script defer src="/components/core/mobile-nav-extras.js?v=e1259a81b1"></script>
@@ -986,8 +1006,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script defer src="/components/bbig-scanner/bbig-scanner.js?v=2d0e84dc0b"></script>
     <script defer src="/components/settings/settings.js?v=3f57237901"></script>
     <script defer src="/components/sidebar/sidebar.js?v=754d60fe6c"></script>
-    <script defer src="/Assets/js/mwl-pass.js?v=254a339897"></script>
-    <script defer src="/Assets/js/mwl-pass-marke.js?v=39f9f04570"></script>
+    <script defer src="/Assets/js/mwl-pass.js?v=4c34de218b"></script>
+    <script defer src="/Assets/js/mwl-pass-marke.js?v=1976312ed0"></script>
     <script defer src="/components/import/import.js?v=92717419d2"></script>
     <!-- KI-Briefkasten: Krypto, Datenschicht, Oberflaeche (Reihenfolge zwingend) -->
     <script defer src="/Assets/js/ki-krypto.js?v=55f94171ac"></script>

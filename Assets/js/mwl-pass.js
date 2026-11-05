@@ -98,7 +98,7 @@ window.MWLPass = (function () {
         let r;
         try {
             r = await mitKonto('/pass/kasse', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dauer: Number(dauer) }),
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dauer: Number(dauer), sprache: document.documentElement.lang === 'en' ? 'en' : 'de' }),
             });
         } catch (e) { return { ok: false, fehler: 'netz' }; }
         if (!r) return { ok: false, fehler: 'anmelden' };

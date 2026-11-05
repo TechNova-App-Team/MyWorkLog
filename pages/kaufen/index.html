@@ -12,17 +12,17 @@
          Knopf führt über /?cloud=login&back=kaufen zur Anmeldung und wieder hierher.
          Live verkauft die Seite erst, wenn im Worker ein LIVE-Schlüssel steckt; im Testbetrieb
          (sk_test_) lehnt der Worker jeden Aufruf außer localhost ab, die Seite sagt dann „bald".
-         Bewusst noindex, ohne /en/-Fassung und ohne Sitemap: Einstieg nur über /preise/ und das Siegel.
-         Was vor dem echten Verkauf fehlt: .claude/notes/bezahlplan.md, Abschnitt Stripe. -->
+         Bewusst noindex und ohne Sitemap: eine Kasse ist kein Suchergebnis. /en/kaufen/ baut die i18n-Pipeline;
+         die Texte aus dem Skript stehen zweisprachig in kaufen.js, der Worker bekommt die Sprache mit. -->
     <meta name="robots" content="noindex, nofollow">
     <title>Ausbildungs-Pass kaufen · MyWorkLog</title>
     <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" href="/Assets/fonts/geist-e2e2f2cf.css?v=0f81469db0">
-    <link rel="stylesheet" href="/Assets/css/kaufen.css?v=52cfb8dd73">
+    <link rel="stylesheet" href="/Assets/css/kaufen.css?v=13904db324">
     <!-- supabase-config lädt die Bibliothek nur, wenn eine Sitzung im Speicher liegt (loadSupabase) -->
     <script src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/mwl-pass.js?v=254a339897"></script>
-    <script defer src="/Assets/js/kaufen.js?v=b506969de7"></script>
+    <script defer src="/Assets/js/mwl-pass.js?v=4c34de218b"></script>
+    <script defer src="/Assets/js/kaufen.js?v=0fa1923e22"></script>
 </head>
 <body class="kf">
 
@@ -33,6 +33,16 @@
     <section class="kf-schritt" data-ansicht="wahl">
         <h1 class="kf-titel">Ausbildungs-Pass</h1>
         <p class="kf-unter">Einmal zahlen, so lange gültig, wie du wählst. Kein Abo.</p>
+
+        <!-- Wer direkt hier landet (Siegel, Werbeflächen), soll sehen, was er kauft. Liste wie auf /preise/. -->
+        <ul class="kf-drin">
+            <li>Doppelt so viel KI am Tag, dazu Kestrel Thinking</li>
+            <li>Mehrere Wochen auf einmal schreiben</li>
+            <li>Diktieren statt tippen</li>
+            <li>Prüfungs-Check vor der Abgabe</li>
+            <li>Zeigt, welche Lernziele des Rahmenplans noch fehlen</li>
+            <li>Woche aus Kalender und Stundenplan vorschlagen</li>
+        </ul>
 
         <p class="kf-konto" id="kfKonto" hidden></p>
 
@@ -47,10 +57,10 @@
         <p class="kf-meldung" id="kfMeldung" role="status"></p>
 
         <ul class="kf-fakten">
-            <li><span>Hängt an deinem Konto.</span> Auf jedem Gerät, auf dem du mit deinem MyWorkLog-Konto angemeldet bist, ist der Pass sofort da.</li>
-            <li><span>Bezahlt wird bei Stripe.</span> Karte, Apple Pay, Google Pay und mehr. MyWorkLog sieht keine Zahlungsdaten.</li>
-            <li><span>Gilt zwei, drei oder vier Jahre ab Kauf.</span> Danach endet der Pass von selbst. Kein Abo, keine automatische Verlängerung.</li>
-            <li><span>Keine Umsatzsteuer.</span> Gemäß § 19 UStG (Kleinunternehmer). Quittung und Rechnung kommen per E-Mail.</li>
+            <li><span>Hängt an deinem Konto.</span> <small>Auf jedem Gerät, auf dem du mit deinem MyWorkLog-Konto angemeldet bist, ist der Pass sofort da.</small></li>
+            <li><span>Bezahlt wird bei Stripe.</span> <small>Karte, PayPal, Apple Pay, Google Pay und mehr. MyWorkLog sieht keine Zahlungsdaten.</small></li>
+            <li><span>Gilt zwei, drei oder vier Jahre ab Kauf.</span> <small>Danach endet der Pass von selbst. Kein Abo, keine automatische Verlängerung.</small></li>
+            <li><span>Keine Umsatzsteuer.</span> <small>Gemäß § 19 UStG (Kleinunternehmer). Quittung und Rechnung kommen per E-Mail.</small></li>
         </ul>
     </section>
 
@@ -58,7 +68,7 @@
     <section class="kf-schritt" data-ansicht="fertig" hidden>
         <p class="kf-haken" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></p>
         <h1 class="kf-titel" tabindex="-1">Dein Pass ist aktiv.</h1>
-        <p class="kf-unter">Gültig bis <span class="kf-datum" id="kfBis">…</span>.</p>
+        <p class="kf-unter"><span>Gültig bis</span> <span class="kf-datum" id="kfBis">…</span></p>
         <p class="kf-klein" id="kfFertigKonto">Er hängt an deinem Konto. Auf einem anderen Gerät meldest du dich einfach mit demselben Konto an.</p>
         <a class="kf-knopf" id="kfWeiter" href="/berichtsheft/?pass=neu">Zum Berichtsheft</a>
     </section>

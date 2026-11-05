@@ -225,6 +225,8 @@ var EVENT_LABELS = {
     'backup':           ['Backup', 'Backup'],
     'konto':            ['Konto', 'Account'],
     'play_tester':      ['Play-Store-Test', 'Play Store test'],
+    'pass_werbung':     ['Pass-Hinweis geklickt', 'Pass prompt clicked'],
+    'pass_werbung_weg': ['Pass-Hinweis weggeklickt', 'Pass prompt dismissed'],
     'import_deeplink':  ['Import-Link geöffnet', 'Import link opened'],
     'cloud_sync':       ['Cloud-Sync', 'Cloud sync'],
     'p2p_sync':         ['Geräte-Sync', 'Device sync'],

@@ -482,8 +482,11 @@ t.gruppe('Preis-Hinweis im leeren Start');
     const ls = e.sandbox.localStorage;
     ls.setItem(I.HINWEIS_KEY, '2026-10-26');   // Stufen-Ankuendigung gelesen
     const h = I.preisHinweisHTML();
-    t.ok(h.includes('bleibt kostenlos') && h.includes('href="/preise/"'), 'erscheint mit der Zusage und dem Link auf /preise/', h.slice(0, 120));
-    t.ok(!/kaufen|jetzt buchen/i.test(h), 'verspricht keinen Kauf (Pass/Plus sind nur vormerkbar)');
+    t.ok(h.includes('bleibt kostenlos') && h.includes('href="/preise/#hefte"'), 'erscheint mit der Zusage und dem Link auf die Pass-Karte', h.slice(0, 120));
+    t.ok(h.includes('Ausbildungs-Pass ist da') && !/kommen|versiegelt|vormerk/i.test(h), 'sagt, dass es den Pass gibt, nicht dass er kommt');
+    e.sandbox.mwlPassWerben = () => false;
+    t.ok(I.preisHinweisHTML() === '', 'mit Pass oder in der Play-App kein Hinweis');
+    delete e.sandbox.mwlPassWerben;
     t.ok(h.includes('AISChat.preisHinweisWeg()') && /preisHinweisWeg,/.test(CHAT), 'Schliessen ist oeffentlich erreichbar');
     ls.removeItem(I.HINWEIS_KEY);
     t.ok(I.preisHinweisHTML() === '', 'nie zusammen mit der offenen Stufen-Ankuendigung');

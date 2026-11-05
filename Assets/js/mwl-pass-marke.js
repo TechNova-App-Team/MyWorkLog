@@ -38,8 +38,31 @@ window.MWLPassMarke = (function () {
         return a;
     }
 
+    // Werbeflächen der App für alle OHNE Pass, gegenläufig zur Marke. Bewusst hier: dieselben
+    // Ereignisse schalten beide um. Ein neu gekaufter Pass nimmt die Werbung sofort weg.
+    const HINWEIS_WEG = 'mwl_pass_hinweis_weg';
+    function werbung() {
+        const werben = typeof window.mwlPassWerben === 'function' && window.mwlPassWerben();
+        const nav = document.getElementById('nav-pass');
+        if (nav) nav.style.display = werben ? '' : 'none';
+        const intro = document.getElementById('viPass');
+        if (intro) intro.hidden = !werben;
+        const banner = document.getElementById('passBanner');
+        if (!banner) return;
+        let weg = true;
+        try { weg = !!localStorage.getItem(HINWEIS_WEG); } catch (e) {}
+        const genug = typeof data !== 'undefined' && data && Array.isArray(data.entries) && data.entries.length >= 3;
+        banner.style.display = werben && !weg && genug ? 'flex' : 'none';
+    }
+    function hinweisWeg() {
+        try { localStorage.setItem(HINWEIS_WEG, new Date().toISOString().slice(0, 10)); } catch (e) {}
+        werbung();
+        if (typeof mwlEvent === 'function') mwlEvent('pass_werbung_weg', { ort: 'dashboard' });
+    }
+
     // Idempotent: entfernt alte Marken und setzt sie neu (oder gar nicht, wenn gesperrt).
     function einsetzen() {
+        werbung();
         document.querySelectorAll('.mwl-pass-marke').forEach(m => m.remove());
         if (!stufe()) return;
         const nutzer = document.querySelector('#profilePopover .profile-popover-user');
@@ -54,5 +77,5 @@ window.MWLPassMarke = (function () {
     // Freigeschaltet/entfernt in einem anderen Tab (z. B. im Berichtsheft)
     window.addEventListener('storage', (e) => { if (e.key === 'mwl_pass') einsetzen(); });
 
-    return { stufe, einsetzen, STUFEN };
+    return { stufe, einsetzen, hinweisWeg, STUFEN };
 })();

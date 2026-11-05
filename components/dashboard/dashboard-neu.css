@@ -72,6 +72,14 @@
 .dn svg.dn-i, .dn-drawer svg.dn-i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .dn-notes:empty { display: none; }
 .dn-notes > .umf-banner { margin-bottom: 14px; }
+/* Immer nur EIN Hinweis: Pass + Umfrage übereinander schoben das Dashboard bei 384 px um ~320 px
+   nach unten. Der Pass weicht jedem anderen und rückt nach, sobald der weg ist. Per CSS, weil
+   KI-, Tester- und Umfrage-Banner je ein eigenes Skript zu eigenen Zeitpunkten schalten. */
+.dn-notes:has(> .umf-banner:not(#passBanner):not([style*="none"])) > #passBanner { display: none !important; }
+/* Bis 1023 px liegt das Menü-Symbol oben links (20 + 40 px) und verdeckte das Symbol jedes Hinweises. */
+@media (max-width: 1023px) {
+    .dn-notes:has(> .umf-banner:not([style*="none"])) { padding-top: 52px; }
+}
 
 /* ── Kopfleiste ── */
 /* Sitzt im Kopf LINKS neben den zwei Anzeigen als eigene Spalte. Unterkante

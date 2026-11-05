@@ -25,6 +25,46 @@ window.mwlEvent = function (name, props, opts) {
     } catch (e) { /* Tracking darf die Seite nie kippen */ }
 };
 
+/* mwlPassWerben() — darf hier für den Ausbildungs-Pass geworben werden? Zwilling in
+   index.template.html; ändert sich eine Fassung, die andere nachziehen (Test: tools/pass-werbung.test.mjs).
+   Nein bei gültigem Pass. Nein in der Play-Store-App: digitale Inhalte in einer Play-App laufen
+   nach Googles Zahlungsrichtlinie über Play Billing, der Pass aber über Stripe (Befund 05.11.2026).
+   mwl_twa allein reicht nicht: die TWA teilt den Speicher mit Chrome, deshalb zählt es nur zusammen
+   mit display-mode standalone. Eine aus dem Browser installierte PWA ohne die Marke sieht die Werbung. */
+window.mwlPassWerben = function () {
+    try {
+        var g = JSON.parse(localStorage.getItem('mwl_pass') || 'null');
+        if (g && g.token && g.bis > Date.now()) return false;
+    } catch (e) {}
+    var app = document.referrer.indexOf('android-app://') === 0 || /[?&]utm_source=android(&|$)/.test(location.search);
+    try {
+        if (app) localStorage.setItem('mwl_twa', '1');
+        else if (localStorage.getItem('mwl_twa') && matchMedia('(display-mode: standalone)').matches) app = true;
+    } catch (e) {}
+    return !app;
+};
+
+/* Pass-Band der gemeinsamen Fußzeile (pages/footer/footer.html). Dort kann es nicht stehen: die Seiten
+   setzen den Fuß per template.innerHTML ein, ein <script> darin läuft nie. version-loader.js kennen
+   nur 25 von 160 Seiten mit Fuß, diese Datei 158. Das Band bleibt ohne dieses Skript versteckt.
+   Nicht auf der Kasse, der Preisseite (dort steht schon alles), den Rechtstexten und bei anderen Zielgruppen. */
+(function () {
+    if (/^(\/en)?\/(kaufen|preise|agb|dsgvo|impressum|widerrufen|ausbilder|klasse)(\/|$)/i.test(location.pathname)) return;
+    if (!window.mwlPassWerben()) return;
+    function zeigen() {
+        var b = document.getElementById('footerPass');
+        if (!b) return false;
+        b.hidden = false;
+        var a = b.querySelector('a');
+        if (a) a.addEventListener('click', function () { window.mwlEvent('pass_werbung', { ort: 'fusszeile' }, { transport: 'sendBeacon' }); });
+        return true;
+    }
+    if (zeigen()) return;
+    var mo = new MutationObserver(function () { if (zeigen()) mo.disconnect(); });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+    setTimeout(function () { mo.disconnect(); }, 20000);
+})();
+
 /* Unbehandelte Fehler zaehlen — Zwilling der Fassung in index.template.html, Gruende dort.
    Kurz: keine Fehlermeldung (kann Nutzerdaten zitieren), nur Typ/Datei/Zeile, max. 5. */
 (function () {

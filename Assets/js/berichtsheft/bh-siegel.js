@@ -83,7 +83,7 @@ function zeigen(name, opt) {
                 // Plus ist nicht kaeuflich, der Kauf-Knopf wuerde dort den falschen Tarif verkaufen
                 (t.plus
                     ? '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/preise/' : '/preise/') + '#hefte">' + esc(L('Plus vormerken', 'Count me in for Plus')) + '</a>'
-                    : '<a class="bs-knopf" href="/kaufen/?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>' +
+                    : '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/kaufen/' : '/kaufen/') + '?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen', 'Get the pass')) + '</a>' +
                       // Der Pass hängt am Konto: wer gekauft hat und hier abgemeldet ist, muss nur sich anmelden
                       ((window.MWLPass && MWLPass.angemeldet()) ? '' : '<p class="bs-hinweis">' + esc(L('Schon gekauft? ', 'Already bought? ')) + '<a href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Mit deinem Konto anmelden', 'Sign in with your account')) + '</a></p>')) +
             '</div>' +
