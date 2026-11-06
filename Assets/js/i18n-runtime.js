@@ -270,6 +270,8 @@
     'Aus Excel oder CSV übernehmen': 'Import from Excel or CSV',
     'Zeiten aus einer Tabelle oder anderen App': 'Times from a spreadsheet or another app',
     // Import eines verschluesselten Backups (encrypted-backup.js)
+    'Das Backup ist beschädigt. Deine bisherigen Daten sind unverändert.': 'The backup is damaged. Your existing data has not been changed.',
+    'Das Backup passt nicht in den Speicher dieses Browsers. Deine bisherigen Daten sind unverändert.': 'The backup does not fit into this browser\'s storage. Your existing data has not been changed.',
     'Falsches Passwort': 'Wrong password',
     'Import fehlgeschlagen': 'Import failed',
     'Das Passwort passt nicht zu dieser Datei. Achte auf Groß- und Kleinschreibung.': 'The password does not match this file. Check upper and lower case.',

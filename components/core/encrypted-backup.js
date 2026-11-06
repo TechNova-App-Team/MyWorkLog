@@ -148,7 +148,6 @@
     
     // Export mit Verschlüsselung
     async function exportEncryptedBackup() {
-        console.log('[DEBUG] exportEncryptedBackup called');
         
         const modal = document.getElementById('encryptedBackupModal');
         if (!modal) {
@@ -169,7 +168,6 @@
         const password = passwordInput.value.trim();
         const confirmPassword = confirmInput.value.trim();
         
-        console.log('[DEBUG] Password validation:', { hasPassword: !!password, match: password === confirmPassword, length: password.length });
         
         // Validierungen
         if (!password) {
@@ -189,7 +187,6 @@
         
         // Passwort-Stärke prüfen
         const strength = calculatePasswordStrength(password);
-        console.log('[DEBUG] Password strength:', strength);
         
         if (strength < 2) {
             showCustomMessage('⚠️ Schwaches Passwort', 'Bitte Großbuchstaben, Zahlen & Symbole verwenden', 'warning');
@@ -203,13 +200,10 @@
         exportBtn.textContent = '🔒 Verschlüssele...';
         
         try {
-            console.log('[DEBUG] Starting encryption...');
-            console.log('[DEBUG] Data object size:', JSON.stringify(data).length, 'bytes');
             
             const jsonData = JSON.stringify(collectFullBackup());
             const encryptedData = await encryptBackupData(jsonData, password);
             
-            console.log('[DEBUG] Encryption successful, encrypted size:', encryptedData.length, 'bytes');
             
             // Download
             const a = document.createElement('a');
@@ -217,14 +211,12 @@
             a.href = URL.createObjectURL(blob);
             a.download = 'time_pro_encrypted_backup_' + new Date().toISOString().split('T')[0] + '.encrypted.json';
             
-            console.log('[DEBUG] Triggering download:', a.download);
             
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(a.href);
             
-            console.log('[DEBUG] Download triggered successfully');
             
             // Cleanup
             passwordInput.value = '';
@@ -370,18 +362,30 @@
     // Stellt ein Backup wieder her – unterstützt v2 (full) und v1 (legacy data-only)
     function restoreFullBackup(parsed) {
         if (parsed._backupVersion === 2 && parsed._localStorage) {
-            // V2: Komplettes localStorage-Backup
-            // Alle bestehenden App-Keys entfernen
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) keysToRemove.push(localStorage.key(i));
-            keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch(e){} });
-            // Alle gesicherten Keys wiederherstellen
-            for (const [key, value] of Object.entries(parsed._localStorage)) {
-                try { localStorage.setItem(key, value); } catch(e) {}
+            // Alles oder nichts: bis 11/2026 wurde erst geloescht und dann mit leerem catch
+            // geschrieben. Voller Speicher oder kaputtes tg_pro_data hiess: alte Daten weg,
+            // Meldung "wiederhergestellt". Test: tools/encrypted-backup.test.mjs
+            const restored = parsed._localStorage.tg_pro_data;
+            let neuerStand = null;
+            try {
+                if (restored) neuerStand = JSON.parse(restored);
+            } catch (e) {
+                throw new Error('Das Backup ist beschädigt. Deine bisherigen Daten sind unverändert.');
             }
-            // Aktuelles data-Objekt aus wiederhergestelltem Storage laden
-            const restored = localStorage.getItem('tg_pro_data');
-            if (restored) data = JSON.parse(restored);
+            const vorher = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                vorher.push([k, localStorage.getItem(k)]);
+            }
+            vorher.forEach(([k]) => localStorage.removeItem(k));
+            try {
+                for (const [key, value] of Object.entries(parsed._localStorage)) localStorage.setItem(key, value);
+            } catch (e) {
+                localStorage.clear();
+                vorher.forEach(([k, v]) => localStorage.setItem(k, v));
+                throw new Error('Das Backup passt nicht in den Speicher dieses Browsers. Deine bisherigen Daten sind unverändert.');
+            }
+            if (neuerStand) data = neuerStand;
         } else if (parsed.entries && parsed.settings) {
             // V1 Legacy: nur data-Objekt
             data = parsed;
