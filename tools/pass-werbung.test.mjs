@@ -1,6 +1,6 @@
 // Werbeflächen für den Ausbildungs-Pass: mwlPassWerben() steht zweimal (App inline, Standalone in
 // ph-init.js) und entscheidet, wer Werbung sieht. Geprüft wird die echte Fassung aus beiden Dateien.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 let fehler = 0, ok = 0;
@@ -72,8 +72,13 @@ const SIEGEL = lies('Assets/js/berichtsheft/bh-siegel.js');
 pruefe(SIEGEL.includes('hfLuecken') && !/Stunden|hours/.test(SIEGEL.slice(SIEGEL.indexOf('function lage'), SIEGEL.indexOf('let offen'))), 'Sperr-Blatt nennt echte fehlende Wochen, keine erfundene Zeitersparnis');
 
 // Der Preis auf den Flächen muss zum Worker passen.
-const WORKER = lies('workers/ai-proxy/worker.js');
-pruefe(/PASS_PREISE = \{ 2: 999,/.test(WORKER), 'Worker verkauft ab 9,99 €');
+// workers/ ist gitignored: auf dem Runner fehlt die Datei, lokal muss ein Fehlen weiter anschlagen.
+if (process.env.CI && !existsSync(new URL('../workers/ai-proxy/worker.js', import.meta.url))) {
+  console.log('  --   uebersprungen: workers/ai-proxy/worker.js ist gitignored.');
+} else {
+  const WORKER = lies('workers/ai-proxy/worker.js');
+  pruefe(/PASS_PREISE = \{ 2: 999,/.test(WORKER), 'Worker verkauft ab 9,99 €');
+}
 pruefe(FUSS.includes('ab 9,99 €') && DASH.includes('ab 9,99 €'), 'Flächen nennen denselben Einstiegspreis');
 
 console.log('\n' + ok + ' ok, ' + fehler + ' fehlgeschlagen');
