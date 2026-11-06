@@ -34,13 +34,15 @@ function lade() {
   vm.createContext(c);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'Assets/js/rechte-checker/faelle.js'), 'utf8'), c);
   vm.runInContext(fs.readFileSync(path.join(ROOT, 'Assets/js/rechte-checker/faelle.en.js'), 'utf8'), c);
-  return { faelle: c.window.RC_FAELLE, en: c.window.RC_EN.scenarios, stand: c.window.RC_STAND, seo: { de: c.window.RC_SEO || {}, en: c.window.RC_EN.seo || {} } };
+  return { faelle: c.window.RC_FAELLE, en: c.window.RC_EN.scenarios, stand: c.window.RC_STAND, seo: { de: c.window.RC_SEO || {}, en: c.window.RC_EN.seo || {} }, seoText: { de: c.window.RC_SEO_TEXT || {}, en: c.window.RC_EN.seoText || {} } };
 }
-const { faelle, en: EN, stand: STAND, seo: SEO } = lade();
+const { faelle, en: EN, stand: STAND, seo: SEO, seoText: SEO_TEXT } = lade();
 if (!faelle || faelle.length < 50) { console.error('[rechte-seiten] Daten nicht geladen'); process.exit(1); }
 if (!/^\d{4}-\d{2}-\d{2}$/.test(STAND || '')) { console.error('[rechte-seiten] RC_STAND fehlt in faelle.js'); process.exit(1); }
 const seoKaputt = [...Object.keys(SEO.de), ...Object.keys(SEO.en)].filter((id) => !faelle.some((s) => s.id === id) || !SEO.de[id] || !SEO.en[id]);
 if (seoKaputt.length) { console.error('[rechte-seiten] RC_SEO ohne Fall oder ohne DE/EN: ' + [...new Set(seoKaputt)].join(', ')); process.exit(1); }
+const textKaputt = [...Object.keys(SEO_TEXT.de), ...Object.keys(SEO_TEXT.en)].filter((id) => !faelle.some((s) => s.id === id) || !SEO_TEXT.de[id] || !SEO_TEXT.en[id] || SEO_TEXT.de[id].length > 160 || SEO_TEXT.en[id].length > 160);
+if (textKaputt.length) { console.error('[rechte-seiten] RC_SEO_TEXT ohne Fall, ohne DE/EN oder ueber 160 Zeichen: ' + [...new Set(textKaputt)].join(', ')); process.exit(1); }
 const fehltEn = faelle.filter((s) => !EN[s.id]).map((s) => s.id);
 if (fehltEn.length) { console.error('[rechte-seiten] ohne Englisch: ' + fehltEn.join(', ')); process.exit(1); }
 
@@ -107,6 +109,22 @@ function kurz(text, max) {
   const schnitt = t.slice(0, max - 1);
   return schnitt.slice(0, schnitt.lastIndexOf(' ')).replace(/[,;:–-]$/, '') + '…';
 }
+// Bis 11/2026 endeten alle 112 Beschreibungen mitten im Satz auf "…". Ganze Saetze, solange sie
+// reichen; Abkuerzungen wie "z." oder "Abs." sind keine Satzenden. Zu kurz bleibt der Wortschnitt.
+function bisSatzende(text, max) {
+  const t = text.replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const saetze = t.split(/(?<=[.!?])\s+(?=[A-ZÄÖÜ„"])/);
+  let aus = '';
+  for (const s of saetze) {
+    const neu = aus ? aus + ' ' + s : s;
+    if (neu.length > max) break;
+    aus = neu;
+  }
+  const abkuerzung = /(?:\b[A-Za-zÄÖÜäöü]|Abs|Nr|bzw|ca|ggf|vgl|Art|etc|no)\.$/;
+  while (abkuerzung.test(aus)) aus = aus.slice(0, aus.lastIndexOf(' ') > 0 ? aus.lastIndexOf(' ') : 0).trim();
+  return aus.length >= 80 && /[.!?]$/.test(aus) ? aus : kurz(t, max);
+}
 const datumDe = (iso) => { const [y, m, d] = iso.split('-').map(Number); return d + '. ' + ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'][m - 1] + ' ' + y; };
 const datumEn = (iso) => { const [y, m, d] = iso.split('-').map(Number); return d + ' ' + ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][m - 1] + ' ' + y; };
 
@@ -160,7 +178,7 @@ function seite(s, lang) {
   const seo = SEO[lang][s.id];
   // Google kuerzt ab ~60 Zeichen; dann lieber ohne Markenzusatz als mit abgeschnittener Frage.
   const kopfTitel = seo ? (seo.length <= 52 ? seo + ' | MyWorkLog' : seo) : t.titel(titel);
-  const beschreibung = kurz(d.verdictShort + ' ' + ohneFett(d.verdictDetail), 158);
+  const beschreibung = SEO_TEXT[lang][s.id] || bisSatzende(d.verdictShort + ' ' + ohneFett(d.verdictDetail), 158);
   const kat = KAT[lang][s.cat];
   const standText = lang === 'de' ? datumDe(STAND) : datumEn(STAND);
   const weg = WEITER[s.cat], neben = WEITER_NEBEN[weg];

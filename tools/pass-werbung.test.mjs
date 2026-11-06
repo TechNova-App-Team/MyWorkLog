@@ -81,5 +81,10 @@ if (process.env.CI && !existsSync(new URL('../workers/ai-proxy/worker.js', impor
 }
 pruefe(FUSS.includes('ab 9,99 €') && DASH.includes('ab 9,99 €'), 'Flächen nennen denselben Einstiegspreis');
 
+// Der Pass wird seit v9.5.8 verkauft. Sichtbarer Text und JSON-LD sagten danach weiter „komplett kostenlos".
+const KOSTEN = ['index.template.html', 'pages/ihk-berichtsheft/index.html', 'tools/i18n/dict/index.en-overrides.json', 'tools/i18n/dict/ihk-berichtsheft.en-overrides.json'].map(lies).join('\n');
+pruefe(!/komplett kostenlos|completely free|keine versteckten Kosten|no hidden costs|keine Tarife und keine Werbung|There are no plans and no advertising/i.test(KOSTEN), 'kein „alles kostenlos“ mehr in Startseite und IHK-Seite');
+pruefe(KOSTEN.includes('Ausbildungs-Pass ab 9,99 €') && KOSTEN.includes('from €9.99'), 'Gegenprobe: dort steht der Pass mit Preis, DE und EN');
+
 console.log('\n' + ok + ' ok, ' + fehler + ' fehlgeschlagen');
 if (fehler) process.exit(1);

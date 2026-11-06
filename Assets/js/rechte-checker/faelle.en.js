@@ -2419,10 +2419,11 @@ Kind regards
             title: '"Only permanent staff get a Christmas bonus."',
             desc: 'Everyone at the company gets a Christmas or holiday bonus, except the trainees.',
             verdictShort: 'There is no statutory right — but a collective agreement, contract or equal treatment can give one.',
-            verdictDetail: 'There is no **statutory** Christmas or holiday bonus. A right can arise, however, from a **collective agreement** (often expressly including trainees), your **training contract**, a **works agreement** or **company practice** (the company has paid it without reservation for several years). If the company pays voluntarily, it must observe the **principle of equal treatment**: it may only exclude groups for an **objective reason**. Such a reason can lie in the purpose of the payment (e.g. rewarding company loyalty); a mere "trainees get nothing" is not always enough.',
+            verdictDetail: 'There is no **statutory** Christmas or holiday bonus. A right can arise, however, from a **collective agreement** (often expressly including trainees), your **training contract**, a **works agreement** or **company practice** (the company has paid it without reservation for several years). If the company pays voluntarily, it must observe the **principle of equal treatment**: it may only exclude groups for an **objective reason**. Such a reason can lie in the purpose of the payment (e.g. rewarding company loyalty); a mere "trainees get nothing" is not always enough. **How much?** There is no statutory amount; it is set in the collective agreement or your contract and varies widely. WSI reports Christmas bonus and holiday pay together at sometimes over 120% of a monthly allowance, for example in the chemical industry, and 100% or more in the metal and electrical industry, depending on the region. Without a collective agreement it can also be nothing.',
             laws: [
                 { title: 'Principle of equal treatment (BAG)', text: 'If an employer grants voluntary benefits according to a recognisable system, it may not exclude individual employees or groups without an objective reason.' },
-                { title: '§ 10 (2) BBiG – Applicable law', text: 'The legal provisions and principles applicable to employment contracts apply to the training contract.' }
+                { title: '§ 10 (2) BBiG – Applicable law', text: 'The legal provisions and principles applicable to employment contracts apply to the training contract.' },
+                { title: 'WSI collective agreement archive, 20 large sectors (September 2026)', text: 'In all sectors examined, except hairdressing and floristry in eastern Germany, collective agreements set a Christmas bonus, holiday pay or both for trainees. Together sometimes over 120% of a monthly allowance, for example in the chemical industry, and 100% or more in the metal and electrical industry, depending on the region.' }
             ],
             tips: [
                 'Look in the collective agreement and training contract for "annual special payment".',
@@ -3435,7 +3436,7 @@ Kind regards
 
     // Google titles, same keys as window.RC_SEO in faelle.js.
     var seo = {
-        'weihnachtsgeld-azubi': 'Do trainees get a Christmas bonus? What applies',
+        'weihnachtsgeld-azubi': 'Do trainees get a Christmas bonus? Right and amount',
         'pruefungsfreistellung': 'Exams during training: do I have to take leave?',
         'krank-berufsschule': 'On sick leave: do I still have to go to school?',
         'krankmeldung-ab-tag-eins': 'Sick note from day one – can my employer demand it?',
@@ -3474,6 +3475,12 @@ Kind regards
         scenarios: scenarios,
         keywords: keywords,
         seo: seo,
+        seoText: {
+            'weihnachtsgeld-azubi': 'No law requires it, but a collective agreement, your contract or company practice can give you a right to it. What sectors pay and how to check.',
+            'kuendigung-wegen-krankheit': 'During probation, yes, without a reason. After that the company needs good cause, and illness generally is not one (§ 22 BBiG).',
+            'krank-berufsschule': 'No: if you are unfit for work, you do not have to go to school either. You usually still have to report your absence there. Also: what applies to exams.',
+            'krankmeldung-ab-tag-eins': 'Yes: the company may require a certificate from day one; otherwise it is needed from the fourth calendar day (§ 5 EntgFG). How the eAU works.',
+        },
         // Mutate SCENARIOS + KEYWORD_MAP in place with the English data.
         apply: function (SCENARIOS, KEYWORD_MAP) {
             var sc = this.scenarios;

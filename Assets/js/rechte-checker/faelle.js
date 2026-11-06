@@ -2263,10 +2263,11 @@ Mit freundlichen Grüßen
         severity: 1,
         verdict: 'jein',
         verdictShort: 'Ein gesetzlicher Anspruch fehlt — aber Tarif, Vertrag oder Gleichbehandlung können ihn geben.',
-        verdictDetail: 'Ein **gesetzliches** Weihnachts- oder Urlaubsgeld gibt es nicht. Ein Anspruch kann sich aber ergeben aus: einem **Tarifvertrag** (oft auch ausdrücklich für Azubis), deinem **Ausbildungsvertrag**, einer **Betriebsvereinbarung** oder einer **betrieblichen Übung** (der Betrieb zahlt mehrere Jahre vorbehaltlos). Zahlt der Betrieb freiwillig, muss er den **Gleichbehandlungsgrundsatz** beachten: Er darf Gruppen nur aus einem **sachlichen Grund** ausnehmen. Ein solcher Grund kann im unterschiedlichen Zweck der Zahlung liegen (z. B. Belohnung für Betriebstreue), ein bloßes „Azubis kriegen nichts" reicht nicht immer.',
+        verdictDetail: 'Ein **gesetzliches** Weihnachts- oder Urlaubsgeld gibt es nicht. Ein Anspruch kann sich aber ergeben aus: einem **Tarifvertrag** (oft auch ausdrücklich für Azubis), deinem **Ausbildungsvertrag**, einer **Betriebsvereinbarung** oder einer **betrieblichen Übung** (der Betrieb zahlt mehrere Jahre vorbehaltlos). Zahlt der Betrieb freiwillig, muss er den **Gleichbehandlungsgrundsatz** beachten: Er darf Gruppen nur aus einem **sachlichen Grund** ausnehmen. Ein solcher Grund kann im unterschiedlichen Zweck der Zahlung liegen (z. B. Belohnung für Betriebstreue), ein bloßes „Azubis kriegen nichts" reicht nicht immer. **Wie viel?** Eine gesetzliche Höhe gibt es nicht, sie steht im Tarifvertrag oder in deinem Vertrag und schwankt stark. Das WSI nennt für Weihnachts- und Urlaubsgeld zusammen teils über 120 % einer Monatsvergütung, etwa in der Chemischen Industrie, in der Metall- und Elektroindustrie 100 % oder mehr, je nach Region. Ohne Tarifbindung kann es auch nichts sein.',
         laws: [
             { title: 'Gleichbehandlungsgrundsatz (BAG)', text: 'Gewährt der Arbeitgeber freiwillige Leistungen nach einem erkennbaren System, darf er einzelne Beschäftigte oder Gruppen nicht ohne sachlichen Grund ausnehmen.' },
-            { title: '§ 10 Abs. 2 BBiG – Anwendbares Recht', text: 'Auf den Berufsausbildungsvertrag sind die für den Arbeitsvertrag geltenden Rechtsvorschriften und Rechtsgrundsätze anzuwenden.' }
+            { title: '§ 10 Abs. 2 BBiG – Anwendbares Recht', text: 'Auf den Berufsausbildungsvertrag sind die für den Arbeitsvertrag geltenden Rechtsvorschriften und Rechtsgrundsätze anzuwenden.' },
+            { title: 'WSI-Tarifarchiv, 20 große Tarifbranchen (September 2026)', text: 'In allen untersuchten Branchen außer dem Friseurhandwerk und der Floristik in Ostdeutschland stehen Weihnachtsgeld, Urlaubsgeld oder beides für Azubis im Tarifvertrag. Zusammen teils über 120 % einer Monatsvergütung, etwa in der Chemischen Industrie, in der Metall- und Elektroindustrie 100 % oder mehr, je nach Region.' }
         ],
         tips: [
             'Schau in Tarifvertrag und Ausbildungsvertrag nach „Jahressonderzahlung".',
@@ -4151,8 +4152,17 @@ window.RC_STICHWORTE = {
 // sucht, sah "Weihnachtsgeld bekommen nur die Festangestellten." — klingt wie die
 // falsche Antwort. Formuliert nach den echten Suchanfragen; nur Faelle mit
 // nennenswerten Impressionen. Fehlt ein Fall hier, bleibt der alte Titel.
+// Eigene Meta-Beschreibung fuer die Faelle mit den meisten Impressionen (Search Console 11/2026).
+// Sonst setzt rechte-seiten.mjs sie aus dem Urteil zusammen. Hoechstens 160 Zeichen, DE und EN Pflicht.
+window.RC_SEO_TEXT = {
+    'weihnachtsgeld-azubi': 'Kein Gesetz schreibt es vor, aber Tarif, Vertrag oder betriebliche Übung können dir einen Anspruch geben. Was Branchen zahlen und wie du es prüfst.',
+    'kuendigung-wegen-krankheit': 'In der Probezeit ja, ohne Grund. Danach braucht der Betrieb einen wichtigen Grund, und Krankheit ist das grundsätzlich nicht (§ 22 BBiG).',
+    'krank-berufsschule': 'Nein: Wer arbeitsunfähig ist, muss auch nicht zur Schule. Dort musst du dich aber meist extra abmelden und entschuldigen. Auch: was bei Prüfungen gilt.',
+    'krankmeldung-ab-tag-eins': 'Ja: Der Betrieb darf die Bescheinigung ab dem ersten Tag verlangen, sonst ist sie ab dem vierten Kalendertag nötig (§ 5 EntgFG). So läuft es mit der eAU.',
+};
+
 window.RC_SEO = {
-    'weihnachtsgeld-azubi': 'Bekommen Azubis Weihnachtsgeld? Was gilt in der Ausbildung',
+    'weihnachtsgeld-azubi': 'Bekommen Azubis Weihnachtsgeld? Anspruch und Höhe',
     'pruefungsfreistellung': 'Prüfung in der Ausbildung: Muss ich dafür Urlaub nehmen?',
     'krank-berufsschule': 'Krankgeschrieben: Muss ich als Azubi in die Berufsschule?',
     'krankmeldung-ab-tag-eins': 'Krankschreibung ab dem ersten Tag – darf der Betrieb das?',
