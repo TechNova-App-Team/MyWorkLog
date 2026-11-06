@@ -259,12 +259,15 @@ ${ldJson(faq)}
     <script type="application/ld+json" data-ld-id="breadcrumb">
 ${ldJson(crumbs)}
     </script>
+    <link rel="stylesheet" href="/Assets/fonts/bricolage-grotesque-geist-bfd216ed.css">
     <link rel="stylesheet" href="/Assets/css/rechte-checker.css">
     <script defer src="/Assets/js/ph-init.js"></script>
 ${lang === 'en' ? '    <script type="application/json" id="i18nLinkMap">' + LINKMAP + '</script>\n' : ''}</head>
 <body class="fall-seite" data-fall="${s.id}">
     <div class="ambient"></div>
     <div class="shell fall-shell">
+        <div class="rc-kopfzeile">
+        <a href="${pre}/rechte-checker/" class="back-btn">${svg(PFEIL_L)}${esc(t.alle)}</a>
         <nav aria-label="Breadcrumb" class="fall-pfad">
             <ol>
                 <li><a href="${pre}/">MyWorkLog</a></li>
@@ -274,7 +277,7 @@ ${lang === 'en' ? '    <script type="application/json" id="i18nLinkMap">' + LINK
                 <li aria-current="page">${esc(kat)}</li>
             </ol>
         </nav>
-        <a href="${pre}/rechte-checker/" class="back-btn">${svg(PFEIL_L)}${esc(t.alle)}</a>
+        </div>
 
         <main class="fall">
             <header class="fall-kopf">

@@ -11,34 +11,39 @@
    lesbar sein, und zehn gleichzeitig leuchtende Akzente tragen keine
    Information - welche Kategorie gemeint ist, steht als Wort daneben.
    Farbe bleibt damit frei fuer das, was sie hier wirklich bedeutet:
-   die Einschaetzung (erlaubt / Graubereich / unzulaessig). */
+   die Einschaetzung (erlaubt / Graubereich / unzulaessig).
+
+   Schriften wie in der App (seit v9.5.18). Bis dahin stand hier 'Inter',
+   das nie geladen wurde: document.fonts war leer, die Seite lief in der
+   Systemschrift. Kopf jeder Seite laedt /Assets/fonts/bricolage-grotesque-geist-*.css.
+   Keine Grossbuchstaben-Etiketten (Markenregel seit v8.1.8). */
 :root {
     --bg-deep: #030305;
-    --bg-card: rgba(22, 22, 26, 0.65);
+    --bg-card: #0d0e12;
     --bg-card-solid: #101014;
-    --bg-elevated: rgba(34, 34, 40, 0.6);
+    --bg-elevated: #17181e;
     --primary: #5578a8;
     --primary-rgb: 85, 120, 168;
-    --success: #10b981;
+    --success: #34d399;
     --success-rgb: 16, 185, 129;
-    --warning: #f59e0b;
+    --warning: #fbbf24;
     --warning-rgb: 245, 158, 11;
-    --danger: #ef4444;
+    --danger: #f87171;
     --danger-rgb: 239, 68, 68;
     --text: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-dim: #64748b;
-    --border: rgba(255, 255, 255, 0.06);
-    --border-strong: rgba(255, 255, 255, 0.10);
-    --radius: 16px;
+    --text-muted: #a3afc0;
+    /* #64748b lag auf den Karten bei rund 3,9:1, zu wenig fuer die kleinen
+       Paragraphen und Kategorien. Dieser Wert haelt AA. */
+    --text-dim: #8b98ad;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --radius: 14px;
     --radius-sm: 10px;
     --radius-xs: 8px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-    /* Schatten in der Hintergrundfarbe statt reinem Schwarz - ein
-       schwarzer Schatten auf dunklem Grund wird zum Loch, kein Volumen. */
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
-    --shadow-lift: 0 8px 28px rgba(0, 0, 0, 0.35);
+    --font: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-display: 'Bricolage Grotesque', 'Geist', -apple-system, sans-serif;
+    --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+    --bewegung: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ═══════════════════════════════════════
@@ -52,12 +57,13 @@ body {
     font-family: var(--font);
     background: var(--bg-deep);
     color: var(--text);
-    min-height: 100vh;
+    min-height: 100dvh;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 a { text-decoration: none; color: inherit; }
+strong { color: var(--text); font-weight: 600; }
 
 /* ═══════════════════════════════════════
    AMBIENT BACKGROUND
@@ -66,15 +72,13 @@ a { text-decoration: none; color: inherit; }
    gelb) mit Dauerschleife. Sie faerbten den halben Bildschirm, standen
    in Konkurrenz zum Inhalt und liessen die GPU durchgehend rechnen.
    Geblieben ist ein einzelner, sehr flacher Lichtschein hinter dem
-   Kopfbereich: genug, damit die Seite nicht flach wirkt, wenig genug,
-   dass man ihn nicht bewusst wahrnimmt. Statisch, also keine Bewegung,
-   die man wegblenden muesste. */
+   Kopfbereich. Statisch, also keine Bewegung, die man wegblenden muesste. */
 .ambient {
     position: fixed; inset: 0;
     pointer-events: none; z-index: 0;
     background:
-        radial-gradient(60rem 32rem at 50% -14rem,
-            rgba(var(--primary-rgb), 0.16), transparent 70%);
+        radial-gradient(56rem 30rem at 12% -12rem,
+            rgba(var(--primary-rgb), 0.13), transparent 70%);
 }
 
 /* ═══════════════════════════════════════
@@ -82,124 +86,100 @@ a { text-decoration: none; color: inherit; }
 ═══════════════════════════════════════ */
 .shell {
     position: relative; z-index: 1;
-    max-width: 1100px;
+    max-width: 1160px;
     margin: 0 auto;
-    padding: 24px 20px 80px;
+    padding: 20px 24px 88px;
+}
+.rc-kopfzeile {
+    display: flex; flex-wrap: wrap;
+    align-items: center; justify-content: space-between;
+    gap: 6px 20px;
 }
 
 /* ═══════════════════════════════════════
-   BACK BUTTON
+   ZURUECK + BREADCRUMB
 ═══════════════════════════════════════ */
 .back-btn {
     display: inline-flex; align-items: center; gap: 8px;
+    min-height: 40px;
     color: var(--text-muted);
-    font-size: 0.85rem; font-weight: 500;
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    backdrop-filter: blur(12px);
-    transition: all 0.25s;
-    margin-bottom: 28px;
+    font-size: 0.875rem; font-weight: 500;
+    transition: color 0.2s ease;
 }
-.back-btn:hover {
-    color: var(--text);
-    background: var(--bg-elevated);
-    transform: translateX(-4px);
+.back-btn:hover { color: var(--text); }
+.back-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; border-radius: 4px; }
+.back-btn svg { width: 16px; height: 16px; transition: transform 0.25s var(--bewegung); }
+.back-btn:hover svg { transform: translateX(-3px); }
+
+.fall-pfad ol {
+    list-style: none;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    font-size: 0.78rem; color: var(--text-dim);
 }
-.back-btn svg { width: 16px; height: 16px; }
+.fall-pfad a { color: var(--text-dim); transition: color 0.2s ease; }
+.fall-pfad a:hover { color: var(--text); }
+.fall-pfad [aria-current] { color: var(--text-muted); }
+.fall-pfad [aria-hidden] { opacity: 0.5; }
 
 /* ═══════════════════════════════════════
    HERO
 ═══════════════════════════════════════ */
 .hero {
-    text-align: center;
-    margin-bottom: 48px;
+    margin: 36px 0 28px;
+    max-width: 46rem;
 }
-/* Das Signal war vorher rot und schrie "Alarm". Der Seitenzweck ist aber
-   Nachschlagen, nicht Warnen - Rot bleibt jetzt den Faellen vorbehalten,
-   in denen wirklich etwas unzulaessig ist. */
+/* Das Signal war vorher rot und schrie "Alarm", danach eine Grossbuchstaben-
+   Pille. Der Seitenzweck ist Nachschlagen: ein Name reicht. */
 .hero-badge {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: rgba(var(--primary-rgb), 0.10);
+    display: inline-flex; align-items: center; gap: 8px;
     color: var(--text-muted);
-    font-size: 0.72rem; font-weight: 600;
-    padding: 5px 13px;
-    border-radius: 100px;
-    border: 1px solid rgba(var(--primary-rgb), 0.22);
-    margin-bottom: 20px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-.hero-badge svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--primary); }
-.hero h1 {
-    font-size: clamp(1.9rem, 5vw, 2.75rem);
-    font-weight: 700;
-    /* Grosse Schrift wirkt bei normaler Laufweite auseinandergezogen. */
-    letter-spacing: -0.025em;
-    line-height: 1.12;
+    font-size: 0.9rem; font-weight: 500;
     margin-bottom: 14px;
-    text-wrap: balance;
 }
-/* Kein Verlaufstext mehr. Zwei Verlaeufe auf einer Seite (Titel und
-   Kennzahlen) waren einer zu viel, und Verlaufsschrift verliert bei
-   kleinen Groessen den Kontrast.
-   Betont wird jetzt mit einem Unterstrich statt mit Textfarbe: der
-   Akzent ist frei waehlbar, und ein heller oder stark entsaettigter
-   Wert liesse das betonte Wort sonst blasser wirken als den Rest der
-   Zeile - es saehe aus wie ausgegraut statt hervorgehoben. */
-.hero h1 span {
-    color: var(--text);
-    box-shadow: inset 0 -0.12em 0 rgba(var(--primary-rgb), 0.75);
+.hero-badge svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--primary); }
+.hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 6.4vw, 4.25rem);
+    font-weight: 650;
+    letter-spacing: -0.022em;
+    line-height: 1.02;
+    margin-bottom: 18px;
+    text-wrap: balance;
 }
 .hero-sub {
     color: var(--text-muted);
-    font-size: 1.02rem;
-    line-height: 1.65;
-    max-width: 34rem;
-    margin: 0 auto 30px;
+    font-size: 1.06rem;
+    line-height: 1.6;
+    max-width: 46rem;
+    margin-bottom: 16px;
     text-wrap: pretty;
 }
 .hero-stats {
-    display: flex; justify-content: center;
-    gap: 0;
-    flex-wrap: wrap;
+    display: flex; flex-wrap: wrap;
+    gap: 2px 20px;
 }
-/* Trennstriche statt grosser Abstaende: die drei Werte lesen sich als
-   eine Zeile, nicht als drei konkurrierende Kacheln. */
-.hero-stat {
-    text-align: center;
-    padding: 0 22px;
-    border-left: 1px solid var(--border);
-}
-.hero-stat:first-child { border-left: 0; }
+/* Die drei Werte sind Einordnung, keine Kennzahlen: eine leise Zeile. */
+.hero-stat { display: inline-flex; align-items: baseline; gap: 6px; font-size: 0.84rem; }
 .hero-stat-num {
-    font-size: 1.35rem; font-weight: 600;
-    font-family: var(--font-mono);
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--text);
-    line-height: 1.3;
 }
-.hero-stat-label {
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-}
+.hero-stat-label { color: var(--text-dim); }
 
 /* ═══════════════════════════════════════
    SEARCH BAR
 ═══════════════════════════════════════ */
 .search-wrap {
-    max-width: 600px;
-    margin: 0 auto 40px;
+    max-width: 46rem;
+    margin: 0 0 40px;
     position: relative;
     z-index: 50;
 }
 /* Nur die Lupe: `.search-wrap svg` traf bis 2026-09-28 JEDES Symbol im
    Suchbereich (Modus-Menü) und legte alle absolut auf denselben Punkt. */
 .search-wrap > svg {
-    position: absolute; left: 16px; top: 50%;
+    position: absolute; left: 18px; top: 50%;
     transform: translateY(-50%);
     width: 20px; height: 20px;
     color: var(--text-dim);
@@ -207,67 +187,69 @@ a { text-decoration: none; color: inherit; }
 }
 .search-input {
     width: 100%;
-    padding: 14px 16px 14px 48px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    /* 1rem: darunter zoomt iOS beim Fokus in die Seite. */
+    font-size: 1rem;
+    padding: 17px 18px 17px 50px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
     color: var(--text);
-    font-size: 0.95rem;
-    font-family: var(--font);
-    backdrop-filter: blur(12px);
-    transition: all 0.3s;
+    text-overflow: ellipsis;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
     outline: none;
 }
-.search-input::placeholder { color: var(--text-dim); }
+.search-input::placeholder { color: var(--text-dim); opacity: 1; }
 .search-input:focus {
-    border-color: rgba(var(--primary-rgb), 0.4);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+    border-color: rgba(var(--primary-rgb), 0.8);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.22);
 }
 /* Tippfehler-Hinweis unter dem Feld. Absolut, damit er die Höhe von
    .search-wrap nicht ändert — sonst verrutscht die Lupe (top: 50%). */
 .search-hint {
     position: absolute;
     top: calc(100% + 8px);
-    left: 18px; right: 18px;
+    left: 4px; right: 4px;
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
 }
 .search-hint[hidden] { display: none; }
 .search-hint button {
     background: none; border: 0; padding: 0;
     font: inherit; font-weight: 600;
-    color: var(--primary);
+    color: var(--text);
     text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration-color: var(--primary);
+    text-underline-offset: 3px;
     cursor: pointer;
 }
 
 /* ═══════════════════════════════════════
-   CATEGORY FILTER PILLS
+   CATEGORY FILTER
 ═══════════════════════════════════════ */
 .cat-filters {
     display: flex; flex-wrap: wrap;
-    justify-content: center; gap: 8px;
-    margin-bottom: 36px;
+    gap: 6px;
+    margin-bottom: 24px;
 }
 .cat-pill {
     display: inline-flex; align-items: center; gap: 7px;
-    padding: 7px 15px;
-    border-radius: 100px;
-    font-size: 0.8rem;
+    min-height: 38px;
+    padding: 0 12px;
+    border-radius: var(--radius-xs);
+    font-size: 0.84rem;
     font-weight: 500;
-    font-family: inherit;
     border: 1px solid var(--border);
-    background: var(--bg-card);
+    background: transparent;
     color: var(--text-muted);
     cursor: pointer;
+    white-space: nowrap;
     transition: background-color 0.2s ease, border-color 0.2s ease,
                 color 0.2s ease;
     user-select: none;
 }
 .cat-pill svg {
-    width: 14px; height: 14px;
+    width: 15px; height: 15px;
     flex-shrink: 0;
     opacity: 0.75;
 }
@@ -280,16 +262,15 @@ a { text-decoration: none; color: inherit; }
     outline: 2px solid var(--primary);
     outline-offset: 2px;
 }
-/* Flaechiger Verlauf plus farbiger Schein war fuer einen Filterknopf zu
-   viel Gewicht - er zog mehr Aufmerksamkeit als die Ergebnisse darunter.
-   Eine ruhige Fuellung reicht, um "ausgewaehlt" zu zeigen. */
+/* Unabhaengig vom Akzent: den waehlt der Nutzer frei, und ein dunkler Wert
+   waere als Fuellung kaum von „nicht gewaehlt" zu unterscheiden. */
 .cat-pill.active {
-    background: rgba(var(--primary-rgb), 0.16);
-    border-color: rgba(var(--primary-rgb), 0.45);
-    color: var(--text);
+    background: var(--text);
+    border-color: var(--text);
+    color: var(--bg-deep);
     font-weight: 600;
 }
-.cat-pill.active svg { opacity: 1; color: var(--primary); }
+.cat-pill.active svg { opacity: 1; }
 
 /* ═══════════════════════════════════════
    SCENARIO CARDS GRID
@@ -297,43 +278,31 @@ a { text-decoration: none; color: inherit; }
 .scenarios-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 16px;
+    gap: 12px;
     margin-bottom: 48px;
 }
+/* Spalte, damit die Fusszeile bei ungleich langen Texten auf einer Linie bleibt. */
 .scenario-card {
+    display: flex; flex-direction: column;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0;
     cursor: pointer;
-    /* Nur transform/border/shadow bewegen sich, nichts loest Layout aus. */
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.22s ease,
-                box-shadow 0.22s ease;
-    box-shadow: var(--shadow-card);
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     overflow: hidden;
     position: relative;
 }
-/* Der farbige Balken oben ist weg: er lief in der Kategoriefarbe und war
-   damit Teil des Regenbogens. Die Karte hebt sich jetzt nur an und
-   bekommt eine deutlichere Kante - das reicht als Ruecklmeldung. */
-.scenario-card:hover,
-.scenario-card:focus-visible {
-    transform: translateY(-2px);
-    border-color: rgba(var(--primary-rgb), 0.35);
-    box-shadow: var(--shadow-lift);
-}
-.scenario-card:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
+.scenario-card:hover {
+    background: var(--bg-card-solid);
+    border-color: var(--border-strong);
 }
 /* Der Titel ist ein echter Link auf die Fallseite; ::after spannt ihn ueber die
    ganze Karte, damit Strg-/Mittelklick ueberall greift. Der Fokusring sitzt an
    der Karte, nicht am Text. */
 .detail-permalink {
     display: inline-block;
-    margin-top: 14px;
-    font-size: 0.8rem;
+    margin-top: 16px;
+    font-size: 0.82rem;
     color: var(--text-muted);
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -344,285 +313,289 @@ a { text-decoration: none; color: inherit; }
 .scenario-card:has(.scenario-link:focus-visible) {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
-    border-color: rgba(var(--primary-rgb), 0.35);
 }
-.scenario-card-inner {
-    padding: 20px 20px 18px;
-}
+.scenario-card-inner { padding: 20px 20px 14px; }
 /* Vorher: gefuellte Pille in einer von zehn Farben. Jetzt Symbol plus
    Wort in gedaempftem Grau - die Kategorie ist eine Einordnung, keine
    Meldung, und braucht deshalb kein Farbfeld um sich herum. */
 .scenario-tag {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 0.68rem; font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-size: 0.78rem; font-weight: 500;
     color: var(--text-dim);
-    margin-bottom: 11px;
+    margin-bottom: 10px;
 }
 .scenario-tag svg {
-    width: 13px; height: 13px;
+    width: 14px; height: 14px;
     flex-shrink: 0;
-    color: var(--text-dim);
 }
-
 .scenario-title {
-    font-size: 0.98rem; font-weight: 650;
-    letter-spacing: -0.008em;
+    font-family: var(--font-display);
+    font-size: 1.12rem; font-weight: 600;
+    letter-spacing: -0.012em;
     margin-bottom: 7px;
-    line-height: 1.35;
+    line-height: 1.28;
     text-wrap: pretty;
 }
 .scenario-desc {
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
-    line-height: 1.55;
+    line-height: 1.5;
     text-wrap: pretty;
 }
 .scenario-footer {
+    margin-top: auto;
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px;
-    padding: 11px 20px;
-    border-top: 1px solid var(--border);
-    background: rgba(0, 0, 0, 0.18);
+    padding: 2px 20px 18px;
 }
 .scenario-law {
-    font-size: 0.7rem;
+    min-width: 0;
+    font-size: 0.72rem;
     font-family: var(--font-mono);
     color: var(--text-dim);
-    font-weight: 500;
 }
 /* Drei rote Punkte ohne Beschriftung sagten niemandem, was sie messen -
-   und wer Rot und Gruen nicht unterscheidet, sah gar nichts. Jetzt steht
-   das Ergebnis als Wort da. Die Staerke-Balken sind wieder rausgeflogen:
-   sie brauchten so viel Breite, dass die Paragraphenangabe daneben
-   umbrach, und "wie schlimm auf einer Skala von drei" ist ohne Legende
-   ohnehin nicht lesbar. Farbe traegt hier echte Bedeutung - deshalb ist
-   dies die einzige Stelle der Seite, an der sie noch auftritt. */
+   und wer Rot und Gruen nicht unterscheidet, sah gar nichts. Das Ergebnis
+   steht als Wort da. Farbe traegt hier echte Bedeutung - deshalb ist
+   dies die einzige Stelle der Liste, an der sie auftritt. */
 .scenario-severity {
     display: inline-flex; align-items: center;
     flex-shrink: 0;
 }
 .severity-label {
-    font-size: 0.68rem; font-weight: 600;
-    letter-spacing: 0.03em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem; font-weight: 600;
     white-space: nowrap;
 }
-.sev-no  .severity-label { color: var(--danger); }
-.sev-mid .severity-label { color: var(--warning); }
-.sev-ok  .severity-label { color: var(--success); }
+.sev-no  .severity-label { color: var(--danger);  background: rgba(var(--danger-rgb), 0.13); }
+.sev-mid .severity-label { color: var(--warning); background: rgba(var(--warning-rgb), 0.12); }
+.sev-ok  .severity-label { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
 
 .no-results {
+    padding: 56px 20px;
     text-align: center;
-    padding: 60px 20px;
     color: var(--text-dim);
 }
 .no-results-icon {
     display: flex; justify-content: center;
     margin-bottom: 14px; color: var(--text-dim);
 }
-.no-results-icon svg { width: 34px; height: 34px; stroke-width: 1.5; }
-.no-results h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 8px; }
+.no-results-icon svg { width: 32px; height: 32px; stroke-width: 1.5; }
+.no-results h3 {
+    font-family: var(--font-display);
+    font-size: 1.2rem; font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.no-results p { font-size: 0.9rem; color: var(--text-muted); }
+
+/* ═══════════════════════════════════════
+   WISSENSBLOCK UNTER DER LISTE
+═══════════════════════════════════════ */
+.rc-wissen { margin-top: 64px; max-width: 46rem; }
+.rc-wissen h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem; font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 14px;
+    text-wrap: balance;
+}
+.rc-wissen h3 {
+    font-family: var(--font-display);
+    font-size: 1.08rem; font-weight: 600;
+    margin: 24px 0 8px;
+}
+.rc-wissen p {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 14px;
+}
+.rc-wissen ul {
+    list-style: none;
+    display: grid; gap: 8px;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+}
 
 /* ═══════════════════════════════════════
    DETAIL OVERLAY
 ═══════════════════════════════════════ */
 .detail-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    backdrop-filter: blur(8px);
+    background: rgba(3, 3, 5, 0.74);
+    backdrop-filter: blur(6px);
     z-index: 1000;
     display: none;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    opacity: 0;
-    transition: opacity 0.3s;
 }
-.detail-overlay.active {
-    display: flex;
-    opacity: 1;
-}
+.detail-overlay.active { display: flex; }
 .detail-modal {
     background: var(--bg-card-solid);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    max-width: 700px;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    max-width: 720px;
     width: 100%;
-    max-height: 90vh;
+    max-height: 90dvh;
     overflow-y: auto;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
-    animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    overscroll-behavior: contain;
+    box-shadow: 0 24px 80px rgba(3, 3, 5, 0.6);
+    animation: modalSlideUp 0.32s var(--bewegung);
 }
 @keyframes modalSlideUp {
-    from { transform: translateY(40px); opacity: 0; }
+    from { transform: translateY(24px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
 .detail-header {
-    padding: 28px 28px 0;
+    padding: 28px 32px 0;
     position: relative;
 }
 .detail-close {
     position: absolute; top: 16px; right: 16px;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: var(--bg-elevated);
+    width: 40px; height: 40px;
+    border-radius: var(--radius-xs);
+    border: 1px solid transparent;
+    background: transparent;
     color: var(--text-muted);
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
-    font-size: 1.1rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
-.detail-close:hover {
-    background: rgba(var(--danger-rgb), 0.15);
-    color: var(--danger);
-    border-color: rgba(var(--danger-rgb), 0.3);
-}
+.detail-close svg { width: 20px; height: 20px; }
+.detail-close:hover { background: var(--bg-elevated); color: var(--text); }
+.detail-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .detail-category {
     display: inline-flex; align-items: center; gap: 7px;
-    font-size: 0.7rem; font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-size: 0.84rem; font-weight: 500;
     color: var(--text-dim);
-    margin-bottom: 14px;
+    margin-bottom: 12px;
 }
-.detail-category svg { width: 14px; height: 14px; flex-shrink: 0; }
+.detail-category svg { width: 15px; height: 15px; flex-shrink: 0; }
 .detail-title {
-    font-size: 1.4rem; font-weight: 800;
-    line-height: 1.25;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 4vw, 1.95rem); font-weight: 650;
+    letter-spacing: -0.022em;
+    line-height: 1.14;
     margin-bottom: 8px;
+    padding-right: 32px;
+    text-wrap: balance;
 }
 .detail-subtitle {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-muted);
-    margin-bottom: 20px;
+    margin-bottom: 22px;
+    text-wrap: pretty;
 }
-.detail-body {
-    padding: 0 28px 28px;
-}
+.detail-body { padding: 0 32px 32px; }
 
-/* Verdict Box */
+/* Das Urteil ist das eine grosse Element jedes Falls: eine getoente Flaeche,
+   die Antwort in Titelschrift. Die Antwort steht in Textfarbe, nur das Etikett
+   ist farbig: ganze Saetze in Rot oder Gelb liest niemand gern. */
 .verdict-box {
-    border-radius: var(--radius-sm);
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid;
+    border-radius: 12px;
+    padding: 20px 22px 22px;
+    margin-bottom: 24px;
 }
-.verdict-box.nein {
-    background: rgba(var(--danger-rgb), 0.08);
-    border-color: rgba(var(--danger-rgb), 0.2);
-}
-.verdict-box.jein {
-    background: rgba(var(--warning-rgb), 0.08);
-    border-color: rgba(var(--warning-rgb), 0.2);
-}
-.verdict-box.ja {
-    background: rgba(var(--success-rgb), 0.08);
-    border-color: rgba(var(--success-rgb), 0.2);
-}
+.verdict-box.nein { background: rgba(var(--danger-rgb), 0.10); }
+.verdict-box.jein { background: rgba(var(--warning-rgb), 0.09); }
+.verdict-box.ja   { background: rgba(var(--success-rgb), 0.09); }
 .verdict-label {
-    font-size: 0.7rem; font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 0.86rem; font-weight: 600;
     margin-bottom: 6px;
 }
 .verdict-box.nein .verdict-label { color: var(--danger); }
 .verdict-box.jein .verdict-label { color: var(--warning); }
-.verdict-box.ja .verdict-label { color: var(--success); }
+.verdict-box.ja   .verdict-label { color: var(--success); }
 .verdict-text {
-    font-size: 1.05rem; font-weight: 700;
-    margin-bottom: 8px;
+    font-family: var(--font-display);
+    font-size: 1.28rem; font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    margin-bottom: 12px;
+    text-wrap: pretty;
 }
-.verdict-box.nein .verdict-text { color: var(--danger); }
-.verdict-box.jein .verdict-text { color: var(--warning); }
-.verdict-box.ja .verdict-text { color: var(--success); }
 .verdict-detail {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    line-height: 1.6;
+    font-size: 0.95rem;
+    color: #c5cedb;
+    line-height: 1.65;
+    text-wrap: pretty;
 }
 
 /* Law Reference */
 .law-ref {
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 16px;
-    margin-bottom: 20px;
-    display: flex; gap: 14px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex; gap: 12px;
     align-items: flex-start;
 }
-.law-ref-icon {
-    flex-shrink: 0;
-    margin-top: 2px;
-}
+.law-ref-icon { flex-shrink: 0; margin-top: 2px; }
 /* Ohne Groesse schrumpfte das SVG im Flex-Kasten auf 0 px — das Buch-Symbol
    war bis 19.10.2026 nirgends zu sehen. */
-.law-ref-icon svg { display: block; width: 18px; height: 18px; color: var(--primary); }
-.law-ref-content { flex: 1; }
+.law-ref-icon svg { display: block; width: 17px; height: 17px; color: var(--text-dim); }
+.law-ref-content { flex: 1; min-width: 0; }
 .law-ref-title {
-    font-size: 0.9rem; font-weight: 700;
-    margin-bottom: 4px;
-    color: var(--primary);
+    font-size: 0.9rem; font-weight: 600;
+    margin-bottom: 3px;
+    color: var(--text);
 }
 .law-ref-text {
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
     line-height: 1.55;
 }
 
 /* Tips */
-.tips-section {
-    margin-bottom: 24px;
-}
+.tips-section { margin: 24px 0; }
 .tips-title {
-    font-size: 0.85rem; font-weight: 700;
-    margin-bottom: 12px;
-    display: flex; align-items: center; gap: 8px;
+    font-family: var(--font-display);
+    font-size: 1.15rem; font-weight: 600;
+    letter-spacing: -0.012em;
+    margin-bottom: 10px;
 }
 .tip-item {
-    display: flex; gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
+    display: flex; gap: 12px;
+    padding: 7px 0;
+    font-size: 0.94rem;
     color: var(--text-muted);
-    line-height: 1.5;
+    line-height: 1.55;
 }
-.tip-item:last-child { border-bottom: none; }
+/* Die Reihenfolge ist nur Zaehlhilfe, deshalb Ziffer statt Farbkreis. */
 .tip-num {
     flex-shrink: 0;
-    width: 24px; height: 24px;
-    border-radius: 50%;
-    background: rgba(var(--primary-rgb), 0.12);
-    color: var(--primary);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 0.7rem; font-weight: 700;
+    min-width: 16px;
+    color: var(--text-dim);
+    font-size: 0.82rem;
     font-family: var(--font-mono);
+    line-height: 1.8;
 }
 
 /* Email Generator */
 .email-section { margin-bottom: 10px; }
+/* Bis v9.5.18 ein Verlauf mit --secondary-rgb. Die Variable gab es nirgends,
+   der Hintergrund war damit ungueltig: der Knopf hatte gar keine Fuellung. */
 .email-btn {
     width: 100%;
-    padding: 14px 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(var(--primary-rgb), 0.3);
-    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(var(--secondary-rgb), 0.1));
+    min-height: 48px;
+    padding: 0 20px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border-strong);
+    background: var(--bg-elevated);
     color: var(--text);
-    font-size: 0.9rem;
+    font-size: 0.94rem;
     font-weight: 600;
-    font-family: var(--font);
     cursor: pointer;
-    transition: all 0.25s;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
     display: flex; align-items: center; justify-content: center; gap: 10px;
 }
-.email-btn:hover {
-    background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(var(--secondary-rgb), 0.2));
-    border-color: rgba(var(--primary-rgb), 0.5);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(var(--primary-rgb), 0.2);
-}
+.email-btn:hover { border-color: rgba(var(--primary-rgb), 0.8); }
+.email-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .email-output {
     margin-top: 16px;
     display: none;
@@ -630,38 +603,37 @@ a { text-decoration: none; color: inherit; }
 .email-output.active { display: block; }
 .email-output-header {
     display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
     margin-bottom: 8px;
 }
 .email-output-title {
-    font-size: 0.8rem; font-weight: 600;
+    font-size: 0.84rem; font-weight: 600;
     color: var(--text-muted);
 }
 .email-copy-btn {
-    padding: 5px 12px;
+    flex-shrink: 0;
+    min-height: 34px;
+    padding: 0 12px;
     border-radius: var(--radius-xs);
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text-muted);
-    font-size: 0.75rem;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--text);
+    font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
-    font-family: var(--font);
+    transition: background-color 0.2s ease;
 }
-.email-copy-btn:hover {
-    color: var(--success);
-    border-color: rgba(var(--success-rgb), 0.3);
-}
+.email-copy-btn:hover { background: var(--bg-elevated); }
+.email-copy-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .email-text {
-    background: var(--bg-elevated);
+    background: var(--bg-deep);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 16px;
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     color: var(--text-muted);
-    line-height: 1.7;
+    line-height: 1.65;
     white-space: pre-wrap;
-    font-family: var(--font);
     max-height: 300px;
     overflow-y: auto;
 }
@@ -670,35 +642,20 @@ a { text-decoration: none; color: inherit; }
    DISCLAIMER FOOTER
 ═══════════════════════════════════════ */
 .disclaimer {
-    text-align: center;
-    padding: 32px 20px;
+    padding: 28px 0 0;
     border-top: 1px solid var(--border);
-    margin-top: 20px;
+    margin-top: 40px;
 }
 .disclaimer p {
-    font-size: 0.75rem;
+    font-size: 0.82rem;
     color: var(--text-dim);
-    max-width: 600px;
-    margin: 0 auto;
+    max-width: 46rem;
     line-height: 1.6;
 }
+.disclaimer strong { color: var(--text-muted); font-weight: 500; }
 .disclaimer a {
-    color: var(--primary);
+    color: var(--text);
     text-decoration: underline;
-}
-
-/* ═══════════════════════════════════════
-   ANIMATIONS
-═══════════════════════════════════════ */
-.fade-in {
-    animation: fadeIn 0.6s ease both;
-}
-.fade-in-d1 { animation-delay: 0.1s; }
-.fade-in-d2 { animation-delay: 0.2s; }
-.fade-in-d3 { animation-delay: 0.3s; }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ═══════════════════════════════════════
@@ -711,26 +668,6 @@ a { text-decoration: none; color: inherit; }
     border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
-
-/* ═══════════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════════ */
-@media (max-width: 680px) {
-    .scenarios-grid {
-        grid-template-columns: 1fr;
-    }
-    .hero h1 { font-size: 1.6rem; }
-    /* Auf schmalen Schirmen brechen die drei Werte um. Die Trennstriche
-       muessen dann weg: das erste Element der zweiten Zeile behielte
-       sonst seinen linken Strich und haette nichts, wovon er trennt. */
-    .hero-stats { gap: 8px 20px; }
-    .hero-stat { padding: 0; border-left: 0; }
-    .detail-modal { max-height: 95vh; }
-    .detail-header, .detail-body { padding-left: 20px; padding-right: 20px; }
-    .detail-title { font-size: 1.2rem; }
-    .cat-filters { gap: 6px; }
-    .cat-pill { padding: 6px 14px; font-size: 0.78rem; }
-}
 
 /* Screen reader only */
 .sr-only {
@@ -747,110 +684,168 @@ a { text-decoration: none; color: inherit; }
 /* ═══════════════════════════════════════
    FALLSEITEN /rechte-checker/<id>/ (tools/rechte-seiten.mjs)
    Eine Spalte zum Lesen, dieselben Bausteine wie das Detailfenster
-   (verdict-box, law-ref, tip-num, email-*). Bewusst ohne .fade-in: eine
-   Einblendung ab Deckkraft 0 verzoegert den LCP (CLAUDE.md).
+   (verdict-box, law-ref, tip-num, email-*). Bewusst ohne Einblendung:
+   eine Animation ab Deckkraft 0 verzoegert den LCP (CLAUDE.md).
 ═══════════════════════════════════════ */
-.fall-shell { max-width: 760px; }
-.fall-pfad ol {
-    list-style: none;
-    display: flex; flex-wrap: wrap; gap: 6px;
-    font-size: 0.75rem; color: var(--text-dim);
-    margin-bottom: 8px;
-}
-.fall-pfad a { color: var(--text-dim); }
-.fall-pfad a:hover { color: var(--text-muted); }
-.fall-pfad [aria-current] { color: var(--text-muted); }
-.fall-kopf { margin-bottom: 24px; }
+.fall-shell { max-width: 780px; }
+.fall { margin-top: 36px; }
+.fall-kopf { margin-bottom: 26px; }
 .fall-titel {
-    font-size: clamp(1.55rem, 4.2vw, 2.1rem);
-    font-weight: 750;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5.2vw, 2.85rem);
+    font-weight: 650;
     letter-spacing: -0.02em;
-    line-height: 1.18;
-    margin-bottom: 10px;
+    line-height: 1.08;
+    margin-bottom: 14px;
     text-wrap: balance;
 }
 .fall-sub {
-    font-size: 1rem;
+    font-size: 1.06rem;
     color: var(--text-muted);
-    line-height: 1.6;
-    margin-bottom: 8px;
+    line-height: 1.55;
+    margin-bottom: 10px;
+    text-wrap: pretty;
 }
 .fall-law {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     color: var(--text-dim);
     font-family: var(--font-mono);
 }
-.fall .verdict-box { margin-bottom: 32px; }
-.fall .verdict-detail { font-size: 0.92rem; line-height: 1.75; }
-.fall-block { margin-bottom: 32px; }
+.fall .verdict-box { margin-bottom: 40px; padding: 24px 26px 26px; }
+.fall .verdict-text { font-size: clamp(1.4rem, 3.6vw, 1.75rem); letter-spacing: -0.02em; line-height: 1.18; margin-bottom: 14px; }
+.fall .verdict-detail { font-size: 1rem; line-height: 1.72; }
+.fall-block { margin-bottom: 40px; }
 .fall-h2 {
-    font-size: 1.05rem; font-weight: 700;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    font-size: 1.35rem; font-weight: 600;
+    letter-spacing: -0.018em;
+    line-height: 1.2;
     margin-bottom: 14px;
+    text-wrap: balance;
 }
-.fall .law-ref { margin-bottom: 12px; }
 .fall-tipps { list-style: none; }
-.fall-tipps .tip-item { font-size: 0.9rem; }
+.fall-tipps .tip-item { font-size: 0.98rem; }
 .fall-mail {
-    margin-bottom: 32px;
-    border: 1px solid var(--border);
+    margin-bottom: 40px;
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
     background: var(--bg-card);
 }
 .fall-mail summary {
     cursor: pointer;
-    padding: 14px 16px;
-    font-size: 0.9rem; font-weight: 600;
+    padding: 15px 18px;
+    font-size: 0.95rem; font-weight: 600;
     list-style-position: inside;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
 }
-.fall-mail summary:hover { color: var(--primary); }
-.fall-mail summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-sm); }
-.fall-mail .email-output { margin: 0; padding: 0 16px 16px; }
+.fall-mail summary:hover { background: var(--bg-elevated); }
+.fall-mail summary:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fall-mail .email-output { margin: 0; padding: 4px 18px 18px; }
 .fall-mail .email-text { max-height: none; }
 .fall-werbung {
-    margin-bottom: 32px;
-    padding: 18px 20px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(var(--primary-rgb), 0.25);
-    background: rgba(var(--primary-rgb), 0.06);
-    font-size: 0.88rem;
+    margin-bottom: 40px;
+    padding: 22px 24px;
+    border-radius: 12px;
+    background: rgba(var(--primary-rgb), 0.10);
+    font-size: 0.94rem;
     color: var(--text-muted);
     line-height: 1.6;
 }
-.fall-werbung-titel { color: var(--text); font-weight: 650; margin-bottom: 4px; }
-.fall-werbung-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 14px; }
+.fall-werbung-titel {
+    font-family: var(--font-display);
+    font-size: 1.15rem; font-weight: 600;
+    letter-spacing: -0.012em;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+.fall-werbung-links { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 16px; }
 .fall-werbung-links a {
     color: var(--text);
     font-weight: 600;
     text-decoration: underline;
-    text-decoration-color: rgba(var(--primary-rgb), 0.6);
+    text-decoration-color: rgba(var(--primary-rgb), 0.7);
     text-underline-offset: 3px;
 }
-.fall-werbung-links a:hover { text-decoration-color: var(--primary); }
+.fall-werbung-links a:hover { text-decoration-color: var(--text); }
+/* Weiss nur auf der Handlung: der Akzent ist frei waehlbar, Schrift darauf
+   waere bei hellen Werten nicht lesbar. */
 .fall-werbung-links a.fall-werbung-knopf {
     display: inline-flex;
     align-items: center;
-    min-height: 40px;
-    padding: 0 16px;
+    min-height: 44px;
+    padding: 0 18px;
     border-radius: var(--radius-xs);
-    background: var(--primary);
-    color: #fff;
+    background: var(--text);
+    color: var(--bg-deep);
     text-decoration: none;
-    transition: filter 0.2s ease;
+    transition: opacity 0.2s ease;
 }
-.fall-werbung-links a.fall-werbung-knopf:hover { filter: brightness(1.12); }
-.fall-werbung-links a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
-.fall-mehr ul { list-style: none; display: grid; gap: 2px; }
+.fall-werbung-links a.fall-werbung-knopf:hover { opacity: 0.88; }
+.fall-werbung-links a:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.fall-mehr ul { list-style: none; display: grid; gap: 2px; margin: 0 -12px; }
 .fall-mehr a {
     display: block;
     padding: 10px 12px;
     border-radius: var(--radius-xs);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--border-strong);
+    text-underline-offset: 3px;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
-.fall-mehr a:hover { background: rgba(var(--primary-rgb), 0.08); color: var(--text); }
+.fall-mehr a:hover { background: var(--bg-elevated); color: var(--text); text-decoration-color: var(--text-dim); }
+.fall-mehr a:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
 .fall-stand { margin-top: 10px !important; }
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
 @media (max-width: 680px) {
-    .fall-shell { padding-left: 16px; padding-right: 16px; }
-    .fall .verdict-box { padding: 16px; }
+    .shell { padding-left: 16px; padding-right: 16px; }
+    .hero { margin-top: 28px; }
+    .hero-sub { font-size: 1rem; }
+    .search-wrap { margin-bottom: 32px; }
+
+    /* 14 Filter brachen in fuenf Zeilen um und schoben die Liste aus dem ersten
+       Bild. Eine Wischzeile; der angeschnittene Knopf am Rand zeigt, dass mehr kommt. */
+    .cat-filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        margin: 0 -16px 20px;
+        padding: 0 16px 4px;
+        scroll-padding: 0 16px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .cat-filters::-webkit-scrollbar { display: none; }
+    .cat-pill { flex: none; min-height: 42px; }
+
+    .scenarios-grid { grid-template-columns: 1fr; gap: 10px; }
+    .rc-wissen { margin-top: 48px; }
+
+    /* Am Handy als Blatt von unten: der Daumen erreicht es, und oben bleibt der
+       Bezug zur Liste. Die Hoehe auf dvh, sonst deckt die Adressleiste den Schluss. */
+    .detail-overlay { align-items: flex-end; padding: 0; }
+    .detail-modal {
+        max-width: none;
+        max-height: 92dvh;
+        border-radius: 16px 16px 0 0;
+        border-width: 1px 0 0;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .detail-header { padding: 24px 20px 0; }
+    .detail-body { padding: 0 20px 28px; }
+
+    .fall { margin-top: 24px; }
+    .fall .verdict-box { padding: 18px 18px 20px; margin-bottom: 32px; }
+    .fall-block, .fall-mail, .fall-werbung { margin-bottom: 32px; }
+    .fall-werbung { padding: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .detail-modal { animation: none; }
+    .back-btn svg { transition: none; }
 }
