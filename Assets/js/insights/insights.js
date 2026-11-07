@@ -252,6 +252,7 @@ var EVENT_LABELS = {
     'geburtstag_kerze': ['Geburtstag: Kerze ausgepustet', 'Birthday: candle blown out'],
     'geburtstag_wunsch': ['Geburtstag: Wunsch geschickt', 'Birthday: wish sent'],
     'halloween':        ['Halloween', 'Halloween'],   // aktion: suesses | saures | laterne | weg | geist | ruhe | spuk
+    'weihnachten':      ['Weihnachten', 'Christmas'],   // aktion: tuer | alle | deko_an | deko_aus | weg
     'traum_antwort':    ['Reisetraum: Frage beantwortet', 'Travel dream: question answered'],
     'traum_teilen':     ['Reisetraum: Seite geteilt', 'Travel dream: page shared'],
     // aktion: gezeigt | geklickt — Einladung zum Betriebskonto nach dem Abzeichnen per Link
@@ -274,6 +275,11 @@ var EVENT_LABELS = {
 // Unterart (Property 'aktion'/'grund', vom Worker als '<event>::<unterart>' angehaengt).
 // Erst '<event>::<unterart>', dann die Unterart allein; sonst wird der Schluessel lesbar gemacht.
 var SUB_LABELS = {
+    'weihnachten::tuer': ['Türchen geöffnet', 'Door opened'],
+    'weihnachten::alle': ['Alle Türchen gezeigt', 'All doors shown'],
+    'weihnachten::deko_an': ['Deko an', 'Decorations on'],
+    'weihnachten::deko_aus': ['Deko aus', 'Decorations off'],
+    'weihnachten::weg': ['Kalender ausgeblendet', 'Calendar hidden'],
     'konto::geloescht': ['gelöscht', 'deleted'],
     'ausbilder_einladung::gezeigt': ['gezeigt', 'shown'], 'ausbilder_einladung::geklickt': ['geklickt', 'clicked'],
     'timer_action::start': ['gestartet', 'started'], 'timer_action::pause': ['pausiert', 'paused'],

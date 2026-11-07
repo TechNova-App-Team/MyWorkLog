@@ -1,0 +1,345 @@
+/* ═══ WEIHNACHTEN MODULE ═══
+   Gilt vom 01.12. 0 Uhr bis 27.12. 7 Uhr (Torwaechter Schritt 8 im Pre-Apply-Skript):
+   html.mwl-weihnachten        → Zeitraum laeuft (Sammelklasse fuer das JS)
+   html.mwl-weihnachten-karte  → Adventskalender oben im Dashboard
+   html.mwl-weihnachten-klein  → heutiges Tuerchen offen: Karte ist eine Zeile
+   html.mwl-weihnachten-deko   → gemalte Winternacht hinter der App, Karten als Glas davor
+   Das Bild malt weihnachten-szene.js, gleiche Bauart wie das Wetterfenster. Der Nutzer hat zweimal
+   verworfen, was hier vorher stand: Geschenk-Kacheln, Lichterkette und Schneewellen als Kacheln und SVG
+   („nicht nur Kloetze und paar Wellen“, 07.11.2026). Also keine gezeichnete Deko mehr ueber dem Inhalt:
+   Stimmung kommt aus dem Bild. --primary mit !important, weil applyTheme() es inline setzt; die
+   gespeicherte Nutzerfarbe bleibt unberuehrt. „Deko aus“ schaltet alles ab. */
+
+html.mwl-weihnachten {
+    --wn-gold: #f0bf66;
+    --wn-gold-rgb: 240, 191, 102;
+    --wn-glas: rgba(9, 16, 33, 0.8);
+    --wn-glas-ansicht: rgba(7, 13, 28, 0.84);
+}
+html.mwl-weihnachten[data-theme="light"] {
+    --wn-gold: #a97f14;   /* Auf Weiss traegt helles Gold nicht: 3:1 fuer Grafik erst ab ~#b8901f */
+    --wn-gold-rgb: 169, 127, 20;
+    --wn-glas: rgba(255, 255, 255, 0.84);
+    --wn-glas-ansicht: rgba(255, 255, 255, 0.88);
+}
+
+/* ─── Die Szene liegt hinter allem ──────────────────────────────────── */
+.wn-welt { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 900ms ease; }
+.wn-welt.is-da { opacity: 1; }
+.wn-welt[hidden] { display: none; }
+.wn-welt canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+html:not(.mwl-weihnachten-deko) .wn-welt { display: none; }
+
+/* ─── Glas statt Flaeche ────────────────────────────────────────────── */
+html.mwl-weihnachten-deko {
+    --primary: #e8524c !important;
+    --primary-rgb: 232, 82, 76 !important;
+    --primary-dim: rgba(232, 82, 76, 0.16) !important;
+
+    --bg-deep: #050c1e;
+    --bg-sidebar: rgba(6, 12, 28, 0.74);
+    --bg-glass: rgba(9, 16, 33, 0.62);
+    --bg-surface: var(--wn-glas);
+    --bg-surface-grad: var(--wn-glas);
+    --bg-surface-hover: rgba(14, 23, 44, 0.76);
+    --bg-elevated: rgba(13, 22, 42, 0.92);
+    --border: rgba(210, 226, 255, 0.11);
+    --border-subtle: rgba(210, 226, 255, 0.09);
+    --border-default: rgba(210, 226, 255, 0.16);
+    --edge-top: inset 0 1px 0 rgba(235, 243, 255, 0.1);
+    --ambient-a1: 0;
+    --ambient-a2: 0;
+    --ambient-a3: 0;
+}
+html.mwl-weihnachten-deko[data-theme="light"] {
+    --primary: #c0302f !important;
+    --primary-rgb: 192, 48, 47 !important;
+    --primary-dim: rgba(192, 48, 47, 0.1) !important;
+
+    --bg-deep: #dfeaf5;
+    --bg-sidebar: rgba(255, 255, 255, 0.78);
+    --bg-glass: rgba(255, 255, 255, 0.72);
+    --bg-surface-hover: rgba(255, 255, 255, 0.92);
+    --bg-elevated: rgba(255, 255, 255, 0.96);
+    --border: rgba(30, 60, 100, 0.1);
+    --border-subtle: rgba(30, 60, 100, 0.08);
+    --border-default: rgba(30, 60, 100, 0.15);
+    --edge-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+html.mwl-weihnachten-deko,
+html.mwl-weihnachten-deko body,
+html.mwl-weihnachten-deko .main,
+html.mwl-weihnachten-deko #mainContent { background-color: transparent; background-image: none; }
+html.mwl-weihnachten-deko { background-color: var(--bg-deep); }
+html.mwl-weihnachten-deko ::selection { background: rgba(var(--wn-gold-rgb), 0.35); }
+html.mwl-weihnachten-deko { scrollbar-color: rgba(var(--wn-gold-rgb), 0.35) transparent; }
+
+/* Lesbarkeit: Der Schnee ist hell. Was vorher direkt auf dem dunklen Grund stand, braucht jetzt Glas,
+   sonst verschwanden Begruessung, Pass-Hinweis und Wochenzahlen im Bild (gemessen 07.11.2026).
+   Kein backdrop-filter: Hinter dem Glas faellt Schnee, das wuerde jedes Bild die Flaeche neu weichzeichnen. */
+.wn-welt::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Oben bleibt die Buehne frei, darunter wird der Schnee ruhig und dunkel genug fuer die Karten. */
+    background: linear-gradient(transparent 0, transparent 330px, rgba(4, 9, 24, 0.5) 560px, rgba(4, 9, 24, 0.62));
+}
+html[data-theme="light"] .wn-welt::after {
+    background: linear-gradient(transparent 0, transparent 330px, rgba(255, 255, 255, 0.42) 560px, rgba(255, 255, 255, 0.55));
+}
+html.mwl-weihnachten-deko .umf-banner,
+html.mwl-weihnachten-deko .dn-hero {
+    background: var(--wn-glas);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--edge-top);
+}
+html.mwl-weihnachten-deko .dn-hero { padding: 16px 20px; border-radius: 16px; }
+/* Andere Ansichten stehen ohne eigene Flaeche auf dem Grund. Der Schatten ersetzt Innenabstand, damit
+   sich kein Layout verschiebt; das Bild bleibt nur am Rand zu sehen. */
+html.mwl-weihnachten-deko .view-section:not(#view-dashboard) {
+    background: var(--wn-glas-ansicht);
+    box-shadow: 0 0 0 14px var(--wn-glas-ansicht);
+    border-radius: 4px;
+}
+
+/* Marken */
+html.mwl-weihnachten-deko .brand-logo svg path,
+html.mwl-weihnachten-deko .brand-logo svg circle { stroke: var(--wn-gold); }
+html.mwl-weihnachten-deko .brand-logo svg circle[fill] { fill: var(--wn-gold); }
+html.mwl-weihnachten-deko .brand {
+    background-image: linear-gradient(135deg, #fff 0%, var(--wn-gold) 70%);
+}
+html.mwl-weihnachten-deko[data-theme="light"] .brand {
+    background-image: linear-gradient(135deg, var(--text-main) 0%, var(--wn-gold) 100%);
+}
+
+/* ─── Karte ─────────────────────────────────────────────────────────── */
+.wn-card { display: none; }
+html.mwl-weihnachten-karte .wn-card {
+    display: grid;
+    grid-template-columns: minmax(0, 348px) minmax(0, 1fr);
+    gap: 0 30px;
+    align-items: center;
+    position: relative;
+    /* Das JS fuellt die Karte erst nach dem Laden; ohne Mindesthoehe schoebe sie das Dashboard. */
+    min-height: 250px;
+    margin-bottom: 1.25rem;
+    padding: 22px 48px 22px 22px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    box-shadow: var(--edge-top), var(--shadow-sm);
+}
+/* Die Karte laesst der Szene ihre Buehne frei: rechts neben dem Kalender, schmaler darueber.
+   Unter 1280 px wurde der Text neben dem Kalender zu einer Wort-Spalte (Bild 1100 px, 07.11.2026). */
+@media (min-width: 1280px) {
+    html.mwl-weihnachten-deko.mwl-weihnachten-karte:not(.mwl-weihnachten-klein) .wn-card {
+        margin-right: min(42%, 480px);
+        min-height: 282px;
+    }
+}
+
+.wn-close {
+    position: absolute;
+    top: 10px; right: 10px;
+    z-index: 2;
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border: 0; border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease, transform 120ms ease-out;
+}
+.wn-close:active { transform: scale(0.94); }
+.wn-close:focus-visible { outline: 2px solid var(--wn-gold); outline-offset: 2px; }
+.wn-ico { display: block; width: 16px; height: 16px; flex-shrink: 0; }
+.wn-ico svg { display: block; width: 100%; height: 100%; }
+
+/* ─── Tuerchen: dunkle Fenster, die von innen hell werden ───────────── */
+.wn-raster {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 7px;
+}
+.wn-tuer {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid rgba(210, 226, 255, 0.2);
+    background: rgba(170, 200, 240, 0.09);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 500ms ease, color 300ms ease, border-color 300ms ease, box-shadow 500ms ease, transform 120ms ease-out;
+}
+/* Auf hellem Glas waren die Fenster ohne eigene Farbe unsichtbar (Bild vom 07.11.2026). */
+html[data-theme="light"] .wn-tuer { border-color: rgba(30, 60, 100, 0.26); background: rgba(40, 80, 130, 0.08); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+html[data-theme="light"] .wn-tuer.is-zu { border-color: rgba(30, 60, 100, 0.14); background: rgba(40, 80, 130, 0.03); }
+.wn-tuer:active { transform: scale(0.95); }
+.wn-tuer:focus-visible { outline: 2px solid var(--wn-gold); outline-offset: 2px; }
+.wn-tuer.is-zu { cursor: default; color: var(--text-muted); background: rgba(170, 200, 240, 0.04); border-color: rgba(210, 226, 255, 0.1); }
+.wn-tuer.is-zu:active { transform: none; }
+.wn-tuer.is-auf {
+    color: #3a2108;
+    border-color: #ffd98c;
+    background: radial-gradient(circle at 50% 60%, #fff1bf, #ffc564 58%, #e79232);
+    box-shadow: 0 0 16px rgba(255, 186, 88, 0.5), inset 0 0 6px rgba(150, 70, 10, 0.5);
+}
+/* Heute: Es glimmt schon durchs Glas, einmal antippen macht das Fenster hell. */
+.wn-tuer.is-heute {
+    border-color: var(--wn-gold);
+    box-shadow: 0 0 0 1px var(--wn-gold);
+}
+.wn-tuer.is-heute::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: 0 0 20px rgba(255, 190, 90, 0.75);
+    animation: wnGlimm 2.4s ease-in-out infinite alternate;
+}
+@keyframes wnGlimm {
+    from { opacity: 0.35; }
+    to   { opacity: 1; }
+}
+
+/* ─── Text ──────────────────────────────────────────────────────────── */
+.wn-text { min-width: 0; }
+.wn-title {
+    margin: 0 0 8px;
+    font-family: var(--font-display, inherit);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--text-main);
+}
+.wn-lead {
+    margin: 0;
+    max-width: 58ch;
+    /* Die Saetze sind bis zu vier Zeilen lang; ohne Mindesthoehe springen die Knoepfe beim Blaettern. */
+    min-height: 6em;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-main);
+    opacity: 0.86;
+    text-wrap: pretty;
+}
+.wn-lead.is-neu { animation: wnRein 260ms cubic-bezier(0.23, 1, 0.32, 1) both; }
+@keyframes wnRein {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 0.86; transform: none; }
+}
+.wn-zaehler {
+    margin: 8px 0 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--wn-gold);
+}
+.wn-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+.wn-actions [hidden] { display: none !important; }
+.wn-btn, .wn-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-default);
+    background: transparent;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease-out;
+}
+.wn-btn:active, .wn-link:active { transform: scale(0.97); }
+.wn-btn:focus-visible, .wn-link:focus-visible { outline: 2px solid var(--wn-gold); outline-offset: 2px; }
+.wn-btn--primary { background: #c9362f; border-color: #c9362f; color: #fff; }
+.wn-btn--leise { border-color: transparent; color: var(--text-muted); }
+.wn-btn--alle { display: none; }
+
+@media (hover: hover) and (pointer: fine) {
+    .wn-close:hover { background: var(--hover-fill); color: var(--text-main); }
+    .wn-link:hover, .wn-btn--leise:hover { background: var(--hover-fill); }
+    .wn-btn--primary:hover { background: #d9423b; border-color: #d9423b; }
+    .wn-tuer:not(.is-zu):not(.is-auf):hover { border-color: rgba(var(--wn-gold-rgb), 0.75); background: rgba(240, 191, 102, 0.14); }
+}
+
+/* ─── Schmal ────────────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+    /* #mobileMenuToggle schwebt oben links ueber der Karte, wie bei .hw-card (gemessen 384 px). */
+    html.mwl-weihnachten-karte .wn-card { margin-top: 56px; }
+    html.mwl-weihnachten-karte .wn-card ~ .setup-card { margin-top: 0; }
+    /* .dn-notes haelt am Handy 52 px fuer den Menueknopf frei, die uebernimmt hier schon die Karte. */
+    html.mwl-weihnachten-karte .wn-card ~ .dn-notes { padding-top: 0; }
+}
+/* Ohne Platz daneben steht die Buehne ueber der Karte. */
+@media (max-width: 1279px) {
+    html.mwl-weihnachten-deko.mwl-weihnachten-karte .wn-card { margin-top: clamp(228px, 62vw, 290px); }
+}
+@media (max-width: 767px) {
+    html.mwl-weihnachten-karte .wn-card {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        min-height: 440px;
+        padding: 44px 14px 14px;
+    }
+    .wn-title { font-size: 1.25rem; }
+    /* Laengster Satz bei 330 px Breite: vier Zeilen (gemessen 07.11.2026). */
+    .wn-lead { min-height: 6em; font-size: 0.9rem; }
+}
+
+/* ─── Eine Zeile, sobald das heutige Tuerchen offen ist ─────────────── */
+/* Steht nach den Medienabfragen, sonst gewinnt deren min-height. */
+html.mwl-weihnachten-klein .wn-card {
+    display: block;
+    min-height: 0;
+    padding: 10px 52px 10px 16px;
+}
+html.mwl-weihnachten-klein .wn-raster,
+html.mwl-weihnachten-klein .wn-lead { display: none; }
+html.mwl-weihnachten-klein .wn-text {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 12px;
+}
+@media (min-width: 1280px) {
+    /* Auch die eingeklappte Karte laesst die Buehne frei. */
+    html.mwl-weihnachten-deko.mwl-weihnachten-klein.mwl-weihnachten-karte .wn-card { margin-top: 306px; }
+}
+html.mwl-weihnachten-klein .wn-title { margin: 0; font-size: 1rem; }
+html.mwl-weihnachten-klein .wn-zaehler { margin: 0; }
+html.mwl-weihnachten-klein .wn-actions { margin: 0; gap: 4px; }
+html.mwl-weihnachten-klein .wn-btn--alle { display: inline-flex; }
+
+/* ─── Weniger Bewegung ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .wn-tuer.is-heute::after, .wn-lead.is-neu { animation: none; }
+    .wn-welt { transition: none; }
+}
+
+/* ─── Nie im Druck ──────────────────────────────────────────────────── */
+@media print {
+    .wn-welt, .wn-card { display: none !important; }
+}

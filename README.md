@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.5.18-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.5.19-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.5.18** · 2026-11-06
+Aktuelle Version: **v9.5.19** · 2026-11-07
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.5.18** | 2026-11-06 | Der Rechte-Checker bekommt die Schriften der App und ein aufgeräumtes Bild |
+| **9.5.19** | 2026-11-07 | Im Dezember liegt hinter der ganzen App eine verschneite Winternacht, mit Adventskalender |
+| 9.5.18 | 2026-11-06 | Der Rechte-Checker bekommt die Schriften der App und ein aufgeräumtes Bild |
 | 9.5.17 | 2026-11-06 | Startseite und IHK-Seite nennen den Ausbildungs-Pass, Weihnachtsgeld-Seite nennt die Höhe |
 | 9.5.16 | 2026-11-06 | Ein Backup, das nicht eingespielt werden kann, lässt die vorhandenen Daten unangetastet |
 | 9.5.15 | 2026-11-05 | Die Seite zum Ende des IHK-Berichtshefts ist auf dem neuesten Stand |
-| 9.5.14 | 2026-11-05 | Die Preisseite zeigt an einem Beispiel, was der Ausbildungs-Pass schreibt |
 
 <!-- changelog:end -->
 

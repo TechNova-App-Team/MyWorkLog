@@ -1,0 +1,82 @@
+/* ═══ WEIHNACHTEN SEITE MODULE ═══
+   Winternacht hinter den eigenständigen Seiten, siehe weihnachten-seite.js. Alles unter @media screen:
+   Druck und PDF sollen von diesem Stil gar nichts erfahren, das Berichtsheft wird ausgedruckt und abgegeben. */
+@media screen {
+    html.mwl-weihnachten-seite {
+        --wn-glas: rgba(9, 16, 33, 0.8);
+        --bg-deep: #050c1e;
+        --bg-surface: var(--wn-glas);
+        --bg-card: var(--wn-glas);
+        --bg-glass: rgba(9, 16, 33, 0.72);
+        --bg-glass-heavy: rgba(8, 14, 30, 0.94);
+        --bg-sidebar: rgba(6, 12, 28, 0.86);
+        --bg-elevated: rgba(13, 22, 42, 0.86);
+        --border: rgba(210, 226, 255, 0.11);
+        --border-subtle: rgba(210, 226, 255, 0.09);
+        --border-default: rgba(210, 226, 255, 0.16);
+        background-color: #050c1e;
+    }
+    html.mwl-weihnachten-seite[data-theme="light"] {
+        --wn-glas: rgba(255, 255, 255, 0.84);
+        --bg-deep: #dfeaf5;
+        --bg-glass: rgba(255, 255, 255, 0.76);
+        --bg-glass-heavy: rgba(255, 255, 255, 0.96);
+        --bg-sidebar: rgba(255, 255, 255, 0.92);
+        --bg-elevated: rgba(255, 255, 255, 0.86);
+        --border: rgba(30, 60, 100, 0.1);
+        --border-subtle: rgba(30, 60, 100, 0.08);
+        --border-default: rgba(30, 60, 100, 0.15);
+        background-color: #dfeaf5;
+    }
+    /* !important: Jede Seite setzt ihren Grund anders, und der läge sonst über der Szene (z-index -1). */
+    html.mwl-weihnachten-seite body { background: transparent !important; }
+    html.mwl-weihnachten-seite .bg-mesh { display: none !important; }
+
+    .wn-welt { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 900ms ease; }
+    .wn-welt.is-da { opacity: 1; }
+    .wn-welt[hidden], html:not(.mwl-weihnachten-deko) .wn-welt { display: none; }
+    .wn-welt canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    /* Überschriften stehen hier direkt auf dem Bild, anders als im Dashboard gibt es keine freie Bühne. */
+    .wn-welt::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(rgba(4, 9, 24, 0.32), rgba(4, 9, 24, 0.58) 300px, rgba(4, 9, 24, 0.74) 620px);
+    }
+    html[data-theme="light"] .wn-welt::after {
+        background: linear-gradient(rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.55) 300px, rgba(255, 255, 255, 0.76) 620px);
+    }
+
+    .wn-seite-aus {
+        position: fixed;
+        left: 14px; bottom: 14px;
+        z-index: 40;
+        padding: 7px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(210, 226, 255, 0.2);
+        background: rgba(9, 16, 33, 0.82);
+        color: rgba(232, 240, 250, 0.82);
+        font: 600 12px/1.2 inherit;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 120ms ease-out;
+    }
+    .wn-seite-aus:active { transform: scale(0.96); }
+    .wn-seite-aus:focus-visible { outline: 2px solid #f0bf66; outline-offset: 2px; }
+    /* Am Handy liegt die Hütte hinter Kopfzeile und Hinweisen, und unten sind die Knöpfe der Seite:
+       Text brauchte dort eine eigene Fläche, der feste Knopf überdeckte „Verbinde deinen KI-Assistenten“
+       (Bild 384 px, 07.11.2026). Darum dunkler und der Schalter am Seitenende statt schwebend. */
+    html.mwl-weihnachten-seite .bh-frist { background: var(--wn-glas); }
+    @media (max-width: 767px) {
+        .wn-welt::after { background: linear-gradient(rgba(4, 9, 24, 0.5), rgba(4, 9, 24, 0.62) 300px, rgba(4, 9, 24, 0.76) 620px); }
+        html[data-theme="light"] .wn-welt::after { background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.62) 300px, rgba(255, 255, 255, 0.78) 620px); }
+        .wn-seite-aus { position: static; display: block; margin: 16px auto; }
+    }
+    html[data-theme="light"] .wn-seite-aus { background: rgba(255, 255, 255, 0.9); color: #2a3a52; border-color: rgba(30, 60, 100, 0.2); }
+}
+@media print {
+    .wn-welt, .wn-seite-aus { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .wn-welt { transition: none; }
+}
