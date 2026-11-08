@@ -25,7 +25,7 @@
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
     <!-- Pfad bewusst "insights", nicht "analytics": EasyPrivacy & Co. filtern
          /analytics/analytics.js nach Namensmuster weg, die Seite stand dann leer. -->
-    <link rel="stylesheet" href="/Assets/css/insights/insights.css?v=7185ff7260">
+    <link rel="stylesheet" href="/Assets/css/insights/insights.css?v=22ee22d5d8">
     <script defer src="/Assets/js/ph-init.js?v=37bf56ec64"></script>
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
@@ -108,21 +108,21 @@
     <section id="overview" class="band band-hero" aria-labelledby="hOverview">
         <h2 id="hOverview" class="sr-only">Übersicht</h2>
         <article class="panel panel-hero">
-            <!-- Nur die drei Groessen mit Zeitreihe sind waehlbar. Absprungrate und
-                 Dauer liefert der Proxy nur als Summe — ein Reiter dafuer haette
-                 kein Diagramm, das er umschalten koennte. -->
-            <div class="metrics" role="tablist" aria-label="Kennzahl im Diagramm">
-                <button type="button" class="metric is-active" role="tab" aria-selected="true" data-metric="visitors">
+            <!-- Nur die drei Groessen mit Zeitreihe sind schaltbar (mehrere gleichzeitig, wie in
+                 der Search Console). Absprungrate und Dauer liefert der Proxy nur als Summe —
+                 eine Kachel dafuer haette keine Linie, die sie ein- oder ausschalten koennte. -->
+            <div class="metrics" role="group" aria-label="Kennzahlen im Diagramm">
+                <button type="button" class="metric is-active" aria-pressed="true" data-metric="visitors" data-serie="1">
                     <span class="metric-label">Besucher</span>
                     <span class="metric-value" id="kVisitors">—</span>
                     <span class="metric-delta" id="dVisitors"></span>
                 </button>
-                <button type="button" class="metric" role="tab" aria-selected="false" data-metric="pageviews">
+                <button type="button" class="metric is-active" aria-pressed="true" data-metric="pageviews" data-serie="2">
                     <span class="metric-label">Seitenaufrufe</span>
                     <span class="metric-value" id="kPageviews">—</span>
                     <span class="metric-delta" id="dPageviews"></span>
                 </button>
-                <button type="button" class="metric" role="tab" aria-selected="false" data-metric="sessions">
+                <button type="button" class="metric" aria-pressed="false" data-metric="sessions" data-serie="3">
                     <span class="metric-label">Sitzungen</span>
                     <span class="metric-value" id="kSessions">—</span>
                     <span class="metric-delta" id="dSessions"></span>
@@ -157,36 +157,36 @@
     </section>
 
     <!-- ═══ GOOGLE-SUCHE ═══ -->
-    <!-- Search Console ueber den Analytics-Proxy (/gsc). EIN Regler: die Wahl Klicks /
-         Impressionen schaltet Diagramm UND beide Listen. CTR und Position haben keine
-         Achse, die sich mit Klicks teilen liesse — deshalb nur als Zahl, nie als zweite Linie. -->
+    <!-- Search Console ueber den Analytics-Proxy (/gsc). Kacheln sind Schalter wie in der
+         Search Console; jede Linie hat ihren eigenen Massstab, Achsenzahlen nur bei EINER Linie
+         (zeichneVerlauf). Die Listen folgen Klicks bzw. Impressionen. -->
     <section id="suche" class="band" aria-labelledby="hSuche">
         <article class="panel panel-hero">
             <div class="panel-head panel-head-hero">
                 <h2 id="hSuche">Google-Suche</h2>
                 <span class="panel-meta" id="gscMeta">Search Console</span>
             </div>
-            <div class="metrics metrics-4" role="tablist" aria-label="Kennzahl der Google-Suche">
-                <button type="button" class="metric is-active" role="tab" aria-selected="true" data-gsc="klicks">
+            <div class="metrics metrics-4" role="group" aria-label="Kennzahlen der Google-Suche">
+                <button type="button" class="metric is-active" aria-pressed="true" data-gsc="klicks" data-serie="1">
                     <span class="metric-label">Klicks</span>
                     <span class="metric-value" id="gscKlicks">—</span>
                     <span class="metric-delta" id="gscDKlicks"></span>
                 </button>
-                <button type="button" class="metric" role="tab" aria-selected="false" data-gsc="impressionen">
+                <button type="button" class="metric is-active" aria-pressed="true" data-gsc="impressionen" data-serie="2">
                     <span class="metric-label">Impressionen</span>
                     <span class="metric-value" id="gscImpr">—</span>
                     <span class="metric-delta" id="gscDImpr"></span>
                 </button>
-                <div class="metric is-static">
+                <button type="button" class="metric" aria-pressed="false" data-gsc="ctr" data-serie="3">
                     <span class="metric-label">Klickrate</span>
                     <span class="metric-value" id="gscCtr">—</span>
                     <span class="metric-delta" id="gscDCtr"></span>
-                </div>
-                <div class="metric is-static">
+                </button>
+                <button type="button" class="metric" aria-pressed="false" data-gsc="position" data-serie="4">
                     <span class="metric-label">Ø Position</span>
                     <span class="metric-value" id="gscPos">—</span>
                     <span class="metric-delta" id="gscDPos"></span>
-                </div>
+                </button>
             </div>
             <div class="chart" id="gscChart" aria-label="Verlauf der Google-Suche">
                 <div class="skeleton skeleton-chart"></div>
@@ -371,7 +371,7 @@
 <script src="/Assets/js/insights/geo-maps.js?v=da867fe46b"></script>
 <script src="/Assets/js/insights/engagement.js?v=3fda343fe4"></script>
 <script src="/Assets/js/insights/behoben.js?v=2aba57f963"></script>
-<script src="/Assets/js/insights/insights.js?v=bee5ba9b3d"></script>
+<script src="/Assets/js/insights/insights.js?v=f382e7fa31"></script>
 
 <script>
 /* Adblock-Guard — MUSS inline bleiben (externe Datei waere selbst blockierbar).

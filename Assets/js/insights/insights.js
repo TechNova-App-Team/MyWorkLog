@@ -15,7 +15,7 @@ let currentRange = 7;
 
 var view = {
     data: null,
-    metric: 'visitors',
+    metrics: ['visitors', 'pageviews'],   // Kacheln sind Schalter, mehrere gleichzeitig (wie Search Console)
     tabs: { pages: 'top', sources: 'referrers', geo: 'countries', tech: 'devices', events: 'actions' },
     expanded: {}
 };
@@ -476,6 +476,31 @@ function renderMetrics(sum) {
 }
 
 // ─── Hauptdiagramm ───────────────────────────────────────────
+// Farben aus der geprueften Palette (dataviz-Pruefer, 08.11.2026, alle Paare, hell + dunkel):
+// drei Farbtoene + ein neutrales Grau, das zusaetzlich gestrichelt ist. Ein vierter Farbton
+// (Gelb/Violett/Magenta) fiel neben Orange bzw. Blau durch. Die Farbe haengt an der
+// KENNZAHL, nie an ihrer Position — Abwaehlen faerbt die anderen nicht um.
+var SERIE = {
+    visitors: 'var(--serie-1)', pageviews: 'var(--serie-2)', sessions: 'var(--serie-3)',
+    klicks: 'var(--serie-1)', impressionen: 'var(--serie-2)', ctr: 'var(--serie-3)', position: 'var(--serie-4)'
+};
+var METRIC_ORDER = ['visitors', 'pageviews', 'sessions'];
+
+// Kachel an/aus; die letzte bleibt an (ein Diagramm ohne Linie sagt nichts)
+function umschalten(liste, key) {
+    var i = liste.indexOf(key);
+    if (i === -1) liste.push(key);
+    else if (liste.length > 1) liste.splice(i, 1);
+    return liste;
+}
+function kachelnSetzen(selektor, attr, aktiv) {
+    document.querySelectorAll(selektor).forEach(function (b) {
+        var on = aktiv.indexOf(b.getAttribute(attr)) !== -1;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+}
+
 var METRIC_NAMES = {
     visitors: ['Besucher', 'Visitors'],
     pageviews: ['Seitenaufrufe', 'Page views'],
@@ -542,7 +567,6 @@ function renderMainChart() {
     if (!el || !view.data) return;
     var series = fillSeries(view.data.series || []);
     var hourly = isHourly(series);
-    var key = view.metric;
     var foot = document.getElementById('chartFoot');
     if (foot) {
         var span = { 1: T('den 24 Stunden', 'the 24 hours'), 365: T('dem Jahr', 'the year') }[currentRange] ||
@@ -558,41 +582,75 @@ function renderMainChart() {
                     first.toLocaleDateString(mwlLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) + '.';
             }
         }
+        if (view.metrics.length > 1) text += ' ' + T('Jede Linie hat ihren eigenen Maßstab, die Werte stehen beim Darüberfahren.', 'Each line has its own scale, values show on hover.');
         foot.textContent = text;
     }
 
-    zeichneVerlauf(el, series, series.map(function (s) { return Number(s[key]) || 0; }), T(METRIC_NAMES[key][0], METRIC_NAMES[key][1]), hourly);
+    var linien = METRIC_ORDER.filter(function (k) { return view.metrics.indexOf(k) !== -1; }).map(function (k) {
+        return { name: T(METRIC_NAMES[k][0], METRIC_NAMES[k][1]), farbe: SERIE[k], ganz: true, fmt: fmtInt, achse: fmtNum,
+            vals: series.map(function (s) { return Number(s[k]) || 0; }) };
+    });
+    zeichneVerlauf(el, series, linien, { hourly: hourly });
 }
 
-// Liniendiagramm mit Fadenkreuz — fuer den Besucherverlauf UND die Google-Suche.
-// Teile werden per Klasse im eigenen Diagramm gesucht, nicht per id: zwei Diagramme
-// auf einer Seite haetten sonst dieselben ids.
-function zeichneVerlauf(el, series, vals, name, hourly) {
+// Liniendiagramm mit Fadenkreuz — fuer den Besucherverlauf UND die Google-Suche, nach dem
+// Vorbild der Search Console: mehrere Kennzahlen gleichzeitig, jede mit EIGENEM Massstab.
+// Deshalb gibt es Achsenzahlen nur bei EINER Linie; bei mehreren waere jede Zahl an der
+// Achse fuer alle anderen Linien falsch (zwei Y-Achsen sind die Luege, die das vermeidet).
+// Die echten Werte stehen im Tooltip, mit Farbmarke.
+// linien: [{ name, vals, farbe: 'var(--serie-1)', fmt(v), achse(v), umgekehrt, gestrichelt }]
+//   vals[i] === null → Luecke (z. B. Position an einem Tag ohne Impressionen)
+//   umgekehrt → kleiner ist besser, liegt oben (Suchposition 1 = ganz oben)
+// Teile werden per Klasse im eigenen Diagramm gesucht, nicht per id; der Verlauf bekommt
+// eine eigene id je Diagramm (zwei SVGs mit derselben Gradient-id teilen sich sonst einen).
+var _verlaufNr = 0;
+function zeichneVerlauf(el, series, linien, opts) {
+    opts = opts || {};
+    var hourly = !!opts.hourly;
     var W = el.clientWidth, H = el.clientHeight;
-    if (!series.length || W < 50) {
+    if (!series.length || !linien.length || W < 50) {
         el.innerHTML = '<div class="chart-empty">' + T('Keine Daten im Zeitraum.', 'No data in this period.') + '</div>';
         return;
     }
-
-    var step = niceStep(Math.max.apply(null, vals) / 4);
-    var max = step * 4;
+    var einzeln = linien.length === 1;
     var cs = getComputedStyle(el);
     var padT = parseFloat(cs.paddingTop) || 0, padB = parseFloat(cs.paddingBottom) || 0, padR = parseFloat(cs.paddingRight) || 0;
     W -= padR; H -= padT + padB;
-    var L = 48, R = 8, TOP = 6, B = 26;
+    var L = einzeln ? 48 : 14, R = 8, TOP = 6, B = 26;
     var iw = Math.max(10, W - L - R), ih = Math.max(10, H - TOP - B);
-    var n = vals.length;
+    var n = series.length;
     var x = function (i) { return L + (n === 1 ? iw / 2 : i * iw / (n - 1)); };
-    var y = function (v) { return TOP + ih - (v / max) * ih; };
 
-    var out = '<defs><linearGradient id="anAreaGrad" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.28"/>' +
-        '<stop offset="100%" stop-color="var(--primary)" stop-opacity="0"/></linearGradient></defs>';
+    // Massstab je Linie
+    linien.forEach(function (l) {
+        var da = l.vals.filter(function (v) { return v !== null && isFinite(v); });
+        if (l.umgekehrt) {
+            var lo = da.length ? Math.min.apply(null, da) : 0, hi = da.length ? Math.max.apply(null, da) : 1;
+            var rand = Math.max(0.5, (hi - lo) * 0.08);
+            lo = Math.max(0, lo - rand); hi = hi + rand;
+            l.wert = function (g) { return lo + (hi - lo) * g / 4; };          // g=0 oben
+            l.y = function (v) { return TOP + (v - lo) / (hi - lo) * ih; };
+        } else {
+            var top = da.length ? Math.max.apply(null, da) : 0;
+            var step = l.ganz ? niceStep(top / 4) : feinerSchritt(top / 4);
+            var max = step * 4;
+            l.wert = function (g) { return max * (4 - g) / 4; };
+            l.y = function (v) { return TOP + ih - (v / max) * ih; };
+        }
+    });
+
+    var gid = 'vg' + (++_verlaufNr);
+    var out = '';
+    if (einzeln && !linien[0].gestrichelt) {
+        out += '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="' + linien[0].farbe + '" stop-opacity="0.26"/>' +
+            '<stop offset="100%" stop-color="' + linien[0].farbe + '" stop-opacity="0"/></linearGradient></defs>';
+    }
 
     for (var g = 0; g <= 4; g++) {
-        var gv = max * g / 4, gy = y(gv).toFixed(1);
+        var gy = (TOP + ih * g / 4).toFixed(1);
         out += '<line class="grid-line" x1="' + L + '" x2="' + (L + iw) + '" y1="' + gy + '" y2="' + gy + '"/>';
-        out += '<text class="axis-text" x="' + (L - 10) + '" y="' + gy + '" dy="0.32em" text-anchor="end">' + esc(fmtNum(gv)) + '</text>';
+        if (einzeln) out += '<text class="axis-text" x="' + (L - 10) + '" y="' + gy + '" dy="0.32em" text-anchor="end">' + esc(linien[0].achse(linien[0].wert(g))) + '</text>';
     }
 
     // Bei Stundenwerten ueber mehrere Tage stehen die Marken an Mitternacht
@@ -615,19 +673,34 @@ function zeichneVerlauf(el, series, vals, name, hourly) {
         out += '<text class="axis-text" x="' + tx.toFixed(1) + '" y="' + (TOP + ih + 18) + '" text-anchor="' + anchor + '">' + esc(pointLabel(series[idx].ts, false, hourly)) + '</text>';
     });
 
-    var line = vals.map(function (v, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join('');
-    if (n > 1) {
-        out += '<path class="area" d="' + line + 'L' + x(n - 1).toFixed(1) + ' ' + (TOP + ih) + 'L' + x(0).toFixed(1) + ' ' + (TOP + ih) + 'Z"/>';
-        out += '<path class="line" d="' + line + '"/>';
-    }
+    linien.forEach(function (l) {
+        var d = '', offen = false, erster = -1, letzter = -1;
+        l.vals.forEach(function (v, i) {
+            if (v === null || !isFinite(v)) { offen = false; return; }
+            d += (offen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + l.y(v).toFixed(1);
+            offen = true;
+            if (erster < 0) erster = i;
+            letzter = i;
+        });
+        if (!d) return;
+        if (einzeln && !l.gestrichelt && n > 1 && d.indexOf('M', 1) === -1) {
+            out += '<path class="area" style="fill:url(#' + gid + ')" d="' + d + 'L' + x(letzter).toFixed(1) + ' ' + (TOP + ih) + 'L' + x(erster).toFixed(1) + ' ' + (TOP + ih) + 'Z"/>';
+        }
+        if (n > 1) out += '<path class="line' + (l.gestrichelt ? ' is-gestrichelt' : '') + '" style="stroke:' + l.farbe + '" d="' + d + '"/>';
+    });
     out += '<line class="cross" y1="' + TOP + '" y2="' + (TOP + ih) + '" x1="-10" x2="-10" visibility="hidden"/>';
-    out += '<circle class="dot" r="4.5" cx="' + x(0) + '" cy="' + y(vals[0]) + '"' + (n > 1 ? ' visibility="hidden"' : '') + '/>';
+    linien.forEach(function (l, k) {
+        var v0 = l.vals[0];
+        out += '<circle class="dot" data-linie="' + k + '" r="4" style="fill:' + l.farbe + '" cx="' + x(0) + '" cy="' + (v0 === null ? -20 : l.y(v0)) + '"' + (n > 1 ? ' visibility="hidden"' : '') + '/>';
+    });
     out += '<rect class="hit" x="' + L + '" y="0" width="' + iw + '" height="' + (TOP + ih) + '" fill="transparent"/>';
 
+    var titel = linien.map(function (l) { return l.name; }).join(', ');
     el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' +
-        esc(name) + '">' + out + '</svg><div class="chart-tip"></div>';
+        esc(titel) + '">' + out + '</svg><div class="chart-tip"></div>';
 
-    var svg = el.querySelector('svg'), cross = el.querySelector('.cross'), dot = el.querySelector('.dot'), tip = el.querySelector('.chart-tip');
+    var svg = el.querySelector('svg'), cross = el.querySelector('.cross'), tip = el.querySelector('.chart-tip');
+    var dots = el.querySelectorAll('.dot');
     function at(clientX) {
         var r = svg.getBoundingClientRect();
         var px = (clientX - r.left) * (W / r.width);
@@ -635,8 +708,15 @@ function zeichneVerlauf(el, series, vals, name, hourly) {
         i = Math.max(0, Math.min(n - 1, i));
         var cx = x(i);
         cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible');
-        dot.setAttribute('cx', cx); dot.setAttribute('cy', y(vals[i])); dot.setAttribute('visibility', 'visible');
-        tip.innerHTML = '<b>' + esc(fmtInt(vals[i])) + ' ' + esc(name) + '</b><span>' + esc(pointLabel(series[i].ts, true, hourly)) + '</span>';
+        var zeilen = '';
+        linien.forEach(function (l, k) {
+            var v = l.vals[i], dot = dots[k];
+            if (v === null || !isFinite(v)) { dot.setAttribute('visibility', 'hidden'); }
+            else { dot.setAttribute('cx', cx); dot.setAttribute('cy', l.y(v)); dot.setAttribute('visibility', 'visible'); }
+            zeilen += '<span class="tip-zeile"><i class="tip-marke' + (l.gestrichelt ? ' is-gestrichelt' : '') + '" style="background:' + l.farbe + '"></i>' +
+                '<span class="tip-name">' + esc(l.name) + '</span><b>' + esc(v === null || !isFinite(v) ? '—' : l.fmt(v)) + '</b></span>';
+        });
+        tip.innerHTML = '<span class="tip-datum">' + esc(pointLabel(series[i].ts, true, hourly)) + '</span>' + zeilen;
         var left = cx / W * r.width;
         var half = tip.offsetWidth / 2;
         tip.style.left = Math.max(half, Math.min(r.width - half, left)) + 'px';
@@ -644,7 +724,7 @@ function zeichneVerlauf(el, series, vals, name, hourly) {
     }
     function off() {
         cross.setAttribute('visibility', 'hidden');
-        if (n > 1) dot.setAttribute('visibility', 'hidden');
+        if (n > 1) dots.forEach(function (d) { d.setAttribute('visibility', 'hidden'); });
         tip.classList.remove('is-on');
     }
     svg.addEventListener('pointermove', function (e) { at(e.clientX); });
@@ -652,13 +732,18 @@ function zeichneVerlauf(el, series, vals, name, hourly) {
     svg.addEventListener('pointerleave', off);
 }
 
+// Rasterschritt auch fuer Bruchteile (Klickrate 0,031): 1-2-5 je Zehnerpotenz.
+function feinerSchritt(raw) {
+    if (!(raw > 0)) return 0.01;
+    var exp = Math.pow(10, Math.floor(Math.log10(raw)));
+    var steps = [1, 2, 5, 10];
+    for (var i = 0; i < steps.length; i++) if (steps[i] * exp >= raw) return steps[i] * exp;
+    return 10 * exp;
+}
+
 function setMetric(key) {
-    view.metric = key;
-    document.querySelectorAll('.metric[data-metric]').forEach(function (b) {
-        var on = b.dataset.metric === key;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-selected', on ? 'true' : 'false');
-    });
+    umschalten(view.metrics, key);
+    kachelnSetzen('.metric[data-metric]', 'data-metric', view.metrics);
     renderMainChart();
 }
 
@@ -1565,8 +1650,12 @@ async function loadAll() {
 // ─── Google-Suche (Search Console ueber den Proxy, /gsc) ─────────
 // Eigener Abruf, unabhaengig vom grossen: faellt die Suche aus, bleibt der Rest stehen —
 // und umgekehrt. Google meldet Tageswerte mit 2-3 Tagen Verzug.
-var gsc = { data: null, metric: 'klicks' };
-var GSC_NAMEN = { klicks: ['Klicks', 'Clicks'], impressionen: ['Impressionen', 'Impressions'] };
+var gsc = { data: null, metrics: ['klicks', 'impressionen'] };
+var GSC_NAMEN = { klicks: ['Klicks', 'Clicks'], impressionen: ['Impressionen', 'Impressions'], ctr: ['Klickrate', 'Click rate'], position: ['Ø Position', 'Avg. position'] };
+var GSC_ORDER = ['klicks', 'impressionen', 'ctr', 'position'];
+// Die Listen zeigen Klicks, wenn die an sind, sonst Impressionen — Klickrate und Position
+// lassen sich je Suchanfrage nicht sinnvoll als Balken sortieren (stehen im title).
+function gscListenWert() { return gsc.metrics.indexOf('klicks') === -1 && gsc.metrics.indexOf('impressionen') !== -1 ? 'impressionen' : 'klicks'; }
 
 async function loadGsc() {
     try {
@@ -1622,24 +1711,36 @@ function renderGsc() {
         : 'Search Console';
 
     var el = document.getElementById('gscChart'), foot = document.getElementById('gscFoot');
-    var name = T(GSC_NAMEN[gsc.metric][0], GSC_NAMEN[gsc.metric][1]);
+    var lw = gscListenWert();
+    var name = T(GSC_NAMEN[lw][0], GSC_NAMEN[lw][1]);
     if (fehler) {
         el.innerHTML = '<div class="chart-empty">' + esc(fehler) + '</div>';
         foot.textContent = '';
     } else if (d) {
         var reihe = gscReihe(d);
-        zeichneVerlauf(el, reihe, reihe.map(function (p) { return Number(p[gsc.metric]) || 0; }), name, false);
+        // Klickrate und Position gibt es nur an Tagen mit Impressionen — sonst Luecke statt 0
+        var mitImpr = function (p, k) { return p.impressionen ? Number(p[k]) : null; };
+        var FMT = { klicks: fmtInt, impressionen: fmtInt, ctr: function (v) { return fmtPct(v, 1); }, position: function (v) { return fmtDec(v, 1); } };
+        var ACHSE = { klicks: fmtNum, impressionen: fmtNum, ctr: function (v) { return fmtPct(v, v && v < 0.1 ? 1 : 0); }, position: function (v) { return fmtDec(v, 1); } };
+        var linien = GSC_ORDER.filter(function (k) { return gsc.metrics.indexOf(k) !== -1; }).map(function (k) {
+            return { name: T(GSC_NAMEN[k][0], GSC_NAMEN[k][1]), farbe: SERIE[k], fmt: FMT[k], achse: ACHSE[k],
+                ganz: k === 'klicks' || k === 'impressionen', umgekehrt: k === 'position', gestrichelt: k === 'position',
+                vals: reihe.map(function (p) { return k === 'ctr' || k === 'position' ? mitImpr(p, k) : (Number(p[k]) || 0); }) };
+        });
+        zeichneVerlauf(el, reihe, linien, { hourly: false });
         var letzter = reihe.length ? reihe[reihe.length - 1].ts : '';
         foot.textContent = (d.hinweis === 'tage7'
             ? T('Google kennt keine Stundenwerte, gezeigt sind die letzten 7 Tage. ', 'Google has no hourly data, showing the last 7 days. ')
             : T('Pfeile vergleichen mit dem gleich langen Zeitraum davor. ', 'Arrows compare with the same length of time before. ')) +
-            (letzter ? T('Google meldet mit 2 bis 3 Tagen Verzug, zuletzt für den ', 'Google reports with a 2 to 3 day delay, latest: ') + fmtTag(letzter, true) + '.' : '');
+            (letzter ? T('Google meldet mit 2 bis 3 Tagen Verzug, zuletzt für den ', 'Google reports with a 2 to 3 day delay, latest: ') + fmtTag(letzter, true) + '.' : '') +
+            (gsc.metrics.length > 1 ? ' ' + T('Jede Linie hat ihren eigenen Maßstab.', 'Each line has its own scale.') : '') +
+            (gsc.metrics.indexOf('position') !== -1 ? ' ' + T('Die Position ist umgedreht, Platz 1 liegt oben.', 'Position is inverted, rank 1 is on top.') : '');
     }
 
     document.querySelectorAll('.gsc-wert-label').forEach(function (x) { x.textContent = name; });
     var leer = fehler || T('Keine Suchdaten im Zeitraum.', 'No search data in this period.');
     var zeile = function (r) {
-        return { label: r.label, value: r[gsc.metric] || 0,
+        return { label: r.label, value: r[lw] || 0,
             title: T('Klickrate ', 'CTR ') + fmtPct(r.ctr || 0, 1) + T(' · Position ', ' · position ') + fmtDec(r.position || 0, 1) };
     };
     renderList('gscAnfragen', fehler ? [] : (d && d.anfragen || []).map(zeile).sort(function (a, b) { return b.value - a.value; }), { key: 'gscAnfragen', empty: leer });
@@ -1652,12 +1753,8 @@ function fmtTag(iso, lang) {
 }
 
 function setGscMetric(key) {
-    gsc.metric = key;
-    document.querySelectorAll('.metric[data-gsc]').forEach(function (b) {
-        var on = b.dataset.gsc === key;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-selected', on ? 'true' : 'false');
-    });
+    umschalten(gsc.metrics, key);
+    kachelnSetzen('.metric[data-gsc]', 'data-gsc', gsc.metrics);
     renderGsc();
 }
 
@@ -1850,10 +1947,12 @@ document.addEventListener('DOMContentLoaded', function () {
     [['mainChart', renderMainChart], ['gscChart', function () { if (gsc.data) renderGsc(); }]].forEach(function (p) {
         var chart = document.getElementById(p[0]);
         if (!chart || !('ResizeObserver' in window)) return;
-        var raf = 0, lastW = 0;
+        // Breite UND Hoehe: das Hauptdiagramm waechst mit „Gerade eben“ daneben, und die SVG
+        // (preserveAspectRatio none) wuerde sonst samt Schrift verzerrt gestreckt.
+        var raf = 0, lastW = 0, lastH = 0;
         new ResizeObserver(function () {
-            if (chart.clientWidth === lastW) return;
-            lastW = chart.clientWidth;
+            if (chart.clientWidth === lastW && chart.clientHeight === lastH) return;
+            lastW = chart.clientWidth; lastH = chart.clientHeight;
             cancelAnimationFrame(raf);
             raf = requestAnimationFrame(p[1]);
         }).observe(chart);
