@@ -8,7 +8,8 @@
 // "Kartenformat"); alles, was der Nutzer sieht, rendert diese Datei. Genau das
 // unterscheidet den Kasten von einem Chat — und haelt ihn dicht gegen Missbrauch.
 //
-// Speicher: mwl_karteikasten_v1 = { v:1, karten: { <id>: Karte }, zuletzt: 'YYYY-MM-DD' }
+// Speicher: mwl_karteikasten_v1 = { v:1, karten: { <id>: Karte }, zuletzt: 'YYYY-MM-DD',
+//                                   neuHeute: { datum, n } }
 //   Karte = { id, typ:'wahl'|'aufdecken'|'reihe', frage, ..., quelle:{art,text},
 //             fach:0..5, faellig:'YYYY-MM-DD', gesehen, richtig, gesperrt }
 //   Die Kartentexte liegen MIT im Speicher (nicht nur die id), weil KI-Karten
@@ -26,6 +27,10 @@
     // Leitner-Abstaende; "falsch" wirft immer zurueck in Fach 1 (= morgen).
     var ABSTAND = [0, 1, 3, 7, 14, 30];
     var MAX_JE_RUNDE = 12;
+    // Hoechstens so viele NEUE Karten (Fach 0) am Tag, der Rest wartet im Fach Neu.
+    // Sonst ertraenkt der erste KI-Stapel (bis 30 Karten) den Nutzer genau am ersten
+    // Tag — und dann kommt er nicht wieder (Plan, Abschnitt 4).
+    var MAX_NEU_JE_TAG = 10;
     var FACH_NAME = [L('Neu', 'New'), '1', '2', '3', '4', '5'];
     var FACH_TAKT = [
         L('neu', 'new'),
@@ -158,10 +163,15 @@
         return Object.keys(stand.karten).map(function (k) { return stand.karten[k]; })
             .filter(function (k) { return !k.gesperrt; });
     }
+    function neuRest() {
+        var n = stand.neuHeute && stand.neuHeute.datum === heute() ? stand.neuHeute.n : 0;
+        return Math.max(0, MAX_NEU_JE_TAG - n);
+    }
     function faellige() {
-        var h = heute();
+        var h = heute(), neuFrei = neuRest();
         return alle().filter(function (k) { return k.faellig <= h; })
-            .sort(function (a, b) { return a.fach - b.fach || (a.faellig < b.faellig ? -1 : 1); });
+            .sort(function (a, b) { return a.fach - b.fach || (a.faellig < b.faellig ? -1 : 1); })
+            .filter(function (k) { return k.fach > 0 || neuFrei-- > 0; });
     }
 
     // ── Elemente ──────────────────────────────────────────────────────
@@ -348,6 +358,7 @@
         el.karteHinten.setAttribute('aria-hidden', 'true');
         el.aufloesung.hidden = true;
         el.melden.hidden = true;
+        el.gruende.hidden = true;
         el.aktionen.innerHTML = '';
         el.karteArbeit.innerHTML = '';
         el.karteFach.textContent = k.fach ? L('Fach ', 'Box ') + k.fach : L('Neu', 'New');
@@ -485,6 +496,10 @@
         // Tag der letzten ABFRAGE, nicht des letzten Aufrufs — sonst zaehlt blosses
         // Reinschauen als Wiederkehr.
         stand.zuletzt = heute();
+        if (vorher === 0) {
+            var nh = stand.neuHeute && stand.neuHeute.datum === stand.zuletzt ? stand.neuHeute.n : 0;
+            stand.neuHeute = { datum: stand.zuletzt, n: nh + 1 };
+        }
         if (richtig) k.richtig = (k.richtig || 0) + 1;
         stand.karten[k.id] = k;
         schreiben();
@@ -520,14 +535,42 @@
         return L('Beispielstapel, Rahmenplan: ', 'Sample deck, training framework: ') + q.text;
     }
 
+    // Erst der Grund, dann sperren. Raus geht nur die Kategorie, nie der Kartentext
+    // (Messplan 8.1). Fehlerhafte KI-Karten von unklaren zu trennen ist genau die
+    // Frage, die das Abbruchkriterium „Stimmt nicht ≤ 5 %“ beantworten soll.
+    var GRUENDE = [
+        ['antwort', L('Antwort ist falsch', 'The answer is wrong')],
+        ['unklar', L('Frage ist unklar', 'The question is unclear')],
+        ['fremd', L('Hat nichts mit mir zu tun', 'Has nothing to do with me')]
+    ];
     function melden() {
+        if (!runde[pos]) return;
+        el.melden.hidden = true;
+        el.gruende.innerHTML = '';
+        var t = document.createElement('p');
+        t.className = 'kk-gruende-t';
+        t.textContent = L('Was stimmt nicht?', 'What is wrong?');
+        el.gruende.appendChild(t);
+        GRUENDE.forEach(function (g) {
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'kk-textknopf';
+            b.dataset.grund = g[0];
+            b.textContent = g[1];
+            b.addEventListener('click', function () { sperren(g[0]); });
+            el.gruende.appendChild(b);
+        });
+        el.gruende.hidden = false;
+        el.gruende.querySelector('button').focus({ preventScroll: true });
+    }
+    function sperren(grund) {
         var k = runde[pos];
         if (!k) return;
         k.gesperrt = true;
         stand.karten[k.id] = k;
         schreiben();
-        el.melden.disabled = true;
-        ev('karteikasten_stimmt_nicht', { typ: k.typ, quelle: k.quelle && k.quelle.art });
+        el.gruende.hidden = true;
+        ev('karteikasten_stimmt_nicht', { typ: k.typ, quelle: k.quelle && k.quelle.art, grund: grund });
         toast(L('Danke. Die Karte kommt nicht mehr dran.', 'Thanks. This card won’t come up again.'));
     }
 
@@ -634,6 +677,11 @@
          ['ergebnisP', 'kkErgebnisP'], ['ergebnisListe', 'kkErgebnisListe'], ['zurueckKnopf', 'kkZurueck'],
          ['toast', 'kkToast']].forEach(function (p) { el[p[0]] = $(p[1]); });
         if (!el.start) return;
+        el.gruende = document.createElement('div');
+        el.gruende.className = 'kk-gruende';
+        el.gruende.id = 'kkGruende';
+        el.gruende.hidden = true;
+        el.melden.insertAdjacentElement('afterend', el.gruende);
 
         el.los.addEventListener('click', starten);
         el.los2.addEventListener('click', starten);
