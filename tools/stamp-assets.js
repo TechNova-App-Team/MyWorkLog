@@ -373,7 +373,11 @@ function nurStempelDiff(rel) {
   } catch (e) { return false; }
   // Versionsnummern und Daten zaehlen mit: die setzt dieses Skript beim Bump
   // selbst (VERSION_RES, DATE_RE).
-  const ohne = (z) => z.slice(1).replace(/\r$/, '').replace(/\?v=[^"'`\s]*/g, '?v=')
+  // Der Stempel faellt GANZ weg, nicht nur sein Wert: tools/beispiel-seiten.mjs
+  // schreibt Links ohne ?v=, und „x.css" gegen „x.css?v=" galt als GEMISCHT —
+  // der Hook liess die gestempelten Seiten liegen und committete sie ungestempelt
+  // (08.11.2026, sechs neue Berufe).
+  const ohne = (z) => z.slice(1).replace(/\r$/, '').replace(/\?v=[^"'`\s]*/g, '')
     .replace(/\d+\.\d+\.\d+/g, 'X.Y.Z').replace(/\d{4}-\d{2}-\d{2}/g, 'JJJJ-MM-TT')
     .replace(/(data-release-date>)\d{1,2}\. [A-Za-zä]+ \d{4}/g, '$1D')
     .replace(/(data-release-count[^>]*>)(?:\d+|—)/g, '$1N');
