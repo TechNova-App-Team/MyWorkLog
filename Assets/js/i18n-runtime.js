@@ -34,6 +34,12 @@
     'Wunsch schicken': 'Send wish',
     'Zu viele Anfragen. Bitte in ein paar Minuten nochmal.': 'Too many requests. Please try again in a few minutes.',
     'Keine Verbindung zum Server. Versuch es gleich nochmal.': 'No connection to the server. Try again in a moment.',
+    // ── Umfrage (umfrage.js setzt Knopf und Fehlertext per textContent) ──
+    'Bitte wähle mindestens eine Antwort aus.': 'Please choose at least one answer.',
+    'Wird gesendet …': 'Sending …',
+    'Antwort senden': 'Send answer',
+    'Keine Verbindung zum Server. Entweder bist du offline, ein Blocker ist dazwischen, oder es kamen gerade zu viele Anfragen.': 'No connection to the server. Either you are offline, a blocker is in the way, or there were too many requests just now.',
+    'Konnte nicht gesendet werden.': 'Could not be sent.',
     // ── P2P Geräte-Sync (p2p-sync.js baut das komplett in JS) ──
     // Geprüft: 'Verbunden'/'Nicht verbunden' kommen NUR in p2p-sync.js vor,
     // 'Offline' ist in beiden Sprachen gleich. Keine Kollision mit anderen Modals.
