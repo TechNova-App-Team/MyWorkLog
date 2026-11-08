@@ -138,6 +138,23 @@ console.log('── Stufen ──');
     ok(e3.CLOUD.Stufe.zuletzt === 'schnell' && e3.CLOUD.Stufe.denkenGrund === 'pass', 'verbraucht: Turbo hat geschrieben, Grund "pass" gemerkt');
     ok(e3.CLOUD.Stufe.get() === 'denken', 'die Wahl Thinking bleibt stehen (morgen gibt es wieder 3)');
   }
+  // Seit 08.11.2026: eine Thinking-Antwort je Kalenderwoche (Worker schickt X-MWL-Denken-Zeitraum: woche).
+  // Der Tagesfall oben bleibt: eine neue App vor dem neuen Worker bekommt noch "2/3" ohne Zeitraum.
+  {
+    const e4 = engine(async () => antwort(200, geminiOk, { 'X-MWL-Denken-Frei': '1/1', 'X-MWL-Denken-Zeitraum': 'woche', 'X-MWL-Stufe': 'denken' }));
+    e4.CLOUD.Stufe.set('denken');
+    await e4.CLOUD.generateWithCloud('software', optionen);
+    const dk = e4.CLOUD.Kontingent.denken();
+    ok(dk && dk.verbraucht === 1 && dk.frei === 1 && dk.zeitraum === 'woche' && /^\d{4}-W\d{2}$/.test(dk.woche),
+      `Wochenstand aus dem Kopf gemerkt: ${JSON.stringify(dk)}`);
+    const roh = JSON.parse(e4.sandbox.localStorage.getItem('mwl_ki_denken'));
+    roh.tag = '2000-01-01';   // anderer Tag, gleiche Woche → gilt weiter
+    e4.sandbox.localStorage.setItem('mwl_ki_denken', JSON.stringify(roh));
+    ok(!!e4.CLOUD.Kontingent.denken(), 'Wochenstand gilt auch an einem anderen Tag derselben Woche');
+    roh.woche = '2000-W01';
+    e4.sandbox.localStorage.setItem('mwl_ki_denken', JSON.stringify(roh));
+    ok(e4.CLOUD.Kontingent.denken() === null, 'Gegenprobe: Stand einer anderen Woche gilt nicht');
+  }
   // v9.4.0: Thinking = ?stufe=denken, teilt sich das bezahlte Kontingent mit Turbo
   e.CLOUD.Stufe.set('denken');
   ok(e.CLOUD.Stufe.get() === 'denken' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'denken', 'Thinking wird gespeichert');

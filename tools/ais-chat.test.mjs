@@ -473,7 +473,7 @@ t.gruppe('Thinking: wer hat geschrieben');
         'Thinking scheitert, Turbo schreibt: Hinweis nennt beide', h);
     S.zuletzt = 'schnell'; S.grund = ''; S.denkenGrund = 'pass';
     const hp = I.werHatGeschrieben();
-    t.ok(hp.startsWith('Deine 3 Thinking-Antworten für heute sind verbraucht') && hp.includes('Ausbildungs-Pass'),
+    t.ok(hp.startsWith('Dein kostenloses Thinking für diese Woche ist verbraucht') && hp.includes('Ausbildungs-Pass'),
         'Schnupper-Thinking verbraucht: sagt das, nicht "hat keine brauchbare Antwort"', hp);
     S.denkenGrund = '';
     S.zuletzt = 'frei'; S.grund = '429';

@@ -39,7 +39,7 @@ const TEXTE = {
         satz: ['Denkt erst nach, dann schreibt es.', 'Thinks first, then writes.'],
         punkte: [['Stärkere Modelle für ganze Wochen und wirre Notizen', 'Stronger models for whole weeks and messy notes'],
                  ['Bleibt näher an dem, was du erzählt hast', 'Stays closer to what you actually said'],
-                 ['Ohne Pass: 3 Antworten am Tag zum Ausprobieren', 'Without a pass: 3 answers a day to try it']],
+                 ['Ohne Pass: eine Antwort pro Woche zum Ausprobieren', 'Without a pass: one answer a week to try it']],
     },
     fachgespraech: {
         plus: true,

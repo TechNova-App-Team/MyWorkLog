@@ -715,12 +715,22 @@ function menueZeichnen() {
     // sonst faellt er nach dem Kontingent-Abruf auf <body> (gemessen headless).
     const fokus = m.contains(document.activeElement) && document.activeElement.getAttribute('data-stufe');
     const jetzt = K.Stufe.get();
-    // Ohne Pass: 3 Thinking-Antworten am Tag zum Ausprobieren (Worker zaehlt). Sind sie
-    // verbraucht, steht Thinking mit "Pass" da und der Klick zeigt das Siegel-Blatt.
+    // Ohne Pass: Thinking zum Ausprobieren, seit 08.11.2026 eine Antwort je Kalenderwoche
+    // (Worker zaehlt und liefert Zahl + Zeitraum; vorher 3 am Tag). Ist sie verbraucht, steht
+    // Thinking mit "Pass" da und der Klick zeigt das Siegel-Blatt. Ohne bekannten Stand: 1/Woche.
     const passFrei = !!(window.MWLPass && MWLPass.frei());
     const dk = !passFrei && K.Kontingent.denken ? K.Kontingent.denken() : null;
-    const denkenRest = passFrei ? null : dk ? Math.max(0, dk.frei - dk.verbraucht) : 3;
+    const denkenFrei = dk ? dk.frei : 1;
+    const denkenWoche = dk ? dk.zeitraum === 'woche' : true;
+    const denkenRest = passFrei ? null : dk ? Math.max(0, dk.frei - dk.verbraucht) : 1;
     const denkenZu = !passFrei && denkenRest === 0;
+    const denkenText = denkenZu
+        ? (denkenWoche ? Lx('Diese Woche ausprobiert, mehr im Ausbildungs-Pass', 'Tried this week, more in the training pass')
+                       : Lx('Heute ausprobiert, mehr im Ausbildungs-Pass', 'Tried today, more in the training pass'))
+        : denkenWoche
+            ? (denkenFrei === 1 ? Lx('Einmal pro Woche kostenlos', 'Once a week for free')
+                                : Lx('Diese Woche noch ' + denkenRest + ' von ' + denkenFrei + ' kostenlos', denkenRest + ' of ' + denkenFrei + ' free left this week'))
+            : Lx('Heute noch ' + denkenRest + ' von ' + denkenFrei + ' kostenlos', denkenRest + ' of ' + denkenFrei + ' free left today');
     const eintrag = (s, unter, zeit, rest, marke) =>
         '<button type="button" class="aic-modell-opt' + (s === 'denken' && denkenZu ? ' is-pass' : '') + '" role="menuitemradio" aria-checked="' + (jetzt === s) + '" data-stufe="' + s + '">' +
         '<span class="aic-modell-opt-kopf"><span class="aic-modell-opt-name">' + esc(stufeName(s)) + '</span>' +
@@ -737,8 +747,7 @@ function menueZeichnen() {
                              'Thinks first, then writes. For whole weeks, messy notes and tricky questions. Counts double against the Turbo quota.'),
             Lx('Antwort in 4 bis 12 Sekunden', 'Answers in 4 to 12 seconds'),
             passFrei ? restText(K.Kontingent.schnell(), NACHRICHT_TOKENS * DENKEN_FAKTOR, ['Nachricht', 'message'], ['Nachrichten', 'messages'])
-                : denkenZu ? Lx('Heute ausprobiert, mehr im Ausbildungs-Pass', 'Tried today, more in the training pass')
-                : Lx('Heute noch ' + denkenRest + ' von 3 kostenlos', denkenRest + ' of 3 free left today'),
+                : denkenText,
             denkenZu ? 'Pass' : 'Thinking') +
         eintrag('frei', Lx('Kostenlos und ausdauernd. Großes Tageskontingent.', 'Free and enduring. Large daily quota.'),
             Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
@@ -786,10 +795,10 @@ function werHatGeschrieben() {
     if (gewaehlt === 'frei') return '';
     const z = K.Stufe.zuletzt;
     if (!z || z === gewaehlt) return '';
-    // Die 3 freien Thinking-Antworten von heute sind weg (Worker-Kopf X-MWL-Denken: pass)
+    // Das freie Thinking dieser Woche ist weg (Worker-Kopf X-MWL-Denken: pass)
     if (gewaehlt === 'denken' && K.Stufe.denkenGrund === 'pass' && z === 'schnell') {
-        return Lx('Deine 3 Thinking-Antworten für heute sind verbraucht, deshalb hat ' + stufeName('schnell') + ' geschrieben. Mehr Thinking gibt es mit dem Ausbildungs-Pass.',
-                  'Your 3 Thinking answers for today are used up, so ' + stufeName('schnell') + ' wrote this. More Thinking comes with the training pass.');
+        return Lx('Dein kostenloses Thinking für diese Woche ist verbraucht, deshalb hat ' + stufeName('schnell') + ' geschrieben. Mehr Thinking gibt es mit dem Ausbildungs-Pass.',
+                  'Your free Thinking for this week is used up, so ' + stufeName('schnell') + ' wrote this. More Thinking comes with the training pass.');
     }
     // Thinking ausgefallen, Turbo hat geschrieben (Worker: DENKER → SOFORT → Gratis).
     const statt = z === 'schnell' ? 'schnell' : 'frei';

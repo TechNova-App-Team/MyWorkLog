@@ -60,7 +60,7 @@ const CLOUD_PROXY = 'https://ai-proxy.myworklog.de';
 const RATE_LIMIT_COOLDOWN_MS = 10000;  // Doppelklick-Schutz, kein Kontingent
 const KONTINGENT_SPEICHER = 'mwl_ki_kontingent';
 const SCHNELL_SPEICHER = 'mwl_ki_schnell';
-const DENKEN_SPEICHER = 'mwl_ki_denken';   // Thinking ohne Pass: verbraucht/frei heute
+const DENKEN_SPEICHER = 'mwl_ki_denken';   // Thinking ohne Pass: verbraucht/frei je Woche
 const GERAET_SPEICHER = 'mwl_ki_geraet';
 
 // Altbestand der browserseitigen Zaehler — wird nirgends mehr gelesen.
@@ -103,6 +103,14 @@ const Kontingent = {
     // Der Server rechnet den Tag in Berliner Zeit — hier genauso, sonst gaelte
     // ein gemerkter Stand zwischen 0 und 2 Uhr noch als "heute".
     _tag() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' }); },
+    // ISO-Kalenderwoche wie im Worker (wocheBerlin), z. B. '2026-W46'
+    _woche() {
+        const [j, m, t] = this._tag().split('-').map(Number);
+        const d = new Date(Date.UTC(j, m - 1, t));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        const jahr = d.getUTCFullYear();
+        return jahr + '-W' + String(Math.ceil(((d - Date.UTC(jahr, 0, 1)) / 864e5 + 1) / 7)).padStart(2, '0');
+    },
     stand() {
         try {
             const d = JSON.parse(localStorage.getItem(KONTINGENT_SPEICHER) || 'null');
@@ -126,23 +134,26 @@ const Kontingent = {
         const d = { tag: this._tag(), verbraucht, limit, erschoepft: !!erschoepft || verbraucht >= limit };
         try { localStorage.setItem(SCHNELL_SPEICHER, JSON.stringify(d)); } catch (e) { }
     },
-    // Thinking ohne Pass (Worker 01.11.2026, Kopf X-MWL-Denken-Frei "verbraucht/frei").
+    // Thinking ohne Pass (Kopf X-MWL-Denken-Frei "verbraucht/frei"). Seit 08.11.2026 je
+    // Kalenderwoche (X-MWL-Denken-Zeitraum: woche); ein alter Worker ohne den Kopf zaehlt je Tag.
     // null = kein Stand bekannt ODER Pass (dort gibt der Worker den Kopf nicht).
     denken() {
         try {
             const d = JSON.parse(localStorage.getItem(DENKEN_SPEICHER) || 'null');
-            return d && d.tag === this._tag() && d.frei > 0 ? d : null;
+            if (!d || !(d.frei > 0)) return null;
+            return (d.zeitraum === 'woche' ? d.woche === this._woche() : d.tag === this._tag()) ? d : null;
         } catch (e) { return null; }
     },
-    _denkenSchreib(verbraucht, frei) {
-        try { localStorage.setItem(DENKEN_SPEICHER, JSON.stringify({ tag: this._tag(), verbraucht, frei })); } catch (e) { }
+    _denkenSchreib(verbraucht, frei, zeitraum) {
+        const z = zeitraum === 'woche' ? 'woche' : 'tag';
+        try { localStorage.setItem(DENKEN_SPEICHER, JSON.stringify({ tag: this._tag(), woche: this._woche(), zeitraum: z, verbraucht, frei })); } catch (e) { }
     },
     ausKopf(response) {
         const h = response && response.headers;
         const s = h && h.get('X-MWL-Schnell'), sm = s && /^(\d+)\/(\d+)$/.exec(s);
         if (sm) this._schnellSchreib(+sm[1], +sm[2], false);
         const dk = h && h.get('X-MWL-Denken-Frei'), dm = dk && /^(\d+)\/(\d+)$/.exec(dk);
-        if (dm) this._denkenSchreib(+dm[1], +dm[2]);
+        if (dm) this._denkenSchreib(+dm[1], +dm[2], h.get('X-MWL-Denken-Zeitraum'));
         Stufe.ausKopf(response);
         // Zuletzt: _schreib loest 'mwl-kontingent' aus, dann stehen beide Staende schon.
         const v = h && h.get('X-MWL-Kontingent');
@@ -159,7 +170,7 @@ const Kontingent = {
             if (!r.ok) return null;
             const j = await r.json();
             if (j && j.schnell && j.schnell.limit > 0) this._schnellSchreib(j.schnell.verbraucht | 0, j.schnell.limit, j.schnell.erschoepft);
-            if (j && j.denken && j.denken.frei > 0) this._denkenSchreib(j.denken.verbraucht | 0, j.denken.frei);
+            if (j && j.denken && j.denken.frei > 0) this._denkenSchreib(j.denken.verbraucht | 0, j.denken.frei, j.denken.zeitraum);
             else if (j && j.denken === null) { try { localStorage.removeItem(DENKEN_SPEICHER); } catch (e) { } }
             if (j && j.limit > 0) this._schreib(j.verbraucht | 0, j.limit, j.erschoepft);
             return this.stand();
@@ -188,7 +199,7 @@ const STUFEN = {
 };
 // Thinking gehoert seit 01.11.2026 zum Ausbildungs-Pass (die staerkeren Modelle kosten ein
 // Vielfaches). Ohne Pass gibt es 3 Antworten am Tag zum Ausprobieren — das ZAEHLT und
-// ENTSCHEIDET der Worker (ai-proxy KONTINGENT.denkenFreiTag); danach schreibt Turbo und der
+// ENTSCHEIDET der Worker (ai-proxy KONTINGENT.denkenFreiWoche); danach schreibt Turbo und der
 // Kopf X-MWL-Denken: pass sagt warum. Hier deshalb keine Sperre, nur Anzeige (Kontingent.denken).
 const Stufe = {
     get() {
