@@ -25,7 +25,7 @@
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
     <!-- Pfad bewusst "insights", nicht "analytics": EasyPrivacy & Co. filtern
          /analytics/analytics.js nach Namensmuster weg, die Seite stand dann leer. -->
-    <link rel="stylesheet" href="/Assets/css/insights/insights.css?v=929936a222">
+    <link rel="stylesheet" href="/Assets/css/insights/insights.css?v=7185ff7260">
     <script defer src="/Assets/js/ph-init.js?v=37bf56ec64"></script>
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
@@ -62,6 +62,7 @@
     </div>
     <nav class="section-nav" aria-label="Bereiche">
         <a href="#overview" class="is-current"><span>Übersicht</span></a>
+        <a href="#suche"><span>Google-Suche</span></a>
         <a href="#content"><span>Seiten &amp; Quellen</span></a>
         <a href="#geo"><span>Herkunft</span></a>
         <a href="#tech"><span>Technik</span></a>
@@ -153,6 +154,57 @@
                 <li class="empty">Warte auf Aktivität…</li>
             </ul>
         </aside>
+    </section>
+
+    <!-- ═══ GOOGLE-SUCHE ═══ -->
+    <!-- Search Console ueber den Analytics-Proxy (/gsc). EIN Regler: die Wahl Klicks /
+         Impressionen schaltet Diagramm UND beide Listen. CTR und Position haben keine
+         Achse, die sich mit Klicks teilen liesse — deshalb nur als Zahl, nie als zweite Linie. -->
+    <section id="suche" class="band" aria-labelledby="hSuche">
+        <article class="panel panel-hero">
+            <div class="panel-head panel-head-hero">
+                <h2 id="hSuche">Google-Suche</h2>
+                <span class="panel-meta" id="gscMeta">Search Console</span>
+            </div>
+            <div class="metrics metrics-4" role="tablist" aria-label="Kennzahl der Google-Suche">
+                <button type="button" class="metric is-active" role="tab" aria-selected="true" data-gsc="klicks">
+                    <span class="metric-label">Klicks</span>
+                    <span class="metric-value" id="gscKlicks">—</span>
+                    <span class="metric-delta" id="gscDKlicks"></span>
+                </button>
+                <button type="button" class="metric" role="tab" aria-selected="false" data-gsc="impressionen">
+                    <span class="metric-label">Impressionen</span>
+                    <span class="metric-value" id="gscImpr">—</span>
+                    <span class="metric-delta" id="gscDImpr"></span>
+                </button>
+                <div class="metric is-static">
+                    <span class="metric-label">Klickrate</span>
+                    <span class="metric-value" id="gscCtr">—</span>
+                    <span class="metric-delta" id="gscDCtr"></span>
+                </div>
+                <div class="metric is-static">
+                    <span class="metric-label">Ø Position</span>
+                    <span class="metric-value" id="gscPos">—</span>
+                    <span class="metric-delta" id="gscDPos"></span>
+                </div>
+            </div>
+            <div class="chart" id="gscChart" aria-label="Verlauf der Google-Suche">
+                <div class="skeleton skeleton-chart"></div>
+            </div>
+            <p class="chart-foot" id="gscFoot"></p>
+        </article>
+    </section>
+    <section id="sucheListen" class="band band-2" aria-label="Suchanfragen und Seiten in der Google-Suche">
+        <article class="panel">
+            <div class="panel-head"><h2>Suchanfragen</h2></div>
+            <div class="list-head"><span id="gscAnfragenLabel">Suchanfrage</span><span class="gsc-wert-label">Klicks</span></div>
+            <div class="list" id="gscAnfragen"><div class="skeleton skeleton-list"></div></div>
+        </article>
+        <article class="panel">
+            <div class="panel-head"><h2>Seiten in der Suche</h2></div>
+            <div class="list-head"><span id="gscSeitenLabel">Pfad</span><span class="gsc-wert-label">Klicks</span></div>
+            <div class="list" id="gscSeiten"><div class="skeleton skeleton-list"></div></div>
+        </article>
     </section>
 
     <!-- ═══ SEITEN & QUELLEN ═══ -->
@@ -319,7 +371,7 @@
 <script src="/Assets/js/insights/geo-maps.js?v=da867fe46b"></script>
 <script src="/Assets/js/insights/engagement.js?v=3fda343fe4"></script>
 <script src="/Assets/js/insights/behoben.js?v=2aba57f963"></script>
-<script src="/Assets/js/insights/insights.js?v=4e877452d2"></script>
+<script src="/Assets/js/insights/insights.js?v=bee5ba9b3d"></script>
 
 <script>
 /* Adblock-Guard — MUSS inline bleiben (externe Datei waere selbst blockierbar).

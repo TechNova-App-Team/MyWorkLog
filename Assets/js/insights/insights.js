@@ -458,7 +458,7 @@ function setDelta(id, cur, prev, lowerIsBetter) {
     var good = lowerIsBetter ? pct < 0 : pct > 0;
     el.className = 'metric-delta ' + (good ? 'is-good' : 'is-bad');
     el.innerHTML = (pct > 0 ? ICONS.up : ICONS.down) + '<span>' + fmtInt(Math.abs(rounded)) + ' %</span>';
-    el.title = T('Vorzeitraum: ', 'Previous period: ') + (id === 'dBounce' ? fmtPct(prev, 1) : id === 'dDuration' ? fmtDuration(prev) : fmtInt(prev));
+    el.title = T('Vorzeitraum: ', 'Previous period: ') + (id === 'dBounce' || id === 'gscDCtr' ? fmtPct(prev, 1) : id === 'dDuration' ? fmtDuration(prev) : id === 'gscDPos' ? fmtDec(prev, 1) : fmtInt(prev));
 }
 
 function renderMetrics(sum) {
@@ -561,13 +561,19 @@ function renderMainChart() {
         foot.textContent = text;
     }
 
+    zeichneVerlauf(el, series, series.map(function (s) { return Number(s[key]) || 0; }), T(METRIC_NAMES[key][0], METRIC_NAMES[key][1]), hourly);
+}
+
+// Liniendiagramm mit Fadenkreuz — fuer den Besucherverlauf UND die Google-Suche.
+// Teile werden per Klasse im eigenen Diagramm gesucht, nicht per id: zwei Diagramme
+// auf einer Seite haetten sonst dieselben ids.
+function zeichneVerlauf(el, series, vals, name, hourly) {
     var W = el.clientWidth, H = el.clientHeight;
     if (!series.length || W < 50) {
         el.innerHTML = '<div class="chart-empty">' + T('Keine Daten im Zeitraum.', 'No data in this period.') + '</div>';
         return;
     }
 
-    var vals = series.map(function (s) { return Number(s[key]) || 0; });
     var step = niceStep(Math.max.apply(null, vals) / 4);
     var max = step * 4;
     var cs = getComputedStyle(el);
@@ -614,14 +620,14 @@ function renderMainChart() {
         out += '<path class="area" d="' + line + 'L' + x(n - 1).toFixed(1) + ' ' + (TOP + ih) + 'L' + x(0).toFixed(1) + ' ' + (TOP + ih) + 'Z"/>';
         out += '<path class="line" d="' + line + '"/>';
     }
-    out += '<line class="cross" id="chartCross" y1="' + TOP + '" y2="' + (TOP + ih) + '" x1="-10" x2="-10" visibility="hidden"/>';
-    out += '<circle class="dot" id="chartDot" r="4.5" cx="' + x(0) + '" cy="' + y(vals[0]) + '"' + (n > 1 ? ' visibility="hidden"' : '') + '/>';
-    out += '<rect id="chartHit" x="' + L + '" y="0" width="' + iw + '" height="' + (TOP + ih) + '" fill="transparent"/>';
+    out += '<line class="cross" y1="' + TOP + '" y2="' + (TOP + ih) + '" x1="-10" x2="-10" visibility="hidden"/>';
+    out += '<circle class="dot" r="4.5" cx="' + x(0) + '" cy="' + y(vals[0]) + '"' + (n > 1 ? ' visibility="hidden"' : '') + '/>';
+    out += '<rect class="hit" x="' + L + '" y="0" width="' + iw + '" height="' + (TOP + ih) + '" fill="transparent"/>';
 
     el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" role="img" aria-label="' +
-        esc(T(METRIC_NAMES[key][0], METRIC_NAMES[key][1])) + '">' + out + '</svg><div class="chart-tip" id="chartTip"></div>';
+        esc(name) + '">' + out + '</svg><div class="chart-tip"></div>';
 
-    var svg = el.querySelector('svg'), cross = el.querySelector('#chartCross'), dot = el.querySelector('#chartDot'), tip = el.querySelector('#chartTip');
+    var svg = el.querySelector('svg'), cross = el.querySelector('.cross'), dot = el.querySelector('.dot'), tip = el.querySelector('.chart-tip');
     function at(clientX) {
         var r = svg.getBoundingClientRect();
         var px = (clientX - r.left) * (W / r.width);
@@ -630,7 +636,7 @@ function renderMainChart() {
         var cx = x(i);
         cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible');
         dot.setAttribute('cx', cx); dot.setAttribute('cy', y(vals[i])); dot.setAttribute('visibility', 'visible');
-        tip.innerHTML = '<b>' + esc(fmtInt(vals[i])) + ' ' + esc(T(METRIC_NAMES[key][0], METRIC_NAMES[key][1])) + '</b><span>' + esc(pointLabel(series[i].ts, true, hourly)) + '</span>';
+        tip.innerHTML = '<b>' + esc(fmtInt(vals[i])) + ' ' + esc(name) + '</b><span>' + esc(pointLabel(series[i].ts, true, hourly)) + '</span>';
         var left = cx / W * r.width;
         var half = tip.offsetWidth / 2;
         tip.style.left = Math.max(half, Math.min(r.width - half, left)) + 'px';
@@ -1556,6 +1562,105 @@ async function loadAll() {
     }
 }
 
+// ─── Google-Suche (Search Console ueber den Proxy, /gsc) ─────────
+// Eigener Abruf, unabhaengig vom grossen: faellt die Suche aus, bleibt der Rest stehen —
+// und umgekehrt. Google meldet Tageswerte mit 2-3 Tagen Verzug.
+var gsc = { data: null, metric: 'klicks' };
+var GSC_NAMEN = { klicks: ['Klicks', 'Clicks'], impressionen: ['Impressionen', 'Impressions'] };
+
+async function loadGsc() {
+    try {
+        var res = await fetch(CF_PROXY + '/gsc?range=' + currentRange, { cache: 'no-store' });
+        var d = await res.json().catch(function () { return { error: 'HTTP ' + res.status }; });
+        gsc.data = d;
+    } catch (e) {
+        gsc.data = { verbunden: true, error: e.message || String(e) };
+    }
+    renderGsc();
+}
+
+function gscFehlerText(d) {
+    if (!d) return '';
+    if (d.verbunden === false) return T('Die Search Console ist noch nicht angebunden.', 'Search Console is not connected yet.');
+    if (d.error) return T('Search Console gerade nicht erreichbar: ', 'Search Console not reachable right now: ') + d.error;
+    return '';
+}
+
+// Nur bis zum letzten GEMELDETEN Tag auffuellen: die 2-3 Tage Verzug am Ende als Nullen
+// zu zeichnen, saehe aus wie ein Einbruch, den es nicht gab.
+function gscReihe(d) {
+    var byDay = {};
+    (d.verlauf || []).forEach(function (p) { byDay[p.ts] = p; });
+    var tage = Object.keys(byDay).sort();
+    if (!tage.length) return [];
+    var out = [], t = parseDay(d.zeitraum && d.zeitraum.von || tage[0]), ende = parseDay(tage[tage.length - 1]);
+    while (t <= ende && out.length < 400) {
+        var k = t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0');
+        out.push(byDay[k] || { ts: k, klicks: 0, impressionen: 0 });
+        t = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1);
+    }
+    return out;
+}
+
+function renderGsc() {
+    var d = gsc.data;
+    var fehler = gscFehlerText(d);
+    var s = (d && d.summe) || {}, v = (d && d.vorher) || {};
+    var hat = !!(d && d.summe);
+    document.getElementById('gscKlicks').textContent = hat ? fmtNum(s.klicks) : '—';
+    document.getElementById('gscImpr').textContent = hat ? fmtNum(s.impressionen) : '—';
+    document.getElementById('gscCtr').textContent = hat && s.impressionen ? fmtPct(s.ctr, 1) : '—';
+    document.getElementById('gscPos').textContent = hat && s.impressionen ? fmtDec(s.position, 1) : '—';
+    setDelta('gscDKlicks', s.klicks, v.klicks);
+    setDelta('gscDImpr', s.impressionen, v.impressionen);
+    setDelta('gscDCtr', s.impressionen ? s.ctr : 0, v.impressionen ? v.ctr : 0);
+    setDelta('gscDPos', s.impressionen ? s.position : 0, v.impressionen ? v.position : 0, true);
+
+    var meta = document.getElementById('gscMeta');
+    if (meta) meta.textContent = d && d.zeitraum
+        ? fmtTag(d.zeitraum.von) + ' – ' + fmtTag(d.zeitraum.bis)
+        : 'Search Console';
+
+    var el = document.getElementById('gscChart'), foot = document.getElementById('gscFoot');
+    var name = T(GSC_NAMEN[gsc.metric][0], GSC_NAMEN[gsc.metric][1]);
+    if (fehler) {
+        el.innerHTML = '<div class="chart-empty">' + esc(fehler) + '</div>';
+        foot.textContent = '';
+    } else if (d) {
+        var reihe = gscReihe(d);
+        zeichneVerlauf(el, reihe, reihe.map(function (p) { return Number(p[gsc.metric]) || 0; }), name, false);
+        var letzter = reihe.length ? reihe[reihe.length - 1].ts : '';
+        foot.textContent = (d.hinweis === 'tage7'
+            ? T('Google kennt keine Stundenwerte, gezeigt sind die letzten 7 Tage. ', 'Google has no hourly data, showing the last 7 days. ')
+            : T('Pfeile vergleichen mit dem gleich langen Zeitraum davor. ', 'Arrows compare with the same length of time before. ')) +
+            (letzter ? T('Google meldet mit 2 bis 3 Tagen Verzug, zuletzt für den ', 'Google reports with a 2 to 3 day delay, latest: ') + fmtTag(letzter, true) + '.' : '');
+    }
+
+    document.querySelectorAll('.gsc-wert-label').forEach(function (x) { x.textContent = name; });
+    var leer = fehler || T('Keine Suchdaten im Zeitraum.', 'No search data in this period.');
+    var zeile = function (r) {
+        return { label: r.label, value: r[gsc.metric] || 0,
+            title: T('Klickrate ', 'CTR ') + fmtPct(r.ctr || 0, 1) + T(' · Position ', ' · position ') + fmtDec(r.position || 0, 1) };
+    };
+    renderList('gscAnfragen', fehler ? [] : (d && d.anfragen || []).map(zeile).sort(function (a, b) { return b.value - a.value; }), { key: 'gscAnfragen', empty: leer });
+    renderList('gscSeiten', fehler ? [] : (d && d.seiten || []).map(zeile).sort(function (a, b) { return b.value - a.value; }), { key: 'gscSeiten', empty: leer });
+}
+
+// lang = ausgeschriebener Monat: am Satzende ergaebe 'Nov.' sonst 'Nov..'
+function fmtTag(iso, lang) {
+    return parseDay(iso).toLocaleDateString(mwlLocale(), { day: 'numeric', month: lang ? 'long' : 'short', year: currentRange > 90 ? 'numeric' : undefined });
+}
+
+function setGscMetric(key) {
+    gsc.metric = key;
+    document.querySelectorAll('.metric[data-gsc]').forEach(function (b) {
+        var on = b.dataset.gsc === key;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    renderGsc();
+}
+
 function setTimeRange(days) {
     currentRange = days;
     document.querySelectorAll('.range-btn').forEach(function (b) {
@@ -1565,6 +1670,7 @@ function setTimeRange(days) {
     });
     view.expanded = {};
     loadAll();
+    loadGsc();
 }
 
 // ─── Gerade eben (Live-Feed) ─────────────────────────────────
@@ -1709,6 +1815,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.metric[data-metric]').forEach(function (b) {
         b.addEventListener('click', function () { setMetric(b.dataset.metric); });
     });
+    document.querySelectorAll('.metric[data-gsc]').forEach(function (b) {
+        b.addEventListener('click', function () { setGscMetric(b.dataset.gsc); });
+    });
     document.querySelectorAll('.seg[data-group]').forEach(function (seg) {
         seg.addEventListener('click', function (e) {
             var b = e.target.closest('button[data-tab]');
@@ -1731,26 +1840,30 @@ document.addEventListener('DOMContentLoaded', function () {
         var list = more.closest('.list');
         if (!list) return;
         if (list.id === 'eventsList') renderEvents(view.data && view.data.customEvents);
+        else if (list.id === 'gscAnfragen' || list.id === 'gscSeiten') renderGsc();
         else {
             var group = { pagesList: 'pages', sourcesList: 'sources', geoList: 'geo', techList: 'tech' }[list.id];
             if (RENDER_TAB[group]) RENDER_TAB[group]();
         }
     });
 
-    var chart = document.getElementById('mainChart');
-    if (chart && 'ResizeObserver' in window) {
+    [['mainChart', renderMainChart], ['gscChart', function () { if (gsc.data) renderGsc(); }]].forEach(function (p) {
+        var chart = document.getElementById(p[0]);
+        if (!chart || !('ResizeObserver' in window)) return;
         var raf = 0, lastW = 0;
         new ResizeObserver(function () {
             if (chart.clientWidth === lastW) return;
             lastW = chart.clientWidth;
             cancelAnimationFrame(raf);
-            raf = requestAnimationFrame(renderMainChart);
+            raf = requestAnimationFrame(p[1]);
         }).observe(chart);
-    }
+    });
 
     bindFloatTip();
     bindSectionNav();
     loadAll();
+    loadGsc();
     startLiveFeed();
     setInterval(function () { if (!document.hidden) loadAll(); }, 300000);
+    setInterval(function () { if (!document.hidden) loadGsc(); }, 1800000);
 });
