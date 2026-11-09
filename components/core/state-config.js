@@ -30,12 +30,34 @@
     // letzten gültigen Backup. Verhindert, dass ein einziger kaputter localStorage-Key die
     // gesamte App-Initialisierung wirft — Symptom war: App lädt Daten nicht, Hard-Reload
     // hilft nicht, nur Cloud-Reload/Neuanlage. Rückgabe: geparstes Objekt oder null (→ Default).
+    // Grundgerüst VOR dem ersten Leser auffüllen. Es gibt zwei Startroutinen am DOMContentLoaded:
+    // initializeApp() (app-startup.js, über mobile-nav-extras.js registriert) läuft ZUERST und ruft
+    // schon recalculateVacationUsed(); das Auffüllen in init-app.js kam erst danach. Fehlte
+    // settings.vacation (Import, alte Sicherung, KI-/Fremddaten), warf vacation-holidays.js
+    // „reading 'usedManual'“ und die App zeigte nur die Fehlerseite (gefunden 09.11.2026 im Emulator).
+    // Nur Struktur, keine Werte des Nutzers ändern; init-app.js füllt danach den Rest wie bisher.
+    function grundgeruest(d) {
+        if (!d || typeof d !== 'object' || Array.isArray(d)) return null;
+        if (!Array.isArray(d.entries)) d.entries = [];
+        if (!d.settings || typeof d.settings !== 'object' || Array.isArray(d.settings)) d.settings = {};
+        const v = d.settings.vacation;
+        if (!v || typeof v !== 'object' || Array.isArray(v)) {
+            d.settings.vacation = {total:30, used:0, usedManual:0, carriedOver:0, mode:'days', carryOverMax:null, lastRolloverYear:null, yearHistory:{}};
+        }
+        if (!Array.isArray(d.settings.hours)) d.settings.hours = [0,8.75,8.75,8.75,8.75,4.5,0];
+        if (!d.settings.break || typeof d.settings.break !== 'object') d.settings.break = {thresh:6, min:[0, 30, 30, 30, 30, 30, 0]};
+        if (!d.settings.ihk || typeof d.settings.ihk !== 'object') d.settings.ihk = {start: '', end: '', exam_zwischen: '', note_zwischen: '', note_abschluss: ''};
+        return d;
+    }
+
     function loadPersistedData() {
         const raw = localStorage.getItem('tg_pro_data');
         if (!raw) return null; // frischer Start — Default-data bleibt bestehen
 
         try {
-            return JSON.parse(raw);
+            const geparst = grundgeruest(JSON.parse(raw));
+            if (geparst) return geparst;
+            console.error('❌ tg_pro_data ist kein Datenobjekt — versuche Auto-Recovery aus Backup');
         } catch (e) {
             console.error('❌ tg_pro_data ist beschädigt — versuche Auto-Recovery aus Backup:', e);
         }
@@ -50,7 +72,7 @@
                     try { localStorage.setItem('tg_pro_data', JSON.stringify(snap.data)); } catch (_) {}
                     window._mwlRecoveredFromBackup = snap.ts ? new Date(snap.ts).toLocaleString(mwlLocale()) : 'unbekannt';
                     console.warn('✅ Daten aus lokalem Backup wiederhergestellt (Stand: ' + window._mwlRecoveredFromBackup + ')');
-                    return snap.data;
+                    return grundgeruest(snap.data);
                 }
             }
         } catch (e2) {
