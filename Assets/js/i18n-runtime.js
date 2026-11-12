@@ -320,6 +320,7 @@
     'Ressourcen': 'Resources',
     'Berichtsheft': 'Report book',
     'Feedback & Support': 'Feedback & support',
+    'Frage oder Problem melden': 'Ask a question or report a problem',
     'Preise': 'Pricing',
     'Was ist MyWorkLog?': 'What is MyWorkLog?',
     'Datenschutz': 'Privacy',

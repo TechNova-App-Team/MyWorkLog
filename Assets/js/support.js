@@ -134,8 +134,8 @@
         state.mode = mode;
         pressGroup('[data-mode]', 'data-mode', mode);
         $('spModeInfo').textContent = mode === 'minimal'
-            ? L('Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.',
-                'Only your message, rating, time and name are sent. No device data, no statistics.')
+            ? L('Nur Nachricht, Bewertung, Zeitpunkt, dein Name und, falls eingetragen, deine E-Mail werden gesendet. Keine Gerätedaten, keine Statistiken.',
+                'Only your message, rating, time, name and, if entered, your email are sent. No device data, no statistics.')
             : L('Zusätzlich Nutzungsstatistiken, App-Einstellungen und Gerätedaten. Nie einzelne Einträge, Notizen oder das Schatten-Berichtsheft.',
                 'Additionally usage statistics, app settings and device data. Never individual entries, notes or the shadow report book.');
     }
@@ -258,8 +258,17 @@
     }
 
     // Die Zeichen im Bericht landen nur in der E-Mail an den Entwickler, nie im UI.
+    function antwortAdresse() { var m = $('spMail'); return m ? m.value.trim() : ''; }
+    // Ohne Regex, Grund im Kopf von Assets/js/kontakt.js.
+    function mailOk(s) {
+        var at = s.indexOf('@');
+        return at > 0 && s.indexOf(' ') === -1 && s.lastIndexOf('.') > at + 1 && s.lastIndexOf('.') < s.length - 1;
+    }
+
     function buildFeedbackData(message, rating) {
         var data = readData();
+        var antwort = antwortAdresse();
+        if (antwort) message = message + '\n\nAntwort an: ' + antwort;
         var emojis = ['—', '😞', '😕', '😐', '😊', '🤩'];
         var base = {
             email: 'sven9micha37@gmail.com',
@@ -270,6 +279,7 @@
             date: new Date().toLocaleString(isEN ? 'en-GB' : 'de-DE'),
             data_mode: state.mode
         };
+        if (antwort) base.reply_to = antwort;
         if (state.mode !== 'full') return base;
         var st = gatherAppStats(data);
         base.message = [
@@ -303,7 +313,7 @@
     var FIELD_LABELS = {
         email: ['Empfänger', 'Recipient'], message: ['Nachricht', 'Message'], rating: ['Bewertung', 'Rating'],
         rating_emoji: ['Bewertung (Symbol)', 'Rating (symbol)'], from_name: ['Name', 'Name'], date: ['Datum & Uhrzeit', 'Date & time'],
-        data_mode: ['Datenmodus', 'Data mode'], user_name: ['Name (App-Einstellung)', 'Name (app setting)'],
+        data_mode: ['Datenmodus', 'Data mode'], reply_to: ['Antwortadresse', 'Reply address'], user_name: ['Name (App-Einstellung)', 'Name (app setting)'],
         total_entries: ['Einträge gesamt', 'Entries total'], total_hours: ['Stunden gesamt', 'Hours total'],
         total_saldo: ['Saldo gesamt', 'Balance total'], total_work_days: ['Arbeitstage', 'Working days'],
         total_school_days: ['Schultage', 'School days'], total_vacation_days: ['Urlaubstage', 'Vacation days'],
@@ -385,6 +395,14 @@
             text.focus();
             return;
         }
+        var adresse = antwortAdresse(), mailFeld = $('spMail');
+        if (mailFeld) mailFeld.removeAttribute('aria-invalid');
+        if (adresse && !mailOk(adresse)) {
+            showStatus('warn', L('Die E-Mail-Adresse sieht unvollständig aus. Prüf sie oder lass das Feld leer.', 'The email address looks incomplete. Check it or leave the field empty.'));
+            mailFeld.setAttribute('aria-invalid', 'true');
+            mailFeld.focus();
+            return;
+        }
         if (!consent.checked) {
             showStatus('warn', L('Setz den Haken bei der Zustimmung — ohne sie wird nichts gesendet.', 'Tick the consent box — nothing is sent without it.'));
             var row = consent.closest('.sp-consent');
@@ -412,8 +430,10 @@
                 text.value = '';
                 consent.checked = false;
                 state.rating = 0; pressGroup('.sp-rate-btn', 'data-rate', 0);
-                showStatus('ok', L('Gesendet. Danke — deine Nachricht ist beim Entwickler angekommen.', 'Sent. Thanks — your message has reached the developer.'));
-                if (typeof window.mwlEvent === 'function') window.mwlEvent('feedback_gesendet', { art: state.kind, modus: state.mode, bewertet: payload.rating !== '0' });
+                showStatus('ok', adresse
+                    ? L('Gesendet. Die Antwort geht an ' + adresse + ', schau auch im Spam-Ordner nach.', 'Sent. The reply goes to ' + adresse + ', check your spam folder too.')
+                    : L('Gesendet. Danke — deine Nachricht ist beim Entwickler angekommen.', 'Sent. Thanks — your message has reached the developer.'));
+                if (typeof window.mwlEvent === 'function') window.mwlEvent('feedback_gesendet', { art: state.kind, modus: state.mode, bewertet: payload.rating !== '0', mit_adresse: !!adresse });
             })
             .catch(function (err) {
                 console.warn('EmailJS Fehler:', err);
