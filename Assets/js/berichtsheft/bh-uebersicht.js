@@ -813,6 +813,12 @@ function renderReports() {
     // deine Wochen". Der Papierkorb bleibt, wenn etwas drin ist (CSS .hf-filter.is-leer).
     const filterLeiste = document.querySelector('.hf-filter');
     if (filterLeiste) filterLeiste.classList.toggle('is-leer', reports.length === 0);
+    // Touch ohne Tastatur: „(Strg+F)" im Platzhalter verspricht dort etwas, das es nicht gibt.
+    const suche = document.getElementById('searchInput');
+    if (suche && !suche.dataset.touch && window.matchMedia && matchMedia('(hover: none)').matches) {
+        suche.dataset.touch = '1';
+        suche.placeholder = L('Suchen', 'Search');
+    }
 
     if (filtered.length === 0) {
         list.innerHTML = '';
