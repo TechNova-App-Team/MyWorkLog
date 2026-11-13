@@ -178,6 +178,22 @@ const handler = hStart === -1 ? '' : SRC.slice(hStart);
 const vorAbschicken = handler.slice(0, handler.indexOf('kontoEntscheiden('));
 ist(hStart !== -1 && vorAbschicken.includes('if (!note)') && vorAbschicken.slice(vorAbschicken.indexOf('if (!note)')).includes('return;'),'Klick auf Zurückgeben/Widerrufen mit leerem Feld schickt nichts ab');
 
+// ── Betrieb hier anlegen (13.11.2026) ──
+// Bis dahin blieb ein angemeldetes Konto ohne Betrieb auf der Infoseite stehen; anlegen ging nur
+// im Berichtsheft der Azubis, obwohl die Seite es „nach dem Anmelden hier“ versprach.
+{
+    const boot = SRC.slice(SRC.indexOf('if (b2bDa() && BHB2B.angemeldet())'), SRC.indexOf('var nutzlast;'));
+    ist(/else if \(!sttFehler && !stt\) \{ bootAnlegen\(\); \}/.test(boot), 'ohne Betrieb: Formular zum Anlegen statt Infoseite');
+    ist(/rolle === 'azubi'\) \{ bootAlsAzubi\(\); \}/.test(boot), 'Azubi-Konto bekommt einen Hinweis statt der Infoseite');
+    const anl = SRC.slice(SRC.indexOf('function bootAnlegen()'), SRC.indexOf('function bootAlsAzubi()'));
+    ist(anl.includes('BHB2B.betriebGruenden(bt, name)') && anl.includes('await bootKonto()'), 'Anlegen ruft betriebGruenden und öffnet danach die Übersicht');
+    ist(anl.includes("mwlEvent('b2b_betrieb_angelegt'"), 'Anlegen wird gemessen');
+    // Bestätigung: unter den Kennzahlen, ohne Azubis zugeklappt
+    const kopf = SRC.slice(SRC.indexOf('var n = d.azubis.length;'), SRC.indexOf('$(\'abKonto\').innerHTML = kopf'));
+    ist(kopf.indexOf('abk-kacheln') < kopf.indexOf('id="abkBest"'), 'Bestätigung steht unter den Kennzahlen');
+    ist(kopf.includes('<details class="abk-best abk-best-zu" id="abkBest">'), 'ohne Azubis ist die Bestätigung zugeklappt');
+}
+
 console.log(`\nausbilder-cockpit: ${ok} ok, ${fehler} fehlgeschlagen`);
 if (ok === 0) process.exit(1);
 process.exit(fehler ? 1 : 0);

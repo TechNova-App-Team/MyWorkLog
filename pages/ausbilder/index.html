@@ -350,6 +350,16 @@
             transition: box-shadow 0.2s ease;
         }
         .abk-best.is-hervor { box-shadow: 0 0 0 4px rgba(var(--warning-rgb), 0.18); }
+        /* Zugeklappt (noch keine Azubis): eine ruhige Zeile statt Warnrand */
+        .abk-best.abk-best-zu { padding: 0; border-color: var(--border); border-left-width: 1px; }
+        .abk-best-zu > .abk-best-sum {
+            padding: 14px 18px; cursor: pointer; font-size: 0.88rem; color: var(--text-muted);
+            list-style-position: inside; border-radius: var(--radius);
+        }
+        .abk-best-zu > .abk-best-sum:hover { color: var(--text-main); }
+        .abk-best-zu > .abk-best-sum:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .abk-best-zu[open] { padding: 0 22px 20px; border-color: rgba(var(--warning-rgb), 0.38); }
+        .abk-best-zu[open] > .abk-best-sum { padding: 14px 0; margin-bottom: 4px; }
         .abk-best-t { font-size: 1.08rem; font-weight: 650; letter-spacing: -0.015em; line-height: 1.3; }
         .abk-best-s { margin-top: 6px; font-size: 0.86rem; color: var(--text-muted); line-height: 1.6; max-width: 62ch; }
         .abk-best-weg { margin-top: 16px; }
@@ -628,6 +638,18 @@
             border-color: rgba(var(--danger-rgb), 0.5);
         }
         .abk-einl-code .abk-verwerfen:disabled { opacity: 0.5; cursor: default; }
+
+        /* Betrieb anlegen (bootAnlegen): eine Spalte, ein Feld, ein Knopf */
+        .abk-anlegen { max-width: 520px; margin: clamp(24px, 6vw, 64px) auto 0; }
+        .abk-anl-schritt { font-size: 0.8rem; color: var(--text-faint); margin-bottom: 10px; }
+        .abk-anl-t { font-family: var(--fd); font-size: clamp(1.8rem, 4vw, 2.4rem); font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; }
+        .abk-anl-s { margin-top: 12px; font-size: 0.98rem; line-height: 1.65; color: var(--text-muted); }
+        .abk-anl-form { margin-top: 22px; }
+        .abk-anl-fehler { margin-top: 12px; font-size: 0.88rem; color: var(--danger); }
+        .abk-anl-knopf { margin-top: 22px; gap: 10px; padding: 13px 22px; border-radius: 999px; background: var(--text-main); color: var(--bg-deep); border: 0; font: inherit; font-weight: 600; cursor: pointer; }
+        .abk-anl-knopf svg { width: 17px; height: 17px; }
+        .abk-anl-knopf:disabled { opacity: 0.6; cursor: default; }
+        .abk-anl-knopf:active { transform: scale(0.97); }
 
         /* Leerzustand ohne Azubis: ein Anfang, keine Sackgasse. */
         .abk-start {
@@ -1094,8 +1116,11 @@
             font-family: 'Geist', var(--font-main);
         }
         [data-theme="light"] #abIntro { --edge: rgba(255, 255, 255, 0.9); --shadow-deep: 0 30px 80px -40px rgba(40, 20, 80, 0.25); }
+        /* right: 0 statt -10 %: der Schein ragte rechts ueber die Seite und gab bei 1280 px 32 px
+           Querscrollen (gemessen 13.11.2026). overflow-x: clip am body hilft NICHT — der Wert wandert
+           auf den Viewport und scrollt trotzdem. Sein Zentrum liegt bei 35 %, rechts fehlt nichts. */
         #abIntro::before {
-            content: ''; position: absolute; left: -10%; right: -10%; top: -120px; height: 900px; z-index: -1; pointer-events: none;
+            content: ''; position: absolute; left: -10%; right: 0; top: -120px; height: 900px; z-index: -1; pointer-events: none;
             background: radial-gradient(50% 50% at 35% 0%, rgba(var(--primary-rgb), 0.2), transparent 70%);
         }
 
@@ -1165,6 +1190,30 @@
         }
         #abIntro .ab-cta:hover { background: var(--text-main); box-shadow: 0 16px 50px -10px rgba(var(--primary-rgb), 0.85); }
         #abIntro .ab-cta:active { transform: scale(0.97); }
+
+        /* Erster Bildschirm: Knopf + drei Schritte (echte Reihenfolge, deshalb Nummern) */
+        #abIntro .abi-start { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+        #abIntro .abi-start .ab-cta { gap: 10px; }
+        #abIntro .abi-start .ab-cta svg { width: 17px; height: 17px; transition: transform 0.3s var(--ease-out); }
+        #abIntro .abi-start .ab-cta:hover svg { transform: translateX(3px); }
+        .abi-drei {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+            margin: clamp(32px, 4vw, 44px) 0 0; padding: 0; list-style: none; max-width: 60rem;
+        }
+        .abi-drei li {
+            display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 4px;
+            padding: 16px 18px 18px; border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)), var(--bg-card);
+            border: 1px solid var(--border); box-shadow: inset 0 1px 0 var(--edge);
+        }
+        .abi-drei-n {
+            grid-row: 1 / span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+            border: 1px solid var(--border-strong); font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        .abi-drei b { font-size: 0.95rem; font-weight: 600; color: var(--text-main); line-height: 1.3; }
+        .abi-drei span:not(.abi-drei-n) { font-size: 0.86rem; line-height: 1.5; color: var(--text-muted); }
+        @media (max-width: 760px) { .abi-drei { grid-template-columns: 1fr; } }
 
         /* Ohne Konto: eine echte Reihenfolge, deshalb nummeriert. */
         #abIntro .ab-steps { margin-top: 24px; }
@@ -1653,7 +1702,23 @@
         <section id="abIntro">
             <p class="ab-eyebrow">Für Ausbilderinnen und Ausbilder</p>
             <h1 class="ab-title">Berichtshefte Ihrer Azubis prüfen und abzeichnen</h1>
-            <p class="ab-lead">Diese Seite hat zwei Betriebsarten. Mit einem Konto ist sie die Übersicht über alle Azubis Ihres Betriebs und deren Wochen. Ohne Konto zeigt sie die Woche, deren Link Sie aus einem Berichtsheft bekommen haben.</p>
+            <!-- Seit 13.11.2026: Versprechen + Knopf + drei Schritte VOR den Bildern. Vorher erklaerte der
+                 erste Satz die „zwei Betriebsarten“ der Seite, und der erste Knopf stand erst nach einem
+                 Bildschirm Aufnahmen und Listen. Anlass: Google-Ads-Test zur IHK-Abschaltung, der hierher
+                 fuehrt (Lokales/werbung/google-ads-plan.md). Die Link-Variante ohne Konto muss im Text
+                 bleiben (siehe Kommentar oben, Googles Beschreibung der Seite). -->
+            <p class="ab-lead">Das Digitale Berichtsheft der IHK endet am 31. Dezember 2026. Hier sehen Sie die Wochen aller Azubis Ihres Betriebs an einem Ort, geben mit Anmerkung zurück und zeichnen digital ab. Kostenlos und ohne Vertrag. Es geht auch ganz ohne Konto: Dann prüfen Sie eine einzelne Woche über den Link aus dem Berichtsheft.</p>
+            <div class="abi-start">
+                <a class="ab-cta" href="/?cloud=login&amp;back=ausbilder" onclick="if(typeof mwlEvent==='function')mwlEvent('b2b_einrichten_klick',{ort:'oben'},{transport:'sendBeacon'})">
+                    <span>Betrieb kostenlos einrichten</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
+            </div>
+            <ol class="abi-drei">
+                <li><span class="abi-drei-n" aria-hidden="true">1</span><b>Anmelden und Betrieb anlegen</b><span>Der Name des Betriebs genügt für den Anfang.</span></li>
+                <li><span class="abi-drei-n" aria-hidden="true">2</span><b>Azubis einladen</b><span>Einmal je Azubi per Link oder QR-Code. Danach kommt jede fertige Woche von selbst.</span></li>
+                <li><span class="abi-drei-n" aria-hidden="true">3</span><b>Wochen prüfen</b><span>Ansehen und zurückgeben sofort, abzeichnen nach einer kurzen Bestätigung Ihres Betriebs.</span></li>
+            </ol>
 
             <!-- Aufnahmen: tools/ausbilder-screenshots.mjs (echter Code, Beispieldaten).
                  KEINE id an den neuen Huellen: der i18n-Schluessel haengt an der
@@ -1690,11 +1755,11 @@
                     <li>Ändert ein Azubi eine Woche nach der Freigabe, führt die Übersicht sie wieder als offen.</li>
                 </ul>
 
-                <a class="ab-cta" href="/?cloud=login&amp;back=ausbilder">
+                <a class="ab-cta" href="/?cloud=login&amp;back=ausbilder" onclick="if(typeof mwlEvent==='function')mwlEvent('b2b_einrichten_klick',{ort:'liste'},{transport:'sendBeacon'})">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
                     <span>Anmelden und Übersicht öffnen</span>
                 </a>
-                <p class="ab-way-note">Noch kein Betrieb hinterlegt? Nach dem Anmelden legen Sie ihn hier an und erzeugen den ersten Einladungscode. Der Weg über ein Konto ist neu — der Weg über den Link darunter bleibt unverändert bestehen.</p>
+                <p class="ab-way-note">Noch kein Betrieb hinterlegt? Nach dem Anmelden legen Sie ihn hier an und erzeugen den ersten Einladungscode. Der Weg über den Link darunter bleibt daneben bestehen.</p>
             </section>
             </div>
 
@@ -1749,7 +1814,7 @@
                  nicht, was ihn nach der Anmeldung erwartet. -->
             <section class="ab-way abi-roles abi-nachweis" data-reveal>
                 <h2 class="ab-way-t">Wie ein Betrieb bestätigt wird</h2>
-                <p class="ab-way-s">Einen Betriebsnamen kann jeder eintippen. Abzeichnen kann ein Betrieb deshalb erst, wenn er auf einem von drei Wegen bestätigt ist. Welcher es war, sehen Ihre Azubis, und er steht auf jedem abgezeichneten Nachweis.</p>
+                <p class="ab-way-s">Ansehen, Einladen und Zurückgeben geht sofort nach dem Anlegen. Für das Abzeichnen bestätigen Sie Ihren Betrieb einmal auf einem von drei Wegen, denn einen Betriebsnamen kann jeder eintippen. Welcher Weg es war, sehen Ihre Azubis, und er steht auf jedem abgezeichneten Nachweis.</p>
                 <ul class="ab-feats ab-roles">
                     <li><span class="ab-role">Firmenadresse</span> <span>Sie melden sich mit Ihrer Adresse der Firma an. Weil so eine Adresse auch Azubis haben, reicht sie allein nicht: Der Betriebsname muss im Impressum Ihrer Website stehen, und die Firma stimmt über die Adresse aus dem Impressum zu — mit einem Klick in einer Mail, ohne eigenes Konto.</span></li>
                     <li><span class="ab-role">DNS-Eintrag</span> <span>Für IT-Verantwortliche: ein TXT-Eintrag in der Domain der Firma. Wer die Domain verwaltet, spricht für die Firma.</span></li>
@@ -3497,6 +3562,7 @@
                 // Ohne Azubis gibt es nichts zu pruefen und keine Karte — der
                 // Anfang ist in beiden Reitern derselbe: einladen.
                 box.innerHTML = '<section class="abk-start">' +
+                    '<p class="abk-anl-schritt">' + abL('Schritt 2 von 2', 'Step 2 of 2') + '</p>' +
                     '<h2 class="abk-start-t">' + abL('Noch keine Azubis verbunden', 'No apprentices connected yet') + '</h2>' +
                     '<p class="abk-start-s">' + abL(
                         'Erzeugen Sie einen Einladungscode und geben Sie ihn weiter. Im Berichtsheft wird er unter „Betrieb & IHK“ eingetragen, danach erscheinen die Wochen hier.',
@@ -3563,11 +3629,6 @@
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
                 '<span>' + abL('Azubi einladen', 'Invite apprentice') + '</span></button>' +
                 '</header>' +
-                // Solange der Betrieb nicht bestaetigt ist, steht der Weg dazu
-                // OFFEN ganz oben — er sperrt die Hauptfunktion dieser Seite und
-                // gehoert deshalb nicht hinter einen Knopf.
-                (d.nachgewiesen ? '' : '<section class="abk-best" id="abkBest" aria-labelledby="abkBestT">' +
-                    (d.nachweisArt === 'email' ? stufenInhalt(d) : bestaetigenInhalt(d)) + '</section>') +
                 '<div class="abk-kacheln">' +
                 kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
                                              : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
@@ -3584,6 +3645,16 @@
                 // Meldungen VOR dem §14-Hinweis: eine Woche, die es nicht
                 // mehr gibt, wiegt schwerer als die allgemeine Monatsfrist.
                 '</div>' + meldungenBlock() + hinweis +
+                // Bestaetigung UNTER den Kennzahlen, nicht mehr als Wand ganz oben (13.11.2026,
+                // Entscheidung des Nutzers): gesperrt ist nur das Abzeichnen (Policy freigaben_insert),
+                // Ansehen, Einladen und Zurueckgeben gehen sofort. Offen bleibt der Weg trotzdem —
+                // hinter einem Knopf wuerde ihn niemand finden.
+                // Ohne Azubis gibt es noch nichts abzuzeichnen: dann zugeklappt, damit „Azubis
+                // einladen“ der erste sichtbare Schritt ist (gemessen nach dem Anlegen: der Kasten
+                // fuellte 430 px VOR dem Einladen). Sobald Wochen warten, steht er offen.
+                (d.nachgewiesen ? '' : (n ? '<section class="abk-best" id="abkBest" aria-labelledby="abkBestT">' : '<details class="abk-best abk-best-zu" id="abkBest">' +
+                    '<summary class="abk-best-sum">' + abL('Betrieb bestätigen, damit Sie später abzeichnen können', 'Confirm your company so you can sign off later') + '</summary>') +
+                    (d.nachweisArt === 'email' ? stufenInhalt(d) : bestaetigenInhalt(d)) + (n ? '</section>' : '</details>')) +
                 '<div id="abkEinladung"></div><div id="abkDomain"></div>';
 
             // Die Reiter stehen auch ohne Azubis da: sonst ist "Team" (und
@@ -4493,6 +4564,7 @@
                 }
                 if (k === 'zur-bestaetigung') {
                     var ziel = $('abkBest');
+                    if (ziel && ziel.tagName === 'DETAILS') ziel.open = true;
                     if (ziel) { ziel.scrollIntoView({ block: 'start', behavior: 'smooth' }); ziel.classList.add('is-hervor'); setTimeout(function () { ziel.classList.remove('is-hervor'); }, 1600); }
                     return;
                 }
@@ -4669,6 +4741,62 @@
 
             bindeKonto();
             renderKonto();
+        }
+
+        // ── Angemeldet, aber noch kein Betrieb: hier anlegen ─────────────
+        function bootAnlegen() {
+            show('abIntro', false);
+            show('abKonto', true);
+            $('abHeadNote').textContent = abL('Betrieb einrichten', 'Set up your company');
+            $('abKonto').innerHTML = '<section class="abk-anlegen" aria-labelledby="abkAnlT">' +
+                '<p class="abk-anl-schritt">' + abL('Schritt 1 von 2', 'Step 1 of 2') + '</p>' +
+                '<h1 class="abk-anl-t" id="abkAnlT">' + abL('Ihren Betrieb anlegen', 'Create your company') + '</h1>' +
+                '<p class="abk-anl-s">' + abL('Danach laden Sie Ihre Azubis ein. Ansehen und Zurückgeben geht sofort, für das Abzeichnen bestätigen Sie den Betrieb später einmal.',
+                    'Then invite your apprentices. Viewing and sending back work right away; to sign off you confirm the company once, later.') + '</p>' +
+                '<form class="abk-anl-form" id="abkAnlForm" novalidate>' +
+                '<div class="ab-field"><label class="ab-label" for="abkAnlBetrieb">' + abL('Name des Betriebs', 'Company name') + '</label>' +
+                '<input class="ab-input" type="text" id="abkAnlBetrieb" autocomplete="organization" required maxlength="120" placeholder="' +
+                abL('z. B. Müller Haustechnik GmbH', 'e.g. Miller Building Services Ltd') + '"></div>' +
+                '<div class="ab-field"><label class="ab-label" for="abkAnlName">' + abL('Ihr Name', 'Your name') + '</label>' +
+                '<input class="ab-input" type="text" id="abkAnlName" autocomplete="name" maxlength="80" placeholder="' + abL('Vor- und Nachname', 'First and last name') + '">' +
+                '<p class="ab-hint">' + abL('Steht bei Ihren Entscheidungen im Berichtsheft der Azubis.', 'Shown with your decisions in your apprentices\' record books.') + '</p></div>' +
+                '<p class="abk-anl-fehler" id="abkAnlFehler" role="alert" hidden></p>' +
+                '<button type="submit" class="ab-cta abk-anl-knopf" id="abkAnlKnopf"><span>' + abL('Betrieb anlegen', 'Create company') + '</span>' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></button>' +
+                '</form></section>';
+            var f = $('abkAnlForm');
+            setTimeout(function () { var i = $('abkAnlBetrieb'); if (i) i.focus(); }, 60);
+            f.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                var bt = ($('abkAnlBetrieb').value || '').trim();
+                var name = ($('abkAnlName').value || '').trim();
+                var fehler = $('abkAnlFehler');
+                if (bt.length < 2) {
+                    fehler.textContent = abL('Bitte den Namen des Betriebs eingeben.', 'Please enter the company name.');
+                    fehler.hidden = false; $('abkAnlBetrieb').focus(); return;
+                }
+                var knopf = $('abkAnlKnopf');
+                knopf.disabled = true; fehler.hidden = true;
+                try {
+                    await BHB2B.betriebGruenden(bt, name);
+                    if (typeof mwlEvent === 'function') mwlEvent('b2b_betrieb_angelegt', { ort: 'ausbilder' });
+                    await bootKonto();
+                } catch (err) {
+                    fehler.textContent = (err && err.message) || abL('Anlegen hat nicht geklappt. Bitte noch einmal versuchen.', 'Could not create the company. Please try again.');
+                    fehler.hidden = false;
+                    knopf.disabled = false;
+                }
+            });
+        }
+        // Konto ist als Azubi mit einem Betrieb verbunden: die Ausbilder-Übersicht braucht ein eigenes Konto.
+        function bootAlsAzubi() {
+            show('abIntro', false);
+            show('abKonto', true);
+            $('abKonto').innerHTML = '<section class="abk-anlegen">' +
+                '<h1 class="abk-anl-t">' + abL('Dieses Konto ist ein Azubi-Konto', 'This is an apprentice account') + '</h1>' +
+                '<p class="abk-anl-s">' + abL('Es ist als Azubi mit einem Betrieb verbunden. Für die Ausbilder-Übersicht melden Sie sich bitte mit einem eigenen Konto an.',
+                    'It is connected to a company as an apprentice. For the trainer overview, please sign in with a separate account.') + '</p>' +
+                '<p><a class="ab-inl" href="/berichtsheft/">' + abL('Zum Berichtsheft', 'To the record book') + '</a></p></section>';
         }
 
         // ── Anfrage an die Firma ─────────────────────────────────────
@@ -4851,9 +4979,15 @@
                 // Kein Fragment: kontobasierter Weg, wenn ein Ausbilder
                 // angemeldet ist. Sonst bleibt der Intro-Zustand stehen.
                 if (b2bDa() && BHB2B.angemeldet()) {
-                    var stt = null;
-                    try { stt = await BHB2B.status(); } catch (e) { /* Netzfehler → Intro */ }
+                    var stt = null, sttFehler = false;
+                    try { stt = await BHB2B.status(); } catch (e) { sttFehler = true; /* Netzfehler → Intro */ }
                     if (stt && stt.rolle === 'ausbilder') { await bootKonto(); }
+                    // 🔴 Bis 13.11.2026 blieb hier ohne Betrieb einfach die Infoseite stehen: Anlegen ging
+                    // NUR im Berichtsheft der Azubis (bh-b2b-ui.js), obwohl der Text hier „nach dem Anmelden
+                    // legen Sie ihn hier an“ versprach. Wer „Betrieb einrichten“ tippte, kam nach dem Login
+                    // zurück auf dieselbe Seite, ohne nächsten Schritt.
+                    else if (!sttFehler && !stt) { bootAnlegen(); }
+                    else if (stt && stt.rolle === 'azubi') { bootAlsAzubi(); }
                 }
                 return;
             }

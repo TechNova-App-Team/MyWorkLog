@@ -246,6 +246,8 @@ var EVENT_LABELS = {
     'deep_dive':        ['Deep Dive', 'Deep dive'],
     'b2b_freischaltung_angefragt': ['Betrieb: Freischaltung angefragt', 'Company: verification requested'],
     'b2b_firma_angefragt': ['Betrieb: Firma angefragt', 'Company: requested'],
+    'b2b_einrichten_klick': ['Ausbilder: Einrichten geklickt', 'Trainer: set-up clicked'],
+    'b2b_betrieb_angelegt': ['Ausbilder: Betrieb angelegt', 'Trainer: company created'],
     'b2b_betrieb_bestaetigt': ['Betrieb bestätigt', 'Company verified'],
     'b2b_firma_entschieden': ['Betrieb: Anfrage entschieden', 'Company: request decided'],
     'ausbilder_einladung': ['Ausbilder-Einladung', 'Trainer invitation'],
