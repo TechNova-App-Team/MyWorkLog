@@ -430,7 +430,10 @@ async function exportBulkPDFCore() {
 
     // 2. Fallback auf lokale Reports
     if (bulkReports.length === 0) {
-        bulkReports = [...(window.reports || [])]
+        // `reports` ist ein let-Global (bh-basis.js) und steht NIE auf window. Bis 13.11.2026 stand
+        // hier window.reports — damit war die Liste immer leer, und „Alle als PDF" meldete bei jedem
+        // ohne Betriebskonto „Keine vollständigen … Berichte" (gemessen: 17 fertige Wochen im Heft).
+        bulkReports = [...(typeof reports !== 'undefined' && Array.isArray(reports) ? reports : [])]
             .filter(r => r.status === 'complete' || r.status === 'signed')
             .sort((a, b) => {
                 const da = new Date(a.dateFrom || 0);
@@ -493,7 +496,7 @@ async function exportBulkPDFCore() {
     if (typeof mwlEvent === 'function') mwlEvent('berichtsheft', { aktion: 'pdf_sammel', berichte: bulkReports.length });
     document.body.removeChild(overlay);
     showToast(bulkReports.length === 1
-        ? L('1 Woche als Bulk-PDF exportiert', '1 week exported as a bulk PDF')
-        : L(`${bulkReports.length} Wochen als Bulk-PDF exportiert`, `${bulkReports.length} weeks exported as a bulk PDF`), 'success');
+        ? L('1 Woche als PDF gespeichert', '1 week saved as PDF')
+        : L(`${bulkReports.length} Wochen in einem PDF gespeichert`, `${bulkReports.length} weeks saved in one PDF`), 'success');
 }
 

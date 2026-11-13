@@ -808,6 +808,11 @@ function renderReports() {
     reportCount.textContent = filtered.length === reports.length
         ? String(reports.length)
         : L(`${filtered.length} von ${reports.length}`, `${filtered.length} of ${reports.length}`);
+    // Ohne eine einzige Woche gibt es nichts zu suchen, filtern oder sortieren. Gemessen
+    // 13.11.2026 am Handy: sechs Bedienelemente (~180 px) standen VOR „Hier stehen gleich
+    // deine Wochen". Der Papierkorb bleibt, wenn etwas drin ist (CSS .hf-filter.is-leer).
+    const filterLeiste = document.querySelector('.hf-filter');
+    if (filterLeiste) filterLeiste.classList.toggle('is-leer', reports.length === 0);
 
     if (filtered.length === 0) {
         list.innerHTML = '';

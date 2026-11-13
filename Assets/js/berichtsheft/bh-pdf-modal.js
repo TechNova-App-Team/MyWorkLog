@@ -378,7 +378,7 @@ function executePDFExportAll() {
     if (typeof exportBulkPDFCore === 'function') {
         exportBulkPDFCore();
     } else {
-        showToast(L('Bulk Export ist nicht verfügbar.', 'Bulk export is not available.'), 'error');
+        showToast(L('Das PDF aller Wochen geht gerade nicht. Lade die Seite einmal neu.', 'The PDF of all weeks is not available right now. Reload the page once.'), 'error');
     }
 }
 

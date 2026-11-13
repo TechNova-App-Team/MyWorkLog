@@ -840,8 +840,12 @@ const GESCHENK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
     '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>' +
     '<path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>';
 function preisHinweisOffen() { try { return !localStorage.getItem(PREIS_HINWEIS_KEY); } catch (e) { return false; } }
+// Noch keine Woche im Heft: der erste Blick gehoert dem Einstieg. Neulinge sahen den Hinweis
+// auch vorher nicht sofort (erst nach dem Wegklicken der Stufen-Ankuendigung) — so bleibt die
+// Kaufraten-Messung (pass_werbung, ort assistent) vergleichbar.
+const neuling = () => typeof reports !== 'undefined' && Array.isArray(reports) && reports.length === 0;
 function preisHinweisHTML() {
-    if (!preisHinweisOffen() || hinweisOffen() || !passWerben()) return '';
+    if (!preisHinweisOffen() || hinweisOffen() || neuling() || !passWerben()) return '';
     return '<aside class="aic-preis" id="aicPreis" aria-label="' + esc(Lx('Hinweis zu den Preisen', 'Note about pricing')) + '">' +
         '<span class="aic-preis-icon">' + GESCHENK_ICON + '</span>' +
         '<p class="aic-preis-text"><strong>' + esc(Lx('Der Ausbildungs-Pass ist da.', 'The training pass is here.')) + '</strong>' +
@@ -860,7 +864,17 @@ function preisHinweisWeg() {
         setTimeout(() => { if (offen) zeichnen(); }, 160);
     } else if (offen) zeichnen();
 }
-function hinweisOffen() { try { return !localStorage.getItem(HINWEIS_KEY); } catch (e) { return false; } }
+// Die Ankuendigung ist eine Aenderungsnotiz („sind zurück") — fuer Leute, die den Assistenten
+// vorher kannten. Ein Neuling (noch keine Woche im Heft) kennt kein Vorher; bei ihm fuellte sie
+// am Handy den ganzen ersten Bildschirm, der Einstieg „Erzähl kurz, was du lernst" lag darunter
+// (gemessen 13.11.2026). Fuer ihn gilt sie als gelesen, auch spaeter.
+function hinweisOffen() {
+    try {
+        if (localStorage.getItem(HINWEIS_KEY)) return false;
+        if (typeof reports !== 'undefined' && Array.isArray(reports) && reports.length === 0) { hinweisGelesen(); return false; }
+        return true;
+    } catch (e) { return false; }
+}
 function hinweisGelesen() { try { localStorage.setItem(HINWEIS_KEY, new Date().toISOString().slice(0, 10)); } catch (e) { } }
 function hinweisWeg() { hinweisGelesen(); if (offen) zeichnen(); }
 function hinweisHTML() {
@@ -904,8 +918,10 @@ function zeichnen() {
         if (beschaeftigt) warteAnimieren();
     }
     profilZeichnen();
-    // Leerer Chat mit Ankuendigung: oben bleiben, sonst ist ihr Kopf weggescrollt.
-    if (!n.length && hinweisOffen()) { const s = $('aicScroll'); if (s) requestAnimationFrame(() => { s.scrollTop = 0; }); }
+    // Leerer Chat: oben bleiben. Bis 13.11.2026 nur mit Ankuendigung — ohne sie sprang der leere
+    // Start nach unten, und am Handy war „Erzähl kurz, was du lernst." weggescrollt; zu sehen
+    // waren nur die Beispiele und die Stil-Karte (gemessen 384 × 832).
+    if (!n.length && !entwurfHatInhalt(gespraech.entwurf)) { const s = $('aicScroll'); if (s) { s.scrollTop = 0; requestAnimationFrame(() => { s.scrollTop = 0; }); } }
     else nachUnten();
 }
 // ── Warten: ein Wochenblatt, das sich beschreibt ─────────────────────

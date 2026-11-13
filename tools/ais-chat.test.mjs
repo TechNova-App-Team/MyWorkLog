@@ -494,6 +494,14 @@ t.gruppe('Preis-Hinweis im leeren Start');
     const e = frisch();
     const I = e.sandbox.AISChat._intern;
     const ls = e.sandbox.localStorage;
+    // Neuling (0 Wochen): weder Ankuendigung noch Preis-Hinweis — der erste Blick gehoert dem Einstieg
+    runInContext(`reports = []`, e.sandbox);
+    t.ok(I.hinweisHTML() === '', 'Neuling: keine „sind zurück“-Ankuendigung');
+    t.ok(I.preisHinweisHTML() === '', 'Neuling: kein Preis-Hinweis im leeren Start');
+    ls.removeItem(I.HINWEIS_KEY);
+    // Ab hier ein Bestandsnutzer mit einer Woche
+    runInContext(`reports = [{ id: 'a', week: 40, dateFrom: '2026-09-28', activities: 'x' }]`, e.sandbox);
+    t.ok(I.hinweisHTML().includes('Schnelle Antworten sind zurück'), 'Gegenprobe: Bestandsnutzer sieht die Ankuendigung');
     ls.setItem(I.HINWEIS_KEY, '2026-10-26');   // Stufen-Ankuendigung gelesen
     const h = I.preisHinweisHTML();
     t.ok(h.includes('bleibt kostenlos') && h.includes('href="/preise/#pass"'), 'erscheint mit der Zusage und dem Link auf die Pass-Karte', h.slice(0, 120));

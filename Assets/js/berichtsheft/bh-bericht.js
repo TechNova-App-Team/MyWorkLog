@@ -768,6 +768,8 @@ function updateTrashBadge() {
     const count = typeof getTrashCount === 'function' ? getTrashCount() : 0;
     badge.textContent = count;
     badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    // Traegt die Leiste bei 0 Wochen (bh-uebersicht.js renderReports): voller Papierkorb bleibt sichtbar
+    if (btn) btn.classList.toggle('hat-inhalt', count > 0);
 }
 
 function restoreReport(id) {
