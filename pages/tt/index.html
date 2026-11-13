@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Zähllink für TikTok (13.11.2026). TikTok gibt dem Konto unter 1.000 Followern keinen Bio-Link, darum steht
+         „myworklog.de/tt“ getippt in Videotext und angepinntem Kommentar. Diese Seite hängt die UTM-Parameter an und
+         leitet aufs Berichtsheft weiter (das verspricht der Clip); PostHog liest sie dort als $entry_utm_source,
+         /analytics/ zeigt sie im Reiter „Kampagnen“. Ziel ist /berichtsheft/, nicht /: das Berichtsheft ist das
+         Produkt für fremde Nutzer, das Dashboard das Werkzeug des Gründers.
+         Kein PostHog hier, sonst zählt jeder Besuch doppelt. noindex + nicht in die Sitemap: ist kein Suchergebnis.
+         Eine 301 über _redirects geht nicht (die Dashboard-Regel frisst /tt vorher, .claude/notes/routing-deploy.md). -->
+    <meta name="robots" content="noindex, nofollow">
+    <title>MyWorkLog</title>
+    <meta http-equiv="refresh" content="0; url=/berichtsheft/?utm_source=tiktok&amp;utm_medium=social">
+    <link rel="canonical" href="https://myworklog.de/berichtsheft/">
+    <script>
+        (function () {
+            var c = new URLSearchParams(location.search).get('c');
+            var ziel = '/berichtsheft/?utm_source=tiktok&utm_medium=social' + (c ? '&utm_campaign=' + encodeURIComponent(c.slice(0, 40)) : '');
+            location.replace(ziel);
+        })();
+    </script>
+</head>
+<body>
+    <p><a href="/berichtsheft/?utm_source=tiktok&amp;utm_medium=social">Weiter zum Berichtsheft</a></p>
+</body>
+</html>
