@@ -355,7 +355,7 @@ var SUB_LABELS = {
     'gehaltszettel_gedruckt': ['Gehaltszettel gedruckt', 'payslip printed'], 'vertrag_angelegt': ['Vertrag angelegt', 'contract created'],
     'zusatzleistung_gespeichert': ['Zusatzleistung gespeichert', 'benefit saved'],
     'gesucht': ['gesucht', 'searched'], 'fall_geoeffnet': ['Fall geöffnet', 'case opened'], 'mustermail_kopiert': ['Mustermail kopiert', 'template email copied'],
-    'weiter_klick': ['weiter in die App', 'on into the app'], 'pdf': ['PDF erstellt', 'PDF created'],
+    'weiter_klick': ['weiter in die App', 'on into the app'], 'geteilt': ['Link geteilt', 'link shared'], 'pdf': ['PDF erstellt', 'PDF created'],
     'weiter_berichtsheft': ['weiter zum Berichtsheft', 'on to the training log'],
     'zur_haelfte': ['bis zur Hälfte gelesen', 'read halfway'], 'zu_ende': ['zu Ende gelesen', 'read to the end'],
     // Gruende der Probleme
