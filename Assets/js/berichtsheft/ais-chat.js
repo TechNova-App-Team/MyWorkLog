@@ -533,6 +533,30 @@ function schnellHTML() {
         knoepfe.push('<button type="button" class="aic-schnell-k" onclick="AISChat.ausfuehrlicher()">' + esc(Lx('Ausführlicher', 'More detail')) + '</button>');
     return knoepfe.length ? '<div class="aic-schnell" role="group" aria-label="' + esc(Lx('Weiter erzählen', 'Keep telling')) + '">' + knoepfe.join('') + '</div>' : '';
 }
+// Antwort, aber noch kein Entwurf (Rückfrage, Einrichtung, „Hallo“): bis 13.11.2026 stand dann
+// nur die Antwort da, die Beispiele des leeren Starts waren weg. Gemessen in 30 Tagen: 54 Personen
+// bekamen eine Antwort ohne Entwurf, nur ein Teil schrieb danach weiter. Jetzt unter der letzten
+// Antwort zwei Beispielsätze (setzen nur ins Feld, wie im leeren Start) und „Mit typischen
+// Tätigkeiten füllen“ — das ist die ausdrückliche Bitte, die das Erfinden-Verbot verlangt
+// (27.09.2026), sichtbar als Nachricht, wie „Leere Tage füllen“. NICHT „Woche vorschlagen“
+// nennen: so heißt die Pass-Funktion (Kalender) direkt darunter in der Profilleiste.
+function weiterHTML() {
+    if (beschaeftigt || !studioDa() || entwurfHatInhalt(gespraech.entwurf)) return '';
+    const k = AIStudio.konfig();
+    if (!k.bereit) return '';
+    const bsp = vorschlaegeFuer(k, k.kw, lernDa() ? lernProfil(new Date()) : null, istEn()).slice(0, 2);
+    return '<div class="aic-weiter">' +
+        '<p class="aic-weiter-t">' + esc(Lx('Zum Beispiel so:', 'For example:')) + '</p>' +
+        '<div class="aic-vorschlaege">' + bsp.map(v =>
+            '<button type="button" class="aic-vorschlag" data-text="' + esc(v) + '" onclick="AISChat.vorschlag(this)">' + esc(v) + '</button>').join('') + '</div>' +
+        '<div class="aic-schnell"><button type="button" class="aic-schnell-k" onclick="AISChat.typischeWoche()">' +
+        esc(Lx('Mit typischen Tätigkeiten füllen', 'Fill with typical tasks')) + '</button></div>' +
+        '</div>';
+}
+function typischeWoche() {
+    if (typeof bhMess === 'function') bhMess('assistent_typische_woche');
+    fuellen();
+}
 function tagBeginnen(i) {
     const f = $('aicText');
     if (!f || !(i >= 0 && i <= 4)) return;
@@ -910,10 +934,13 @@ function zeichnen() {
         n.forEach((x, i) => { if (x.rolle === 'assistent' && !x.woche) letzte = i; });
         const karte = entwurfHatInhalt(gespraech.entwurf) && !gespraech.erledigt
             ? entwurfHTML() + (beschaeftigt ? '' : schnellHTML()) : '';
+        // Nur unter der LETZTEN Nachricht — eine ältere Antwort mit Vorschlägen darunter wirkt wie offen.
+        const weiter = !karte && letzte === n.length - 1 ? weiterHTML() : '';
         let html = '';
         n.forEach((x, i) => {
             html += nachrichtHTML(x, i);
             if (i === letzte && karte) html += '<div class="aic-n is-karte">' + karte + '</div>';
+            if (i === letzte && weiter) html += '<div class="aic-n is-karte">' + weiter + '</div>';
         });
         if (letzte === -1 && karte) html += '<div class="aic-n is-karte">' + karte + '</div>';
         box.innerHTML = hinweisHTML() + html + (beschaeftigt ? tippenHTML() : '');
@@ -2295,7 +2322,7 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
-    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berichtGespeichert, uebernahmeZurueck,
+    tagBeginnen, ausfuehrlicher, typischeWoche, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berichtGespeichert, uebernahmeZurueck,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.

@@ -453,7 +453,7 @@ t.gruppe('Kurzwege unter dem Entwurf');
     t.ok(!I.schnellHTML().includes('ausfuehrlicher()'), 'bei Umfang ausfuehrlich kein "Ausführlicher"');
     I.setzeEntwurf(I.entwurfLesen({ kw: 44, tage: [0, 1, 2, 3, 4].map(i => ({ index: i, entries: ['x' + i] })) }));
     t.ok(I.schnellHTML() === '', 'volle Woche, ausfuehrlich: keine Kurzwege (Hauptaktion bleibt Übernehmen)');
-    t.ok(/onclick="AISChat\.tagBeginnen\(/.test(CHAT) && /tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen/.test(CHAT),
+    t.ok(/onclick="AISChat\.tagBeginnen\(/.test(CHAT) && /tagBeginnen, ausfuehrlicher, typischeWoche, offenerEntwurf, nachtragen/.test(CHAT),
         'Kurzwege und Startseiten-Helfer sind oeffentlich (onclick ruft sie ueber AISChat)');
 }
 
@@ -523,6 +523,17 @@ t.gruppe('Übernehmen → erst Speichern macht erledigt');
     t.ok(!/if \(bhStill\) return/.test(save) && save.includes('b2bOnReportSaved(report)'), 'stilles Speichern spiegelt trotzdem in den Betrieb');
     t.ok(/warNeu && !bhStill &&/.test(save), 'kein Konfetti beim stillen Speichern (das Blatt ist der Moment)');
     t.ok(save.includes('launchConfetti()'), 'Gegenprobe: Konfetti gibt es sonst weiter');
+
+    // Antwort ohne Entwurf → Beispiele + „Mit typischen Tätigkeiten füllen“ (13.11.2026)
+    const weiterQ = CHAT.split('function weiterHTML')[1].split('\nfunction ')[0];
+    t.ok(weiterQ.includes('entwurfHatInhalt(gespraech.entwurf)) return') && weiterQ.includes('k.bereit'), 'weiter nur ohne Entwurf und mit fertigem Profil');
+    t.ok(/AISChat\.typischeWoche\(\)/.test(weiterQ) && /typischeWoche,/.test(CHAT), 'Füllen ist ein sichtbarer Knopf (Bitte statt stilles Erfinden)');
+    t.ok(!/Woche vorschlagen/.test(weiterQ.split('\n').filter(z => !/^\s*\/\//.test(z)).join('\n')), 'nicht wie die Pass-Funktion „Woche vorschlagen“ benannt');
+    t.ok(/letzte === n\.length - 1 \? weiterHTML\(\)/.test(CHAT), 'nur unter der letzten Nachricht');
+    // Leeres Formular → Assistent
+    const BER2 = readFileSync('Assets/js/berichtsheft/bh-bericht.js', 'utf8');
+    t.ok(/bhAssistentHinweis\(!bhFormularHatText\(\)\)/.test(BER2), 'Hinweis nur im leeren Formular');
+    t.ok(/bhFormularOffen = false;[^\n]*\n\s*closeReportModal\(\);/.test(BER2.split('\r\n').join('\n')), 'Wechsel zum Assistenten zählt nicht als leerer Abbruch');
 }
 
 // ── Hinweis auf die Preisliste (v9.4.0) ────────────────────────────────────

@@ -130,6 +130,43 @@ document.addEventListener('input', (e) => {
     if (t && t.closest && t.closest('#reportModal') && (t.classList.contains('daily-textarea') || t.id === 'reportActivities')) bhStatusNachInhalt();
 });
 
+// Leeres Formular → Angebot, es dem Assistenten zu erzählen. Gemessen in 30 Tagen bis 13.11.2026:
+// 53 Personen öffneten das Formular („Selbst schreiben“, „KW nachtragen“) und schlossen es leer.
+// Nur solange das Formular leer ist: jede Eingabe (auch das Befüllen aus dem Assistenten, das
+// 'input' auslöst) blendet es aus. Per JS statt im Markup: kein Text für die i18n-Pipeline, und
+// ohne Assistent (AISChat fehlt) gibt es den Hinweis gar nicht.
+function bhAssistentHinweis(zeigen) {
+    const form = document.getElementById('reportForm');
+    if (!form) return;
+    let el = document.getElementById('rmAssist');
+    if (!zeigen || !window.AISChat) { if (el) el.hidden = true; return; }
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'rmAssist';
+        el.className = 'rm-assist';
+        el.innerHTML = '<p>' + escapeHtml(L('Keine Lust zu tippen? Erzähl dem Assistenten in ein paar Sätzen, was los war.', 'Rather not type? Tell the assistant in a few sentences what happened.')) + '</p>' +
+            '<button type="button" class="rm-assist-k" onclick="bhFormularZumAssistenten()">' +
+            '<svg class="icon" aria-hidden="true"><use href="#i-sparkles"/></svg><span>' + escapeHtml(L('Mit dem Assistenten', 'With the assistant')) + '</span></button>';
+        form.insertBefore(el, form.firstChild);
+    }
+    el.hidden = false;
+}
+function bhFormularZumAssistenten() {
+    const kw = parseInt(document.getElementById('reportWeek').value, 10);
+    const von = document.getElementById('reportDateFrom').value;
+    const jahr = von ? isoWeekYear(new Date(von + 'T12:00:00')) : isoWeekYear(new Date());
+    bhMess('formular_zum_assistenten');
+    bhFormularOffen = false;   // kein „formular_abgebrochen_leer“: er hat ja weitergemacht
+    closeReportModal();
+    const jetzt = new Date();
+    if (kw === getWeekNumber(jetzt) && jahr === isoWeekYear(jetzt)) AISChat.oeffnen();
+    else AISChat.nachtragen(kw, jahr);
+}
+document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest('#reportForm') && (t.tagName === 'TEXTAREA' || t.id === 'reportActivities')) bhAssistentHinweis(false);
+});
+
 function openNewReportModal() {
     editingId = null;
     bhStatusSelbst = false;
@@ -163,6 +200,7 @@ function openNewReportModal() {
     const text = document.getElementById('reportActivities').value;
     document.getElementById('charCount').textContent = text.length + L(' Zeichen', ' characters');
     updateQualityMeter(text);
+    bhAssistentHinweis(!bhFormularHatText());
 }
 
 // Ob das Formular ohne Speichern zugeht: der wichtigste Abbruchpunkt im Trichter.
@@ -342,6 +380,7 @@ function bhStillZurueck(id) {
 async function editReport(id) {
     const report = reports.find(r => r.id === id);
     if (!report) return;
+    bhAssistentHinweis(false);
 
     // Bestaetigte Wochen sind gesperrt.
     if (bhIsLocked(report)) {
