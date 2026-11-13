@@ -71,6 +71,13 @@ const T = {
   de: {
     urteil: { nein: 'Das darf der Chef NICHT', jein: 'Kommt drauf an …', ja: 'Das ist erlaubt' },
     checker: 'Rechte-Checker', alle: 'Alle Fälle', gesetz: 'Was im Gesetz steht', tipps: 'Was du tun kannst',
+    chefSagt: 'Dein Chef sagt', fundstellen: (n) => n === 1 ? '1 Fundstelle' : n + ' Fundstellen',
+    teilenFrage: 'Kennt das jemand aus deiner Klasse?', teilen: 'Link teilen', geteilt: 'Link kopiert',
+    urteilKurz: { nein: 'Darf er nicht', jein: 'Kommt drauf an', ja: 'Darf er' },
+    // Bezieht sich auf das Chef-Zitat daneben, NICHT auf die Suchfrage im H1: die ist mal
+    // „Muss ich …?“, mal „Darf der Betrieb …?“ — ein „Nein.“ wäre bei der Hälfte falsch herum.
+    urteilWort: { nein: 'Darf er nicht.', jein: 'Kommt drauf an.', ja: 'Darf er.' },
+    ganzeAntwort: 'Die ganze Antwort', naechster: 'Tipp', kurzGesagt: 'Kurz gesagt',
     mail: 'E-Mail-Vorlage an deinen Ausbilder', betreff: 'Betreff', kopieren: 'Kopieren', kopiert: 'Kopiert',
     mehr: (k) => 'Weitere Fälle: ' + k, frage: (t) => t + ' – ist das erlaubt?',
     titel: (t) => t + ' – Azubi-Rechte | MyWorkLog',
@@ -85,6 +92,11 @@ const T = {
   en: {
     urteil: { nein: 'The boss may NOT do that', jein: 'It depends …', ja: 'This is allowed' },
     checker: 'Rights Checker', alle: 'All cases', gesetz: 'What the law says', tipps: 'What you can do',
+    chefSagt: 'Your boss says', fundstellen: (n) => n === 1 ? '1 legal source' : n + ' legal sources',
+    teilenFrage: 'Does someone in your class know this one?', teilen: 'Share link', geteilt: 'Link copied',
+    urteilKurz: { nein: 'Not allowed', jein: 'It depends', ja: 'Allowed' },
+    urteilWort: { nein: 'Not allowed.', jein: 'It depends.', ja: 'Allowed.' },
+    ganzeAntwort: 'The full answer', naechster: 'Tip', kurzGesagt: 'In short',
     mail: 'Email template for your trainer', betreff: 'Subject', kopieren: 'Copy', kopiert: 'Copied',
     mehr: (k) => 'More cases: ' + k, frage: (t) => t + ' – is that allowed?',
     titel: (t) => t + ' – Trainee rights | MyWorkLog',
@@ -198,16 +210,17 @@ function seite(s, lang) {
     ],
   };
 
+  // H1 = die Suchfrage (RC_SEO), nicht mehr das Chef-Zitat: bis 11/2026 stand im H1 nur
+  // '"Weihnachtsgeld bekommen nur die Festangestellten."' — kein Wort der Suche
+  // („bekommen azubis weihnachtsgeld“), 5.771 Einblendungen in 28 Tagen bei 0,4 % Klickrate.
+  // Das Zitat bleibt als Sprechblase direkt darunter. Hinter dem ersten „?“ steht im
+  // SEO-Titel nur noch der Zusatz fürs Suchergebnis („Anspruch und Höhe“).
+  const frage = seo ? (seo.includes('?') ? seo.slice(0, seo.indexOf('?') + 1) : seo) : t.frage(titel);
+  const paragraphen = String(s.law || '').split(/\s*\/\s*/).filter(Boolean);
   const gesetze = (d.laws || []).map((l) => `
-                <div class="law-ref">
-                    <div class="law-ref-icon">${svg(BUCH)}</div>
-                    <div class="law-ref-content">
-                        <div class="law-ref-title">${esc(l.title)}</div>
-                        <div class="law-ref-text">${esc(l.text)}</div>
-                    </div>
-                </div>`).join('');
-  const tipps = (d.tips || []).map((x, i) => `
-                    <li class="tip-item"><span class="tip-num" aria-hidden="true">${i + 1}</span><span>${esc(x)}</span></li>`).join('');
+                    <li><p class="rf-g-titel">${esc(l.title)}</p><p>${esc(l.text)}</p></li>`).join('');
+  const tipps = (d.tips || []).map((x) => `
+                    <li>${esc(x)}</li>`).join('');
   const mail = d.email ? `
             <details class="fall-mail">
                 <summary>${esc(t.mail)}</summary>
@@ -222,8 +235,18 @@ function seite(s, lang) {
   const mehr = nachbarn.map((x) => {
     const xd = lang === 'de' ? x : { ...x, ...EN[x.id] };
     return `
-                    <li><a href="${pre}/rechte-checker/${x.id}/">${esc(ohneAnf(xd.title))}</a></li>`;
+                    <li><a href="${pre}/rechte-checker/${x.id}/" data-urteil="${x.verdict}"><span class="rf-mehr-urteil">${esc(t.urteilKurz[x.verdict])}</span><span class="rf-mehr-zitat">${esc(ohneAnf(xd.title))}</span></a></li>`;
   }).join('');
+  // Drei Wege statt zwei: das Berichtsheft fehlte auf allen Arbeitszeit-, Krankheits- und
+  // Kündigungsseiten, obwohl dort der meiste Google-Verkehr landet (28 Tage bis 13.11.2026).
+  const wege = [...new Set([weg, neben, 'heft'])];
+  const artikel = {
+    '@context': 'https://schema.org', '@type': 'Article', inLanguage: lang,
+    headline: frage, description: beschreibung, dateModified: STAND,
+    mainEntityOfPage: url, image: SITE + '/Grafiken/icon-512.png',
+    author: { '@type': 'Organization', name: 'MyWorkLog', url: SITE + '/' },
+    publisher: { '@type': 'Organization', name: 'MyWorkLog', logo: { '@type': 'ImageObject', url: SITE + '/Grafiken/icon-512.png' } },
+  };
 
   return `<!DOCTYPE html>
 <html lang="${lang}">
@@ -259,13 +282,17 @@ ${ldJson(faq)}
     <script type="application/ld+json" data-ld-id="breadcrumb">
 ${ldJson(crumbs)}
     </script>
+    <script type="application/ld+json" data-ld-id="artikel">
+${ldJson(artikel)}
+    </script>
     <link rel="stylesheet" href="/Assets/fonts/bricolage-grotesque-geist-bfd216ed.css">
     <link rel="stylesheet" href="/Assets/css/rechte-checker.css">
+    <link rel="stylesheet" href="/Assets/css/rechte-fall.css">
     <script defer src="/Assets/js/ph-init.js"></script>
 ${lang === 'en' ? '    <script type="application/json" id="i18nLinkMap">' + LINKMAP + '</script>\n' : ''}</head>
 <body class="fall-seite" data-fall="${s.id}">
     <div class="ambient"></div>
-    <div class="shell fall-shell">
+    <div class="shell fall-shell rf-shell">
         <div class="rc-kopfzeile">
         <a href="${pre}/rechte-checker/" class="back-btn">${svg(PFEIL_L)}${esc(t.alle)}</a>
         <nav aria-label="Breadcrumb" class="fall-pfad">
@@ -279,38 +306,70 @@ ${lang === 'en' ? '    <script type="application/json" id="i18nLinkMap">' + LINK
         </nav>
         </div>
 
-        <main class="fall">
-            <header class="fall-kopf">
-                <div class="detail-category">${svg(CAT_ICON[s.cat])}${esc(kat)}</div>
-                <h1 class="fall-titel">${esc(d.title)}</h1>
-                <p class="fall-sub">${esc(d.desc)}</p>
-                <p class="fall-law">${esc(s.law)}</p>
-            </header>
-
-            <div class="verdict-box ${s.verdict}">
-                <div class="verdict-label">${esc(t.urteil[s.verdict])}</div>
-                <div class="verdict-text">${esc(d.verdictShort)}</div>
-                <div class="verdict-detail">${fett(d.verdictDetail)}</div>
-            </div>
-
-            <section class="fall-block" aria-labelledby="h-gesetz">
-                <h2 class="fall-h2" id="h-gesetz">${esc(t.gesetz)}</h2>${gesetze}
+        <main class="rf" data-urteil="${s.verdict}">
+            <section class="rf-held">
+                <div class="rf-held-text">
+                    <p class="rf-kat">${svg(CAT_ICON[s.cat])}${esc(kat)}</p>
+                    <h1 class="rf-frage">${esc(frage)}</h1>
+                    <figure class="rf-spruch">
+                        <figcaption>${esc(t.chefSagt)}</figcaption>
+                        <blockquote><p>${esc(titel)}</p></blockquote>
+                    </figure>
+                    <p class="rf-lage">${esc(d.desc)}</p>
+                </div>
+                <aside class="rf-urteil" aria-labelledby="rf-urteil-wort">
+                  <div class="rf-urteil-kern">
+                    <p class="rf-urteil-marke">${esc(t.kurzGesagt)}</p>
+                    <p class="rf-urteil-wort" id="rf-urteil-wort">${esc(t.urteilWort[s.verdict])}</p>
+                    <p class="rf-kurz">${esc(d.verdictShort)}</p>
+${(d.tips || []).length ? `                    <div class="rf-erster">
+                        <p class="rf-erster-t">${svg('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>')}${esc(t.naechster)}</p>
+                        <p>${esc(d.tips[0])}</p>
+                    </div>
+` : ''}                    <ul class="rf-paragraphen" aria-label="${esc(t.gesetz)}">${paragraphen.map((x) => '<li>' + esc(x) + '</li>').join('')}</ul>
+                  </div>
+                </aside>
             </section>
 
-            <section class="fall-block tips-section" aria-labelledby="h-tipps">
-                <h2 class="fall-h2" id="h-tipps">${esc(t.tipps)}</h2>
-                <ol class="fall-tipps">${tipps}
-                </ol>
-            </section>
+            <div class="rf-raster">
+                <article class="rf-inhalt">
+                    <section class="rf-block" aria-labelledby="h-antwort">
+                        <h2 class="rf-h2" id="h-antwort">${esc(t.ganzeAntwort)}</h2>
+                        <div class="rf-detail">${fett(d.verdictDetail)}</div>
+                        <p class="rf-stand"><time datetime="${STAND}">${esc(t.stand(standText))}</time> · ${esc(t.fundstellen((d.laws || []).length))}</p>
+                    </section>
+
+                    <section class="rf-block" aria-labelledby="h-gesetz">
+                        <h2 class="rf-h2" id="h-gesetz">${esc(t.gesetz)}</h2>
+                        <ul class="rf-gesetze">${gesetze}
+                        </ul>
+                    </section>
+
+                    <section class="rf-block" aria-labelledby="h-tipps">
+                        <h2 class="rf-h2" id="h-tipps">${esc(t.tipps)}</h2>
+                        <ol class="rf-schritte">${tipps}
+                        </ol>
+                    </section>
 ${mail}
-            <aside class="fall-werbung" data-weg="${weg}">
-                <p class="fall-werbung-titel">${esc(t.weiter[weg].titel)}</p>
-                <p>${esc(t.weiter[weg].text)}</p>
-                <p class="fall-werbung-links"><a class="fall-werbung-knopf" href="${pre}${WEITER_ZIEL[weg]}" data-ziel="${weg}">${esc(t.weiter[weg].knopf)}</a><a href="${pre}${WEITER_ZIEL[neben]}" data-ziel="${neben}">${esc(t.weiter[neben].knopf)}</a></p>
-            </aside>
+                </article>
+
+                <div class="rf-seite">
+                    <aside class="fall-werbung rf-weiter" data-weg="${weg}">
+                      <div class="rf-weiter-kern">
+                        <p class="rf-weiter-titel">${esc(t.weiter[weg].titel)}</p>
+                        <p class="rf-weiter-text">${esc(t.weiter[weg].text)}</p>
+                        <p class="rf-weiter-links">${wege.map((w, i) => '<a class="' + (i === 0 ? 'rf-knopf' : 'rf-link') + '" href="' + pre + WEITER_ZIEL[w] + '" data-ziel="' + w + '">' + (i === 0 ? '<span>' + esc(t.weiter[w].knopf) + '</span><span class="rf-knopf-pfeil">' + svg('<path d="M7 17 17 7"/><path d="M8 7h9v9"/>') + '</span>' : esc(t.weiter[w].knopf)) + '</a>').join('')}</p>
+                      </div>
+                    </aside>
+                    <div class="rf-teilen">
+                        <p>${esc(t.teilenFrage)}</p>
+                        <button type="button" class="rf-link-knopf" data-geteilt="${esc(t.geteilt)}" onclick="rcTeilen(this)">${svg('<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/>')}<span>${esc(t.teilen)}</span></button>
+                    </div>
+                </div>
+            </div>
 ${nachbarn.length ? `
-            <section class="fall-block fall-mehr" aria-labelledby="h-mehr">
-                <h2 class="fall-h2" id="h-mehr">${esc(t.mehr(kat))}</h2>
+            <section class="rf-mehr" aria-labelledby="h-mehr">
+                <h2 class="rf-h2" id="h-mehr">${esc(t.mehr(kat))}</h2>
                 <ul>${mehr}
                 </ul>
             </section>
@@ -318,7 +377,6 @@ ${nachbarn.length ? `
 
         <footer class="disclaimer">
             <p>${esc(t.hinweis)}</p>
-            <p class="fall-stand">${esc(t.stand(standText))}</p>
         </footer>
     </div>
 
@@ -330,6 +388,20 @@ ${nachbarn.length ? `
         var fertig = function () { var alt = btn.textContent; btn.textContent = btn.getAttribute('data-kopiert'); setTimeout(function () { btn.textContent = alt; }, 1800); };
         if (navigator.clipboard) navigator.clipboard.writeText(text).then(fertig, function () {});
         if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'mustermail_kopiert', fall: document.body.getAttribute('data-fall'), ort: 'fallseite' });
+    }
+    // Teilen: am Handy das System-Menü (WhatsApp & Co.), sonst den Link kopieren.
+    function rcTeilen(btn) {
+        var fall = document.body.getAttribute('data-fall');
+        var daten = { title: document.querySelector('.rf-frage').textContent, url: location.href.split('#')[0] };
+        var gemeldet = function (weg) { if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'geteilt', weg: weg, fall: fall }); };
+        if (navigator.share) { navigator.share(daten).then(function () { gemeldet('menue'); }).catch(function () { /* abgebrochen */ }); return; }
+        if (!navigator.clipboard) return;
+        navigator.clipboard.writeText(daten.url).then(function () {
+            var sp = btn.querySelector('span'), alt = sp.textContent;
+            sp.textContent = btn.getAttribute('data-geteilt');
+            setTimeout(function () { sp.textContent = alt; }, 1800);
+            gemeldet('kopiert');
+        }, function () { });
     }
     document.querySelectorAll('.fall-werbung a[data-ziel]').forEach(function (a) {
         a.addEventListener('click', function () {

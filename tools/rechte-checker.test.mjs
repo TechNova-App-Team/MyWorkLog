@@ -123,14 +123,24 @@ gruppe('Weg in die App');
 const ZIEL = { schatten: '/schatten-berichtsheft/', zeit: '/', heft: '/berichtsheft/' };
 const wege = F.map((s) => {
   const html = fs.readFileSync(`pages/rechte-checker/${s.id}/index.html`, 'utf8');
-  const weg = html.match(/class="fall-werbung" data-weg="([a-z]+)"/)?.[1];
-  const knopf = html.match(/class="fall-werbung-knopf" href="([^"]+)" data-ziel="([a-z]+)"/);
+  const weg = html.match(/class="fall-werbung rf-weiter" data-weg="([a-z]+)"/)?.[1];
+  const knopf = html.match(/class="rf-knopf" href="([^"]+)" data-ziel="([a-z]+)"/);
   return { id: s.id, cat: s.cat, weg, ok: !!weg && !!knopf && knopf[1] === ZIEL[weg] && knopf[2] === weg && html.includes("aktion: 'weiter_klick'") };
 });
 t(wege.length === F.length && wege.length > 0, 'Gegenprobe: jede Fallseite gelesen');
 const wegKaputt = wege.filter((w) => !w.ok).map((w) => w.id);
 t(wegKaputt.length === 0, 'jede Fallseite hat Kasten, Knopf aufs passende Ziel und Klick-Messung', wegKaputt.join(','));
 t(wege.filter((w) => w.cat === 'kuendigung' || w.cat === 'mobbing').every((w) => w.weg === 'schatten'), 'Kündigung/Mobbing führen ins Schatten-Berichtsheft');
+
+// Fallseite seit 13.11.2026: H1 = Suchfrage, Chef-Zitat als Sprechblase, Berichtsheft überall verlinkt
+{
+  const seiten = F.map((s) => ({ s, html: fs.readFileSync(`pages/rechte-checker/${s.id}/index.html`, 'utf8') }));
+  const h1Zitat = seiten.filter(({ html }) => /<h1[^>]*>&quot;/.test(html)).map(({ s }) => s.id);
+  t(h1Zitat.length === 0, 'kein H1 ist mehr das Chef-Zitat', h1Zitat.join(','));
+  t(seiten.every(({ html }) => /<h1 class="rf-frage">/.test(html)), 'Gegenprobe: jede Seite hat das neue H1');
+  t(seiten.every(({ html }) => html.includes('class="rf-spruch"') && html.includes('data-ld-id="artikel"')), 'Sprechblase und Artikel-Daten auf jeder Seite');
+  t(seiten.every(({ html }) => html.includes('data-ziel="heft"')), 'jede Fallseite verlinkt das Berichtsheft');
+}
 // ── 6. Google-Titel (RC_SEO): Search Console 10/2026, CTR 0,8 % bei Position 6,8 ──
 gruppe('Google-Titel');
 const SEO = c.window.RC_SEO || {}, SEOEN = c.window.RC_EN.seo || {};

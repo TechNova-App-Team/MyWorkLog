@@ -1,0 +1,401 @@
+/* ═══ RECHTE-CHECKER: FALLSEITE (/rechte-checker/<id>/, tools/rechte-seiten.mjs) ═══
+   Seit 13.11.2026. Tokens kommen aus rechte-checker.css (davor geladen), hier keine Farbwerte.
+   Anlass: die Fallseiten tragen 72 % aller Google-Einblendungen der Website (24.122 von 33.404,
+   28 Tage bis 13.11.2026), stehen aber mit 0,4–1 % Klickrate auf Platz 4–7.
+   Wünsche des Nutzers (13.11.2026), in dieser Reihenfolge:
+   1. „Azubis wollen zack die Info, dann erst den langen Text“ → erster Bildschirm = Frage,
+      Chef-Zitat, Urteil in einem Satz; am PC zweispaltig, nicht die Handy-Spalte.
+   2. „edler, teurer, nicht so neon, richtig stimmig“ → fast monochrom. Die Urteilsfarbe steht
+      nur noch als GEDÄMPFTER Ton (--ton, zur Schriftfarbe hin gemischt) im Urteilswort, im
+      kleinen Punkt und im Faden der Karte. Kein Leuchthof, keine getönten Flächen, keine
+      farbigen Schatten. Karten als Doppelrand (Schale + Kern), Hairlines statt Rahmen.
+   Bewegung: genau EIN Moment beim Laden — die Sprechblase „wird gesagt“, das Urteil setzt sich.
+   Nur transform, nie Deckkraft 0 (LCP, CLAUDE.md). Das H1 bewegt sich nie. */
+
+.rf-shell { max-width: 1200px; }
+.rf {
+    --ton: color-mix(in oklab, var(--warning) 52%, var(--text));
+    --haar: rgba(255, 255, 255, 0.07);
+    --haar-2: rgba(255, 255, 255, 0.12);
+    --kern: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    --glanz: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --weich: cubic-bezier(0.32, 0.72, 0, 1);
+    margin-top: 52px;
+    /* clip statt hidden: kein Scroll-Container, sticky bleibt heil */
+    overflow-x: clip;
+}
+.rf[data-urteil="nein"] { --ton: color-mix(in oklab, var(--danger) 55%, var(--text)); }
+.rf[data-urteil="ja"]   { --ton: color-mix(in oklab, var(--success) 50%, var(--text)); }
+
+/* ── Erster Bildschirm ── */
+.rf-held {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: 72px;
+    align-items: center;
+    margin-bottom: 96px;
+}
+.rf-kat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px 5px 10px;
+    border: 1px solid var(--haar);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.rf-kat svg { width: 14px; height: 14px; flex-shrink: 0; stroke-width: 1.6; }
+.rf-frage {
+    margin: 22px 0 30px;
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 4.4vw, 3.5rem);
+    font-weight: 600;
+    letter-spacing: -0.038em;
+    line-height: 1.04;
+    text-wrap: balance;
+}
+/* Sprechblase: was der Chef sagt. Schwanz unten links = „kommt von jemandem“. */
+.rf-spruch {
+    display: inline-block;
+    max-width: min(36ch, 100%);
+    margin: 0;
+    padding: 14px 20px 16px;
+    border: 1px solid var(--haar);
+    border-radius: 22px 22px 22px 6px;
+    background: var(--kern);
+    box-shadow: var(--glanz);
+    transform-origin: 0 100%;
+    animation: rf-sagen 0.6s var(--weich) both;
+}
+.rf-spruch figcaption { margin-bottom: 4px; font-size: 0.72rem; letter-spacing: 0.01em; color: var(--text-dim); }
+.rf-spruch p { font-size: 1.08rem; font-weight: 500; line-height: 1.4; color: var(--text); text-wrap: pretty; }
+.rf-lage {
+    max-width: 50ch;
+    margin-top: 18px;
+    font-size: 0.98rem;
+    line-height: 1.65;
+    color: var(--text-muted);
+    text-wrap: pretty;
+}
+
+/* Urteil als Doppelrand: Schale (Haarlinie, kaum Fläche) + Kern (eigener Glanz oben). */
+.rf-urteil {
+    padding: 7px;
+    border: 1px solid var(--haar);
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.018);
+    animation: rf-setzen 0.75s var(--weich) 0.12s both;
+}
+.rf-urteil-kern {
+    position: relative;
+    padding: 30px 30px 26px;
+    border-radius: 23px;
+    background: var(--kern), var(--bg-card);
+    box-shadow: var(--glanz), 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+}
+/* Der einzige Farbfaden der Karte: oben, kurz, gedämpft */
+.rf-urteil-kern::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    width: 56px;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+    background: var(--ton);
+    opacity: 0.85;
+}
+.rf-urteil-marke {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+}
+.rf-urteil-marke::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ton); }
+.rf-urteil-wort {
+    margin-top: 14px;
+    font-family: var(--font-display);
+    font-size: clamp(2.1rem, 3.8vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--ton);
+}
+.rf-kurz {
+    margin-top: 14px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--text);
+    text-wrap: pretty;
+}
+.rf-erster { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--haar); }
+.rf-erster-t {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+}
+.rf-erster-t svg { width: 13px; height: 13px; stroke-width: 1.6; }
+.rf-erster p:last-child { font-size: 0.95rem; line-height: 1.55; color: var(--text-muted); }
+.rf-paragraphen { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 20px; list-style: none; }
+.rf-paragraphen li {
+    padding: 4px 10px;
+    border: 1px solid var(--haar-2);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
+/* ── Lesen + Seitenleiste ── */
+.rf-raster {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 80px;
+    align-items: start;
+    margin-bottom: 96px;
+}
+.rf-inhalt { max-width: 66ch; }
+.rf-seite { position: sticky; top: 28px; display: grid; gap: 14px; }
+.rf-block { margin-bottom: 56px; }
+.rf-block:last-child { margin-bottom: 0; }
+.rf-h2 {
+    margin-bottom: 16px;
+    font-family: var(--font-display);
+    font-size: 1.32rem;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+    text-wrap: balance;
+}
+.rf-detail { font-size: 1.02rem; line-height: 1.78; color: var(--text-muted); }
+.rf-detail strong { color: var(--text); font-weight: 550; }
+.rf-stand { margin-top: 16px; font-size: 0.74rem; color: var(--text-dim); }
+
+/* Gesetz: Fundstelle in Mono, Text darunter, nur Haarlinien dazwischen */
+.rf-gesetze { list-style: none; border-top: 1px solid var(--haar); }
+.rf-gesetze li {
+    display: grid;
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+    gap: 6px 28px;
+    padding: 18px 0 19px;
+    border-bottom: 1px solid var(--haar);
+}
+.rf-g-titel { font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.55; color: var(--text); }
+.rf-gesetze li p:not(.rf-g-titel) { font-size: 0.93rem; line-height: 1.62; color: var(--text-muted); }
+
+/* Schritte: wirklich eine Reihenfolge, deshalb Nummern mit Verbindungslinie */
+.rf-schritte { list-style: none; counter-reset: rf; }
+.rf-schritte li {
+    position: relative;
+    padding: 3px 0 22px 46px;
+    font-size: 0.99rem;
+    line-height: 1.6;
+    color: var(--text);
+    counter-increment: rf;
+}
+.rf-schritte li::before {
+    content: counter(rf);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--haar-2);
+    border-radius: 50%;
+    background: var(--kern), var(--bg-deep);
+    box-shadow: var(--glanz);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+.rf-schritte li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 14.5px;
+    top: 34px;
+    bottom: 4px;
+    width: 1px;
+    background: linear-gradient(var(--haar-2), transparent);
+}
+.rf .fall-mail { margin: 56px 0 0; border-color: var(--haar); border-radius: 18px; background: var(--kern), var(--bg-card); }
+
+/* Seitenleiste: Weg in die App (Doppelrand) + Teilen */
+.rf .rf-weiter {
+    margin: 0;
+    padding: 6px;
+    border: 1px solid var(--haar);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.018);
+}
+.rf-weiter-kern {
+    padding: 22px 22px 20px;
+    border-radius: 20px;
+    background: var(--kern), var(--bg-card);
+    box-shadow: var(--glanz);
+}
+.rf-weiter-titel {
+    margin-bottom: 6px;
+    font-family: var(--font-display);
+    font-size: 1.08rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text);
+}
+.rf-weiter-text { font-size: 0.88rem; line-height: 1.6; color: var(--text-muted); }
+.rf-weiter-links { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; margin-top: 18px; }
+/* Knopf mit eigenem Pfeil-Kreis; beim Darüberfahren rückt nur der Pfeil */
+.rf-knopf {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 6px 6px 18px;
+    border-radius: 999px;
+    background: var(--text);
+    color: var(--bg-deep);
+    font-size: 0.86rem;
+    font-weight: 600;
+    white-space: nowrap;   /* „Schatten-Berichtsheft öffnen“ brach bei 320 px Leiste um */
+    text-decoration: none;
+    transition: transform 0.4s var(--weich);
+}
+.rf-knopf-pfeil {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.08);
+    transition: transform 0.4s var(--weich);
+}
+.rf-knopf-pfeil svg { width: 14px; height: 14px; stroke-width: 1.8; }
+.rf-knopf:hover .rf-knopf-pfeil { transform: translate(2px, -1px) scale(1.06); }
+.rf-knopf:active { transform: scale(0.98); }
+.rf-link {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--haar-2);
+    text-underline-offset: 4px;
+    transition: color 0.3s var(--weich), text-decoration-color 0.3s var(--weich);
+}
+.rf-link:hover { color: var(--text); text-decoration-color: var(--text-dim); }
+.rf-knopf:focus-visible, .rf-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+
+.rf-teilen {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 14px;
+    padding: 16px 18px 16px 20px;
+    border: 1px solid var(--haar);
+    border-radius: 22px;
+    font-size: 0.86rem;
+    color: var(--text-muted);
+}
+.rf-link-knopf {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid var(--haar-2);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s var(--weich), transform 0.4s var(--weich);
+}
+.rf-link-knopf svg { width: 14px; height: 14px; stroke-width: 1.7; }
+.rf-link-knopf:hover { background: rgba(255, 255, 255, 0.05); }
+.rf-link-knopf:active { transform: scale(0.97); }
+.rf-link-knopf:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ── Weitere Fälle ── */
+.rf-mehr ul {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    list-style: none;
+}
+.rf-mehr a {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    padding: 18px 20px 20px;
+    border: 1px solid var(--haar);
+    border-radius: 18px;
+    background: var(--kern), var(--bg-card);
+    box-shadow: var(--glanz);
+    text-decoration: none;
+    transition: border-color 0.4s var(--weich), transform 0.5s var(--weich);
+}
+.rf-mehr a:hover { border-color: var(--haar-2); transform: translateY(-3px); }
+.rf-mehr a:active { transform: translateY(0) scale(0.99); }
+.rf-mehr a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rf-mehr-urteil {
+    --t: color-mix(in oklab, var(--warning) 52%, var(--text));
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    color: var(--text-dim);
+}
+.rf-mehr-urteil::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--t); }
+.rf-mehr a[data-urteil="nein"] .rf-mehr-urteil { --t: color-mix(in oklab, var(--danger) 55%, var(--text)); }
+.rf-mehr a[data-urteil="ja"] .rf-mehr-urteil { --t: color-mix(in oklab, var(--success) 50%, var(--text)); }
+.rf-mehr-zitat { font-size: 0.94rem; line-height: 1.48; color: var(--text); text-wrap: pretty; }
+
+/* ── Bewegung ── */
+@keyframes rf-sagen {
+    from { transform: translateY(10px) scale(0.96); }
+    to   { transform: none; }
+}
+@keyframes rf-setzen {
+    from { transform: translateY(18px); }
+    to   { transform: none; }
+}
+
+/* ── Schmaler ── */
+@media (max-width: 1000px) {
+    .rf-held { grid-template-columns: 1fr; gap: 32px; margin-bottom: 64px; }
+    .rf-raster { grid-template-columns: 1fr; gap: 48px; margin-bottom: 64px; }
+    .rf-seite { position: static; }
+    .rf-mehr ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Handy: das Urteil muss im ersten Bild stehen („zack die Info“). Gemessen 390 × 844: mit
+   Brotkrümeln und Situationssatz davor begann die Urteilskarte erst bei 950 px. Die Krümel
+   stehen weiter in den Strukturdaten, der Situationssatz rückt unter das Urteil. */
+@media (max-width: 600px) {
+    .rf-shell .fall-pfad { display: none; }
+    .rf { margin-top: 20px; }
+    .rf-held { display: flex; flex-direction: column; gap: 0; }
+    .rf-held-text { display: contents; }
+    .rf-kat { align-self: flex-start; }
+    .rf-urteil { order: 1; margin-top: 20px; border-radius: 26px; padding: 5px; }
+    .rf-urteil-kern { padding: 24px 20px 20px; border-radius: 21px; }
+    .rf-urteil-kern::before { left: 20px; }
+    .rf-lage { order: 2; margin-top: 20px; }
+    .rf-frage { margin: 16px 0 18px; }
+    .rf-spruch { padding: 12px 16px 14px; }
+    .rf-spruch p { font-size: 1rem; }
+    .rf-gesetze li { grid-template-columns: 1fr; }
+    .rf-mehr ul { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .rf-spruch, .rf-urteil { animation: none; }
+    .rf-mehr a, .rf-knopf, .rf-knopf-pfeil, .rf-link-knopf { transition: none; }
+}
