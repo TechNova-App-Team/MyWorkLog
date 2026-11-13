@@ -395,7 +395,7 @@ function viewReport(id) {
                         <div style="font-weight: 600; font-size: 0.95rem;">${wordCount}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Qualität', 'Quality')}</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">${L('Umfang', 'Length')}</div>
                         <div style="font-weight: 700; font-size: 0.95rem; color: ${quality >= 80 ? 'var(--success)' : quality >= 50 ? 'var(--warning)' : 'var(--danger)'};">${quality}%</div>
                     </div>
                 </div>
@@ -728,11 +728,11 @@ function calculateQuality(text) {
     else if (hasMultipleLines >= 3) score += 10;
     else if (hasMultipleLines >= 2) score += 5;
 
-    // Specificity bonus: numbers, tools, technologies (max 10)
-    const hasNumbers = /\d+/.test(text);
-    const hasTechTerms = /API|SQL|HTML|CSS|Python|Java|C\+\+|Server|Datenbank|Framework|Docker|Git|Linux|Windows/i.test(text);
-    if (hasNumbers) score += 5;
-    if (hasTechTerms) score += 5;
+    // Konkrete Angaben (max 10): Zahlen, Mengen, Daten. Bis 13.11.2026 gab es die Haelfte davon
+    // nur fuer IT-Woerter (API, SQL, Python, Server, Docker …) — ein gleich guter Bericht einer
+    // Koechin kam damit nie ueber 95 %. Was hier gemessen wird, ist UMFANG und Gliederung, keine
+    // Qualitaet; so heisst es auch in der Ansicht.
+    if (/\d+/.test(text)) score += 10;
 
     return Math.min(score, 100);
 }
