@@ -44,6 +44,26 @@ let threw = false;
 try { dl.window.mwlEvent('x', { a: 1 }); } catch (e) { threw = true; }
 ok('ohne posthog: kein Absturz', !threw);
 
+// ── Übersprungene Seitenwechsel zählen nicht als Skriptfehler (13.11.2026) ──
+// 163 Meldungen „inline:0 AbortError/InvalidStateError“ seit dem 16.10. kamen aus den
+// Cross-Document View Transitions, nicht aus unserem Code (nachgestellt: Wechsel auf „/“).
+{
+  const gemeldet = [];
+  w.mwlEvent = (n, p) => gemeldet.push(p && p.aktion);
+  const ablehnung = (name, message) => {
+    const ev = new w.Event('unhandledrejection');
+    ev.reason = { name, message };
+    w.dispatchEvent(ev);
+  };
+  ablehnung('InvalidStateError', 'Transition was aborted because of invalid state. ViewTransition opt-in disabled');
+  ablehnung('AbortError', 'Transition was skipped');
+  ok('Seitenwechsel-Ablehnungen werden nicht gemeldet', gemeldet.length === 0);
+  ablehnung('AbortError', 'The user aborted a request.');
+  ok('Gegenprobe: ein anderer AbortError wird weiter gemeldet', gemeldet.length === 1 && /AbortError/.test(gemeldet[0]));
+  const tpl = readFileSync('index.template.html', 'utf8');
+  ok('App-Fassung filtert dieselben Ablehnungen', tpl.includes('if (seitenwechsel(r)) return;') && /pagereveal/.test(tpl));
+}
+
 // ── Die App hat ihre eigene, inline gesetzte Fassung ──
 ok('App definiert mwlEvent inline',
    /window\.mwlEvent\s*=\s*function/.test(readFileSync('index.template.html', 'utf8')));

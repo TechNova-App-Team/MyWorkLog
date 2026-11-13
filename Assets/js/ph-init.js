@@ -102,8 +102,24 @@ window.mwlPassWerben = function () {
         if (!t || t === window || t.tagName !== 'SCRIPT' || !t.src || t.src.indexOf(location.origin + '/') !== 0) return;
         melde('laden', { name: 'Ladefehler' }, t.src, 0);
     }, true);
+    // Übersprungene Seitenwechsel (seitenwechsel.css, Cross-Document View Transitions seit
+    // 15.10.2026) lehnen ready/finished ab: AbortError „Transition was skipped“, InvalidStateError
+    // „…aborted because of invalid state“ — ohne Stack, also „inline:0“. Gemessen: erste Meldung
+    // 16.10.2026, davor (Daten ab 06.10.) keine; bis 13.11. 163 Stück, die echte Fehler verdeckten.
+    // Kein Fehler der Seite: der Browser springt nur ohne Übergang. An der Quelle abfangen (der
+    // Lauscher kommt beim Einblenden evtl. zu spät, beim Verlassen nie) und im Zähler auslassen.
+    function seitenwechsel(r) {
+      return !!r && /^(AbortError|InvalidStateError|TimeoutError)$/.test(r.name || '') && /transition/i.test(String(r.message || ''));
+    }
+    ['pageswap', 'pagereveal'].forEach(function (typ) {
+      window.addEventListener(typ, function (e) {
+        var vt = e && e.viewTransition;
+        if (vt) [vt.ready, vt.finished, vt.updateCallbackDone].forEach(function (p) { if (p && p.catch) p.catch(function () {}); });
+      });
+    });
     window.addEventListener('unhandledrejection', function (e) {
         var r = e && e.reason;
+        if (seitenwechsel(r)) return;
         // Erste Stack-Zeile mit Adresse: "…(https://host/pfad.js?v=1:120:7)" → Datei + Zeile.
         var st = r && r.stack ? String(r.stack) : '', i = st.indexOf('http'), datei = '', zeile = 0;
         if (i !== -1) {
