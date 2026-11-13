@@ -753,9 +753,12 @@ function menueZeichnen() {
             Lx('Antwort in 20 bis 40 Sekunden', 'Answers in 20 to 40 seconds'),
             restText(K.Kontingent.stand(), WOCHE_TOKENS, ['Woche', 'week'], ['Wochen', 'weeks']), Lx('Gratis', 'Free')) +
         // Einziger Weg aus dem Assistenten zur Preisseite: hier sieht man das Tageslimit,
-        // und genau das hebt der Ausbildungs-Pass auf.
-        '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#pass', '/en/preise/#pass') + '">' +
-        esc(Lx('Thinking und doppelt so viel am Tag: Ausbildungs-Pass', 'Thinking and twice as much per day: training pass')) + '</a>';
+        // und genau das hebt der Ausbildungs-Pass auf. MIT Pass stand hier bis 13.11.2026
+        // dieselbe Werbung — fuer etwas, das der Leser schon gekauft hatte. Jetzt die Bestaetigung.
+        (passFrei
+            ? '<p class="aic-modell-mehr is-pass">' + esc(Lx('Mit deinem Ausbildungs-Pass: Thinking und doppelt so viel am Tag.', 'With your training pass: Thinking and twice as much per day.')) + '</p>'
+            : '<a class="aic-modell-mehr" role="menuitem" href="' + Lx('/preise/#pass', '/en/preise/#pass') + '">' +
+              esc(Lx('Thinking und doppelt so viel am Tag: Ausbildungs-Pass', 'Thinking and twice as much per day: training pass')) + '</a>');
     if (fokus) { const b = m.querySelector('[data-stufe="' + fokus + '"]'); if (b) b.focus(); }
 }
 function modellMenue(auf) {

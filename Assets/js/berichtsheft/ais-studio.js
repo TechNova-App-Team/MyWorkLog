@@ -1187,6 +1187,7 @@ function init() {
 
     _loadProfile();
     _berufAusApp();
+    _berufAusDeckblatt();
     _restoreApiSettings();
 
     // ✦ Aufgaben-Pipe + Sonntag-Reminder + AI-Settings Restore
@@ -2330,6 +2331,36 @@ function _saveProfile() {
         };
         localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
     } catch (e) { }
+}
+
+// Letzter Rueckfall, wenn weder Profil noch App einen Beruf kennen: der Beruf vom
+// PDF-Deckblatt (pdf_personal_cfg.beruf). Gemessen 13.11.2026: ein Heft mit
+// „Fachinformatikerin für Systemintegration" auf dem Deckblatt zeigte im Assistenten
+// „Noch kein Beruf", und „Mehrere Wochen" schickte der KI „Beruf: unbekannt".
+// Bewusst NICHT gespeichert — waehlt der Nutzer im Assistenten selbst, gilt das.
+// Lehrjahr ebenso: ohne gespeichertes Lehrjahr aus dem Ausbildungsbeginn statt der
+// festen 2 aus dem Grundzustand.
+function _berufAusDeckblatt() {
+    if (!state.selectedProfession) {
+        let beruf = '';
+        try { beruf = String((JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}') || {}).beruf || '').trim().slice(0, 120); } catch (e) { }
+        if (beruf) {
+            state.customProfession = beruf;
+            state.selectedProfession = _detectProfession(beruf) || 'custom';
+            const prof = PROFESSIONS[state.selectedProfession];
+            _berufAnzeigen(prof ? prof.icon : '<svg class="icon"><use href="#i-grad"/></svg>', beruf);
+        }
+    }
+    let gespeichert = false;
+    try { gespeichert = !!(JSON.parse(localStorage.getItem(STORAGE_KEYS.profile) || '{}') || {}).lehrjahr; } catch (e) { }
+    if (!gespeichert && typeof bhAusbildungsjahrFuer === 'function') {
+        const h = new Date();
+        const j = bhAusbildungsjahrFuer(h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0'));
+        if (j >= 1 && j <= 4) {
+            state.lehrjahr = j;
+            document.querySelectorAll('.ais-lj-btn').forEach(b => b.classList.toggle('sel', parseInt(b.dataset.lj) === j));
+        }
+    }
 }
 
 // Beruf aus den Einstellungen der App (tg_pro_data.settings.job / jobCustom).
