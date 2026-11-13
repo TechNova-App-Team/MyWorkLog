@@ -251,6 +251,8 @@ async function saveReport(event) {
     // Lernprofil: Entwurf gegen das Gespeicherte halten (bh-lernen.js). Darf
     // das Speichern nie stoeren — der Bericht ist zu diesem Zeitpunkt schon sicher.
     if (window.BHLernen) { try { BHLernen.berichtGespeichert(report); } catch (e) { } }
+    // Assistent: ein uebergebener Entwurf gilt erst JETZT als erledigt (ais-chat.js berichtGespeichert)
+    if (window.AISChat && typeof AISChat.berichtGespeichert === 'function') { try { AISChat.berichtGespeichert(report); } catch (e) { } }
     updateUI();
     // KI-Entwurf (bh-ki.js) erst nach dem Speichern loeschen — und VOR
     // closeReportModal(), das den Merker zuruecksetzt.

@@ -277,6 +277,8 @@ function laden() {
                 woche: typeof g.woche === 'string' ? g.woche : '', erledigt: !!g.erledigt,
                 entwurf: entwurfLesen(g.entwurf),
             };
+            // Uebergeben, aber noch nicht gespeichert (entwurfUebernehmen) — ueberlebt ein Neuladen
+            if (g.uebergeben && typeof g.uebergeben === 'object') gespraech.uebergeben = { kw: Number(g.uebergeben.kw) || null, zeit: Number(g.uebergeben.zeit) || 0 };
         }
     } catch (e) { /* kaputter Stand → leeres Gespraech */ }
 }
@@ -1775,11 +1777,24 @@ function entwurfUebernehmen() {
     // ohne eigene KW fiele der Entwurf sonst in die Woche der Einstellungen.
     if (!gespraech.entwurf.kw) { const o = offenerEntwurf(); if (o) gespraech.entwurf.kw = o.kw; }
     AIStudio.wocheSetzen(entwurfAlsWoche(gespraech.entwurf, AIStudio.konfig()));
-    // Uebernommen = diese Woche ist fertig; beim naechsten Oeffnen geht es frisch los.
-    gespraech.erledigt = true;
+    // Erledigt ist der Entwurf erst, wenn die Woche GESPEICHERT ist (berichtGespeichert unten).
+    // Bis 13.11.2026 stand hier gespraech.erledigt = true: „Übernehmen" oeffnet aber nur das
+    // vorbefuellte Formular — wer dort „Abbrechen" tippte oder wegwischte, hatte die Woche weder
+    // im Heft noch im Assistenten (der begann frisch). Nachgestellt am Handy, 0 Wochen danach.
+    gespraech.uebergeben = { kw: gespraech.entwurf.kw || null, zeit: Date.now() };
     speichern();
     schliessen();
     AIStudio.insertAll();
+    verlaufZeichnen();
+}
+// Aus saveReport() (bh-bericht.js): die uebergebene Woche liegt jetzt im Heft.
+function berichtGespeichert(report) {
+    const u = gespraech.uebergeben;
+    if (!u || !report) return;
+    if (u.kw && Number(report.week) !== Number(u.kw)) return;   // eine andere Woche gespeichert
+    gespraech.erledigt = true;
+    delete gespraech.uebergeben;
+    speichern();
     verlaufZeichnen();
 }
 // Fuer die Startseite (renderNow): liegt ein nicht uebernommener Entwurf?
@@ -2262,7 +2277,7 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
-    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch,
+    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berichtGespeichert,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.

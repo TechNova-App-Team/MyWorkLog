@@ -488,6 +488,29 @@ t.gruppe('Thinking: wer hat geschrieben');
         'Menue hat den Thinking-Eintrag und rechnet seinen Rest mit dem Faktor des Workers');
 }
 
+// ── Übernehmen heißt erst nach dem Speichern erledigt (13.11.2026) ─────────
+// „Übernehmen“ öffnet nur das vorbefüllte Formular. Galt der Entwurf schon dabei als erledigt,
+// war die Woche nach „Abbrechen“ weder im Heft noch im Assistenten.
+t.gruppe('Übernehmen → erst Speichern macht erledigt');
+{
+    const e = frisch();
+    const A = e.sandbox.AISChat;
+    const g = A._intern.gespraech();
+    g.erledigt = false; g.uebergeben = { kw: 46, zeit: 1 };
+    A.berichtGespeichert({ week: 45 });
+    t.ok(g.erledigt === false && g.uebergeben, 'andere Woche gespeichert: Entwurf bleibt offen');
+    A.berichtGespeichert({ week: 46 });
+    t.ok(g.erledigt === true && !g.uebergeben, 'die übergebene Woche gespeichert: erledigt');
+    const g2 = A._intern.gespraech(); g2.erledigt = false; delete g2.uebergeben;
+    A.berichtGespeichert({ week: 46 });
+    t.ok(g2.erledigt === false, 'ohne Übergabe ändert Speichern nichts am Gespräch');
+    // Kommentarzeilen raus: der Kommentar zitiert die alte Zeile absichtlich (tests.md)
+    const quelle = CHAT.split('function entwurfUebernehmen')[1].split('\nfunction ')[0]
+        .split('\n').filter(z => !/^\s*\/\//.test(z)).join('\n');
+    t.ok(!quelle.includes('gespraech.erledigt = true') && quelle.includes('gespraech.uebergeben'), 'entwurfUebernehmen setzt nicht mehr erledigt, nur die Übergabe');
+    t.ok(/AISChat\.berichtGespeichert/.test(readFileSync('Assets/js/berichtsheft/bh-bericht.js', 'utf8')), 'saveReport meldet das Speichern an den Assistenten');
+}
+
 // ── Hinweis auf die Preisliste (v9.4.0) ────────────────────────────────────
 t.gruppe('Preis-Hinweis im leeren Start');
 {

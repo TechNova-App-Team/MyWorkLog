@@ -1129,7 +1129,9 @@ function _doFillForm(week) {
             hoursInput.value = week.totalHours || (week.days.length * 8);
         }
 
-        showToast(L('Alle Einträge in Tagesfelder eingefügt', 'All entries added to the day fields'), 'success');
+        // Sagt, was jetzt noch fehlt: im Heft ist die Woche erst nach „Speichern" (13.11.2026 —
+        // vorher „Alle Einträge in Tagesfelder eingefügt", das klang nach fertig).
+        showToast(L('Eingetragen. Kurz prüfen, dann Speichern.', 'Filled in. Check it, then save.'), 'info');
     });
 }
 
