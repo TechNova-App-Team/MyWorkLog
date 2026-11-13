@@ -507,7 +507,7 @@ function entwurfHTML() {
         '<div class="aic-woche-tage">' + tage.map(t => tagHTML(t, { stunden: sf, neu: zuletztGeaendert })).join('') + '</div>' +
         // Eigener Block vor dem Fuß: Klebte der ganze Fuß, blieben am Handy nur ~100 von 510 px für die Tage.
         '<div class="aic-woche-haupt"><button type="button" class="aic-knopf is-haupt" onclick="AISChat.entwurfUebernehmen()"' + (gefuellt ? '' : ' disabled') + '>' +
-        '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>' + Lx('In den Bericht übernehmen', 'Add to report') + '</button></div>' +
+        '<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>' + Lx('Ins Heft speichern', 'Save to report book') + '</button></div>' +
         '<footer class="aic-woche-fuss is-unter-haupt">' +
         (leer ?'<button type="button" class="aic-knopf" onclick="AISChat.fuellen()">' +
             esc(leer === 1 ? Lx('Leeren Tag füllen', 'Fill the empty day') : Lx(leer + ' leere Tage füllen', 'Fill ' + leer + ' empty days')) + '</button>' : '') +
@@ -1784,7 +1784,25 @@ function entwurfUebernehmen() {
     gespraech.uebergeben = { kw: gespraech.entwurf.kw || null, zeit: Date.now() };
     speichern();
     schliessen();
-    AIStudio.insertAll();
+    // Seit 13.11.2026 speichert der Knopf direkt („Ins Heft speichern“) — der Weg übers Formular
+    // verlor 47 von ~100 Personen mit fertigem Entwurf. Ohne bhStillSpeichern (alte Seite) wie früher.
+    if (typeof bhStillSpeichern !== 'function') { AIStudio.insertAll(); verlaufZeichnen(); return; }
+    AIStudio.insertAll(async () => {
+        const r = await bhStillSpeichern();
+        verlaufZeichnen();
+        if (!r) return;   // Doppelte Woche, Rückfrage abgebrochen: das Formular steht jetzt sichtbar offen
+        if (typeof bhMess === 'function') bhMess('assistent_direkt_gespeichert', { vollstaendig: r.status === 'complete' });
+        if (typeof hfFrischZeigen === 'function') hfFrischZeigen(r.id);
+        if (typeof showToast === 'function') showToast(Lx('KW ' + r.week + ' ist im Heft', 'Week ' + r.week + ' is in your report book'), 'success',
+            { label: Lx('Rückgängig', 'Undo'), onClick: () => bhStillZurueck(r.id) });
+    });
+}
+// Rückgängig nach dem Direkt-Speichern (bh-bericht.js): der Entwurf ist wieder offen.
+function uebernahmeZurueck(report) {
+    if (!report) return;
+    gespraech.erledigt = false;
+    delete gespraech.uebergeben;
+    speichern();
     verlaufZeichnen();
 }
 // Aus saveReport() (bh-bericht.js): die uebergebene Woche liegt jetzt im Heft.
@@ -2277,7 +2295,7 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
-    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berichtGespeichert,
+    tagBeginnen, ausfuehrlicher, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berichtGespeichert, uebernahmeZurueck,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.

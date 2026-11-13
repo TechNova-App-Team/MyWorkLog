@@ -283,18 +283,56 @@ async function saveReport(event) {
     closeReportModal();
     clearDraft();
 
-    bhMess(warNeu ? 'bericht_erstellt' : 'bericht_bearbeitet', { modus: currentMode, status: report.status });
+    bhMess(warNeu ? 'bericht_erstellt' : 'bericht_bearbeitet', { modus: currentMode, status: report.status, direkt: bhStill });
     if (warNeu && reports.length === 1) bhMess('erster_bericht', { modus: currentMode });
-    showToast(warNeu ? L('Bericht erstellt', 'Report created') : L('Bericht aktualisiert', 'Report updated'), 'success');
+    bhZuletztGespeichert = report;
+    // Direkt-Speichern meldet sich selbst (mit Rückgängig) und zeigt das Blatt statt Konfetti.
+    if (!bhStill) {
+        if (typeof hfFrischWeg === 'function') hfFrischWeg();
+        showToast(warNeu ? L('Bericht erstellt', 'Report created') : L('Bericht aktualisiert', 'Report updated'), 'success');
+    }
 
     // B2B: bei einem Azubi den Bericht in die Betriebs-Tabelle spiegeln.
     // Guard, weil bh-b2b-ui.js nur mit geladenem Supabase-Config etwas tut.
     if (typeof b2bOnReportSaved === 'function') b2bOnReportSaved(report);
 
     // Confetti on new complete report
-    if (warNeu && (report.status === 'complete' || report.status === 'signed')) {
+    if (warNeu && !bhStill && (report.status === 'complete' || report.status === 'signed')) {
         launchConfetti();
     }
+}
+
+// Speichern ohne sichtbares Formular — fuer „Ins Heft speichern“ im Assistenten (13.11.2026).
+// Gemessen in 30 Tagen: 47 Personen hatten einen fertigen Entwurf und gingen, ohne ihn zu
+// übernehmen; „Übernehmen“ öffnete bis dahin ein Formular voller Felder. Das Formular wird
+// trotzdem befüllt und durch saveReport() geschickt — EIN Speicherweg, gleiche Prüfungen
+// (doppelte Woche, Lernprofil, Betrieb). Bricht die Doppelt-Rückfrage ab, bleibt das
+// Formular offen und wird sichtbar: dann entscheidet der Nutzer dort.
+let bhStill = false;
+let bhZuletztGespeichert = null;
+async function bhStillSpeichern() {
+    bhStill = true;
+    bhZuletztGespeichert = null;
+    document.body.classList.add('bh-still');
+    try { await saveReport({ preventDefault() { } }); }
+    finally { bhStill = false; document.body.classList.remove('bh-still'); }
+    const modal = document.getElementById('reportModal');
+    if (modal && modal.classList.contains('active')) return null;
+    return bhZuletztGespeichert;
+}
+// Rückgängig nach dem Direkt-Speichern: die Woche wieder raus, ohne Papierkorb (sie war
+// nie eine eigene Arbeit), der Entwurf im Assistenten wieder offen.
+function bhStillZurueck(id) {
+    const r = reports.find(x => x.id === id);
+    if (!r) return;
+    reports = reports.filter(x => x.id !== id);
+    saveToStorage();
+    if (typeof b2bOnReportDeleted === 'function') b2bOnReportDeleted(id);
+    if (window.AISChat && typeof AISChat.uebernahmeZurueck === 'function') AISChat.uebernahmeZurueck(r);
+    if (typeof hfFrischWeg === 'function') hfFrischWeg();
+    updateUI();
+    bhMess('direkt_rueckgaengig');
+    showToast(L('Wieder als Entwurf im Assistenten', 'Back to a draft in the assistant'), 'info');
 }
 
 // ═══════════════════════════════════════

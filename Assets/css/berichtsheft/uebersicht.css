@@ -1094,3 +1094,39 @@ body.hf-schau-offen { overflow: hidden; }   /* 🔴 nur body selbst: eine Regel 
 /* Pille „Verbinde deinen KI-Assistenten" (MWLKiApp.pille) */
 .hf-ki { margin-top: 18px; }
 .hf-ki[hidden] { display: none; }
+
+/* ══════════ „Ins Heft speichern“: das Blatt landet (seit 13.11.2026) ══════════
+   EIN Effekt, einmal je Speichern (hfFrisch.neu in bh-uebersicht.js): das Blatt legt
+   sich auf den Stapel, danach schreibt der Kuli die Tageszeilen und die Unterschrift
+   des Azubis. Bewusst KEIN Stempel und kein Konfetti — Stempel heißt hier „freigegeben“,
+   Kuli-Blau ist die Rolle des Azubis (basis.css). Endlage = Ruhelage von .b1 (-1.3deg),
+   sonst springt das Blatt nach der Animation. */
+@keyframes hf-landen {
+    from { opacity: 0; transform: translateY(-34px) rotate(-4.5deg) scale(1.025); }
+    to   { opacity: 1; transform: rotate(-1.3deg); }
+}
+/* Negative Ränder: Caveat-Schleifen und Unterlängen ragen über die Box hinaus — mit inset(0)
+   blieb „Anna Beispiel“ nach der Animation als „Anna Beispie“ abgeschnitten (fill-mode both). */
+@keyframes hf-schreiben {
+    from { clip-path: inset(-30% 100% -40% -12%); }
+    to   { clip-path: inset(-30% -30% -40% -12%); }
+}
+.hf-blatt.b1.is-neu { animation: hf-landen 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.hf-blatt.b1.is-neu .hf-blatt-tag p,
+.hf-blatt.b1.is-neu .hf-hand { animation: hf-schreiben 0.42s cubic-bezier(0.33, 0, 0.2, 1) both; }
+.hf-blatt.b1.is-neu .hf-blatt-tag:nth-child(1) p { animation-delay: 0.38s; }
+.hf-blatt.b1.is-neu .hf-blatt-tag:nth-child(2) p { animation-delay: 0.5s; }
+.hf-blatt.b1.is-neu .hf-blatt-tag:nth-child(3) p { animation-delay: 0.62s; }
+.hf-blatt.b1.is-neu .hf-blatt-tag:nth-child(4) p { animation-delay: 0.74s; }
+.hf-blatt.b1.is-neu .hf-blatt-tag:nth-child(5) p { animation-delay: 0.86s; }
+.hf-blatt.b1.is-neu .hf-us:first-child .hf-hand { animation-duration: 0.6s; animation-delay: 1.08s; }
+@media (prefers-reduced-motion: reduce) {
+    .hf-blatt.b1.is-neu { animation: hf-landen-ruhig 0.2s ease-out both; }
+    .hf-blatt.b1.is-neu .hf-blatt-tag p, .hf-blatt.b1.is-neu .hf-hand { animation: none; }
+}
+@keyframes hf-landen-ruhig { from { opacity: 0; } to { opacity: 1; } }
+
+/* Direkt-Speichern füllt das Formular unsichtbar und schickt es durch saveReport()
+   (bhStillSpeichern, bh-bericht.js). Bleibt es offen (Rückfrage „doppelte Woche“
+   abgebrochen), fällt die Klasse weg und das Formular erscheint. */
+body.bh-still #reportModal { visibility: hidden; }

@@ -509,6 +509,20 @@ t.gruppe('Übernehmen → erst Speichern macht erledigt');
         .split('\n').filter(z => !/^\s*\/\//.test(z)).join('\n');
     t.ok(!quelle.includes('gespraech.erledigt = true') && quelle.includes('gespraech.uebergeben'), 'entwurfUebernehmen setzt nicht mehr erledigt, nur die Übergabe');
     t.ok(/AISChat\.berichtGespeichert/.test(readFileSync('Assets/js/berichtsheft/bh-bericht.js', 'utf8')), 'saveReport meldet das Speichern an den Assistenten');
+
+    // „Ins Heft speichern“ (13.11.2026): direkt über saveReport, mit Rückgängig
+    t.ok(quelle.includes('bhStillSpeichern()') && quelle.includes('bhStillZurueck(r.id)'), 'entwurfUebernehmen speichert direkt und bietet Rückgängig');
+    t.ok(quelle.includes("typeof bhStillSpeichern !== 'function'"), 'ohne Direkt-Speichern fällt es auf das Formular zurück');
+    g.erledigt = true; g.uebergeben = { kw: 46, zeit: 1 };
+    A.uebernahmeZurueck({ week: 46 });
+    t.ok(g.erledigt === false && !g.uebergeben, 'Rückgängig: der Entwurf ist wieder offen');
+    const BER = readFileSync('Assets/js/berichtsheft/bh-bericht.js', 'utf8').split('\r\n').join('\n')
+        .split('\n').filter(z => !/^\s*\/\//.test(z)).join('\n');
+    const save = BER.split('async function saveReport')[1].split('\nasync function bhStillSpeichern')[0];
+    // Ein frühes return bei bhStill übersprang das Spiegeln in den Betrieb (beim Bau gefunden)
+    t.ok(!/if \(bhStill\) return/.test(save) && save.includes('b2bOnReportSaved(report)'), 'stilles Speichern spiegelt trotzdem in den Betrieb');
+    t.ok(/warNeu && !bhStill &&/.test(save), 'kein Konfetti beim stillen Speichern (das Blatt ist der Moment)');
+    t.ok(save.includes('launchConfetti()'), 'Gegenprobe: Konfetti gibt es sonst weiter');
 }
 
 // ── Hinweis auf die Preisliste (v9.4.0) ────────────────────────────────────

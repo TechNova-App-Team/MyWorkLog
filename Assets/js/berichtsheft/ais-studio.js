@@ -1061,13 +1061,14 @@ function _ensureModalDailyMode(callback) {
     _waitForDailyFields(callback);
 }
 
-function fillFormWithGeneratedWeek(week) {
+function fillFormWithGeneratedWeek(week, nachher) {
     if (!week || !week.days) return;
 
-    _ensureModalDailyMode(() => _doFillForm(week));
+    _ensureModalDailyMode(() => _doFillForm(week, nachher));
 }
 
-function _doFillForm(week) {
+// nachher: statt des Hinweises aufrufen, sobald alle Felder stehen (Direkt-Speichern aus dem Assistenten).
+function _doFillForm(week, nachher) {
     // Set metadata
     const yearSelect = document.getElementById('reportYear');
     if (yearSelect && week.yearNum) yearSelect.value = week.yearNum;
@@ -1139,6 +1140,7 @@ function _doFillForm(week) {
 
         // Sagt, was jetzt noch fehlt: im Heft ist die Woche erst nach „Speichern" (13.11.2026 —
         // vorher „Alle Einträge in Tagesfelder eingefügt", das klang nach fertig).
+        if (typeof nachher === 'function') { nachher(); return; }
         showToast(L('Eingetragen. Kurz prüfen, dann Speichern.', 'Filled in. Check it, then save.'), 'info');
     });
 }
@@ -2960,12 +2962,12 @@ function shuffleEntries() {
     showToast(L('Einträge gemischt', 'Entries shuffled'), 'info');
 }
 
-function insertAll() {
+function insertAll(nachher) {
     if (!state.generatedEntries) {
         showToast(L('Keine Einträge zum Einfügen vorhanden', 'No entries to add'), 'warning');
         return;
     }
-    fillFormWithGeneratedWeek(state.generatedEntries);
+    fillFormWithGeneratedWeek(state.generatedEntries, typeof nachher === 'function' ? nachher : null);
     close();
 }
 

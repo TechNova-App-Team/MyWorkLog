@@ -241,6 +241,29 @@ function hfOffenerEntwurf() {
 // Einmal je Seitenaufruf: Kam jemand zurueck, waehrend ein Entwurf wartet?
 // (Gegenstueck zu assistent_weg_mit_entwurf in ais-chat.js, Messung 28.10.2026.)
 let hfEntwurfGemeldet = false;
+// Gerade aus dem Assistenten gespeichert (ais-chat.js entwurfUebernehmen): die Bühne zeigt
+// DIESE Woche, das Blatt landet einmal sichtbar auf dem Stapel (neu = Animation noch offen).
+// Kein Stempel dafür: Stempel heißt auf dieser Seite „freigegeben“ (basis.css) — der Moment
+// gehört dem Kuli, also den Zeilen und der Unterschrift des Azubis.
+let hfFrisch = null;
+function hfFrischZeigen(id) {
+    hfFrisch = { id, neu: true };
+    renderNow();
+    // Das Blatt muss GANZ zu sehen sein, sonst landet es unbemerkt: am Handy (390 px) liegt der
+    // Stapel unter den Knöpfen, gemessen 870–1279 px bei 844 px Bildhöhe. Sofort springen, nicht
+    // gleiten — der Assistent geht im selben Moment zu, ein Sprung fällt nicht auf, und die
+    // Landung (0,6 s) läuft so nicht während der Fahrt ab.
+    const box = document.getElementById('hfNow');
+    const stapel = document.getElementById('hfStapel');
+    if (!box || !stapel) return;
+    const oben = box.getBoundingClientRect().top + window.scrollY - 16;
+    const unten = stapel.getBoundingClientRect().bottom + window.scrollY + 24;
+    // Passt alles, oben anfangen; sonst zählt das Blatt (Titel darf oben angeschnitten sein).
+    const ziel = Math.max(unten - oben <= window.innerHeight ? oben : unten - window.innerHeight, 0);
+    const sichtbar = unten <= window.scrollY + window.innerHeight && (unten - oben > window.innerHeight || oben >= window.scrollY);
+    if (!sichtbar) window.scrollTo({ top: ziel, behavior: 'auto' });
+}
+function hfFrischWeg() { if (hfFrisch) { hfFrisch = null; renderNow(); } }
 function renderNow() {
     const box = document.getElementById('hfNow');
     if (!box) return;
@@ -276,8 +299,24 @@ function renderNow() {
     // fokus = die Woche, um die es im Satz geht; sie liegt oben auf dem Stapel.
     let fokusMo = mo, fokusR = r;
     let titel, text, aktionen, extra = '', nach = '';
+    const frisch = hfFrisch && reports.find(x => x.id === hfFrisch.id);
 
-    if (zurueck) {
+    if (frisch) {
+        fokusMo = frisch.dateFrom ? hfMontag(hfAusDatum(frisch.dateFrom)) : mo;
+        fokusR = frisch;
+        const tage = hfTageMitText(frisch);
+        const n = tage ? tage.filter(Boolean).length : 5;
+        titel = L(t(`KW ${frisch.week} steht im `, 'Heft'), t(`Week ${frisch.week} is in your `, 'report book'));
+        text = frisch.status === 'complete'
+            ? L('Alle Tage sind drin. Ändern kannst du die Woche jederzeit.', 'Every day is filled in. You can change the week at any time.')
+            : L(`${n} von 5 Tagen haben Text. Den Rest trägst du nach, wann du willst.`, `${n} of 5 days have text. Add the rest whenever you like.`);
+        // Danach: die Woche mitnehmen (PDF) oder gleich die nächste Lücke. Gemessen 30 Tage bis
+        // 13.11.2026: 39 schrieben eine erste Woche, nur 20 öffneten je ein PDF.
+        const g = luecken[0];
+        aktionen = cta(L('Als PDF', 'As PDF'), `exportReportPDF('${frisch.id}')`, 'file') +
+            (g ? chip(L(`KW ${getWeekNumber(g)} nachtragen`, `Add week ${getWeekNumber(g)}`), `AISChat.nachtragen(${getWeekNumber(g)}, ${isoWeekYear(g)})`, 'sparkles')
+               : chip(L('Bearbeiten', 'Edit'), `editReport('${frisch.id}')`, 'pen'));
+    } else if (zurueck) {
         fokusMo = zurueck.dateFrom ? hfMontag(hfAusDatum(zurueck.dateFrom)) : mo;
         fokusR = zurueck;
         const wer = zurueck.approval.by || L('Dein Ausbilder', 'Your trainer');
@@ -298,7 +337,7 @@ function renderNow() {
             entwurf.voll.map(v => `<span class="hf-tag-strich${v ? ' is-voll' : ''}"></span>`).join('') +
             `<span class="hf-tage-text" aria-hidden="true">${escapeHtml(L(`${n} von ${entwurf.voll.length} Tagen`, `${n} of ${entwurf.voll.length} days`))}</span></div>`;
         if (!hfEntwurfGemeldet && typeof bhMess === 'function') { hfEntwurfGemeldet = true; bhMess('entwurf_wartet_gesehen'); }
-        aktionen = cta(L('Entwurf übernehmen', 'Add draft'), 'AISChat.entwurfUebernehmen()', 'check') +
+        aktionen = cta(L('Ins Heft speichern', 'Save to report book'), 'AISChat.entwurfUebernehmen()', 'check') +
             chip(L('Im Assistenten weiter', 'Continue in the assistant'), assistent, 'sparkles');
     } else if (!reports.length) {
         titel = L(t('Dein erstes ', 'Berichtsheft'), t('Your first ', 'report book'));
@@ -371,6 +410,11 @@ function renderNow() {
     const riesen = document.getElementById('hfRiesen');
     if (riesen) riesen.textContent = L(`KW ${fokusKw}`, `CW ${fokusKw}`);
     renderStapel(fokusMo, fokusR);
+    if (frisch && hfFrisch.neu) {
+        hfFrisch.neu = false;
+        const b1 = document.querySelector('#hfStapel .hf-blatt.b1');
+        if (b1) b1.classList.add('is-neu');
+    }
 }
 
 // ═══════════════════════════════════════
