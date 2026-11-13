@@ -587,7 +587,16 @@ function duplicateReport(id) {
     // eine kopierte Woche aus dem Vorjahr landete sonst im falschen Jahr, und
     // KW 52 → 1 ignorierte, dass ein Jahr 53 Wochen haben kann.
     const basis = bhParseDatum(original.dateFrom) || new Date();
-    const naechster = new Date(basis.getFullYear(), basis.getMonth(), basis.getDate() + 7);
+    // Die naechste FREIE Woche: bis 13.11.2026 landete die Kopie von KW 29 auf KW 30, auch wenn
+    // es KW 30 schon gab — danach stand die Woche doppelt im Heft (der Pruefungs-Check meldet
+    // „Woche doppelt"). Hoechstens ein Jahr weit suchen, dann wie frueher die Folgewoche.
+    const belegt = new Set(reports.map(r => r.dateFrom));
+    let naechster = new Date(basis.getFullYear(), basis.getMonth(), basis.getDate() + 7);
+    for (let i = 0; i < 53; i++) {
+        const k = getWeekNumber(naechster);
+        if (!belegt.has(getWeekDates(k, isoWeekYear(naechster)).monday)) break;
+        naechster = new Date(naechster.getFullYear(), naechster.getMonth(), naechster.getDate() + 7);
+    }
     const week = getWeekNumber(naechster);
     const { monday, friday } = getWeekDates(week, isoWeekYear(naechster));
 
