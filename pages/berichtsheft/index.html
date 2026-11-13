@@ -66,7 +66,7 @@
          Selektor gewinnt die spaetere Datei, und druck-responsive.css muss
          alle Regeln davor schlagen koennen. Nicht umsortieren. -->
     <link rel="stylesheet" href="/Assets/css/berichtsheft/basis.css?v=aa3b95364d">
-    <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=3916c88274">
+    <link rel="stylesheet" href="/Assets/css/berichtsheft/uebersicht.css?v=74f9e3fdf9">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/berichte.css?v=ee5adb0c5a">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/modal-formular.css?v=cbbeaaedcd">
     <link rel="stylesheet" href="/Assets/css/berichtsheft/bh-text.css?v=4cb0f2fe3b">
@@ -636,23 +636,35 @@
                             <span>PDF</span>
                             <kbd class="hf-kbd">E</kbd>
                         </button>
-                        <!-- Pruefungs-Check (Pass-Paket). Steht neben dem PDF, weil beides
-                             „vor der Abgabe" ist. Gesperrt zeigt er das Siegel-Blatt (bh-siegel.js). -->
-                        <button type="button" class="hf-chip" data-mess="leiste_pruefcheck" onclick="MWLPass.oeffnen('pruefcheck')">
-                            <svg class="icon icon-sm"><use href="#i-checksq" /></svg>
-                            <span>Prüfungs-Check</span>
-                        </button>
-                        <!-- Rahmenplan-Abgleich (Pass-Paket, bh-rahmenplan.js). Daten aller Berufe liegen
-                             öffentlich unter /Assets/data/rahmenplaene/, nur der Abgleich ist Pass. -->
-                        <button type="button" class="hf-chip" data-mess="leiste_rahmenplan" onclick="MWLPass.oeffnen('rahmenplan')">
-                            <svg class="icon icon-sm"><use href="#i-scroll" /></svg>
-                            <span>Rahmenplan</span>
-                        </button>
-                        <!-- Fachgespraech ueben (Plus, Vorschau hinter dem Pass-Code; bh-fachgespraech.js im Pass-Paket) -->
-                        <button type="button" class="hf-chip" data-mess="leiste_fachgespraech" onclick="MWLPass.oeffnen('fachgespraech')">
-                            <svg class="icon icon-sm"><use href="#i-grad" /></svg>
-                            <span>Fachgespräch</span>
-                        </button>
+                        <!-- Drei Pruefungs-Werkzeuge (Pass-Paket) unter EINEM Menue, wie beim Import:
+                             als drei eigene Knoepfe brach die Leiste bei ~1150 px in eine zweite Zeile
+                             (Rueckmeldung des Nutzers 13.11.2026). Steht neben dem PDF, weil beides
+                             „vor der Abgabe" ist. Gesperrt zeigt jedes das Siegel-Blatt (bh-siegel.js).
+                             Die data-mess-Namen der Punkte bleiben die alten leiste_*, sonst reisst die
+                             Zaehlung in /analytics/; leiste_pruefung zaehlt das Oeffnen des Menues. -->
+                        <details class="hf-menue" id="hfPruefung">
+                            <summary class="hf-chip" data-mess="leiste_pruefung">
+                                <svg class="icon icon-sm"><use href="#i-grad" /></svg>
+                                <span>Prüfung</span>
+                            </summary>
+                            <div class="hf-menue-liste">
+                                <button type="button" class="hf-menue-punkt" data-mess="leiste_pruefcheck" onclick="hfMenueZu();MWLPass.oeffnen('pruefcheck')">
+                                    <svg class="icon"><use href="#i-checksq" /></svg>
+                                    <span class="hf-menue-text"><span>Prüfungs-Check</span><small>Vor der Abgabe alles prüfen</small></span>
+                                </button>
+                                <!-- Rahmenplan-Abgleich (bh-rahmenplan.js). Daten aller Berufe liegen öffentlich
+                                     unter /Assets/data/rahmenplaene/, nur der Abgleich ist Pass. -->
+                                <button type="button" class="hf-menue-punkt" data-mess="leiste_rahmenplan" onclick="hfMenueZu();MWLPass.oeffnen('rahmenplan')">
+                                    <svg class="icon"><use href="#i-scroll" /></svg>
+                                    <span class="hf-menue-text"><span>Rahmenplan</span><small>Welche Lernziele noch fehlen</small></span>
+                                </button>
+                                <!-- Fachgespraech ueben (Plus, Vorschau hinter dem Pass-Code; bh-fachgespraech.js) -->
+                                <button type="button" class="hf-menue-punkt" data-mess="leiste_fachgespraech" onclick="hfMenueZu();MWLPass.oeffnen('fachgespraech')">
+                                    <svg class="icon"><use href="#i-user" /></svg>
+                                    <span class="hf-menue-text"><span>Fachgespräch</span><small>Mit Prüferfragen üben</small></span>
+                                </button>
+                            </div>
+                        </details>
                     </div>
                 </div>
 
@@ -2299,7 +2311,7 @@ An der Teambesprechung teilgenommen" required></textarea>
     <script src="/Assets/js/berichtsheft/bh-basis.js?v=0faffc723d"></script>
     <!-- Formatierter Berichtstext (BHText): Vordrucke, PDF, Editor und Chat nutzen ihn erst zur Laufzeit -->
     <script src="/Assets/js/berichtsheft/bh-text.js?v=c09de7652e"></script>
-    <script src="/Assets/js/berichtsheft/bh-uebersicht.js?v=28a005f87d"></script>
+    <script src="/Assets/js/berichtsheft/bh-uebersicht.js?v=ef4df9210a"></script>
     <script src="/Assets/js/berichtsheft/bh-wochenschau.js?v=d59ed19c4c"></script>
     <script src="/Assets/js/berichtsheft/bh-freigabe.js?v=97fb044e7d"></script>
     <!-- B2B: Betriebs-Anbindung. supabase-config.js OHNE ?v= laden (eine der

@@ -206,13 +206,14 @@ function hfTageMitText(r) {
     return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map(k => !!String(r.dailyActivities[k] || '').trim());
 }
 
+// Zwei Menues in der Leiste. <details> schliesst ein offenes Geschwister nicht von
+// selbst — ohne den Klick-Handler lagen Import- und Pruefungs-Liste uebereinander.
+const HF_MENUES = ['hfImport', 'hfPruefung'];
 function hfMenueZu() {
-    const m = document.getElementById('hfImport');
-    if (m) m.open = false;
+    HF_MENUES.forEach((id) => { const m = document.getElementById(id); if (m) m.open = false; });
 }
 document.addEventListener('click', (e) => {
-    const m = document.getElementById('hfImport');
-    if (m && m.open && !m.contains(e.target)) m.open = false;
+    HF_MENUES.forEach((id) => { const m = document.getElementById(id); if (m && m.open && !m.contains(e.target)) m.open = false; });
 });
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') hfMenueZu();
