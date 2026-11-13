@@ -1118,6 +1118,14 @@ function _doFillForm(week) {
         }
         if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
 
+        // Jeder Tag gefuellt → „Vollständig" vorwaehlen (nur aus „In Bearbeitung", nie aus
+        // „Unterschrieben"). Gemessen 13.11.2026: eine volle Assistenten-Woche wurde als
+        // „In Bearbeitung" gespeichert — der Pruefungs-Check zaehlte sie als Entwurf, und
+        // „Alle als PDF" liess sie weg. Mehrere Wochen speichert schon als 'complete'.
+        const statusSel = document.getElementById('reportStatus');
+        const voll = week.days.length > 0 && week.days.every(d => (d.dayStatus && DAY_STATUS_LABELS[d.dayStatus]) || (d.entries && d.entries.length));
+        if (statusSel && voll && statusSel.value === 'incomplete') statusSel.value = 'complete';
+
         // Lernprofil: den Entwurf merken, damit saveReport() sieht, was der
         // Azubi daran aendert (bh-lernen.js). Nur der ganze Wochen-Einschub —
         // ein einzelner Tag ist kein Entwurf der Woche.

@@ -109,8 +109,30 @@ function getWeekDates(weekNum, year) {
 // MODAL OPERATIONS
 // ═══════════════════════════════════════
 
+// Status „Vollständig" folgt dem Inhalt, solange der Nutzer ihn nicht selbst gewaehlt hat.
+// Gemessen 13.11.2026: eine Woche mit allen fuenf Tagen wurde als „In Bearbeitung"
+// gespeichert, weil niemand das Feld anfasst — der Pruefungs-Check zaehlte sie als
+// Entwurf, „Alle als PDF" liess sie weg. Sichtbar im Formular, nie still beim Speichern.
+let bhStatusSelbst = false;
+function bhStatusNachInhalt() {
+    const sel = document.getElementById('reportStatus');
+    if (bhStatusSelbst || !sel || sel.value === 'signed') return;
+    const tage = [...document.querySelectorAll('#reportModal .daily-textarea')];
+    const voll = currentMode === 'daily'
+        ? tage.length > 0 && tage.every(t => t.value.trim())
+        : (document.getElementById('reportActivities')?.value.trim().length || 0) >= 40;
+    sel.value = voll ? 'complete' : 'incomplete';
+}
+// Nur der Nutzer loest hier 'change' aus: der Code setzt reportStatus.value immer ohne Ereignis.
+document.addEventListener('change', (e) => { if (e.target && e.target.id === 'reportStatus') bhStatusSelbst = true; });
+document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest('#reportModal') && (t.classList.contains('daily-textarea') || t.id === 'reportActivities')) bhStatusNachInhalt();
+});
+
 function openNewReportModal() {
     editingId = null;
+    bhStatusSelbst = false;
     bhFormularOffen = true;
     bhMess('formular_offen');
     document.getElementById('modalTitle').textContent = L('Neuen Bericht erstellen', 'Create new report');
@@ -316,6 +338,8 @@ async function editReport(id) {
     }
 
     editingId = id;
+    // Bearbeiten: der gespeicherte Status gilt als gewaehlt — nichts automatisch umstellen
+    bhStatusSelbst = true;
     document.getElementById('modalTitle').textContent = L('Bericht bearbeiten', 'Edit report');
     document.getElementById('reportYear').value = report.year;
     document.getElementById('reportWeek').value = report.week;
