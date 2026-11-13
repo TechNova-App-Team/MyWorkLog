@@ -170,14 +170,15 @@
     }
     </script>
     <link rel="stylesheet" href="/Assets/fonts/bricolage-grotesque-geist-bfd216ed.css?v=033ee648ed">
-    <link rel="stylesheet" href="/Assets/css/rechte-checker.css?v=a1efe8f507">
+    <link rel="stylesheet" href="/Assets/css/rechte-checker.css?v=8e8fcc0db8">
+    <link rel="stylesheet" href="/Assets/css/rechte-uebersicht.css?v=d459c8ea38">
     <script defer src="/Assets/js/ph-init.js?v=bb543add18"></script>
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
     <script src="/components/weihnachten/weihnachten-seite.js?v=8eda02f946"></script>
 </head>
-<body>
+<body class="rc-start">
     <!-- ═══════════════ AMBIENT ═══════════════ -->
     <!-- Der Lichtschein liegt jetzt als Verlauf auf .ambient selbst; die drei
          Kugel-Elemente waren nach dem Umbau leere Huellen ohne Regel. -->
@@ -199,7 +200,8 @@
         </nav>
         </div>
 
-        <!-- Hero -->
+        <!-- Erster Bildschirm (seit 13.11.2026): links die Frage, rechts die Suche als Hauptweg -->
+        <section class="rc-held">
         <header class="hero">
             <div class="hero-badge" id="heroBadge">Azubi-Bodyguard</div>
             <h1>Darf der Chef <span>das</span>?</h1>
@@ -220,13 +222,25 @@
             </div>
         </header>
 
-        <!-- Search -->
+        <div class="rc-suche">
         <div class="search-wrap" role="search" aria-label="Szenarien durchsuchen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <label for="searchInput" class="sr-only">Szenario suchen</label>
             <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off">
             <p class="search-hint" id="searchHint" aria-live="polite" hidden></p>
         </div>
+        <!-- Beispiel-Suchen: renderBeispiele() (Text per RL, deshalb nicht im Markup/i18n) -->
+        <div class="rc-beispiele" id="rcBeispiele"></div>
+        </div>
+        </section>
+
+        <!-- Häufig gesucht: füllt renderOft() aus OFT_GESUCHT (Search Console) -->
+        <section class="rc-oft" id="rcOft" aria-labelledby="rcOftT">
+            <h2 class="rc-h2" id="rcOftT">Häufig gesucht</h2>
+            <ol class="rc-oft-liste" id="rcOftListe"></ol>
+        </section>
+
+        <h2 class="rc-h2 rc-alle-t" id="rcAlleT">Alle Fälle</h2>
 
         <!-- Category Filters -->
         <div class="cat-filters" id="catFilters">
@@ -292,19 +306,6 @@
     </div>
 
     <div id="page-footer"></div>
-
-    <!-- ═════════════ DETAIL OVERLAY ═════════════ -->
-    <div class="detail-overlay" id="detailOverlay">
-        <div class="detail-modal" id="detailModal">
-            <div class="detail-header">
-                <button class="detail-close" onclick="closeDetail()" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-                <div class="detail-category" id="detailCategory"></div>
-                <h2 class="detail-title" id="detailTitle"></h2>
-                <p class="detail-subtitle" id="detailSubtitle"></p>
-            </div>
-            <div class="detail-body" id="detailBody"></div>
-        </div>
-    </div>
 
     <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
     <script src="/Assets/js/rechte-checker/faelle.js?v=a492be78ed"></script>
@@ -569,6 +570,8 @@
     //  RENDER SCENARIO CARDS
     // ═══════════════════════════════════════════
     function renderScenarios() {
+        renderOft();
+        renderBeispiele();
         const grid = document.getElementById('scenariosGrid');
         const noResults = document.getElementById('noResults');
 
@@ -624,16 +627,62 @@
         }).join('');
     }
 
-    // Jeder Fall hat eine eigene Seite (tools/rechte-seiten.mjs). Der Link in der
-    // Karte ist fuer Suchmaschinen und Strg-/Mittelklick da; ein normaler Klick
-    // oeffnet weiter das Detailfenster.
+    // Jeder Fall hat eine eigene Seite (tools/rechte-seiten.mjs). Bis 13.11.2026 oeffnete ein
+    // Klick hier ein Detailfenster mit denselben Inhalten; seit die Fallseiten die Antwort
+    // zuerst zeigen, fuehrt die ganze Karte dorthin (der Link deckt sie per ::after ab).
     function fallUrl(id) {
         return (document.documentElement.lang === 'en' ? '/en' : '') + '/rechte-checker/' + id + '/';
     }
     function karteKlick(e, id) {
-        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-        e.preventDefault();
-        openDetail(id);
+        if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'fall_geoeffnet', fall: id }, { transport: 'sendBeacon' });
+    }
+
+    // Die meistgesuchten Faelle zuerst. Reihenfolge = Google-Einblendungen der Fallseiten,
+    // Search Console 28 Tage bis 13.11.2026 (Weihnachtsgeld 5.771, krank + Schule 2.912,
+    // Krankschreibung ab Tag 1 2.146, Pruefung 1.540, Fahrtkosten Schule 1.047,
+    // Kuendigung bei Krankheit 740). Bei Saisonwechsel (Weihnachtsgeld!) neu messen.
+    const OFT_GESUCHT = ['weihnachtsgeld-azubi', 'krank-berufsschule', 'krankmeldung-ab-tag-eins',
+        'pruefungsfreistellung', 'berufsschule-fahrtkosten', 'kuendigung-wegen-krankheit'];
+    function frageVon(s) {
+        const seo = (document.documentElement.lang === 'en' ? (window.RC_EN && window.RC_EN.seo) : window.RC_SEO) || {};
+        const t = seo[s.id];
+        return t ? (t.includes('?') ? t.slice(0, t.indexOf('?') + 1) : t) : s.title.replace(/"/g, '');
+    }
+    function renderOft() {
+        const box = document.getElementById('rcOft');
+        const liste = document.getElementById('rcOftListe');
+        if (!box || !liste) return;
+        box.hidden = !!searchQuery || activeCat !== 'all';
+        if (liste.childElementCount) return;
+        liste.innerHTML = OFT_GESUCHT.map(id => SCENARIOS.find(s => s.id === id)).filter(Boolean).map(s => `
+            <li><a href="${fallUrl(s.id)}" onclick="karteKlick(event, '${s.id}')">
+                <span class="rc-oft-kat">${catIcon(s.cat)}${escapeHtml(getCatLabel(s.cat))}</span>
+                <span class="rc-oft-frage">${escapeHtml(frageVon(s))}</span>
+                <span class="rc-oft-pfeil" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></span>
+            </a></li>`).join('');
+    }
+    // Beispiel-Suchen unter dem Feld: setzen den Text und suchen sofort. Begriffe aus den
+    // meistgesuchten Themen (siehe OFT_GESUCHT), nicht erfunden.
+    function renderBeispiele() {
+        const box = document.getElementById('rcBeispiele');
+        if (!box) return;
+        box.hidden = !!searchQuery;
+        if (box.childElementCount) return;
+        const bsp = RL('Überstunden|Krank in der Berufsschule|Urlaub|Kündigung', 'Overtime|Sick on a school day|Holiday|Dismissal').split('|');
+        box.innerHTML = '<span class="rc-beispiele-t">' + RL('Zum Beispiel', 'For example') + '</span>' +
+            bsp.map(b => '<button type="button" class="rc-beispiel" data-q="' + escapeHtml(b) + '">' + escapeHtml(b) + '</button>').join('');
+        box.addEventListener('click', (e) => {
+            const b = e.target.closest('.rc-beispiel');
+            if (!b) return;
+            const input = document.getElementById('searchInput');
+            input.value = b.getAttribute('data-q');
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.focus();
+        });
+    }
+    // Wie auf den Fallseiten: bezieht sich auf das Chef-Zitat, nicht auf eine Suchfrage.
+    function urteilWort(v) {
+        return v === 'nein' ? RL('Darf er nicht', 'Not allowed') : v === 'jein' ? RL('Kommt drauf an', 'It depends') : RL('Darf er', 'Allowed');
     }
 
     function getCatLabel(cat) {
@@ -710,14 +759,8 @@
        Wort das Ergebnis, der Balken zeigt nur noch, wie deutlich der Fall ist. */
     function renderSeverity(level, verdict) {
         const kind = verdict === 'nein' ? 'no' : verdict === 'jein' ? 'mid' : 'ok';
-        const label = kind === 'no'  ? RL('Unzulässig', 'Not allowed')
-                    : kind === 'mid' ? RL('Kommt drauf an', 'Depends')
-                    :                  RL('Zulässig', 'Allowed');
+        const label = urteilWort(verdict);
         return `<span class="severity-label">${label}</span>`;
-    }
-    // **x** in verdictDetail stand bis 19.10.2026 mit Sternchen im Text.
-    function fett(str) {
-        return escapeHtml(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     }
     function escapeHtml(str) {
         const d = document.createElement('div');
@@ -763,128 +806,6 @@
         });
     }
 
-    // ═══════════════════════════════════════════
-    //  DETAIL OVERLAY
-    // ═══════════════════════════════════════════
-    function openDetail(id) {
-        const s = SCENARIOS.find(x => x.id === id);
-        if (!s) return;
-        // Die id ist ein fester Katalogschluessel ('ueberstunden'), kein Nutzertext.
-        if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'fall_geoeffnet', fall: s.id });
-
-        const overlay = document.getElementById('detailOverlay');
-        const catDiv = document.getElementById('detailCategory');
-        const titleEl = document.getElementById('detailTitle');
-        const subEl = document.getElementById('detailSubtitle');
-        const bodyEl = document.getElementById('detailBody');
-
-        catDiv.className = 'detail-category tag-' + s.cat;
-        catDiv.innerHTML = catIcon(s.cat) + escapeHtml(getCatLabel(s.cat));
-        titleEl.textContent = s.title;
-        subEl.textContent = s.desc;
-
-        let html = '';
-
-        // Verdict box
-        html += `<div class="verdict-box ${s.verdict}">
-            <div class="verdict-label">${s.verdict === 'nein' ? RL('Das darf der Chef NICHT', 'The boss may NOT do that') : s.verdict === 'jein' ? RL('Kommt drauf an…', 'It depends…') : RL('Das ist erlaubt', 'This is allowed')}</div>
-            <div class="verdict-text">${escapeHtml(s.verdictShort)}</div>
-            <div class="verdict-detail">${fett(s.verdictDetail)}</div>
-        </div>`;
-
-        // Law references
-        if (s.laws && s.laws.length) {
-            s.laws.forEach(law => {
-                html += `<div class="law-ref">
-                    <div class="law-ref-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg></div>
-                    <div class="law-ref-content">
-                        <div class="law-ref-title">${escapeHtml(law.title)}</div>
-                        <div class="law-ref-text">${escapeHtml(law.text)}</div>
-                    </div>
-                </div>`;
-            });
-        }
-
-        // Tips
-        if (s.tips && s.tips.length) {
-            html += `<div class="tips-section">
-                <div class="tips-title">${RL('Was du tun kannst', 'What you can do')}</div>`;
-            s.tips.forEach((tip, i) => {
-                html += `<div class="tip-item">
-                    <div class="tip-num">${i + 1}</div>
-                    <div>${escapeHtml(tip)}</div>
-                </div>`;
-            });
-            html += '</div>';
-        }
-
-        // Email generator
-        if (s.email) {
-            html += `<div class="email-section">
-                <button class="email-btn" onclick="toggleEmail('${s.id}')">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    ${RL('E-Mail-Vorlage generieren', 'Generate email template')}
-                </button>
-                <div class="email-output" id="emailOutput_${s.id}">
-                    <div class="email-output-header">
-                        <div class="email-output-title">${RL('Betreff: ', 'Subject: ')}${escapeHtml(s.email.subject)}</div>
-                        <button class="email-copy-btn" onclick="copyEmail('${s.id}')">${RL('Kopieren', 'Copy')}</button>
-                    </div>
-                    <div class="email-text" id="emailText_${s.id}">${escapeHtml(s.email.body)}</div>
-                </div>
-            </div>`;
-        }
-
-        html += `<a class="detail-permalink" href="${fallUrl(s.id)}">${RL('Eigene Seite zu diesem Fall — zum Teilen', 'Page for this case — to share')}</a>`;
-
-        bodyEl.innerHTML = html;
-
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeDetail() {
-        const overlay = document.getElementById('detailOverlay');
-        overlay.classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    // Close on overlay click (not modal)
-    document.getElementById('detailOverlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeDetail();
-    });
-
-    // Close on Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeDetail();
-    });
-
-    // ═══════════════════════════════════════════
-    //  EMAIL TEMPLATE
-    // ═══════════════════════════════════════════
-    function toggleEmail(id) {
-        const el = document.getElementById('emailOutput_' + id);
-        if (el) el.classList.toggle('active');
-    }
-
-    function copyEmail(id) {
-        const s = SCENARIOS.find(x => x.id === id);
-        if (!s || !s.email) return;
-        if (typeof mwlEvent === 'function') mwlEvent('rechte_checker', { aktion: 'mustermail_kopiert', fall: s.id });
-        const text = RL('Betreff: ', 'Subject: ') + s.email.subject + '\n\n' + s.email.body;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.querySelector('#emailOutput_' + id + ' .email-copy-btn');
-            if (btn) {
-                const original = btn.textContent;
-                btn.textContent = RL('Kopiert!', 'Copied!');
-                btn.style.color = 'var(--success)';
-                setTimeout(() => {
-                    btn.textContent = original;
-                    btn.style.color = '';
-                }, 2000);
-            }
-        });
-    }
     </script>
 
     <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme.

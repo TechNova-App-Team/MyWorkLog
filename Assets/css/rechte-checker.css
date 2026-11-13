@@ -299,15 +299,6 @@ strong { color: var(--text); font-weight: 600; }
 /* Der Titel ist ein echter Link auf die Fallseite; ::after spannt ihn ueber die
    ganze Karte, damit Strg-/Mittelklick ueberall greift. Der Fokusring sitzt an
    der Karte, nicht am Text. */
-.detail-permalink {
-    display: inline-block;
-    margin-top: 16px;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-.detail-permalink:hover { color: var(--text); }
 .scenario-link { color: inherit; outline: none; }
 .scenario-link::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
 .scenario-card:has(.scenario-link:focus-visible) {
@@ -422,180 +413,10 @@ strong { color: var(--text); font-weight: 600; }
 }
 
 /* ═══════════════════════════════════════
-   DETAIL OVERLAY
+   E-MAIL-VORLAGE (Klappfeld der Fallseiten, .fall-mail)
+   Das Detailfenster dieser Seite ist seit 13.11.2026 weg: jede Karte führt auf ihre Fallseite.
 ═══════════════════════════════════════ */
-.detail-overlay {
-    position: fixed; inset: 0;
-    background: rgba(3, 3, 5, 0.74);
-    backdrop-filter: blur(6px);
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-.detail-overlay.active { display: flex; }
-.detail-modal {
-    background: var(--bg-card-solid);
-    border: 1px solid var(--border-strong);
-    border-radius: 16px;
-    max-width: 720px;
-    width: 100%;
-    max-height: 90dvh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    box-shadow: 0 24px 80px rgba(3, 3, 5, 0.6);
-    animation: modalSlideUp 0.32s var(--bewegung);
-}
-@keyframes modalSlideUp {
-    from { transform: translateY(24px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-.detail-header {
-    padding: 28px 32px 0;
-    position: relative;
-}
-.detail-close {
-    position: absolute; top: 16px; right: 16px;
-    width: 40px; height: 40px;
-    border-radius: var(--radius-xs);
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-muted);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-.detail-close svg { width: 20px; height: 20px; }
-.detail-close:hover { background: var(--bg-elevated); color: var(--text); }
-.detail-close:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.detail-category {
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 0.84rem; font-weight: 500;
-    color: var(--text-dim);
-    margin-bottom: 12px;
-}
-.detail-category svg { width: 15px; height: 15px; flex-shrink: 0; }
-.detail-title {
-    font-family: var(--font-display);
-    font-size: clamp(1.5rem, 4vw, 1.95rem); font-weight: 650;
-    letter-spacing: -0.022em;
-    line-height: 1.14;
-    margin-bottom: 8px;
-    padding-right: 32px;
-    text-wrap: balance;
-}
-.detail-subtitle {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    margin-bottom: 22px;
-    text-wrap: pretty;
-}
-.detail-body { padding: 0 32px 32px; }
-
-/* Das Urteil ist das eine grosse Element jedes Falls: eine getoente Flaeche,
-   die Antwort in Titelschrift. Die Antwort steht in Textfarbe, nur das Etikett
-   ist farbig: ganze Saetze in Rot oder Gelb liest niemand gern. */
-.verdict-box {
-    border-radius: 12px;
-    padding: 20px 22px 22px;
-    margin-bottom: 24px;
-}
-.verdict-box.nein { background: rgba(var(--danger-rgb), 0.10); }
-.verdict-box.jein { background: rgba(var(--warning-rgb), 0.09); }
-.verdict-box.ja   { background: rgba(var(--success-rgb), 0.09); }
-.verdict-label {
-    font-size: 0.86rem; font-weight: 600;
-    margin-bottom: 6px;
-}
-.verdict-box.nein .verdict-label { color: var(--danger); }
-.verdict-box.jein .verdict-label { color: var(--warning); }
-.verdict-box.ja   .verdict-label { color: var(--success); }
-.verdict-text {
-    font-family: var(--font-display);
-    font-size: 1.28rem; font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.25;
-    margin-bottom: 12px;
-    text-wrap: pretty;
-}
-.verdict-detail {
-    font-size: 0.95rem;
-    color: #c5cedb;
-    line-height: 1.65;
-    text-wrap: pretty;
-}
-
-/* Law Reference */
-.law-ref {
-    background: var(--bg-elevated);
-    border-radius: var(--radius-sm);
-    padding: 14px 16px;
-    margin-bottom: 8px;
-    display: flex; gap: 12px;
-    align-items: flex-start;
-}
-.law-ref-icon { flex-shrink: 0; margin-top: 2px; }
-/* Ohne Groesse schrumpfte das SVG im Flex-Kasten auf 0 px — das Buch-Symbol
-   war bis 19.10.2026 nirgends zu sehen. */
-.law-ref-icon svg { display: block; width: 17px; height: 17px; color: var(--text-dim); }
-.law-ref-content { flex: 1; min-width: 0; }
-.law-ref-title {
-    font-size: 0.9rem; font-weight: 600;
-    margin-bottom: 3px;
-    color: var(--text);
-}
-.law-ref-text {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    line-height: 1.55;
-}
-
-/* Tips */
-.tips-section { margin: 24px 0; }
-.tips-title {
-    font-family: var(--font-display);
-    font-size: 1.15rem; font-weight: 600;
-    letter-spacing: -0.012em;
-    margin-bottom: 10px;
-}
-.tip-item {
-    display: flex; gap: 12px;
-    padding: 7px 0;
-    font-size: 0.94rem;
-    color: var(--text-muted);
-    line-height: 1.55;
-}
-/* Die Reihenfolge ist nur Zaehlhilfe, deshalb Ziffer statt Farbkreis. */
-.tip-num {
-    flex-shrink: 0;
-    min-width: 16px;
-    color: var(--text-dim);
-    font-size: 0.82rem;
-    font-family: var(--font-mono);
-    line-height: 1.8;
-}
-
 /* Email Generator */
-.email-section { margin-bottom: 10px; }
-/* Bis v9.5.18 ein Verlauf mit --secondary-rgb. Die Variable gab es nirgends,
-   der Hintergrund war damit ungueltig: der Knopf hatte gar keine Fuellung. */
-.email-btn {
-    width: 100%;
-    min-height: 48px;
-    padding: 0 20px;
-    border-radius: var(--radius-xs);
-    border: 1px solid var(--border-strong);
-    background: var(--bg-elevated);
-    color: var(--text);
-    font-size: 0.94rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-}
-.email-btn:hover { border-color: rgba(var(--primary-rgb), 0.8); }
-.email-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .email-output {
     margin-top: 16px;
     display: none;
@@ -731,23 +552,10 @@ strong { color: var(--text); font-weight: 600; }
     .scenarios-grid { grid-template-columns: 1fr; gap: 10px; }
     .rc-wissen { margin-top: 48px; }
 
-    /* Am Handy als Blatt von unten: der Daumen erreicht es, und oben bleibt der
-       Bezug zur Liste. Die Hoehe auf dvh, sonst deckt die Adressleiste den Schluss. */
-    .detail-overlay { align-items: flex-end; padding: 0; }
-    .detail-modal {
-        max-width: none;
-        max-height: 92dvh;
-        border-radius: 16px 16px 0 0;
-        border-width: 1px 0 0;
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-    .detail-header { padding: 24px 20px 0; }
-    .detail-body { padding: 0 20px 28px; }
 
 }
 
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .detail-modal { animation: none; }
     .back-btn svg { transition: none; }
 }

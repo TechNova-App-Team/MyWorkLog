@@ -115,7 +115,10 @@ t(KATS.every((k) => labelDe.includes(k + ':') && labelEn.includes(k + ':')), 'je
 const icons = haupt.match(/const CAT_ICONS = \{([\s\S]*?)\};/)?.[1] || '';
 t(KATS.every((k) => new RegExp('\\b' + k + ':').test(icons)), 'jede Kategorie hat ein Symbol');
 t(haupt.includes(`id="statTotal">${F.length}<`), 'Fallzahl steht im Markup (ohne JS lesbar)');
-t(haupt.includes('function fett(') && haupt.includes('fett(s.verdictDetail)'), 'Detailfenster rendert **fett** als <strong>');
+// Seit 13.11.2026 kein Detailfenster mehr: jede Karte führt auf ihre Fallseite (dort rendert fett())
+t(!haupt.includes('detailOverlay') && !haupt.includes('function openDetail'), 'Übersicht hat kein doppeltes Detailfenster mehr');
+t(fs.readFileSync('tools/rechte-seiten.mjs', 'utf8').includes('fett(d.verdictDetail)'), 'Fallseiten rendern **fett** als <strong>');
+t(haupt.includes('OFT_GESUCHT') && haupt.includes('id="rcOftListe"'), 'Übersicht zeigt die meistgesuchten Fälle');
 t(haupt.includes('fallUrl(s.id)'), 'Karten verlinken auf die Fallseite');
 
 // ── 5. Fallseiten: Weg in die App passt zum Thema (gemessen 28.10.2026: Einstiege ≈ Ausstiege) ──

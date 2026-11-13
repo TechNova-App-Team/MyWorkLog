@@ -1,0 +1,231 @@
+/* ═══ RECHTE-CHECKER: ÜBERSICHT (/rechte-checker/, body.rc-start) ═══
+   Seit 13.11.2026, gleiche Sprache wie die Fallseiten (rechte-fall.css): fast monochrom,
+   Urteilsfarbe nur als gedämpfter Ton in kleinen Punkten, Haarlinien statt Rahmen,
+   Doppelrand für das eine Hauptelement (die Suche). Wunsch des Nutzers: „edel, nicht neon“.
+   Liegt NACH rechte-checker.css und überschreibt dort nur Aussehen, keine Funktion.
+   Aufbau: erster Bildschirm = Frage links, Suche rechts → „Häufig gesucht“ (meistgesuchte
+   Fälle laut Search Console) → alle Fälle mit Filtern → Wissensblock. */
+
+.rc-start {
+    --ton-nein: color-mix(in oklab, var(--danger) 55%, var(--text));
+    --ton-jein: color-mix(in oklab, var(--warning) 52%, var(--text));
+    --ton-ja:   color-mix(in oklab, var(--success) 50%, var(--text));
+    --haar: rgba(255, 255, 255, 0.07);
+    --haar-2: rgba(255, 255, 255, 0.12);
+    --kern: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    --glanz: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --weich: cubic-bezier(0.32, 0.72, 0, 1);
+}
+.rc-start .shell { max-width: 1200px; }
+
+/* ── Erster Bildschirm ── */
+.rc-held {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+    gap: 72px;
+    align-items: center;
+    margin: 56px 0 88px;
+}
+.rc-start .hero { margin: 0; max-width: none; }
+.rc-start .hero-badge {
+    margin-bottom: 22px;
+    padding: 5px 12px 5px 10px;
+    border: 1px solid var(--haar);
+    border-radius: 999px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.rc-start .hero-badge svg { width: 14px; height: 14px; color: var(--text-muted); stroke-width: 1.6; }
+.rc-start .hero h1 {
+    margin-bottom: 20px;
+    font-size: clamp(2.6rem, 5.6vw, 4.4rem);
+    font-weight: 600;
+    letter-spacing: -0.042em;
+    line-height: 1;
+}
+.rc-start .hero h1 span { color: var(--text-muted); }
+.rc-start .hero-sub { max-width: 46ch; font-size: 1rem; line-height: 1.65; margin-bottom: 22px; }
+.rc-start .hero-sub strong { font-weight: 550; }
+.rc-start .hero-stats { gap: 4px 22px; }
+.rc-start .hero-stat { font-size: 0.8rem; }
+.rc-start .hero-stat-num { font-weight: 550; }
+
+/* Suche als Doppelrand: Schale + Kern, das eine Hauptelement der Seite */
+.rc-start .search-wrap {
+    max-width: none;
+    margin: 0;
+    padding: 7px;
+    border: 1px solid var(--haar);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.018);
+    animation: rc-setzen 0.75s var(--weich) 0.1s both;
+}
+.rc-start .search-wrap > svg { left: 26px; width: 19px; height: 19px; stroke-width: 1.7; }
+.rc-start .search-input {
+    padding: 22px 22px 22px 52px;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    background: var(--kern), var(--bg-card);
+    box-shadow: var(--glanz), 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+    font-size: 1.02rem;
+    transition: border-color 0.4s var(--weich), box-shadow 0.4s var(--weich);
+}
+.rc-start .search-input:focus { border-color: var(--haar-2); box-shadow: var(--glanz), 0 0 0 4px rgba(255, 255, 255, 0.04); }
+.rc-start .search-hint { top: calc(100% + 12px); left: 12px; }
+.rc-start .search-hint button { text-decoration-color: var(--text-dim); }
+
+/* Beispiel-Suchen unter dem Feld */
+.rc-beispiele { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 6px 0; }
+.rc-beispiele[hidden] { display: none; }
+.rc-beispiele-t { margin-right: 4px; font-size: 0.78rem; color: var(--text-dim); }
+.rc-beispiel {
+    padding: 6px 12px;
+    border: 1px solid var(--haar);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.3s var(--weich), color 0.3s var(--weich), border-color 0.3s var(--weich), transform 0.3s var(--weich);
+}
+.rc-beispiel:hover { border-color: var(--haar-2); background: rgba(255, 255, 255, 0.04); color: var(--text); }
+.rc-beispiel:active { transform: scale(0.97); }
+.rc-beispiel:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ── Abschnittsköpfe ── */
+.rc-h2 {
+    margin-bottom: 18px;
+    font-family: var(--font-display);
+    font-size: 1.36rem;
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.2;
+}
+
+/* ── Häufig gesucht: Liste, kein Kartenraster. Urteil leise vorn, Frage, Pfeil ── */
+.rc-oft { margin-bottom: 80px; }
+.rc-oft[hidden] { display: none; }
+.rc-oft-liste {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 40px;
+    list-style: none;
+    border-top: 1px solid var(--haar);
+}
+.rc-oft-liste li { border-bottom: 1px solid var(--haar); }
+.rc-oft-liste a {
+    display: grid;
+    grid-template-columns: 128px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 4px;
+    color: var(--text);
+    text-decoration: none;
+}
+.rc-oft-kat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+.rc-oft-kat svg { width: 14px; height: 14px; flex-shrink: 0; stroke-width: 1.6; }
+.rc-oft-frage { font-size: 1rem; font-weight: 500; line-height: 1.4; text-wrap: pretty; }
+.rc-oft-pfeil {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--haar-2);
+    border-radius: 50%;
+    color: var(--text-muted);
+    transition: transform 0.45s var(--weich), background-color 0.3s var(--weich), color 0.3s var(--weich);
+}
+.rc-oft-pfeil svg { width: 14px; height: 14px; }
+.rc-oft-liste a:hover .rc-oft-pfeil { transform: translate(2px, -1px); background: var(--text); color: var(--bg-deep); }
+.rc-oft-liste a:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 8px; }
+
+/* ── Filter ── */
+.rc-start .cat-filters { gap: 6px; margin-bottom: 22px; }
+.rc-start .cat-pill {
+    min-height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--haar);
+    border-radius: 999px;
+    font-size: 0.82rem;
+    transition: background-color 0.3s var(--weich), border-color 0.3s var(--weich), color 0.3s var(--weich);
+}
+.rc-start .cat-pill svg { width: 14px; height: 14px; stroke-width: 1.6; }
+.rc-start .cat-pill:hover { border-color: var(--haar-2); background: rgba(255, 255, 255, 0.04); }
+.rc-start .cat-pill.active { background: var(--text); border-color: var(--text); color: var(--bg-deep); }
+
+/* ── Karten ── */
+.rc-start .scenarios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 64px; }
+.rc-start .scenario-card {
+    border: 1px solid var(--haar);
+    border-radius: 18px;
+    background: var(--kern), var(--bg-card);
+    box-shadow: var(--glanz);
+    overflow: visible;
+    transition: border-color 0.4s var(--weich), transform 0.5s var(--weich);
+}
+.rc-start .scenario-card:hover { border-color: var(--haar-2); background: var(--kern), var(--bg-card); transform: translateY(-3px); }
+.rc-start .scenario-card:active { transform: translateY(0) scale(0.99); }
+.rc-start .scenario-card-inner { padding: 20px 20px 14px; }
+.rc-start .scenario-tag { font-size: 0.74rem; color: var(--text-dim); }
+.rc-start .scenario-tag svg { stroke-width: 1.6; }
+.rc-start .scenario-title { font-weight: 600; letter-spacing: -0.015em; }
+.rc-start .scenario-desc { color: var(--text-muted); }
+.rc-start .scenario-footer { border-top-color: var(--haar); }
+.rc-start .scenario-law { font-size: 0.7rem; }
+/* Urteil: kein Farbfeld mehr, nur gedämpfter Punkt + graues Wort (wie auf den Fallseiten) */
+.rc-start .severity-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0;
+    background: none !important;
+    color: var(--text-dim) !important;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+.rc-start .severity-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ton-jein); }
+.rc-start .sev-no .severity-label::before { background: var(--ton-nein); }
+.rc-start .sev-ok .severity-label::before { background: var(--ton-ja); }
+
+/* ── Wissensblock ── */
+.rc-start .rc-wissen {
+    max-width: 68ch;
+    margin-top: 32px;
+    padding-top: 48px;
+    border-top: 1px solid var(--haar);
+}
+
+@keyframes rc-setzen {
+    from { transform: translateY(16px); }
+    to   { transform: none; }
+}
+
+@media (max-width: 1000px) {
+    .rc-held { grid-template-columns: 1fr; gap: 32px; margin: 36px 0 64px; }
+    .rc-start .scenarios-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rc-oft-liste { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+    .rc-held { margin: 20px 0 52px; gap: 24px; }
+    .rc-start .hero h1 { font-size: clamp(2.4rem, 11vw, 3rem); }
+    .rc-start .search-wrap { border-radius: 22px; padding: 5px; }
+    .rc-start .search-input { padding: 18px 16px 18px 46px; border-radius: 18px; }
+    .rc-start .search-wrap > svg { left: 20px; }
+    .rc-oft-liste a { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 16px 2px; }
+    .rc-oft-kat { grid-column: 1; grid-row: 1; }
+    .rc-oft-frage { grid-column: 1; grid-row: 2; }
+    .rc-oft-pfeil { grid-column: 2; grid-row: 1 / span 2; }
+    .rc-start .scenarios-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .rc-start .search-wrap { animation: none; }
+    .rc-start .scenario-card, .rc-oft-pfeil, .rc-start .cat-pill { transition: none; }
+}
