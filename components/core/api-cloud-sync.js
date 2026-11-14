@@ -502,6 +502,9 @@
             if (alt && alt.uid === uid && Date.now() - alt.t < B2B_ER_TAKT) return;
             localStorage.setItem('mwl_b2b_er_geprueft', JSON.stringify({ uid: uid, t: Date.now() }));
         } catch (e) { return; }
+        // Hat dieses Geraet die Handy-Erinnerung an, das Konto ans Abo haengen — sonst
+        // finden Ausbilder-Erinnerungen das Geraet nicht (erinnerung-push.js).
+        if (window.MWLErinnerung) window.MWLErinnerung.kontoNachziehen();
         const cs = window.cloudSync;
         if (!cs || !cs.client || typeof window.mwlAusbilderMeldung !== 'function') return;
         try {

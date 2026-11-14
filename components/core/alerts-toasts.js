@@ -236,6 +236,8 @@
         set.hidden = !settings;
         if (foot) foot.hidden = settings;
         if (btn) btn.setAttribute('aria-expanded', String(settings));
+        // Erinnerung aufs Handy erst hier zeichnen: der Status fragt den Service Worker.
+        if (settings && window.MWLErinnerung) window.MWLErinnerung.zeichne(document.getElementById('alertPushBox'));
     }
     
     function checkAlertsThresholds() {

@@ -538,13 +538,15 @@ self.addEventListener('message', event => {
 // PUSH NOTIFICATIONS
 // ─────────────────────────────────────────────
 
-// Einziger Absender bisher: Klassen-Mitteilungen (Edge Function klassen-push, seit v8.5.9).
-// Eine offene App bekommt zusaetzlich eine Nachricht und holt die Mitteilung sofort in
-// ihre Glocke (klasse-profil.js), statt bis zum naechsten Abgleich zu warten.
+// Absender: Klassen-Mitteilungen (Edge Function klassen-push, seit v8.5.9, tag 'klasse-…')
+// und Berichtsheft-/Ausbilder-Erinnerungen (erinnerung-push, seit v9.7.1, tag 'mwl-…').
+// Nur bei Klassen-Mitteilungen bekommt eine offene App zusaetzlich eine Nachricht und holt
+// die Mitteilung sofort in ihre Glocke (klasse-profil.js).
 self.addEventListener('push', event => {
   let data = {};
   try { data = event.data?.json() ?? {}; } catch { data = { body: event.data?.text() }; }
   const ziel = typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/';
+  const klasse = typeof data.tag === 'string' && data.tag.startsWith('klasse-');
 
   event.waitUntil(Promise.all([
     self.registration.showNotification(data.title ?? 'MyWorkLog', {
@@ -554,8 +556,8 @@ self.addEventListener('push', event => {
       tag:   data.tag ?? 'myworklog',
       data:  { url: ziel },
     }),
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then(list => list.forEach(c => c.postMessage({ typ: 'klasse-mitteilung' }))),
+    klasse ? self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then(list => list.forEach(c => c.postMessage({ typ: 'klasse-mitteilung' }))) : null,
   ]));
 });
 
@@ -564,9 +566,12 @@ self.addEventListener('notificationclick', event => {
   const ziel = event.notification.data?.url || '/';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
-      // Laeuft die App schon, nach vorn holen (die Nachricht oben hat sie schon abgeglichen);
-      // sonst neu oeffnen — ?klasse=mitteilung loest dort den Abgleich sofort aus.
-      const offen = list.find(c => new URL(c.url).pathname === '/' || new URL(c.url).pathname === '/en/') || list[0];
+      // Ein Fenster, das schon auf dem Ziel-Pfad steht, nach vorn holen (bei Klassen-
+      // Mitteilungen hat die Nachricht oben es schon abgeglichen); sonst das Ziel oeffnen.
+      // Bis v9.7.0 holte der Klick IRGENDEIN Fenster nach vorn (`|| list[0]`) — mit
+      // Erinnerungen, deren Ziel /berichtsheft/ ist, landete man damit im Dashboard.
+      const pfad = new URL(ziel, self.location.origin).pathname;
+      const offen = list.find(c => new URL(c.url).pathname === pfad);
       return offen ? offen.focus() : self.clients.openWindow(ziel);
     })
   );

@@ -2022,7 +2022,7 @@
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=4cfead16a8"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=32a2404178"></script>
     <script defer src="/Assets/js/ausbilder-pdf.js?v=39a1016227"></script>
 
     <script>
@@ -3196,8 +3196,12 @@
             try {
                 var zeile = await BHB2B.erinnerungSenden(az.userId, f.wochen);
                 kontoErinnerungen[az.userId] = zeile;
-                toast(abL('Erinnerung an ' + (az.name || 'den Azubi') + ' gesendet',
-                          'Reminder sent to ' + (az.name || 'the apprentice')));
+                // Push aufs Handy des Azubis, falls er sie erlaubt hat. Ohne Abo bleibt es
+                // bei App-Glocke und Berichtsheft — der Toast sagt, was wirklich passiert ist.
+                var push = BHB2B.erinnerungPushen ? await BHB2B.erinnerungPushen(zeile.id) : null;
+                var aufsHandy = !!(push && push.gesendet > 0);
+                toast(abL('Erinnerung an ' + (az.name || 'den Azubi') + ' gesendet' + (aufsHandy ? ', auch aufs Handy' : ''),
+                          'Reminder sent to ' + (az.name || 'the apprentice') + (aufsHandy ? ', also to their phone' : '')));
                 if (typeof mwlEvent === 'function') mwlEvent('b2b_erinnerung', { wochen: f.gesamt, leer: !az.berichte.length });
             } catch (e) {
                 if (e && e.code === 'zu_frueh') {

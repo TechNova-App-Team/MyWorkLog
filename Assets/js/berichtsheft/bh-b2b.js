@@ -1486,6 +1486,23 @@
     }
 
     /**
+     * Ausbilder: die eben angelegte Erinnerung zusaetzlich als Push an die Geraete des
+     * Azubis (Edge Function erinnerung-push; prueft selbst, dass DIESES Konto sie angelegt
+     * hat, und schickt jede hoechstens einmal). → { gesendet, abos } oder null.
+     */
+    async function bhb2bErinnerungPushen(id) {
+        try {
+            const sb = await client();
+            const { data, error } = await sb.functions.invoke('erinnerung-push', { body: { aktion: 'ausbilder', id: String(id || '') } });
+            if (error) { console.warn('[B2B] Erinnerung pushen:', error.message); return null; }
+            return data || null;
+        } catch (e) {
+            console.warn('[B2B] Erinnerung pushen:', e && e.message);
+            return null;
+        }
+    }
+
+    /**
      * Ausbilder: letzte Erinnerung je Azubi des Betriebs.
      * → { <azubiId>: { id, wochen, erstellt_at, gelesen_at, ausbilder_name } }
      */
@@ -1596,6 +1613,7 @@
         austreten: bhb2bAustreten,
         fehlendeWochen: fehlendeWochen,
         erinnerungSenden: bhb2bErinnerungSenden,
+        erinnerungPushen: bhb2bErinnerungPushen,
         erinnerungenBetrieb: bhb2bErinnerungenBetrieb,
         erinnerungenOffen: bhb2bErinnerungenOffen,
         erinnerungenGelesen: bhb2bErinnerungenGelesen,

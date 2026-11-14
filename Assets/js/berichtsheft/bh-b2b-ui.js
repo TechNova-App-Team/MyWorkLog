@@ -877,6 +877,14 @@
         if (tief) { setZu(false); expandiert = true; }
         aktualisieren(false).then(function () {
             if (tief && el() && !el().hidden) el().scrollIntoView({ block: 'start', behavior: 'smooth' });
+            // Erinnerung aufs Handy (erinnerung-push.js). Verbundene Azubis lesen dazu,
+            // dass auch die Erinnerungen des Ausbilders so ankommen; ein schon erteiltes
+            // Abo bekommt nach dem Anmelden das Konto angehaengt.
+            if (window.MWLErinnerung) {
+                const st = statusErinnerung();
+                window.MWLErinnerung.zeichne(document.getElementById('bhPushKarte'), { ausbilder: !!(st && st.rolle === 'azubi') });
+                window.MWLErinnerung.kontoNachziehen();
+            }
         });
     };
 

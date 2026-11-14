@@ -441,7 +441,12 @@
         try {
             const reg = await root.navigator.serviceWorker.getRegistration('/');
             const abo = reg && await reg.pushManager.getSubscription();
-            if (abo) { await rpc('klasse_push_aus', { p_endpoint: abo.endpoint }).catch(function () {}); await abo.unsubscribe(); }
+            // Das Browser-Abo teilt sich die Klasse mit der Berichtsheft-Erinnerung
+            // (erinnerung-push.js) — nur aufgeben, wenn die es nicht mehr braucht.
+            if (abo) {
+                await rpc('klasse_push_aus', { p_endpoint: abo.endpoint }).catch(function () {});
+                if (!(root.MWLErinnerung && root.MWLErinnerung.istAn())) await abo.unsubscribe();
+            }
         } finally { const z = zustand(); if (z) { delete z.push; zustandSetzen(z); } }
         return true;
     }
