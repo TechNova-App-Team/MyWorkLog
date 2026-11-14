@@ -204,6 +204,7 @@ var EVENT_LABELS = {
     'performance_zeitraum': ['Performance: Zeitraum gewechselt', 'Performance: period switched'],
     'ihk_daten_gespeichert': ['IHK-Daten gespeichert', 'IHK data saved'],
     'ihk_frist_klick': ['IHK-Frist: Hinweis geklickt', 'IHK deadline: prompt clicked'],
+    'arbeitszeitrechner': ['Arbeitszeitrechner genutzt', 'Working hours calculator used'],
     'ziel_angelegt':    ['Ziel angelegt', 'Goal created'],
     'umfrage_geoeffnet': ['Umfrage geöffnet', 'Survey opened'],
     'umfrage_gesendet': ['Umfrage abgeschickt', 'Survey submitted'],
@@ -277,6 +278,9 @@ var EVENT_LABELS = {
 // Unterart (Property 'aktion'/'grund', vom Worker als '<event>::<unterart>' angehaengt).
 // Erst '<event>::<unterart>', dann die Unterart allein; sonst wird der Schluessel lesbar gemacht.
 var SUB_LABELS = {
+    'arbeitszeitrechner::genutzt': ['gerechnet', 'calculated'],
+    'arbeitszeitrechner::tag_dazu': ['Tag hinzugefügt', 'Day added'],
+    'arbeitszeitrechner::zur_app': ['zur Zeiterfassung', 'to time tracking'],
     'weihnachten::tuer': ['Türchen geöffnet', 'Door opened'],
     'weihnachten::alle': ['Alle Türchen gezeigt', 'All doors shown'],
     'weihnachten::deko_an': ['Deko an', 'Decorations on'],

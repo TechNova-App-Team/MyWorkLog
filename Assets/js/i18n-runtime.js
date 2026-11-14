@@ -307,6 +307,7 @@
     'Anbieter-Vergleich': 'Compare providers',
     'Berichtsheft-Vorlage': 'Training log template',
     'Berichtsheft-Beispiele': 'Training log examples',
+    'Arbeitszeitrechner': 'Working hours calculator',
     'Über uns': 'About us',
     'So funktioniert MyWorkLog': 'How MyWorkLog works',
     'Mein Reisetraum': 'My travel dream',
