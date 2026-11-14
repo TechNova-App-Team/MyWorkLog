@@ -472,19 +472,23 @@ if (smNeu !== smRoh) { if (CHECK) abweichungen.push('sitemap.xml'); else fs.writ
 // ── Berufsliste auf /berichtsheft/ (Abschnitt "So sieht eine fertige Woche aus") ──
 // Steht zwischen Markern im Markup, damit ein neuer Beruf dort ohne Handarbeit
 // auftaucht. Kein Text ausser den Berufsnamen: die Liste traegt translate="no".
-const bhDatei = path.join(ROOT, 'pages/berichtsheft/index.html');
-const bhRoh = fs.readFileSync(bhDatei, 'utf8');
-const bhCrlf = bhRoh.includes('\r\n');
-let bh = bhRoh.split('\r\n').join('\n');
+// Dieselbe Liste auch auf /berichtsheft-vorlage/ (14.11.2026): die Vorlage-Seite rankt fuer
+// "berichtsheft vorlage" besser als die Beispielseiten, und "mfa berichtsheft vorlage",
+// "zfa berichtsheft" (bis 5.000/Monat) brauchen Links mit dem Berufsnamen dorthin.
 const B_START = '<!-- beispiele-berufe:start (tools/beispiel-seiten.mjs) -->', B_ENDE = '<!-- beispiele-berufe:end -->';
-if (!bh.includes(B_START) || !bh.includes(B_ENDE)) { console.error('[beispiel-seiten] Marker fehlen in pages/berichtsheft/index.html'); process.exit(1); }
-const einzug = '                ';
-const chips = B_START + '\n' + einzug + '<ul class="hf-bsp-berufe" translate="no">\n' +
-  berufe.map((b) => einzug + '    <li><a href="/berichtsheft-beispiele/' + b.id + '/" data-mess="beispiel_beruf">' + esc(b.de.kurz) + '</a></li>').join('\n') +
-  '\n' + einzug + '</ul>\n' + einzug + B_ENDE;
-bh = bh.slice(0, bh.indexOf(B_START)) + chips + bh.slice(bh.indexOf(B_ENDE) + B_ENDE.length);
-const bhNeu = bhCrlf ? bh.split('\n').join('\r\n') : bh;
-if (ohneStempel(bhNeu) !== ohneStempel(bhRoh)) { if (CHECK) abweichungen.push('pages/berichtsheft/index.html (Berufsliste)'); else fs.writeFileSync(bhDatei, bhNeu); }
+for (const [rel, klasse, einzug] of [['pages/berichtsheft/index.html', 'hf-bsp-berufe', '                '], ['pages/berichtsheft-vorlage/index.html', 'bv-berufe', '            ']]) {
+  const bhDatei = path.join(ROOT, rel);
+  const bhRoh = fs.readFileSync(bhDatei, 'utf8');
+  const bhCrlf = bhRoh.includes('\r\n');
+  let bh = bhRoh.split('\r\n').join('\n');
+  if (!bh.includes(B_START) || !bh.includes(B_ENDE)) { console.error('[beispiel-seiten] Marker fehlen in ' + rel); process.exit(1); }
+  const chips = B_START + '\n' + einzug + '<ul class="' + klasse + '" translate="no">\n' +
+    berufe.map((b) => einzug + '    <li><a href="/berichtsheft-beispiele/' + b.id + '/" data-mess="beispiel_beruf">' + esc(b.de.kurz) + '</a></li>').join('\n') +
+    '\n' + einzug + '</ul>\n' + einzug + B_ENDE;
+  bh = bh.slice(0, bh.indexOf(B_START)) + chips + bh.slice(bh.indexOf(B_ENDE) + B_ENDE.length);
+  const bhNeu = bhCrlf ? bh.split('\n').join('\r\n') : bh;
+  if (ohneStempel(bhNeu) !== ohneStempel(bhRoh)) { if (CHECK) abweichungen.push(rel + ' (Berufsliste)'); else fs.writeFileSync(bhDatei, bhNeu); }
+}
 
 if (CHECK) {
   if (abweichungen.length) { console.error('[beispiel-seiten] ✗ nicht aktuell — node tools/beispiel-seiten.mjs:\n  ' + abweichungen.join('\n  ')); process.exit(1); }
