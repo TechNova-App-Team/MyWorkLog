@@ -991,7 +991,7 @@
         if (context === 'entry') {
             return {
                 icon: 'entry',
-                title: qhL('Eintrag erfassen', 'Log an entry'),
+                title: qhL('Arbeitszeit erfassen', 'Log working time'),
                 sub: qhL('Zeiten in wenigen Sekunden buchen', 'Book your time in seconds'),
                 groups: [
                     { kind: 'list', label: qhL('So geht\'s', 'How it works'), items: [
@@ -1450,3 +1450,30 @@
             showVoiceFeedback('❌ Fehler beim Verarbeiten', 'error');
         }
     }
+
+// ═══ UEBERGABE VOM ARBEITSZEITRECHNER ═══
+// /arbeitszeitrechner/ legt beim Klick auf "Zeiterfassung öffnen" die erste Zeile unter
+// mwl_azr_uebergabe ab. Hier landet sie im Eintragsfenster — nur wenn sie frisch ist
+// (10 min) und die Felder leer sind, damit nie eine angefangene Eingabe ueberschrieben wird.
+// Gespeichert wird NICHT: der Nutzer sieht die Werte und tippt selbst auf Speichern.
+window.addEventListener('load', function () {
+    var roh = null;
+    try { roh = localStorage.getItem('mwl_azr_uebergabe'); localStorage.removeItem('mwl_azr_uebergabe'); } catch (e) { return; }
+    if (!roh) return;
+    var u = null;
+    try { u = JSON.parse(roh); } catch (e) { return; }
+    if (!u || !u.von || !u.bis || !(Date.now() - (u.t || 0) < 600000)) return;
+    var start = document.getElementById('inpStart'), ende = document.getElementById('inpEnd');
+    if (!start || !ende || start.value || ende.value) return;
+    start.value = u.von;
+    ende.value = u.bis;
+    var pause = document.getElementById('inpBreak');
+    if (pause && u.pause != null && u.pause !== '' && !pause.value) pause.value = u.pause;
+    if (typeof updateBreakPlaceholder === 'function') updateBreakPlaceholder();
+    if (typeof updateEntryDuration === 'function') updateEntryDuration();
+    // Schublade nur oeffnen, wenn kein Intro davor liegt (Erstbesucher sehen sonst beides uebereinander)
+    var intro = document.getElementById('pro-intro');
+    var introSichtbar = intro && getComputedStyle(intro).display !== 'none';
+    if (!introSichtbar && typeof dnOpenEntry === 'function') setTimeout(dnOpenEntry, 400);
+    if (typeof mwlEvent === 'function') mwlEvent('arbeitszeitrechner', { aktion: 'uebernommen' });
+});

@@ -203,6 +203,16 @@
     });
     var weiter = $('azrWeiter');
     if (weiter) weiter.addEventListener('click', function () {
+        // Erste Zeile an die App uebergeben; dashboard.js fuellt damit das Eintragsfenster
+        var erste = zeilen()[0];
+        if (erste) try {
+            localStorage.setItem('mwl_azr_uebergabe', JSON.stringify({
+                von: erste.querySelector('.azr-von').value,
+                bis: erste.querySelector('.azr-bis').value,
+                pause: erste.querySelector('.azr-pause').value,
+                t: Date.now()
+            }));
+        } catch (e) {}
         if (typeof mwlEvent === 'function') mwlEvent('arbeitszeitrechner', { aktion: 'zur_app' }, { transport: 'sendBeacon' });
     });
     rechnen();

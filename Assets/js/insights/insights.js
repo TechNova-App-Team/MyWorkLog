@@ -281,6 +281,7 @@ var SUB_LABELS = {
     'arbeitszeitrechner::genutzt': ['gerechnet', 'calculated'],
     'arbeitszeitrechner::tag_dazu': ['Tag hinzugefügt', 'Day added'],
     'arbeitszeitrechner::zur_app': ['zur Zeiterfassung', 'to time tracking'],
+    'arbeitszeitrechner::uebernommen': ['Zeiten in der App übernommen', 'Times carried into the app'],
     'weihnachten::tuer': ['Türchen geöffnet', 'Door opened'],
     'weihnachten::alle': ['Alle Türchen gezeigt', 'All doors shown'],
     'weihnachten::deko_an': ['Deko an', 'Decorations on'],
