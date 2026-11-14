@@ -65,12 +65,13 @@
     }
     </script>
 
-    <link rel="stylesheet" href="/Assets/fonts/bricolage-grotesque-geist-d03d04c0.css?v=6de8a38cd0">
-    <link rel="stylesheet" href="/Assets/css/arbeitszeitrechner.css?v=c55ebcfbab">
+    <link rel="stylesheet" href="/Assets/fonts/bricolage-grotesque-dm-serif-display-c380c273.css?v=27a46ccaac">
+    <link rel="stylesheet" href="/components/core/core.css?v=445129c570">
+    <link rel="stylesheet" href="/Assets/css/arbeitszeitrechner.css?v=d5c5bef7a3">
     <script defer src="/Assets/js/ph-init.js?v=bb543add18"></script>
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
-    <script defer src="/Assets/js/arbeitszeitrechner.js?v=0ada79bdf5"></script>
+    <script defer src="/Assets/js/arbeitszeitrechner.js?v=4b12dcbc0c"></script>
     <script src="/components/weihnachten/weihnachten-seite.js?v=8eda02f946"></script>
 </head>
 <body class="azr">
@@ -90,7 +91,14 @@
         <p class="azr-lede" id="azrLede">Beginn, Ende und Pause eintragen, und die Arbeitszeit steht da: in Stunden und Minuten und als Dezimalzahl. Mit gesetzlicher Mindestpause, für einen Tag oder die ganze Woche, auf Wunsch mit Überstunden und Auszahlung.</p>
     </section>
 
-    <form class="azr-rechner" id="azrRechner" onsubmit="return false" aria-label="Arbeitszeitrechner">
+    <form class="azr-rechner azr-karte" id="azrRechner" onsubmit="return false" aria-label="Arbeitszeitrechner">
+        <div class="azr-kopfzeile">
+            <span class="azr-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span>
+            <div>
+                <p class="azr-kopfzeile-t" id="azrKopfT">Zeiten eintragen</p>
+                <p class="azr-kopfzeile-u" id="azrKopfU">Pause leer lassen: die gesetzliche Mindestpause wird eingesetzt</p>
+            </div>
+        </div>
         <ol class="azr-tage" id="azrTage"></ol>
 
         <div class="azr-leiste">
@@ -109,14 +117,14 @@
             </div>
 
             <div class="azr-extra">
-                <label class="azr-f"><span class="azr-f-l" id="azrSollL">Soll-Stunden für diese Tage</span><input id="azrSoll" type="text" inputmode="decimal" placeholder="z. B. 40" autocomplete="off"></label>
+                <label class="azr-f"><span class="azr-f-l" id="azrSollL">Soll-Stunden für diese Tage</span><input id="azrSoll" class="glass-input" type="text" inputmode="decimal" placeholder="z. B. 40" autocomplete="off"></label>
                 <div class="azr-saldo" id="azrSaldo" hidden>
                     <span class="azr-saldo-l" id="azrSaldoL"></span>
                     <output class="azr-saldo-w" id="azrSaldoW"></output>
                 </div>
                 <div class="azr-reihe">
-                    <label class="azr-f"><span class="azr-f-l" id="azrLohnL">Stundenlohn (€)</span><input id="azrLohn" type="text" inputmode="decimal" placeholder="z. B. 15,50" autocomplete="off"></label>
-                    <label class="azr-f"><span class="azr-f-l" id="azrZuschlagL">Zuschlag (%)</span><input id="azrZuschlag" type="text" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+                    <label class="azr-f"><span class="azr-f-l" id="azrLohnL">Stundenlohn (€)</span><input id="azrLohn" class="glass-input" type="text" inputmode="decimal" placeholder="z. B. 15,50" autocomplete="off"></label>
+                    <label class="azr-f"><span class="azr-f-l" id="azrZuschlagL">Zuschlag (%)</span><input id="azrZuschlag" class="glass-input" type="text" inputmode="decimal" placeholder="0" autocomplete="off"></label>
                 </div>
                 <div class="azr-saldo is-geld" id="azrLohnErg" hidden>
                     <span class="azr-saldo-l" id="azrLohnErgL">Überstunden ausgezahlt</span>
@@ -126,7 +134,7 @@
         </div>
     </form>
 
-    <aside class="azr-weiter" aria-labelledby="azrWeiterT">
+    <aside class="azr-weiter azr-karte" aria-labelledby="azrWeiterT">
         <div>
             <h2 class="azr-weiter-t" id="azrWeiterT">Jeden Tag festhalten statt jedes Mal rechnen</h2>
             <p id="azrWeiterP">Die Zeiterfassung von MyWorkLog rechnet dasselbe automatisch mit: Stempeluhr oder Eintrag, Pause nach Gesetz, Überstunden-Saldo und Urlaub über das ganze Jahr. Kostenlos, ohne Konto, die Daten bleiben auf deinem Gerät.</p>
@@ -213,6 +221,10 @@
         try {
             var d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
             if (d && d.settings && d.settings.theme) applyTheme(d.settings.theme);
+            // Hell/Dunkel wie in der App (setThemeMode in settings.js): der Rechner sieht aus wie das Dashboard
+            var m = d && d.settings && d.settings.themeMode;
+            var hell = m === 'light' || (m === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches);
+            if (hell) document.documentElement.setAttribute('data-theme', 'light');
         } catch (e) {}
     }
     sync();

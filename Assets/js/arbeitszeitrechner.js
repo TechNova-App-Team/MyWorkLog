@@ -64,9 +64,9 @@
         li.className = 'azr-tag';
         li.innerHTML =
             '<span class="azr-tag-name"></span>' +
-            '<label class="azr-f"><span class="azr-f-l">' + (EN ? 'Start' : 'Beginn') + '</span><input type="time" class="azr-von" step="60"></label>' +
-            '<label class="azr-f"><span class="azr-f-l">' + (EN ? 'End' : 'Ende') + '</span><input type="time" class="azr-bis" step="60"></label>' +
-            '<label class="azr-f azr-f-pause"><span class="azr-f-l">' + (EN ? 'Break (min)' : 'Pause (min)') + '</span><input type="number" class="azr-pause" min="0" max="600" step="5" inputmode="numeric"></label>' +
+            '<label class="azr-f"><span class="azr-f-l">' + (EN ? 'Start' : 'Beginn') + '</span><input type="time" class="azr-von glass-input" step="60"></label>' +
+            '<label class="azr-f"><span class="azr-f-l">' + (EN ? 'End' : 'Ende') + '</span><input type="time" class="azr-bis glass-input" step="60"></label>' +
+            '<label class="azr-f azr-f-pause"><span class="azr-f-l">' + (EN ? 'Break (min)' : 'Pause (min)') + '</span><input type="number" class="azr-pause glass-input" min="0" max="600" step="5" inputmode="numeric"></label>' +
             '<output class="azr-erg" aria-live="polite"></output>' +
             '<button type="button" class="azr-weg" aria-label="' + T.weg + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
             '<div class="azr-band" aria-hidden="true"><i class="azr-band-zeit"></i><i class="azr-band-zeit2"></i></div>' +

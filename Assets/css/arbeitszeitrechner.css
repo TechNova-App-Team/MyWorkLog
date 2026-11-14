@@ -1,45 +1,33 @@
 /* ═══ ARBEITSZEITRECHNER (/arbeitszeitrechner/) ═══
-   Dunkle Buehne wie /berichtsheft-vorlage/ (laedt KEIN core.css, eigener Reset).
-   Der einzige Blickfang ist das Tagesband unter jeder Zeile: eine 24-Stunden-Skala,
-   auf der die Schicht als Balken liegt — eine Nachtschicht zerfaellt sichtbar in zwei
-   Stuecke. Keine Lade-Animation, keine Karten-Kaskade. Farben nur als Tokens hier oben;
-   gelb (--warn) ist Semantik fuer "Pause unter dem Gesetz". */
+   Optik der App-Zeiterfassung, NICHT der Berichtsheft-Buehne (Wunsch des Nutzers
+   14.11.2026: der Rechner gehoert zum Dashboard). Deshalb laedt die Seite core.css —
+   Farben, Lichtflecken, .glass-input und Hell/Dunkel kommen von dort — und setzt nur
+   die App-Huelle zurueck (body ist dort 100vh/flex/overflow:hidden, CLAUDE.md).
+   --bg-inset und --border-subtle stehen in dashboard.css, nicht in core.css; die
+   Werte hier sind dieselben. Einziger Blickfang: das 24-h-Band unter jeder Zeile. */
 
 :root {
-    --buehne-1: #131428;
-    --buehne-2: #1a1830;
-    --buehne-3: #23182b;
-    --primary: #6d7fd1;
-    --primary-rgb: 109, 127, 209;
-    --text-main: #f1f0f7;
-    --text-2: #b9b6cb;
-    --text-3: #8b87a2;
-    --linie: rgba(255, 255, 255, 0.1);
-    --linie-2: rgba(255, 255, 255, 0.16);
-    --feld: rgba(255, 255, 255, 0.04);
-    --flaeche: rgba(255, 255, 255, 0.03);
-    --success: #34d399;
-    --danger: #f87171;
-    --warn: #fbbf24;
-    --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
+    --bg-inset: rgba(0, 0, 0, 0.24);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+}
+[data-theme="light"] {
+    --bg-inset: rgba(7, 16, 35, 0.04);
+    --border-subtle: rgba(7, 16, 35, 0.06);
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-button, input, select, textarea { font-family: inherit; }
-body {
-    margin: 0;
+body.azr {
+    display: block;
+    height: auto;
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    overflow: visible;
+    overflow-x: clip;
     color: var(--text-main);
-    font-family: var(--font-main);
     font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    overflow-x: clip;
 }
-a { color: inherit; }
-:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.azr a { color: inherit; }
+.azr :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 /* ── Kopf ─────────────────────────────────────────────────────────── */
 .azr-top {
@@ -47,79 +35,102 @@ a { color: inherit; }
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    max-width: 980px;
+    max-width: 960px;
     margin: 0 auto;
-    padding: 22px 24px;
+    padding: 20px 24px;
 }
 .azr-marke { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
 .azr-marke svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
-.azr-top-link { font-size: 0.92rem; color: var(--text-2); text-decoration: none; }
+.azr-top-link { font-size: 0.9rem; color: var(--text-muted); text-decoration: none; transition: color 0.2s ease; }
 .azr-top-link:hover { color: var(--text-main); }
 
-.azr-main { max-width: 980px; margin: 0 auto; padding: 0 24px 72px; }
+.azr-main { max-width: 960px; margin: 0 auto; padding: 0 24px 72px; }
 
-.azr-kopf { padding: 24px 0 28px; }
+.azr-kopf { padding: 20px 0 24px; }
 .azr-titel {
-    margin: 0 0 12px;
+    margin: 0 0 10px;
     font-family: var(--font-display);
-    font-size: clamp(2.2rem, 5vw, 3.4rem);
-    font-weight: 750;
-    line-height: 1.02;
-    letter-spacing: -0.02em;
+    font-size: clamp(2rem, 4.6vw, 3rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
 }
-.azr-lede { margin: 0; color: var(--text-2); font-size: 1.05rem; max-width: 60ch; }
+.azr-lede { margin: 0; color: var(--text-muted); font-size: 1rem; max-width: 62ch; }
 
-/* ── Rechner ──────────────────────────────────────────────────────── */
-.azr-rechner {
-    border: 1px solid var(--linie);
-    border-radius: 16px;
-    background: var(--flaeche);
-    padding: 8px 20px 20px;
+/* ── Karte wie im Dashboard ───────────────────────────────────────── */
+.azr-karte {
+    background: var(--bg-glass);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
+.azr-rechner { padding: 1.375rem 1.5rem 1.5rem; }
+
+.azr-kopfzeile {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.azr-badge {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: 9px;
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.10);
+    border: 1px solid rgba(var(--primary-rgb), 0.18);
+}
+.azr-badge svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.azr-kopfzeile-t { margin: 0; font-family: var(--font-display); font-size: 0.95rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.azr-kopfzeile-u { margin: 2px 0 0; color: var(--text-muted); font-size: 0.72rem; line-height: 1.3; }
+
 .azr-tage { list-style: none; margin: 0; padding: 0; }
-
 .azr-tag {
     display: grid;
-    grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.1fr) 36px;
+    grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) minmax(0, 1.1fr) 34px;
     grid-template-areas:
         "name von bis pause erg weg"
         ".    band band band  band ."
         ".    hin  hin  hin   hin  .";
     align-items: end;
-    column-gap: 12px;
-    padding: 16px 0 12px;
-    border-bottom: 1px solid var(--linie);
+    column-gap: 10px;
+    padding: 14px 0 10px;
+    border-bottom: 1px solid var(--border-subtle);
 }
-.azr-tag-name { grid-area: name; padding-bottom: 11px; color: var(--text-3); font-size: 0.9rem; }
+.azr-tag-name { grid-area: name; padding-bottom: 13px; color: var(--text-muted); font-size: 0.78rem; font-weight: 600; }
 .azr-tag .azr-f:nth-of-type(1) { grid-area: von; }
 .azr-tag .azr-f:nth-of-type(2) { grid-area: bis; }
 .azr-tag .azr-f-pause { grid-area: pause; }
-.azr-erg { grid-area: erg; padding-bottom: 8px; text-align: right; white-space: nowrap; }
-.azr-erg b { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-.azr-erg span { display: block; color: var(--text-3); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+.azr-erg { grid-area: erg; padding-bottom: 9px; text-align: right; white-space: nowrap; }
+.azr-erg b { font-family: var(--font-display); font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.azr-erg span { display: block; color: var(--text-muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
 .azr-weg {
     grid-area: weg;
-    width: 36px; height: 36px; margin-bottom: 4px;
+    width: 34px; height: 34px; margin-bottom: 6px;
     display: grid; place-items: center;
-    border: 0; border-radius: 8px; background: transparent; color: var(--text-3); cursor: pointer;
+    border: 0; border-radius: 9px; background: transparent; color: var(--text-muted); cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease;
 }
 /* display:grid oben schlaegt das hidden-Attribut; Platz bleibt, damit die Spalten nicht springen */
 .azr-weg[hidden] { display: grid; visibility: hidden; }
-.azr-weg:hover { background: var(--feld); color: var(--text-main); }
-.azr-weg svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.azr-weg:hover { background: var(--hover-fill); color: var(--text-main); }
+.azr-weg svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 
 .azr-band {
     grid-area: band;
     position: relative;
     height: 6px;
-    margin-top: 12px;
+    margin-top: 10px;
     border-radius: 3px;
     background:
-        linear-gradient(90deg, transparent calc(25% - 1px), var(--linie-2) calc(25% - 1px), var(--linie-2) 25%, transparent 25%,
-                               transparent calc(50% - 1px), var(--linie-2) calc(50% - 1px), var(--linie-2) 50%, transparent 50%,
-                               transparent calc(75% - 1px), var(--linie-2) calc(75% - 1px), var(--linie-2) 75%, transparent 75%),
-        var(--feld);
+        linear-gradient(90deg, transparent calc(25% - 1px), var(--border) calc(25% - 1px), var(--border) 25%, transparent 25%,
+                               transparent calc(50% - 1px), var(--border) calc(50% - 1px), var(--border) 50%, transparent 50%,
+                               transparent calc(75% - 1px), var(--border) calc(75% - 1px), var(--border) 75%, transparent 75%),
+        var(--bg-inset);
 }
 .azr-band i {
     position: absolute; top: 0; bottom: 0;
@@ -127,156 +138,147 @@ a { color: inherit; }
     background: var(--primary);
     transition: left 0.2s ease, width 0.2s ease;
 }
-.azr-tag-hinweis { grid-area: hin; margin: 6px 0 0; min-height: 1.2em; color: var(--text-3); font-size: 0.82rem; }
-.azr-tag.is-warn .azr-tag-hinweis { color: var(--warn); }
-.azr-tag.is-warn .azr-pause { border-color: var(--warn); }
+.azr-tag-hinweis { grid-area: hin; margin: 6px 0 0; min-height: 1.2em; color: var(--text-muted); font-size: 0.75rem; }
+.azr-tag.is-warn .azr-tag-hinweis { color: var(--audit-warn); }
+.azr-tag.is-warn .azr-pause { border-color: var(--audit-warn); }
+/* #fbbf24 hat auf Weiss nur Kontrast 1,6 — hell wie bei den Noten (--note-mid) */
+[data-theme="light"] .azr-tag.is-warn .azr-tag-hinweis { color: var(--note-mid); }
+[data-theme="light"] .azr-tag.is-warn .azr-pause { border-color: var(--note-mid); }
 
-/* Felder */
+/* Felder: .glass-input aus core.css, kompakt wie im Erfassen-Formular */
 .azr-f { display: grid; gap: 6px; min-width: 0; }
-.azr-f-l { color: var(--text-2); font-size: 0.82rem; }
-.azr-f input {
-    width: 100%;
-    min-height: 42px;
-    padding: 8px 10px;
-    border: 1px solid var(--linie);
-    border-radius: 8px;
-    background: var(--feld);
-    color: var(--text-main);
-    font-size: 1rem;
+.azr-f-l { padding-left: 2px; color: var(--text-muted); font-size: 0.7rem; font-weight: 600; }
+.azr .glass-input {
+    padding: 11px 12px;
+    font-size: 0.92rem;
+    border-radius: 11px;
+    background: var(--bg-inset);
     font-variant-numeric: tabular-nums;
     color-scheme: dark;
-    transition: border-color 0.2s ease;
 }
-.azr-f input:hover { border-color: var(--linie-2); }
-.azr-f input:focus { outline: none; border-color: var(--primary); }
-.azr-f input::placeholder { color: var(--text-3); }
+[data-theme="light"] .azr .glass-input { color-scheme: light; }
+.azr .glass-input::placeholder { color: var(--text-muted); opacity: 0.65; }
 
 .azr-leiste {
     display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
     gap: 12px 20px;
-    padding: 16px 0 4px;
+    padding: 14px 0 2px;
 }
-.azr-haken { display: inline-flex; align-items: center; gap: 9px; color: var(--text-2); font-size: 0.92rem; cursor: pointer; }
-.azr-haken input { width: 18px; height: 18px; accent-color: var(--primary); }
+.azr-haken { display: inline-flex; align-items: center; gap: 9px; color: var(--text-muted); font-size: 0.85rem; cursor: pointer; }
+.azr-haken input { width: 17px; height: 17px; accent-color: var(--primary); }
 
 .azr-knopf {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    min-height: 44px;
+    min-height: 42px;
     padding: 10px 18px;
-    border: 1px solid var(--primary);
-    border-radius: 8px;
+    border: 1px solid transparent;
+    border-radius: 11px;
     background: var(--primary);
-    color: var(--buehne-1);
-    font-size: 0.95rem;
+    color: #fff;
+    font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
-    transition: filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 5px 20px -5px var(--primary);
+    transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.azr-knopf:hover { filter: brightness(1.08); }
-.azr-knopf svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.azr-knopf.is-leise { background: transparent; border-color: var(--linie-2); color: var(--text-main); }
-.azr-knopf.is-leise:hover { border-color: var(--primary); filter: none; }
+.azr-knopf:hover { background: color-mix(in srgb, var(--primary) 88%, #ffffff); }
+.azr-knopf svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.azr-knopf.is-leise { background: var(--bg-inset); border-color: var(--border); color: var(--text-main); box-shadow: none; }
+.azr-knopf.is-leise:hover { border-color: var(--hover-border); background: var(--hover-fill); }
 .azr-knopf:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Ergebnis */
 .azr-ergebnis {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 28px;
-    margin-top: 18px;
-    padding-top: 22px;
-    border-top: 1px solid var(--linie-2);
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-subtle);
 }
 .azr-summe p { margin: 0; }
-.azr-summe-l { color: var(--text-2); font-size: 0.92rem; }
-.azr-summe-tage { color: var(--text-3); }
-.azr-summe-w { margin-top: 4px !important; line-height: 1; }
+.azr-summe-l { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; }
+.azr-summe-w { margin-top: 6px !important; line-height: 1; }
 .azr-summe-w output {
     font-family: var(--font-display);
-    font-size: clamp(3rem, 8vw, 4.6rem);
-    font-weight: 750;
-    letter-spacing: -0.03em;
+    font-size: clamp(2.8rem, 7vw, 4.2rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
 }
-.azr-summe-h { color: var(--text-3); font-size: 1.4rem; font-weight: 600; }
-.azr-summe-dez { margin-top: 8px !important; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.azr-summe-h { color: var(--text-muted); font-size: 1.3rem; font-weight: 600; }
+.azr-summe-dez { margin-top: 8px !important; color: var(--text-muted); font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 
-.azr-extra { display: grid; gap: 14px; align-content: start; }
-.azr-reihe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.6fr); gap: 12px; }
+.azr-extra { display: grid; gap: 12px; align-content: start; }
+.azr-reihe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.6fr); gap: 10px; }
 .azr-saldo {
     display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
     padding: 10px 14px;
-    border: 1px solid var(--linie);
-    border-radius: 8px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--bg-inset);
 }
 .azr-saldo[hidden] { display: none; }
-.azr-saldo-l { color: var(--text-2); font-size: 0.9rem; }
-.azr-saldo-w { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.azr-saldo-l { color: var(--text-muted); font-size: 0.82rem; }
+.azr-saldo-w { font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .azr-saldo.is-plus .azr-saldo-w { color: var(--success); }
 .azr-saldo.is-minus .azr-saldo-w { color: var(--danger); }
 
 /* ── Uebergang in die App ─────────────────────────────────────────── */
 .azr-weiter {
     display: flex; align-items: center; justify-content: space-between; gap: 24px;
-    margin: 28px 0 56px;
-    padding: 22px 24px;
-    border: 1px solid var(--linie);
-    border-left: 3px solid var(--primary);
-    border-radius: 12px;
+    margin: 20px 0 56px;
+    padding: 1.25rem 1.5rem;
 }
-.azr-weiter-t { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.25rem; font-weight: 700; }
-.azr-weiter p { margin: 0; color: var(--text-2); max-width: 62ch; }
+.azr-weiter-t { margin: 0 0 4px; font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
+.azr-weiter p { margin: 0; color: var(--text-muted); font-size: 0.9rem; max-width: 62ch; }
 .azr-weiter .azr-knopf { flex-shrink: 0; }
 
 /* ── Text ─────────────────────────────────────────────────────────── */
 .azr-text { max-width: 68ch; }
 .azr-text section + section { margin-top: 44px; }
-.azr-text h2 { margin: 0 0 12px; font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; line-height: 1.2; }
-.azr-text p { margin: 0 0 12px; color: var(--text-2); }
+.azr-text h2 { margin: 0 0 12px; font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.azr-text p { margin: 0 0 12px; color: var(--text-muted); }
 .azr-text a { color: var(--text-main); text-underline-offset: 3px; }
 
 .azr-tabelle { border-collapse: collapse; margin: 6px 0 0; font-variant-numeric: tabular-nums; }
-.azr-tabelle th, .azr-tabelle td { padding: 7px 28px 7px 0; border-bottom: 1px solid var(--linie); text-align: left; }
-.azr-tabelle th { color: var(--text-3); font-weight: 500; font-size: 0.88rem; }
-.azr-tabelle td { color: var(--text-2); }
+.azr-tabelle th, .azr-tabelle td { padding: 7px 28px 7px 0; border-bottom: 1px solid var(--border); text-align: left; }
+.azr-tabelle th { color: var(--text-muted); font-weight: 600; font-size: 0.8rem; }
+.azr-tabelle td { color: var(--text-main); }
 
-.azr-frage { border-bottom: 1px solid var(--linie); }
-.azr-frage summary {
-    padding: 14px 0;
-    cursor: pointer;
-    font-weight: 600;
-    list-style: none;
-}
+.azr-frage { border-bottom: 1px solid var(--border); }
+.azr-frage summary { padding: 14px 0; cursor: pointer; font-weight: 600; list-style: none; }
 .azr-frage summary::-webkit-details-marker { display: none; }
-.azr-frage summary::after { content: '+'; float: right; color: var(--text-3); }
+.azr-frage summary::after { content: '+'; float: right; color: var(--text-muted); }
 .azr-frage[open] summary::after { content: '–'; }
 .azr-frage p { margin: 0 0 16px; }
 
 /* ── Schmal ───────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .azr-tag {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) 36px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) 34px;
         grid-template-areas:
-            "name name erg  weg"
+            "name name erg   weg"
             "von  bis  pause pause"
-            "band band band band"
-            "hin  hin  hin  hin";
+            "band band band  band"
+            "hin  hin  hin   hin";
         row-gap: 8px;
         align-items: center;
     }
     .azr-tag-name { padding-bottom: 0; }
     .azr-erg { padding-bottom: 0; }
     .azr-erg span { display: inline; margin-left: 6px; }
+    .azr-weg { margin-bottom: 0; }
     .azr-band { margin-top: 4px; }
-    .azr-ergebnis { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+    .azr-ergebnis { grid-template-columns: minmax(0, 1fr); gap: 20px; }
     .azr-weiter { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 480px) {
     .azr-top, .azr-main { padding-left: 16px; padding-right: 16px; }
-    .azr-rechner { padding: 4px 14px 16px; }
+    .azr-rechner { padding: 1.1rem 1rem 1.2rem; }
     .azr-tag {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 34px;
         grid-template-areas:
             "name  erg   weg"
             "von   bis   bis"
@@ -287,9 +289,9 @@ a { color: inherit; }
     .azr-reihe { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 @media (max-width: 360px) {
-    .azr-titel { font-size: 2rem; }
+    .azr-titel { font-size: 1.9rem; }
     .azr-tag { grid-template-areas: "name erg weg" "von von von" "bis bis bis" "pause pause pause" "band band band" "hin hin hin"; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .azr-band i, .azr-f input, .azr-knopf, .azr-weg { transition: none; }
+    .azr-band i, .azr-knopf, .azr-weg, .azr-top-link { transition: none; }
 }
