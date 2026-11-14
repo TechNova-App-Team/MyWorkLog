@@ -416,6 +416,27 @@ ok(alarm[0].kw === 10 && alarm[0].datumVon === '2026-03-02',
 ok(I.meldungenEindampfen([ev('1', 'u-a', 10, 'geloescht')], [], NAMEN).length === 1,
     'Gegenprobe: eine schlichte Loeschung kommt durch');
 
+// ── Fehlende Wochen fuer die Erinnerung ──────────────────────────────────
+gruppe('fehlendeWochen (Erinnerung)');
+const HEUTE = new Date(2026, 10, 14, 10, 0);   // Sa 14.11.2026 → letzte fertige Woche ab Mo 02.11.
+const fw = I.fehlendeWochen(['2026-10-05', '2026-10-19', '2026-10-21'], HEUTE);
+ok(JSON.stringify(fw.wochen) === JSON.stringify(['2026-10-12', '2026-10-26', '2026-11-02']),
+    'Luecke in der Mitte und alles nach der letzten Woche bis zur letzten fertigen Woche', JSON.stringify(fw));
+ok(fw.gesamt === 3, 'gesamt zaehlt dieselben drei');
+ok(!fw.wochen.includes('2026-11-09'), 'die laufende Woche ist nicht verspaetet');
+ok(I.fehlendeWochen(['2026-11-12'], HEUTE).gesamt === 0, 'nur die laufende Woche angelegt: nichts fehlt');
+ok(I.fehlendeWochen([], HEUTE).gesamt === 0, 'ohne jede Woche gibt es keine Spanne (kein erfundener Beginn)');
+ok(I.fehlendeWochen(['2026-10-07'], HEUTE).wochen[0] === '2026-10-12',
+    'ein Mittwoch zaehlt fuer seine Woche (Montag 05.10.), die naechste fehlt');
+const lang = [];
+for (let d = new Date(2024, 0, 1); d < new Date(2024, 0, 2); d.setDate(d.getDate() + 1)) lang.push('2024-01-01');
+const viel = I.fehlendeWochen(lang, HEUTE);
+ok(viel.gesamt > 80 && viel.wochen.length === 80 && viel.wochen[79] === '2026-11-02',
+    'mehr als 80 Luecken: die juengsten 80 bleiben, gesamt zaehlt alle', viel.gesamt + ' / ' + viel.wochen.length);
+// Zeitumstellung (25.10.2026): Montage bleiben Montage
+ok(I.fehlendeWochen(['2026-10-19'], HEUTE).wochen.every(w => new Date(w + 'T12:00:00').getDay() === 1),
+    'ueber die Zeitumstellung hinweg nur Montage');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
 ok(bestanden >= 80, `es sind genug Pruefungen gelaufen (${bestanden})`);

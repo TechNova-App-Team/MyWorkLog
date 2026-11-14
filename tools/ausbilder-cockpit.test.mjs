@@ -46,6 +46,7 @@ const namen = ['esc', 'fmtDate', 'monogramm', 'stateLabel', 'schonUnterschrieben
 const mod = new Function(
   'function abL(de, en) { return de; }\nfunction abLocale() { return "de-DE"; }\n' +
   'function anteilsBalken() { return "<BALKEN>"; }\nfunction wochenStreifen() { return "<STREIFEN>"; }\n' +
+  'function erinnerungsZeile() { return ""; }\n' +
   'var kontoDaten = null; var filter = { status: "offen", azubi: "", q: "" };\n' +
   FILTER_SRC + '\n' + namen.map(hole).join('\n') +
   '\nreturn { ' + namen.join(', ') + ', setze: function (d, f) { kontoDaten = d; filter = f; } };')();
@@ -192,6 +193,47 @@ ist(hStart !== -1 && vorAbschicken.includes('if (!note)') && vorAbschicken.slice
     const kopf = SRC.slice(SRC.indexOf('var n = d.azubis.length;'), SRC.indexOf('$(\'abKonto\').innerHTML = kopf'));
     ist(kopf.indexOf('abk-kacheln') < kopf.indexOf('id="abkBest"'), 'Bestätigung steht unter den Kennzahlen');
     ist(kopf.includes('<details class="abk-best abk-best-zu" id="abkBest">'), 'ohne Azubis ist die Bestätigung zugeklappt');
+}
+
+// ── Erinnern an fehlende Wochen ─────────────────────────────────────
+console.log('\n▶ Erinnern-Zeile auf der Azubi-Karte');
+{
+  const er = new Function(
+    'function abL(de, en) { return de; }\nfunction abLocale() { return "de-DE"; }\n' +
+    'var GLOCKE = "", ERINNERUNG_SPERRE_MS = 12 * 3600 * 1000, kontoErinnerungen = {};\n' +
+    'var BHB2B = { fehlendeWochen: function (d) { return d.length ? { wochen: ["2026-10-12", "2026-10-26"], gesamt: 2 } : { wochen: [], gesamt: 0 }; } };\n' +
+    ['esc', 'fmtDate', 'fehlendFuer', 'erinnerungsZeile'].map(hole).join('\n') +
+    '\nreturn { erinnerungsZeile: erinnerungsZeile, setze: function (e) { kontoErinnerungen = e; } };')();
+  const az = { userId: 'u1', name: 'Lea', berichte: [{ datum_von: '2026-10-05' }] };
+
+  const z = er.erinnerungsZeile(az, 0, false);
+  ist(z.includes('2 Wochen fehlen') && z.includes('data-q="erinnern"') && !z.includes('disabled'),
+    'fehlende Wochen: Zahl und aktiver Knopf');
+  ist(z.includes('12. Oktober 2026'), 'älteste fehlende Woche mit Datum');
+
+  er.setze({ u1: { erstellt_at: new Date(Date.now() - 3600e3).toISOString(), gelesen_at: null } });
+  const gesperrt = er.erinnerungsZeile(az, 0, false);
+  ist(gesperrt.includes('disabled') && gesperrt.includes('noch nicht gelesen'), 'binnen 12 h: Knopf gesperrt, Stand „noch nicht gelesen“');
+
+  er.setze({ u1: { erstellt_at: new Date(Date.now() - 13 * 3600e3).toISOString(), gelesen_at: new Date().toISOString() } });
+  const frei = er.erinnerungsZeile(az, 0, false);
+  ist(!frei.includes('disabled') && frei.includes('gelesen'), 'nach 12 h wieder frei, Stand „gelesen“');
+
+  er.setze({});
+  ist(er.erinnerungsZeile({ userId: 'u2', name: 'Tom', berichte: [] }, 1, true).includes('Ans Berichtsheft erinnern'),
+    'ohne jede Woche: an das Berichtsheft erinnern');
+  // Negativ mit Gegenprobe: ohne Lücke und ohne frühere Erinnerung keine Zeile — aber oben gab es eine.
+  const ohne = new Function(
+    'function abL(de, en) { return de; }\nfunction abLocale() { return "de-DE"; }\n' +
+    'var GLOCKE = "", ERINNERUNG_SPERRE_MS = 1, kontoErinnerungen = {};\n' +
+    'var BHB2B = { fehlendeWochen: function () { return { wochen: [], gesamt: 0 }; } };\n' +
+    ['esc', 'fmtDate', 'fehlendFuer', 'erinnerungsZeile'].map(hole).join('\n') + '\nreturn erinnerungsZeile;')();
+  ist(ohne(az, 0, false) === '' && z !== '', 'keine Lücke, nie erinnert: keine Zeile (Gegenprobe: mit Lücke gab es eine)');
+
+  const er2 = SRC.slice(SRC.indexOf('async function erinnern('), SRC.indexOf('// ── Meldungen: Wochen, die der Azubi geloescht hat'));
+  ist(er2.includes('BHB2B.erinnerungSenden(az.userId, f.wochen)') && er2.includes("mwlEvent('b2b_erinnerung'"),
+    'Klick sendet die fehlenden Wochen und wird gemessen');
+  ist(SRC.includes("else if (was === 'erinnern') erinnern("), 'Knopf ist im Klick-Empfänger verdrahtet');
 }
 
 console.log(`\nausbilder-cockpit: ${ok} ok, ${fehler} fehlgeschlagen`);

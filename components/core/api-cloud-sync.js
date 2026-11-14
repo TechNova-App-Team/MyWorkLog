@@ -486,6 +486,58 @@
         }, 2500);
     }
 
+    // Erinnerung des Ausbilders an fehlende Berichtsheft-Wochen (seit
+    // 14.11.2026, Tabelle b2b_erinnerungen). Hier nur MELDEN — als gelesen
+    // markiert der Azubi sie im Berichtsheft, wo er die Wochen nachtraegt;
+    // sonst waere sie weg, bevor er sie dort gesehen hat. Doppelt meldet sich
+    // nichts: der Schluessel `b2b_er_<id>` geht ueber lastAlertCheck.
+    // Bewusst ohne Vorbedingung "ist in einem Betrieb": das wuesste nur ein
+    // Geraet, auf dem das Berichtsheft schon einmal offen war. Stattdessen
+    // hoechstens alle 15 Minuten eine kleine Abfrage (RLS liefert sonst leer).
+    const B2B_ER_TAKT = 15 * 60 * 1000;
+    async function b2bErinnerungPruefen(uid) {
+        try {
+            const roh = localStorage.getItem('mwl_b2b_er_geprueft');
+            const alt = roh ? JSON.parse(roh) : null;
+            if (alt && alt.uid === uid && Date.now() - alt.t < B2B_ER_TAKT) return;
+            localStorage.setItem('mwl_b2b_er_geprueft', JSON.stringify({ uid: uid, t: Date.now() }));
+        } catch (e) { return; }
+        const cs = window.cloudSync;
+        if (!cs || !cs.client || typeof window.mwlAusbilderMeldung !== 'function') return;
+        try {
+            const { data, error } = await cs.client.from('b2b_erinnerungen')
+                .select('id, wochen, ausbilder_name, erstellt_at')
+                .eq('azubi_id', uid).is('gelesen_at', null)
+                .order('erstellt_at', { ascending: false }).limit(5);
+            if (error || !data || !data.length) return;
+            const en = document.documentElement.lang === 'en';
+            const kw = function (iso) {
+                const d = new Date(iso + 'T12:00:00');
+                const u = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                u.setUTCDate(u.getUTCDate() + 4 - (u.getUTCDay() || 7));
+                return Math.ceil((((u - Date.UTC(u.getUTCFullYear(), 0, 1)) / 86400000) + 1) / 7);
+            };
+            data.slice().reverse().forEach(function (e) {
+                const w = Array.isArray(e.wochen) ? e.wochen : [];
+                const wer = e.ausbilder_name || (en ? 'Your trainer' : 'Dein Ausbilder');
+                const liste = w.slice(-6).map(function (x) { return (en ? 'week ' : 'KW ') + kw(x); }).join(', ') +
+                    (w.length > 6 ? ' …' : '');
+                const text = !w.length
+                    ? (en ? 'No week of your report book has reached the company yet.' : 'Beim Betrieb ist noch keine Woche deines Berichtshefts angekommen.')
+                    : (en ? (w.length === 1 ? 'One week is missing from your report book: ' : w.length + ' weeks are missing from your report book: ')
+                          : (w.length === 1 ? 'Im Berichtsheft fehlt eine Woche: ' : 'Im Berichtsheft fehlen ' + w.length + ' Wochen: ')) + liste + '.';
+                window.mwlAusbilderMeldung({
+                    key: 'b2b_er_' + e.id, type: 'warning',
+                    title: en ? 'Reminder from ' + wer : 'Erinnerung von ' + wer,
+                    message: text,
+                    link: (en ? '/en' : '') + '/berichtsheft/',
+                    linkLabel: en ? 'Open report book' : 'Zum Berichtsheft'
+                });
+            });
+            if (typeof mwlEvent === 'function') mwlEvent('b2b_erinnerung_app', { anzahl: data.length });
+        } catch (e) { /* offline: naechstes Mal */ }
+    }
+
     function setupCloudSyncIntegration() {
         // Registriere Auth-State Callbacks
         if (window.cloudSync && window.cloudSync.onAuthStateChanged) {
@@ -495,7 +547,7 @@
                     originalCallback.call(this, isLoggedIn, user);
                 }
                 updateCloudSyncUI(isLoggedIn, user);
-                if (isLoggedIn && user) e2eEinmalPruefen(user.id);
+                if (isLoggedIn && user) { e2eEinmalPruefen(user.id); setTimeout(() => b2bErinnerungPruefen(user.id), 4000); }
             };
         }
 
@@ -504,9 +556,17 @@
             const isLoggedIn = window.cloudSync.isLoggedIn ? window.cloudSync.isLoggedIn() : false;
             const user = window.cloudSync.getCurrentUser ? window.cloudSync.getCurrentUser() : null;
             updateCloudSyncUI(isLoggedIn, user);
-            if (isLoggedIn && user) e2eEinmalPruefen(user.id);
+            if (isLoggedIn && user) { e2eEinmalPruefen(user.id); setTimeout(() => b2bErinnerungPruefen(user.id), 4000); }
         }
         
+        // Die App bleibt am Handy oft tagelang offen: bei der Rueckkehr erneut
+        // nach Erinnerungen fragen (der Takt in b2bErinnerungPruefen bremst).
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden || !window.cloudSync || !window.cloudSync.isLoggedIn || !window.cloudSync.isLoggedIn()) return;
+            const u = window.cloudSync.getCurrentUser ? window.cloudSync.getCurrentUser() : null;
+            if (u && u.id) b2bErinnerungPruefen(u.id);
+        });
+
         // Auto-Sync beim Speichern aktivieren
         setupAutoSync();
     }

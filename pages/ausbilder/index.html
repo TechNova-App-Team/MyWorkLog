@@ -718,6 +718,30 @@
             margin-top: auto; padding-top: 2px;
         }
         .abk-az-aktion .abk-cta { flex: 0 0 auto; padding: 9px 16px; font-size: 0.85rem; }
+
+        /* Erinnern-Zeile: Haarlinie statt eigener Karte — sie gehoert zum Azubi
+           darueber. Warnton nur am Text, wenn wirklich Wochen fehlen. */
+        .abk-er {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px 14px; flex-wrap: wrap;
+            padding-top: 12px; border-top: 1px solid var(--border);
+        }
+        .abk-er-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .abk-er-info { font-size: 0.82rem; color: var(--text-muted); }
+        .abk-er.is-fehlt .abk-er-info strong { color: var(--warning); font-weight: 650; }
+        .abk-er-stand { font-size: 0.74rem; color: var(--text-faint); }
+        .abk-er-stand .is-gelesen { color: var(--success); }
+        .abk-er .abk-er-btn {
+            display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+            padding: 7px 13px; border-radius: 8px; cursor: pointer;
+            border: 1px solid var(--border-strong); background: transparent;
+            color: var(--text); font: inherit; font-size: 0.8rem; font-weight: 600;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+        }
+        .abk-er .abk-er-btn svg { width: 15px; height: 15px; }
+        .abk-er .abk-er-btn:hover:not(:disabled) { background: var(--bg-raise); border-color: rgba(var(--primary-rgb), 0.4); }
+        .abk-er .abk-er-btn:active:not(:disabled) { transform: scale(0.97); }
+        .abk-er .abk-er-btn:disabled { cursor: default; color: var(--text-faint); }
+        .abk-er .abk-er-btn:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
         .abk-wz[data-wz] { cursor: pointer; }
 
         /* Zusammensetzung der eingereichten Wochen. KEIN Fortschritt gegen
@@ -786,6 +810,10 @@
             font-size: 0.62rem; color: var(--text-faint); line-height: 1;
             white-space: nowrap; overflow: visible;
         }
+        /* Beginnt der Monat in der LETZTEN Spalte, ragte die Marke rechts aus dem
+           Scroll-Kasten und wurde zu "No" gekappt (390 px, Streifen bis heute).
+           rtl laesst sie nach links ueberstehen statt nach rechts. */
+        .abk-wz-m:last-child { direction: rtl; }
         .abk-leg {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 0.76rem; color: var(--text-muted);
@@ -1994,7 +2022,7 @@
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=f5a69bc00c"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=0de9a54e10"></script>
 
     <script>
     (function () {
@@ -2554,6 +2582,7 @@
         var kontoGebunden = false;
         var kontoMeldungen = [];   // geloeschte Wochen, noch nicht quittiert
         var kontoTeam = [];        // Ausbilder dieses Betriebs (Urlaubsvertretung)
+        var kontoErinnerungen = {}; // azubiId → letzte Erinnerung (b2b_erinnerungen)
 
         function findeBericht(bid) {
             for (var i = 0; i < (kontoDaten ? kontoDaten.azubis.length : 0); i++) {
@@ -2939,8 +2968,11 @@
         }
 
         // ── Wochen-Streifen ──────────────────────────────────────────────
-        // Eine Zelle je Kalenderwoche zwischen der ERSTEN und der LETZTEN
-        // eingereichten Woche. Bewusst nicht ueber die Vertragslaufzeit: die
+        // Eine Zelle je Kalenderwoche von der ERSTEN angelegten Woche bis zur
+        // letzten ABGESCHLOSSENEN Kalenderwoche (dieselbe Spanne wie
+        // BHB2B.fehlendeWochen — bis 14.11.2026 endete der Streifen an der
+        // letzten Einreichung und meldete "Keine Lücke", waehrend die
+        // Erinnern-Zeile darunter "3 Wochen fehlen" sagte). Bewusst nicht ueber die Vertragslaufzeit: die
         // steht nirgends, ein Nenner "52 von 156" waere erfunden (CLAUDE.md).
         // Die Luecken INNERHALB der Spanne sind dagegen echt gemessen — genau
         // sie sind die Information, die eine Liste nicht hergibt.
@@ -2989,6 +3021,9 @@
                 if (!proWoche[k] || (rang[st] || 0) > (rang[proWoche[k]] || 0)) { proWoche[k] = st; bidProWoche[k] = b.id; }
             });
             if (!min || !max) return '';
+            var bisher = montagVon(isoDatum(new Date()));
+            bisher.setDate(bisher.getDate() - 7);
+            if (bisher > max) max = bisher;
 
             var zellen = '', marken = '', spalten = 0, letzterMonat = -1, luecken = 0;
             for (var d = new Date(min); d <= max; d.setDate(d.getDate() + 7)) {
@@ -3082,6 +3117,8 @@
                     '</div>';
             }
 
+            koerper += erinnerungsZeile(az, ai, leer);
+
             return '<section class="abk-azubi">' +
                 '<header class="abk-azubi-head">' +
                 '<span class="abk-avatar" aria-hidden="true">' + esc(monogramm(name)) + '</span>' +
@@ -3091,6 +3128,79 @@
                 '</div>' +
                 '<span class="abk-azubi-stand' + stand[0] + '">' + stand[1] + '</span>' +
                 '</header>' + koerper + '</section>';
+        }
+
+        // ── Erinnern an fehlende Wochen ──────────────────────────────────
+        // Welche Wochen fehlen, rechnet BHB2B.fehlendeWochen() (Spanne: erste
+        // angelegte Woche bis zur letzten abgeschlossenen — kein erfundener
+        // Ausbildungsbeginn). Die 12-h-Sperre sitzt im Server-Trigger; hier
+        // steht sie nur, damit der Knopf nicht erst nach dem Klick Nein sagt.
+        var ERINNERUNG_SPERRE_MS = 12 * 3600 * 1000;
+        var GLOCKE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+
+        function fehlendFuer(az) {
+            if (typeof BHB2B === 'undefined' || !BHB2B.fehlendeWochen) return { wochen: [], gesamt: 0 };
+            return BHB2B.fehlendeWochen(az.berichte.map(function (b) { return b.datum_von; }));
+        }
+
+        function erinnerungsZeile(az, ai, leer) {
+            var f = fehlendFuer(az);
+            var letzte = kontoErinnerungen[az.userId] || null;
+            if (!leer && !f.gesamt && !letzte) return '';
+
+            var info;
+            if (leer) info = abL('Noch keine Woche angelegt', 'No week started yet');
+            else if (f.gesamt) {
+                info = '<strong>' + abL(f.gesamt === 1 ? '1 Woche fehlt' : f.gesamt + ' Wochen fehlen',
+                    f.gesamt === 1 ? '1 week missing' : f.gesamt + ' weeks missing') + '</strong>' +
+                    ' · ' + abL('älteste vom ', 'oldest from ') + esc(fmtDate(f.wochen[0]));
+            } else info = abL('Keine Woche fehlt', 'No week missing');
+
+            var stand = '';
+            if (letzte) {
+                var wann = new Date(letzte.erstellt_at);
+                var tag = isNaN(wann) ? '' : wann.toLocaleDateString(abLocale(), { day: 'numeric', month: 'short' });
+                stand = '<span class="abk-er-stand">' + abL('Erinnert am ', 'Reminded on ') + esc(tag) + ' · ' +
+                    (letzte.gelesen_at ? '<span class="is-gelesen">' + abL('gelesen', 'read') + '</span>'
+                                       : abL('noch nicht gelesen', 'not read yet')) + '</span>';
+            }
+
+            var knopf = '';
+            if (leer || f.gesamt) {
+                var gesperrt = letzte && (Date.now() - new Date(letzte.erstellt_at).getTime()) < ERINNERUNG_SPERRE_MS;
+                knopf = '<button type="button" class="abk-er-btn" data-q="erinnern" data-ai="' + esc(ai) + '"' +
+                    (gesperrt ? ' disabled title="' + esc(abL('Höchstens eine Erinnerung in 12 Stunden', 'At most one reminder per 12 hours')) + '"' : '') + '>' +
+                    GLOCKE + '<span>' + (gesperrt ? abL('Erinnert', 'Reminded')
+                        : leer ? abL('Ans Berichtsheft erinnern', 'Remind about the report book')
+                        : abL('Erinnern', 'Remind')) + '</span></button>';
+            }
+
+            return '<div class="abk-er' + (f.gesamt ? ' is-fehlt' : '') + '">' +
+                '<div class="abk-er-text"><span class="abk-er-info">' + info + '</span>' + stand + '</div>' +
+                knopf + '</div>';
+        }
+
+        async function erinnern(ai, knopf) {
+            var az = kontoDaten && kontoDaten.azubis[+ai];
+            if (!az) return;
+            var f = fehlendFuer(az);
+            if (knopf) { knopf.disabled = true; knopf.classList.add('is-laeuft'); }
+            try {
+                var zeile = await BHB2B.erinnerungSenden(az.userId, f.wochen);
+                kontoErinnerungen[az.userId] = zeile;
+                toast(abL('Erinnerung an ' + (az.name || 'den Azubi') + ' gesendet',
+                          'Reminder sent to ' + (az.name || 'the apprentice')));
+                if (typeof mwlEvent === 'function') mwlEvent('b2b_erinnerung', { wochen: f.gesamt, leer: !az.berichte.length });
+            } catch (e) {
+                if (e && e.code === 'zu_frueh') {
+                    // Ein anderer Ausbilder war schneller: Stand nachladen statt raten.
+                    try { kontoErinnerungen = await BHB2B.erinnerungenBetrieb(); } catch (x) { /* bleibt */ }
+                    toast(abL('In den letzten 12 Stunden wurde schon erinnert.', 'Already reminded in the last 12 hours.'), true);
+                } else {
+                    toast(abL('Erinnerung konnte nicht gesendet werden.', 'Reminder could not be sent.'), true);
+                }
+            }
+            renderAnsicht();
         }
 
         // ── Meldungen: Wochen, die der Azubi geloescht hat ────────────
@@ -4525,6 +4635,7 @@
                     else if (was === 'az-offen') oeffneWocheImStapel(null, q.getAttribute('data-ai'), 'offen');
                     else if (was === 'az-alle') oeffneWocheImStapel(null, q.getAttribute('data-ai'), 'alle');
                     else if (was === 'kachel-offen') oeffneWocheImStapel(null, null, 'offen');
+                    else if (was === 'erinnern') erinnern(q.getAttribute('data-ai'), q);
                     return;
                 }
 
@@ -4734,10 +4845,12 @@
             // kippen (dann eben ohne Meldungen statt ohne Seite).
             var zusatz = await Promise.all([
                 BHB2B.meldungen ? BHB2B.meldungen().catch(function () { return []; }) : [],
-                BHB2B.team ? BHB2B.team().catch(function () { return []; }) : []
+                BHB2B.team ? BHB2B.team().catch(function () { return []; }) : [],
+                BHB2B.erinnerungenBetrieb ? BHB2B.erinnerungenBetrieb().catch(function () { return {}; }) : {}
             ]);
             kontoMeldungen = zusatz[0] || [];
             kontoTeam = zusatz[1] || [];
+            kontoErinnerungen = zusatz[2] || {};
 
             bindeKonto();
             renderKonto();

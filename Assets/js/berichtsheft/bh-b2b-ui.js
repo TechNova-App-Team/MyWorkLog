@@ -593,6 +593,7 @@
     // Von saveReport() gerufen (bh-bericht.js). Einzelner Bericht, sofort.
     window.b2bOnReportSaved = async function (report) {
         if (typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet()) return;
+        if (erOffen.length) erZeichnen();
         try {
             const st = await BHB2B.status();
             // Ohne Gegenbestaetigung geht nichts an den Betrieb (siehe zeigeBestaetigen).
@@ -667,6 +668,118 @@
         } catch (e) { /* egal */ }
     };
 
+    // ── Erinnerung des Ausbilders an fehlende Wochen ────────────────
+    // Steht OBEN im Container, nicht an der Karte: die Karte liegt unter dem
+    // Kalender, und eine Erinnerung, die man erst suchen muss, erinnert nicht.
+    // Wochen, die inzwischen auf diesem Geraet angelegt sind, fallen aus der
+    // Liste — der Hinweis zeigt, was NOCH fehlt, nicht was einmal fehlte.
+    let erOffen = [];
+
+    function erMontag(iso) {
+        const d = new Date(String(iso || '') + 'T12:00:00');
+        if (isNaN(d)) return null;
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return d;
+    }
+    function erIso(d) {
+        const m = d.getMonth() + 1, t = d.getDate();
+        return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (t < 10 ? '0' : '') + t;
+    }
+    function erKw(d) {
+        const u = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        u.setUTCDate(u.getUTCDate() + 4 - (u.getUTCDay() || 7));
+        return Math.ceil((((u - Date.UTC(u.getUTCFullYear(), 0, 1)) / 86400000) + 1) / 7);
+    }
+
+    function erNochFehlend(wochen) {
+        const da = new Set();
+        if (typeof reports !== 'undefined' && Array.isArray(reports)) {
+            reports.forEach(function (r) { const mo = erMontag(r.dateFrom); if (mo) da.add(erIso(mo)); });
+        }
+        return wochen.filter(function (w) { return !da.has(w); });
+    }
+
+    function erZeichnen() {
+        let box = document.getElementById('b2bErinnerung');
+        if (!erOffen.length) { if (box) box.remove(); return; }
+        const karte = el();
+        if (!karte || !karte.parentElement) return;
+        if (!box) {
+            box = document.createElement('div');
+            box.id = 'b2bErinnerung';
+            box.setAttribute('role', 'status');
+            karte.parentElement.insertBefore(box, karte.parentElement.firstElementChild);
+        }
+        const neueste = erOffen[0];
+        const alle = new Set();
+        erOffen.forEach(function (e) { (e.wochen || []).forEach(function (w) { alle.add(w); }); });
+        const angefragt = [...alle].sort();
+        const fehlt = erNochFehlend(angefragt);
+        const wer = neueste.ausbilder_name ? esc(neueste.ausbilder_name) : b2bL('Dein Ausbilder', 'Your trainer');
+        const wann = datumKurz(neueste.erstellt_at);
+
+        let text, chips = '';
+        if (!angefragt.length) {
+            text = b2bL('erinnert dich an dein Berichtsheft. Bisher ist keine Woche beim Betrieb angekommen.',
+                'is reminding you about your report book. No week has reached the company yet.');
+        } else if (!fehlt.length) {
+            text = b2bL('hat an fehlende Wochen erinnert. Alle sind jetzt angelegt.',
+                'reminded you about missing weeks. All of them are in now.');
+        } else {
+            text = b2bL(fehlt.length === 1 ? 'erinnert dich an eine fehlende Woche:' : 'erinnert dich an ' + fehlt.length + ' fehlende Wochen:',
+                fehlt.length === 1 ? 'is reminding you about one missing week:' : 'is reminding you about ' + fehlt.length + ' missing weeks:');
+            const zeigen = fehlt.slice(0, 12);
+            chips = '<div class="b2b-er-wochen">' + zeigen.map(function (w) {
+                const d = erMontag(w);
+                return '<button type="button" class="b2b-er-woche" onclick="b2bErWoche(\'' + w + '\')">' +
+                    'KW ' + erKw(d) + ' <span>' + esc(d.toLocaleDateString(document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE', { day: '2-digit', month: '2-digit' })) + '</span></button>';
+            }).join('') +
+                (fehlt.length > zeigen.length ? '<span class="b2b-er-mehr">+' + (fehlt.length - zeigen.length) + '</span>' : '') +
+                '</div>';
+        }
+
+        box.className = 'b2b-er' + (fehlt.length ? ' is-offen' : '');
+        box.innerHTML =
+            '<svg class="b2b-er-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>' +
+            '<div class="b2b-er-text">' +
+            '<p><strong>' + wer + '</strong> ' + text + '</p>' + chips +
+            (wann ? '<span class="b2b-er-wann">' + b2bL('Gesendet am ', 'Sent on ') + esc(wann) + '</span>' : '') +
+            '</div>' +
+            '<button type="button" class="btn btn-ghost b2b-er-ok" onclick="b2bErGelesen()">' +
+            (fehlt.length ? b2bL('Verstanden', 'Got it') : b2bL('Erledigt', 'Done')) + '</button>';
+    }
+
+    async function erLaden() {
+        if (!BHB2B.erinnerungenOffen) return;
+        erOffen = await BHB2B.erinnerungenOffen().catch(function () { return []; });
+        erZeichnen();
+        if (erOffen.length && typeof mwlEvent === 'function') mwlEvent('b2b_erinnerung_gezeigt', { anzahl: erOffen.length });
+    }
+
+    // Neuen Bericht fuer genau diese Woche oeffnen. Die Felder werden NACH
+    // openNewReportModal() gesetzt, weil das Formular dort auf die laufende
+    // Woche zurueckgesetzt und ein Entwurf eingespielt wird.
+    window.b2bErWoche = function (montag) {
+        if (typeof openNewReportModal !== 'function') return;
+        const d = erMontag(montag);
+        if (!d) return;
+        openNewReportModal();
+        const fr = new Date(d.getTime()); fr.setDate(fr.getDate() + 4);
+        const setze = function (id, v) { const f = document.getElementById(id); if (f) f.value = v; };
+        setze('reportWeek', erKw(d));
+        setze('reportDateFrom', erIso(d));
+        setze('reportDateTo', erIso(fr));
+        if (typeof bhAusbildungsjahrVorbelegen === 'function') bhAusbildungsjahrVorbelegen(erIso(d), false);
+        if (typeof mwlEvent === 'function') mwlEvent('b2b_erinnerung_woche', {});
+    };
+
+    window.b2bErGelesen = async function () {
+        const ids = erOffen.map(function (e) { return e.id; });
+        erOffen = [];
+        erZeichnen();
+        if (ids.length) await BHB2B.erinnerungenGelesen(ids);
+    };
+
     // ── Zustand bestimmen und rendern ───────────────────────────────
 
     let laeuft = false;
@@ -739,6 +852,9 @@
             const offen = bestaetigt() !== st.betriebId;
             if (offen) zeigeBestaetigen(st); else zeigeAzubi(st, netzfehler);
             if (netzfehler) return;
+            // Unabhaengig von der Gegenbestaetigung: die Erinnerung ist eine
+            // Nachricht an den Azubi, kein Hochladen.
+            erLaden();
             if (!offen) await berichteHochladen();
             const map = await BHB2B.freigabenRunter();
             const geaendert = await freigabenEinspielen(map);

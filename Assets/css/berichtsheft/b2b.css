@@ -462,3 +462,42 @@
 
 /* Gelb auf Hell traegt nicht: dunklerer Ton fuer das helle Thema. */
 [data-theme="light"] .b2b-exp { color: color-mix(in srgb, var(--warning) 55%, var(--text-main)); background: rgba(var(--warning-rgb), 0.18); }
+
+/* Erinnerung des Ausbilders (bh-b2b-ui.js erZeichnen). Steht oben im
+   Container. Ein Effekt-Traeger: der Warnton am Rand und am Symbol, die
+   Flaeche bleibt ruhig. Ohne offene Wochen (alles nachgetragen) neutral. */
+.b2b-er {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+}
+.b2b-er.is-offen { border-color: rgba(var(--warning-rgb), 0.38); }
+.b2b-er-ic { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 1px; color: var(--text-muted); }
+.b2b-er.is-offen .b2b-er-ic { color: var(--warning); }
+.b2b-er-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.b2b-er-text p { margin: 0; font-size: 0.92rem; line-height: 1.5; color: var(--text-secondary); }
+.b2b-er-text strong { color: var(--text-main); font-weight: 600; }
+.b2b-er-wochen { display: flex; flex-wrap: wrap; gap: 6px; }
+.b2b-er-woche {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    padding: 5px 10px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: transparent;
+    font: inherit; font-size: 0.82rem; font-weight: 600; color: var(--text-main);
+    transition: border-color 0.2s var(--ease), background 0.2s var(--ease), transform 0.12s var(--ease);
+}
+.b2b-er-woche span { font-weight: 400; color: var(--text-muted); font-size: 0.76rem; }
+.b2b-er-woche:hover { border-color: var(--border-active); background: var(--primary-dim); }
+.b2b-er-woche:active { transform: scale(0.97); }
+.b2b-er-woche:focus-visible { outline: 2px solid var(--border-active); outline-offset: 2px; }
+.b2b-er-mehr { align-self: center; font-size: 0.8rem; color: var(--text-muted); }
+.b2b-er-ok { flex: 0 0 auto; }
+@media (max-width: 560px) {
+    .b2b-er { flex-wrap: wrap; }
+    .b2b-er-text { flex-basis: calc(100% - 34px); }
+    .b2b-er-ok { margin-left: 34px; }
+}
+.b2b-er-wann { font-size: 0.76rem; color: var(--text-muted); }

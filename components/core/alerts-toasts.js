@@ -23,7 +23,8 @@
         { key: 'dailyReminders', id: 'alertDailyReminders' },
         { key: 'milestones',     id: 'alertMilestones' },
         { key: 'exportReminder', id: 'alertExportReminder' },
-        { key: 'klasse',         id: 'alertKlasse' }
+        { key: 'klasse',         id: 'alertKlasse' },
+        { key: 'ausbilder',      id: 'alertAusbilder' }
     ];
 
     let alertSettings = {};
@@ -658,11 +659,12 @@
         }
     }
 
-    // Klassen-Meldung einreihen (Mitteilungen/Aenderungen aus klasse-profil.js).
-    // Der Torwaechter sitzt HIER, damit kein Aufrufer ihn vergessen kann;
-    // `key` dedupliziert ueber lastAlertCheck (dieselbe Tatsache meldet sich einmal).
-    function mwlKlassenMeldung(o) {
-        if (!o || !mwlAlertsOn('klasse')) return false;
+    // Meldung von aussen einreihen (Klasse: klasse-profil.js, Ausbilder-
+    // Erinnerung: api-cloud-sync.js). Der Torwaechter sitzt HIER, damit kein
+    // Aufrufer ihn vergessen kann; `key` dedupliziert ueber lastAlertCheck
+    // (dieselbe Tatsache meldet sich einmal). Nur Kategorien aus ALERT_TOGGLES.
+    function mwlMeldung(kategorie, o) {
+        if (!o || !ALERT_TOGGLES.some(t => t.key === kategorie) || !mwlAlertsOn(kategorie)) return false;
         if (o.key && lastAlertCheck[o.key]) return false;
         const a = createAlert(o.title || '', o.message || '', o.type || 'info', '');
         if (apSafeLink(o.link)) { a.link = o.link; a.linkLabel = o.linkLabel || ''; }
@@ -673,6 +675,11 @@
         if (o.toast !== false) { try { showToastNotification(a); } catch (e) { /* ohne Toast */ } }
         return true;
     }
+    // Je Kategorie ein Einstieg mit eigenem Guard: tools/alerts-schalter.test.mjs
+    // verlangt, dass jeder Schalter woertlich abgefragt wird.
+    function mwlKlassenMeldung(o) { return mwlAlertsOn('klasse') && mwlMeldung('klasse', o); }
+    function mwlAusbilderMeldung(o) { return mwlAlertsOn('ausbilder') && mwlMeldung('ausbilder', o); }
+    window.mwlAusbilderMeldung = mwlAusbilderMeldung;
     window.mwlKlassenMeldung = mwlKlassenMeldung;
 
     // Ein Klick-Empfaenger fuer die ganze Liste statt eines onclick je Zeile:

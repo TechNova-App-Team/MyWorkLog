@@ -29,9 +29,10 @@ function hole(name) {
 }
 
 console.log('\n▶ /ausbilder/: Anzeigename des Azubis');
-const namen = ['esc', 'monogramm', 'schonUnterschrieben', 'istOffen', 'zahlenFuer', 'fmtDate', 'azubiKarte'];
+const namen = ['esc', 'monogramm', 'schonUnterschrieben', 'istOffen', 'zahlenFuer', 'fmtDate', 'fehlendFuer', 'erinnerungsZeile', 'azubiKarte'];
 const { azubiKarte } = new Function(
   'function abL(de, en) { return de; }\nfunction abLocale() { return "de-DE"; }\n' +
+  'var kontoErinnerungen = {}, GLOCKE = "", ERINNERUNG_SPERRE_MS = 1;\n' +
   namen.map(hole).join('\n') + '\nreturn { azubiKarte };')();
 
 const leer = azubiKarte({ name: BOESE, berichte: [] }, false);

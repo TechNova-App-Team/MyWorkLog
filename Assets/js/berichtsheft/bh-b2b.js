@@ -1394,6 +1394,158 @@
         return true;
     }
 
+    // ── Erinnerung an fehlende Wochen (seit 14.11.2026) ──────────────
+    //
+    // Der Ausbilder schickt mit einem Klick eine Erinnerung; sie landet in
+    // `b2b_erinnerungen` (Migration `b2b_erinnerungen`). Der Server haelt:
+    // nur Ausbilder desselben Betriebs legen an, nur der Azubi liest und
+    // setzt `gelesen_at`, hoechstens eine je Azubi in 12 h (Trigger,
+    // Meldung `erinnerung_zu_frueh`), nichts wird geloescht.
+    //
+    // 🔴 Welche Wochen "fehlen", laesst sich nur INNERHALB einer belegten
+    // Spanne sagen: der Ausbildungsbeginn steht nirgends (kein erfundener
+    // Nenner, CLAUDE.md). Die Spanne beginnt deshalb an der ersten Woche,
+    // die der Azubi ueberhaupt angelegt hat — auch einer noch offenen —, und
+    // endet an der letzten ABGESCHLOSSENEN Woche: die laufende Woche ist
+    // nicht verspaetet. Anders als der Wochen-Streifen im Cockpit reicht sie
+    // bis heute, nicht nur bis zur letzten Einreichung — sonst saehe ein
+    // Azubi, der seit Wochen nichts mehr schreibt, aus wie "keine Luecke".
+
+    const ERINNERUNG_MAX_WOCHEN = 80;   // = CHECK auf b2b_erinnerungen.wochen
+
+    function lokalIso(d) {
+        // Nie toISOString(): rechnet nach UTC und verschiebt den Tag.
+        const m = d.getMonth() + 1, t = d.getDate();
+        return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (t < 10 ? '0' : '') + t;
+    }
+
+    function montagVon(wert) {
+        const d = wert instanceof Date ? new Date(wert.getTime()) : new Date(String(wert || '') + 'T12:00:00');
+        if (isNaN(d)) return null;
+        d.setHours(12, 0, 0, 0);
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+        return d;
+    }
+
+    /**
+     * Montage (YYYY-MM-DD) der Wochen ohne jeden Bericht, aelteste zuerst.
+     * `daten` = Liste von Startdaten (datum_von / dateFrom), `heute` optional.
+     * → { wochen: [...], gesamt: n } — `wochen` ist auf die juengsten
+     *   ERINNERUNG_MAX_WOCHEN gekappt, `gesamt` zaehlt alle.
+     */
+    function fehlendeWochen(daten, heute) {
+        const belegt = new Set();
+        let erste = null;
+        (daten || []).forEach(function (v) {
+            const mo = montagVon(v);
+            if (!mo) return;
+            belegt.add(lokalIso(mo));
+            if (!erste || mo < erste) erste = mo;
+        });
+        const letzte = montagVon(heute instanceof Date ? heute : new Date());
+        if (!erste || !letzte) return { wochen: [], gesamt: 0 };
+        letzte.setDate(letzte.getDate() - 7);
+        const alle = [];
+        for (const d = new Date(erste.getTime()); d <= letzte; d.setDate(d.getDate() + 7)) {
+            const k = lokalIso(d);
+            if (!belegt.has(k)) alle.push(k);
+        }
+        return { wochen: alle.slice(-ERINNERUNG_MAX_WOCHEN), gesamt: alle.length };
+    }
+
+    /**
+     * Ausbilder: Erinnerung an einen Azubi schicken.
+     * `wochen` leer = "noch nichts eingereicht".
+     * → { id, erstellt_at }; wirft Error mit `.code = 'zu_frueh'` bei der
+     *   12-Stunden-Sperre.
+     */
+    async function bhb2bErinnerungSenden(azubiId, wochen, notiz) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const sb = await client();
+        const zeile = {
+            betrieb_id: st.betriebId,
+            azubi_id: String(azubiId || ''),
+            ausbilder_id: st.userId,
+            ausbilder_name: (st.anzeigeName || '').slice(0, 120) || null,
+            wochen: (Array.isArray(wochen) ? wochen : [])
+                .filter(function (w) { return /^\d{4}-\d{2}-\d{2}$/.test(w); })
+                .slice(-ERINNERUNG_MAX_WOCHEN),
+            notiz: notiz ? String(notiz).slice(0, 500) : null
+        };
+        const { data, error } = await sb.from('b2b_erinnerungen')
+            .insert(zeile).select('id, azubi_id, wochen, erstellt_at, gelesen_at').single();
+        if (error) {
+            const e = new Error(/erinnerung_zu_frueh/.test(error.message || '')
+                ? 'Diese Person wurde in den letzten 12 Stunden schon erinnert.'
+                : (error.message || 'Erinnerung fehlgeschlagen'));
+            if (/erinnerung_zu_frueh/.test(error.message || '')) e.code = 'zu_frueh';
+            throw e;
+        }
+        return data;
+    }
+
+    /**
+     * Ausbilder: letzte Erinnerung je Azubi des Betriebs.
+     * → { <azubiId>: { id, wochen, erstellt_at, gelesen_at, ausbilder_name } }
+     */
+    async function bhb2bErinnerungenBetrieb() {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') return {};
+        try {
+            const sb = await client();
+            const { data, error } = await sb.from('b2b_erinnerungen')
+                .select('id, azubi_id, wochen, erstellt_at, gelesen_at, ausbilder_name')
+                .eq('betrieb_id', st.betriebId)
+                .order('erstellt_at', { ascending: false })
+                .limit(500);
+            if (error) { console.warn('[B2B] Erinnerungen:', error.message); return {}; }
+            const je = {};
+            (data || []).forEach(function (r) { if (!je[r.azubi_id]) je[r.azubi_id] = r; });
+            return je;
+        } catch (e) {
+            console.warn('[B2B] Erinnerungen:', e && e.message);
+            return {};
+        }
+    }
+
+    /** Azubi: ungelesene Erinnerungen, juengste zuerst. */
+    async function bhb2bErinnerungenOffen() {
+        if (!hatSitzung()) return [];
+        try {
+            const sb = await client();
+            const u = await benutzer(sb);
+            if (!u) return [];
+            const { data, error } = await sb.from('b2b_erinnerungen')
+                .select('id, wochen, notiz, ausbilder_name, erstellt_at')
+                .eq('azubi_id', u.id)
+                .is('gelesen_at', null)
+                .order('erstellt_at', { ascending: false })
+                .limit(10);
+            if (error) { console.warn('[B2B] Erinnerungen:', error.message); return []; }
+            return data || [];
+        } catch (e) {
+            console.warn('[B2B] Erinnerungen:', e && e.message);
+            return [];
+        }
+    }
+
+    /** Azubi: Erinnerungen als gelesen markieren (Zeit setzt der Server). */
+    async function bhb2bErinnerungenGelesen(ids) {
+        if (!Array.isArray(ids) || !ids.length) return false;
+        try {
+            const sb = await client();
+            const { error } = await sb.from('b2b_erinnerungen')
+                .update({ gelesen_at: new Date().toISOString() })
+                .in('id', ids);
+            if (error) { console.warn('[B2B] Erinnerung gelesen:', error.message); return false; }
+            return true;
+        } catch (e) {
+            console.warn('[B2B] Erinnerung gelesen:', e && e.message);
+            return false;
+        }
+    }
+
     // ── Export ───────────────────────────────────────────────────────
     window.BHB2B = {
         angemeldet: bhb2bAngemeldet,
@@ -1442,7 +1594,12 @@
         firmaStand: bhb2bFirmaStand,
         firmaAntwort: bhb2bFirmaAntwort,
         austreten: bhb2bAustreten,
+        fehlendeWochen: fehlendeWochen,
+        erinnerungSenden: bhb2bErinnerungSenden,
+        erinnerungenBetrieb: bhb2bErinnerungenBetrieb,
+        erinnerungenOffen: bhb2bErinnerungenOffen,
+        erinnerungenGelesen: bhb2bErinnerungenGelesen,
         // fuer Tests
-        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, nachweisGilt, inhaltDiff: bhb2bInhaltDiff, meldungenEindampfen }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText, nachweisGilt, inhaltDiff: bhb2bInhaltDiff, meldungenEindampfen, fehlendeWochen, montagVon }
     };
 })();
