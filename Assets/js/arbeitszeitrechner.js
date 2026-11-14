@@ -217,3 +217,111 @@
     });
     rechnen();
 })();
+
+// ═══ STUNDENZETTEL-VORLAGE (PDF) ═══
+// Leerer Monats-Stundenzettel zum Ausdrucken (Keyword-Planer: "stundenzettel vorlage
+// kostenlos", "zum ausdrucken", je ~500/Monat). jsPDF erst beim Klick (~360 KB).
+// 🔴 jsPDF-Standardschrift kann nur WinAnsi: keine Zeichen ueber U+00FF in die Texte
+// (kein "→", kein "✓"); Umlaute und "–" gehen.
+(function () {
+    'use strict';
+    var EN = document.documentElement.lang === 'en';
+    var JSPDF_URL = '/Assets/js/vendor/jspdf-2.5.1.umd.min.js?v=98ccf17aa1';
+    var knopf = document.getElementById('szLaden');
+    if (!knopf) return;
+    var monat = document.getElementById('szMonat');
+    var heute = new Date();
+    if (!monat.value) monat.value = heute.getFullYear() + '-' + String(heute.getMonth() + 1).padStart(2, '0');
+
+    function laden() {
+        if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+        return new Promise(function (ok, fehler) {
+            var s = document.createElement('script');
+            s.src = JSPDF_URL;
+            s.onload = function () { window.jspdf ? ok() : fehler(new Error('jspdf')); };
+            s.onerror = fehler;
+            document.head.appendChild(s);
+        });
+    }
+
+    var TAGE = EN ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] : ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    var MONATE = EN
+        ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+        : ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+    var K = EN ? {
+        titel: 'Timesheet', name: 'Name', firma: 'Company', datum: 'Date', tag: 'Day', von: 'Start', bis: 'End',
+        pause: 'Break', std: 'Hours', bem: 'Notes', summe: 'Total hours', soll: 'Target', saldo: 'Overtime / short',
+        u1: 'Date, signature employee', u2: 'Date, signature supervisor', fuss: 'Template: myworklog.de/arbeitszeitrechner'
+    } : {
+        titel: 'Stundenzettel', name: 'Name', firma: 'Firma', datum: 'Datum', tag: 'Tag', von: 'Beginn', bis: 'Ende',
+        pause: 'Pause', std: 'Stunden', bem: 'Bemerkung', summe: 'Summe Stunden', soll: 'Soll', saldo: 'Über-/Minusstunden',
+        u1: 'Datum, Unterschrift Mitarbeiter/in', u2: 'Datum, Unterschrift Vorgesetzte/r', fuss: 'Vorlage: myworklog.de/arbeitszeitrechner'
+    };
+
+    function pdf() {
+        var teile = (monat.value || '').split('-');
+        var j = +teile[0], m = +teile[1] - 1;
+        if (!j || m < 0) return;
+        var name = (document.getElementById('szName').value || '').trim();
+        var firma = (document.getElementById('szFirma').value || '').trim();
+        var d = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
+        var L = 14, R = 196, B = R - L;
+        d.setFont('helvetica', 'bold'); d.setFontSize(18);
+        d.text(K.titel + ' ' + MONATE[m] + ' ' + j, L, 20);
+        d.setFont('helvetica', 'normal'); d.setFontSize(10);
+        d.text(K.name + ':', L, 30); d.text(K.firma + ':', 110, 30);
+        d.setDrawColor(150); d.line(L + 13, 31, 104, 31); d.line(124, 31, R, 31);
+        if (name) d.text(name, L + 14, 30);
+        if (firma) d.text(firma, 125, 30);
+
+        // Spalten: Datum, Tag, Beginn, Ende, Pause, Stunden, Bemerkung
+        var sp = [L, L + 24, L + 36, L + 56, L + 76, L + 94, L + 114, R];
+        var kopf = [K.datum, K.tag, K.von, K.bis, K.pause, K.std, K.bem];
+        var tage = new Date(j, m + 1, 0).getDate();
+        var y = 38, zh = Math.min(7, (262 - y - 8) / (tage + 1));
+        d.setFillColor(235, 235, 240); d.rect(L, y, B, zh, 'F');
+        d.setFont('helvetica', 'bold'); d.setFontSize(9);
+        kopf.forEach(function (t, i) { d.text(t, sp[i] + 1.5, y + zh - 2.2); });
+        d.setFont('helvetica', 'normal');
+        for (var t = 1; t <= tage; t++) {
+            var dt = new Date(j, m, t), wt = dt.getDay();
+            var yy = y + zh * t;
+            if (wt === 0 || wt === 6) { d.setFillColor(246, 246, 248); d.rect(L, yy, B, zh, 'F'); }
+            var datum = EN ? (String(t).padStart(2, '0') + '/' + String(m + 1).padStart(2, '0') + '/' + j)
+                           : (String(t).padStart(2, '0') + '.' + String(m + 1).padStart(2, '0') + '.' + j);
+            d.text(datum, sp[0] + 1.5, yy + zh - 2.2);
+            d.text(TAGE[wt], sp[1] + 1.5, yy + zh - 2.2);
+        }
+        var ende = y + zh * (tage + 1);
+        d.setDrawColor(170); d.setLineWidth(0.2);
+        for (var r = 0; r <= tage + 1; r++) d.line(L, y + zh * r, R, y + zh * r);
+        sp.forEach(function (x) { d.line(x, y, x, ende); });
+
+        // Summenblock
+        var sy = ende + 6;
+        d.setFont('helvetica', 'bold');
+        [K.summe, K.soll, K.saldo].forEach(function (t, i) {
+            d.text(t + ':', L, sy + i * 7);
+            d.line(L + 42, sy + i * 7 + 1, L + 80, sy + i * 7 + 1);
+        });
+        d.setFont('helvetica', 'normal'); d.setFontSize(8);
+        var uy = 283;
+        d.line(L, uy - 5, L + 80, uy - 5); d.line(R - 80, uy - 5, R, uy - 5);
+        d.text(K.u1, L, uy - 1); d.text(K.u2, R - 80, uy - 1);
+        d.setTextColor(150); d.text(K.fuss, R, 292, { align: 'right' });
+        d.save((EN ? 'timesheet-' : 'stundenzettel-') + j + '-' + String(m + 1).padStart(2, '0') + '.pdf');
+    }
+
+    knopf.addEventListener('click', function () {
+        var status = document.getElementById('szStatus');
+        knopf.disabled = true;
+        status.textContent = EN ? 'Creating PDF …' : 'PDF wird erstellt …';
+        laden().then(function () {
+            pdf();
+            status.textContent = '';
+            if (typeof mwlEvent === 'function') mwlEvent('arbeitszeitrechner', { aktion: 'stundenzettel' });
+        }).catch(function () {
+            status.textContent = EN ? 'The PDF could not be created. Please reload the page and try again.' : 'Das PDF ließ sich nicht erstellen. Lade die Seite neu und versuch es noch einmal.';
+        }).then(function () { knopf.disabled = false; });
+    });
+})();
