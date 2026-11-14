@@ -252,6 +252,7 @@ var EVENT_LABELS = {
     'b2b_betrieb_bestaetigt': ['Betrieb bestätigt', 'Company verified'],
     'b2b_firma_entschieden': ['Betrieb: Anfrage entschieden', 'Company: request decided'],
     'b2b_erinnerung':   ['Ausbilder: an fehlende Wochen erinnert', 'Trainer: reminded about missing weeks'],
+    'b2b_gesamt_pdf':   ['Ausbilder: alle Wochen eines Azubis als PDF', 'Trainer: all weeks of an apprentice as PDF'],
     'b2b_erinnerung_app': ['Azubi: Erinnerung in der App erhalten', 'Apprentice: reminder received in the app'],
     'b2b_erinnerung_gezeigt': ['Azubi: Erinnerung im Berichtsheft gesehen', 'Apprentice: reminder seen in report book'],
     'b2b_erinnerung_woche': ['Azubi: fehlende Woche aus der Erinnerung geöffnet', 'Apprentice: opened missing week from reminder'],

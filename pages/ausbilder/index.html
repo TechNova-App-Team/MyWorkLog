@@ -2022,7 +2022,8 @@
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=0de9a54e10"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=4cfead16a8"></script>
+    <script defer src="/Assets/js/ausbilder-pdf.js?v=39a1016227"></script>
 
     <script>
     (function () {
@@ -3114,6 +3115,13 @@
                     '<button type="button" class="abk-textknopf" data-q="az-alle" data-ai="' + esc(ai) + '">' +
                     abL(nAlle === 1 ? '1 Woche ansehen' : 'Alle ' + nAlle + ' Wochen ansehen',
                         nAlle === 1 ? 'View 1 week' : 'View all ' + nAlle + ' weeks') + '</button>' +
+                    // Gesamt-PDF fuer die Zulassung (Assets/js/ausbilder-pdf.js).
+                    // Nur, wenn es eingereichte Wochen gibt — ein PDF aus Entwuerfen
+                    // waere kein Nachweis.
+                    (z.eingereicht
+                        ? '<button type="button" class="abk-textknopf abk-pdf" data-q="pdf" data-ai="' + esc(ai) + '">' +
+                          abL('Alles als PDF', 'All as PDF') + '</button>'
+                        : '') +
                     '</div>';
             }
 
@@ -3201,6 +3209,30 @@
                 }
             }
             renderAnsicht();
+        }
+
+        // ── Alle Wochen eines Azubis als PDF (Zulassung) ───────────────
+        async function gesamtPdf(ai, knopf) {
+            var az = kontoDaten && kontoDaten.azubis[+ai];
+            if (!az || typeof AusbilderPdf === 'undefined') return;
+            var text = knopf ? knopf.textContent : '';
+            if (knopf) { knopf.disabled = true; knopf.textContent = abL('PDF wird erstellt …', 'Creating PDF …'); }
+            try {
+                var r = await AusbilderPdf.gesamtPdf(az, { betrieb: kontoDaten.betrieb, ausbilder: kontoIch.name });
+                if (!r.wochen) {
+                    toast(abL('Noch keine eingereichte Woche.', 'No submitted week yet.'), true);
+                } else {
+                    toast(abL(r.wochen + (r.wochen === 1 ? ' Woche' : ' Wochen') + ' im PDF, ' + r.abgezeichnet + ' abgezeichnet' +
+                              (r.entwuerfe ? ', ' + r.entwuerfe + (r.entwuerfe === 1 ? ' Entwurf' : ' Entwürfe') + ' nicht enthalten' : ''),
+                              r.wochen + (r.wochen === 1 ? ' week' : ' weeks') + ' in the PDF, ' + r.abgezeichnet + ' signed off' +
+                              (r.entwuerfe ? ', ' + r.entwuerfe + (r.entwuerfe === 1 ? ' draft' : ' drafts') + ' left out' : '')));
+                    if (typeof mwlEvent === 'function') mwlEvent('b2b_gesamt_pdf', { wochen: r.wochen, abgezeichnet: r.abgezeichnet });
+                }
+            } catch (e) {
+                toast(abL('PDF konnte nicht erstellt werden.', 'Could not create the PDF.'), true);
+            } finally {
+                if (knopf) { knopf.disabled = false; knopf.textContent = text; }
+            }
         }
 
         // ── Meldungen: Wochen, die der Azubi geloescht hat ────────────
@@ -4636,6 +4668,7 @@
                     else if (was === 'az-alle') oeffneWocheImStapel(null, q.getAttribute('data-ai'), 'alle');
                     else if (was === 'kachel-offen') oeffneWocheImStapel(null, null, 'offen');
                     else if (was === 'erinnern') erinnern(q.getAttribute('data-ai'), q);
+                    else if (was === 'pdf') gesamtPdf(q.getAttribute('data-ai'), q);
                     return;
                 }
 

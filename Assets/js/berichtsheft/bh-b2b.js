@@ -1063,7 +1063,7 @@
                     // dann vor dem September. `datum_von` ist das echte Datum.
                     // Dieselbe Falle wie in der Berichtsheft-Uebersicht (v6.9.12).
                     .order('datum_von', { ascending: true }),
-                sb.from('freigaben').select('id, bericht_id, ausbilder_id, entscheidung, widerruft, anmerkung, ausbilder_name, ausbilder_email, betrieb_nachweis, pruefsumme, prev_pruefsumme, inhalt, erstellt_at')
+                sb.from('freigaben').select('id, bericht_id, ausbilder_id, entscheidung, widerruft, anmerkung, ausbilder_name, ausbilder_email, betrieb_nachweis, pruefsumme, prev_pruefsumme, inhalt, signatur, erstellt_at')
                     .eq('betrieb_id', st.betriebId)
                     .order('erstellt_at', { ascending: true })   // aelteste zuerst
             ]);

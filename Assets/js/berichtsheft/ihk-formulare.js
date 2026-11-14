@@ -365,6 +365,89 @@
         };
     }
 
+    // ── Bericht → Werte fuer den Vordruck ────────────────────────────────────
+    // EINE Stelle fuer Azubi (bh-pdf-modal.js buildIhkCtx, Kopfwerte aus dem
+    // PDF-Dialog) und Ausbilder (/ausbilder/ Gesamt-PDF, Kopfwerte vom Server).
+    // Bis 14.11.2026 stand das nur im Berichtsheft; eine zweite Kopie auf der
+    // Ausbilder-Seite haette die Schultag-Sortierung (v7.2.4) und die
+    // stale-Regel unten frueher oder spaeter verloren.
+    // `kopf`: name, bereich, adresse, beruf, fachrichtung, betrieb, ausbilder,
+    // heftNr, beginn, ende — Datumsfelder als YYYY-MM-DD.
+    const TAG_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    function ctxLocale() {
+        return window.mwlLocale ? window.mwlLocale() : document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
+    }
+    // Wie formatDate()/bhStunden() im Berichtsheft — gleiche Ausgabe, damit
+    // Azubi- und Ausbilder-PDF Zeichen fuer Zeichen gleich drucken.
+    function ctxDatum(s) {
+        if (!s) return '-';
+        return new Date(s).toLocaleDateString(ctxLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    function ctxStunden(n) { return (Number(n) || 0).toLocaleString(ctxLocale()); }
+
+    function ihkCtxAusBericht(report, kopf) {
+        const k = kopf || {};
+        const tagName = key => TAGE[TAG_KEYS.indexOf(key)];
+        const days = TAG_KEYS.map(key => {
+            const isSchool = report.dailySchool && report.dailySchool[key];
+            let text = report.dailyActivities ? (report.dailyActivities[key] || '') : '';
+            if (isSchool && text) text = '[Berufsschule] ' + text;
+            else if (isSchool) text = 'Berufsschule';
+            return {
+                label: tagName(key),
+                text: text,
+                hours: report.dailyHours && report.dailyHours[key] ? ctxStunden(report.dailyHours[key]) : ''
+            };
+        });
+        // Wochenmodus: der zusammengefasste Text steht im Taetigkeits-Block.
+        // Im Tagesmodus fuellt derselbe Text die Tageszeilen (mit [Berufsschule]-
+        // Marke, weil dort jeder Tag EINE Zeile hat). Fuer den Wochen-Vordruck
+        // werden die Schultage dagegen in den Block „Themen des Berufsschul-
+        // unterrichts" sortiert: bis v7.2.4 standen sie mit Marke unter „Betriebliche
+        // Taetigkeiten" und der Schul-Block blieb leer — genau andersherum, als der
+        // Vordruck es vorsieht. Die Stunden werden mitgeteilt.
+        const istTagesmodus = report.mode === 'daily' && !!report.dailyActivities;
+        const istSchule = key => !!(report.dailySchool && report.dailySchool[key]);
+        const tagesText = key => tagName(key) + ':\n' + (report.dailyActivities[key] || 'Berufsschule');
+        const stundenVon = keys => {
+            if (!report.dailyHours) return 0;
+            return Math.round(keys.reduce((s, key) => s + (parseFloat(report.dailyHours[key]) || 0), 0) * 100) / 100;
+        };
+        const betriebTage = istTagesmodus ? TAG_KEYS.filter(key => report.dailyActivities[key] && !istSchule(key)) : [];
+        const schulTage = istTagesmodus ? TAG_KEYS.filter(istSchule) : [];
+        const betriebKeys = TAG_KEYS.filter(key => !istSchule(key));
+        return {
+            name: k.name || '',
+            jahr: report.year ? String(report.year) : '',
+            bereich: report.department || k.bereich || '',
+            von: ctxDatum(report.dateFrom),
+            bis: ctxDatum(report.dateTo),
+            nr: report.week ? String(report.week) : '',
+            activities: istTagesmodus ? betriebTage.map(tagesText).join('\n\n') : (report.activities || ''),
+            instruction: report.instruction || '',
+            school: istTagesmodus ? schulTage.map(tagesText).join('\n\n') : (report.school || ''),
+            days: days,
+            gesamtStunden: report.hours ? ctxStunden(report.hours) : '',
+            betriebStunden: istTagesmodus && schulTage.length && stundenVon(betriebKeys)
+                ? ctxStunden(stundenVon(betriebKeys)) : '',
+            schoolStunden: istTagesmodus && stundenVon(schulTage) ? ctxStunden(stundenVon(schulTage)) : '',
+            adresse: k.adresse || '',
+            beruf: k.beruf || '',
+            fachrichtung: k.fachrichtung || '',
+            betrieb: k.betrieb || '',
+            ausbilder: k.ausbilder || '',
+            heftNr: k.heftNr || '',
+            beginn: k.beginn ? ctxDatum(k.beginn) : '',
+            ende: k.ende ? ctxDatum(k.ende) : '',
+            // Die Freigabe des Ausbilders. Bis v6.5.2 endete sie in der App und kam
+            // im PDF nicht vor — eine freigegebene Woche druckte exakt wie eine, die
+            // nie jemand gesehen hat.
+            // `stale` = die Woche wurde nach dem Abzeichnen geaendert; dann darf die
+            // alte Unterschrift NICHT aufs Blatt (sie deckt einen anderen Inhalt ab).
+            approval: (report.approval && !report.approval.stale) ? report.approval : null
+        };
+    }
+
     function buildIhkFormModel(formId, ctx) {
         const tpl = IHK_FORMS[formId] || IHK_FORMS['dihk-w'];
         const val = k => (ctx && ctx[k] != null && ctx[k] !== '') ? String(ctx[k]) : '';
@@ -1074,6 +1157,7 @@
     window.ihkFormHint = ihkFormHint;
     window.ihkIsEnglish = isEnglish;
     window.buildIhkFormModel = buildIhkFormModel;
+    window.ihkCtxAusBericht = ihkCtxAusBericht;
     window.ihkFormToHtml = ihkFormToHtml;
     window.ihkFormToPdf = ihkFormToPdf;
 })();

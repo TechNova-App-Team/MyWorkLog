@@ -185,74 +185,16 @@ function _savePDFPersonalCfg() {
     localStorage.setItem('pdf_personal_cfg', JSON.stringify(cfg));
 }
 
-// Fuellt das Formular-Modell aus einem Bericht. Einzige Stelle, an der
-// Berichtsfelder auf Vordruck-Bloecke abgebildet werden — Vorschau und
-// PDF greifen beide hierauf zu.
+// Kopfwerte aus dem PDF-Dialog; die Abbildung Bericht → Vordruck-Bloecke steht
+// EINMAL in ihk-formulare.js (ihkCtxAusBericht), die /ausbilder/ fuer das
+// Gesamt-PDF genauso nutzt.
 function buildIhkCtx(report) {
     const v = id => (document.getElementById(id)?.value || '').trim();
-    const days = DAYS_ORDER.map(k => {
-        const isSchool = report.dailySchool && report.dailySchool[k];
-        let text = report.dailyActivities ? (report.dailyActivities[k] || '') : '';
-        if (isSchool && text) text = '[Berufsschule] ' + text;
-        else if (isSchool) text = 'Berufsschule';
-
-        return {
-            label: DAYS_MAP[k],
-            text: text,
-            hours: report.dailyHours && report.dailyHours[k] ? bhStunden(report.dailyHours[k]) : ''
-        };
+    return ihkCtxAusBericht(report, {
+        name: v('pdfAzubiName'), bereich: v('pdfBeruf'), adresse: v('pdfAdresse'),
+        beruf: v('pdfBeruf'), fachrichtung: v('pdfFachrichtung'), betrieb: v('pdfBetrieb'),
+        ausbilder: v('pdfAusbilder'), heftNr: v('pdfHeftNr'), beginn: v('pdfBeginn'), ende: v('pdfEnde')
     });
-    // Wochenmodus: der zusammengefasste Text steht im Taetigkeits-Block.
-    // Im Tagesmodus fuellt derselbe Text die Tageszeilen (mit [Berufsschule]-
-    // Marke, weil dort jeder Tag EINE Zeile hat). Fuer den Wochen-Vordruck
-    // werden die Schultage dagegen in den Block „Themen des Berufsschul-
-    // unterrichts" sortiert: bis v7.2.4 standen sie mit Marke unter „Betriebliche
-    // Taetigkeiten" und der Schul-Block blieb leer — genau andersherum, als der
-    // Vordruck es vorsieht. Die Stunden werden mitgeteilt.
-    const istTagesmodus = report.mode === 'daily' && !!report.dailyActivities;
-    const istSchule = k => !!(report.dailySchool && report.dailySchool[k]);
-    const tagesText = k => DAYS_MAP[k] + ':\n' + (report.dailyActivities[k] || 'Berufsschule');
-    const stundenVon = keys => {
-        if (!report.dailyHours) return 0;
-        return Math.round(keys.reduce((s, k) => s + (parseFloat(report.dailyHours[k]) || 0), 0) * 100) / 100;
-    };
-    const betriebTage = istTagesmodus ? DAYS_ORDER.filter(k => report.dailyActivities[k] && !istSchule(k)) : [];
-    const schulTage = istTagesmodus ? DAYS_ORDER.filter(istSchule) : [];
-    return {
-        name: v('pdfAzubiName'),
-        jahr: report.year ? String(report.year) : '',
-        bereich: report.department || v('pdfBeruf'),
-        von: formatDate(report.dateFrom),
-        bis: formatDate(report.dateTo),
-        nr: report.week ? String(report.week) : '',
-        activities: istTagesmodus
-            ? betriebTage.map(tagesText).join('\n\n')
-            : (report.activities || ''),
-        instruction: report.instruction || '',
-        school: istTagesmodus
-            ? schulTage.map(tagesText).join('\n\n')
-            : (report.school || ''),
-        days: days,
-        gesamtStunden: report.hours ? bhStunden(report.hours) : '',
-        betriebStunden: istTagesmodus && schulTage.length && stundenVon(DAYS_ORDER.filter(k => !istSchule(k)))
-            ? bhStunden(stundenVon(DAYS_ORDER.filter(k => !istSchule(k)))) : '',
-        schoolStunden: istTagesmodus && stundenVon(schulTage) ? bhStunden(stundenVon(schulTage)) : '',
-        adresse: v('pdfAdresse'),
-        beruf: v('pdfBeruf'),
-        fachrichtung: v('pdfFachrichtung'),
-        betrieb: v('pdfBetrieb'),
-        ausbilder: v('pdfAusbilder'),
-        heftNr: v('pdfHeftNr'),
-        beginn: v('pdfBeginn') ? formatDate(v('pdfBeginn')) : '',
-        ende: v('pdfEnde') ? formatDate(v('pdfEnde')) : '',
-        // Die Freigabe des Ausbilders. Bis v6.5.2 endete sie in der App und kam
-        // im PDF nicht vor — eine freigegebene Woche druckte exakt wie eine, die
-        // nie jemand gesehen hat. Genau die Information, fuer die der ganze
-        // Freigabe-Weg existiert, fiel beim Ausdruck weg.
-        // `stale` = die Woche wurde nach dem Abzeichnen geaendert; dann darf die
-        // alte Unterschrift NICHT aufs Blatt (sie deckt einen anderen Inhalt ab).
-        approval: (report.approval && !report.approval.stale) ? report.approval : null
-    };
 }
 
 function currentIhkModel(report) {
