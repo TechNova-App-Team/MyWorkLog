@@ -280,18 +280,23 @@
                 T('Diese Verbindungsanfrage gilt nicht mehr. Starte die Verbindung im KI-Assistenten neu.', 'This connection request is no longer valid. Start the connection again in the AI assistant.'));
             return;
         }
-        // Schon einmal zugestimmt: Supabase liefert direkt die Weiterleitung.
-        if (r.data.redirect_url && !r.data.authorization_id) {
-            try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
-            location.replace(r.data.redirect_url);
-            return;
-        }
-        if (!zielErlaubt(r.data.redirect_uri)) {
+        // Schon einmal zugestimmt: Supabase liefert direkt die Weiterleitung — und zwar
+        // mit Code an JEDE redirect_uri, die der Client registriert hat, nicht nur an die
+        // der ersten Zustimmung. Ohne Zielpruefung hier holte sich ein Angreifer-Client
+        // nach einer harmlosen localhost-Zustimmung jeden weiteren Code ohne Klick
+        // (Audit 17.11.2026, im Zwilling bis zur Passwortaenderung durchgespielt).
+        var ziel = (r.data.redirect_url && !r.data.authorization_id) ? r.data.redirect_url : r.data.redirect_uri;
+        if (!zielErlaubt(ziel)) {
             try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
             ereignis('ki_verbindung_ziel_gesperrt', {});
             fehlerSeite(T('Unbekannter Assistent', 'Unknown assistant'),
-                T('Diese Anfrage würde den Zugang an eine Website schicken, die kein bekannter KI-Assistent ist (' + zielHost(r.data.redirect_uri) + '). Zu deinem Schutz lässt MyWorkLog das nicht zu. Hat dir jemand diesen Link geschickt, schließ die Seite einfach. Benutzt du selbst einen anderen Assistenten, schreib uns über den Support, dann nehmen wir ihn auf.',
-                  'This request would send access to a website that is not a known AI assistant (' + zielHost(r.data.redirect_uri) + '). To protect you, MyWorkLog does not allow this. If someone sent you this link, just close the page. If you use a different assistant yourself, contact support and we will add it.'));
+                T('Diese Anfrage würde den Zugang an eine Website schicken, die kein bekannter KI-Assistent ist (' + zielHost(ziel) + '). Zu deinem Schutz lässt MyWorkLog das nicht zu. Hat dir jemand diesen Link geschickt, schließ die Seite einfach. Benutzt du selbst einen anderen Assistenten, schreib uns über den Support, dann nehmen wir ihn auf.',
+                  'This request would send access to a website that is not a known AI assistant (' + zielHost(ziel) + '). To protect you, MyWorkLog does not allow this. If someone sent you this link, just close the page. If you use a different assistant yourself, contact support and we will add it.'));
+            return;
+        }
+        if (ziel === r.data.redirect_url) {
+            try { localStorage.removeItem(MERK); } catch (e) { /* egal */ }
+            location.replace(ziel);
             return;
         }
         zustimmungZeigen(sb, id, r.data, user);
@@ -304,8 +309,13 @@
     // also entscheidet das Rückleitungsziel: localhost und App-Schemata (cursor://,
     // vscode://) landen auf SEINEM Gerät, eine fremde https-Seite beim Angreifer.
     // Deshalb nur bekannte https-Hosts; neue Assistenten hier eintragen.
-    var KI_HOSTS = ['claude.ai', 'claude.com', 'anthropic.com', 'chatgpt.com', 'openai.com',
-        'mistral.ai', 'perplexity.ai', 'cursor.com', 'cursor.sh', 'vscode.dev', 'github.com', 'microsoft.com', 'google.com'];
+    // 🔴 Keine Allzweck-Domains (google.com, github.com, microsoft.com): dort gibt es
+    // Weiterleiter wie google.com/url?q=, ueber die der Code beim Angreifer ankommt.
+    var KI_HOSTS = ['claude.ai', 'claude.com', 'chatgpt.com',
+        'mistral.ai', 'perplexity.ai', 'cursor.com', 'cursor.sh', 'vscode.dev'];
+    // App-Schemata als Erlaubnisliste, nicht als Sperrliste: x-safari-https://evil/
+    // oder microsoft-edge://evil/ oeffnen sonst die Angreiferseite im Browser.
+    var KI_SCHEMATA = ['cursor:', 'vscode:', 'vscode-insiders:', 'windsurf:', 'claude:', 'zed:'];
     function zielHost(uri) { try { return new URL(uri).host; } catch (e) { return '?'; } }
     function zielErlaubt(uri) {
         var u;
@@ -316,7 +326,7 @@
             if (u.protocol === 'http:') return false;
             return KI_HOSTS.some(function (k) { return h === k || h.slice(-(k.length + 1)) === '.' + k; });
         }
-        return /^[a-z][a-z0-9+.-]*:$/.test(u.protocol) && ['javascript:', 'data:', 'file:', 'blob:'].indexOf(u.protocol) < 0;
+        return KI_SCHEMATA.indexOf(u.protocol) >= 0;
     }
 
     start().catch(function () {

@@ -18,9 +18,18 @@ const TOOLS = path.dirname(fileURLToPath(import.meta.url));
 // pass/tests/ liegt gitignored (Code der Pass-Funktionen geht nie ins Repo) — lokal
 // laufen die Tests mit, in CI gibt es den Ordner nicht.
 const PASS = path.join(TOOLS, '..', 'pass', 'tests');
+// workers/ ist ebenso gitignored; die Offline-Tests der Worker (fetch/KV als Attrappe) liefen
+// bis 17.11.2026 nur, wenn man sie von Hand rief — die Audit-Faelle dort also nie mit.
+const WORKERS = path.join(TOOLS, '..', 'workers');
+const workerTests = existsSync(WORKERS)
+  ? readdirSync(WORKERS, { withFileTypes: true }).filter(d => d.isDirectory()).flatMap(d =>
+      readdirSync(path.join(WORKERS, d.name)).filter(f => f.endsWith('.test.mjs')).sort()
+        .map(f => path.join('..', 'workers', d.name, f)))
+  : [];
 const tests = [
   ...readdirSync(TOOLS).filter(f => f.endsWith('.test.mjs')).sort(),
   ...(existsSync(PASS) ? readdirSync(PASS).filter(f => f.endsWith('.test.mjs')).sort().map(f => path.join('..', 'pass', 'tests', f)) : []),
+  ...workerTests,
 ];
 
 // Exit 2 heisst "uebersprungen, mit Begruendung" — aktuell nur

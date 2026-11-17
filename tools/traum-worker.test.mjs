@@ -18,8 +18,12 @@ const src = fs.readFileSync(WORKER, 'utf8');
 const start = src.indexOf('async function handleTraum');
 const end   = src.indexOf('// ── Worker Entry Point');
 if (start < 0 || end < 0 || end < start) { console.error('✗ handleTraum nicht im Worker gefunden'); process.exit(1); }
+// handleTraum prueft seit 17.11.2026 den Origin — die Hilfsfunktion muss mit in den Ausschnitt
+const oStart = src.indexOf('function isAllowedOrigin(');
+const oEnd = src.indexOf('\n}\n', oStart);
+if (oStart < 0 || oEnd < 0) { console.error('✗ isAllowedOrigin nicht im Worker gefunden'); process.exit(1); }
 const tmp = new URL('./.traum.generated.mjs', import.meta.url);
-fs.writeFileSync(tmp, src.slice(start, end) + '\nexport { handleTraum };');
+fs.writeFileSync(tmp, src.slice(oStart, oEnd + 3) + '\n' + src.slice(start, end) + '\nexport { handleTraum };');
 const { handleTraum } = await import(tmp.href);
 fs.unlinkSync(tmp);
 
@@ -46,7 +50,7 @@ function makeKV() {
 }
 
 const URL_ = 'https://x/traum';
-const post = (body) => new Request(URL_, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const post = (body, origin = 'https://myworklog.de') => new Request(URL_, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(origin ? { Origin: origin } : {}) }, body: JSON.stringify(body) });
 const get = (headers = {}) => new Request(URL_, { method: 'GET', headers });
 const call = (env, req) => handleTraum(req, env, new URL(req.url), { 'X-Test': '1' });
 
@@ -64,7 +68,12 @@ ok((await call(env, post({ id: 'dddddddd-4444', antwort: 'vielleicht' }))).statu
 ok((await call(env, post({ id: 'eeeeeeee-5555', antwort: 'ja', name: 'x', ip: '1.2.3.4' }))).status === 200, 'Zusatzfelder stoeren nicht');
 const meta = env.UMFRAGE._store.get('traum:eeeeeeee-5555').metadata;
 ok(Object.keys(meta).sort().join() === 'a,l,t', 'gespeichert wird nur Antwort, Sprache, Zeit — kein Name, keine IP');
-ok((await call(env, new Request(URL_, { method: 'POST', body: '{kaputt' }))).status === 400, 'kaputter Body → 400');
+ok((await call(env, new Request(URL_, { method: 'POST', headers: { Origin: 'https://myworklog.de' }, body: '{kaputt' }))).status === 400, 'kaputter Body → 400');
+// Audit 17.11.2026: die Ja-Zahl ist oeffentlich — Stimmen nur von der eigenen Seite
+const vorTraum = env.UMFRAGE._store.size;
+ok((await call(env, post({ id: 'ffffffff-6666', antwort: 'ja' }, null))).status === 403, 'Stimme ohne Origin → 403');
+ok((await call(env, post({ id: 'ffffffff-7777', antwort: 'ja' }, 'https://evil.example'))).status === 403, 'Stimme von fremder Seite → 403');
+ok(env.UMFRAGE._store.size === vorTraum, 'abgewiesene Stimmen werden nicht gespeichert');
 
 ok((await call(env, get())).status === 401, 'Abruf ohne Secret → 401');
 ok((await call(env, get({ 'X-Umfrage-Secret': 'falsch' }))).status === 401, 'Abruf mit falschem Secret → 401');

@@ -2022,7 +2022,7 @@
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=32a2404178"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=e96112393b"></script>
     <script defer src="/Assets/js/ausbilder-pdf.js?v=39a1016227"></script>
 
     <script>
@@ -2245,7 +2245,7 @@
                     return '<div class="ab-wk' + (offen && i === naechsteOffene() ? ' is-open' : '') + '" data-i="' + i + '">' +
                         '<div class="ab-wk-card' + (decisions[i] ? ' is-' + decisions[i].s : '') + '">' +
                         '<div class="ab-wk-head" data-toggle="' + i + '" role="button" tabindex="0" aria-expanded="' + (offen && i === naechsteOffene()) + '">' +
-                        '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + w.w + '</span>' +
+                        '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + esc(w.w) + '</span>' +
                         '<span class="ab-wk-sub">' + esc(fmtRange(w.df, w.dt)) + '</span>' +
                         (gestempelt ? stempelHTML(null, null, true, i === frischGestempelt)
                                     : '<span class="ab-wk-state ' + st[0] + '">' + st[1] + '</span>') +
@@ -5142,6 +5142,10 @@
                 return;
             }
 
+            // Die Nutzlast kommt aus einem Link, den jeder bauen kann: KW strikt als Zahl,
+            // sonst landete <img onerror> als w.w im Wochen-Kopf (Audit 17.11.2026).
+            function kwGueltig(w) { return !!w && /^\d{1,2}$/.test(String(w.w)) && +w.w >= 1 && +w.w <= 53; }
+
             var nutzlast;
             try {
                 nutzlast = await MWLCodec.decode(m[1]);
@@ -5157,10 +5161,10 @@
             // Einzelwoche direkt im Wurzelobjekt. Beide lesen, damit ein Link,
             // der schon verschickt wurde, weiter funktioniert.
             if (nutzlast && nutzlast.v === 1 && Array.isArray(nutzlast.ws)) {
-                weeks = nutzlast.ws.filter(function (w) { return w && w.w; });
+                weeks = nutzlast.ws.filter(kwGueltig);
                 azubi = { az: nutzlast.az || '', bt: nutzlast.bt || '' };
             } else if (nutzlast && nutzlast.v === 1 && nutzlast.w) {
-                weeks = [nutzlast];
+                weeks = [nutzlast].filter(kwGueltig);
                 azubi = { az: nutzlast.az || '', bt: nutzlast.bt || '' };
             }
 

@@ -437,6 +437,29 @@ ok(viel.gesamt > 80 && viel.wochen.length === 80 && viel.wochen[79] === '2026-11
 ok(I.fehlendeWochen(['2026-10-19'], HEUTE).wochen.every(w => new Date(w + 'T12:00:00').getDay() === 1),
     'ueber die Zeitumstellung hinweg nur Montage');
 
+// ── Audit 17.11.2026: tief verschachtelter Inhalt darf eine Faelschung nicht verdecken ──
+gruppe('Pruefsumme schlaegt fehl → gilt als veraendert');
+{
+    const tief = (n) => { let a = []; for (let i = 0; i < n; i++) a = [a]; return a; };
+    const basis = { jahr: 2026, kw: 46, datum_von: '2026-11-09', datum_bis: '2026-11-13', inhalt: { text: 'Original' } };
+    // berichtVeraendert() nimmt den App-Bericht (year/week/…), die Summe bildet berichtKern() daraus
+    const app = { id: 'r1', year: 2026, week: 46, dateFrom: '2026-11-09', dateTo: '2026-11-13', activities: 'Original' };
+    const summe = await B.pruefsumme(I.berichtKern(app));
+    const mitFreigabe = (patch) => ({ ...app, ...patch,
+        approval: { state: 'approved', pruefsumme: summe } });
+    let warf = false;
+    try { await B.pruefsumme({ ...basis, inhalt: { text: 'x', _x: tief(200000) } }); } catch (e) { warf = true; }
+    ok(warf, 'Gegenprobe: 200.000 Ebenen sprengen kanonisch() wirklich');
+    ok(await B.berichtVeraendert(mitFreigabe({})) === false, 'unveraenderte Woche: false');
+    ok(await B.berichtVeraendert(mitFreigabe({ activities: 'GEFAELSCHT' })) === true, 'geaenderter Text: true');
+    // berichtInhalt() uebernimmt nur feste Felder — die Nutzlast muss in eines davon (form)
+    ok(await B.berichtVeraendert(mitFreigabe({ activities: 'GEFAELSCHT', form: { _x: tief(200000) } })) === true,
+        'geaenderter Text + Verschachtelungs-Trick: true (vorher false)');
+    const cockpit = SRC.slice(SRC.indexOf('for (const az of azubis)'));
+    ok(/catch \(e\) \{ abweichend = true; \}/.test(cockpit) && !/catch \(e\) \{ continue; \}/.test(cockpit.slice(0, 800)),
+        'Cockpit-Vergleich: catch setzt abweichend = true');
+}
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
 ok(bestanden >= 80, `es sind genug Pruefungen gelaufen (${bestanden})`);

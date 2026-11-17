@@ -922,13 +922,15 @@
      * Nur fuer einen Bericht mit `report.approval` (server, approved) sinnvoll.
      * Fehlt die gespeicherte Pruefsumme (Freigabe aus der Zeit vor v6.7.0),
      * → false: ohne Vergleich lieber keine falsche Warnung.
+     * Wirft dagegen die Berechnung selbst (z. B. tief verschachtelter Inhalt), → true:
+     * dann laesst sich NICHT belegen, dass die Woche unveraendert ist (Audit 17.11.2026).
      */
     async function bhb2bBerichtVeraendert(report) {
         const a = report && report.approval;
         if (!a || a.state !== 'approved' || !a.pruefsumme) return false;
         try {
             return (await bhb2bPruefsumme(berichtKern(report))) !== a.pruefsumme;
-        } catch (e) { return false; }
+        } catch (e) { return true; }
     }
 
     // ── Aenderungsvergleich ──────────────────────────────────────────
@@ -1110,8 +1112,12 @@
                     const f = b.freigabe;
                     if (!f || !f.pruefsumme) continue;
                     let abweichend = false;
+                    // 🔴 Scheitert die Pruefsumme, gilt die Woche als VERAENDERT, nicht als
+                    // unveraendert: ein Azubi haengte 4.000+ verschachtelte Arrays an den
+                    // Inhalt, kanonisch() warf RangeError, und die gefaelschte Woche lief mit
+                    // gueltiger Unterschrift durchs Cockpit und ins PDF (Audit 17.11.2026).
                     try { abweichend = (await bhb2bPruefsumme(b)) !== f.pruefsumme; }
-                    catch (e) { continue; }   // ohne Vergleich lieber keine Warnung
+                    catch (e) { abweichend = true; }
                     if (!abweichend) continue;
                     if (f.entscheidung === 'approved') b.veraendert = true;
                     else if (f.entscheidung === 'rejected') b.nachgebessert = true;
@@ -1420,7 +1426,7 @@
     }
 
     function montagVon(wert) {
-        const d = wert instanceof Date ? new Date(wert.getTime()) : new Date(String(wert || '') + 'T12:00:00');
+        const d = wert && typeof wert.getTime === 'function' ? new Date(wert.getTime()) : new Date(String(wert || '') + 'T12:00:00');
         if (isNaN(d)) return null;
         d.setHours(12, 0, 0, 0);
         d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
@@ -1442,7 +1448,9 @@
             belegt.add(lokalIso(mo));
             if (!erste || mo < erste) erste = mo;
         });
-        const letzte = montagVon(heute instanceof Date ? heute : new Date());
+        // Kein instanceof: ein Date aus einem anderen Realm (Test-vm, iframe) fiel sonst still
+        // auf das echte Heute zurueck — der Test lief nur bis 15.11.2026 gruen.
+        const letzte = montagVon(heute && typeof heute.getTime === 'function' ? heute : new Date());
         if (!erste || !letzte) return { wochen: [], gesamt: 0 };
         letzte.setDate(letzte.getDate() - 7);
         const alle = [];
