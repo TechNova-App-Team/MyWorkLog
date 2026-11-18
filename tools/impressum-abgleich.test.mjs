@@ -82,7 +82,13 @@ ok(links.length > 0 && links.length <= 3, 'es gibt Treffer, hoechstens drei');
 // ── 6. Keine Abfragen ins interne Netz ──────────────────────────────────
 const privat = ['127.0.0.1', '10.1.2.3', '192.168.0.1', '172.16.5.5', '169.254.169.254', '0.0.0.0',
     '100.64.0.1', '::1', 'fd00::1', 'fe80::1', '::ffff:127.0.0.1', 'kaputt'];
-const oeffentlich = ['93.184.216.34', '172.32.0.1', '8.8.8.8', '2606:4700::1111'];
+// Audit 17.11.2026: Formen, an denen die alte IPv6-Sperrliste vorbeiliess
+privat.push('::127.0.0.1', '::7f00:1', '64:ff9b::a00:1', '64:ff9b::10.0.0.1', '2002:7f00:1::1',
+    '2001:0:4136:e378::1', '2001:db8::1', 'fec0::1', 'ff02::1', '100::1', 'fe80::1%eth0',
+    '0:0:0:0:0:0:0:1', '0:0:0:0:0:ffff:7f00:1', '1:2:3', '2606::4700::1', 'gggg::1',
+    '192.0.0.1', '192.0.2.5', '198.51.100.7', '203.0.113.7');
+const oeffentlich = ['93.184.216.34', '172.32.0.1', '8.8.8.8', '2606:4700::1111',
+    '2a00:1450:4001:80b::200e', '2001:4860:4860::8888', '2606:4700:4700:0:0:0:0:1111', '3fff::1', '192.0.1.1'];
 for (const ip of privat) ok(istPrivateIp(ip) === true, 'privat: ' + ip);
 for (const ip of oeffentlich) ok(istPrivateIp(ip) === false, 'oeffentlich: ' + ip);
 

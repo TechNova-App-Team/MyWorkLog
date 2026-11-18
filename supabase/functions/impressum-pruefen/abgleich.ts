@@ -203,19 +203,52 @@ export function adressenAuswahl(liste: string[], domain: string): string[] {
   return basis.sort((a, b) => rang(a) - rang(b));
 }
 
+// IPv6 in 8 Gruppen; null = unlesbar (gilt als privat). Versteht '::' und einen
+// IPv4-Schwanz ('::ffff:1.2.3.4'). Eine Zonen-Angabe ('fe80::1%eth0') ist immer lokal.
+function v6Gruppen(s: string): number[] | null {
+  if (s.includes('%')) return null;
+  let rest = s;
+  const schwanz: number[] = [];
+  const m = rest.match(/^(.*:)([0-9]+[.][0-9]+[.][0-9]+[.][0-9]+)$/);
+  if (m) {
+    const p = m[2].split('.').map(Number);
+    if (p.some((x) => !Number.isInteger(x) || x < 0 || x > 255)) return null;
+    schwanz.push((p[0] << 8) | p[1], (p[2] << 8) | p[3]);
+    rest = m[1].endsWith('::') ? m[1] : m[1].slice(0, -1);
+  }
+  const doppelt = rest.split('::');
+  if (doppelt.length > 2) return null;
+  const teile = (x: string) => (x ? x.split(':') : []);
+  const vorn = teile(doppelt[0]);
+  const hinten = doppelt.length === 2 ? teile(doppelt[1]) : [];
+  const fehlen = 8 - schwanz.length - vorn.length - hinten.length;
+  if (doppelt.length === 2 ? fehlen < 1 : fehlen !== 0) return null;
+  const alle = [...vorn, ...Array(doppelt.length === 2 ? fehlen : 0).fill('0'), ...hinten];
+  if (!alle.every((g) => /^[0-9a-f]{1,4}$/.test(g))) return null;
+  return [...alle.map((g) => parseInt(g, 16)), ...schwanz];
+}
+
 /** Private, Loopback- und Link-Local-Adressen — dorthin wird nie abgefragt. */
 export function istPrivateIp(ip: string): boolean {
-  const s = String(ip || '').toLowerCase();
+  const s = String(ip || '').trim().toLowerCase();
   if (s.includes(':')) {
-    return s === '::' || s === '::1' || s.startsWith('fe8') || s.startsWith('fe9') ||
-      s.startsWith('fea') || s.startsWith('feb') || s.startsWith('fc') || s.startsWith('fd') ||
-      s.startsWith('::ffff:');
+    // Erlaubnisliste statt Sperrliste (Audit 17.11.2026): nur globales Unicast 2000::/3.
+    // Die alte Sperrliste liess '::127.0.0.1', NAT64 (64:ff9b::), 6to4 (2002::, bettet eine
+    // IPv4 ein), Teredo (2001:0::/32), site-local fec0:: und Multicast durch.
+    const g = v6Gruppen(s);
+    if (!g) return true;
+    if ((g[0] & 0xe000) !== 0x2000) return true;
+    if (g[0] === 0x2002) return true;                                   // 6to4
+    if (g[0] === 0x2001 && (g[1] === 0 || g[1] === 0x0db8)) return true; // Teredo, Doku
+    return false;
   }
   const p = s.split('.').map(Number);
   if (p.length !== 4 || p.some((x) => !Number.isInteger(x) || x < 0 || x > 255)) return true;
-  const [a, b] = p;
+  const [a, b, c] = p;
   return a === 0 || a === 10 || a === 127 || a >= 224 ||
     (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) ||
-    (a === 198 && (b === 18 || b === 19));
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 192 && b === 0 && (c === 0 || c === 2)) || (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113);
 }

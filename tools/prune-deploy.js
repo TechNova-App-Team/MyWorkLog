@@ -69,6 +69,16 @@ const REMOVE = [
   'CLAUDE.md',
   '.eslintrc.json',
   '.github',               // Workflows — gehoeren ins Repo, nicht auf die Domain
+  // Audit 17.11.2026: die Sperrregeln in _redirects/_headers greifen nur auf die exakte
+  // Schreibweise — /%2Egraphifyignore lieferte live 200. Was nicht im Deploy liegt,
+  // kann keine Schreibweise ausliefern. prune-deploy ist der LETZTE Build-Schritt, npm
+  // braucht package.json danach nicht mehr.
+  '.gitignore',
+  '.gitattributes',
+  '.graphifyignore',
+  'README.md',
+  'package.json',
+  'package-lock.json',
 ];
 
 let removed = 0;
