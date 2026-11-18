@@ -162,17 +162,31 @@
     // 24.10.2026. Getrennt vom E2E-Backup, ohne Schatten-Tresor, nur auf
     // ausdrueckliches Einschalten. Merker je Geraet, damit niemand ungefragt
     // eine lesbare Kopie hochlaedt.
+    // 🔴 Der Merker gilt je Geraet, der Schalter aber fuers KONTO: bis 18.11.2026
+    // schaltete Geraet A Lesen aus (Zeile geloescht), Geraet B hatte noch '1' und lud
+    // beim naechsten save() die lesbare Kopie wieder hoch (Audit). Deshalb ist jetzt
+    // die Zeile auf dem Server der Schalter: 'neu' (gerade eingeschaltet, auch von
+    // /ki-verbinden/) darf sie ANLEGEN, '1' nur noch aendern — fehlt sie, hat jemand
+    // auf einem anderen Geraet ausgeschaltet, und dieses Geraet schaltet sich mit aus.
     const LESEN = 'mwl_ki_lesen';
-    function lesenAn() { try { return localStorage.getItem(LESEN) === '1'; } catch (e) { return false; } }
+    function lesenWert() { try { return localStorage.getItem(LESEN); } catch (e) { return null; } }
+    function lesenAn() { const w = lesenWert(); return w === '1' || w === 'neu'; }
 
     async function spiegelSchreiben(daten) {
         const { c, u } = await ctx();
         if (!u) return;
-        pruefen(await c.from('ki_app_spiegel').upsert({ user_id: u.id, daten }, { onConflict: 'user_id' }));
+        if (lesenWert() === 'neu') {
+            pruefen(await c.from('ki_app_spiegel').upsert({ user_id: u.id, daten }, { onConflict: 'user_id' }));
+            try { localStorage.setItem(LESEN, '1'); } catch (e) { /* egal */ }
+            return;
+        }
+        const z = pruefen(await c.from('ki_app_spiegel').update({ daten, aktualisiert: new Date().toISOString() })
+            .eq('user_id', u.id).select('user_id'));
+        if (!z || !z.length) { try { localStorage.removeItem(LESEN); } catch (e) { /* egal */ } }
     }
 
     async function lesenSetzen(an, daten) {
-        try { an ? localStorage.setItem(LESEN, '1') : localStorage.removeItem(LESEN); } catch (e) { /* egal */ }
+        try { an ? localStorage.setItem(LESEN, 'neu') : localStorage.removeItem(LESEN); } catch (e) { /* egal */ }
         if (an) { if (daten) await spiegelSchreiben(daten); return; }
         const { c, u } = await ctx();
         if (u) pruefen(await c.from('ki_app_spiegel').delete().eq('user_id', u.id));
@@ -257,7 +271,11 @@
         const { c, u } = await ctx();
         if (!u) return;
         const z = pruefen(await c.from('ki_app_spiegel').select('daten').eq('user_id', u.id).maybeSingle());
-        if (!z || !z.daten) return;
+        if (!z || !z.daten) {
+            // Keine Zeile, aber '1': auf einem anderen Geraet ausgeschaltet (siehe LESEN)
+            if (!z && lesenWert() === '1') { try { localStorage.removeItem(LESEN); } catch (e) { /* egal */ } }
+            return;
+        }
         Object.assign(z.daten, teile);
         await spiegelSchreiben(z.daten);
     }

@@ -137,9 +137,23 @@ window.mwlPassWerben = function () {
 
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
 
+    // Zugangs-Token stehen bei uns im #-Teil (#firma=, #w=, #p2p=, #fb=) oder in der Query
+    // (?authorization_id= auf /ki-verbinden/). PostHog schickt $current_url & Co. VOLL mit —
+    // bis 18.11.2026 lagen sie so in der Analytik (Audit). Eigene URLs gehen deshalb ohne
+    // #-Teil und nur mit utm_*/ref raus. Zwilling in index.template.html bzw. ph-init.js.
+    function mwlUrlSauber(v) {
+        try {
+            if (typeof v !== 'string' || v.indexOf(location.origin) !== 0) return v;
+            var u = new URL(v), q = new URLSearchParams();
+            u.searchParams.forEach(function (w, k) { if (k.indexOf('utm_') === 0 || k === 'ref') q.append(k, w); });
+            u.hash = ''; u.search = q.toString();
+            return u.href;
+        } catch (e) { return v; }
+    }
     posthog.init('phc_yU64gT44sK6HkU4EvRote7oHGLiL9UhJgL6TXu2BRhUZ', {
         api_host: 'https://eu.i.posthog.com',
         person_profiles: 'never',
+      before_send: function (ev) { try { var p = ev && ev.properties; if (p) for (var k in p) p[k] = mwlUrlSauber(p[k]); } catch (e) { /* nie blockieren */ } return ev; },
         autocapture: false,
         capture_pageview: true,
         capture_pageleave: true,

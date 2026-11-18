@@ -80,5 +80,33 @@ for (const [f, n] of [['components/umfrage/umfrage.js', 3],
      (src.match(/[^.\w]mwlEvent\(/g) || []).length === n && !src.includes('uEvent'));
 }
 
+// ── Audit 18.11.2026: Zugangs-Token im #-Teil/der Query gingen mit $current_url an
+//    PostHog. before_send muss sie in BEIDEN Fassungen herausnehmen. ──
+for (const [name, quelle, url] of [
+  ['ph-init.js', phInit, 'https://myworklog.de/ausbilder/#firma=GEHEIM1'],
+  ['index.template.html', (() => { const t = readFileSync('index.template.html', 'utf8');
+     const a = t.indexOf('(function(){'), e = t.indexOf('})();', a); return t.slice(a, e + 5); })(), 'https://myworklog.de/#p2p=GEHEIM1'],
+]) {
+  const d = new JSDOM('<!doctype html><html><body><script></script></body></html>', { url, runScripts: 'outside-only' });
+  d.window.eval(quelle);
+  const init = d.window.posthog && d.window.posthog._i && d.window.posthog._i[0];
+  const bs = init && init[1] && init[1].before_send;
+  ok(`${name}: before_send gesetzt`, typeof bs === 'function');
+  if (typeof bs !== 'function') continue;
+  const ev = bs({ event: '$pageview', properties: {
+    $current_url: url,
+    $session_entry_url: 'https://myworklog.de/ausbilder/?x=1&utm_source=mail&w=GEHEIM2#w=GEHEIM3',
+    $initial_current_url: 'https://myworklog.de/ki-verbinden/?authorization_id=GEHEIM4',
+    $referrer: 'https://www.google.com/search?q=myworklog',
+    $pathname: '/ausbilder/', anzahl: 3,
+  } });
+  const p = ev && ev.properties || {};
+  ok(`${name}: Ereignis kommt weiter (nicht verworfen)`, !!ev && ev.event === '$pageview');
+  ok(`${name}: kein Token mehr in irgendeiner Eigenschaft`, !JSON.stringify(p).includes('GEHEIM'));
+  ok(`${name}: Gegenprobe — es gab Token zu entfernen`, JSON.stringify({ url }).includes('GEHEIM'));
+  ok(`${name}: Pfad und utm_* bleiben`, p.$session_entry_url === 'https://myworklog.de/ausbilder/?utm_source=mail' && p.$current_url.startsWith('https://myworklog.de/'));
+  ok(`${name}: fremde URLs und Zahlen unangetastet`, p.$referrer === 'https://www.google.com/search?q=myworklog' && p.anzahl === 3);
+}
+
 console.log(`\n${pass} bestanden, ${fail} fehlgeschlagen`);
 process.exit(fail ? 1 : 0);

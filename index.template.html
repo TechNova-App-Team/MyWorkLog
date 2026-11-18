@@ -19,9 +19,23 @@
   // eu.i.posthog.com -> eu-assets.i.posthog.com (PostHogs CDN). Der api_host ist der
   // Ingestion-Endpoint; statische Dateien von dort zu ziehen ist Legacy und flakey
   // (503er). Beide Hosts stehen in der CSP. Events gehen weiterhin an den api_host.
+  // Zugangs-Token stehen bei uns im #-Teil (#firma=, #w=, #p2p=, #fb=) oder in der Query
+  // (?authorization_id= auf /ki-verbinden/). PostHog schickt $current_url & Co. VOLL mit —
+  // bis 18.11.2026 lagen sie so in der Analytik (Audit). Eigene URLs gehen deshalb ohne
+  // #-Teil und nur mit utm_*/ref raus. Zwilling in index.template.html bzw. ph-init.js.
+  function mwlUrlSauber(v) {
+      try {
+          if (typeof v !== 'string' || v.indexOf(location.origin) !== 0) return v;
+          var u = new URL(v), q = new URLSearchParams();
+          u.searchParams.forEach(function (w, k) { if (k.indexOf('utm_') === 0 || k === 'ref') q.append(k, w); });
+          u.hash = ''; u.search = q.toString();
+          return u.href;
+      } catch (e) { return v; }
+  }
   posthog.init('phc_yU64gT44sK6HkU4EvRote7oHGLiL9UhJgL6TXu2BRhUZ', {
     api_host: 'https://eu.i.posthog.com',
     person_profiles: 'never',
+    before_send: function (ev) { try { var p = ev && ev.properties; if (p) for (var k in p) p[k] = mwlUrlSauber(p[k]); } catch (e) { /* nie blockieren */ } return ev; },
     autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
@@ -279,7 +293,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
 <meta name="rating" content="general">
 <meta name="referrer" content="origin-when-cross-origin">
 <meta name="format-detection" content="telephone=no">
-<meta name="generator" content="MyWorkLog v9.8.1">
+<meta name="generator" content="MyWorkLog v9.8.2">
 
 <!-- ===== CANONICAL & ALTERNATE ===== -->
 <link rel="canonical" href="https://myworklog.de/">
@@ -369,9 +383,9 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "applicationSubCategory": "Zeiterfassung",
       "operatingSystem": "Web, Windows, macOS, Linux, iOS, Android",
       "browserRequirements": "Requires Chrome 90+, Firefox 88+, Safari 14+ or Edge 90+",
-      "softwareVersion": "9.8.1",
+      "softwareVersion": "9.8.2",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-11-17",
+      "dateModified": "2026-11-18",
       "inLanguage": "de",
       "isAccessibleForFree": true,
       "license": "https://opensource.org/licenses/MIT",
@@ -457,7 +471,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "about": { "@id": "https://myworklog.de/#app" },
       "inLanguage": "de",
       "datePublished": "2025-01-01",
-      "dateModified": "2026-11-17",
+      "dateModified": "2026-11-18",
       "breadcrumb": {
         "@type": "BreadcrumbList",
         "itemListElement": [
@@ -851,7 +865,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
           <a class="vi-alt" href="/ausbilder/" onclick="if(typeof mwlEvent==='function')mwlEvent('intro',{aktion:'ausbilder'})">Ich bin Ausbilder</a>
           <!-- Sichtbarkeit: MWLPassMarke.einsetzen() -->
           <a class="vi-alt" id="viPass" href="/preise/#pass" hidden onclick="if(typeof mwlEvent==='function')mwlEvent('pass_werbung',{ort:'intro'},{transport:'sendBeacon'})">Ausbildungs-Pass ab 9,99 €</a>
-          <span class="vi-ver" data-app-version translate="no">v9.8.1</span>
+          <span class="vi-ver" data-app-version translate="no">v9.8.2</span>
         </div>
       </div>
 
@@ -994,7 +1008,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
     <script defer src="/components/jobs/jobs.js?v=4743048a82"></script>
     <script defer src="/components/core/storage-save.js?v=7790dd0a5e"></script>
     <script defer src="/components/core/entry-edit.js?v=d2d5c9852f"></script>
-    <script defer src="/components/core/trash.js?v=adc664d2b5"></script>
+    <script defer src="/components/core/trash.js?v=cf1d8c9f84"></script>
     <script defer src="/components/core/tab-navigation.js?v=e495c047a9"></script>
     <script defer src="/components/core/timer.js?v=e5986a8324"></script>
     <script defer src="/components/core/vacation-holidays.js?v=10caa54372"></script>
@@ -1010,7 +1024,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
     <script defer src="/components/core/settings-panel.js?v=5c288b4f7f"></script>
     <script defer src="/components/core/data-notice.js?v=d8a730143e"></script>
     <script defer src="/components/core/theme-colors.js?v=34035dbb7c"></script>
-    <script defer src="/components/core/p2p-sync.js?v=297858776d"></script>
+    <script defer src="/components/core/p2p-sync.js?v=c6a09d187d"></script>
     <script defer src="/components/core/school-rules.js?v=27502dcfdf"></script>
     <script defer src="/components/core/onboarding-tour.js?v=8b8f3a1ae0"></script>
     <script defer src="/components/core/alerts-toasts.js?v=73593b2c32"></script>
@@ -1021,7 +1035,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
     <script defer src="/components/core/mobile-nav-extras.js?v=e1259a81b1"></script>
     <script defer src="/components/core/api-cloud-sync.js?v=6e070c520d"></script>
     <script defer src="/components/core/init-app.js?v=4a80607e6f"></script>
-    <script defer src="/components/dashboard/dashboard.js?v=df32244e0b"></script>
+    <script defer src="/components/dashboard/dashboard.js?v=b51ea3c72d"></script>
     <script defer src="/components/dashboard/dashboard-neu.js?v=3cf0fe8b07"></script>
     <script defer src="/components/ihk/ihk.js?v=a30afe9d38"></script>
     <script defer src="/components/school/school.js?v=2832108f98"></script>
@@ -1042,7 +1056,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
     <script defer src="/components/import/import.js?v=92717419d2"></script>
     <!-- KI-Briefkasten: Krypto, Datenschicht, Oberflaeche (Reihenfolge zwingend) -->
     <script defer src="/Assets/js/ki-krypto.js?v=55f94171ac"></script>
-    <script defer src="/Assets/js/ki-app-briefkasten.js?v=33cbc27e85"></script>
+    <script defer src="/Assets/js/ki-app-briefkasten.js?v=e5f94da9a1"></script>
     <script defer src="/Assets/js/kontakt.js?v=73b06d3a23"></script>
     <script defer src="/components/core/ki-assistent.js?v=fd59cdebae"></script>
 <!-- Ensure touch-mobile-optimizations is loaded as a fallback -->

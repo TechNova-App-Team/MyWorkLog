@@ -1222,17 +1222,17 @@
 
             if (type === 'info') {
                 inner += '<div class="vfc-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>';
-                inner += '<div class="vfc-live-text">' + (msg || '').replace(/^[🎤📝]\s*/, '') + '</div>';
+                inner += '<div class="vfc-live-text">' + esc((msg || '').replace(/^[🎤📝]\s*/, '')) + '</div>';
             } else if (type === 'success' && chips) {
                 inner += '<div class="vfc-chips">';
-                if (chips.time)    inner += '<span class="vfc-chip vfc-chip--time">⏰ ' + chips.time + '</span>';
-                if (chips.date)    inner += '<span class="vfc-chip vfc-chip--date">📅 ' + chips.date + '</span>';
-                if (chips.project) inner += '<span class="vfc-chip vfc-chip--project">📁 ' + chips.project + '</span>';
-                if (chips.note)    inner += '<span class="vfc-chip vfc-chip--note">📝 ' + chips.note + '</span>';
+                if (chips.time)    inner += '<span class="vfc-chip vfc-chip--time">⏰ ' + esc(chips.time) + '</span>';
+                if (chips.date)    inner += '<span class="vfc-chip vfc-chip--date">📅 ' + esc(chips.date) + '</span>';
+                if (chips.project) inner += '<span class="vfc-chip vfc-chip--project">📁 ' + esc(chips.project) + '</span>';
+                if (chips.note)    inner += '<span class="vfc-chip vfc-chip--note">📝 ' + esc(chips.note) + '</span>';
                 inner += '</div>';
             } else {
                 var icon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : '✅';
-                inner += '<div class="vfc-msg">' + icon + ' <span>' + msg + '</span></div>';
+                inner += '<div class="vfc-msg">' + icon + ' <span>' + esc(msg) + '</span></div>';
             }
 
             inner += '</div>';

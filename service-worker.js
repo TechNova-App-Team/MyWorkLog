@@ -545,7 +545,8 @@ self.addEventListener('message', event => {
 self.addEventListener('push', event => {
   let data = {};
   try { data = event.data?.json() ?? {}; } catch { data = { body: event.data?.text() }; }
-  const ziel = typeof data.url === 'string' && data.url.startsWith('/') ? data.url : '/';
+  // Nur eigene Pfade: '//host/x' und '/\host' beginnen auch mit '/', oeffnen aber eine fremde Seite.
+  const ziel = typeof data.url === 'string' && /^[/](?![/\\])/.test(data.url) ? data.url : '/';
   const klasse = typeof data.tag === 'string' && data.tag.startsWith('klasse-');
 
   event.waitUntil(Promise.all([

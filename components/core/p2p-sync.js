@@ -50,6 +50,10 @@
         role: null, // 'host' | 'client'
         connected: false,
         viaLink: false,   // Einladung kam per Link/QR von aussen → kein Auto-Sync
+        // Per Link verbunden: was die Gegenstelle schickt, wartet hier, bis der Nutzer
+        // "Übertragen" tippt (Audit 18.11.2026, siehe p2pHandleMessage 'sync-complete').
+        wartend: null,
+        empfangFrei: false,
 
         crypto: { keyPair: null, pub: null, key: null, sas: null, active: false },
         syncStats: { sent: 0, received: 0, merged: 0 },
@@ -299,6 +303,8 @@
         document.getElementById('p2pStep3Dot').className = 'p2p-step-dot';
         document.getElementById('p2pWizardSubtitle').textContent = 'Rolle wählen';
         p2pSync.viaLink = false;
+        p2pSync.wartend = null;
+        p2pSync.empfangFrei = false;
 
         // Ein Schluessel gehoert zu GENAU einer Verbindung. Bleibt ein alter liegen,
         // verschluesselt der zweite Versuch gegen ein Geheimnis, das die neue
@@ -1249,6 +1255,20 @@
                 break;
 
             case 'sync-complete':
+                // viaLink sperrte bis 18.11.2026 nur das SENDEN. Ein fremder Absender ("klick
+                // mal den Link") konnte dem Opfer sofort nach dem Verbinden beliebige Eintraege
+                // in den Speicher schieben, ohne Klick und ohne Pruefziffer (Audit). Jetzt
+                // wartet der Empfang, bis p2pManualSync() ihn freigibt.
+                if (p2pSync.viaLink && !p2pSync.empfangFrei) {
+                    p2pSync.wartend = p2pReceivedChunks.slice(0, 20000);
+                    p2pReceivedChunks = [];
+                    p2pUpdateProgress(0, 'Wartet auf Freigabe');
+                    p2pLog(`Gegenstelle hat ${p2pSync.wartend.length} Einträge geschickt – übernommen wird erst nach „Übertragen“`);
+                    showCustomMessage(p2pL('Einträge warten', 'Entries waiting'),
+                        p2pL('Das andere Gerät hat Einträge geschickt. Vergleiche zuerst die Prüfziffer auf beiden Geräten und tippe dann auf „Übertragen“ – erst dann werden sie übernommen.',
+                             'The other device sent entries. First compare the check code on both devices, then tap "Transfer" – only then are they applied.'), 'info');
+                    break;
+                }
                 console.log(' Sync-Complete empfangen. Merging', p2pReceivedChunks.length, 'Einträge...');
                 p2pUpdateProgress(85, 'Merge läuft...');
                 p2pLog('Führe Einträge zusammen …');
@@ -1301,6 +1321,37 @@
         }
     }
 
+    // === EINGANGSPRUEFUNG ===
+    // Was ein anderes Geraet schickt, ist fremde Eingabe. Die Anzeige vertraut an
+    // vielen Stellen darauf, dass Datum/Typ/Uhrzeiten ihre Form haben (trash.js setzt
+    // entry.type ungemaskt in innerHTML) — ein Eintrag mit type "<img onerror=…>" war
+    // gespeichertes XSS (Audit 18.11.2026). Deshalb: feste Formen fuer die Felder, die
+    // nur Kennungen/Zahlen sind, und in Freitext kein Tag-Anfang.
+    const P2P_FREI_TAG = /<[a-z!/?]/i;
+    function p2pTextOk(v, tiefe) {
+        if (v == null || typeof v === 'number' || typeof v === 'boolean') return v === v && v !== Infinity && v !== -Infinity;
+        if (typeof v === 'string') return v.length <= 5000 && !P2P_FREI_TAG.test(v);
+        if (tiefe > 3 || typeof v !== 'object') return false;
+        const werte = Array.isArray(v) ? v : Object.keys(v).map(k => (k === '__proto__' || k === 'constructor' || k === 'prototype' || P2P_FREI_TAG.test(k)) ? undefined : v[k]);
+        if (werte.length > 200) return false;
+        return werte.every(x => x !== undefined && p2pTextOk(x, tiefe + 1));
+    }
+    function p2pEintragSauber(e) {
+        if (!e || typeof e !== 'object' || Array.isArray(e)) return false;
+        const id = e.id;
+        if (!((typeof id === 'number' && isFinite(id)) || (typeof id === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(id)))) return false;
+        if (typeof e.date !== 'string' || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(e.date)) return false;
+        if (e.type != null && !(typeof e.type === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(e.type))) return false;
+        if (e.jobId != null && !(typeof e.jobId === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(e.jobId))) return false;
+        for (const k of ['start', 'end', 'shiftStart', 'shiftEnd']) {
+            if (e[k] != null && e[k] !== '' && !(typeof e[k] === 'string' && /^[0-9]{1,2}:[0-9]{2}$/.test(e[k]))) return false;
+        }
+        for (const k of ['worked', 'expected', 'diff', 'breakMins', 'timestamp']) {
+            if (e[k] != null && e[k] !== '' && !(typeof e[k] === 'number' && isFinite(e[k])) && !(typeof e[k] === 'string' && /^-?[0-9]+([.][0-9]+)?$/.test(e[k]))) return false;
+        }
+        return p2pTextOk(e, 0);
+    }
+
     // === SMART MERGE ENGINE ===
     function p2pSmartMerge(remoteEntries) {
         let newCount = 0;
@@ -1312,7 +1363,7 @@
         }
 
         remoteEntries.forEach(remoteEntry => {
-            if (!remoteEntry || !remoteEntry.id) {
+            if (!p2pEintragSauber(remoteEntry)) {
                 skippedCount++;
                 return;
             }
@@ -1358,6 +1409,16 @@
         }
         p2pSync.syncStats = { sent: 0, received: 0, merged: 0 };
         p2pUpdateStats();
+        // Der Klick ist die Freigabe: ab jetzt wird Empfangenes uebernommen, auch das,
+        // was schon vorher ankam und gewartet hat.
+        p2pSync.empfangFrei = true;
+        if (p2pSync.wartend) {
+            const r = p2pSmartMerge(p2pSync.wartend);
+            p2pSync.wartend = null;
+            p2pLog(`Zusammengeführt: ${r.new} neu, ${r.updated} aktualisiert, ${r.skipped} unverändert oder abgelehnt`);
+            if (typeof renderEntries === 'function') renderEntries();
+            if (typeof computeAll === 'function') computeAll();
+        }
         p2pExecuteSync();
     }
 

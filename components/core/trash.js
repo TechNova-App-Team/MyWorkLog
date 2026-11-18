@@ -76,10 +76,10 @@
             body.style.flex = '1';
             body.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                    <div style="font-weight:700; color:var(--text-main);">${entry.date} · ${entry.type} · ${entry.worked}h</div>
+                    <div style="font-weight:700; color:var(--text-main);">${esc(entry.date)} · ${esc(entry.type)} · ${esc(entry.worked)}h</div>
                     <div style="color:var(--text-muted); font-size:0.9rem;">${ageDays}d</div>
                 </div>
-                <div style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">${entry.project ? '<strong style="color:var(--primary);">' + entry.project + '</strong> · ' : ''}${entry.info ? entry.info : ''}</div>
+                <div style="color:var(--text-muted); font-size:0.85rem; margin-top:6px;">${entry.project ? '<strong style="color:var(--primary);">' + esc(entry.project) + '</strong> · ' : ''}${entry.info ? esc(entry.info) : ''}</div>
             `;
 
             const actions = document.createElement('div');
