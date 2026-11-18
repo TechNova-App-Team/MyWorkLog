@@ -99,6 +99,9 @@ for (const [name, quelle, url] of [
     $initial_current_url: 'https://myworklog.de/ki-verbinden/?authorization_id=GEHEIM4',
     $referrer: 'https://www.google.com/search?q=myworklog',
     $pathname: '/ausbilder/', anzahl: 3,
+    // Zweitpruefung 18.11.: verschachtelt (Web-Vitals) und andere eigene Hosts
+    $web_vitals_LCP_event: { $current_url: 'https://myworklog.de/ausbilder/#w=GEHEIM5', value: 1200 },
+    liste: ['https://www.myworklog.de/#p2p=GEHEIM6'],
   } });
   const p = ev && ev.properties || {};
   ok(`${name}: Ereignis kommt weiter (nicht verworfen)`, !!ev && ev.event === '$pageview');

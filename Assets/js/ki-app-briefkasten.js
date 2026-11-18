@@ -168,14 +168,25 @@
     // die Zeile auf dem Server der Schalter: 'neu' (gerade eingeschaltet, auch von
     // /ki-verbinden/) darf sie ANLEGEN, '1' nur noch aendern — fehlt sie, hat jemand
     // auf einem anderen Geraet ausgeschaltet, und dieses Geraet schaltet sich mit aus.
+    // 'neu' traegt Konto und Zeitpunkt ('neu:<user_id>:<ms>', 24 h gueltig): ein liegen-
+    // gebliebenes 'neu' (offline, abgemeldet) legte sonst Tage spaeter die Kopie wieder an,
+    // nach einem Kontowechsel sogar fuer das ANDERE Konto (Zweitpruefung 18.11.2026).
     const LESEN = 'mwl_ki_lesen';
+    const NEU_GILT_MS = 24 * 3600 * 1000;
     function lesenWert() { try { return localStorage.getItem(LESEN); } catch (e) { return null; } }
-    function lesenAn() { const w = lesenWert(); return w === '1' || w === 'neu'; }
+    function lesenAn() { const w = lesenWert(); return w === '1' || (typeof w === 'string' && w.indexOf('neu:') === 0); }
+    function neuFuer(uid) { return 'neu:' + uid + ':' + Date.now(); }
+    function neuGiltFuer(w, uid) {
+        const t = String(w || '').split(':');
+        return t.length === 3 && t[0] === 'neu' && t[1] === uid && Date.now() - Number(t[2]) < NEU_GILT_MS && Number(t[2]) <= Date.now() + 60000;
+    }
 
     async function spiegelSchreiben(daten) {
         const { c, u } = await ctx();
         if (!u) return;
-        if (lesenWert() === 'neu') {
+        const w = lesenWert();
+        if (typeof w === 'string' && w.indexOf('neu:') === 0) {
+            if (!neuGiltFuer(w, u.id)) { try { localStorage.removeItem(LESEN); } catch (e) { /* egal */ } return; }
             pruefen(await c.from('ki_app_spiegel').upsert({ user_id: u.id, daten }, { onConflict: 'user_id' }));
             try { localStorage.setItem(LESEN, '1'); } catch (e) { /* egal */ }
             return;
@@ -186,9 +197,14 @@
     }
 
     async function lesenSetzen(an, daten) {
-        try { an ? localStorage.setItem(LESEN, 'neu') : localStorage.removeItem(LESEN); } catch (e) { /* egal */ }
-        if (an) { if (daten) await spiegelSchreiben(daten); return; }
         const { c, u } = await ctx();
+        if (an) {
+            if (!u) return;
+            try { localStorage.setItem(LESEN, neuFuer(u.id)); } catch (e) { /* egal */ }
+            if (daten) await spiegelSchreiben(daten);
+            return;
+        }
+        try { localStorage.removeItem(LESEN); } catch (e) { /* egal */ }
         if (u) pruefen(await c.from('ki_app_spiegel').delete().eq('user_id', u.id));
     }
 

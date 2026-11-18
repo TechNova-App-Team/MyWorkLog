@@ -1009,11 +1009,14 @@
             // Start heartbeat
             p2pStartHeartbeat();
 
-            // Auto-sync if enabled
-            if (document.getElementById('p2pAutoSync')?.checked && !p2pSync.viaLink) {
+            // Sofort uebertragen nur auf dem EINLADENDEN Geraet (es hat den Code selbst erzeugt).
+            // Wer einen Code annimmt — per Link ODER eingefuegt —, hat ihn von jemand anderem;
+            // bis 18.11.2026 schickte der Einfuege-Weg trotzdem sofort alle Eintraege raus
+            // (Zweitpruefung des Audits). Dort erst Pruefziffer vergleichen, dann tippen.
+            if (document.getElementById('p2pAutoSync')?.checked && !p2pAngenommen()) {
                 setTimeout(() => p2pExecuteSync(), 500);
-            } else if (p2pSync.viaLink) {
-                p2pLog('Per Link verbunden: erst Prüfziffer vergleichen, dann übertragen');
+            } else if (p2pAngenommen()) {
+                p2pLog('Code angenommen: erst Prüfziffer vergleichen, dann übertragen');
             }
 
             p2pLog('Verbindung hergestellt');
@@ -1259,7 +1262,7 @@
                 // mal den Link") konnte dem Opfer sofort nach dem Verbinden beliebige Eintraege
                 // in den Speicher schieben, ohne Klick und ohne Pruefziffer (Audit). Jetzt
                 // wartet der Empfang, bis p2pManualSync() ihn freigibt.
-                if (p2pSync.viaLink && !p2pSync.empfangFrei) {
+                if (p2pAngenommen() && !p2pSync.empfangFrei) {
                     p2pSync.wartend = p2pReceivedChunks.slice(0, 20000);
                     p2pReceivedChunks = [];
                     p2pUpdateProgress(0, 'Wartet auf Freigabe');
@@ -1321,6 +1324,9 @@
         }
     }
 
+    // Code von aussen angenommen (Empfaenger-Rolle, per Link oder eingefuegt)?
+    function p2pAngenommen() { return p2pSync.viaLink || p2pSync.role === 'client'; }
+
     // === EINGANGSPRUEFUNG ===
     // Was ein anderes Geraet schickt, ist fremde Eingabe. Die Anzeige vertraut an
     // vielen Stellen darauf, dass Datum/Typ/Uhrzeiten ihre Form haben (trash.js setzt
@@ -1347,7 +1353,11 @@
             if (e[k] != null && e[k] !== '' && !(typeof e[k] === 'string' && /^[0-9]{1,2}:[0-9]{2}$/.test(e[k]))) return false;
         }
         for (const k of ['worked', 'expected', 'diff', 'breakMins', 'timestamp']) {
-            if (e[k] != null && e[k] !== '' && !(typeof e[k] === 'number' && isFinite(e[k])) && !(typeof e[k] === 'string' && /^-?[0-9]+([.][0-9]+)?$/.test(e[k]))) return false;
+            if (e[k] == null || e[k] === '') continue;
+            // Zahl als Text wird zur Zahl: die Anzeige ruft .toFixed() darauf auf (trash.js,
+            // history-export.js, entry-edit.js) und brach sonst ab (Zweitpruefung 18.11.).
+            if (typeof e[k] === 'string' && /^-?[0-9]+([.][0-9]+)?$/.test(e[k])) e[k] = Number(e[k]);
+            if (!(typeof e[k] === 'number' && isFinite(e[k]))) return false;
         }
         return p2pTextOk(e, 0);
     }

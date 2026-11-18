@@ -175,20 +175,20 @@
         let monthRows = monthKeys.map(k => {
             const m = monthMap[k];
             const diffColor = m.diff >= 0 ? '#10b981' : '#ef4444';
-            return `<tr><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;">${k}</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.worked.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.expected.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;color:${diffColor};font-weight:700;">${m.diff >= 0 ? '+' : ''}${m.diff.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.count}</td></tr>`;
+            return `<tr><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;">${esc(k)}</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.worked.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.expected.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;color:${diffColor};font-weight:700;">${m.diff >= 0 ? '+' : ''}${m.diff.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.count}</td></tr>`;
         }).join('');
 
         // Project table
         let projRows = Object.entries(projectMap).sort((a,b) => b[1]-a[1]).map(([p, h]) => {
             const pct = totalHours > 0 ? (h/totalHours*100).toFixed(1) : 0;
-            return `<tr><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;">${p}</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;font-weight:700;">${h.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;color:var(--text-muted);">${pct}%</td></tr>`;
+            return `<tr><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;">${esc(p)}</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;font-weight:700;">${h.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;color:var(--text-muted);">${pct}%</td></tr>`;
         }).join('');
 
         // Entry table (last 50)
         const recent = entries.slice(-50).reverse();
         let entryRows = recent.map(e => {
             const tColor = typeColors[e.type] || '#888';
-            return `<tr><td style="padding:6px 10px;border-bottom:1px solid #222;font-size:13px;">${e.date}</td><td style="padding:6px 10px;border-bottom:1px solid #222;"><span style="color:${tColor};font-weight:600;font-size:12px;">${typeLabels[e.type]||e.type}</span></td><td style="padding:6px 10px;border-bottom:1px solid #222;text-align:right;font-family:monospace;">${(e.worked||0).toFixed(2)}h</td><td style="padding:6px 10px;border-bottom:1px solid #222;text-align:right;color:${(e.diff||0)>=0?'#10b981':'#ef4444'};font-family:monospace;">${(e.diff||0)>=0?'+':''}${(e.diff||0).toFixed(2)}h</td><td style="padding:6px 10px;border-bottom:1px solid #222;font-size:12px;color:#888;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.project||'—'}</td></tr>`;
+            return `<tr><td style="padding:6px 10px;border-bottom:1px solid #222;font-size:13px;">${esc(e.date)}</td><td style="padding:6px 10px;border-bottom:1px solid #222;"><span style="color:${tColor};font-weight:600;font-size:12px;">${esc(typeLabels[e.type]||e.type)}</span></td><td style="padding:6px 10px;border-bottom:1px solid #222;text-align:right;font-family:monospace;">${(e.worked||0).toFixed(2)}h</td><td style="padding:6px 10px;border-bottom:1px solid #222;text-align:right;color:${(e.diff||0)>=0?'#10b981':'#ef4444'};font-family:monospace;">${(e.diff||0)>=0?'+':''}${(e.diff||0).toFixed(2)}h</td><td style="padding:6px 10px;border-bottom:1px solid #222;font-size:12px;color:#888;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.project||'—')}</td></tr>`;
         }).join('');
 
         const now = new Date();

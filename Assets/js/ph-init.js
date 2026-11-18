@@ -141,10 +141,18 @@ window.mwlPassWerben = function () {
     // (?authorization_id= auf /ki-verbinden/). PostHog schickt $current_url & Co. VOLL mit —
     // bis 18.11.2026 lagen sie so in der Analytik (Audit). Eigene URLs gehen deshalb ohne
     // #-Teil und nur mit utm_*/ref raus. Zwilling in index.template.html bzw. ph-init.js.
-    function mwlUrlSauber(v) {
+    // Rekursiv (Web-Vitals legen $current_url in verschachtelte Objekte, Zweitpruefung 18.11.)
+    // und fuer jeden myworklog.de-Host, nicht nur den aktuellen.
+    function mwlUrlSauber(v, tiefe) {
+        tiefe = tiefe || 0;
+        if (v && typeof v === 'object' && tiefe < 5) {
+            for (var k in v) if (Object.prototype.hasOwnProperty.call(v, k)) v[k] = mwlUrlSauber(v[k], tiefe + 1);
+            return v;
+        }
         try {
-            if (typeof v !== 'string' || v.indexOf(location.origin) !== 0) return v;
-            var u = new URL(v), q = new URLSearchParams();
+            if (typeof v !== 'string' || v.indexOf('http') !== 0) return v;
+            var u = new URL(v), h = u.hostname, q = new URLSearchParams();
+            if (h !== location.hostname && h !== 'myworklog.de' && h.slice(-13) !== '.myworklog.de') return v;
             u.searchParams.forEach(function (w, k) { if (k.indexOf('utm_') === 0 || k === 'ref') q.append(k, w); });
             u.hash = ''; u.search = q.toString();
             return u.href;

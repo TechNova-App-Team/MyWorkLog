@@ -17,7 +17,9 @@ const block = (start, laenge = 1500) => { const i = src.indexOf(start); return i
 
 const connect = block("peer.on('connect'", 2500);
 ist(connect.length > 0, 'Gegenprobe: connect-Handler gefunden');
-ist(/p2pAutoSync'\)\?\.checked && !p2pSync\.viaLink/.test(connect), 'Auto-Sync nur, wenn die Verbindung NICHT per Link kam');
+ist(connect.includes("p2pAutoSync')?.checked && !p2pAngenommen()"), 'Auto-Sync nur auf dem einladenden Geraet (nicht nach Link UND nicht nach Einfuegen)');
+// Zweitpruefung 18.11.: der Einfuege-Weg (viaLink=false, Rolle client) war ungeschuetzt
+ist(src.includes("function p2pAngenommen() { return p2pSync.viaLink || p2pSync.role === 'client'; }"), 'angenommen = per Link ODER Empfaenger-Rolle (eingefuegter Code)');
 
 const link = block('async function p2pHandleDeepLink', 4000);
 const iSet = link.indexOf('p2pSync.viaLink = true'), iStart = link.indexOf('p2pStartClient()');
@@ -30,7 +32,7 @@ ist(reset.includes('p2pSync.viaLink = false'), 'Neustart des Assistenten setzt v
 // Opfer ohne Klick Eintraege in den Speicher — mit type "<img onerror>" gespeichertes
 // XSS (trash.js setzt entry.type ungemaskt ein).
 const complete = block("case 'sync-complete'", 1500);
-const iGate = complete.indexOf('p2pSync.viaLink && !p2pSync.empfangFrei'), iMerge = complete.indexOf('p2pSmartMerge(');
+const iGate = complete.indexOf('p2pAngenommen() && !p2pSync.empfangFrei'), iMerge = complete.indexOf('p2pSmartMerge(');
 ist(iGate !== -1 && iMerge !== -1 && iGate < iMerge, 'Per Link: Empfangenes wird vor dem Merge angehalten');
 ist(/p2pSync\.empfangFrei = true[\s\S]{0,200}p2pSmartMerge\(p2pSync\.wartend\)/.test(block('function p2pManualSync', 1200)), 'erst der Klick auf Übertragen gibt frei und übernimmt das Wartende');
 ist(reset.includes('p2pSync.empfangFrei = false') && reset.includes('p2pSync.wartend = null'), 'Neustart setzt Freigabe und Wartendes zurueck');
@@ -43,6 +45,8 @@ const sauber = new Function(roh.slice(a, b) + '\nreturn p2pEintragSauber;')();
 const gut = { id: 1731900000000, date: '2026-11-18', type: 'work', worked: 7.5, expected: '8.75', diff: -1.25, info: 'Server 3 < 4 umgezogen | Projekt', start: '07:00', end: '15:30', jobId: 'primary', breakLog: [{ von: '12:00', bis: '12:45' }], customFieldValues: { kunde: 'Zahn' }, timestamp: 1731900000000, mood: '' };
 ist(sauber(gut), 'normaler Eintrag (auch mit „3 < 4“ im Text) kommt durch');
 ist(sauber({ ...gut, id: 'e_17319-a' }), 'Text-Id kommt durch');
+const alsText = { ...gut, worked: '7.5', diff: '-1.25' };
+ist(sauber(alsText) && alsText.worked === 7.5 && alsText.diff === -1.25, 'Zahl als Text wird zur Zahl (Anzeige ruft .toFixed auf)');
 const boese = {
   'type mit HTML': { ...gut, type: '<img src=x onerror=alert(1)>' },
   'date mit HTML': { ...gut, date: '<svg onload=alert(1)>' },

@@ -73,11 +73,30 @@ const vorher = schreibAufrufe;
 if (B.api.lesenAn()) await B.api.spiegelSchreiben({ stand: 'B3' });
 ok(schreibAufrufe === vorher, 'danach versucht B gar nicht mehr zu schreiben');
 
-// 5. Zustimmungsseite setzt 'neu' → darf die Kopie wieder ANLEGEN
-B.ls.setItem('mwl_ki_lesen', 'neu');
+// 5. Zustimmungsseite setzt 'neu:<konto>:<ms>' → darf die Kopie wieder ANLEGEN
+B.ls.setItem('mwl_ki_lesen', 'neu:' + USER.id + ':' + Date.now());
 ok(B.api.lesenAn(), '"neu" zaehlt als eingeschaltet');
 await B.api.spiegelSchreiben({ stand: 'B4' });
 ok(tabelle.has(USER.id) && tabelle.get(USER.id).daten.stand === 'B4' && B.ls.getItem('mwl_ki_lesen') === '1', 'ausdrueckliches Einschalten (neu) legt an und steht danach auf "1"');
+
+// 5b. Zweitpruefung: liegengebliebenes 'neu' (alt / fremdes Konto / alte Form) legt NICHT an
+for (const [name, wert] of [
+    ['aelter als 24 h', 'neu:' + USER.id + ':' + (Date.now() - 25 * 3600 * 1000)],
+    ['fuer ein anderes Konto', 'neu:99999999-2222-4333-8444-555555555555:' + Date.now()],
+    ['alte Form ohne Konto', 'neu'],
+]) {
+    tabelle.delete(USER.id);
+    B.ls.setItem('mwl_ki_lesen', wert);
+    await B.api.spiegelSchreiben({ stand: 'liegengeblieben' });
+    ok(!tabelle.has(USER.id) && B.ls.getItem('mwl_ki_lesen') === null, '"neu" ' + name + ': keine Kopie angelegt, Merker geloescht');
+}
+
+// 5c. Einschalten in der App schreibt die Konto-Form
+tabelle.delete(USER.id);
+await A.api.lesenSetzen(true, null);
+ok(/^neu:11111111-2222-4333-8444-555555555555:[0-9]+$/.test(A.ls.getItem('mwl_ki_lesen') || ''), 'lesenSetzen(true) merkt Konto und Zeitpunkt');
+await A.api.spiegelSchreiben({ stand: 'A9' });
+ok(tabelle.has(USER.id) && A.ls.getItem('mwl_ki_lesen') === '1', '... und legt damit an');
 
 // 6. Teil-Aktualisierung (Berichtsheft-Seite) nach Ausschalten woanders
 await A.api.lesenSetzen(false);
@@ -86,7 +105,7 @@ ok(!tabelle.has(USER.id) && !B.api.lesenAn(), 'Teil-Aktualisierung legt nichts a
 
 // 7. Quelle der Zustimmungsseite setzt 'neu', nicht '1'
 const seite = readFileSync(new URL('../pages/ki-verbinden/index.html', import.meta.url), 'utf8');
-ok(seite.includes("localStorage.setItem('mwl_ki_lesen', 'neu')") && !seite.includes("localStorage.setItem('mwl_ki_lesen', '1')"), '/ki-verbinden/ setzt "neu"');
+ok(seite.includes("localStorage.setItem('mwl_ki_lesen', 'neu:' + user.id + ':' + Date.now())") && !seite.includes("localStorage.setItem('mwl_ki_lesen', '1')"), '/ki-verbinden/ setzt "neu" mit Konto und Zeitpunkt');
 
 console.log(`\nki-lesen-geraete: ${pass} bestanden, ${fail} fehlgeschlagen`);
 process.exit(fail ? 1 : 0);

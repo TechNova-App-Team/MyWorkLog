@@ -545,8 +545,14 @@ self.addEventListener('message', event => {
 self.addEventListener('push', event => {
   let data = {};
   try { data = event.data?.json() ?? {}; } catch { data = { body: event.data?.text() }; }
-  // Nur eigene Pfade: '//host/x' und '/\host' beginnen auch mit '/', oeffnen aber eine fremde Seite.
-  const ziel = typeof data.url === 'string' && /^[/](?![/\\])/.test(data.url) ? data.url : '/';
+  // Nur eigene Seiten: '//host/x', '/\host' und '/\t/host' beginnen alle mit '/', oeffnen aber
+  // eine fremde Seite (der URL-Parser wirft Tab/Zeilenumbruch weg). Deshalb wie der Browser
+  // aufloesen und den Origin vergleichen, nicht am Text pruefen (Zweitpruefung 18.11.2026).
+  let ziel = '/';
+  try {
+    const u = new URL(String(data.url || '/'), self.location.origin);
+    if (u.origin === self.location.origin) ziel = u.pathname + u.search + u.hash;
+  } catch (e) { /* ziel bleibt '/' */ }
   const klasse = typeof data.tag === 'string' && data.tag.startsWith('klasse-');
 
   event.waitUntil(Promise.all([

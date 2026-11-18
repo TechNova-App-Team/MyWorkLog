@@ -21,7 +21,7 @@
     <meta name="robots" content="noindex,follow">
     <meta name="theme-color" content="#0a0b0e">
     <link href="/Assets/fonts/inter-01b75a3c.css?v=1a708cbcf5" rel="stylesheet">
-    <script defer src="/Assets/js/ph-init.js?v=abe1a8dc85"></script>
+    <script defer src="/Assets/js/ph-init.js?v=57b1cbe27a"></script>
     <style>
         :root {
             --bg-0: #0a0b0e;
@@ -237,7 +237,8 @@
                         localStorage.setItem('mwl_ki_app_wunsch', '1');
                         localStorage.setItem('mwl_ki_lesen_gefragt', '1');
                         // 'neu' = diese Zustimmung darf die Kopie ANLEGEN (ki-app-briefkasten.js, LESEN)
-                        if (document.getElementById('kvLesen').checked) localStorage.setItem('mwl_ki_lesen', 'neu');
+                        // Konto + Zeitpunkt: ein liegengebliebener Merker gilt nur 24 h und nur fuer dieses Konto
+                        if (document.getElementById('kvLesen').checked) localStorage.setItem('mwl_ki_lesen', 'neu:' + user.id + ':' + Date.now());
                         else localStorage.removeItem('mwl_ki_lesen');
                     }
                 } catch (e) { /* egal */ }
