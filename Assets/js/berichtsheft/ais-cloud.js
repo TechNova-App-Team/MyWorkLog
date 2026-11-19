@@ -103,6 +103,7 @@ const Kontingent = {
     // Der Server rechnet den Tag in Berliner Zeit — hier genauso, sonst gaelte
     // ein gemerkter Stand zwischen 0 und 2 Uhr noch als "heute".
     _tag() { return new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' }); },
+    _monat() { return this._tag().slice(0, 7); },
     // ISO-Kalenderwoche wie im Worker (wocheBerlin), z. B. '2026-W46'
     _woche() {
         const [j, m, t] = this._tag().split('-').map(Number);
@@ -134,19 +135,20 @@ const Kontingent = {
         const d = { tag: this._tag(), verbraucht, limit, erschoepft: !!erschoepft || verbraucht >= limit };
         try { localStorage.setItem(SCHNELL_SPEICHER, JSON.stringify(d)); } catch (e) { }
     },
-    // Thinking ohne Pass (Kopf X-MWL-Denken-Frei "verbraucht/frei"). Seit 08.11.2026 je
-    // Kalenderwoche (X-MWL-Denken-Zeitraum: woche); ein alter Worker ohne den Kopf zaehlt je Tag.
+    // Thinking ohne Pass (Kopf X-MWL-Denken-Frei "verbraucht/frei"). Seit 19.11.2026 je
+    // Kalendermonat (X-MWL-Denken-Zeitraum: monat), 08.-19.11. je Woche; ohne Kopf je Tag.
     // null = kein Stand bekannt ODER Pass (dort gibt der Worker den Kopf nicht).
     denken() {
         try {
             const d = JSON.parse(localStorage.getItem(DENKEN_SPEICHER) || 'null');
             if (!d || !(d.frei > 0)) return null;
-            return (d.zeitraum === 'woche' ? d.woche === this._woche() : d.tag === this._tag()) ? d : null;
+            const gilt = d.zeitraum === 'monat' ? d.monat === this._monat() : d.zeitraum === 'woche' ? d.woche === this._woche() : d.tag === this._tag();
+            return gilt ? d : null;
         } catch (e) { return null; }
     },
     _denkenSchreib(verbraucht, frei, zeitraum) {
-        const z = zeitraum === 'woche' ? 'woche' : 'tag';
-        try { localStorage.setItem(DENKEN_SPEICHER, JSON.stringify({ tag: this._tag(), woche: this._woche(), zeitraum: z, verbraucht, frei })); } catch (e) { }
+        const z = zeitraum === 'monat' || zeitraum === 'woche' ? zeitraum : 'tag';
+        try { localStorage.setItem(DENKEN_SPEICHER, JSON.stringify({ tag: this._tag(), woche: this._woche(), monat: this._monat(), zeitraum: z, verbraucht, frei })); } catch (e) { }
     },
     ausKopf(response) {
         const h = response && response.headers;
@@ -198,8 +200,8 @@ const STUFEN = {
     frei:    { name: 'Albatros 2.5 Marathon' },
 };
 // Thinking gehoert seit 01.11.2026 zum Ausbildungs-Pass (die staerkeren Modelle kosten ein
-// Vielfaches). Ohne Pass gibt es 3 Antworten am Tag zum Ausprobieren — das ZAEHLT und
-// ENTSCHEIDET der Worker (ai-proxy KONTINGENT.denkenFreiWoche); danach schreibt Turbo und der
+// Vielfaches). Ohne Pass gibt es eine Antwort im Monat zum Ausprobieren — das ZAEHLT und
+// ENTSCHEIDET der Worker (ai-proxy KONTINGENT.denkenFreiMonat); danach schreibt Turbo und der
 // Kopf X-MWL-Denken: pass sagt warum. Hier deshalb keine Sperre, nur Anzeige (Kontingent.denken).
 const Stufe = {
     get() {

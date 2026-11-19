@@ -155,6 +155,21 @@ console.log('── Stufen ──');
     e4.sandbox.localStorage.setItem('mwl_ki_denken', JSON.stringify(roh));
     ok(e4.CLOUD.Kontingent.denken() === null, 'Gegenprobe: Stand einer anderen Woche gilt nicht');
   }
+  // Seit 19.11.2026: je Kalendermonat (X-MWL-Denken-Zeitraum: monat)
+  {
+    const e5 = engine(async () => antwort(200, geminiOk, { 'X-MWL-Denken-Frei': '1/1', 'X-MWL-Denken-Zeitraum': 'monat', 'X-MWL-Stufe': 'denken' }));
+    e5.CLOUD.Stufe.set('denken');
+    await e5.CLOUD.generateWithCloud('software', optionen);
+    const dk = e5.CLOUD.Kontingent.denken();
+    ok(dk && dk.verbraucht === 1 && dk.zeitraum === 'monat' && /^\d{4}-\d{2}$/.test(dk.monat), `Monatsstand aus dem Kopf gemerkt: ${JSON.stringify(dk)}`);
+    const roh = JSON.parse(e5.sandbox.localStorage.getItem('mwl_ki_denken'));
+    roh.tag = '2000-01-01'; roh.woche = '2000-W01';   // anderer Tag, andere Woche, gleicher Monat → gilt weiter
+    e5.sandbox.localStorage.setItem('mwl_ki_denken', JSON.stringify(roh));
+    ok(!!e5.CLOUD.Kontingent.denken(), 'Monatsstand gilt auch in einer anderen Woche desselben Monats');
+    roh.monat = '2000-01';
+    e5.sandbox.localStorage.setItem('mwl_ki_denken', JSON.stringify(roh));
+    ok(e5.CLOUD.Kontingent.denken() === null, 'Gegenprobe: Stand eines anderen Monats gilt nicht');
+  }
   // v9.4.0: Thinking = ?stufe=denken, teilt sich das bezahlte Kontingent mit Turbo
   e.CLOUD.Stufe.set('denken');
   ok(e.CLOUD.Stufe.get() === 'denken' && e.sandbox.localStorage.getItem('bh_ki_stufe') === 'denken', 'Thinking wird gespeichert');
