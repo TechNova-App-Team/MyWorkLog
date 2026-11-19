@@ -63,6 +63,20 @@ const FEHLER = {
     paket: ['Freigeschaltet, aber die Funktionen kamen nicht an. Lade die Seite neu.', 'Unlocked, but the features did not arrive. Reload the page.'],
     server: ['Der Server konnte gerade nicht freischalten. Versuch es gleich noch einmal.', 'The server could not unlock right now. Try again in a moment.'],
 };
+// Probedurchgang „Mehrere Wochen" (MWLPass.probeStarten). 'netz' = Grenze je Netz erreicht.
+const PROBE_FEHLER = {
+    anmelden: ['Melde dich zuerst mit deinem Konto an.', 'Sign in with your account first.'],
+    genutzt: ['Deinen kostenlosen Durchgang hast du schon genutzt.', 'You have already used your free run.'],
+    netz: ['Hier wurde der Probedurchgang diesen Monat schon genutzt. Versuch es später noch einmal.', 'The free run has already been used here this month. Try again later.'],
+    pass: ['Du hast den Pass schon. Lade die Seite neu.', 'You already have the pass. Reload the page.'],
+    offline: FEHLER.netz,
+};
+// Seit 19.11.2026 (Entscheidung des Nutzers): „Mehrere Wochen" einmal je Konto kostenlos,
+// bis 3 Wochen. 48 Leute sahen dieses Blatt in 30 Tagen, 5 klickten weiter — wer es einmal
+// selbst gesehen hat, kauft eher. Den Pruefungs-Check gibt es bewusst NICHT zur Probe.
+function probeMoeglich(name) {
+    return name === 'mehrwochen' && !!(window.MWLPass && MWLPass.probeGenutzt) && !MWLPass.frei() && !MWLPass.probeGenutzt();
+}
 
 // Fehlende Wochen zaehlt schon der kostenlose Teil (bh-uebersicht.js). Keine geschaetzten Stunden:
 // der kostenlose Assistent schreibt eine Woche auch in Sekunden, die Arbeit ist das Erzaehlen.
@@ -89,6 +103,8 @@ function zeigen(name, opt) {
     vorFokus = document.activeElement;
     const ist = lage(name);
     const en = document.documentElement.lang === 'en';
+    const probe = probeMoeglich(name);
+    const kaufHref = (en ? '/en/kaufen/' : '/kaufen/') + '?zurueck=' + encodeURIComponent(location.pathname);
     const el = document.createElement('div');
     el.className = 'bs-ebene';
     el.innerHTML =
@@ -103,8 +119,16 @@ function zeigen(name, opt) {
                 // Plus ist nicht kaeuflich, der Kauf-Knopf wuerde dort den falschen Tarif verkaufen
                 (t.plus
                     ? '<a class="bs-knopf" href="' + (document.documentElement.lang === 'en' ? '/en/preise/' : '/preise/') + '#hefte">' + esc(L('Plus vormerken', 'Count me in for Plus')) + '</a>'
-                    : '<a class="bs-knopf" data-bs-kauf href="' + (en ? '/en/kaufen/' : '/kaufen/') + '?zurueck=' + encodeURIComponent(location.pathname) + '">' + esc(L('Pass holen, ab 9,99 €', 'Get the pass, from €9.99')) + '</a>' +
-                      '<a class="bs-mehr" data-bs-kauf href="' + (en ? '/en/preise/' : '/preise/') + '#pass">' + esc(L('Alles im Pass ansehen', 'See everything in the pass')) + '</a>' +
+                    : (probe
+                        ? (MWLPass.angemeldet()
+                            ? '<button type="button" class="bs-knopf" data-bs-probe>' + esc(L('Kostenlos ausprobieren', 'Try it for free')) + '</button>'
+                            : '<a class="bs-knopf" data-bs-probe-anmelden href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Anmelden und kostenlos ausprobieren', 'Sign in and try it for free')) + '</a>') +
+                          '<a class="bs-knopf is-leise bs-zweit" data-bs-kauf href="' + kaufHref + '">' + esc(L('Pass holen, ab 9,99 €', 'Get the pass, from €9.99')) + '</a>' +
+                          '<p class="bs-probe-satz">' + esc(L('Einmal pro Konto: bis zu drei Wochen in einem Durchgang. Danach gehört „Mehrere Wochen“ zum Pass.', 'Once per account: up to three weeks in one run. After that, “Several weeks” is part of the pass.')) + '</p>' +
+                          '<p class="bs-meldung" id="bsProbeMeldung" role="status"></p>'
+                        : '<a class="bs-knopf" data-bs-kauf href="' + kaufHref + '">' + esc(L('Pass holen, ab 9,99 €', 'Get the pass, from €9.99')) + '</a>') +
+                      // Beim Probedurchgang stehen schon zwei Knoepfe; der dritte Weg wuerde nur verwirren
+                      (probe ? '' : '<a class="bs-mehr" data-bs-kauf href="' + (en ? '/en/preise/' : '/preise/') + '#pass">' + esc(L('Alles im Pass ansehen', 'See everything in the pass')) + '</a>') +
                       // Der Pass hängt am Konto: wer gekauft hat und hier abgemeldet ist, muss nur sich anmelden
                       ((window.MWLPass && MWLPass.angemeldet()) ? '' : '<p class="bs-hinweis">' + esc(L('Schon gekauft? ', 'Already bought? ')) + '<a href="/?cloud=login&amp;back=berichtsheft">' + esc(L('Mit deinem Konto anmelden', 'Sign in with your account')) + '</a></p>')) +
             '</div>' +
@@ -121,6 +145,9 @@ function zeigen(name, opt) {
     el.addEventListener('click', (e) => {
         if (e.target.closest && e.target.closest('[data-bs-kauf]') && typeof window.bhMess === 'function') { try { window.bhMess('pass_siegel_weiter', { wo: name }); } catch (x) {} }
         if (e.target === el || e.target.closest('[data-bs-zu]')) schliessen();
+        if (e.target.closest && e.target.closest('[data-bs-probe-anmelden]') && typeof window.bhMess === 'function') { try { window.bhMess('pass_probe', { schritt: 'anmelden' }); } catch (x) {} }
+        const pk = e.target.closest && e.target.closest('[data-bs-probe]');
+        if (pk) probeStarten(pk, name, opt);
     });
     el.querySelector('form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -138,6 +165,19 @@ function zeigen(name, opt) {
     offen = el;
     if (typeof window.bhMess === 'function') { try { window.bhMess('pass_siegel', { wo: name, luecken: luecken() >= 2 }); } catch (x) {} }
     setTimeout(() => { const zu = el.querySelector('.bs-knopf'); if (zu) zu.focus({ preventScroll: true }); }, 30);
+}
+async function probeStarten(knopf, name, opt) {
+    const meld = offen && offen.querySelector('#bsProbeMeldung');
+    knopf.disabled = true;
+    if (meld) meld.textContent = L('Wird vorbereitet …', 'Getting it ready …');
+    const r = await MWLPass.probeStarten();
+    if (typeof window.bhMess === 'function') { try { window.bhMess('pass_probe', { schritt: r.ok ? 'ok' : r.fehler }); } catch (x) {} }
+    if (r.ok) { schliessen(); MWLPass.oeffnen(name, opt); return; }
+    const f = PROBE_FEHLER[r.fehler] || FEHLER.server;
+    if (meld) meld.textContent = L(f[0], f[1]);
+    // Endgueltig: Knopf weg, der Kauf bleibt
+    if (r.fehler === 'genutzt' || r.fehler === 'netz' || r.fehler === 'pass') knopf.remove();
+    else knopf.disabled = false;
 }
 function schliessen() {
     if (!offen) return;

@@ -24,6 +24,12 @@
 // Pass-Token still beim Laden (kontoFreischalten) — es gilt 7 Tage und wird vor Ablauf
 // erneuert. Ohne Pass merkt sich die Seite das 12 Stunden, damit nicht jeder Seitenaufruf
 // eines Kontos ohne Pass den Worker (und GoTrue) fragt. Der Haupt-Code ({code}) bleibt.
+//
+// Probedurchgang (seit 19.11.2026): „Mehrere Wochen" einmal kostenlos, bis 3 Wochen, nur mit
+// Konto (/pass/probe; Grenze je Konto und Netz entscheidet die DB). Das Probe-Token steht
+// GETRENNT in mwl_pass_probe und laedt nur das Probepaket (Worker: pass:probe:*), nie das volle.
+// frei() bleibt fuer die Probe falsch — sonst hielten Etikett, Thinking-Menue und Pass-Karte
+// den Probenutzer fuer einen Pass-Inhaber.
 
 window.MWLPass = (function () {
     'use strict';
@@ -44,6 +50,25 @@ window.MWLPass = (function () {
         try { localStorage.removeItem(SCHLUESSEL); } catch (e) {}
         // Vom alten Vorschau-Hash (bis 31.10.2026) nichts liegen lassen
         try { localStorage.removeItem('mwl_vorschau'); } catch (e) {}
+    }
+
+    const PROBE = 'mwl_pass_probe';       // { token, bis, fertig } | { grund: 'genutzt' }
+    function probeGespeichert() {
+        try { return JSON.parse(localStorage.getItem(PROBE) || 'null'); } catch (e) { return null; }
+    }
+    // Fenster offen und noch nicht losgeschrieben
+    function probeAktiv() {
+        const p = probeGespeichert();
+        return !frei() && !!(p && p.token && p.bis > Date.now() && !p.fertig);
+    }
+    // Schon verbraucht (geschrieben, Fenster vorbei oder vom Server so gemeldet)
+    function probeGenutzt() {
+        const p = probeGespeichert();
+        return !!(p && (p.fertig || p.grund === 'genutzt' || (p.token && !(p.bis > Date.now()))));
+    }
+    function probeBeenden() {
+        const p = probeGespeichert() || {};
+        try { localStorage.setItem(PROBE, JSON.stringify(Object.assign({}, p, { fertig: true }))); } catch (e) {}
     }
 
     const SB_SCHLUESSEL = 'sb-fouucibowmukxvweratn-auth-token';
@@ -168,6 +193,26 @@ window.MWLPass = (function () {
         kontoFreischalten().catch(() => {});
     }
 
+    // Probedurchgang holen. → { ok } | { ok:false, fehler: 'anmelden'|'genutzt'|'netz'|'pass'|'offline'|'server'|'paket' }
+    // 'netz' = in diesem Netz schon zu viele Proben (nicht: keine Verbindung, das ist 'offline').
+    async function probeStarten() {
+        if (frei()) return { ok: false, fehler: 'pass' };
+        if (probeAktiv()) return (await laden()) ? { ok: true } : { ok: false, fehler: 'paket' };
+        let r;
+        try { r = await mitKonto('/pass/probe', { method: 'POST' }); }
+        catch (e) { return { ok: false, fehler: 'offline' }; }
+        if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
+        const d = await r.json().catch(() => null);
+        if (r.status === 409) {
+            const g = (d && d.grund) || 'server';
+            if (g === 'genutzt') { try { localStorage.setItem(PROBE, JSON.stringify({ grund: 'genutzt' })); } catch (e) {} }
+            return { ok: false, fehler: g };
+        }
+        if (!r.ok || !d || !d.token) return { ok: false, fehler: 'server' };
+        try { localStorage.setItem(PROBE, JSON.stringify({ token: d.token, bis: d.bis })); } catch (e) { return { ok: false, fehler: 'server' }; }
+        return (await laden()) ? { ok: true } : { ok: false, fehler: 'paket' };
+    }
+
     // Pass-Code gegen den Server pruefen. → { ok, fehler }
     async function einloesen(code) {
         const c = String(code || '').trim();
@@ -198,14 +243,15 @@ window.MWLPass = (function () {
         document.head.appendChild(s);
     }
 
-    // Lokal: Einzeldateien aus /pass/ (gut zum Debuggen, Zeilen stimmen)
-    async function lokalLaden() {
+    // Lokal: Einzeldateien aus /pass/ (gut zum Debuggen, Zeilen stimmen). Probe: nur m.probe.
+    async function lokalLaden(probe) {
         let m;
         try {
             const r = await fetch('/pass/manifest.json', { cache: 'no-store' });
             if (!r.ok) return false;
             m = await r.json();
         } catch (e) { return false; }
+        if (probe) m = m.probe || { js: [], css: [] };
         (m.css || []).forEach(f => {
             const l = document.createElement('link');
             l.rel = 'stylesheet'; l.href = '/pass/' + f + '?t=' + Date.now();
@@ -222,14 +268,15 @@ window.MWLPass = (function () {
         return true;
     }
 
-    async function vomServerLaden() {
-        const g = gespeichert();
+    async function vomServerLaden(probe) {
+        const g = probe ? probeGespeichert() : gespeichert();
         const kopf = { Authorization: 'Bearer ' + g.token };
         const [js, css] = await Promise.all([
             fetch(API + '/pass/paket?art=js', { headers: kopf, cache: 'no-store' }),
             fetch(API + '/pass/paket?art=css', { headers: kopf, cache: 'no-store' }),
         ]);
         if (js.status === 401 || css.status === 401) {
+            if (probe) { probeBeenden(); return false; }   // Fenster vorbei — der Pass bleibt unberuehrt
             sperren();
             try { window.dispatchEvent(new CustomEvent('mwl-pass-weg')); } catch (e) {}
             return false;
@@ -243,12 +290,13 @@ window.MWLPass = (function () {
     let ladung = null;
     // → Promise<boolean>: true, wenn die Pass-Funktionen jetzt da sind
     function laden() {
-        if (!frei()) return Promise.resolve(false);
+        const probe = !frei() && probeAktiv();
+        if (!frei() && !probe) return Promise.resolve(false);
         if (!ladung) {
             ladung = (async () => {
                 try {
-                    if (lokal() && await lokalLaden()) return true;
-                    return await vomServerLaden();
+                    if (lokal() && await lokalLaden(probe)) return true;
+                    return await vomServerLaden(probe);
                 } catch (e) { return false; }
             })().then(ok => { if (!ok) ladung = null; return ok; });
         }
@@ -264,7 +312,7 @@ window.MWLPass = (function () {
         fachgespraech: (o) => window.BHFachgespraech && BHFachgespraech.oeffnen(o),
     };
     async function oeffnen(name, opt) {
-        if (frei() && await laden() && OEFFNER[name]) { OEFFNER[name](opt); return; }
+        if ((frei() || (name === 'mehrwochen' && probeAktiv())) && await laden() && OEFFNER[name]) { OEFFNER[name](opt); return; }
         if (window.BHSiegel) BHSiegel.zeigen(name, opt);
     }
 
@@ -293,6 +341,7 @@ window.MWLPass = (function () {
 
     return {
         frei, vomKonto, einloesen, sperren, laden, oeffnen, lokal, kasse, kaufAbholen, kontoFreischalten, angemeldet, passBis,
+        probeAktiv, probeGenutzt, probeStarten, probeBeenden,
         set tokenQuelle(f) { tokenQuelle = typeof f === 'function' ? f : null; },
     };
 })();
