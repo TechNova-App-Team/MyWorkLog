@@ -98,7 +98,7 @@ function zeigen(name, opt) {
             '<h2 class="bs-satz" id="bsTitel">' + esc(ist && ist.satz ? ist.satz : L(t.satz[0], t.satz[1])) + '</h2>' +
             (ist && ist.zusatz ? '<p class="bs-lage">' + esc(ist.zusatz) + '</p>' : '') +
             '<ul class="bs-punkte">' + t.punkte.map(p => '<li>' + esc(L(p[0], p[1])) + '</li>').join('') + '</ul>' +
-            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass: einmal zahlen ab 9,99 €, kein Abo. Er finanziert die KI und die Weiterentwicklung, ohne Werbung und ohne Datenverkauf.', 'Part of the training pass: pay once from €9.99, no subscription. It funds the AI and further development, with no ads and no selling of data.')) + '</p>' +
+            '<p class="bs-hinweis">' + esc(t.plus ? L('Gehört zu Plus. Das ist noch nicht erhältlich.', 'Part of Plus, which is not available yet.') : L('Gehört zum Ausbildungs-Pass: einmal zahlen ab 9,99 € für zwei Jahre, rechnerisch 42 Cent im Monat, kein Abo. Er finanziert die KI und die Weiterentwicklung, ohne Werbung und ohne Datenverkauf.', 'Part of the training pass: pay once from €9.99 for two years, about 42 cents a month, no subscription. It funds the AI and further development, with no ads and no selling of data.')) + '</p>' +
             '<div class="bs-aktion">' +
                 // Plus ist nicht kaeuflich, der Kauf-Knopf wuerde dort den falschen Tarif verkaufen
                 (t.plus
