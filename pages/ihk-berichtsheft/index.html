@@ -12,7 +12,7 @@
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
     <title>IHK Berichtsheft online endet 2026: Export, Azubiheft, Alternative</title>
-    <meta name="description" content="Das Digitale Berichtsheft der IHK im Serviceportal Bildung endet zum 31.12.2026. So sicherst du deine Ausbildungsnachweise als PDF, was das Azubiheft ist und wie es weitergeht.">
+    <meta name="description" content="Das Digitale Berichtsheft der IHK im Serviceportal Bildung endet zum 31.12.2026. So sicherst du deine Ausbildungsnachweise als PDF, was das Azubiheft kostet und ob alte Einträge mitkommen.">
     <meta name="keywords" content="IHK Berichtsheft eingestellt, Digitales Berichtsheft IHK Abschaltung 2026, Serviceportal Bildung Berichtsheft Export, IHK Berichtsheft Alternative, Azubiheft, Meine IHK digital Berichtsheft, IHK Berichtsheft PDF importieren, Ausbildungsnachweis weiterführen, Berichtsheft App kostenlos">
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
     <script>/* Anlauf-Zustaende gelten nur mit JS — sonst bliebe der Hero unsichtbar. */
@@ -240,6 +240,7 @@
         .facts div { padding: 16px 18px; border-radius: 16px; background: var(--bg-card); border: 1px solid var(--border); }
         .facts dt { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 4px; }
         .facts dd { font-size: 0.94rem; color: var(--text-main); line-height: 1.5; }
+        .facts.vier { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
 
         /* ── Zwei Leser, zwei Spalten. Karten nur hier, weil es wirklich zwei
               getrennte Anleitungen sind. ── */
@@ -498,7 +499,7 @@
         }
         @media (max-width: 760px) {
             .wer, .zwei { grid-template-columns: 1fr; }
-            .facts { grid-template-columns: 1fr; gap: 10px; }
+            .facts, .facts.vier { grid-template-columns: 1fr; gap: 10px; }
         }
         @media (max-width: 560px) {
             .shell { padding: 20px 16px 32px; }
@@ -637,6 +638,29 @@
             <h3>Du willst lieber Papier</h3>
             <p><span>Auch das ist zulässig. Eine Vorlage zum Ausdrucken gibt es hier:</span> <a class="inl" href="/berichtsheft-vorlage/">Berichtsheft-Vorlage</a><span>.</span></p>
         </div>
+
+        <!-- Wer „azubiheft" sucht, landet hier (Search Console 19.11.2026: azubiheft, azubi heft,
+             azubiheft ihk/online, Position 11-19). Nur Fakten aus den Quellen q7/q8/q10, kein Urteil
+             ueber das Produkt; Kosten haengen an der Kammer, nie als bundesweite Zahl schreiben. -->
+        <h3 class="prose" id="azubiheft" data-reveal style="margin-top:28px;">Das Azubiheft auf einen Blick</h3>
+        <dl class="facts vier" id="azubiheftFakten" data-reveal>
+            <div>
+                <dt>Anbieter</dt>
+                <dd><span>ORA Software GmbH aus Mannheim, erreichbar über azubiheft.de und berichtsheft-ihk.de. Kein Angebot der IHK selbst, sondern ein Produkt, das Kammern ihren Betrieben anbieten.</span><a class="fn" href="#q10">10</a></dd>
+            </div>
+            <div>
+                <dt>Kosten</dt>
+                <dd><span>Für Azubis ohne verbundenen Betrieb kostenlos. Was der Betrieb zahlt, hängt von der eigenen IHK ab: in Nürnberg und Koblenz für Mitgliedsbetriebe frei, ohne Vereinbarung der Kammer nennt der Anbieter 1 € pro Azubi und Monat.</span><a class="fn" href="#q7">7</a><a class="fn" href="#q8">8</a><a class="fn" href="#q10">10</a></dd>
+            </div>
+            <div>
+                <dt>Alte Einträge</dt>
+                <dd><span>Werden laut Anbieter nicht automatisch übernommen. Die PDF aus dem Serviceportal lässt sich dort als Anhang hochladen.</span><a class="fn" href="#q10">10</a></dd>
+            </div>
+            <div>
+                <dt>Gilt es überall?</dt>
+                <dd><span>Nein. Auf die Frage, ob alle IHKs dieselbe Lösung nutzen, antwortet der Anbieter selbst mit Nein. Was gilt, sagt die eigene Kammer.</span><a class="fn" href="#q10">10</a></dd>
+            </div>
+        </dl>
 
         <h2 id="import" data-reveal>So kommt der IHK-Export in MyWorkLog</h2>
         <p class="prose">
@@ -831,11 +855,23 @@
                     regelt der Ausbildungsvertrag. Im Zweifel die eigene IHK fragen.
                 </p>
             </details>
+            <details class="faq-item">
+                <summary>Was ist das Azubiheft und was kostet es?</summary>
+                <p>Ein digitales Berichtsheft der ORA Software GmbH, das mehrere IHKs als Nachfolge anbieten. Für Azubis ohne verbundenen Betrieb ist es kostenlos; was der Betrieb zahlt, legt die eigene IHK fest. Nicht jede Kammer nutzt es.</p>
+            </details>
+            <details class="faq-item">
+                <summary>Kommen meine alten Einträge ins Azubiheft?</summary>
+                <p>Nicht automatisch. Laut Anbieter lässt sich die PDF aus dem Serviceportal als Anhang hochladen. MyWorkLog liest die PDF dagegen ein und macht daraus wieder einzelne Wochen und Tage.</p>
+            </details>
+            <details class="faq-item">
+                <summary>Gibt es eine IHK-Berichtsheft-Vorlage als PDF?</summary>
+                <p><span>Ja, auf dem Vordruck deiner Kammer, kostenlos zum Ausdrucken oder digital ausgefüllt:</span> <a class="inl" href="/berichtsheft-vorlage/">IHK-Berichtsheft-Vorlage als PDF</a><span>.</span></p>
+            </details>
         </div>
 
         <h2 id="quellen" data-reveal>Quellen</h2>
         <div class="sources prose" data-reveal>
-            <p>Alle Angaben zur Abschaltung stammen von den Kammern selbst, gelesen am 20. September und 5. November 2026.</p>
+            <p>Alle Angaben zur Abschaltung stammen von den Kammern selbst, gelesen am 20. September, 5. und 19. November 2026.</p>
             <ol>
                 <li id="q1"><a href="https://www.ihk.de/nordschwarzwald/aus-und-weiterbildung/ausbildung/ausbildung-digital/serviceportal-bildung-berichtsheft/service-digitales-berichtsheft-wird-eingestellt-6821804" rel="noopener" target="_blank">IHK Nordschwarzwald</a> <span>— „zum 31. Dezember 2026 bundesweit eingestellt"; Nachweispflicht für die Zulassung bleibt</span></li>
                 <li id="q2"><a href="https://www.ihk.de/hannover/hauptnavigation/ausbildung-und-weiterbildung/ausbildung/aktuell/digitales-berichtsheft-gibt-es-nur-noch-bis-ende-2026-6743960" rel="noopener" target="_blank">IHK Hannover</a> <span>— Meldung vom 13. März 2026; Zugriff ab 1. Januar 2027 nicht mehr möglich; Papier und halbdigital bleiben zulässig (BIBB-Empfehlung 2020)</span></li>
@@ -845,6 +881,7 @@
                 <li id="q6"><a href="https://www.ihk.de/blueprint/servlet/resource/blob/7099488/b3c7561114cffa1543245eaee508333c/anleitung-export-berichtsheft-data.pdf" rel="noopener" target="_blank">Anleitung zum Export (PDF)</a> <span>— dieselben Schritte als Dokument</span></li>
                 <li id="q7"><a href="https://www.ihk-nuernberg.de/wim-wirtschaft-in-mittelfranken/ihk-magazin-wim-08-09-2026/details/das-azubiheft-ist-gestartet" rel="noopener" target="_blank">IHK Nürnberg</a> <span>— Azubiheft löst das Digitale Berichtsheft ab, Auswahlverfahren der IHKs, für Betriebe und Azubis kostenfrei</span></li>
                 <li id="q8"><a href="https://www.ihk.de/koblenz/bildung/aktuelles/serviceportal-bildung-berichtsheft-5029386" rel="noopener" target="_blank">IHK Koblenz</a> <span>— Basisversion für Mitgliedsbetriebe kostenfrei, Anmeldung über berichtsheft-ihk.de</span></li>
+                <li id="q10"><a href="https://berichtsheft-ihk.de/" rel="noopener" target="_blank">Azubiheft (berichtsheft-ihk.de)</a> <span>— Anbieter ORA Software GmbH; Kosten je nach Lizenz der IHK; alte Einträge „nicht automatisch" übernommen, PDF als Anhang; nicht alle IHKs nutzen dieselbe Lösung</span></li>
                 <li id="q9"><a href="https://www.ihk.de/karlsruhe/fachthemen/uebersicht-ausbildung/ihk-online-portal/ihk-online-portal-fuer-ausbilder-4491812" rel="noopener" target="_blank">IHK Karlsruhe</a> <span>— eigener Termin: Abschaltung zum 30.06.2026</span></li>
             </ol>
             <p>
@@ -878,8 +915,25 @@
         {"@type":"Question","name":"Ich habe im Portal wochenweise geführt, nicht tageweise.","acceptedAnswer":{"@type":"Answer","text":"Beide Formen werden gelesen. Tageweise geführte Wochen kommen mit Tagesfeldern an, wochenweise geführte als ein Wochentext mit Anwesenheit und Stunden, bei Ort Schule/Betrieb getrennt in Schule und Betrieb."}},
         {"@type":"Question","name":"Brauche ich ein Konto?","acceptedAnswer":{"@type":"Answer","text":"Nein. Berichtsheft und Import laufen ohne Konto, auf dem eigenen Gerät, auch offline. Ein Konto braucht es nur für den Abgleich zwischen Geräten und die Verbindung zum Betrieb."}},
         {"@type":"Question","name":"Was kostet das?","acceptedAnswer":{"@type":"Answer","text":"Das Berichtsheft, der Import und die Ausbilder-Freigabe kosten nichts, auch nicht für Betriebe, und es gibt keine Werbung. Zusatzfunktionen wie mehrere Wochen auf einmal gibt es im Ausbildungs-Pass ab 9,99 € einmalig, ohne Abo."}},
-        {"@type":"Question","name":"Erkennt die IHK ein Berichtsheft aus MyWorkLog an?","acceptedAnswer":{"@type":"Answer","text":"Zur Prüfung verlangen die Kammern in der Regel ein PDF; MyWorkLog erzeugt es auf dem Vordruck der jeweiligen IHK. Ob elektronisch geführt werden darf, regelt der Ausbildungsvertrag. Im Zweifel die eigene IHK fragen."}}
+        {"@type":"Question","name":"Erkennt die IHK ein Berichtsheft aus MyWorkLog an?","acceptedAnswer":{"@type":"Answer","text":"Zur Prüfung verlangen die Kammern in der Regel ein PDF; MyWorkLog erzeugt es auf dem Vordruck der jeweiligen IHK. Ob elektronisch geführt werden darf, regelt der Ausbildungsvertrag. Im Zweifel die eigene IHK fragen."}},
+        {"@type":"Question","name":"Was ist das Azubiheft und was kostet es?","acceptedAnswer":{"@type":"Answer","text":"Ein digitales Berichtsheft der ORA Software GmbH, das mehrere IHKs als Nachfolge anbieten. Für Azubis ohne verbundenen Betrieb ist es kostenlos; was der Betrieb zahlt, legt die eigene IHK fest. Nicht jede Kammer nutzt es."}},
+        {"@type":"Question","name":"Kommen meine alten Einträge ins Azubiheft?","acceptedAnswer":{"@type":"Answer","text":"Nicht automatisch. Laut Anbieter lässt sich die PDF aus dem Serviceportal als Anhang hochladen. MyWorkLog liest die PDF dagegen ein und macht daraus wieder einzelne Wochen und Tage."}},
+        {"@type":"Question","name":"Gibt es eine IHK-Berichtsheft-Vorlage als PDF?","acceptedAnswer":{"@type":"Answer","text":"Ja, auf dem Vordruck der eigenen Kammer, kostenlos zum Ausdrucken oder digital ausgefüllt: https://myworklog.de/berichtsheft-vorlage/"}}
       ]
+    }
+    </script>
+    <script type="application/ld+json" data-ld-id="artikel">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Das Digitale Berichtsheft der IHK endet am 31. Dezember 2026",
+      "description": "Was Azubis und Ausbilder vor der Abschaltung tun müssen, was das Azubiheft ist und wie der IHK-Export weitergeführt wird.",
+      "datePublished": "2026-09-20",
+      "dateModified": "2026-11-19",
+      "inLanguage": "de",
+      "mainEntityOfPage": "https://myworklog.de/ihk-berichtsheft/",
+      "author": {"@type":"Organization","name":"MyWorkLog","url":"https://myworklog.de/"},
+      "publisher": {"@type":"Organization","name":"MyWorkLog","url":"https://myworklog.de/"}
     }
     </script>
     <script type="application/ld+json" data-ld-id="breadcrumb">
