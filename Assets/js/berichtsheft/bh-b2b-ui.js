@@ -264,6 +264,9 @@
             b2bL(' geteilt und dort abgezeichnet. Eine abgezeichnete Woche ist hier gesperrt, bis der Ausbilder sie wieder freigibt.',
                 ' and signed off there. A signed-off week is locked here until your trainer releases it again.') +
             domainZeile(st) +
+            // Firmenpass (seit 19.11.2026): der Azubi muss sehen, dass sein Pass vom Betrieb kommt
+            // und dass der Betrieb ihn jederzeit zuruecknehmen darf (Entscheidung des Nutzers).
+            '<span class="b2b-muted" id="b2bLizenz" hidden></span>' +
             '<span class="b2b-muted">' + (offline
                 ? b2bL('Offline — Stand vom letzten Abgleich.', 'Offline — last synced state.')
                 : b2bL('Abgleich läuft bei jedem Öffnen automatisch.', 'Syncs automatically each time you open the page.')) +
@@ -273,6 +276,17 @@
             b2bL('Verbindung lösen', 'Disconnect') + '</button>' +
             '</div></div></details>';
         el().hidden = false;
+        if (!offline && window.BHB2B && BHB2B.meineLizenz) lizenzZeigen();
+    }
+    async function lizenzZeigen() {
+        const l = await BHB2B.meineLizenz();
+        const z = document.getElementById('b2bLizenz');
+        // Nur 'aktiv': nach dem Austritt gibt es diese Zeile nicht mehr (keine Verbindung = kein Panel)
+        if (!z || !l || l.zustand !== 'aktiv') return;
+        const bis = datumKurz(l.bis);
+        z.textContent = b2bL('Deinen Ausbildungs-Pass hat dein Betrieb bezahlt (bis ' + bis + '). Der Betrieb kann ihn jederzeit zurücknehmen, auch wenn du die Verbindung löst.',
+            'Your company paid for your training pass (until ' + bis + '). The company can take it back at any time, including if you disconnect.');
+        z.hidden = false;
     }
 
     function datumKurz(iso) {

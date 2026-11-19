@@ -470,6 +470,88 @@
         return true;
     }
 
+    // ── Firmenpass: Lizenzen des Betriebs (seit 19.11.2026) ──────────
+    //
+    // Entscheidungen des Nutzers: gekauft wird je Azubi (sofort zugewiesen, kein Vorrat),
+    // Laufzeit ab Kauf, Preis wie fuer Azubis. Der Ausbilder darf jederzeit entziehen und
+    // die Restdauer einem anderen Azubi geben; nach einem Austritt bleibt die Lizenz als
+    // 'verlassen' markiert, bis er „behalten lassen" (endgueltig) oder „entziehen" waehlt.
+    // Kauf ueber den ai-proxy (Stripe), alles andere per RPC — ob das Konto Ausbilder DIESES
+    // Betriebs ist, prueft die DB (public.betrieb_lizenz_*), nicht dieser Code.
+    const PASS_API = 'https://ai-proxy.myworklog.de';
+    async function bhb2bLizenzen() {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') return null;
+        const sb = await client();
+        const [liz, mit] = await Promise.all([
+            sb.from('betrieb_lizenzen').select('id, dauer_jahre, bis, azubi, azubi_name, zustand, verlassen_am, erstellt_am')
+                .eq('betrieb_id', st.betriebId).order('erstellt_am', { ascending: false }),
+            sb.rpc('betrieb_lizenz_azubis_mit_pass', { p_betrieb: st.betriebId }),
+        ]);
+        if (liz.error) throw new Error(liz.error.message);
+        // setof uuid kommt als Liste von Strings
+        const mitPass = (mit.data || []).map(x => typeof x === 'string' ? x : Object.values(x || {})[0]).filter(Boolean);
+        return { betriebId: st.betriebId, lizenzen: liz.data || [], mitPass };
+    }
+    async function lizenzRpc(fn, args) {
+        const sb = await client();
+        const { error } = await sb.rpc(fn, args);
+        if (error) throw new Error(error.message);
+        return true;
+    }
+    const bhb2bLizenzEntziehen = (id) => lizenzRpc('betrieb_lizenz_entziehen', { p_lizenz: id });
+    const bhb2bLizenzSchenken = (id) => lizenzRpc('betrieb_lizenz_schenken', { p_lizenz: id });
+    const bhb2bLizenzZuweisen = (id, azubi) => lizenzRpc('betrieb_lizenz_zuweisen', { p_lizenz: id, p_azubi: azubi });
+    async function passApi(pfad, init) {
+        const sb = await client();
+        const { data } = await sb.auth.getSession();
+        const t = data && data.session && data.session.access_token;
+        if (!t) return null;
+        return fetch(PASS_API + pfad, Object.assign({}, init, { headers: Object.assign({}, (init && init.headers) || {}, { Authorization: 'Bearer ' + t }) }));
+    }
+    // → { ok, url } | { ok:false, fehler: 'anmelden'|'test'|'zu'|'netz'|'server'|<grund der DB>, azubis }
+    async function bhb2bLizenzKasse(azubis, dauer) {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') return { ok: false, fehler: 'kein_ausbilder' };
+        let r;
+        try {
+            r = await passApi('/pass/betrieb-kasse', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ betrieb: st.betriebId, azubis, dauer: Number(dauer), sprache: document.documentElement.lang === 'en' ? 'en' : 'de' }) });
+        } catch (e) { return { ok: false, fehler: 'netz' }; }
+        if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
+        const d = await r.json().catch(() => null);
+        if (r.status === 503) return { ok: false, fehler: 'zu' };
+        if (r.status === 403 && d && d.test) return { ok: false, fehler: 'test' };
+        if (r.status === 409) return { ok: false, fehler: (d && d.grund) || 'server', azubis: (d && d.azubis) || [] };
+        if (!r.ok || !d || !/^https:\/\/checkout\.stripe\.com\//.test(d.url || '')) return { ok: false, fehler: 'server' };
+        return { ok: true, url: d.url };
+    }
+    // Nach der Rueckkehr von Stripe → { ok, anzahl } | { ok:false, fehler: 'offen'|'fremd'|'kein'|'anmelden'|'netz'|'server' }
+    async function bhb2bLizenzKaufAbholen(sitzung) {
+        let r;
+        try { r = await passApi('/pass/betrieb-kauf?sitzung=' + encodeURIComponent(sitzung), { cache: 'no-store' }); }
+        catch (e) { return { ok: false, fehler: 'netz' }; }
+        if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
+        const d = await r.json().catch(() => null);
+        if (r.status === 202) return { ok: false, fehler: 'offen' };
+        if (r.status === 403) return { ok: false, fehler: 'fremd' };
+        if (r.status === 404 || r.status === 400) return { ok: false, fehler: 'kein' };
+        if (!r.ok || !d) return { ok: false, fehler: 'server' };
+        return { ok: true, anzahl: d.anzahl | 0 };
+    }
+    // Fuer den Azubi: kommt mein Pass vom Betrieb? (RLS: nur die eigene Zeile) → { zustand, bis } | null
+    async function bhb2bMeineLizenz() {
+        try {
+            const sb = await client();
+            const { data: u } = await sb.auth.getUser();
+            if (!u || !u.user) return null;
+            const { data, error } = await sb.from('betrieb_lizenzen').select('zustand, bis')
+                .eq('azubi', u.user.id).in('zustand', ['aktiv', 'verlassen', 'geschenkt']).gt('bis', new Date().toISOString()).limit(1);
+            if (error || !data || !data.length) return null;
+            return data[0];
+        } catch (e) { return null; }
+    }
+
     // ── Meldungen (geloeschte Wochen) ────────────────────────────────
     //
     // Geschrieben werden sie vom Trigger `berichte_ereignis_log`, nicht von
@@ -1591,6 +1673,13 @@
         einladungenListe: bhb2bEinladungenListe,
         team: bhb2bTeam,
         mitgliedEntfernen: bhb2bMitgliedEntfernen,
+        lizenzen: bhb2bLizenzen,
+        lizenzEntziehen: bhb2bLizenzEntziehen,
+        lizenzSchenken: bhb2bLizenzSchenken,
+        lizenzZuweisen: bhb2bLizenzZuweisen,
+        lizenzKasse: bhb2bLizenzKasse,
+        lizenzKaufAbholen: bhb2bLizenzKaufAbholen,
+        meineLizenz: bhb2bMeineLizenz,
         meldungen: bhb2bMeldungen,
         meldungenQuittieren: bhb2bMeldungenQuittieren,
         azubiListe: bhb2bAzubiListe,

@@ -604,6 +604,35 @@
         }
         .abk-team-fehler { margin-top: 9px; font-size: 0.8rem; color: var(--danger); line-height: 1.55; }
 
+        /* Pässe (Firmenpass, seit 19.11.2026): Zeilen wie im Team-Reiter, Zustand als Marke.
+           „verlassen" traegt die Alarmfarbe der Meldungen: der Betrieb muss etwas entscheiden. */
+        .abp-liste { margin-top: 12px; display: grid; gap: 6px; }
+        .abp-zeile {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            padding: 10px 13px; background: var(--bg-raise);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+        }
+        .abp-zeile.is-verlassen { background: rgba(var(--danger-rgb), 0.07); border-color: rgba(var(--danger-rgb), 0.30); }
+        .abp-name { font-size: 0.86rem; font-weight: 600; }
+        .abp-bis { font-size: 0.74rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+        .abp-satz { flex-basis: 100%; font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+        .abp-aktionen { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; align-items: center; }
+        .abp-aktionen .ab-btn { flex: 0 0 auto; padding: 6px 12px; font-size: 0.78rem; }
+        .abp-aktionen select { padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--bg-card); color: var(--text-main); font: inherit; font-size: 0.8rem; }
+        .abp-kauf { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+        .abp-wahl { margin-top: 10px; display: grid; gap: 6px; }
+        .abp-wahl label { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.86rem; cursor: pointer; }
+        .abp-wahl label.is-aus { opacity: 0.55; cursor: default; }
+        .abp-wahl small { margin-left: auto; font-size: 0.74rem; color: var(--text-faint); }
+        .abp-dauer { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+        .abp-dauer label { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.82rem; cursor: pointer; }
+        .abp-dauer label:has(input:checked) { border-color: var(--primary); }
+        .abp-summe { margin-top: 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .abp-summe .ab-btn { flex: 0 0 auto; }
+        .abp-summe small { font-size: 0.76rem; color: var(--text-muted); }
+        .abp-meldung { margin-top: 10px; font-size: 0.82rem; line-height: 1.55; color: var(--text-main); }
+        .abp-meldung.is-fehler { color: var(--danger); }
+
         /* Einladungscode direkt hier — vorher musste man ins Berichtsheft. */
         .abk-einl {
             margin-top: 14px; padding: 16px 18px;
@@ -2022,7 +2051,7 @@
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=e96112393b"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=46b33fb2b2"></script>
     <script defer src="/Assets/js/ausbilder-pdf.js?v=39a1016227"></script>
 
     <script>
@@ -3403,6 +3432,205 @@
             }
         };
 
+        // ── Pässe (Firmenpass, seit 19.11.2026) ──────────────────────────
+        // Entscheidungen des Nutzers: gekauft wird je Azubi (sofort zugewiesen, KEIN Vorrat —
+        // sonst laege in Jahren ein alter, billigerer Pass herum), Laufzeit ab Kauf, Preis wie
+        // fuer Azubis. Entziehen geht jederzeit; die Restdauer kann ein anderer Azubi des Betriebs
+        // bekommen. Verlaesst ein Azubi den Betrieb, bleibt seine Lizenz hier rot markiert, bis
+        // „behalten lassen" (endgueltig) oder „entziehen" gewaehlt ist; dazu kommt eine Mail
+        // (ai-proxy, 10-Minuten-Takt). Ob das Konto das darf, entscheidet die DB, nicht diese Seite.
+        var kontoLizenzen = null;          // { lizenzen, mitPass } | null
+        var lizenzMeldung = { text: '', fehler: false };
+        var lizenzWahl = {};               // userId → true
+        var lizenzDauer = 3;
+        var lizenzBestaetigen = '';        // Lizenz, deren „Entziehen" auf den zweiten Klick wartet
+        var LIZENZ_PREIS = { 2: 999, 3: 1499, 4: 1799 };   // Cent, wie PASS_PREISE im Worker
+
+        function lizenzEuro(cent) {
+            var t = (cent / 100).toFixed(2);
+            return document.documentElement.lang === 'en' ? '€' + t : t.replace('.', ',') + ' €';
+        }
+        function lizenzListe() { return (kontoLizenzen && kontoLizenzen.lizenzen) || []; }
+        function lizenzenVerlassen() { return lizenzListe().filter(function (l) { return l.zustand === 'verlassen'; }); }
+        async function lizenzenLaden() {
+            try { kontoLizenzen = await BHB2B.lizenzen(); }
+            catch (e) { kontoLizenzen = { lizenzen: [], mitPass: [], fehler: true }; }
+        }
+        function lizenzMess(schritt, extra) {
+            if (typeof mwlEvent === 'function') { try { mwlEvent('firmenpass', Object.assign({ schritt: schritt }, extra || {})); } catch (e) {} }
+        }
+
+        // Rote Leiste ueber den Reitern, solange ein Austritt unentschieden ist
+        function lizenzHinweisBlock() {
+            var v = lizenzenVerlassen();
+            if (!v.length) return '';
+            return '<div class="abk-meld is-alarm" id="abpHinweis"><div class="abk-meld-kopf">' +
+                '<span class="abk-meld-t">' + (v.length === 1
+                    ? abL(esc(v[0].azubi_name || 'Ein Azubi') + ' hat Ihren Betrieb verlassen', esc(v[0].azubi_name || 'An apprentice') + ' has left your company')
+                    : abL(v.length + ' Azubis mit Pass haben Ihren Betrieb verlassen', v.length + ' apprentices with a pass have left your company')) + '</span>' +
+                '<span class="abk-meld-s">' + abL('Entscheiden Sie, ob der Pass bleibt oder an einen anderen Azubi geht.', 'Decide whether the pass stays or goes to another apprentice.') + '</span>' +
+                '<button type="button" class="abk-meld-alle" data-ansicht="paesse">' + abL('Zu den Pässen', 'Go to passes') + '</button>' +
+                '</div></div>';
+        }
+
+        function lizenzZeile(l) {
+            var bis = l.bis ? fmtDate(String(l.bis).slice(0, 10)) : '';
+            var name = esc(l.azubi_name || abL('ohne Namen', 'unnamed'));
+            var zustand = {
+                aktiv: abL('aktiv', 'active'), verlassen: abL('hat den Betrieb verlassen', 'left the company'),
+                geschenkt: abL('überlassen', 'handed over'), frei: abL('frei', 'unassigned'), erstattet: abL('erstattet', 'refunded')
+            }[l.zustand] || l.zustand;
+            var marke = '<span class="abk-meld-marke' + (l.zustand === 'verlassen' ? ' is-alarm' : '') + '">' + zustand + '</span>';
+            var bisText = l.zustand === 'erstattet' ? '' : '<span class="abp-bis">' + abL('läuft bis ', 'runs until ') + esc(bis) + '</span>';
+            var aktionen = '', satz = '';
+            var warte = lizenzBestaetigen === l.id;
+            var entziehen = warte
+                ? '<button type="button" class="ab-btn ab-btn-ghost" onclick="abpEntziehen(\'' + l.id + '\', true)">' + abL('Wirklich entziehen', 'Really revoke') + '</button>' +
+                  '<button type="button" class="ab-btn ab-btn-ghost" onclick="abpAbbrechen()">' + abL('Abbrechen', 'Cancel') + '</button>'
+                : '<button type="button" class="ab-btn ab-btn-ghost" onclick="abpEntziehen(\'' + l.id + '\')">' + abL('Entziehen', 'Revoke') + '</button>';
+            if (l.zustand === 'aktiv') {
+                aktionen = entziehen;
+                if (warte) satz = abL('Der Pass endet sofort für ' + name + '. Die restliche Laufzeit bis ' + esc(bis) + ' können Sie danach einem anderen Azubi geben.',
+                    'The pass ends immediately for ' + name + '. You can then give the remaining time until ' + esc(bis) + ' to another apprentice.');
+            } else if (l.zustand === 'verlassen') {
+                var seit = l.verlassen_am ? fmtDate(String(l.verlassen_am).slice(0, 10)) : '';
+                satz = abL(name + ' ist seit ' + esc(seit) + ' nicht mehr mit Ihrem Betrieb verbunden und behält den Pass, bis Sie entscheiden. „Behalten lassen“ ist endgültig.',
+                    name + ' has not been connected to your company since ' + esc(seit) + ' and keeps the pass until you decide. “Let them keep it” is final.');
+                aktionen = (warte ? '' : '<button type="button" class="ab-btn" onclick="abpSchenken(\'' + l.id + '\')">' + abL('Behalten lassen', 'Let them keep it') + '</button>') + entziehen;
+            } else if (l.zustand === 'geschenkt') {
+                satz = abL('Der Pass bleibt bei ' + name + ' bis zum Ende der Laufzeit.', 'The pass stays with ' + name + ' until it ends.');
+            } else if (l.zustand === 'frei') {
+                name = abL('Nicht zugewiesen', 'Not assigned');
+                var frei = (kontoDaten && kontoDaten.azubis || []).filter(function (a) { return (kontoLizenzen.mitPass || []).indexOf(a.userId) === -1; });
+                if (new Date(l.bis) <= new Date()) {
+                    satz = abL('Abgelaufen.', 'Expired.');
+                } else if (frei.length) {
+                    aktionen = '<select id="abpZu-' + l.id + '" aria-label="' + abL('Azubi wählen', 'Choose apprentice') + '">' +
+                        frei.map(function (a) { return '<option value="' + esc(a.userId) + '">' + esc(a.name || abL('ohne Namen', 'unnamed')) + '</option>'; }).join('') +
+                        '</select><button type="button" class="ab-btn" onclick="abpZuweisen(\'' + l.id + '\')">' + abL('Zuweisen', 'Assign') + '</button>';
+                    satz = abL('Wer sie bekommt, erhält die restliche Laufzeit bis ' + esc(bis) + '.', 'Whoever gets it receives the remaining time until ' + esc(bis) + '.');
+                } else {
+                    satz = abL('Alle Azubis haben schon einen Pass. Die Lizenz wartet hier bis ' + esc(bis) + '.', 'All apprentices already have a pass. The licence waits here until ' + esc(bis) + '.');
+                }
+            }
+            return '<div class="abp-zeile' + (l.zustand === 'verlassen' ? ' is-verlassen' : '') + '">' +
+                '<span class="abp-name">' + name + '</span>' + marke + bisText +
+                (aktionen ? '<span class="abp-aktionen">' + aktionen + '</span>' : '') +
+                (satz ? '<p class="abp-satz">' + satz + '</p>' : '') + '</div>';
+        }
+
+        function paessePanelHTML() {
+            if (!kontoLizenzen) return '<p class="abk-einl-lade" style="margin-top:14px;">' + abL('Pässe werden geladen …', 'Loading passes …') + '</p>';
+            var liste = lizenzListe();
+            var mitPass = kontoLizenzen.mitPass || [];
+            var azubis = (kontoDaten && kontoDaten.azubis) || [];
+            // Kaufen geht nur fuer Azubis ohne Pass (Entscheidung des Nutzers: kein Vorrat)
+            Object.keys(lizenzWahl).forEach(function (id) {
+                if (mitPass.indexOf(id) !== -1 || !azubis.some(function (a) { return a.userId === id; })) delete lizenzWahl[id];
+            });
+            var n = Object.keys(lizenzWahl).length;
+            var preis = LIZENZ_PREIS[lizenzDauer] || 0;
+            var wahl = azubis.map(function (a) {
+                var hat = mitPass.indexOf(a.userId) !== -1;
+                return '<label' + (hat ? ' class="is-aus"' : '') + '><input type="checkbox"' + (hat ? ' disabled' : '') + (lizenzWahl[a.userId] ? ' checked' : '') +
+                    ' onchange="abpWahl(\'' + esc(a.userId) + '\', this.checked)"><span>' + esc(a.name || abL('ohne Namen', 'unnamed')) + '</span>' +
+                    (hat ? '<small>' + abL('hat schon einen Pass', 'already has a pass') + '</small>' : '') + '</label>';
+            }).join('');
+            var dauer = [2, 3, 4].map(function (j) {
+                return '<label><input type="radio" name="abpDauer"' + (lizenzDauer === j ? ' checked' : '') + ' onchange="abpDauer(' + j + ')">' +
+                    '<span>' + abL('bis ' + j + ' Jahre', 'up to ' + j + ' years') + ' · ' + lizenzEuro(LIZENZ_PREIS[j]) + '</span></label>';
+            }).join('');
+            var frei = azubis.filter(function (a) { return mitPass.indexOf(a.userId) === -1; }).length;
+            return '<div class="abk-einl" id="abpBox">' +
+                '<p class="abk-einl-t">' + abL('Ausbildungs-Pass für Ihre Azubis', 'Training pass for your apprentices') + '</p>' +
+                '<p class="abk-einl-s" style="margin-top:6px;">' + abL(
+                    'Mit dem Pass schreiben Ihre Azubis mehrere Wochen auf einmal, prüfen das Heft vor der Abgabe und gleichen es mit dem Rahmenplan ab. Pro Azubi kostet er dasselbe wie für Azubis selbst, einmalig und ohne Abo. Die Laufzeit beginnt mit dem Kauf. Sie können einen Pass jederzeit entziehen und die restliche Laufzeit einem anderen Azubi geben.',
+                    'With the pass your apprentices write several weeks at once, check the book before handing it in and compare it with the training framework. Per apprentice it costs the same as for apprentices themselves, once, no subscription. The term starts with the purchase. You can revoke a pass at any time and give the remaining time to another apprentice.') + '</p>' +
+                (liste.length ? '<div class="abp-liste">' + liste.map(lizenzZeile).join('') + '</div>' : '') +
+                (lizenzMeldung.text ? '<p class="abp-meldung' + (lizenzMeldung.fehler ? ' is-fehler' : '') + '" role="status">' + esc(lizenzMeldung.text) + '</p>' : '') +
+                (azubis.length ? '<div class="abp-kauf">' +
+                    '<p class="abk-einl-t">' + abL('Pässe kaufen', 'Buy passes') + '</p>' +
+                    (frei ? '' : '<p class="abk-einl-s">' + abL('Alle verbundenen Azubis haben schon einen Pass.', 'All connected apprentices already have a pass.') + '</p>') +
+                    '<div class="abp-wahl">' + wahl + '</div>' +
+                    (frei ? '<div class="abp-dauer" role="radiogroup" aria-label="' + abL('Laufzeit', 'Term') + '">' + dauer + '</div>' +
+                        '<div class="abp-summe"><button type="button" class="ab-btn abk-cta" onclick="abpKaufen()"' + (n ? '' : ' disabled') + '><span>' +
+                        (n ? abL('Weiter zur Zahlung · ' + lizenzEuro(preis * n), 'Continue to payment · ' + lizenzEuro(preis * n)) : abL('Azubis auswählen', 'Choose apprentices')) + '</span></button>' +
+                        '<small>' + abL('Rechnung auf Ihre Firma, ohne Umsatzsteuer (§ 19 UStG). Für Unternehmer gilt kein Widerrufsrecht.', 'Invoice to your company, no VAT (§ 19 UStG). Businesses have no right of withdrawal.') + '</small></div>' : '') +
+                    '</div>' : '') +
+                '</div>';
+        }
+
+        function paesseNeu() { if (ansicht === 'paesse') renderAnsicht(); }
+        window.abpWahl = function (id, an) { if (an) lizenzWahl[id] = true; else delete lizenzWahl[id]; paesseNeu(); };
+        window.abpDauer = function (j) { lizenzDauer = j; paesseNeu(); };
+        window.abpAbbrechen = function () { lizenzBestaetigen = ''; paesseNeu(); };
+        async function lizenzAktion(fn, ok) {
+            var box = $('abpBox');
+            if (box) box.querySelectorAll('button, select, input').forEach(function (b) { b.disabled = true; });
+            try { await fn(); lizenzMeldung = { text: ok, fehler: false }; }
+            catch (e) { lizenzMeldung = { text: (e && e.message) || abL('Das hat nicht geklappt.', 'That did not work.'), fehler: true }; }
+            lizenzBestaetigen = '';
+            await lizenzenLaden();
+            renderKonto();
+        }
+        window.abpEntziehen = function (id, sicher) {
+            if (!sicher) { lizenzBestaetigen = id; paesseNeu(); return; }
+            lizenzMess('entzogen');
+            lizenzAktion(function () { return BHB2B.lizenzEntziehen(id); }, abL('Pass entzogen. Die restliche Laufzeit können Sie jetzt weitergeben.', 'Pass revoked. You can now pass on the remaining time.'));
+        };
+        window.abpSchenken = function (id) {
+            lizenzMess('geschenkt');
+            lizenzAktion(function () { return BHB2B.lizenzSchenken(id); }, abL('Der Pass bleibt beim Azubi.', 'The pass stays with the apprentice.'));
+        };
+        window.abpZuweisen = function (id) {
+            var sel = $('abpZu-' + id);
+            if (!sel || !sel.value) return;
+            lizenzMess('zugewiesen');
+            lizenzAktion(function () { return BHB2B.lizenzZuweisen(id, sel.value); }, abL('Pass zugewiesen.', 'Pass assigned.'));
+        };
+        window.abpKaufen = async function () {
+            var ids = Object.keys(lizenzWahl);
+            if (!ids.length) return;
+            var box = $('abpBox');
+            if (box) box.querySelectorAll('button, input').forEach(function (b) { b.disabled = true; });
+            lizenzMess('kasse', { anzahl: ids.length, dauer: lizenzDauer });
+            var r = await BHB2B.lizenzKasse(ids, lizenzDauer);
+            if (r.ok) { location.href = r.url; return; }
+            var T = {
+                hat_pass: abL('Für ' + (r.azubis || []).join(', ') + ' gibt es schon einen Pass.', 'There is already a pass for ' + (r.azubis || []).join(', ') + '.'),
+                kein_azubi: abL('Mindestens einer der Azubis ist nicht mehr mit Ihrem Betrieb verbunden.', 'At least one apprentice is no longer connected to your company.'),
+                kein_ausbilder: abL('Nur Ausbilder dieses Betriebs können Pässe kaufen.', 'Only trainers of this company can buy passes.'),
+                anmelden: abL('Bitte melden Sie sich erneut an.', 'Please sign in again.'),
+                test: abL('Die Kasse läuft noch im Testbetrieb.', 'Checkout is still in test mode.'),
+                zu: abL('Die Kasse ist gerade nicht eingerichtet.', 'Checkout is not set up right now.'),
+                netz: abL('Keine Verbindung. Sind Sie online?', 'No connection. Are you online?')
+            };
+            lizenzMeldung = { text: T[r.fehler] || abL('Die Kasse ist gerade nicht erreichbar. Versuchen Sie es gleich noch einmal.', 'Checkout is not reachable right now. Try again in a moment.'), fehler: true };
+            lizenzMess('kasse_fehler', { fehler: r.fehler });
+            await lizenzenLaden();
+            renderKonto();
+        };
+        // Rueckkehr von Stripe (?betriebkauf=cs_… | abgebrochen). Webhook und Rueckkehr buchen
+        // beide (idempotent je Sitzung); „offen" heisst: Zahlung noch nicht bestaetigt.
+        async function lizenzKaufZurueck(sitzung) {
+            ansicht = 'paesse';
+            if (sitzung === 'abgebrochen') { lizenzMeldung = { text: abL('Kauf abgebrochen. Es wurde nichts berechnet.', 'Purchase cancelled. Nothing was charged.'), fehler: false }; return; }
+            if (!/^cs_(test|live)_[A-Za-z0-9]{10,200}$/.test(sitzung)) return;
+            var r = null;
+            for (var i = 0; i < 6; i++) {
+                r = await BHB2B.lizenzKaufAbholen(sitzung);
+                if (r.ok || r.fehler !== 'offen') break;
+                await new Promise(function (ok) { setTimeout(ok, 2500); });
+            }
+            lizenzMess(r && r.ok ? 'gekauft' : 'rueckkehr_fehler', r && r.ok ? { anzahl: r.anzahl } : { fehler: r && r.fehler });
+            lizenzMeldung = r && r.ok
+                ? { text: abL(r.anzahl === 1 ? 'Bezahlt. Der Pass ist zugewiesen, die Rechnung kommt per E-Mail.' : 'Bezahlt. ' + r.anzahl + ' Pässe sind zugewiesen, die Rechnung kommt per E-Mail.',
+                              r.anzahl === 1 ? 'Paid. The pass is assigned, the invoice comes by email.' : 'Paid. ' + r.anzahl + ' passes are assigned, the invoice comes by email.'), fehler: false }
+                : { text: r && r.fehler === 'offen'
+                        ? abL('Die Zahlung ist noch nicht bestätigt. Die Pässe erscheinen hier, sobald sie eingeht.', 'The payment is not confirmed yet. The passes appear here as soon as it arrives.')
+                        : abL('Die Zahlung ließ sich gerade nicht prüfen. Laden Sie die Seite gleich neu, die Pässe werden trotzdem zugewiesen.', 'The payment could not be checked right now. Reload the page in a moment; the passes are assigned anyway.'), fehler: !(r && r.fehler === 'offen') };
+        }
+
         // ── Prüfen: EIN Stapel über alle Azubis ──────────────────────────
         // Bis v7.7.0 lagen die offenen Wochen je Azubi in einer eigenen
         // Klappkarte. Wer zehn offene Wochen bei drei Azubis hatte, klappte
@@ -3410,7 +3638,7 @@
         // hatte keine Antwort an EINER Stelle. Jetzt ist die Liste links die
         // Antwort, rechts steht die gewaehlte Woche, und die Azubi-Karten sind
         // eine zweite Sicht darauf, die hierher fuehrt statt selbst zu pruefen.
-        var ansicht = 'pruefen';                       // 'pruefen' | 'azubis' | 'team'
+        var ansicht = 'pruefen';                       // 'pruefen' | 'azubis' | 'team' | 'paesse'
         var filter = { status: 'offen', azubi: '', q: '' };
         var aktivId = null;
         var auswahl = {};                              // bid → true (Sammel-Abzeichnen)
@@ -3697,6 +3925,7 @@
                 r('pruefen', 'Prüfen', 'Review', g.offen) +
                 r('azubis', 'Azubis', 'Apprentices', n) +
                 r('team', 'Team', 'Team', kontoTeam.length) +
+                r('paesse', 'Pässe', 'Passes', lizenzenVerlassen().length) +
                 '</div>';
         }
 
@@ -3704,7 +3933,7 @@
             var box = $('abkAnsicht');
             if (!box) return;
             box.setAttribute('aria-labelledby', 'abkR-' + ansicht);
-            if (!kontoDaten.azubis.length && ansicht !== 'team') {
+            if (!kontoDaten.azubis.length && ansicht !== 'team' && !(ansicht === 'paesse' && lizenzListe().length)) {
                 // Ohne Azubis gibt es nichts zu pruefen und keine Karte — der
                 // Anfang ist in beiden Reitern derselbe: einladen.
                 box.innerHTML = '<section class="abk-start">' +
@@ -3721,6 +3950,8 @@
             } else if (ansicht === 'team') {
                 box.innerHTML = teamPanelHTML(teamFehler);
                 teamFehler = '';
+            } else if (ansicht === 'paesse') {
+                box.innerHTML = paessePanelHTML();
             } else {
                 box.innerHTML = pruefenHTML();
                 renderListe();
@@ -3790,7 +4021,7 @@
                                            'already signed, not by you'), 'ihk') : '') +
                 // Meldungen VOR dem §14-Hinweis: eine Woche, die es nicht
                 // mehr gibt, wiegt schwerer als die allgemeine Monatsfrist.
-                '</div>' + meldungenBlock() + hinweis +
+                '</div>' + lizenzHinweisBlock() + meldungenBlock() + hinweis +
                 // Bestaetigung UNTER den Kennzahlen, nicht mehr als Wand ganz oben (13.11.2026,
                 // Entscheidung des Nutzers): gesperrt ist nur das Abzeichnen (Policy freigaben_insert),
                 // Ansehen, Einladen und Zurueckgeben gehen sofort. Offen bleibt der Weg trotzdem —
@@ -4883,13 +5114,22 @@
             var zusatz = await Promise.all([
                 BHB2B.meldungen ? BHB2B.meldungen().catch(function () { return []; }) : [],
                 BHB2B.team ? BHB2B.team().catch(function () { return []; }) : [],
-                BHB2B.erinnerungenBetrieb ? BHB2B.erinnerungenBetrieb().catch(function () { return {}; }) : {}
+                BHB2B.erinnerungenBetrieb ? BHB2B.erinnerungenBetrieb().catch(function () { return {}; }) : {},
+                BHB2B.lizenzen ? lizenzenLaden() : null
             ]);
             kontoMeldungen = zusatz[0] || [];
             kontoTeam = zusatz[1] || [];
             kontoErinnerungen = zusatz[2] || {};
 
             bindeKonto();
+            var kaufZurueck = new URLSearchParams(location.search).get('betriebkauf');
+            if (kaufZurueck) {
+                history.replaceState(null, '', location.pathname + location.hash);
+                ansicht = 'paesse';
+                renderKonto();
+                await lizenzKaufZurueck(kaufZurueck);
+                await lizenzenLaden();
+            }
             renderKonto();
         }
 

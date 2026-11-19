@@ -232,6 +232,7 @@ var EVENT_LABELS = {
     'kauf_los':         ['Kasse: Weiter geklickt', 'Checkout: continue clicked'],
     'kauf_fertig':      ['Pass gekauft', 'Pass bought'],
     'kauf_abgebrochen': ['Zahlung abgebrochen', 'Payment cancelled'],
+    'firmenpass':       ['Firmenpass (Ausbilder)', 'Company pass (trainer)'],
     'pass_werbung_weg': ['Pass-Hinweis weggeklickt', 'Pass prompt dismissed'],
     'import_deeplink':  ['Import-Link geöffnet', 'Import link opened'],
     'cloud_sync':       ['Cloud-Sync', 'Cloud sync'],
