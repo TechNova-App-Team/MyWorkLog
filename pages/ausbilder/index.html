@@ -2033,6 +2033,10 @@
     <script defer src="/config/supabase-config.js"></script>
     <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=46b33fb2b2"></script>
     <script defer src="/Assets/js/ausbilder-pdf.js?v=39a1016227"></script>
+    <!-- Nur die Adresse der Demo (/ausbilder/?demo), geladen wird sie erst in
+         demoStarten(). Im <template> fuehrt der Browser das Skript nicht aus,
+         stamp-assets setzt aber den Inhalts-Hash. -->
+    <template id="abDemoSkript"><script src="/Assets/js/ausbilder-demo.js?v=018ec8f470"></script></template>
 
     <script>
     (function () {
@@ -5503,8 +5507,13 @@
         }
         function demoStarten() {
             return new Promise(function (fertig) {
+                // Adresse aus dem <template id="abDemoSkript">: dort stempelt
+                // stamp-assets den Inhalts-Hash (in einem JS-String hier taete
+                // es das nicht, und der SW liefert ?v=-Adressen Cache-First —
+                // eine geaenderte Demo kaeme sonst nie an).
+                var vorlage = document.getElementById('abDemoSkript');
                 var s = document.createElement('script');
-                s.src = '/Assets/js/ausbilder-demo.js?v=0';
+                s.src = vorlage ? vorlage.content.querySelector('script').getAttribute('src') : '/Assets/js/ausbilder-demo.js';
                 s.onload = async function () {
                     window.MWLAusbilderDemo(BHB2B);
                     await bootKonto();

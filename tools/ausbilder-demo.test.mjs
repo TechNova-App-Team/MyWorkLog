@@ -85,10 +85,15 @@ const boot = SEITE.slice(SEITE.indexOf('        async function boot() {'), SEITE
 const iDemo = boot.indexOf('if (demoErlaubt()) { await demoStarten(); return; }');
 ok('boot() startet die Demo', iDemo !== -1);
 ok('… bevor der angemeldete Weg (echtes Konto) laufen kann', iDemo !== -1 && iDemo < boot.indexOf('BHB2B.angemeldet()'));
-const starten = SEITE.slice(SEITE.indexOf('function demoStarten()'), SEITE.indexOf('function demoStarten()') + 600);
+const iStart = SEITE.indexOf('function demoStarten()');
+const starten = SEITE.slice(iStart, SEITE.indexOf('\n        }\n', iStart));
 ok('demoStarten ersetzt BHB2B, BEVOR bootKonto laeuft',
    starten.indexOf('window.MWLAusbilderDemo(BHB2B)') !== -1 && starten.indexOf('window.MWLAusbilderDemo(BHB2B)') < starten.indexOf('await bootKonto()'));
 ok('Einstieg hat den Knopf „Demo ansehen“', /<a class="abi-demo" href="\/ausbilder\/\?demo"/.test(SEITE));
+// Die Adresse muss einen Inhalts-Hash tragen (SW liefert ?v= Cache-First);
+// gestempelt wird nur ein src=" im HTML, deshalb steht sie im <template>.
+ok('Demo-Adresse steht gestempelt im <template>', /<template id="abDemoSkript"><script src="\/Assets\/js\/ausbilder-demo\.js\?v=[0-9a-f]{6,}"><\/script><\/template>/.test(SEITE));
+ok('demoStarten liest die Adresse aus dem <template>', starten.includes("getElementById('abDemoSkript')"));
 
 console.log('\nausbilder-demo: ' + pass + ' ok, ' + fail + ' fehlgeschlagen');
 process.exit(fail ? 1 : 0);
