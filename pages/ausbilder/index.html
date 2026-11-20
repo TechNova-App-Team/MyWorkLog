@@ -1221,6 +1221,18 @@
         #abIntro .abi-start .ab-cta { gap: 10px; }
         #abIntro .abi-start .ab-cta svg { width: 17px; height: 17px; transition: transform 0.3s var(--ease-out); }
         #abIntro .abi-start .ab-cta:hover svg { transform: translateX(3px); }
+        #abIntro .abi-demo {
+            display: inline-flex; align-items: center; gap: 9px;
+            margin-top: 28px; padding: 13px 22px; border-radius: 999px;
+            border: 1px solid var(--border-strong); color: var(--text-main);
+            font-size: 0.95rem; font-weight: 600; text-decoration: none;
+            transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        #abIntro .abi-demo svg { width: 14px; height: 14px; }
+        #abIntro .abi-demo:hover { border-color: var(--text-muted); background: rgba(255, 255, 255, 0.04); }
+        [data-theme="light"] #abIntro .abi-demo:hover { background: rgba(22, 23, 26, 0.04); }
+        #abIntro .abi-demo:active { transform: scale(0.97); }
+        #abIntro .abi-demo:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.6); outline-offset: 3px; }
         .abi-drei {
             display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
             margin: clamp(32px, 4vw, 44px) 0 0; padding: 0; list-style: none; max-width: 60rem;
@@ -1300,6 +1312,7 @@
             .abi-frame { padding: 5px; border-radius: 18px; }
             .abi-frame-in { border-radius: 13px; }
             #abIntro .ab-cta { width: 100%; justify-content: center; }
+            #abIntro .abi-demo { width: 100%; justify-content: center; margin-top: 0; }
         }
         @media (prefers-reduced-motion: reduce) {
             .abi-tilt .tilt-in { transform: none; }
@@ -1729,6 +1742,13 @@
                 <a class="ab-cta" href="/?cloud=login&amp;back=ausbilder" onclick="if(typeof mwlEvent==='function')mwlEvent('b2b_einrichten_klick',{ort:'oben'},{transport:'sendBeacon'})">
                     <span>Betrieb kostenlos einrichten</span>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </a>
+                <!-- Demo-Durchgang ohne Konto: erfundener Betrieb, nichts geht an den Server
+                     (Assets/js/ausbilder-demo.js). Text im <span>, damit der i18n-Schluessel
+                     nicht am Icon haengt. -->
+                <a class="abi-demo" href="/ausbilder/?demo" onclick="if(typeof mwlEvent==='function')mwlEvent('ausbilder_demo',{schritt:'knopf'},{transport:'sendBeacon'})">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>
+                    <span>Demo ansehen</span>
                 </a>
             </div>
             <ol class="abi-drei">
@@ -3626,6 +3646,12 @@
                 await new Promise(function (ok) { setTimeout(ok, 2500); });
             }
             lizenzMess(r && r.ok ? 'gekauft' : 'rueckkehr_fehler', r && r.ok ? { anzahl: r.anzahl } : { fehler: r && r.fehler });
+            // Demo: der Ablauf ist echt, die Zahlung nicht — das muss der Satz sagen.
+            if (r && r.ok && demoErlaubt()) {
+                lizenzMeldung = { text: abL('So sieht es nach dem Bezahlen aus: der Pass ist zugewiesen. In der Demo wurde nichts berechnet; in Ihrem Betrieb geht es hier zur Kasse, und die Rechnung kommt per E-Mail.',
+                                            'This is how it looks after paying: the pass is assigned. Nothing was charged in the demo; in your company this leads to checkout, and the invoice comes by email.'), fehler: false };
+                return;
+            }
             lizenzMeldung = r && r.ok
                 ? { text: abL(r.anzahl === 1 ? 'Bezahlt. Der Pass ist zugewiesen, die Rechnung kommt per E-Mail.' : 'Bezahlt. ' + r.anzahl + ' Pässe sind zugewiesen, die Rechnung kommt per E-Mail.',
                               r.anzahl === 1 ? 'Paid. The pass is assigned, the invoice comes by email.' : 'Paid. ' + r.anzahl + ' passes are assigned, the invoice comes by email.'), fehler: false }
@@ -5396,7 +5422,7 @@
             var fm = /[#&]firma=([A-Za-z0-9_-]+)/.exec(location.hash || '');
             if (fm) { await bootFirma(fm[1]); return; }
 
-            // Vorschau mit erfundenem Betrieb, NUR lokal (/ausbilder/?demo).
+            // Demo-Durchgang mit erfundenem Betrieb (/ausbilder/?demo).
             // Ersetzt BHB2B komplett, bevor das Cockpit laedt.
             if (demoErlaubt()) { await demoStarten(); return; }
 
@@ -5467,17 +5493,18 @@
                 setIch: function (ich) { Object.assign(kontoIch, ich); } };
         }
 
-        // Der Nutzer sah den Pass-Kauf nie, weil er selbst einen Pass hat.
-        // Die Datei wird nur auf localhost geladen und von prune-deploy aus dem
-        // Deploy entfernt — live gibt es weder den Schalter noch die Datei.
+        // Demo-Durchgang (/ausbilder/?demo, Knopf „Demo ansehen“ im Einstieg):
+        // Betriebe sollen das Cockpit ausprobieren koennen, bevor sie eins
+        // anlegen (Wunsch des Nutzers 20.11.2026). Laeuft auch live — sicher,
+        // weil ausbilder-demo.js JEDE BHB2B-Funktion ersetzt, bevor das Cockpit
+        // laedt (Test: tools/ausbilder-demo.test.mjs).
         function demoErlaubt() {
-            var h = location.hostname;
-            return (h === 'localhost' || h === '127.0.0.1') && new URLSearchParams(location.search).has('demo') && b2bDa();
+            return new URLSearchParams(location.search).has('demo') && !!b2bDa();
         }
         function demoStarten() {
             return new Promise(function (fertig) {
                 var s = document.createElement('script');
-                s.src = '/Assets/js/dev/ausbilder-demo.js';
+                s.src = '/Assets/js/ausbilder-demo.js?v=0';
                 s.onload = async function () {
                     window.MWLAusbilderDemo(BHB2B);
                     await bootKonto();

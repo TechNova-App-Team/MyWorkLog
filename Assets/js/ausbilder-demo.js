@@ -1,19 +1,18 @@
 // ═══ AUSBILDER DEMO MODULE ═══
-// Vorschau des Ausbilder-Cockpits mit einem erfundenen Betrieb, NUR auf
-// localhost: /ausbilder/?demo (Seite laedt diese Datei nur dort, siehe
-// demoErlaubt() in pages/ausbilder/index.html).
+// Demo-Durchgang des Ausbilder-Cockpits mit einem erfundenen Betrieb:
+// /ausbilder/?demo, Knopf „Demo ansehen“ im Einstieg. Laeuft LIVE fuer
+// Betriebe, die das Cockpit vor dem Anlegen ausprobieren wollen (Wunsch des
+// Nutzers 20.11.2026). Ein echtes Demo-Konto haette in die produktive
+// Supabase geschrieben und echte Stripe-Kassen geoeffnet.
 //
-// Warum: Der Nutzer hat selbst einen Pass und sah deshalb im Reiter „Pässe“
-// nie den Kauf-Ablauf (20.11.2026). Ein echtes Demo-Konto haette in die
-// PRODUKTIVE Supabase geschrieben — das hier ersetzt BHB2B im Browser.
-//
-// 🔴 Sicherheitsregeln, nicht aufweichen:
+// 🔴 Sicherheitsregeln, nicht aufweichen (Test: tools/ausbilder-demo.test.mjs):
 // - JEDE BHB2B-Funktion wird ersetzt. Was hier nicht nachgebaut ist, wirft
-//   „in der Vorschau nicht möglich“ — so kann kein Klick die echte DB oder
-//   Stripe erreichen, auch nicht eine kuenftig neue Funktion.
-// - tools/prune-deploy.js entfernt Assets/js/dev/ aus dem Deploy.
-// - Zustand (gekaufte Paesse, Entscheidungen) lebt in sessionStorage und ist
-//   mit dem Tab weg.
+//   „in der Demo nicht möglich“ — so kann kein Klick die echte DB oder
+//   Stripe erreichen, auch nicht eine kuenftig neue Funktion. Echt bleiben
+//   nur reine Rechenfunktionen ohne Netz (ECHT unten).
+// - mwlEvent laesst in der Demo NUR 'ausbilder_demo' durch. Sonst zaehlten
+//   Demo-Klicks als echte Freigaben und Firmenpass-Kaeufe (Kaufrate!).
+// - Zustand (Paesse, Entscheidungen) lebt in sessionStorage, mit dem Tab weg.
 (function () {
     'use strict';
     var SPEICHER = 'mwl_ausbilder_demo';
@@ -189,33 +188,85 @@
         }
     };
 
+    function L(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
+    // Der echte Weg zum eigenen Betrieb: derselbe Link wie der Hauptknopf im
+    // Einstieg (auf /en/ zeigt er dorthin, wohin die EN-Seite zeigt).
+    function einrichtenUrl() {
+        var a = document.querySelector('#abIntro .abi-start .ab-cta');
+        return (a && a.getAttribute('href')) || '/?cloud=login&back=ausbilder';
+    }
+    function demoVerlassen(ziel) {
+        try { sessionStorage.removeItem(SPEICHER); } catch (e) { /* egal */ }
+        location.href = ziel;
+    }
+
     window.MWLAusbilderDemo = function (bhb2b) {
         // Reine Rechenfunktionen ohne Netz duerfen echt bleiben.
         var ECHT = ['fehlendeWochen', 'inhaltDiff'];
+        var nichtMoeglich = function () {
+            throw new Error(L('In der Demo nicht möglich. Richten Sie dafür Ihren eigenen Betrieb ein.',
+                              'Not available in the demo. Set up your own company for this.'));
+        };
         Object.keys(bhb2b).forEach(function (k) {
             if (typeof bhb2b[k] !== 'function' || ECHT.indexOf(k) !== -1) return;
-            bhb2b[k] = NACHGEBAUT[k] || function () {
-                throw new Error('In der Vorschau nicht möglich.');
-            };
+            bhb2b[k] = NACHGEBAUT[k] || nichtMoeglich;
         });
         Object.keys(NACHGEBAUT).forEach(function (k) { if (!bhb2b[k]) bhb2b[k] = NACHGEBAUT[k]; });
+        // „Abmelden“ im Konto-Menue verlaesst die Demo.
+        bhb2b.abmelden = async function () { demoVerlassen(location.pathname); };
 
+        // Messung: nur das eigene Ereignis durchlassen (siehe Kopf).
+        var echtesEvent = typeof window.mwlEvent === 'function' ? window.mwlEvent : null;
+        var melden = function (schritt) {
+            if (echtesEvent) { try { echtesEvent('ausbilder_demo', { schritt: schritt }, { transport: 'sendBeacon' }); } catch (e) { /* egal */ } }
+        };
+        window.mwlEvent = function (name) {
+            if (name === 'ausbilder_demo' && echtesEvent) return echtesEvent.apply(this, arguments);
+        };
+        var z = zustand();
+        if (!z.gestartet) { z.gestartet = true; merken(z); melden('start'); }
+
+        // Band IM Fluss ueber dem Cockpit, nicht fixiert: fixiert lag es am Handy
+        // auf der Entscheidungsleiste (die klebt ebenfalls unten).
         var band = document.createElement('div');
         band.className = 'ab-demo-band';
-        band.setAttribute('role', 'status');
-        band.innerHTML = '<span>Vorschau mit erfundenen Daten. Nichts wird gespeichert oder bezahlt.</span>' +
-            '<button type="button">Zurücksetzen</button>';
-        band.querySelector('button').addEventListener('click', function () {
-            try { sessionStorage.removeItem(SPEICHER); } catch (e) { /* egal */ }
-            location.href = location.pathname + '?demo';
+        band.setAttribute('role', 'note');
+        band.innerHTML =
+            '<p class="ab-demo-t"><b>' + L('Demo-Betrieb', 'Demo company') + '</b>' +
+            '<span>' + L('Erfundene Azubis und Wochen. Probieren Sie alles aus: nichts wird gespeichert, verschickt oder bezahlt.',
+                         'Made-up apprentices and weeks. Try everything: nothing is saved, sent or charged.') + '</span></p>' +
+            '<div class="ab-demo-knoepfe">' +
+            '<button type="button" class="ab-demo-neu">' + L('Neu starten', 'Start over') + '</button>' +
+            '<a class="ab-demo-los" href="' + einrichtenUrl().replace(/"/g, '&quot;') + '">' + L('Eigenen Betrieb einrichten', 'Set up your company') + '</a>' +
+            '</div>';
+        band.querySelector('.ab-demo-neu').addEventListener('click', function () {
+            melden('neu');
+            demoVerlassen(location.pathname + '?demo');
+        });
+        band.querySelector('.ab-demo-los').addEventListener('click', function (e) {
+            e.preventDefault();
+            melden('einrichten');
+            demoVerlassen(this.getAttribute('href'));
         });
         var st = document.createElement('style');
-        st.textContent = '.ab-demo-band{position:fixed;left:16px;bottom:16px;max-width:calc(100vw - 32px);z-index:100001;' +
-            'display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;border-radius:999px;' +
-            'background:var(--ink);color:var(--on-ink);font-size:.8rem;font-weight:500;box-shadow:0 10px 30px -10px rgba(0,0,0,.6)}' +
-            '.ab-demo-band button{border:0;border-radius:999px;padding:6px 12px;font:inherit;font-weight:600;cursor:pointer;' +
-            'background:rgba(var(--primary-rgb),.25);color:inherit}';
+        st.textContent =
+            '.ab-demo-band{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px;margin:0 0 18px;padding:12px 12px 12px 18px;' +
+            'border:1px solid rgba(var(--primary-rgb),.35);border-radius:14px;background:rgba(var(--primary-rgb),.1)}' +
+            '.ab-demo-t{flex:1 1 320px;display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline;font-size:.84rem;line-height:1.5;color:var(--text-muted)}' +
+            '.ab-demo-t b{color:var(--text-main);font-weight:650}' +
+            '.ab-demo-knoepfe{display:flex;gap:8px;flex-wrap:wrap}' +
+            '.ab-demo-neu,.ab-demo-los{display:inline-flex;align-items:center;padding:8px 16px;border-radius:999px;font:inherit;' +
+            'font-size:.84rem;font-weight:600;cursor:pointer;text-decoration:none;transition:background-color .18s ease,border-color .18s ease}' +
+            '.ab-demo-neu{border:1px solid var(--border-strong);background:none;color:var(--text-main)}' +
+            '.ab-demo-neu:hover{border-color:var(--text-muted)}' +
+            '.ab-demo-los{border:1px solid transparent;background:var(--ink);color:var(--on-ink)}' +
+            '.ab-demo-los:hover{background:color-mix(in srgb,var(--ink) 88%,var(--primary))}' +
+            '.ab-demo-neu:active,.ab-demo-los:active{transform:scale(.97)}' +
+            '@media (max-width:760px){.ab-demo-knoepfe{width:100%}.ab-demo-knoepfe>*{flex:1 1 100%;justify-content:center;white-space:nowrap}.ab-demo-los{order:-1}}';
         document.head.appendChild(st);
-        document.body.appendChild(band);
+        var konto = document.getElementById('abKonto');
+        if (konto && konto.parentNode) konto.parentNode.insertBefore(band, konto);
+        else document.body.insertBefore(band, document.body.firstChild);
     };
 })();
