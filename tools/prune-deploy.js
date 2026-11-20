@@ -65,6 +65,7 @@ const REMOVE = [
                            // gemessen 18.10.2026: kein fetch in Assets/js, components, pages
   'index.template.html',   // Quelle der generierten index.html
   'tools',                 // Build-Tooling
+  'Assets/js/dev',         // lokale Vorschauen (z. B. /ausbilder/?demo) — tauschen BHB2B aus, nie live
   'supabase',              // Quelltext der Edge Functions — laeuft bei Supabase, nicht hier
   'CLAUDE.md',
   '.eslintrc.json',

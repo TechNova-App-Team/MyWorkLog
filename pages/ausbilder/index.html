@@ -5156,7 +5156,7 @@
             bindeKonto();
             var kaufZurueck = new URLSearchParams(location.search).get('betriebkauf');
             if (kaufZurueck) {
-                history.replaceState(null, '', location.pathname + location.hash);
+                history.replaceState(null, '', location.pathname + (demoErlaubt() ? '?demo' : '') + location.hash);
                 ansicht = 'paesse';
                 renderKonto();
                 await lizenzKaufZurueck(kaufZurueck);
@@ -5396,6 +5396,10 @@
             var fm = /[#&]firma=([A-Za-z0-9_-]+)/.exec(location.hash || '');
             if (fm) { await bootFirma(fm[1]); return; }
 
+            // Vorschau mit erfundenem Betrieb, NUR lokal (/ausbilder/?demo).
+            // Ersetzt BHB2B komplett, bevor das Cockpit laedt.
+            if (demoErlaubt()) { await demoStarten(); return; }
+
             var m = /[#&]w=([A-Za-z0-9\-_]+)/.exec(location.hash || '');
             if (!m) {
                 // Kein Fragment: kontobasierter Weg, wenn ein Ausbilder
@@ -5461,6 +5465,27 @@
                 setDaten: function (d) { kontoDaten = d; renderKonto(); },
                 // Wer "ich" bin, entscheidet ueber den Widerruf-Knopf.
                 setIch: function (ich) { Object.assign(kontoIch, ich); } };
+        }
+
+        // Der Nutzer sah den Pass-Kauf nie, weil er selbst einen Pass hat.
+        // Die Datei wird nur auf localhost geladen und von prune-deploy aus dem
+        // Deploy entfernt — live gibt es weder den Schalter noch die Datei.
+        function demoErlaubt() {
+            var h = location.hostname;
+            return (h === 'localhost' || h === '127.0.0.1') && new URLSearchParams(location.search).has('demo') && b2bDa();
+        }
+        function demoStarten() {
+            return new Promise(function (fertig) {
+                var s = document.createElement('script');
+                s.src = '/Assets/js/dev/ausbilder-demo.js';
+                s.onload = async function () {
+                    window.MWLAusbilderDemo(BHB2B);
+                    await bootKonto();
+                    fertig();
+                };
+                s.onerror = function () { fertig(); };
+                document.head.appendChild(s);
+            });
         }
 
         if (document.readyState === 'loading') {
