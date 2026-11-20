@@ -96,7 +96,7 @@
     function daten() {
         var z = zustand();
         var konto = {
-            betrieb: 'Musterwerk GmbH', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true,
+            betrieb: 'Musterwerk GmbH', kuerzel: z.kuerzel || '', betriebId: 'demo', domain: 'musterwerk.de', domainOk: true,
             nachweisArt: 'dns', nachgewiesen: true, impressumUrl: 'https://musterwerk.de/impressum',
             kontoEmail: 'm.weber@musterwerk.de',
             azubis: [
@@ -161,6 +161,7 @@
             merken(z);
             return zeile;
         },
+        kuerzelSetzen: async function (k) { var z = zustand(); z.kuerzel = k || ''; merken(z); return z.kuerzel; },
         lizenzen: async function () { return lizenzen(); },
         lizenzEntziehen: async function (id) { return lizenzAendern(id, function (l) { l.zustand = 'frei'; l.azubi = null; l.azubi_name = null; return l; }); },
         lizenzSchenken: async function (id) { return lizenzAendern(id, function (l) { l.zustand = 'geschenkt'; return l; }); },

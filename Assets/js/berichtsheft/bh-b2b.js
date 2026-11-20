@@ -243,8 +243,8 @@
 
             // Den Token braucht nur der Ausbilder (er traegt ihn ins DNS ein).
             const spalten = row.rolle === 'ausbilder'
-                ? 'name, domain, domain_token, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at, impressum_emails, firma_email, firma_bestaetigt_at'
-                : 'name, domain, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at, firma_email, firma_bestaetigt_at';
+                ? 'name, kuerzel, domain, domain_token, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at, impressum_emails, firma_email, firma_bestaetigt_at'
+                : 'name, kuerzel, domain, domain_verifiziert_at, nachweis_art, impressum_url, impressum_geprueft_at, firma_email, firma_bestaetigt_at';
             let b = null;
             const bt = await sb.from('betriebe').select(spalten).eq('id', row.betrieb_id).maybeSingle();
             if (bt && bt.data) b = bt.data;
@@ -252,6 +252,8 @@
             const wert = {
                 betriebId: row.betrieb_id,
                 name: (b && b.name) || '',
+                // Selbst gewaehltes Kuerzel fuers ganze Team; '' = automatisch.
+                kuerzel: (b && b.kuerzel) || '',
                 rolle: row.rolle,
                 // Wird gebraucht, sobald es mehrere Ausbilder gibt: die
                 // Team-Liste markiert damit "Sie" und sperrt den Knopf, mit
@@ -1207,7 +1209,7 @@
                 }
             }
             return {
-                betrieb: st.name, azubis: azubis, betriebId: st.betriebId,
+                betrieb: st.name, kuerzel: st.kuerzel, azubis: azubis, betriebId: st.betriebId,
                 domain: st.domain, domainToken: st.domainToken, domainOk: st.domainOk,
                 nachweisArt: st.nachweisArt, nachgewiesen: st.nachgewiesen,
                 impressumUrl: st.impressumUrl, impressumEmails: st.impressumEmails,
@@ -1332,6 +1334,24 @@
     // Der Nachweis selbst entsteht NICHT hier, sondern in der Edge Function
     // `domain-pruefen`. Diese Datei traegt nur die Domain ein und stoesst die
     // Pruefung an — `domain_verifiziert_at` kann der Client nicht schreiben.
+
+    /**
+     * Kuerzel des Betriebs setzen ('' = wieder automatisch). Spaltenrecht +
+     * RLS betriebe_update erlauben es nur Ausbildern des Betriebs; die
+     * Pruefung betriebe_kuerzel_form (1-2 Buchstaben/Ziffern, gross) sitzt in
+     * der DB. Der Nachweis bleibt unberuehrt (Trigger fasst kuerzel nicht an).
+     */
+    async function bhb2bKuerzelSetzen(kuerzel) {
+        const st = await bhb2bStatus(true);
+        if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann das.');
+        const k = String(kuerzel || '').trim().toUpperCase();
+        if (k && !/^[\p{L}\p{N}]{1,2}$/u.test(k)) throw new Error('Ein oder zwei Buchstaben oder Ziffern.');
+        const sb = await client();
+        const { error } = await sb.from('betriebe').update({ kuerzel: k || null }).eq('id', st.betriebId);
+        if (error) throw new Error(error.message);
+        statusVergessen();
+        return k;
+    }
 
     /** Domain hinterlegen (setzt einen bestehenden Nachweis zurueck). */
     async function bhb2bDomainSetzen(domain) {
@@ -1700,6 +1720,7 @@
         freigabePruefen: bhb2bFreigabePruefen,
         freigabeVerlauf: bhb2bFreigabeVerlauf,
         domainSetzen: bhb2bDomainSetzen,
+        kuerzelSetzen: bhb2bKuerzelSetzen,
         domainPruefen: bhb2bDomainPruefen,
         domainAusEmail: bhb2bDomainAusEmail,
         kontoEmailDomain: bhb2bKontoEmailDomain,

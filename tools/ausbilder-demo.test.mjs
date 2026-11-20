@@ -95,5 +95,15 @@ ok('Einstieg hat den Knopf „Demo ansehen“', /<a class="abi-demo" href="\/aus
 ok('Demo-Adresse steht gestempelt im <template>', /<template id="abDemoSkript"><script src="\/Assets\/js\/ausbilder-demo\.js\?v=[0-9a-f]{6,}"><\/script><\/template>/.test(SEITE));
 ok('demoStarten liest die Adresse aus dem <template>', starten.includes("getElementById('abDemoSkript')"));
 
+// ── 6. Kuerzel fuers ganze Team (betriebe.kuerzel, seit 20.11.2026) ───
+await attrappe.kuerzelSetzen('MW');
+ok('Demo merkt sich das Kuerzel', (await attrappe.azubiBerichte()).kuerzel === 'MW');
+ok('kein echter Aufruf beim Kuerzel', echtGerufen.length === 0);
+const B2B = readFileSync('Assets/js/berichtsheft/bh-b2b.js', 'utf8');
+ok('bh-b2b liest kuerzel fuer Ausbilder UND Azubi', (B2B.match(/'name, kuerzel, /g) || []).length === 2);
+ok('bh-b2b exportiert kuerzelSetzen', /kuerzelSetzen: bhb2bKuerzelSetzen/.test(B2B));
+ok('Seite speichert ueber BHB2B, nicht mehr in localStorage',
+   SEITE.includes('BHB2B.kuerzelSetzen(') && !SEITE.includes('mwl_ab_kuerzel_'));
+
 console.log('\nausbilder-demo: ' + pass + ' ok, ' + fail + ' fehlgeschlagen');
 process.exit(fail ? 1 : 0);

@@ -2065,12 +2065,12 @@
          Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
          bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
     <script defer src="/config/supabase-config.js"></script>
-    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=46b33fb2b2"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=47988e8e91"></script>
     <script defer src="/Assets/js/ausbilder-pdf.js?v=39a1016227"></script>
     <!-- Nur die Adresse der Demo (/ausbilder/?demo), geladen wird sie erst in
          demoStarten(). Im <template> fuehrt der Browser das Skript nicht aus,
          stamp-assets setzt aber den Inhalts-Hash. -->
-    <template id="abDemoSkript"><script src="/Assets/js/ausbilder-demo.js?v=018ec8f470"></script></template>
+    <template id="abDemoSkript"><script src="/Assets/js/ausbilder-demo.js?v=430583297e"></script></template>
 
     <script>
     (function () {
@@ -4393,17 +4393,13 @@
 
         // ── Kuerzel des Betriebs (Kaestchen links im Kopf) ───────────────
         // Automatisch aus dem Namen (monogramm); auf Wunsch selbst gewaehlt
-        // (Nutzer 20.11.2026). Gespeichert NUR auf diesem Geraet: eine eigene
-        // Spalte in `betriebe` braeuchte eine Migration der produktiven DB —
-        // fuer zwei Buchstaben Anzeige nicht gerechtfertigt, solange niemand
-        // danach fragt, dass das Team es geteilt sieht.
+        // (Nutzer 20.11.2026). Liegt in betriebe.kuerzel und gilt fuers ganze
+        // Team; schreiben duerfen nur Ausbilder (Spaltenrecht + RLS), die Form
+        // prueft die DB (betriebe_kuerzel_form).
         var KUERZEL_MUSTER = /^[\p{L}\p{N}]{1,2}$/u;
-        function kuerzelSchluessel(d) { return 'mwl_ab_kuerzel_' + ((d && d.betriebId) || 'ohne'); }
         function eigenesKuerzel(d) {
-            try {
-                var k = localStorage.getItem(kuerzelSchluessel(d));
-                return k && KUERZEL_MUSTER.test(k) ? k : '';
-            } catch (e) { return ''; }
+            var k = d && d.kuerzel;
+            return k && KUERZEL_MUSTER.test(k) ? k : '';
         }
         function kuerzelKnopf(d) {
             var k = eigenesKuerzel(d) || monogramm(d.betrieb);
@@ -4426,21 +4422,37 @@
             feld.setAttribute('aria-label', abL('Kürzel, ein oder zwei Zeichen. Leer lassen für automatisch.',
                                                 'Initials, one or two characters. Leave empty for automatic.'));
             var fertig = false;
+            function knopfZurueck() {
+                var neu = document.createElement('div');
+                neu.innerHTML = kuerzelKnopf(d);
+                var alt = $('abkKuerzel') || feld;
+                alt.replaceWith(neu.firstChild);
+            }
             function zurueck(speichern) {
                 if (fertig) return;
                 fertig = true;
+                var vorher = d.kuerzel || '';
                 if (speichern) {
                     var v = feld.value.trim().toUpperCase();
-                    try {
-                        if (!v || v === monogramm(d.betrieb)) localStorage.removeItem(kuerzelSchluessel(d));
-                        else if (KUERZEL_MUSTER.test(v)) localStorage.setItem(kuerzelSchluessel(d), v);
-                    } catch (e) { /* ohne Speicher bleibt es automatisch */ }
+                    // Gleich dem automatischen = automatisch (NULL), sonst
+                    // wuerde ein Namenswechsel das alte Kuerzel festhalten.
+                    var neu = (!v || v === monogramm(d.betrieb)) ? '' : v;
+                    if (neu !== vorher && (neu === '' || KUERZEL_MUSTER.test(neu))) {
+                        d.kuerzel = neu;             // sofort zeigen, Server danach
+                        knopfZurueck();
+                        BHB2B.kuerzelSetzen(neu).catch(function (e) {
+                            d.kuerzel = vorher;
+                            knopfZurueck();
+                            var b = $('abkKuerzel');
+                            if (b) b.title = (e && e.message) || abL('Konnte nicht gespeichert werden.', 'Could not be saved.');
+                            toast(abL('Kürzel konnte nicht gespeichert werden.', 'Initials could not be saved.'), true);
+                        });
+                        var b1 = $('abkKuerzel'); if (b1) b1.focus();
+                        return;
+                    }
                 }
-                var neu = document.createElement('div');
-                neu.innerHTML = kuerzelKnopf(d);
-                feld.replaceWith(neu.firstChild);
-                var b = $('abkKuerzel');
-                if (b) b.focus();
+                knopfZurueck();
+                var b2 = $('abkKuerzel'); if (b2) b2.focus();
             }
             feld.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') { e.preventDefault(); zurueck(true); }
