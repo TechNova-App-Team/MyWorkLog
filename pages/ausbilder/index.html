@@ -499,13 +499,13 @@
         .abk-label { font-size: 0.76rem; color: var(--text-faint); line-height: 1.4; }
         /* Status faerbt nur, wenn es etwas zu sagen gibt — nie Farbe allein,
            die Beschriftung steht immer daneben. */
-        .abk-kachel.is-auf { border-color: rgba(var(--primary-rgb), 0.32); }
+        /* Nur die Zahl traegt die Farbe, der Rahmen bleibt gleich: zwei
+           orange Rahmen + ein gestrichelter nebeneinander wirkten unruhig
+           (20.11.2026). */
         .abk-kachel.is-auf .abk-wert { color: var(--primary); }
-        .abk-kachel.is-warn { border-color: rgba(var(--warning-rgb), 0.38); }
         .abk-kachel.is-warn .abk-wert { color: var(--warning); }
         .abk-kachel.is-ruhig .abk-wert { color: var(--text-faint); }
         /* Herkunft, keine Bewertung — deshalb Neutralton wie im Balkensegment. */
-        .abk-kachel.is-ihk { border-style: dashed; }
         .abk-kachel.is-ihk .abk-wert { color: var(--text-muted); }
 
         .abk-hinweis {
@@ -808,13 +808,19 @@
             font-variant-numeric: tabular-nums;
         }
         .abk-wz-luecke { color: var(--warning); }
-        /* Bei vielen Wochen scrollt der Streifen in SICH — nie die Seite.
+        /* Der Streifen passt sich der Breite an, statt zu scrollen: mit
+           minmax(9px) standen bei 62 Wochen in 590 px eine native, helle
+           Windows-Scrollbar unter dem Streifen (vom Nutzer bemaengelt,
+           20.11.2026). Scrollen bleibt nur als Notnagel fuer Extremfaelle
+           (3,5 Jahre am Handy) — dann ohne sichtbare Leiste.
            min-width: 0 auf dem Kind, sonst waechst das Raster den Kasten auf. */
-        .abk-wz-scroll { overflow-x: auto; min-width: 0; padding-bottom: 2px; }
+        .abk-wz-scroll { overflow-x: auto; min-width: 0; scrollbar-width: none; }
+        .abk-wz-scroll::-webkit-scrollbar { display: none; }
         .abk-wz-grid, .abk-wz-achse {
-            display: grid; grid-template-columns: repeat(var(--wz-n), minmax(9px, 1fr));
+            display: grid; grid-template-columns: repeat(var(--wz-n), minmax(2px, 1fr));
             gap: 2px; min-width: 100%;
         }
+        .abk-wz-grid.is-dicht, .abk-wz-achse.is-dicht { gap: 1px; }
         .abk-wz {
             height: 22px; border-radius: 2px; background: var(--bg-raise);
             transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -842,7 +848,7 @@
         /* Beginnt der Monat in der LETZTEN Spalte, ragte die Marke rechts aus dem
            Scroll-Kasten und wurde zu "No" gekappt (390 px, Streifen bis heute).
            rtl laesst sie nach links ueberstehen statt nach rechts. */
-        .abk-wz-m:last-child { direction: rtl; }
+        .abk-wz-m:last-child, .abk-wz-m.is-ende { direction: rtl; }
         .abk-leg {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 0.76rem; color: var(--text-muted);
@@ -1733,7 +1739,7 @@
     </style>
     <!-- Heft-Stilschicht (Papier, Kuli, Rotstift, Stempel). Muss NACH dem Inline-Style
          stehen: sie ueberschreibt dessen Tokens und Bauteile bei gleicher Spezifitaet. -->
-    <link rel="stylesheet" href="/Assets/css/ausbilder-heft.css?v=35708a2e32">
+    <link rel="stylesheet" href="/Assets/css/ausbilder-heft.css?v=b2a74b9c54">
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
 </head>
@@ -3056,6 +3062,8 @@
             if (bisher > max) max = bisher;
 
             var zellen = '', marken = '', spalten = 0, letzterMonat = -1, luecken = 0;
+            var gesamt = Math.round((max - min) / 6048e5) + 1;
+            var abstand = Math.max(3, Math.ceil(gesamt / 16)), letzteMarke = -Infinity;
             for (var d = new Date(min); d <= max; d.setDate(d.getDate() + 7)) {
                 spalten++;
                 var k = isoDatum(d), st = proWoche[k];
@@ -3068,9 +3076,14 @@
                     (st ? ' data-wz="' + esc(bidProWoche[k]) + '" data-ai="' + esc(ai) + '"' : '') +
                     ' title="' + esc(titel) + '"></span>';
                 // Monatswechsel bekommt eine Marke — in derselben Spalte.
-                if (d.getMonth() !== letzterMonat) {
-                    letzterMonat = d.getMonth();
-                    marken += '<span class="abk-wz-m">' +
+                // Bei schmalen Zellen nicht jeden Monat beschriften — sonst
+                // laufen "Sep Okt Nov" ineinander. Abstand waechst mit der
+                // Wochenzahl (62 Wochen → mind. 4 Spalten, 180 → 12).
+                var neuerMonat = d.getMonth() !== letzterMonat;
+                letzterMonat = d.getMonth();
+                if (neuerMonat && spalten - letzteMarke >= abstand) {
+                    letzteMarke = spalten;
+                    marken += '<span class="abk-wz-m' + (gesamt - spalten < 2 ? ' is-ende' : '') + '">' +
                         esc(d.toLocaleDateString(abLocale(), { month: 'short' })) + '</span>';
                 } else {
                     marken += '<span class="abk-wz-m"></span>';
@@ -3088,10 +3101,10 @@
                 '<div class="abk-wz-kopf">' +
                 '<span>' + abL('Wochen im Verlauf', 'Weeks over time') + '</span>' + fuss + '</div>' +
                 '<div class="abk-wz-scroll">' +
-                '<div class="abk-wz-grid" style="--wz-n:' + spalten + '" role="img" aria-label="' +
+                '<div class="abk-wz-grid' + (spalten > 80 ? ' is-dicht' : '') + '" style="--wz-n:' + spalten + '" role="img" aria-label="' +
                 esc(abL(spalten + ' Wochen von ', spalten + ' weeks from ') + fmtDate(isoDatum(min)) +
                     abL(' bis ', ' to ') + fmtDate(isoDatum(max))) + '">' + zellen + '</div>' +
-                '<div class="abk-wz-achse" style="--wz-n:' + spalten + '" aria-hidden="true">' + marken + '</div>' +
+                '<div class="abk-wz-achse' + (spalten > 80 ? ' is-dicht' : '') + '" style="--wz-n:' + spalten + '" aria-hidden="true">' + marken + '</div>' +
                 '</div></div>';
         }
 
