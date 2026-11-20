@@ -67,7 +67,14 @@ async function probe(path, folgen = false) {
     const abbruch = AbortSignal.timeout(TIMEOUT_MS);
     try {
       // GET statt HEAD: manche Edge-Regeln verhalten sich bei HEAD anders.
-      const r = await fetch(BASE + path, { redirect: folgen ? 'follow' : 'manual', signal: abbruch });
+      // Eigener User-Agent: die WAF-Regel „Scraper-Schutz Rechtsseiten“ (seit
+      // 20.11.2026) sperrt Werkzeug-Kennungen wie Nodes Standard „node“ und
+      // laesst nur diese Kennung durch. Ohne sie meldet der Check Impressum,
+      // AGB usw. als 403, obwohl die Seiten fuer Menschen laufen.
+      const r = await fetch(BASE + path, {
+        redirect: folgen ? 'follow' : 'manual', signal: abbruch,
+        headers: { 'User-Agent': 'MyWorkLog-LiveCheck/1.0 (+https://myworklog.de)' },
+      });
       return { status: r.status, location: r.headers.get('location') || '' };
     } catch (e) {
       if (versuch === RETRIES) return { status: 0, location: '', fehler: String(e.message || e) };
