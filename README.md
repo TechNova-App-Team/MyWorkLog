@@ -249,7 +249,7 @@ Aktuelle Version: **v9.8.7** · 2026-11-20
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.8.7** | 2026-11-20 | Ausbilder: Die Prüfansicht ist neu gestaltet |
+| **9.8.7** | 2026-11-20 | Ausbilder: Überblick auf einen Blick, Prüfansicht aufgeräumt |
 | 9.8.6 | 2026-11-20 | Der Ausbilder-Bereich hat neutrale, dunkle Flächen statt eines Violett-Stichs |
 | 9.8.5 | 2026-11-19 | Ausbildungsbetriebe können den Ausbildungs-Pass für ihre Azubis kaufen |
 | 9.8.4 | 2026-11-19 | „Mehrere Wochen“ lässt sich einmal kostenlos ausprobieren |

@@ -1,17 +1,101 @@
 /* ausbilder-pruefen.css — Reiter „Prüfen“ im Ausbilder-Cockpit (seit v9.8.7)
    Laedt NACH ausbilder-heft.css und gewinnt bei gleicher Spezifitaet.
 
-   Warum es diese Datei gibt: Der Nutzer fand die Pruef-Ansicht „nicht modern“
-   (20.11.2026) und wollte sie „richtig modern“. Die Papier-Sprache aus
-   ausbilder-heft.css (Rotrand, Vordruck-Kaestchen, Kuli-Blau, schraeger
-   Stempel) gilt deshalb NUR noch fuer die Link-Ansicht einzelner Wochen
-   (#abWeekList) und den Einstieg. Im Cockpit ist die Woche ein ruhiges
-   Dokument wie in einem Review-Werkzeug (Linear, GitHub-Review):
+   Der Nutzer fand Pruef-Ansicht und Kopf des Cockpits „nicht modern“ und
+   „zu viel Text auf einmal“ (20.11.2026). Modern ist hier der RAHMEN:
+   - Lagebild statt vier Textkacheln + Warnband (abkLage() im Skript)
    - Liste = Posteingang, Filter = Segment-Schalter
-   - Detail ohne Papier, Text in Lesefarbe statt Kuli
-   - EIN gestalterischer Akzent: das Wochenbild (Stunden je Tag, wochenBild())
+   - Wochenbild: Stunden je Tag als Saeulen (wochenBild())
    - Entscheidungsleiste schwebt unten (sticky, mit Unschaerfe)
-   Wer hier das Papier zurueckholt, dreht eine Entscheidung des Nutzers um. */
+   Die Woche SELBST bleibt das Papier-Blatt (siehe unten) — bewusst. */
+
+/* ── Lagebild ueber den Reitern (abkLage() im Seiten-Skript) ──────────
+   Drei Fragen nebeneinander in EINEM Kasten. Ersetzt vier Textkacheln und
+   das §14-Warnband. Die Frist-Leiste ist die einzige Stelle mit Warnfarbe. */
+.abk-lage {
+    display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.15fr) minmax(0, 1.4fr);
+    margin-top: 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+.abk-lage-feld {
+    display: flex; flex-direction: column; gap: 6px; min-width: 0;
+    padding: 20px 22px 20px;
+}
+.abk-lage-feld + .abk-lage-feld { border-left: 1px solid var(--border); }
+.abk-lage-t { font-size: 0.78rem; font-weight: 500; color: var(--text-faint); }
+.abk-lage-s { font-size: 0.78rem; line-height: 1.45; color: var(--text-faint); }
+.abk-lage-zahl {
+    font-family: var(--font-display); font-size: 2.7rem; font-weight: 700;
+    letter-spacing: -0.045em; line-height: 1; color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+}
+.abk-lage-zahl.is-warn { color: var(--warning); }
+.abk-lage-zahl.is-ruhig { color: var(--text-faint); }
+.abk-lage-offen { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr auto; column-gap: 14px; row-gap: 6px; }
+.abk-lage-offen .abk-lage-t { grid-column: 1 / -1; }
+.abk-lage-offen .abk-lage-zahl { grid-row: 2; }
+.abk-lage-offen .abk-lage-s { grid-row: 2; align-self: end; padding-bottom: 4px; }
+.abk-lage-offen .abk-lage-los {
+    grid-column: 1 / -1; justify-self: start; margin-top: 8px;
+    flex: 0 0 auto; padding: 8px 16px; font-size: 0.84rem; font-weight: 600;
+}
+.abk-lage-wert {
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px;
+    font-size: 1.45rem; font-weight: 650; letter-spacing: -0.025em; line-height: 1.15;
+    font-variant-numeric: tabular-nums; color: var(--text-main);
+}
+.abk-lage-wert small { font-size: 0.8rem; font-weight: 500; letter-spacing: 0; color: var(--text-muted); }
+.abk-lage-wert.is-warn { color: var(--warning); }
+.abk-lage-wert.is-ruhig { font-size: 1rem; color: var(--text-muted); }
+.abk-lage-marke {
+    align-self: center; padding: 2px 8px; border-radius: 6px;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0;
+    color: var(--warning); background: rgba(var(--warning-rgb), 0.13);
+}
+.abk-frist {
+    position: relative; height: 8px; margin: 6px 0 4px;
+    border-radius: 4px; background: var(--bg-raise);
+}
+.abk-frist-fuell {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    border-radius: 4px; background: var(--primary);
+}
+.abk-frist.is-warn .abk-frist-fuell { background: var(--warning); }
+/* Die Grenze steht UEBER der Fuellung, sonst verschwindet sie im Warnfall. */
+.abk-frist-grenze {
+    position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px;
+    border-radius: 1px; background: var(--text-main); opacity: 0.75;
+}
+.abk-lage-stand .abk-bar { height: 10px; margin: 6px 0 8px; border-radius: 5px; }
+.abk-lage-stand .abk-legende { margin-bottom: 0; gap: 4px 14px; }
+
+/* Geloeschte Wochen: eine Zeile, aufklappbar. */
+.abk-meld { padding: 0 16px; }
+.abk-meld-kopf {
+    list-style: none; cursor: pointer;
+    padding: 12px 0; align-items: center;
+}
+.abk-meld-kopf::-webkit-details-marker { display: none; }
+.abk-meld-auf {
+    margin-left: auto; width: 16px; height: 16px; flex: 0 0 auto;
+    background: var(--text-faint);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.abk-meld[open] .abk-meld-auf { transform: rotate(180deg); }
+.abk-meld-kopf:hover .abk-meld-auf { background: var(--text-main); }
+.abk-meld-kopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; border-radius: 6px; }
+.abk-meld-alle-zeile { display: flex; justify-content: flex-end; padding: 0 0 8px; }
+.abk-meld[open] { padding-bottom: 4px; }
+
+@media (max-width: 760px) {
+    .abk-lage { grid-template-columns: minmax(0, 1fr); }
+    .abk-lage-feld + .abk-lage-feld { border-left: 0; border-top: 1px solid var(--border); }
+    .abk-lage-feld { padding: 16px 18px; }
+}
 
 /* ── Filterleiste: Segment-Schalter statt loser Pillen ───────────── */
 .abq-leiste { margin-bottom: 16px; }
@@ -97,15 +181,6 @@
 
 /* ── Detail: Kopf ────────────────────────────────────────────────── */
 .abq-detail {
-    /* Bühnenwerte merken, BEVOR das Blatt-Token-Paket aus ausbilder-heft.css
-       sie im Body auf Papier umbiegt — unten werden sie zurueckgegeben. */
-    --pr-text: var(--text-main);
-    --pr-muted: var(--text-muted);
-    --pr-faint: var(--text-faint);
-    --pr-border: var(--border);
-    --pr-border-strong: var(--border-strong);
-    --pr-raise: var(--bg-raise);
-    --pr-card: var(--bg-card);
     position: relative;
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -138,8 +213,7 @@
 /* ── Das Wochenbild (wochenBild() im Seiten-Skript) ──────────────── */
 .abq-wbild {
     display: flex; align-items: flex-end; flex-wrap: wrap; gap: 18px 36px;
-    margin: 22px 28px 0; padding-bottom: 22px;
-    border-bottom: 1px solid var(--border);
+    margin: 20px 28px 22px;
 }
 .abq-wbild-zahlen { display: flex; gap: 28px; margin: 0; }
 .abq-wbild-zahlen dt { font-size: 0.74rem; color: var(--text-faint); }
@@ -180,91 +254,17 @@
 .abq-wt.is-leer .abq-wt-wert { color: var(--warning); }
 .abq-wt-tag { font-size: 0.72rem; font-weight: 500; color: var(--text-faint); }
 
-/* ── Detail: Body ohne Papier ────────────────────────────────────── */
-.abq-detail .abq-dbody {
-    --text-main: var(--pr-text);
-    --text-muted: var(--pr-muted);
-    --text-faint: var(--pr-faint);
-    --border: var(--pr-border);
-    --border-strong: var(--pr-border-strong);
-    --bg-raise: var(--pr-raise);
-    --bg-card: var(--pr-card);
-    --bg-deep: var(--pr-card);
-    color: var(--text-main);
-    background: none;
-    box-shadow: none;
-    border-radius: 0;
-    margin: 0;
-    padding: 4px 28px 8px;
-}
-/* Stunden/Abteilung stehen schon im Wochenbild. */
+/* ── Die Woche selbst bleibt das Blatt aus ausbilder-heft.css ────────
+   Entscheidung des Nutzers 20.11.2026, nach einem Tag ohne Papier: das
+   Blatt mit Kuli-Schrift ist das, was der Azubi im Berichtsheft sieht und
+   was abgezeichnet wird — der Wiedererkennungswert schlaegt "modern".
+   Modern ist der Rahmen drumherum (Liste, Filter, Wochenbild, Leiste).
+   Hier nur, was das Wochenbild ueberfluessig macht: */
 .abq-detail .ab-chips { display: none; }
-
-/* Tage als zweispaltige Zeilen: links Tag + Stunden, rechts der Text. */
-.abq-detail .ab-day { display: block; padding: 18px 0; }
-.abq-detail .ab-day + .ab-day { border-top: 1px solid var(--border); }
-.abq-detail .ab-day::before,
-.abq-detail .ab-dot { display: none; }
-.abq-detail .ab-day-body {
-    display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 4px 24px;
-}
-.abq-detail .ab-day-head { flex-direction: column; align-items: flex-start; gap: 2px; }
-.abq-detail .ab-day-name {
-    font-family: var(--font-main); font-size: 0.86rem; font-weight: 600;
-    letter-spacing: -0.005em; color: var(--text-main);
-}
-.abq-detail .ab-day-h {
-    margin-left: 0; font-family: var(--font-main); font-size: 0.78rem;
-    color: var(--text-faint);
-}
-.abq-detail .ab-day-text,
-.abq-detail .ab-block-text {
-    margin-top: 0; max-width: 72ch;
-    font-size: 0.94rem; line-height: 1.65; color: var(--text-main);
-}
 /* Leere Wochenendtage sind kein Befund, nur Rauschen. Ein leerer WERKTAG
    bleibt stehen (im Wochenbild ist er zusaetzlich markiert). */
 .abq-detail .ab-day:not(.ab-day-filled):nth-child(n+6) { display: none; }
-.abq-detail .ab-day-empty { margin-top: 0; font-style: normal; color: var(--text-faint); font-size: 0.88rem; }
-.abq-detail .ab-block { border-top: 1px solid var(--border); padding: 18px 0 6px; }
-.abq-detail .ab-block-label {
-    font-family: var(--font-main); font-size: 0.78rem; font-weight: 600;
-    color: var(--text-faint); margin-bottom: 6px;
-}
-
-/* Anmerkung des Ausbilders: Hinweisblock statt Handschrift. Rot bleibt ihre
-   Rolle (Rotstift = was der Ausbilder anmerkt). */
-.abq-detail .ab-wk-note {
-    margin: 14px 0 4px; padding: 11px 14px;
-    border-left: 2px solid var(--rot-hell); border-radius: 0 10px 10px 0;
-    background: rgba(240, 133, 122, 0.08);
-    font-family: var(--font-main); font-size: 0.9rem; line-height: 1.55;
-    color: var(--text-main);
-}
-
-/* Freigegeben: ruhiges Etikett mit Haken statt schraegem Gummistempel. */
-.abq-detail .ab-stempel {
-    position: static; display: inline-flex; align-items: center; gap: 8px;
-    margin: 18px 0 2px; padding: 6px 12px 6px 10px;
-    border: 1px solid rgba(var(--success-rgb), 0.32); border-radius: 999px;
-    background: rgba(var(--success-rgb), 0.1);
-    color: var(--success);
-    font-family: var(--font-main);
-    transform: none; mix-blend-mode: normal;
-}
-.abq-detail .ab-stempel::before {
-    content: ""; width: 14px; height: 14px; background: currentColor;
-    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
-}
-.abq-detail .ab-stempel b { font-size: 0.8rem; font-weight: 600; letter-spacing: 0; text-transform: none; }
-.abq-detail .ab-stempel small { font-size: 0.76rem; letter-spacing: 0; color: var(--text-muted); }
-.abq-detail .ab-stempel.is-neu { animation: abqFrei 0.32s cubic-bezier(0.23, 1, 0.32, 1) both; }
-.abq-detail .abq-dbody.is-gestempelt-jetzt { animation: none; }
-@keyframes abqFrei {
-    from { opacity: 0; transform: scale(0.94); }
-    to   { opacity: 1; transform: none; }
-}
+.abq-detail .abq-dbody { margin-top: 2px; }
 
 /* ── Entscheidungsleiste: schwebt unten, Text darunter bleibt lesbar ── */
 .abq-dfuss {
@@ -283,7 +283,6 @@
 
 @media (prefers-reduced-motion: reduce) {
     .abq-wt-saeule i { transition: none; }
-    .abq-detail .ab-stempel.is-neu { animation: none; }
 }
 
 @media (max-width: 760px) {
@@ -291,11 +290,8 @@
     .abq-chips::-webkit-scrollbar { display: none; }
     .abq-chip { flex: 0 0 auto; }
     .abq-dkopf { padding: 16px 16px 0; }
-    .abq-wbild { margin: 18px 16px 0; padding-bottom: 18px; gap: 16px; }
+    .abq-wbild { margin: 16px 16px 18px; gap: 16px; }
     .abq-wbild-tage { margin-left: 0; width: 100%; grid-auto-columns: minmax(0, 1fr); }
-    .abq-detail .abq-dbody { padding: 0 16px 6px; }
-    .abq-detail .ab-day-body { grid-template-columns: minmax(0, 1fr); }
-    .abq-detail .ab-day-head { flex-direction: row; align-items: baseline; gap: 10px; }
     .abq-dfuss { padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); }
 }
 

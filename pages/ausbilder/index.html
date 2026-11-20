@@ -473,41 +473,6 @@
         .abk-kopf .abk-einladen svg { width: 16px; height: 16px; }
         .abk-kopf .abk-einladen:active { transform: scale(0.97); }
 
-        /* Kennzahlen. Eine Kachel traegt die eigentliche Frage und ist
-           breiter — drei gleiche Spalten waeren die generische Loesung. */
-        .abk-kacheln {
-            display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 10px;
-            margin-top: 20px;
-        }
-        /* Die IHK-Kachel gibt es nur, wenn es solche Wochen gibt. Dann sind es
-           vier — ohne diese Regel faellt die vierte allein in eine zweite Reihe
-           und sieht aus, als fehle etwas daneben. `:has()` statt einer Klasse am
-           Container, weil das Markup je Zustand anders viele Kinder hat. */
-        .abk-kacheln:has(.abk-kachel.is-ihk) { grid-template-columns: 1.5fr 1fr 1fr 1.4fr; }
-        .abk-kachel {
-            min-width: 0;
-            display: flex; flex-direction: column; gap: 2px;
-            padding: 15px 17px;
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-        }
-        .abk-wert {
-            font-family: var(--font-mono); font-variant-numeric: tabular-nums;
-            font-size: 1.55rem; font-weight: 600; line-height: 1.1;
-            letter-spacing: -0.02em; color: var(--text-main);
-        }
-        .abk-label { font-size: 0.76rem; color: var(--text-faint); line-height: 1.4; }
-        /* Status faerbt nur, wenn es etwas zu sagen gibt — nie Farbe allein,
-           die Beschriftung steht immer daneben. */
-        /* Nur die Zahl traegt die Farbe, der Rahmen bleibt gleich: zwei
-           orange Rahmen + ein gestrichelter nebeneinander wirkten unruhig
-           (20.11.2026). */
-        .abk-kachel.is-auf .abk-wert { color: var(--primary); }
-        .abk-kachel.is-warn .abk-wert { color: var(--warning); }
-        .abk-kachel.is-ruhig .abk-wert { color: var(--text-faint); }
-        /* Herkunft, keine Bewertung — deshalb Neutralton wie im Balkensegment. */
-        .abk-kachel.is-ihk .abk-wert { color: var(--text-muted); }
-
         .abk-hinweis {
             display: flex; gap: 10px; align-items: flex-start;
             margin-top: 14px; padding: 11px 14px; border-radius: var(--radius-sm);
@@ -930,9 +895,6 @@
             /* Auch die Vier-Kachel-Variante faellt hier auf zwei Spalten zurueck —
                die Regel oben ist spezifischer und muss deshalb mit umgeschaltet
                werden, sonst quetscht sie vier Kacheln in eine Handy-Zeile. */
-            .abk-kacheln,
-            .abk-kacheln:has(.abk-kachel.is-ihk) { grid-template-columns: 1fr 1fr; }
-            .abk-kacheln .abk-kachel:first-child { grid-column: 1 / -1; }
             .abk-kopf .abk-einladen { margin-left: 0; flex: 1 1 auto; }
             .abk-azubi { padding: 15px 14px; }
         }
@@ -1393,14 +1355,6 @@
         .abk-menue-liste [role="menuitem"]:disabled { opacity: 0.6; cursor: default; }
 
         /* ── Kacheln als Einstieg ────────────────────────────────────── */
-        .abk-kachel.is-knopf {
-            font: inherit; color: inherit; text-align: left; cursor: pointer;
-            transition: border-color 0.2s ease, background-color 0.2s ease;
-        }
-        .abk-kachel.is-knopf:hover { background: var(--bg-raise); }
-        .abk-kachel.is-knopf:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.55); outline-offset: 2px; }
-        .abk-kachel.is-knopf:active { transform: scale(0.99); }
-        .abk-wert small { font-size: 0.55em; font-weight: 500; color: var(--text-faint); letter-spacing: 0; }
 
         /* ── Reiter ──────────────────────────────────────────────────── */
         .abk-reiterleiste {
@@ -1685,7 +1639,7 @@
         .abk-sk-mono { width: 48px; height: 48px; border-radius: 14px; flex: 0 0 auto; }
         .abk-sk-t { width: 280px; max-width: 60vw; height: 26px; }
         .abk-sk-s { width: 190px; max-width: 45vw; height: 12px; margin-top: 10px; }
-        .abk-sk-kachel { height: 74px; }
+        .abk-sk-lage { height: 148px; margin-top: 20px; border-radius: 16px; }
         .abk-sk-split { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 18px; margin-top: 62px; }
         .abk-sk-zeile { height: 50px; margin-bottom: 6px; }
         .abk-sk-detail { height: 440px; border-radius: var(--radius); }
@@ -1734,13 +1688,12 @@
         @media (prefers-reduced-motion: reduce) {
             .abk-sk::after { animation: none; }
             .abq-toast { transition: opacity 0.2s ease; transform: translate(-50%, 0); }
-            .abk-kachel.is-knopf:active { transform: none; }
         }
     </style>
     <!-- Heft-Stilschicht (Papier, Kuli, Rotstift, Stempel). Muss NACH dem Inline-Style
          stehen: sie ueberschreibt dessen Tokens und Bauteile bei gleicher Spezifitaet. -->
-    <link rel="stylesheet" href="/Assets/css/ausbilder-heft.css?v=b2a74b9c54">
-    <link rel="stylesheet" href="/Assets/css/ausbilder-pruefen.css?v=a58cb300d0">
+    <link rel="stylesheet" href="/Assets/css/ausbilder-heft.css?v=d89b0a7c5e">
+    <link rel="stylesheet" href="/Assets/css/ausbilder-pruefen.css?v=30cd36a131">
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
 </head>
@@ -3149,16 +3102,6 @@
                 '</div></div>';
         }
 
-        // `ziel` macht die Kachel zum Knopf in den Pruefen-Reiter. Eine Zahl,
-        // die "10 warten" sagt und nicht dorthin fuehrt, ist eine Sackgasse.
-        function kachel(wert, label, ton, ziel) {
-            var tag = ziel ? 'button' : 'div';
-            return '<' + tag + (ziel ? ' type="button" data-q="' + ziel + '"' : '') +
-                ' class="abk-kachel' + (ton ? ' is-' + ton : '') + (ziel ? ' is-knopf' : '') + '">' +
-                '<span class="abk-wert">' + wert + '</span>' +
-                '<span class="abk-label">' + label + '</span></' + tag + '>';
-        }
-
         // Die Azubi-Sicht: WER steht wie da. Gepruefte wird hier nicht mehr —
         // das passiert an EINER Stelle, im Reiter "Prüfen". Zwei Oberflaechen,
         // die dieselbe Woche abzeichnen koennen, driften (zwei Regler auf einen
@@ -3369,12 +3312,16 @@
                 '</div>';
         }
 
+        var meldOffen = false;   // aufgeklappt bleibt aufgeklappt, auch nach "Gelesen"
         function meldungenBlock() {
             if (!kontoMeldungen.length) return '';
             var n = kontoMeldungen.length;
             var alarm = kontoMeldungen.some(function (m) { return m.warFreigegeben; });
-            return '<div class="abk-meld' + (alarm ? ' is-alarm' : '') + '" id="abkMeld">' +
-                '<div class="abk-meld-kopf">' +
+            // Zugeklappt, ausser eine bereits ABGEZEICHNETE Woche ist weg (Alarm):
+            // vier Zeilen "endgueltig geloescht" drueckten die eigentliche Arbeit
+            // um 250 px nach unten (Nutzer 20.11.2026).
+            return '<details class="abk-meld' + (alarm ? ' is-alarm' : '') + '" id="abkMeld"' + (alarm || meldOffen ? ' open' : '') + '>' +
+                '<summary class="abk-meld-kopf">' +
                 '<span class="abk-meld-t">' + abL('Gelöschte Wochen', 'Deleted weeks') + '</span>' +
                 '<span class="abk-meld-s">' + abL(
                     n === 1
@@ -3383,16 +3330,18 @@
                     n === 1
                         ? 'One week was removed from the report book and no longer appears below.'
                         : n + ' weeks were removed from the report book and no longer appear below.') + '</span>' +
-                (n > 1 ? '<button type="button" class="abk-meld-alle" data-mk="alle">' +
-                    abL('Alle gelesen', 'Mark all read') + '</button>' : '') +
-                '</div>' +
+                '<span class="abk-meld-auf" aria-hidden="true"></span>' +
+                '</summary>' +
+                (n > 1 ? '<div class="abk-meld-alle-zeile"><button type="button" class="abk-meld-alle" data-mk="alle">' +
+                    abL('Alle gelesen', 'Mark all read') + '</button></div>' : '') +
                 kontoMeldungen.map(meldungZeile).join('') +
-                '</div>';
+                '</details>';
         }
 
         async function meldungenQuittieren(ids) {
             if (!ids || !ids.length) return;
             var box = $('abkMeld');
+            if (box) meldOffen = box.open;
             if (box) box.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
             var ok = false;
             try { ok = await BHB2B.meldungenQuittieren(ids); } catch (e) { ok = false; }
@@ -4012,6 +3961,58 @@
             }
         }
 
+        // Lagebild ueber den Reitern: drei Antworten nebeneinander statt vier
+        // Textkacheln + Warnband untereinander (Nutzer 20.11.2026: "viel zu viel
+        // auf einmal, nichts sofort ersichtlich"). Jede Spalte beantwortet EINE
+        // Frage: Was wartet? Wie dringend (§14)? Wie steht der Rest?
+        // Die Frist-Leiste ersetzt das Warnband: dieselbe Aussage, ablesbar.
+        // Ihr Nenner ist benannt (Tage bis heute), die Marke ist die Schwelle,
+        // ab der die Seite schon vorher gewarnt hat (35 Tage = 5 Wochen).
+        var FRIST_TAGE = 35;
+        function abkLage(g, alter, ueberfaellig, n) {
+            var offen = '<div class="abk-lage-feld abk-lage-offen">' +
+                '<p class="abk-lage-t">' + abL('Zu prüfen', 'To review') + '</p>' +
+                '<p class="abk-lage-zahl' + (g.offen ? (ueberfaellig ? ' is-warn' : '') : ' is-ruhig') + '">' + g.offen + '</p>' +
+                '<p class="abk-lage-s">' + (g.offen
+                    ? abL(g.offen === 1 ? 'Woche wartet auf Ihre Freigabe' : 'Wochen warten auf Ihre Freigabe',
+                          g.offen === 1 ? 'week waiting for your approval' : 'weeks waiting for your approval')
+                    : abL('Nichts wartet auf Sie', 'Nothing is waiting for you')) + '</p>' +
+                (g.offen && n ? '<button type="button" class="ab-btn ab-btn-primary abk-lage-los" data-q="kachel-offen">' +
+                    abL('Jetzt prüfen', 'Review now') + '</button>' : '') +
+                '</div>';
+
+            var frist;
+            if (alter === null) {
+                frist = '<div class="abk-lage-feld">' +
+                    '<p class="abk-lage-t">' + abL('Prüffrist', 'Review deadline') + '</p>' +
+                    '<p class="abk-lage-wert is-ruhig">' + abL('Keine Woche offen', 'No week open') + '</p>' +
+                    '<p class="abk-lage-s">' + abL('§14 BBiG: Nachweise mindestens monatlich prüfen.', '§14 BBiG: review records at least monthly.') + '</p></div>';
+            } else {
+                var skala = Math.max(Math.ceil(alter * 1.15), FRIST_TAGE + 14);
+                var proz = function (t) { return (Math.min(t, skala) / skala * 100).toFixed(1) + '%'; };
+                frist = '<div class="abk-lage-feld">' +
+                    '<p class="abk-lage-t">' + abL('Prüffrist', 'Review deadline') + '</p>' +
+                    '<p class="abk-lage-wert' + (ueberfaellig ? ' is-warn' : '') + '">' + alter +
+                    '<small>' + abL(alter === 1 ? ' Tag' : ' Tage', alter === 1 ? ' day' : ' days') + '</small>' +
+                    (ueberfaellig ? '<span class="abk-lage-marke">' + abL('überfällig', 'overdue') + '</span>' : '') + '</p>' +
+                    '<div class="abk-frist' + (ueberfaellig ? ' is-warn' : '') + '" role="img" aria-label="' +
+                    esc(abL('Älteste offene Woche wartet seit ' + alter + ' Tagen, Grenze ' + FRIST_TAGE + ' Tage',
+                            'Oldest open week has waited ' + alter + ' days, limit ' + FRIST_TAGE + ' days')) + '">' +
+                    '<span class="abk-frist-fuell" style="width:' + proz(alter) + '"></span>' +
+                    '<span class="abk-frist-grenze" style="left:' + proz(FRIST_TAGE) + '"></span></div>' +
+                    '<p class="abk-lage-s">' + abL('älteste Woche vom ' + fmtDate(g.aeltesteOffen) + ', Grenze 5 Wochen (§14 BBiG: monatlich)',
+                                                   'oldest week from ' + fmtDate(g.aeltesteOffen) + ', limit 5 weeks (§14 BBiG: monthly)') + '</p></div>';
+            }
+
+            var stand = g.eingereicht
+                ? '<div class="abk-lage-feld abk-lage-stand">' +
+                  '<p class="abk-lage-t">' + abL('Stand aller ' + g.eingereicht + ' Wochen', 'All ' + g.eingereicht + ' weeks') + '</p>' +
+                  '<p class="abk-lage-wert">' + g.abgezeichnet + '<small>' + abL(' von Ihnen abgezeichnet', ' signed off by you') + '</small></p>' +
+                  anteilsBalken(g) + '</div>'
+                : '';
+            return '<section class="abk-lage" aria-label="' + abL('Überblick', 'Overview') + '">' + offen + frist + stand + '</section>';
+        }
+
         function renderKonto() {
             var d = kontoDaten;
             // Die Behaelter unten werden mit `kopf` neu geschrieben. Ohne das
@@ -4034,19 +4035,6 @@
             var alter = g.offen ? tageSeit(g.aeltesteOffen) : null;
             var ueberfaellig = alter !== null && alter > 35;
 
-            // Nur noch der Warnfall steht als Band da. Den allgemeinen Satz
-            // "monatlich pruefen" traegt jetzt die Kachel mit dem Alter der
-            // aeltesten Woche — als Zahl, an der man es ablesen kann.
-            var hinweis = ueberfaellig
-                ? '<div class="abk-hinweis is-warn">' +
-                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>' +
-                  '<span>' + abL(
-                    'Die älteste unbearbeitete Woche ist vom ' + fmtDate(g.aeltesteOffen) +
-                    ' und damit über einen Monat alt. Ausbildungsnachweise sind nach §14 BBiG mindestens monatlich zu prüfen.',
-                    'The oldest unreviewed week is from ' + fmtDate(g.aeltesteOffen) +
-                    ', more than a month ago. Under §14 BBiG training records must be reviewed at least monthly.') + '</span></div>'
-                : '';
-
             var n = d.azubis.length;
             var kopf = '<header class="abk-kopf">' +
                 '<span class="abk-firma-mono" aria-hidden="true">' + esc(monogramm(d.betrieb)) + '</span>' +
@@ -4060,22 +4048,12 @@
                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>' +
                 '<span>' + abL('Azubi einladen', 'Invite apprentice') + '</span></button>' +
                 '</header>' +
-                '<div class="abk-kacheln">' +
-                kachel(g.offen, g.offen === 1 ? abL('Woche wartet auf Ihre Freigabe', 'week waiting for your approval')
-                                             : abL('Wochen warten auf Ihre Freigabe', 'weeks waiting for your approval'),
-                       g.offen ? (ueberfaellig ? 'warn' : 'auf') : 'ruhig', n ? 'kachel-offen' : '') +
-                kachel(alter === null ? '—' : alter + '<small>' + abL(alter === 1 ? ' Tag' : ' Tage', alter === 1 ? ' day' : ' days') + '</small>',
-                       alter === null ? abL('keine Woche offen', 'no week open')
-                                      : abL('wartet die älteste Woche · §14 BBiG: monatlich', 'oldest week waiting · §14 BBiG: monthly'),
-                       alter === null ? 'ruhig' : (ueberfaellig ? 'warn' : '')) +
-                kachel(g.abgezeichnet, abL('von Ihnen abgezeichnet', 'signed off by you')) +
-                // Nur zeigen, wenn es sie gibt: eine Kachel mit dauerhafter Null
-                // ist eine Frage, die sich niemand gestellt hat.
-                (g.ihk ? kachel(g.ihk, abL('bereits unterschrieben, nicht von Ihnen',
-                                           'already signed, not by you'), 'ihk') : '') +
-                // Meldungen VOR dem §14-Hinweis: eine Woche, die es nicht
+                // Kennzahlen als Lagebild (abkLage) statt der vier Kacheln
+                // (vormals "abk-kacheln") und des §14-Warnbands.
+                abkLage(g, alter, ueberfaellig, n) +
+                // Meldungen direkt unter dem Lagebild: eine Woche, die es nicht
                 // mehr gibt, wiegt schwerer als die allgemeine Monatsfrist.
-                '</div>' + lizenzHinweisBlock() + meldungenBlock() + hinweis +
+                lizenzHinweisBlock() + meldungenBlock() +
                 // Bestaetigung UNTER den Kennzahlen, nicht mehr als Wand ganz oben (13.11.2026,
                 // Entscheidung des Nutzers): gesperrt ist nur das Abzeichnen (Policy freigaben_insert),
                 // Ansehen, Einladen und Zurueckgeben gehen sofort. Offen bleibt der Weg trotzdem —
@@ -5126,7 +5104,7 @@
             for (var i = 0; i < 6; i++) zeilen += '<div class="abk-sk abk-sk-zeile"></div>';
             return '<div class="abk-skel" aria-busy="true" role="status" aria-label="' + abL('Wird geladen', 'Loading') + '">' +
                 '<div class="abk-sk-kopf"><div class="abk-sk abk-sk-mono"></div><div><div class="abk-sk abk-sk-t"></div><div class="abk-sk abk-sk-s"></div></div></div>' +
-                '<div class="abk-kacheln"><div class="abk-sk abk-sk-kachel"></div><div class="abk-sk abk-sk-kachel"></div><div class="abk-sk abk-sk-kachel"></div></div>' +
+                '<div class="abk-sk abk-sk-lage"></div>' +
                 '<div class="abk-sk-split"><div>' + zeilen + '</div><div class="abk-sk abk-sk-detail"></div></div>' +
                 '</div>';
         }

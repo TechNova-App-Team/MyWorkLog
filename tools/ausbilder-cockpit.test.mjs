@@ -191,7 +191,7 @@ ist(hStart !== -1 && vorAbschicken.includes('if (!note)') && vorAbschicken.slice
     ist(anl.includes("mwlEvent('b2b_betrieb_angelegt'"), 'Anlegen wird gemessen');
     // Bestätigung: unter den Kennzahlen, ohne Azubis zugeklappt
     const kopf = SRC.slice(SRC.indexOf('var n = d.azubis.length;'), SRC.indexOf('$(\'abKonto\').innerHTML = kopf'));
-    ist(kopf.indexOf('abk-kacheln') < kopf.indexOf('id="abkBest"'), 'Bestätigung steht unter den Kennzahlen');
+    ist(kopf.indexOf('abkLage(') !== -1 && kopf.indexOf('abkLage(') < kopf.indexOf('id="abkBest"'), 'Bestätigung steht unter den Kennzahlen (Lagebild)');
     ist(kopf.includes('<details class="abk-best abk-best-zu" id="abkBest">'), 'ohne Azubis ist die Bestätigung zugeklappt');
 }
 
