@@ -10,11 +10,10 @@
 //   azubi.webp    dieselbe Uebersicht, Reiter "Azubis": Stand je Azubi
 //   woche.webp    die Link-Ansicht einer Woche (ohne Konto)
 //
-// 🔴 cockpit.webp steht AUCH im Landing-Intro (index.template.html, Kapitel
-// "Ausbilder", `data-f` = Brennpunkt als Anteil des Bildes). Aendert sich das
-// Bild, stimmen die Brennpunkte nicht mehr — die Kamera zoomte nach dem Umbau
-// v7.8.0 mitten durch Liste und Woche. Nach jedem Lauf dort nachmessen
-// (Anleitung: .claude/notes/intro-video.md).
+// cockpit.webp steht AUCH im Landing-Intro (index.template.html, Station
+// "monitor"). Seit dem Three.js-Intro (v8.1.6) liegt es dort als ganze Textur
+// auf dem Bildschirm, Brennpunkte gibt es nicht mehr; der Stempel (?v=) zieht
+// das neue Bild von selbst nach.
 //
 // 🔴 Das Cockpit braucht ein Konto und liest aus Supabase. Ein echtes Konto
 // gehoert in keine oeffentliche Aufnahme (Namen, Betrieb, Texte echter
@@ -124,7 +123,7 @@ const code = await fenster.MWLCodec.encode(nutzlast);
 if (!code || code.length < 50) { console.error('Link-Kodierung fehlgeschlagen'); process.exit(1); }
 
 const shots = [
-    ['cockpit.webp', URL_AB, `new Promise(function(r){setTimeout(function(){r(document.querySelectorAll('#abKonto .abk-kacheln > *').length+' Kacheln, Wochen im Stapel: '+document.querySelectorAll('#abKonto .abq-row').length)},1500)})`],
+    ['cockpit.webp', URL_AB, `new Promise(function(r){setTimeout(function(){r(document.querySelectorAll('#abKonto .abk-lage-feld').length+' Lagefelder, Wochen im Stapel: '+document.querySelectorAll('#abKonto .abq-row').length)},1500)})`],
     // Seit v7.8.0 steht die Azubi-Sicht in einem eigenen Reiter — erst
     // umschalten, dann zur Reiterleiste scrollen.
     ['azubi.webp', URL_AB, `new Promise(function(r){setTimeout(function(){var t=document.querySelector('[data-ansicht="azubis"]');if(t)t.click();var k=document.querySelector('.abk-reiterleiste');var y=k?k.getBoundingClientRect().top+scrollY-90:600;window.scrollTo(0,y);setTimeout(function(){r('Reiter: '+(t?'azubis':'FEHLT')+', Karten: '+document.querySelectorAll('.abk-azubi').length)},700)},1500)})`],
