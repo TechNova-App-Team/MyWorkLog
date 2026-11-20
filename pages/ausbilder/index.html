@@ -313,17 +313,51 @@
             margin-left: auto; flex: 0 0 auto;
             padding: 9px 15px; font-size: 0.85rem;
         }
-        .abk-exp {
-            margin-left: 8px; padding: 2px 6px; border-radius: var(--radius-sm);
-            background: rgba(var(--warning-rgb), 0.12); color: var(--warning);
-            font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em;
+        /* Kuerzel ist ein Knopf (selbst waehlbar, abkKuerzelAendern). Der Stift
+           erscheint beim Ueberfahren; am Handy (kein :hover) steht er immer da. */
+        button.abk-firma-mono {
+            position: relative; cursor: pointer; padding: 0;
+            font-family: inherit;
+            transition: border-color 0.18s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
         }
+        button.abk-firma-mono:hover { border-color: rgba(var(--primary-rgb), 0.5); }
+        button.abk-firma-mono:active { transform: scale(0.96); }
+        button.abk-firma-mono:focus-visible { outline: 2px solid rgba(var(--primary-rgb), 0.6); outline-offset: 3px; }
+        .abk-kuerzel-stift {
+            position: absolute; right: -6px; bottom: -6px;
+            display: grid; place-items: center; width: 20px; height: 20px; border-radius: 999px;
+            background: var(--bg-card); border: 1px solid var(--border-strong); color: var(--text-muted);
+            opacity: 0; transform: scale(0.85);
+            transition: opacity 0.16s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .abk-kuerzel-stift svg { width: 11px; height: 11px; }
+        button.abk-firma-mono:hover .abk-kuerzel-stift,
+        button.abk-firma-mono:focus-visible .abk-kuerzel-stift { opacity: 1; transform: none; }
+        @media (hover: none) { .abk-kuerzel-stift { opacity: 1; transform: none; } }
+        /* input.… statt .…: ausbilder-heft.css laedt spaeter und setzt die
+           Randfarbe von .abk-firma-mono mit gleicher Spezifitaet. */
+        input.abk-kuerzel-feld {
+            padding: 0; text-align: center; text-transform: uppercase; font-family: inherit;
+            outline: none; border-color: rgba(var(--primary-rgb), 0.7);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+        }
+
+        /* Verifiziert: Siegel hinter dem Namen + eine Zeile darunter.
+           Gruen = Semantikfarbe „bestaetigt“, wie bisher der Haken. */
+        .abk-siegel {
+            display: inline-block; width: 0.78em; height: 0.78em;
+            margin-left: 0.3em; vertical-align: -0.06em; color: var(--success);
+        }
+        .abk-siegel svg { display: block; width: 100%; height: 100%; }
+        .abk-siegel-form { fill: currentColor; }
+        .abk-siegel-haken { fill: none; stroke: var(--bg-deep); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
         .abk-ungeprueft { margin-top: 5px; font-size: 0.75rem; color: var(--text-faint); line-height: 1.5; }
         .abk-domok {
-            display: inline-flex; align-items: center; gap: 5px; margin-top: 5px;
-            font-size: 0.75rem; color: var(--success); font-weight: 600;
+            display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+            font-size: 0.78rem; color: var(--text-muted); font-weight: 500;
         }
-        .abk-domok svg { width: 13px; height: 13px; }
+        .abk-domok b { color: var(--success); font-weight: 650; }
+        .abk-verif-wie::before { content: "·"; margin: 0 6px 0 2px; color: var(--text-faint); }
         .abk-ungeprueft.is-offen { color: var(--warning); font-weight: 600; }
         .abk-domok { flex-wrap: wrap; row-gap: 4px; }
         .abk-imp { font-weight: 500; color: var(--text-muted); }
@@ -4067,11 +4101,15 @@
 
             var n = d.azubis.length;
             var kopf = '<header class="abk-kopf">' +
-                '<span class="abk-firma-mono" aria-hidden="true">' + esc(monogramm(d.betrieb)) + '</span>' +
+                kuerzelKnopf(d) +
                 '<div class="abk-kopf-text">' +
-                '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') +
-                '<span class="abk-exp">Open Beta</span></p>' +
-                '<h1 class="abk-firma">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
+                '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') + '</p>' +
+                '<h1 class="abk-firma">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) +
+                // Siegel NUR fuer nachgewiesene Betriebe — dieselbe Bedingung,
+                // unter der das Abzeichnen freigeschaltet ist.
+                (d.nachgewiesen ? '<span class="abk-siegel" role="img" aria-label="' + abL('Verifiziert', 'Verified') +
+                    '" title="' + abL('Verifizierter Ausbildungsbetrieb', 'Verified training company') + '">' + SIEGEL + '</span>' : '') +
+                '</h1>' +
                 nachweisZeile(d) +
                 '</div>' +
                 '<button type="button" class="ab-btn ab-btn-ghost abk-einladen" onclick="abkEinladen()">' +
@@ -4319,13 +4357,15 @@
                     'Noch nicht bestätigt — Abzeichnen ist gesperrt.',
                     'Not confirmed yet — signing off is locked.') + '</p>';
             }
-            var text;
+            // Wie geprueft wurde, steht klein hinter der Aussage. Die Aussage
+            // selbst ist fuer alle Wege gleich: verifiziert ist verifiziert.
+            var wie;
             if (d.nachweisArt === 'manuell') {
-                text = abL('Von MyWorkLog geprüft', 'Checked by MyWorkLog');
+                wie = abL('von MyWorkLog persönlich geprüft', 'checked in person by MyWorkLog');
             } else if (d.nachweisArt === 'email') {
-                text = abL('Bestätigt über die Firmenadresse @', 'Confirmed via company address @') + esc(d.domain);
+                wie = abL('über die Firmenadresse @', 'via company address @') + esc(d.domain);
             } else {
-                text = abL('Bestätigt per DNS: ', 'Confirmed via DNS: ') + esc(d.domain);
+                wie = abL('per DNS-Eintrag auf ', 'via DNS record on ') + esc(d.domain);
             }
             var impressum = '';
             if (d.nachweisArt !== 'manuell') {
@@ -4340,9 +4380,77 @@
                         esc(d.firmaEmail) + ')</span>';
                 }
             }
-            return '<p class="abk-domok">' + HAKEN + '<span>' + text + '</span>' + impressum + '</p>' +
+            return '<p class="abk-domok">' +
+                '<b>' + abL('Verifizierter Ausbildungsbetrieb', 'Verified training company') + '</b>' +
+                '<span class="abk-verif-wie">' + wie + '</span>' + impressum + '</p>' +
                 '<div id="abkImpErgebnis" aria-live="polite"></div>';
         }
+
+        // Siegel hinter dem Firmennamen (Form: „badge-check“, gefuellt).
+        var SIEGEL = '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+            '<path class="abk-siegel-form" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>' +
+            '<path class="abk-siegel-haken" d="m9 12 2 2 4-4"/></svg>';
+
+        // ── Kuerzel des Betriebs (Kaestchen links im Kopf) ───────────────
+        // Automatisch aus dem Namen (monogramm); auf Wunsch selbst gewaehlt
+        // (Nutzer 20.11.2026). Gespeichert NUR auf diesem Geraet: eine eigene
+        // Spalte in `betriebe` braeuchte eine Migration der produktiven DB —
+        // fuer zwei Buchstaben Anzeige nicht gerechtfertigt, solange niemand
+        // danach fragt, dass das Team es geteilt sieht.
+        var KUERZEL_MUSTER = /^[\p{L}\p{N}]{1,2}$/u;
+        function kuerzelSchluessel(d) { return 'mwl_ab_kuerzel_' + ((d && d.betriebId) || 'ohne'); }
+        function eigenesKuerzel(d) {
+            try {
+                var k = localStorage.getItem(kuerzelSchluessel(d));
+                return k && KUERZEL_MUSTER.test(k) ? k : '';
+            } catch (e) { return ''; }
+        }
+        function kuerzelKnopf(d) {
+            var k = eigenesKuerzel(d) || monogramm(d.betrieb);
+            var titel = abL('Kürzel ändern', 'Change initials');
+            return '<button type="button" class="abk-firma-mono" id="abkKuerzel" onclick="abkKuerzelAendern()"' +
+                ' title="' + titel + '" aria-label="' + esc(titel + ': ' + k) + '">' + esc(k) +
+                '<span class="abk-kuerzel-stift" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>' +
+                '</button>';
+        }
+        window.abkKuerzelAendern = function () {
+            var knopf = $('abkKuerzel');
+            if (!knopf || !kontoDaten) return;
+            var d = kontoDaten;
+            var feld = document.createElement('input');
+            feld.className = 'abk-firma-mono abk-kuerzel-feld';
+            feld.maxLength = 2;
+            feld.autocomplete = 'off';
+            feld.spellcheck = false;
+            feld.value = eigenesKuerzel(d) || monogramm(d.betrieb);
+            feld.setAttribute('aria-label', abL('Kürzel, ein oder zwei Zeichen. Leer lassen für automatisch.',
+                                                'Initials, one or two characters. Leave empty for automatic.'));
+            var fertig = false;
+            function zurueck(speichern) {
+                if (fertig) return;
+                fertig = true;
+                if (speichern) {
+                    var v = feld.value.trim().toUpperCase();
+                    try {
+                        if (!v || v === monogramm(d.betrieb)) localStorage.removeItem(kuerzelSchluessel(d));
+                        else if (KUERZEL_MUSTER.test(v)) localStorage.setItem(kuerzelSchluessel(d), v);
+                    } catch (e) { /* ohne Speicher bleibt es automatisch */ }
+                }
+                var neu = document.createElement('div');
+                neu.innerHTML = kuerzelKnopf(d);
+                feld.replaceWith(neu.firstChild);
+                var b = $('abkKuerzel');
+                if (b) b.focus();
+            }
+            feld.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); zurueck(true); }
+                else if (e.key === 'Escape') { e.preventDefault(); zurueck(false); }
+            });
+            feld.addEventListener('blur', function () { zurueck(true); });
+            knopf.replaceWith(feld);
+            feld.focus();
+            feld.select();
+        };
 
         function bestaetigenInhalt(d) {
             return '<h2 class="abk-best-t" id="abkBestT">' + abL(

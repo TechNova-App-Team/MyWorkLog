@@ -138,7 +138,12 @@ gruppe('Kopfzeile nennt, WIE bestaetigt wurde');
 const z = (d) => lade('de', d).nachweisZeile(d);
 ok(z({ nachgewiesen: false }).includes('Abzeichnen ist gesperrt'), 'ohne Nachweis: gesperrt');
 const zm = z({ nachgewiesen: true, nachweisArt: 'manuell' });
-ok(zm.includes('Von MyWorkLog geprüft') && !zm.includes('abkImpressum'), 'manuell: kein Impressum-Knopf');
+ok(zm.includes('Verifizierter Ausbildungsbetrieb') && zm.includes('von MyWorkLog persönlich geprüft') && !zm.includes('abkImpressum'), 'manuell: verifiziert, nennt MyWorkLog, kein Impressum-Knopf');
+ok(ze_vorab(), 'jeder nachgewiesene Weg sagt „Verifizierter Ausbildungsbetrieb“');
+function ze_vorab() {
+    return ['manuell', 'email', 'dns'].every(a => z({ nachgewiesen: true, nachweisArt: a, domain: 'x.de', impressumUrl: 'u' }).includes('Verifizierter Ausbildungsbetrieb'));
+}
+ok(!z({ nachgewiesen: false }).includes('Verifizierter'), 'Gegenprobe: unbestätigt heißt nicht verifiziert');
 const ze = z({ nachgewiesen: true, nachweisArt: 'email', domain: 'brush-zahn.com', impressumUrl: '' });
 ok(ze.includes('@brush-zahn.com') && ze.includes('abkImpressum'), 'E-Mail: Domain + Knopf zum Impressum-Abgleich');
 const zi = z({ nachgewiesen: true, nachweisArt: 'dns', domain: 'brush-zahn.com', impressumUrl: 'https://brush-zahn.com/impressum' });
