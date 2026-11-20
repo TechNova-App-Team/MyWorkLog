@@ -1740,6 +1740,7 @@
     <!-- Heft-Stilschicht (Papier, Kuli, Rotstift, Stempel). Muss NACH dem Inline-Style
          stehen: sie ueberschreibt dessen Tokens und Bauteile bei gleicher Spezifitaet. -->
     <link rel="stylesheet" href="/Assets/css/ausbilder-heft.css?v=b2a74b9c54">
+    <link rel="stylesheet" href="/Assets/css/ausbilder-pruefen.css?v=a58cb300d0">
     <link rel="stylesheet" href="/Assets/css/seitenwechsel.css?v=efc210ade7">
     <script defer src="/Assets/js/seitenwechsel.js?v=73dad496e9"></script>
 </head>
@@ -2862,6 +2863,45 @@
         // Die gewaehlte Woche rechts neben der Liste. Traegt `.abk-card` und
         // `.ab-wk-body`, weil die Klick-Behandlung (bindeKonto) und die
         // Fehlermeldung in kontoEntscheiden() genau diese beiden suchen.
+        // Wochenbild im Pruef-Detail: Stunden je Tag als Saeulen, damit ein
+        // kurzer oder leerer Tag auffaellt, BEVOR man den Text liest. Schultage
+        // stehen neutral (sie zaehlen das Soll, keine Leistung). Nur im Cockpit;
+        // die Link-Ansicht fuer einzelne Wochen bleibt beim Papier-Blatt.
+        // Mo–Fr immer, Sa/So nur wenn dort etwas steht.
+        function wochenBild(b) {
+            var inh = b.inhalt || {};
+            var dh = inh.dailyHours || {}, da = inh.dailyActivities || {}, ds = inh.dailySchool || {};
+            var zahl = function (v) { var n = parseFloat(v); return isFinite(n) && n > 0 ? n : 0; };
+            var tage = DAY_ORDER.filter(function (d, i) { return i < 5 || zahl(dh[d]) || String(da[d] || '').trim(); });
+            var werte = tage.map(function (d) { return zahl(dh[d]); });
+            var mitTagen = werte.some(Boolean) || tage.some(function (d) { return ds[d]; });
+            var max = Math.max(10, Math.max.apply(null, werte));
+            var kurz = function (n) { return n.toLocaleString(abLocale(), { maximumFractionDigits: 1 }); };
+
+            var zahlen = '';
+            if (fmtHours(inh.hours)) zahlen += '<div><dt>' + abL('Stunden', 'Hours') + '</dt><dd>' + esc(fmtHours(inh.hours)) + '</dd></div>';
+            if (String(inh.department || '').trim()) zahlen += '<div><dt>' + abL('Abteilung', 'Department') + '</dt><dd>' + esc(inh.department) + '</dd></div>';
+            if (!zahlen && !mitTagen) return '';
+
+            var saeulen = '', vorlesen = [];
+            if (mitTagen) {
+                tage.forEach(function (d, i) {
+                    var n = werte[i], schule = !!ds[d];
+                    var kuerzel = dayLabel(d).slice(0, 2);
+                    vorlesen.push(dayLabel(d) + ' ' + (schule ? abL('Berufsschule', 'school') : n ? kurz(n) + ' h' : abL('kein Eintrag', 'no entry')));
+                    saeulen += '<span class="abq-wt' + (schule ? ' is-schule' : '') + (!n && !schule ? ' is-leer' : '') + '"' +
+                        ' style="--h:' + (schule && !n ? 1 : (n / max)).toFixed(3) + '">' +
+                        '<span class="abq-wt-wert">' + (schule && !n ? abL('BS', 'Sch') : n ? kurz(n) : '–') + '</span>' +
+                        '<span class="abq-wt-saeule"><i></i></span>' +
+                        '<span class="abq-wt-tag">' + esc(kuerzel) + '</span></span>';
+                });
+            }
+            return '<div class="abq-wbild">' +
+                (zahlen ? '<dl class="abq-wbild-zahlen">' + zahlen + '</dl>' : '') +
+                (saeulen ? '<div class="abq-wbild-tage" role="img" aria-label="' + esc(abL('Stunden je Tag: ', 'Hours per day: ') + vorlesen.join(', ')) + '">' + saeulen + '</div>' : '') +
+                '</div>';
+        }
+
         function detailHTML(b, az, pos, gesamt) {
             var f = b.freigabe;
             var st = standVon(b);
@@ -2889,6 +2929,7 @@
                 '<span class="ab-wk-state ' + stL[0] + '">' + stL[1] + '</span>' +
                 nav +
                 '</header>' +
+                wochenBild(b) +
                 '<div class="ab-wk-body abq-dbody">' +
                 (st === 'approved' ? stempelHTML(f && f.erstellt_at, f && f.ausbilder_name) : '') +
                 weekBodyHTML(zeileZuWoche(b)) +
