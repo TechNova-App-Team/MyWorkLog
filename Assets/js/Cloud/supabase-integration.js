@@ -337,64 +337,6 @@ class SupabaseCloudSync {
     }
 
     /**
-     * Login mit GitHub OAuth
-     * @returns {Promise<Object>} Resultat der signInWithOAuth Operation
-     */
-    async loginWithGitHub() {
-        if (!this.client) {
-            throw new Error('Supabase Client nicht verfügbar');
-        }
-
-        try {
-            const { data, error } = await this.client.auth.signInWithOAuth({
-                provider: 'github',
-                options: {
-                    redirectTo: window.location.origin + window.location.pathname
-                }
-            });
-
-            if (error) {
-                throw error;
-            }
-
-            return { success: true, data };
-        } catch (error) {
-            console.error('[Auth] GitHub OAuth Fehler:', error);
-            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'github' });
-            throw error;
-        }
-    }
-
-    /**
-     * Login mit Discord OAuth
-     * @returns {Promise<Object>} Resultat der signInWithOAuth Operation
-     */
-    async loginWithDiscord() {
-        if (!this.client) {
-            throw new Error('Supabase Client nicht verfügbar');
-        }
-
-        try {
-            const { data, error } = await this.client.auth.signInWithOAuth({
-                provider: 'discord',
-                options: {
-                    redirectTo: window.location.origin + window.location.pathname
-                }
-            });
-
-            if (error) {
-                throw error;
-            }
-
-            return { success: true, data };
-        } catch (error) {
-            console.error('[Auth] Discord OAuth Fehler:', error);
-            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'discord' });
-            throw error;
-        }
-    }
-
-    /**
      * Login mit Microsoft (Supabase-Anbieter "azure"). Scope "email" ist Pflicht — ohne ihn
      * liefert Microsoft bei privaten Konten keine Adresse und Supabase lehnt die Anmeldung ab.
      * Welche Konten zugelassen sind, steht in der App-Registrierung bei Microsoft (nur private

@@ -485,8 +485,8 @@
     [/^(\[\d\d:\d\d:\d\d\] )?Relay-Test fehlgeschlagen: (.+)$/g, '$1Relay test failed: $2'],
     // Anmelde-Meldungen aus supabase-ui.js (authFehlerText). JS-generiert, also
     // hier und nirgends sonst - der i18n-Build sieht diese Zeichenketten nie.
-    [/^Gerade wurden zu viele Anmelde-Mails verschickt\. Versuch es in etwa einer Stunde noch einmal — oder melde dich mit Google, GitHub oder Discord an, dafür braucht es keine E-Mail\.$/g,
-      'Too many sign-in emails have just been sent. Try again in about an hour \u2014 or sign in with Google, GitHub or Discord, which needs no email.'],
+    [/^Gerade wurden zu viele Anmelde-Mails verschickt\. Versuch es in etwa einer Stunde noch einmal — oder melde dich mit einem Google-Konto an, dafür braucht es keine E-Mail\.$/g,
+      'Too many sign-in emails have just been sent. Try again in about an hour \u2014 or sign in with a Google account, which needs no email.'],
     [/^Dieser Anmelde-Link ist abgelaufen oder wurde schon benutzt\. Fordere einen neuen an\.$/g,
       'This sign-in link has expired or has already been used. Request a new one.'],
     [/^Diese E-Mail-Adresse sieht nicht gültig aus\. Bitte prüfe die Schreibweise\.$/g,

@@ -75,6 +75,18 @@ window.MWLPass = (function () {
     const KEIN_PASS = 'mwl_pass_kein';     // Zeitpunkt der letzten Antwort „kein Pass am Konto“
     const GEPRUEFT = 'mwl_pass_geprueft';  // letzte Antwort des Kontos (für die stündliche Prüfung)
     const angemeldet = () => { try { return !!localStorage.getItem(SB_SCHLUESSEL); } catch (e) { return false; } };
+    const kontoId = () => { try { const s = JSON.parse(localStorage.getItem(SB_SCHLUESSEL) || 'null'); return (s && s.user && s.user.id) || ''; } catch (e) { return ''; } };
+    // „Kein Pass" gilt nur fuer DAS Konto, das gefragt hat. Bis 21.11.2026 stand hier nur die Uhrzeit:
+    // wer erst mit einem Zweitkonto ohne Pass angemeldet war und dann aufs Hauptkonto wechselte, sah
+    // 12 h lang keinen Pass, weil die Seite gar nicht mehr nachfragte. Wert: "<user-id>:<ms>";
+    // ein alter reiner Zeitstempel zaehlt als fremdes Konto (einmal neu fragen).
+    function keinPassSeit() {
+        let v = '';
+        try { v = localStorage.getItem(KEIN_PASS) || ''; } catch (e) {}
+        const i = v.lastIndexOf(':');
+        if (i < 0 || v.slice(0, i) !== kontoId()) return 0;
+        return Number(v.slice(i + 1)) || 0;
+    }
 
     // Supabase-Zugangstoken. Erst ueber den EINEN Client der Seite (frischt abgelaufene Tokens
     // auf), sonst die gespeicherte Sitzung, solange sie noch gilt. Eine Seite ohne eigenen
@@ -161,7 +173,7 @@ window.MWLPass = (function () {
         if (!r || r.status === 401) return { ok: false, fehler: 'anmelden' };
         try { localStorage.setItem(GEPRUEFT, String(Date.now())); } catch (e) {}
         if (r.status === 404) {
-            try { localStorage.setItem(KEIN_PASS, String(Date.now())); } catch (e) {}
+            try { localStorage.setItem(KEIN_PASS, kontoId() + ':' + Date.now()); } catch (e) {}
             // Erstattet/zurückgebucht: Konto-Freischaltung auf diesem Gerät sofort wegräumen.
             // Der Haupt-Code ('code') hängt an keinem Konto und bleibt.
             const g = gespeichert();
@@ -187,9 +199,7 @@ window.MWLPass = (function () {
         try { geprueft = Number(localStorage.getItem(GEPRUEFT)) || 0; } catch (e) {}
         const stuendlich = g && g.quelle === 'konto' && Date.now() - geprueft > 3600000;
         if (g && g.token && g.bis - Date.now() > 2 * 86400000 && !stuendlich) return;
-        let zuletzt = 0;
-        try { zuletzt = Number(localStorage.getItem(KEIN_PASS)) || 0; } catch (e) {}
-        if (!(g && g.token) && Date.now() - zuletzt < 12 * 3600000) return;
+        if (!(g && g.token) && Date.now() - keinPassSeit() < 12 * 3600000) return;
         kontoFreischalten().catch(() => {});
     }
 

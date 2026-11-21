@@ -32,7 +32,7 @@ function authFehlerText(error) {
 
     if (code === 429 || s.includes('rate limit') || s.includes('too many requests')) {
         return 'Gerade wurden zu viele Anmelde-Mails verschickt. Versuch es in etwa einer '
-             + 'Stunde noch einmal — oder melde dich mit Google, GitHub oder Discord an, '
+             + 'Stunde noch einmal — oder melde dich mit einem Google-Konto an, '
              + 'dafür braucht es keine E-Mail.';
     }
     /* Passkeys. Der haeufigste Fall ist harmlos: der Nutzer bricht den
@@ -144,18 +144,6 @@ class SupabaseCloudSyncUI {
         const overlay = document.getElementById('cloud-login-overlay');
         if (overlay) {
             overlay.addEventListener('click', () => this.closeLoginModal());
-        }
-
-        // Discord OAuth Button
-        const discordBtn = document.getElementById('cloud-login-discord');
-        if (discordBtn) {
-            discordBtn.addEventListener('click', () => this.handleDiscordLogin());
-        }
-
-        // GitHub OAuth Button
-        const githubBtn = document.getElementById('cloud-login-github');
-        if (githubBtn) {
-            githubBtn.addEventListener('click', () => this.handleGitHubLogin());
         }
 
         // Google OAuth Button
@@ -353,46 +341,6 @@ class SupabaseCloudSyncUI {
     }
 
     /**
-     * Handler für Discord OAuth Login
-     */
-    async handleDiscordLogin() {
-        const discordBtn = document.getElementById('cloud-login-discord');
-        const originalText = discordBtn.innerHTML;
-
-        try {
-            discordBtn.disabled = true;
-            discordBtn.innerHTML = WARTE_SPINNER + '<span>Discord …</span>';
-            localStorage.setItem('_showCloudTabAfterOAuth', 'true');
-            await this.sync.loginWithDiscord();
-        } catch (error) {
-            this.showMessage('Discord-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
-            discordBtn.disabled = false;
-            discordBtn.innerHTML = originalText;
-            localStorage.removeItem('_showCloudTabAfterOAuth');
-        }
-    }
-
-    /**
-     * Handler für GitHub OAuth Login
-     */
-    async handleGitHubLogin() {
-        const githubBtn = document.getElementById('cloud-login-github');
-        const originalText = githubBtn.innerHTML;
-
-        try {
-            githubBtn.disabled = true;
-            githubBtn.innerHTML = WARTE_SPINNER + '<span>GitHub …</span>';
-            localStorage.setItem('_showCloudTabAfterOAuth', 'true');
-            await this.sync.loginWithGitHub();
-        } catch (error) {
-            this.showMessage('GitHub-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
-            githubBtn.disabled = false;
-            githubBtn.innerHTML = originalText;
-            localStorage.removeItem('_showCloudTabAfterOAuth');
-        }
-    }
-
-    /**
      * Handler für Google OAuth Login
      */
     async handleGoogleLogin() {
@@ -433,10 +381,12 @@ class SupabaseCloudSyncUI {
 
     /**
      * Zeigt nur die Konto-Knoepfe, deren Anbieter in Supabase wirklich an ist. Quelle ist der
-     * oeffentliche Endpunkt /auth/v1/settings (external.{google,github,discord,azure}).
+     * oeffentliche Endpunkt /auth/v1/settings (external.{google,azure}).
      * Microsoft steht im Markup auf hidden und erscheint erst, wenn der Anbieter an ist — so
      * kann der Knopf vor der Einrichtung ausgeliefert werden, ohne je ins Leere zu fuehren.
-     * Faellt die Abfrage aus (offline), bleibt es beim Markup: die drei bewaehrten sichtbar.
+     * Faellt die Abfrage aus (offline), bleibt es beim Markup: nur Google sichtbar.
+     * GitHub und Discord sind seit 21.11.2026 raus (je ein Konto, beide vom Betreiber, beide mit
+     * weiterem Anmeldeweg) — in Supabase duerfen sie trotzdem an bleiben, ohne Knopf fuehrt nichts hin.
      */
     async anbieterAbgleichen() {
         const c = typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG : null;
@@ -447,7 +397,7 @@ class SupabaseCloudSyncUI {
             if (!r.ok) return;
             an = (await r.json()).external || {};
         } catch (e) { return; }
-        const knoepfe = { google: 'google', github: 'github', discord: 'discord', azure: 'microsoft' };
+        const knoepfe = { google: 'google', azure: 'microsoft' };
         let sichtbar = 0;
         for (const anbieter in knoepfe) {
             const btn = document.getElementById('cloud-login-' + knoepfe[anbieter]);
