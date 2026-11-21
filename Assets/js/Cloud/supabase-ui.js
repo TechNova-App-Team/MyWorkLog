@@ -78,6 +78,9 @@ function authFehlerText(error) {
     return roh ? 'Anmeldung fehlgeschlagen: ' + roh : 'Anmeldung fehlgeschlagen.';
 }
 
+// Ladezeichen fuer die Konto-Knoepfe, solange die Weiterleitung laeuft (vorher ein Sanduhr-Emoji).
+const WARTE_SPINNER = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" class="cl-spin" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.2" stroke-dasharray="30" stroke-dashoffset="10" stroke-linecap="round"/></svg>';
+
 class SupabaseCloudSyncUI {
     constructor(cloudSyncInstance) {
         this.sync = cloudSyncInstance;
@@ -351,7 +354,7 @@ class SupabaseCloudSyncUI {
 
         try {
             discordBtn.disabled = true;
-            discordBtn.innerHTML = '⏳ Discord...';
+            discordBtn.innerHTML = WARTE_SPINNER + '<span>Discord …</span>';
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithDiscord();
         } catch (error) {
@@ -371,7 +374,7 @@ class SupabaseCloudSyncUI {
 
         try {
             githubBtn.disabled = true;
-            githubBtn.innerHTML = '⏳ GitHub...';
+            githubBtn.innerHTML = WARTE_SPINNER + '<span>GitHub …</span>';
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGitHub();
         } catch (error) {
@@ -391,7 +394,7 @@ class SupabaseCloudSyncUI {
 
         try {
             googleBtn.disabled = true;
-            googleBtn.innerHTML = '⏳ Google...';
+            googleBtn.innerHTML = WARTE_SPINNER + '<span>Google …</span>';
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGoogle();
         } catch (error) {

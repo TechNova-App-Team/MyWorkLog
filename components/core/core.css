@@ -185,14 +185,12 @@
             overflow: hidden;
         }
 
-        /* ── Cloud Login Modal (Neuentwurf v8.2.3) ──
-           Doppelrand: .cg-shell = Haarlinie + 6 px Innenabstand, .cg-core = eigene
-           Flaeche mit Lichtkante. Radien konzentrisch (30 - 6 = 24). Markup in
-           components/modals/modals.html, Verhalten in Assets/js/Cloud/supabase-ui.js
-           (setzt style.display none/flex — deshalb das !important unten).
-           13.11.2026 ruhiger („cleaner, edler“; v8.2.3 war schon „too much, aber okay“):
-           kein Emblem mit kreisendem Lichtpunkt, kein farbiger Schimmer, kein Leuchtpunkt am
-           Etikett, kein Farbschatten am Knopf. Graphit-Kern wie Rechte-Checker, Haarlinien. */
+        /* ── Cloud Login Modal (Fassung "Zweigeteilt", 21.11.2026) ──
+           Links das Warum (Marke, Titel, drei Punkte), rechts das Formular. Vom Nutzer aus
+           sechs Entwuerfen gewaehlt (Variante D, Vorbild Stripe/Atlassian). Vorgaenger v8.2.3
+           war "too much, aber okay" — deshalb hier EIN Effekt (der Akzent-Verlauf links),
+           sonst Haarlinien. Markup in components/modals/modals.html, Verhalten in
+           Assets/js/Cloud/supabase-ui.js (setzt style.display none/flex — daher das !important). */
         .cloud-login-modal {
             position: fixed;
             inset: 0;
@@ -208,261 +206,187 @@
         .cloud-login-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(3, 3, 6, 0.78);
-            backdrop-filter: blur(20px) saturate(120%);
-            -webkit-backdrop-filter: blur(20px) saturate(120%);
-            animation: cg-dunkel 0.32s ease both;
+            background: rgba(3, 3, 6, 0.74);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: cg-dunkel 0.28s ease both;
         }
         @keyframes cg-dunkel { from { opacity: 0; } }
 
-        .cg-shell {
+        .cg-karte {
             position: relative;
             z-index: 2010;
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
             width: 100%;
-            max-width: 420px;
+            max-width: 780px;
             max-height: calc(100dvh - 2rem);
-            padding: 6px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.035);
+            overflow: hidden;
+            border-radius: 18px;
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow:
-                0 50px 120px -30px rgba(0, 0, 0, 0.75),
-                0 0 0 1px rgba(0, 0, 0, 0.35);
-            animation: cg-rein 0.46s cubic-bezier(0.32, 0.72, 0, 1) both;
+            background: var(--bg-sidebar);
+            box-shadow: 0 30px 90px -20px rgba(0, 0, 0, 0.7);
+            animation: cg-rein 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
-        @keyframes cg-rein {
-            from { opacity: 0; transform: translateY(16px) scale(0.965); filter: blur(6px); }
+        @keyframes cg-rein { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+
+        .cg-links {
+            display: flex;
+            flex-direction: column;
+            padding: 40px 36px;
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+            background: linear-gradient(160deg, rgba(var(--primary-rgb), 0.2), rgba(var(--primary-rgb), 0.04) 70%);
         }
-        .cg-core {
+        .cg-marke { display: flex; align-items: center; gap: 10px; font-size: 0.92rem; font-weight: 600; color: var(--text-main); }
+        .cg-marke img { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; }
+        .cg-title {
+            margin: 32px 0 24px;
+            font-family: var(--font-display);
+            font-size: 1.7rem;
+            font-weight: 600;
+            line-height: 1.15;
+            letter-spacing: -0.025em;
+            color: var(--text-main);
+            text-wrap: balance;
+        }
+        .cg-punkte { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+        .cg-punkte li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; }
+        .cg-pic {
+            width: 34px; height: 34px; display: grid; place-items: center;
+            border-radius: 9px; border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--bg-sidebar); color: var(--text-main);
+        }
+        .cg-punkte strong { display: block; margin-bottom: 2px; font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+        .cg-punkte span:not(.cg-pic) { display: block; font-size: 0.82rem; line-height: 1.5; color: var(--text-muted); }
+        .cg-kurz { display: none; }
+
+        .cg-rechts {
             position: relative;
-            flex: 1;
+            display: flex;
+            flex-direction: column;
             min-width: 0;
+            padding: 40px 36px 32px;
             overflow-y: auto;
             overscroll-behavior: contain;
-            scrollbar-width: none;
-            padding: 32px 30px 28px;
-            border-radius: 24px;
-            background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01) 40%, transparent), var(--bg-deep);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-            isolation: isolate;
         }
-        .cg-core::-webkit-scrollbar { display: none; }
-        /* Emblem und Schimmer stehen noch im Markup (modals.html), sind seit 13.11.2026 aber aus. */
-        .cg-glow, .cg-mark { display: none; }
-
         .cg-close {
             position: absolute;
-            top: 18px;
-            right: 18px;
+            top: 14px;
+            right: 14px;
             width: 32px;
             height: 32px;
             display: grid;
             place-items: center;
             padding: 0;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: color 0.2s ease, background-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-        .cg-close:active { transform: scale(0.92); }
-
-
-        .cg-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 0;
-            font-size: 0.76rem;
-            font-weight: 500;
-            letter-spacing: 0.01em;
-            color: var(--text-muted);
-        }
-        .cg-eyebrow::before {
-            content: '';
-            width: 14px;
-            height: 1px;
-            background: currentColor;
-            opacity: 0.6;
-        }
-        .cg-title {
-            margin: 12px 0 0;
-            font-size: clamp(1.6rem, 4.8vw, 1.85rem);
-            font-weight: 600;
-            line-height: 1.1;
-            letter-spacing: -0.035em;
-            color: var(--text-main);
-            text-wrap: balance;
-        }
-        .cg-sub {
-            margin: 10px 0 0;
-            max-width: 36ch;
-            font-size: 0.88rem;
-            line-height: 1.6;
-            color: var(--text-muted);
-        }
-        .cg-fine {
-            margin: 8px 4px 0;
-            font-size: 0.74rem;
-            line-height: 1.5;
-            color: var(--text-muted);
-            opacity: 0.8;
-        }
-
-        .cg-passkey { margin-top: 28px; }
-        .cg-btn {
-            width: 100%;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            background: transparent;
-            color: var(--text-main);
-            font-size: 0.92rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-        .cg-btn:active { transform: scale(0.98); }
-        .cg-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-
-        .cg-form { display: grid; margin-top: 26px; }
-        .cg-passkey + .cg-form { margin-top: 22px; }
-        .cg-label {
-            margin: 0 0 8px 4px;
-            font-size: 0.78rem;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
-        /* Das Feld als eingelassene Mulde: dunkler als der Kern, Schatten innen. */
-        .cg-field {
-            display: flex;
-            align-items: center;
-            height: 50px;
-            padding-left: 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            background: rgba(255, 255, 255, 0.02);
-            box-shadow: none;
-            color: var(--text-muted);
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
-        }
-        .cg-field:focus-within {
-            border-color: rgba(255, 255, 255, 0.22);
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
-            color: var(--text-main);
-        }
-        .cg-field svg { flex-shrink: 0; }
-        .cg-input {
-            flex: 1;
-            min-width: 0;
-            height: 100%;
-            padding: 0 16px 0 12px;
             border: 0;
-            outline: none;
+            border-radius: 8px;
             background: transparent;
-            color: var(--text-main);
-            font-size: 16px;   /* iOS zoomt bei kleinerer Schrift in die Seite */
-        }
-        .cg-input::placeholder { color: var(--text-muted); opacity: 0.55; }
-
-        /* Hauptknopf hell auf dunkel, der Pfeil sitzt in einer eigenen Scheibe. */
-        .cg-cta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            width: 100%;
-            height: 52px;
-            margin-top: 12px;
-            padding: 0 7px 0 24px;
-            border: 0;
-            border-radius: 999px;
-            background: var(--text-main);
-            color: var(--bg-deep);
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            cursor: pointer;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-            transition: transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
-        }
-        .cg-cta:active { transform: scale(0.98); }
-        .cg-cta:disabled { opacity: 0.6; cursor: progress; }
-        .cg-cta .cloud-loading { display: inline-flex; align-items: center; gap: 8px; }
-        .cg-cta-disc {
-            flex-shrink: 0;
-            width: 38px;
-            height: 38px;
-            display: grid;
-            place-items: center;
-            border-radius: 50%;
-            background: var(--bg-deep);
-            color: var(--text-main);
-            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
-        }
-        .cg-form .cl-message { margin-top: 12px; }
-
-        .cg-or {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin: 26px 0 14px;
-            font-size: 0.72rem;
             color: var(--text-muted);
+            cursor: pointer;
+            transition: color 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
         }
-        .cg-or::before,
-        .cg-or::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.07);
-        }
-        .cg-or::after { background: rgba(255, 255, 255, 0.07); }
+        .cg-close:active { transform: scale(0.94); }
+        .cg-h3 { margin: 0 0 18px; font-size: 1.15rem; font-weight: 600; color: var(--text-main); }
 
-        .cg-oauth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .cg-fine { margin: 8px 0 0; font-size: 0.78rem; line-height: 1.5; color: var(--text-muted); }
+
+        .cg-btn,
         .cg-oauth-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            width: 100%;
             min-width: 0;
             height: 44px;
-            padding: 0 10px;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
             background: transparent;
             color: var(--text-main);
-            font-size: 0.84rem;
+            font-size: 0.9rem;
             font-weight: 500;
             white-space: nowrap;
             cursor: pointer;
-            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.16s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
         }
-        .cg-oauth-btn:active { transform: scale(0.97); }
-        .cg-oauth-btn svg { flex-shrink: 0; }
+        .cg-btn:active, .cg-oauth-btn:active { transform: scale(0.98); }
+        .cg-btn:disabled, .cg-oauth-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .cg-btn svg, .cg-oauth-btn svg { flex-shrink: 0; }
+
+        .cg-form { display: grid; }
+        .cg-label { margin: 0 0 6px; font-size: 0.84rem; font-weight: 500; color: var(--text-main); }
+        .cg-input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+            font-size: 16px;   /* iOS zoomt bei kleinerer Schrift in die Seite */
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .cg-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+        .cg-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25); }
+
+        .cg-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 44px;
+            margin-top: 10px;
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter 0.15s ease, transform 0.12s ease;
+        }
+        .cg-cta:active { transform: scale(0.98); }
+        .cg-cta:disabled { opacity: 0.65; cursor: progress; }
+        .cg-cta .cloud-loading { display: inline-flex; align-items: center; gap: 8px; }
+        .cg-form .cl-message, .cg-form .cloud-login-message { margin-top: 12px; }
+
+        .cg-or {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 18px 0;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+        }
+        .cg-or::before,
+        .cg-or::after { content: ''; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08); }
+        .cg-passkey .cg-fine { margin-bottom: 0; }
+
+        .cg-oauth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .cg-oauth-btn { gap: 8px; padding: 0 8px; font-size: 0.85rem; }
+
+        .cg-btn:focus-visible, .cg-oauth-btn:focus-visible, .cg-cta:focus-visible, .cg-close:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
 
         /* Touch hat kein :hover — die Flaechen sind ohne Hover vollstaendig lesbar. */
         @media (hover: hover) and (pointer: fine) {
             .cg-close:hover { color: var(--text-main); background: var(--hover-fill); }
             .cg-btn:hover,
-            .cg-oauth-btn:hover { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.16); }
-            .cg-cta:hover .cg-cta-disc { transform: translate(2px, -1px) scale(1.04); }
+            .cg-oauth-btn:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+            .cg-cta:hover:not(:disabled) { filter: brightness(1.08); }
         }
 
         /* Message (auch fuer die Passkey-Liste in den Einstellungen: cl-message) */
         .cl-message,
         .cloud-login-message {
             padding: 9px 12px;
-            border-radius: 12px;
+            border-radius: 8px;
             font-size: 13px;
-            text-align: center;
+            line-height: 1.5;
             font-weight: 500;
             border: 1px solid transparent;
         }
@@ -483,31 +407,32 @@
         .cl-spin { animation: cl-spin-anim 0.85s linear infinite; }
         @keyframes cl-spin-anim { to { transform: rotate(360deg); } }
 
-        /* Light theme: Haarlinien und Mulden dunkel statt hell */
-        [data-theme="light"] .cloud-login-overlay { background: rgba(240, 242, 247, 0.82); }
-        [data-theme="light"] .cg-shell {
-            background: rgba(0, 0, 0, 0.025);
-            border-color: rgba(0, 0, 0, 0.07);
-            box-shadow: 0 40px 100px -30px rgba(15, 23, 42, 0.28);
-        }
-        [data-theme="light"] .cg-core { background: var(--bg-deep); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9); }
-        [data-theme="light"] .cg-field:focus-within { border-color: rgba(0, 0, 0, 0.25); box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.04); }
-        [data-theme="light"] .cg-or::before, [data-theme="light"] .cg-or::after { background: rgba(0, 0, 0, 0.08); }
-        [data-theme="light"] .cg-btn:hover, [data-theme="light"] .cg-oauth-btn:hover { background: rgba(0, 0, 0, 0.03); border-color: rgba(0, 0, 0, 0.16); }
-        [data-theme="light"] .cg-close,
-        [data-theme="light"] .cg-mark,
-        [data-theme="light"] .cg-eyebrow,
+        /* Light theme: Flaechen weiss, Haarlinien dunkel */
+        [data-theme="light"] .cloud-login-overlay { background: rgba(15, 23, 42, 0.38); }
+        [data-theme="light"] .cg-karte { border-color: rgba(7, 16, 35, 0.1); box-shadow: 0 30px 80px -20px rgba(15, 23, 42, 0.3); }
+        [data-theme="light"] .cg-links { border-right-color: rgba(7, 16, 35, 0.08); }
+        [data-theme="light"] .cg-pic { border-color: rgba(7, 16, 35, 0.1); }
         [data-theme="light"] .cg-btn,
-        [data-theme="light"] .cg-oauth-btn { border-color: rgba(0, 0, 0, 0.09); background: rgba(255, 255, 255, 0.7); }
-        [data-theme="light"] .cg-field { border-color: rgba(0, 0, 0, 0.1); background: rgba(255, 255, 255, 0.85); box-shadow: none; }
+        [data-theme="light"] .cg-oauth-btn,
+        [data-theme="light"] .cg-input { border-color: rgba(7, 16, 35, 0.16); }
+        [data-theme="light"] .cg-input { background: rgba(7, 16, 35, 0.03); }
+        [data-theme="light"] .cg-or::before, [data-theme="light"] .cg-or::after { background: rgba(7, 16, 35, 0.1); }
 
-        @media (max-width: 480px) {
+        /* Handy: Liste weg, Kopf (Marke, Titel, Verschluesselungs-Satz) bleibt ueber dem Formular. */
+        @media (max-width: 720px) {
             .cloud-login-modal { padding: 0.75rem; }
-            .cg-core { padding: 26px 20px 22px; }
-            .cg-close { top: 14px; right: 14px; }
+            .cg-karte { grid-template-columns: 1fr; max-width: 440px; overflow-y: auto; }
+            .cg-links { padding: 22px 22px 18px; border-right: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.07); }
+            [data-theme="light"] .cg-links { border-bottom-color: rgba(7, 16, 35, 0.08); }
+            .cg-title { margin: 16px 0 6px; font-size: 1.3rem; }
+            .cg-punkte { display: none; }
+            .cg-kurz { display: block; margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--text-muted); }
+            /* static: das Kreuz richtet sich dann an der Karte aus und sitzt oben rechts im Kopf. */
+            .cg-rechts { position: static; padding: 22px 22px 24px; overflow: visible; }
+            .cg-close { top: 12px; right: 12px; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .cg-shell { animation: cg-dunkel 0.2s ease both; }
+            .cg-karte { animation: cg-dunkel 0.2s ease both; }
         }
 
         /* Range Slider Styling */
