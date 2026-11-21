@@ -60,7 +60,7 @@ const CLOUD_PROXY = 'https://ai-proxy.myworklog.de';
 const RATE_LIMIT_COOLDOWN_MS = 10000;  // Doppelklick-Schutz, kein Kontingent
 const KONTINGENT_SPEICHER = 'mwl_ki_kontingent';
 const SCHNELL_SPEICHER = 'mwl_ki_schnell';
-const DENKEN_SPEICHER = 'mwl_ki_denken';   // Thinking ohne Pass: verbraucht/frei je Woche
+const DENKEN_SPEICHER = 'mwl_ki_denken';   // Thinking ohne Pass: verbraucht/frei im Zeitraum, den der Worker meldet (seit 19.11.2026 Kalendermonat)
 const GERAET_SPEICHER = 'mwl_ki_geraet';
 
 // Altbestand der browserseitigen Zaehler — wird nirgends mehr gelesen.
