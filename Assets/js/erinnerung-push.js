@@ -170,9 +170,25 @@
     function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
     const GLOCKE = '<svg class="erp-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 
+    // Wegklicken (nur wo opt.schliessbar, also auf /berichtsheft/): danach bleibt eine Haarlinie
+    // zum Zurueckholen stehen — dieselben Klassen wie die Betriebszeile darunter (b2b.css).
+    const ZU_KEY = 'mwl_erinnerung_karte_zu';
+    function istZu() { try { return root.localStorage.getItem(ZU_KEY) === '1'; } catch (e) { return false; } }
+    function setZu(v) { try { v ? root.localStorage.setItem(ZU_KEY, '1') : root.localStorage.removeItem(ZU_KEY); } catch (e) { /* Privatmodus */ } }
+
     async function zeichne(box, opt) {
         if (!box) return;
         opt = opt || {};
+        if (opt.schliessbar && istZu()) {
+            box.classList.add('is-mini');
+            box.innerHTML = '<button type="button" class="b2b-mini-btn erp-wieder">' +
+                GLOCKE.replace('class="erp-ic"', 'class="icon"') +
+                '<span>' + L('Berichtsheft-Erinnerung aufs Handy', 'Report book reminder on your phone') + '</span></button>';
+            box.hidden = false;
+            box.querySelector('.erp-wieder').addEventListener('click', function () { setZu(false); zeichne(box, opt); });
+            return;
+        }
+        box.classList.remove('is-mini');
         const st = await status();
         const z = lesen() || {};
         const tag = z.tag != null ? z.tag : VORGABE.tag, stunde = z.stunde != null ? z.stunde : VORGABE.stunde;
@@ -213,7 +229,10 @@
             '<div class="erp-kopf">' + GLOCKE +
             '<div class="erp-text"><p class="erp-titel">' + L('Berichtsheft-Erinnerung aufs Handy', 'Report book reminder on your phone') +
             (st === 'an' && z.wochen !== false ? '<span class="erp-marke">' + L('an', 'on') + '</span>' : '') + '</p>' +
-            '<p class="erp-unter">' + unter + '</p></div></div>' +
+            '<p class="erp-unter">' + unter + '</p></div>' +
+            (opt.schliessbar ? '<button type="button" class="b2b-x erp-x" aria-label="' + L('Ausblenden', 'Hide') +
+                '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' : '') +
+            '</div>' +
             (zeit || rechts ? '<div class="erp-fuss">' + zeit + rechts + '</div>' : '') +
             '<p class="erp-meldung" role="status" hidden></p>';
         box.hidden = false;
@@ -231,6 +250,8 @@
         const wert = function () {
             return { tag: +box.querySelector('.erp-tag').value, stunde: +box.querySelector('.erp-stunde').value, wochen: true };
         };
+        const btnX = box.querySelector('.erp-x');
+        if (btnX) btnX.addEventListener('click', function () { setZu(true); zeichne(box, opt); });
         const btnAn = box.querySelector('.erp-an'), btnAus = box.querySelector('.erp-aus');
         if (btnAn) btnAn.addEventListener('click', async function () {
             btnAn.disabled = true;

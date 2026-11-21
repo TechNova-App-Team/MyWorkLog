@@ -896,7 +896,7 @@
             // Abo bekommt nach dem Anmelden das Konto angehaengt.
             if (window.MWLErinnerung) {
                 const st = statusErinnerung();
-                window.MWLErinnerung.zeichne(document.getElementById('bhPushKarte'), { ausbilder: !!(st && st.rolle === 'azubi') });
+                window.MWLErinnerung.zeichne(document.getElementById('bhPushKarte'), { ausbilder: !!(st && st.rolle === 'azubi'), schliessbar: true });
                 window.MWLErinnerung.kontoNachziehen();
             }
         });
