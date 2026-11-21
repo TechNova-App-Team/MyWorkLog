@@ -164,6 +164,13 @@ class SupabaseCloudSyncUI {
             googleBtn.addEventListener('click', () => this.handleGoogleLogin());
         }
 
+        // Microsoft OAuth Button
+        const microsoftBtn = document.getElementById('cloud-login-microsoft');
+        if (microsoftBtn) {
+            microsoftBtn.addEventListener('click', () => this.handleMicrosoftLogin());
+        }
+        this.anbieterAbgleichen();
+
         // Passkey
         const passkeyBtn = document.getElementById('cloud-login-passkey');
         if (passkeyBtn) {
@@ -403,6 +410,56 @@ class SupabaseCloudSyncUI {
             googleBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');
         }
+    }
+
+    /**
+     * Handler für Microsoft OAuth Login
+     */
+    async handleMicrosoftLogin() {
+        const btn = document.getElementById('cloud-login-microsoft');
+        const original = btn.innerHTML;
+        try {
+            btn.disabled = true;
+            btn.innerHTML = WARTE_SPINNER + '<span>Microsoft …</span>';
+            localStorage.setItem('_showCloudTabAfterOAuth', 'true');
+            await this.sync.loginWithMicrosoft();
+        } catch (error) {
+            this.showMessage('Microsoft-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
+            btn.disabled = false;
+            btn.innerHTML = original;
+            localStorage.removeItem('_showCloudTabAfterOAuth');
+        }
+    }
+
+    /**
+     * Zeigt nur die Konto-Knoepfe, deren Anbieter in Supabase wirklich an ist. Quelle ist der
+     * oeffentliche Endpunkt /auth/v1/settings (external.{google,github,discord,azure}).
+     * Microsoft steht im Markup auf hidden und erscheint erst, wenn der Anbieter an ist — so
+     * kann der Knopf vor der Einrichtung ausgeliefert werden, ohne je ins Leere zu fuehren.
+     * Faellt die Abfrage aus (offline), bleibt es beim Markup: die drei bewaehrten sichtbar.
+     */
+    async anbieterAbgleichen() {
+        const c = typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG : null;
+        if (!c || !c.URL || !c.ANON_KEY) return;
+        let an;
+        try {
+            const r = await fetch(c.URL + '/auth/v1/settings', { headers: { apikey: c.ANON_KEY } });
+            if (!r.ok) return;
+            an = (await r.json()).external || {};
+        } catch (e) { return; }
+        const knoepfe = { google: 'google', github: 'github', discord: 'discord', azure: 'microsoft' };
+        let sichtbar = 0;
+        for (const anbieter in knoepfe) {
+            const btn = document.getElementById('cloud-login-' + knoepfe[anbieter]);
+            if (!btn) continue;
+            btn.hidden = an[anbieter] !== true;
+            if (!btn.hidden) sichtbar++;
+        }
+        const reihe = document.querySelector('.cg-oauth');
+        if (reihe) reihe.dataset.anzahl = String(sichtbar);
+        const oder = document.getElementById('cgOderKonto');
+        if (oder) oder.hidden = sichtbar === 0;
+        if (reihe) reihe.hidden = sichtbar === 0;
     }
 
     /**

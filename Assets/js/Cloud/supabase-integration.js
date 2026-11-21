@@ -395,6 +395,34 @@ class SupabaseCloudSync {
     }
 
     /**
+     * Login mit Microsoft (Supabase-Anbieter "azure"). Scope "email" ist Pflicht — ohne ihn
+     * liefert Microsoft bei privaten Konten keine Adresse und Supabase lehnt die Anmeldung ab.
+     * Welche Konten zugelassen sind, steht in der App-Registrierung bei Microsoft (nur private
+     * Konten: Schulkonten verschwinden nach der Ausbildung und mit ihnen der Zugang).
+     * @returns {Promise<Object>} Resultat der signInWithOAuth Operation
+     */
+    async loginWithMicrosoft() {
+        if (!this.client) {
+            throw new Error('Supabase Client nicht verfügbar');
+        }
+        try {
+            const { data, error } = await this.client.auth.signInWithOAuth({
+                provider: 'azure',
+                options: {
+                    scopes: 'email',
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+            if (error) throw error;
+            return { success: true, data };
+        } catch (error) {
+            console.error('[Auth] Microsoft OAuth Fehler:', error);
+            if (typeof mwlEvent === 'function') mwlEvent('problem_anmeldung', { grund: 'microsoft' });
+            throw error;
+        }
+    }
+
+    /**
      * Logout - entfernt Session
      * @returns {Promise<void>}
      */
