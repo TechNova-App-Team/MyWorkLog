@@ -42,7 +42,9 @@ console.log('\n1. Mail-Limit (429)');
     const t = authFehlerText({ status: 429, message: 'email rate limit exceeded' });
     ok('nennt den Grund', /zu viele Anmelde-Mails/.test(t), t.slice(0, 60) + '…');
     ok('nennt eine Wartezeit', /Stunde/.test(t));
-    ok('nennt den Weg, der sofort geht', /Google/.test(t) && /GitHub/.test(t));
+    ok('nennt den Weg, der sofort geht', /Google/.test(t));
+    // GitHub/Discord sind seit 9.8.10 aus dem Login raus — der Text darf sie nicht mehr anbieten
+    ok('bietet keinen entfernten Anbieter an', !/GitHub|Discord/.test(t));
     ok('kein englischer Rohtext mehr', !/rate limit/i.test(t));
     // Der Code kommt nicht immer als status durch — supabase-js verpackt ihn
     // je nach Fassung anders. Deshalb beide Wege pruefen.

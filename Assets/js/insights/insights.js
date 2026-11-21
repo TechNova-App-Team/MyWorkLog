@@ -267,6 +267,8 @@ var EVENT_LABELS = {
     'traum_teilen':     ['Reisetraum: Seite geteilt', 'Travel dream: page shared'],
     // aktion: gezeigt | geklickt — Einladung zum Betriebskonto nach dem Abzeichnen per Link
     'ausbilder_einladung': ['Ausbilder: Einladung zum Betriebskonto', 'Trainer: company account invite'],
+    'ausbilder_demo':   ['Ausbilder: Demo angesehen', 'Trainer: demo viewed'],
+    'speicher_aufgeraeumt': ['Alte Browser-Einträge aufgeräumt', 'Old browser entries cleaned up'],
     'ghost_mode_on':    ['Ghost Mode (seit v7.5.4 entfernt)', 'Ghost mode (removed in v7.5.4)'],
     // Probleme — alles mit 'problem_' landet im eigenen Reiter.
     'problem_js_fehler':      ['Skriptfehler', 'Script error'],
@@ -376,7 +378,7 @@ var SUB_LABELS = {
     'zur_haelfte': ['bis zur Hälfte gelesen', 'read halfway'], 'zu_ende': ['zu Ende gelesen', 'read to the end'],
     // Gruende der Probleme
     'magic_link': ['Anmeldelink', 'sign-in link'], 'passkey': ['Passkey', 'passkey'], 'passkey_anlegen': ['Passkey anlegen', 'creating passkey'],
-    'google': ['Google', 'Google'], 'github': ['GitHub', 'GitHub'], 'discord': ['Discord', 'Discord'],
+    'google': ['Google', 'Google'], 'github': ['GitHub', 'GitHub'], 'discord': ['Discord', 'Discord'], 'microsoft': ['Microsoft', 'Microsoft'],
     'rueckkehr': ['Rückkehr vom Anbieter', 'return from provider'],
     'hochladen': ['Hochladen', 'upload'], 'herunterladen': ['Herunterladen', 'download'],
     'verschluesseln': ['Verschlüsseln', 'encrypting'], 'entschluesseln': ['Entschlüsseln: falsches Passwort', 'decrypting: wrong password'],

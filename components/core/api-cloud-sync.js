@@ -32,7 +32,8 @@
     }
 
     const apiStatusMonitor = {
-        logs: JSON.parse(localStorage.getItem('api_status_logs') || '[]'),
+        // Aelter als 30 Tage zeigt keine Ansicht (groesster Reiter '30d') — beim Laden wegwerfen statt mitschleppen.
+        logs: (function () { try { const g = Date.now() - 2592000000; return (JSON.parse(localStorage.getItem('api_status_logs') || '[]') || []).filter(l => l && l.ts >= g); } catch (e) { return []; } })(),
         currentRange: '24h',
 
         // Record an API call result
