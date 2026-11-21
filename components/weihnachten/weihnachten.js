@@ -1,5 +1,5 @@
 // ═══ WEIHNACHTEN MODULE ═══
-// Winterliche App vom 01.12. 0 Uhr bis 27.12. 7 Uhr: Frost und Schnee hinter allem (weihnachten-szene.js),
+// Winterliche App vom 01.12. 0 Uhr bis 27.12. 7 Uhr: Schnee, der unten liegen bleibt (weihnachten-szene.js),
 // Frostglas-Flächen (weihnachten.css) und eine Grußzeile oben im Dashboard. Klassen setzt das Pre-Apply-Skript
 // im <head> (Schritt 8). Testen an einem anderen Tag: localStorage.mwl_weihnachten_test = '1', neu laden;
 // außerhalb des Dezembers rechnet die Zeile dann mit dem 7. Dezember.

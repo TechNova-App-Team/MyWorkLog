@@ -2,9 +2,9 @@
    Gilt vom 01.12. 0 Uhr bis 27.12. 7 Uhr (Torwaechter Schritt 8 im Pre-Apply-Skript):
    html.mwl-weihnachten        → Zeitraum laeuft (Sammelklasse fuer das JS)
    html.mwl-weihnachten-karte  → Grusszeile oben im Dashboard
-   html.mwl-weihnachten-deko   → Frost + Schnee hinter der App, Flaechen als Frostglas
-   Fassung 4 (22.11.2026): die App selbst wird winterlich. Bewusst NICHT mehr hier: Adventskalender,
-   gemalte Berge, roter Akzent, goldenes Logo (alles verworfen). Kein --primary: die Akzentfarbe des
+   html.mwl-weihnachten-deko   → Schnee hinter der App, Schneekante unten, Flaechen als Frostglas
+   Fassung 5 (22.11.2026): die App selbst wird winterlich. Bewusst NICHT mehr hier: Adventskalender,
+   gemalte Berge, roter Akzent, goldenes Logo, gezeichnete Eisblumen (alles verworfen). Kein --primary: die Akzentfarbe des
    Nutzers bleibt, Winter kommt nur aus den Flaechen und der Szene. „Deko aus“ schaltet alles ab. */
 
 /* ─── Die Szene liegt hinter allem ──────────────────────────────────── */
@@ -14,8 +14,15 @@
 .wn-welt canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 html:not(.mwl-weihnachten-deko) .wn-welt { display: none; }
 
+/* Schneekante: VOR dem Inhalt, nur ein paar Pixel hoch, ohne Klicks. Unter der Seitenleiste (z 200), sonst
+   deckt sie dort die Versionszeile zu. Am Handy haengt sie in der Navigation (is-nav, siehe weihnachten-szene.js). */
+.wn-kante { position: fixed; left: 0; bottom: 0; width: 100%; z-index: 140; pointer-events: none; display: block; opacity: 0; transition: opacity 900ms ease; }
+.wn-kante.is-da { opacity: 1; }
+.wn-kante.is-nav { position: absolute; bottom: 100%; z-index: 1; }
+.wn-kante[hidden], html:not(.mwl-weihnachten-deko) .wn-kante { display: none; }
+
 /* ─── Frostglas ─────────────────────────────────────────────────────── */
-/* Deckkraft 0,7: bei 0,82 verschwanden die Eisblumen fast ganz hinter den Karten (Bild 1288 px, 22.11.2026).
+/* Deckkraft 0,7: bei 0,82 wirkten die Flaechen wie normale Karten, der Winter kam nur in den Fugen an.
    Kein backdrop-filter: Hinter dem Glas faellt Schnee, das wuerde jedes Bild die Flaeche neu weichzeichnen. */
 html.mwl-weihnachten-deko {
     --wn-glas: rgba(12, 21, 39, 0.7);
@@ -54,7 +61,7 @@ html.mwl-weihnachten-deko[data-theme="light"] {
     --edge-top: inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 /* Das Dashboard hat eigene Flaechen-Tokens, die Seitenleiste ist in layout-fix.css per !important schwarz.
-   Ohne diese beiden lag der Frost unter deckenden Flaechen (gemessen 22.11.2026: --dn-panel 0,78, Seitenleiste
+   Ohne diese beiden lag die Szene unter deckenden Flaechen (gemessen 22.11.2026: --dn-panel 0,78, Seitenleiste
    rgb(3,3,5)) und war nur in 12 px breiten Fugen zu sehen. */
 html.mwl-weihnachten-deko #view-dashboard {
     --dn-panel: var(--wn-glas);
@@ -84,7 +91,7 @@ html.mwl-weihnachten-deko .dn-hero {
 }
 html.mwl-weihnachten-deko .dn-hero { padding: 16px 20px; border-radius: 16px; }
 /* Andere Ansichten stehen ohne eigene Flaeche auf dem Grund. Der Schatten ersetzt Innenabstand, damit
-   sich kein Layout verschiebt; Frost und Schnee bleiben nur am Rand zu sehen. */
+   sich kein Layout verschiebt; der Schnee bleibt nur am Rand zu sehen. */
 html.mwl-weihnachten-deko .view-section:not(#view-dashboard) {
     background: var(--wn-glas-ansicht);
     box-shadow: 0 0 0 14px var(--wn-glas-ansicht);
@@ -185,10 +192,10 @@ html.mwl-weihnachten-karte .wn-card {
 
 /* ─── Weniger Bewegung ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-    .wn-welt { transition: none; }
+    .wn-welt, .wn-kante { transition: none; }
 }
 
 /* ─── Nie im Druck ──────────────────────────────────────────────────── */
 @media print {
-    .wn-welt, .wn-card { display: none !important; }
+    .wn-welt, .wn-card, .wn-kante { display: none !important; }
 }

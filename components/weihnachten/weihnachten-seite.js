@@ -1,5 +1,5 @@
 // ═══ WEIHNACHTEN SEITE MODULE ═══
-// Bringt den Winter (Frost + Schnee, Frostglas) auf die eigenständigen Seiten (Berichtsheft, Aufgaben, Rechte-Checker …). Steht
+// Bringt den Winter (Schnee + Schneekante, Frostglas) auf die eigenständigen Seiten (Berichtsheft, Aufgaben, Rechte-Checker …). Steht
 // als normales Skript vor </head>, damit die Farben vor dem ersten Zeichnen stimmen; die übrigen elf
 // Monate endet es in der ersten Zeile, Stil und Szene werden nur im Fenster nachgeladen.
 //
@@ -21,12 +21,12 @@
         root.classList.add('mwl-weihnachten', 'mwl-weihnachten-deko', 'mwl-weihnachten-seite');
         const css = document.createElement('link');
         css.rel = 'stylesheet';
-        css.href = '/components/weihnachten/weihnachten-seite.css?v=30ae97c634';
+        css.href = '/components/weihnachten/weihnachten-seite.css?v=70d7f781d5';
         document.head.appendChild(css);
 
         const start = function () {
             const s = document.createElement('script');
-            s.src = '/components/weihnachten/weihnachten-szene.js?v=0e70d77d1a';
+            s.src = '/components/weihnachten/weihnachten-szene.js?v=b25639dfc7';
             s.onload = function () { if (window.WeihnachtsSzene) window.WeihnachtsSzene.start(); };
             document.head.appendChild(s);
 

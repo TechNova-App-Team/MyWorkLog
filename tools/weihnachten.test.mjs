@@ -169,6 +169,9 @@ ok('Szene: Deko-Schleife faengt Fehler', SZENE.includes("catch (e) { console.war
 ok('Szene: steht in verdeckten Tabs', SZENE.includes('document.hidden') && SZENE.includes('visibilitychange'));
 ok('Szene: Bewegung aus bei reduzierter Bewegung', SZENE.includes('prefers-reduced-motion') && SZENE.includes('RUHIG'));
 ok('Szene: malt erst im Leerlauf', SZENE.includes('requestIdleCallback'));
+ok('Schneekante haengt am Handy in der Navigation', SZENE.includes("getElementById('mobNavInner')") && /.wn-kante.is-nav {[^}]*bottom: 100%/.test(CSS));
+ok('Schneekante nie im Druck, faengt keine Klicks', /@media print[^}]*.wn-kante/.test(CSS) && /.wn-kante {[^}]*pointer-events: none/.test(CSS));
+ok('Keine Eisblumen mehr (verworfen 22.11.2026)', !SZENE.includes('maleFrost'));
 const hoverBloecke = CSS.split('@media (hover: hover)');
 ok('Hover nur hinter Medienabfrage', hoverBloecke.length === 2 && !hoverBloecke[0].includes(':hover'));
 // Entscheidung 22.11.2026: Winter kommt aus Flaechen und Szene, die Akzentfarbe des Nutzers bleibt
