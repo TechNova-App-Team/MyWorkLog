@@ -317,6 +317,10 @@ self.addEventListener('activate', event => {
         );
       })
       .then(() => alteAssetsRaeumen().catch(() => {}))
+      // Navigation Preload: der Browser startet die Seitenanfrage, WAEHREND er den
+      // Worker aufweckt, statt danach (Idee aus YouTubes SW, 22.11.2026). Der
+      // navigate-Zweig muss event.preloadResponse dann auch abnehmen.
+      .then(() => self.registration?.navigationPreload?.enable().catch(() => {}))
       .then(() => self.clients.claim())
   );
 });
@@ -336,23 +340,30 @@ self.addEventListener('fetch', event => {
 
   // HTML-Navigation: Network-First mit cache:'reload' → bypassed Browser-HTTP-Cache komplett.
   // Verhindert, dass bei Cloudflare-Deployments ein 304-Hit alten HTML-Content liefert.
+  //
+  // Mit Navigation Preload (activate) liegt die Antwort oft schon an. Die Preload-
+  // Anfrage laeuft mit dem Standard-Cache-Modus statt 'reload' — gleichwertig, weil
+  // jede HTML-Seite live `max-age=0, must-revalidate` traegt (gemessen 22.11.2026 an
+  // /, /berichtsheft/, /rechte-checker/, /preise/). Kommt eine Seite je mit laengerem
+  // max-age, liefert der Preload ab dann die alte Fassung — dann hier abschalten.
+  // Ohne Preload (Browser kann es nicht, erster Start vor activate): wie bisher.
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(new Request(request, { cache: 'reload' }))
-        .then(response => {
-          if (response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(c => c.put(seitenSchluessel(request.url), clone)).catch(() => {});
-          }
-          return response;
-        })
-        .catch(async () => {
-          const cache = await caches.open(CACHE_NAME);
-          return (await cache.match(seitenSchluessel(request.url)))
-            ?? (await cache.match(OFFLINE_URL))
-            ?? new Response('Offline', { status: 503 });
-        })
-    );
+    event.respondWith((async () => {
+      try {
+        const response = (await event.preloadResponse)
+          || await fetch(new Request(request, { cache: 'reload' }));
+        if (response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(seitenSchluessel(request.url), clone)).catch(() => {});
+        }
+        return response;
+      } catch (e) {
+        const cache = await caches.open(CACHE_NAME);
+        return (await cache.match(seitenSchluessel(request.url)))
+          ?? (await cache.match(OFFLINE_URL))
+          ?? new Response('Offline', { status: 503 });
+      }
+    })());
     return;
   }
 

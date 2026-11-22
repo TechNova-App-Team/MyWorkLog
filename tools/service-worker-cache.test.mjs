@@ -135,6 +135,7 @@ async function anfrage(url, opt = {}, umgebung = {}) {
     request: new FakeRequest(url, opt),
     respondWith: (p) => { abgefangen = true; antwort = p; },
     waitUntil: () => {},
+    preloadResponse: umgebung.preload,
   };
   hoerer.fetch(event);
   const res = abgefangen ? await antwort : null;
@@ -432,6 +433,36 @@ console.log('\n6. Navigation');
     cacheVorbelegt: { 'https://myworklog.de/': new FakeResponse('<html>alt</html>', { marke: 'cache' }) },
   });
   ok(a.res?.marke === 'cache', 'Navigation faellt offline auf den Cache zurueck');
+}
+// 6a: Navigation Preload. Liegt die Antwort schon an, darf kein zweiter
+// Netzabruf folgen (sonst laedt jede Seite doppelt); scheitert der Preload
+// (offline), muss der Cache greifen wie ohne Preload.
+{
+  const a = await anfrage('https://myworklog.de/', { mode: 'navigate' }, {
+    preload: Promise.resolve(new FakeResponse('<html>vorab</html>', { marke: 'preload' })),
+  });
+  ok(a.res?.marke === 'preload', '6a Preload-Antwort wird genommen');
+  ok(a.netzAufrufe.length === 0, '6a kein zweiter Netzabruf neben dem Preload (' + a.netzAufrufe.length + ')');
+}
+{
+  const a = await anfrage('https://myworklog.de/', { mode: 'navigate' }, {
+    preload: Promise.resolve(undefined),
+  });
+  ok(a.res?.marke === 'netz' && a.netzAufrufe.length === 1, '6a Preload leer → normaler Abruf');
+}
+{
+  const p = Promise.reject(new Error('offline')); p.catch(() => {});
+  const a = await anfrage('https://myworklog.de/', { mode: 'navigate' }, {
+    preload: p,
+    netz: async () => { throw new Error('offline'); },
+    cacheVorbelegt: { 'https://myworklog.de/': new FakeResponse('<html>alt</html>', { marke: 'cache' }) },
+  });
+  ok(a.res?.marke === 'cache', '6a Preload scheitert offline → Cache');
+}
+{
+  const ohne = QUELLE.replace(/\/\/.*$/gm, '');
+  ok(/navigationPreload\??\.enable\(\)/.test(ohne), '6a activate schaltet Navigation Preload ein');
+  ok(/event\.preloadResponse/.test(ohne), '6a navigate-Zweig nimmt die Preload-Antwort ab');
 }
 // 6b: die installierte App startet ueber die start_url mit ?utm_…, die
 // Offline-Seite schickt auf '/'. Gegen den alten Stand (Schluessel = volle URL)
