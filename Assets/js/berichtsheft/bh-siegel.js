@@ -44,10 +44,19 @@ const TEXTE = {
     fachgespraech: {
         plus: true,
         titel: ['Fachgespräch üben', 'Practise the expert interview'],
-        satz: ['Der Prüfer fragt nach deinen eigenen Berichten.', 'The examiner asks about your own reports.'],
-        punkte: [['Fragen wie im echten Fachgespräch, zu dem, was in deinem Heft steht', 'Questions like in the real interview, about what is in your record book'],
+        // Seit Fassung 2 (01.11.2026) fragt es nach Prüfungsaufgabe und Beruf, nicht nach dem Heft
+        satz: ['Der Prüfer fragt nach deiner Prüfungsaufgabe und deinem Beruf.', 'The examiner asks about your exam task and your occupation.'],
+        punkte: [['Fragen wie im echten Fachgespräch, zu deinem Projekt oder Report und zu den Aufgaben deines Berufs', 'Questions like in the real interview, about your project or report and the tasks of your occupation'],
                  ['Rückmeldung zu jeder Antwort: was überzeugt, was fehlt', 'Feedback on every answer: what convinces, what is missing'],
                  ['Die Nachfrage, die ein Prüfer jetzt stellen würde', 'The follow-up an examiner would ask next']],
+    },
+    projektdoku: {
+        plus: true,
+        titel: ['Projektdoku', 'Project documentation'],
+        satz: ['Du schreibst, der Ausschuss liest vorher mit.', 'You write, the board reads along first.'],
+        punkte: [['Gliederung mit den Fragen, die jedes Kapitel beantworten muss', 'An outline with the questions each chapter has to answer'],
+                 ['Prüfung deines Entwurfs: was fehlt, was unbegründet bleibt, ob der Zeitplan aufgeht', 'A review of your draft: what is missing, what lacks reasons, whether the time plan adds up'],
+                 ['Schreibt keinen Text für dich, denn die Doku musst du selbst verfassen', 'Writes no text for you, because you must write the documentation yourself']],
     },
     wochenvorschlag: {
         titel: ['Woche vorschlagen', 'Suggest the week'],

@@ -320,6 +320,7 @@ window.MWLPass = (function () {
         rahmenplan: (o) => window.BHRahmenplan && BHRahmenplan.oeffnen(o),
         wochenvorschlag: (o) => window.BHWochenvorschlag && BHWochenvorschlag.oeffnen(o),
         fachgespraech: (o) => window.BHFachgespraech && BHFachgespraech.oeffnen(o),
+        projektdoku: (o) => window.BHProjektdoku && BHProjektdoku.oeffnen(o),
     };
     async function oeffnen(name, opt) {
         if ((frei() || (name === 'mehrwochen' && probeAktiv())) && await laden() && OEFFNER[name]) { OEFFNER[name](opt); return; }
