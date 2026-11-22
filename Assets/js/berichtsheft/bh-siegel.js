@@ -53,10 +53,10 @@ const TEXTE = {
     projektdoku: {
         plus: true,
         titel: ['Projektdoku', 'Project documentation'],
-        satz: ['Du schreibst, der Ausschuss liest vorher mit.', 'You write, the board reads along first.'],
-        punkte: [['Gliederung mit den Fragen, die jedes Kapitel beantworten muss', 'An outline with the questions each chapter has to answer'],
-                 ['Prüfung deines Entwurfs: was fehlt, was unbegründet bleibt, ob der Zeitplan aufgeht', 'A review of your draft: what is missing, what lacks reasons, whether the time plan adds up'],
-                 ['Schreibt keinen Text für dich, denn die Doku musst du selbst verfassen', 'Writes no text for you, because you must write the documentation yourself']],
+        satz: ['In sechs Schritten zur fertigen Doku, aus deinem eigenen Heft.', 'Six steps to a finished documentation, from your own record book.'],
+        punkte: [['Gliederung mit Leitfragen und Satzanfängen für jedes Kapitel', 'An outline with guiding questions and sentence starters for every chapter'],
+                 ['Soll-Ist-Vergleich und Chronik aus deinem Heft und deiner Zeiterfassung', 'Planned vs. actual and a timeline from your record book and time tracking'],
+                 ['Hinweise zu deinen Sätzen und eine Prüfung, die deine Doku mit deinem Heft abgleicht', 'Notes on your sentences and a review that checks your documentation against your record book']],
     },
     wochenvorschlag: {
         titel: ['Woche vorschlagen', 'Suggest the week'],
