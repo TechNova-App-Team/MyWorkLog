@@ -77,5 +77,13 @@ ls.setItem(TOT[0], 'x');
 w.mwlSpeicherAufraeumen();
 ok(ls.getItem(TOT[0]) === 'x' && ereignisse.length === 1, 'laeuft nur einmal je STAND');
 
+// Neues Jahr: Merker vom Vorjahr → laeuft wieder, damit Saison-Schluessel jeden Januar gehen
+ls.setItem('mwl_speicher_aufgeraeumt', ls.getItem('mwl_speicher_aufgeraeumt').replace(String(jahr), String(jahr - 1)));
+ls.setItem('mwl_silvester_' + (jahr - 1), 'weg');
+ls.setItem('mwl_silvester_' + (jahr + 1), 'weg');
+w.mwlSpeicherAufraeumen();
+ok(ls.getItem('mwl_silvester_' + (jahr - 1)) === null && ls.getItem(TOT[0]) === null, 'neues Jahr: laeuft wieder, alter Silvester-Schluessel weg');
+ok(ls.getItem('mwl_silvester_' + (jahr + 1)) === 'weg', 'Silvester-Schluessel mit dem NEUEN Jahr bleibt (gilt ab 30.12.)');
+
 if (fehler) { console.log(`\n${fehler} Fehler`); process.exit(1); }
 console.log('\nspeicher-aufraeumen: alles gruen');

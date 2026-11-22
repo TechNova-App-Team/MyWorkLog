@@ -1,0 +1,69 @@
+/* ═══ SILVESTER SEITE MODULE ═══
+   Feuerwerk hinter den eigenstaendigen Seiten, siehe silvester-seite.js. Alles unter @media screen:
+   Druck und PDF sollen von diesem Stil nichts erfahren, das Berichtsheft wird ausgedruckt und abgegeben. */
+@media screen {
+    html.mwl-silvester-seite {
+        --sv-glas: rgba(13, 13, 30, 0.8);
+        --bg-deep: #07071a;
+        --bg-surface: var(--sv-glas);
+        --bg-card: var(--sv-glas);
+        --bg-glass: rgba(13, 13, 30, 0.72);
+        --bg-glass-heavy: rgba(10, 10, 24, 0.94);
+        --bg-sidebar: rgba(9, 9, 24, 0.86);
+        --bg-elevated: rgba(16, 16, 36, 0.86);
+        --border: rgba(210, 205, 255, 0.11);
+        --border-subtle: rgba(210, 205, 255, 0.08);
+        --border-default: rgba(210, 205, 255, 0.16);
+        background-color: #07071a;
+    }
+    html.mwl-silvester-seite[data-theme="light"] {
+        --sv-glas: rgba(255, 255, 255, 0.84);
+        --bg-deep: #ecebf4;
+        --bg-glass: rgba(255, 255, 255, 0.76);
+        --bg-glass-heavy: rgba(255, 255, 255, 0.96);
+        --bg-sidebar: rgba(255, 255, 255, 0.92);
+        --bg-elevated: rgba(255, 255, 255, 0.86);
+        --border: rgba(40, 36, 90, 0.1);
+        --border-subtle: rgba(40, 36, 90, 0.08);
+        --border-default: rgba(40, 36, 90, 0.15);
+        background-color: #ecebf4;
+    }
+    /* !important: Jede Seite setzt ihren Grund anders, und der laege sonst ueber der Szene (z-index -1). */
+    html.mwl-silvester-seite body { background: transparent !important; }
+    html.mwl-silvester-seite .bg-mesh { display: none !important; }
+
+    .sv-welt { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 900ms ease; }
+    .sv-welt.is-da { opacity: 1; }
+    .sv-welt[hidden], html:not(.mwl-silvester-deko) .sv-welt { display: none; }
+    .sv-welt canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+    .sv-seite-aus {
+        position: fixed;
+        left: 14px; bottom: 14px;
+        z-index: 40;
+        padding: 7px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(210, 205, 255, 0.2);
+        background: rgba(13, 13, 30, 0.82);
+        color: rgba(236, 234, 250, 0.82);
+        font: 600 12px/1.2 inherit;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 160ms ease, transform 120ms ease-out;
+    }
+    .sv-seite-aus:active { transform: scale(0.96); }
+    .sv-seite-aus:focus-visible { outline: 2px solid var(--primary, currentColor); outline-offset: 2px; }
+    html.mwl-silvester-seite .bh-frist { background: var(--sv-glas); }
+    /* Am Handy liegen unten die Knoepfe der Seite: dort am Seitenende statt schwebend (wie Weihnachten,
+       Bild 384 px, 07.11.2026). */
+    @media (max-width: 767px) {
+        .sv-seite-aus { position: static; display: block; margin: 16px auto; }
+    }
+    html[data-theme="light"] .sv-seite-aus { background: rgba(255, 255, 255, 0.9); color: #2a2a4a; border-color: rgba(40, 36, 90, 0.2); }
+}
+@media print {
+    .sv-welt, .sv-seite-aus { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .sv-welt { transition: none; }
+}

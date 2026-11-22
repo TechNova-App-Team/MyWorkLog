@@ -262,7 +262,8 @@ var EVENT_LABELS = {
     'geburtstag_kerze': ['Geburtstag: Kerze ausgepustet', 'Birthday: candle blown out'],
     'geburtstag_wunsch': ['Geburtstag: Wunsch geschickt', 'Birthday: wish sent'],
     'halloween':        ['Halloween', 'Halloween'],   // aktion: suesses | saures | laterne | weg | geist | ruhe | spuk
-    'weihnachten':      ['Weihnachten', 'Christmas'],   // aktion: tuer | alle | deko_an | deko_aus | weg
+    'weihnachten':      ['Weihnachten', 'Christmas'],   // aktion: deko_an | deko_aus | weg
+    'silvester':        ['Silvester', 'New Year’s Eve'],   // aktion: deko_an | deko_aus | weg | mitternacht
     'traum_antwort':    ['Reisetraum: Frage beantwortet', 'Travel dream: question answered'],
     'traum_teilen':     ['Reisetraum: Seite geteilt', 'Travel dream: page shared'],
     // aktion: gezeigt | geklickt — Einladung zum Betriebskonto nach dem Abzeichnen per Link
@@ -292,11 +293,13 @@ var SUB_LABELS = {
     'arbeitszeitrechner::zur_app': ['zur Zeiterfassung', 'to time tracking'],
     'arbeitszeitrechner::uebernommen': ['Zeiten in der App übernommen', 'Times carried into the app'],
     'arbeitszeitrechner::stundenzettel': ['Stundenzettel-PDF geladen', 'Timesheet PDF downloaded'],
-    'weihnachten::tuer': ['Türchen geöffnet', 'Door opened'],
-    'weihnachten::alle': ['Alle Türchen gezeigt', 'All doors shown'],
     'weihnachten::deko_an': ['Deko an', 'Decorations on'],
     'weihnachten::deko_aus': ['Deko aus', 'Decorations off'],
-    'weihnachten::weg': ['Kalender ausgeblendet', 'Calendar hidden'],
+    'weihnachten::weg': ['Gruß ausgeblendet', 'Greeting hidden'],
+    'silvester::deko_an': ['Feuerwerk an', 'Fireworks on'],
+    'silvester::deko_aus': ['Feuerwerk aus', 'Fireworks off'],
+    'silvester::weg': ['Countdown ausgeblendet', 'Countdown hidden'],
+    'silvester::mitternacht': ['Mitternacht in der App erlebt', 'Saw midnight in the app'],
     'konto::geloescht': ['gelöscht', 'deleted'],
     'ausbilder_einladung::gezeigt': ['gezeigt', 'shown'], 'ausbilder_einladung::geklickt': ['geklickt', 'clicked'],
     'erinnerung_push::an': ['eingeschaltet', 'turned on'], 'erinnerung_push::aus': ['ausgeschaltet', 'turned off'],

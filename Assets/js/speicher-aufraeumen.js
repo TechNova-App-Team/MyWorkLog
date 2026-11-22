@@ -1,6 +1,6 @@
 // ═══ SPEICHER-AUFRAEUMEN MODULE ═══
 // Loescht localStorage-Schluessel, die kein Code mehr liest — Altbestand entfernter Funktionen.
-// Laeuft einmal je STAND im Leerlauf nach dem Start (App, Berichtsheft, Aufgaben teilen sich den Ursprung).
+// Laeuft einmal je STAND und Kalenderjahr im Leerlauf nach dem Start (App, Berichtsheft, Aufgaben teilen sich den Ursprung).
 //
 // Regeln, damit hier nie echte Daten verschwinden:
 // - NUR exakte Namen, kein Muster. Einzige Ausnahme sind Saison-Schluessel mit Jahreszahl, und die nur
@@ -39,12 +39,14 @@
         'timetracker_maintenance', 'timetracker_updates'
     ];
 
-    var SAISON = /^mwl_(halloween|geburtstag|weihnachten)(_[a-z]+)?_(\d{4})$/;
+    var SAISON = /^mwl_(halloween|geburtstag|weihnachten|silvester)(_[a-z]+)?_(\d{4})$/;
 
     function aufraeumen() {
         var ls;
-        try { ls = window.localStorage; if (ls.getItem(MERKER) === STAND) return; } catch (e) { return; }
         var jahr = new Date().getFullYear(), weg = 0;
+        // Merker mit Jahr: die Saison-Schluessel des Vorjahres sollen jeden Januar wieder weg, nicht nur einmal je STAND
+        var merke = STAND + '|' + jahr;
+        try { ls = window.localStorage; if (ls.getItem(MERKER) === merke) return; } catch (e) { return; }
         try {
             TOT.forEach(function (k) { if (ls.getItem(k) !== null) { ls.removeItem(k); weg++; } });
             // Rueckwaerts, weil removeItem die Indizes verschiebt
@@ -52,7 +54,7 @@
                 var k = ls.key(i), m = k && SAISON.exec(k);
                 if (m && +m[3] < jahr) { ls.removeItem(k); weg++; }
             }
-            ls.setItem(MERKER, STAND);
+            ls.setItem(MERKER, merke);
         } catch (e) { /* voller oder gesperrter Speicher: naechster Start versucht es wieder */ }
         if (weg && typeof mwlEvent === 'function') mwlEvent('speicher_aufgeraeumt', { anzahl: weg });
     }

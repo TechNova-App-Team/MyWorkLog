@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.8.12-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.8.13-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.8.12** · 2026-11-22
+Aktuelle Version: **v9.8.13** · 2026-11-22
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.8.12** | 2026-11-22 | Winter in der App statt Adventskalender |
+| **9.8.13** | 2026-11-22 | Silvester: Feuerwerk, Countdown und dein Jahr in Zahlen |
+| 9.8.12 | 2026-11-22 | Winter in der App statt Adventskalender |
 | 9.8.11 | 2026-11-22 | Alte Einträge im Browser-Speicher werden aufgeräumt |
 | 9.8.10 | 2026-11-21 | Neue Anmeldung für den Cloud-Sync |
 | 9.8.9 | 2026-11-20 | Ausbilder: Verifizierte Betriebe tragen ein Siegel, das Kürzel ist frei wählbar |
-| 9.8.8 | 2026-11-20 | Ausbilder: Demo-Betrieb zum Ausprobieren, ganz ohne Konto |
 
 <!-- changelog:end -->
 

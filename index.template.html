@@ -254,6 +254,15 @@
       if(localStorage.getItem('mwl_weihnachten_'+wnD.getFullYear())!=='weg'){document.documentElement.classList.add('mwl-weihnachten-karte');
         if(localStorage.getItem('mwl_weihnachten_ruhe_'+wnD.getFullYear())!=='1')document.documentElement.classList.add('mwl-weihnachten-deko');}}
   }catch(e){}
+  // 9. Silvester (30.12. 0 Uhr bis 02.01. 7 Uhr): Countdown + Feuerwerk hinter der App, VOR dem ersten Zeichnen.
+  //    Schluessel tragen das NEUE Jahr. Test: localStorage.mwl_silvester_test = '1' oder 'finale'. Details: components/silvester/
+  try{
+    var svD=new Date(),svM=svD.getMonth(),svT=svD.getDate(),svX=localStorage.getItem('mwl_silvester_test');
+    var svTag=(svM===11&&svT>=30)||(svM===0&&(svT===1||(svT===2&&svD.getHours()<7)))||svX==='1'||svX==='finale';
+    if(svTag){var svN=svM===0?svD.getFullYear():svD.getFullYear()+1;document.documentElement.classList.add('mwl-silvester');
+      if(localStorage.getItem('mwl_silvester_'+svN)!=='weg'){document.documentElement.classList.add('mwl-silvester-karte');
+        if(localStorage.getItem('mwl_silvester_ruhe_'+svN)!=='1')document.documentElement.classList.add('mwl-silvester-deko');}}
+  }catch(e){}
 })();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
@@ -299,7 +308,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
 <meta name="rating" content="general">
 <meta name="referrer" content="origin-when-cross-origin">
 <meta name="format-detection" content="telephone=no">
-<meta name="generator" content="MyWorkLog v9.8.12">
+<meta name="generator" content="MyWorkLog v9.8.13">
 
 <!-- ===== CANONICAL & ALTERNATE ===== -->
 <link rel="canonical" href="https://myworklog.de/">
@@ -389,7 +398,7 @@ html.mwl-start.mwl-start-aus::after{opacity:0;transform:scale(1.06)}
       "applicationSubCategory": "Zeiterfassung",
       "operatingSystem": "Web, Windows, macOS, Linux, iOS, Android",
       "browserRequirements": "Requires Chrome 90+, Firefox 88+, Safari 14+ or Edge 90+",
-      "softwareVersion": "9.8.12",
+      "softwareVersion": "9.8.13",
       "datePublished": "2025-01-01",
       "dateModified": "2026-11-22",
       "inLanguage": "de",
@@ -626,7 +635,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
 <!-- Klasse (/klasse/): uebernimmt einen vorgemerkten Beitritt und fragt hoechstens alle 6 h nach Aenderungen -->
 <script defer src="/Assets/js/klasse-profil.js?v=f80879c6fd"></script>
 <script defer src="/Assets/js/erinnerung-push.js?v=4803c10a3c"></script>
-<script defer src="/Assets/js/speicher-aufraeumen.js?v=f94de98089"></script>
+<script defer src="/Assets/js/speicher-aufraeumen.js?v=6065df49bf"></script>
 
 
     <!-- ═══ Component CSS (externalized) ═══ -->
@@ -646,6 +655,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
     <link rel="stylesheet" href="/components/geburtstag/geburtstag.css?v=939b92ab2a">
     <link rel="stylesheet" href="/components/halloween/halloween.css?v=ee371f2fdf">
     <link rel="stylesheet" href="/components/weihnachten/weihnachten.css?v=85c5969b23">
+    <link rel="stylesheet" href="/components/silvester/silvester.css?v=7f9ac1d490">
     <!-- Non-critical — async load (view-specific, not needed for first paint) -->
     <link rel="stylesheet" href="/components/performance/performance.css?v=a221f30df8" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="/components/performance/performance.css?v=a221f30df8"></noscript>
@@ -872,7 +882,7 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
           <a class="vi-alt" href="/ausbilder/" onclick="if(typeof mwlEvent==='function')mwlEvent('intro',{aktion:'ausbilder'})">Ich bin Ausbilder</a>
           <!-- Sichtbarkeit: MWLPassMarke.einsetzen() -->
           <a class="vi-alt" id="viPass" href="/preise/#pass" hidden onclick="if(typeof mwlEvent==='function')mwlEvent('pass_werbung',{ort:'intro'},{transport:'sendBeacon'})">Ausbildungs-Pass ab 9,99 €</a>
-          <span class="vi-ver" data-app-version translate="no">v9.8.12</span>
+          <span class="vi-ver" data-app-version translate="no">v9.8.13</span>
         </div>
       </div>
 
@@ -1055,6 +1065,8 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
     <script defer src="/components/halloween/halloween.js?v=af586c7bd7"></script>
     <script defer src="/components/weihnachten/weihnachten-szene.js?v=b25639dfc7"></script>
     <script defer src="/components/weihnachten/weihnachten.js?v=96fb11ab8a"></script>
+    <script defer src="/components/silvester/silvester-szene.js?v=1d606426c3"></script>
+    <script defer src="/components/silvester/silvester.js?v=451f8c64b0"></script>
     <script defer src="/components/bbig-scanner/bbig-scanner.js?v=2d0e84dc0b"></script>
     <script defer src="/components/settings/settings.js?v=3f57237901"></script>
     <script defer src="/components/sidebar/sidebar.js?v=754d60fe6c"></script>
