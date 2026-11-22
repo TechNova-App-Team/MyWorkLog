@@ -249,7 +249,7 @@ Aktuelle Version: **v9.8.15** · 2026-11-22
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.8.15** | 2026-11-22 | Hilfe bei der Projektdoku: Gliederung und Prüfung deines Entwurfs |
+| **9.8.15** | 2026-11-22 | Projektdoku: in sechs Schritten zur Dokumentation, aus dem eigenen Heft |
 | 9.8.14 | 2026-11-22 | Die App fragt Seiten schon beim Aufwachen an |
 | 9.8.13 | 2026-11-22 | Silvester: Feuerwerk, Countdown und dein Jahr in Zahlen |
 | 9.8.12 | 2026-11-22 | Winter in der App statt Adventskalender |
