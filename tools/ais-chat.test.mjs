@@ -530,6 +530,15 @@ t.gruppe('Übernehmen → erst Speichern macht erledigt');
     t.ok(/AISChat\.typischeWoche\(\)/.test(weiterQ) && /typischeWoche,/.test(CHAT), 'Füllen ist ein sichtbarer Knopf (Bitte statt stilles Erfinden)');
     t.ok(!/Woche vorschlagen/.test(weiterQ.split('\n').filter(z => !/^\s*\/\//.test(z)).join('\n')), 'nicht wie die Pass-Funktion „Woche vorschlagen“ benannt');
     t.ok(/letzte === n\.length - 1 \? weiterHTML\(\)/.test(CHAT), 'nur unter der letzten Nachricht');
+    // Ohne Beruf: Beruf-Knöpfe statt nichts (27.11.2026). Jede Knopf-Id muss es als Beruf geben,
+    // sonst setzt konfigSetzen still nichts (PROFESSIONS[k.beruf] fehlt) und der Knopf ist tot.
+    t.ok(/if \(!k\.bereit\) return berufHTML\(\);/.test(weiterQ), 'ohne Beruf: Beruf-Auswahl statt leer');
+    const knopfIds = JSON.parse(CHAT.split('const BERUF_KNOEPFE = ')[1].split(';')[0].replace(/'/g, '"'));
+    const P = readFileSync('Assets/js/berichtsheft/ais-berufe.js', 'utf8');
+    const fehlend = knopfIds.filter(id => !new RegExp('^    ' + id + ': \\{', 'm').test(P));
+    t.ok(fehlend.length === 0, 'jeder Beruf-Knopf ist ein echter Beruf', fehlend.join());
+    t.ok(knopfIds.length > 0, 'Gegenprobe: es gibt überhaupt Beruf-Knöpfe');
+    t.ok(/berufWaehlen,/.test(CHAT) && CHAT.includes("bhMess('assistent_antwort_ohne_entwurf_ohne_beruf')"), 'Beruf-Knopf öffentlich, Anteil ohne Beruf gemessen');
     // Leeres Formular → Assistent
     const BER2 = readFileSync('Assets/js/berichtsheft/bh-bericht.js', 'utf8');
     t.ok(/bhAssistentHinweis\(!bhFormularHatText\(\)\)/.test(BER2), 'Hinweis nur im leeren Formular');

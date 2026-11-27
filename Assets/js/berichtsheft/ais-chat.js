@@ -540,10 +540,35 @@ function schnellHTML() {
 // Tätigkeiten füllen“ — das ist die ausdrückliche Bitte, die das Erfinden-Verbot verlangt
 // (27.09.2026), sichtbar als Nachricht, wie „Leere Tage füllen“. NICHT „Woche vorschlagen“
 // nennen: so heißt die Pass-Funktion (Kalender) direkt darunter in der Profilleiste.
+// Ohne Beruf stand bis 27.11.2026 unter der Antwort GAR NICHTS (k.bereit falsch), und genau dann
+// fragt die KI meist nach dem Beruf. 87 von 174 Personen mit Antwort bekamen in 30 Tagen keinen
+// Entwurf. Jetzt: die häufigsten Berufe als Knöpfe, ein Klick setzt ihn wie die Profilleiste.
+// Messpunkt: assistent_antwort_ohne_entwurf_ohne_beruf (Anteil) + assistent_beruf_knopf.
+const BERUF_KNOEPFE = ['kaufmann', 'software', 'einzelhandel', 'kfz', 'elektro', 'mfa', 'lager', 'metall'];
+function berufHTML() {
+    const P = (window.AIS_BERUFE && AIS_BERUFE.PROFESSIONS) || {};
+    const ids = BERUF_KNOEPFE.filter(id => P[id]);
+    if (!ids.length) return '';
+    return '<div class="aic-weiter">' +
+        '<p class="aic-weiter-t">' + esc(Lx('Damit der Bericht zu deiner Ausbildung passt: Welchen Beruf lernst du?', 'So the report fits your training: which trade are you learning?')) + '</p>' +
+        '<div class="aic-schnell">' + ids.map(id =>
+            '<button type="button" class="aic-schnell-k" onclick="AISChat.berufWaehlen(\'' + id + '\')">' + esc(P[id].name) + '</button>').join('') + '</div>' +
+        '</div>';
+}
+function berufWaehlen(id) {
+    if (!studioDa()) return;
+    const geaendert = AIStudio.konfigSetzen({ beruf: id });
+    if (typeof bhMess === 'function') bhMess('assistent_beruf_knopf', { beruf: id });
+    sagen({ rolle: 'assistent', chips: chipsFuer(geaendert.length ? geaendert : ['beruf']), text: Lx(
+        'Alles klar. Jetzt erzähl mir in ein paar Sätzen, was diese Woche im Betrieb los war.',
+        'Got it. Now tell me in a few sentences what happened at work this week.') });
+    const f = $('aicText');
+    if (f) f.focus();
+}
 function weiterHTML() {
     if (beschaeftigt || !studioDa() || entwurfHatInhalt(gespraech.entwurf)) return '';
     const k = AIStudio.konfig();
-    if (!k.bereit) return '';
+    if (!k.bereit) return berufHTML();
     const bsp = vorschlaegeFuer(k, k.kw, lernDa() ? lernProfil(new Date()) : null, istEn()).slice(0, 2);
     return '<div class="aic-weiter">' +
         '<p class="aic-weiter-t">' + esc(Lx('Zum Beispiel so:', 'For example:')) + '</p>' +
@@ -1671,7 +1696,10 @@ async function senden(e, vorgabeText) {
     if (typeof bhMess === 'function') bhMess('assistent_antwort', { tage: zus.geaendert.length });
     // Antwort ohne einen einzigen eingetragenen Tag (Rueckfrage o. ae.): eigener Name,
     // weil der Proxy die Eigenschaft 'tage' nicht auswertet.
-    if (!entwurfHatInhalt(gespraech.entwurf) && typeof bhMess === 'function') bhMess('assistent_antwort_ohne_entwurf');
+    if (!entwurfHatInhalt(gespraech.entwurf) && typeof bhMess === 'function') {
+        bhMess('assistent_antwort_ohne_entwurf');
+        if (!k.bereit) bhMess('assistent_antwort_ohne_entwurf_ohne_beruf');
+    }
     sagen({ rolle: 'assistent', text: ergebnis.antwort.trim().slice(0, 600), chips: chipsFuer(geaendert), wer: werHatGeschrieben() });
     knopfZustand();
 }
@@ -2327,7 +2355,7 @@ return {
     entwurfUebernehmen, entwurfBearbeiten, fuellen, ohneKi,
     ausVerlauf, neueWoche, vorschlag, rail, profilZeichnen, verlaufLoeschen, gespraechLoeschen,
     modellMenue, modellWaehlen, hinweisWeg, preisHinweisWeg,
-    tagBeginnen, ausfuehrlicher, typischeWoche, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berichtGespeichert, uebernahmeZurueck,
+    tagBeginnen, ausfuehrlicher, typischeWoche, offenerEntwurf, nachtragen, mehrwochen, stapelInsHeft, stapelAufTisch, berufWaehlen, berichtGespeichert, uebernahmeZurueck,
     vorwissen, vorwissenZu, vorwissenSpeichern, vorwissenEntfernen, vorwissenKopieren, vorwissenAusBerichten,
     gelernt, gelerntZu, lpSchalten, lpRegelNeu, lpLoesePin, lpAnpinnen, lpVerbergen, lpKorrekturWeg, lpAusbilderWeg, lpVergessen,
     // Fuer tools/ais-chat.test.mjs: die reinen Teile ohne DOM.
