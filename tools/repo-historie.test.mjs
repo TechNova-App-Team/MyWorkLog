@@ -89,10 +89,10 @@ console.log('\n── Flacher Klon + Schnappschuss ─────────�
 
     // HEAD ist nicht der Kopf des Schnappschusses -> genau EIN Commit dazu.
     ok(gitRow(html, 'Commits') === fmt(831), `Commits = 831 (830 + HEAD), gemessen: ${gitRow(html, 'Commits')}`);
-    ok(gitRow(html, 'Project Start') === '2025-12-25', 'Project Start kommt aus dem Schnappschuss');
-    ok(gitRow(html, 'Branches') === '2', 'Branches aus dem Schnappschuss, nicht die eine des Klons');
+    ok(gitRow(html, 'Projektstart') === '2025-12-25', 'Project Start kommt aus dem Schnappschuss');
+    ok(gitRow(html, 'Zweige') === '2', 'Branches aus dem Schnappschuss, nicht die eine des Klons');
     ok(gitRow(html, 'Tags') === '1', 'Tags aus dem Schnappschuss');
-    ok(gitRow(html, 'Branch') !== '—' && gitRow(html, 'Branch') !== null,
+    ok(gitRow(html, 'Zweig') !== '—' && gitRow(html, 'Zweig') !== null,
         'Zweigname vorhanden (Cloudflare checkt losgeloest aus)');
     ok(/Historie aus <code>config\/repo-history\.json<\/code>/.test(html), 'Herkunft steht auf der Seite');
     ok(html.includes('Stand 2026-08-28 21:15'), 'Stand des Schnappschusses steht dabei');
@@ -104,7 +104,7 @@ console.log('\n── Flacher Klon + Schnappschuss ─────────�
     // Das Stundenraster ist seit v6.4.8 ein Balkendiagramm mit `data-tip`
     // statt einer Kachelmatrix mit `title` — und die Zahl darin traegt
     // Tausenderpunkte.
-    const stunden = [...html.matchAll(/data-tip="(\d\d):00 — ([\d.]+) commits/g)]
+    const stunden = [...html.matchAll(/data-tip="(\d\d):00 — ([\d.]+) Commits/g)]
         .reduce((a, m) => a + Number(m[2].replace(/\./g, '')), 0);
     ok(stunden === 41, `Stundenraster summiert auf 41 (40 + HEAD), gemessen: ${stunden}`);
 

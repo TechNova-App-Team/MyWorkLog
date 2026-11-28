@@ -15,7 +15,7 @@ Lokal zuerst · offline nutzbar · ohne Konto · kostenlos · quelloffen
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-9.8.18-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
+[![Version](https://img.shields.io/badge/version-9.8.19-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](#versionierung)
 [![PWA](https://img.shields.io/badge/PWA-installierbar-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/Lizenz-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
@@ -245,15 +245,15 @@ Eine Version je Änderung, Schema `X.Y.Z` mit Überlauf bei `Z = 19` und `Y = 9`
 <!-- Der Block bis changelog:end wird beim Version-Bump von tools/stamp-assets.js neu geschrieben — nicht von Hand pflegen. -->
 <!-- changelog:start -->
 
-Aktuelle Version: **v9.8.18** · 2026-11-28
+Aktuelle Version: **v9.8.19** · 2026-11-28
 
 | Version | Datum | Was ist anders |
 |---|---|---|
-| **9.8.18** | 2026-11-28 | Preisseite und Impressum sind ruhiger und einheitlich gestaltet |
+| **9.8.19** | 2026-11-28 | Rechte-Checker, Berichtsheft-Vorlage und Repo-Bericht im gleichen ruhigen Design |
+| 9.8.18 | 2026-11-28 | Preisseite und Impressum sind ruhiger und einheitlich gestaltet |
 | 9.8.17 | 2026-11-28 | Die Über-Seite zeigt die App jetzt in Bewegung und zum Ausprobieren |
 | 9.8.16 | 2026-11-27 | Der Berichtsheft-Assistent fragt nach dem Beruf, wenn er noch fehlt |
 | 9.8.15 | 2026-11-22 | Projektdoku: in sechs Schritten zur Dokumentation, aus dem eigenen Heft |
-| 9.8.14 | 2026-11-22 | Die App fragt Seiten schon beim Aufwachen an |
 
 <!-- changelog:end -->
 

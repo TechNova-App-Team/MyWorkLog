@@ -19,6 +19,7 @@
    Keine Grossbuchstaben-Etiketten (Markenregel seit v8.1.8). */
 :root {
     --bg-deep: #030305;
+    --bg-grund: #08090d;   /* Seitengrund; --bg-deep bleibt fuer eingelassene Felder */
     --bg-card: #0d0e12;
     --bg-card-solid: #101014;
     --bg-elevated: #17181e;
@@ -55,7 +56,7 @@ button, input, select, textarea { font-family: inherit; }
 html { scroll-behavior: smooth; }
 body {
     font-family: var(--font);
-    background: var(--bg-deep);
+    background: var(--bg-grund);
     color: var(--text);
     min-height: 100dvh;
     line-height: 1.6;
@@ -73,12 +74,22 @@ strong { color: var(--text); font-weight: 600; }
    in Konkurrenz zum Inhalt und liessen die GPU durchgehend rechnen.
    Geblieben ist ein einzelner, sehr flacher Lichtschein hinter dem
    Kopfbereich. Statisch, also keine Bewegung, die man wegblenden muesste. */
+/* Grund seit 28.11.2026 wie /preise/ und /impressum/ (Wunsch des Nutzers: nicht ganz
+   schwarz, „man soll sehen, dass da einer existiert“): #08090d, zwei Lichtscheine im
+   Akzent und feine Heftlinien oben, die nach unten auslaufen. Werte aus preise.css. */
 .ambient {
     position: fixed; inset: 0;
     pointer-events: none; z-index: 0;
     background:
-        radial-gradient(56rem 30rem at 12% -12rem,
-            rgba(var(--primary-rgb), 0.13), transparent 70%);
+        radial-gradient(64rem 38rem at 14% -10rem, rgba(var(--primary-rgb), 0.26), transparent 72%),
+        radial-gradient(52rem 40rem at 100% 112%, rgba(var(--primary-rgb), 0.11), transparent 70%);
+}
+.ambient::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(255, 255, 255, 0.045) 31px 32px);
+    -webkit-mask-image: radial-gradient(80rem 46rem at 28% -4rem, #000 0%, transparent 72%);
+    mask-image: radial-gradient(80rem 46rem at 28% -4rem, #000 0%, transparent 72%);
 }
 
 /* ═══════════════════════════════════════
