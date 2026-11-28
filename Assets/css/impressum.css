@@ -5,18 +5,19 @@
    Impressum ist ein Briefkopf, also liegt oben EIN Briefbogen mit den Pflichtangaben.
    EIN Effekt: das Blatt landet beim Laden — nur Bewegung, keine Deckkraft (eine
    Einblendung ab opacity 0 nimmt dem Inhalt den LCP, CLAUDE.md).
-   Laedt KEIN core.css: eigener :root mit den Werten aus Assets/css/preise.css. */
+   Laedt KEIN core.css: eigener :root mit den Werten aus Assets/css/preise.css.
+   Seit 28.11.2026 Grund und Grautoene wie /rechte-checker/, /preise/ und
+   /berichtsheft-vorlage/ (Wunsch des Nutzers: schlichter, einheitlich schwarz) —
+   vorher violetter Buehnenverlauf #131428 → #23182b. Der Briefbogen bleibt. */
 
 :root {
-    --buehne-1: #131428;
-    --buehne-2: #1a1830;
-    --buehne-3: #23182b;
-    --primary: #6d7fd1;
-    --primary-rgb: 109, 127, 209;
-    --text-main: #f1f0f7;
-    --text-2: #b9b6cb;
-    --text-3: #8b87a2;
-    --linie: rgba(255, 255, 255, 0.1);
+    --bg-grund: #08090d;
+    --primary: #5578a8;
+    --primary-rgb: 85, 120, 168;
+    --text-main: #f8fafc;
+    --text-2: #a3afc0;
+    --text-3: #8b98ad;
+    --linie: rgba(255, 255, 255, 0.07);
     --papier: #ecebf4;
     --papier-tinte: #15131d;
     --papier-tinte-2: rgba(21, 19, 29, 0.58);
@@ -36,13 +37,29 @@ html { scroll-behavior: smooth; }
 body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    background:
+        radial-gradient(64rem 38rem at 14% -10rem, rgba(var(--primary-rgb), 0.26), transparent 72%) fixed,
+        radial-gradient(52rem 40rem at 100% 112%, rgba(var(--primary-rgb), 0.11), transparent 70%) fixed,
+        var(--bg-grund);
     color: var(--text-main);
     font-family: var(--font-main);
     font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     overflow-x: clip;
+}
+/* Grund seit 28.11.2026 nicht mehr ganz schwarz (Wunsch des Nutzers: „man soll sehen,
+   dass da einer existiert“): #08090d statt #030305, zwei Lichtscheine im Akzent und
+   feine Heftlinien oben, die nach unten auslaufen. Fest, ohne Zeiger, hinter dem Inhalt. */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(255, 255, 255, 0.045) 31px 32px);
+    -webkit-mask-image: radial-gradient(80rem 46rem at 28% -4rem, #000 0%, transparent 72%);
+    mask-image: radial-gradient(80rem 46rem at 28% -4rem, #000 0%, transparent 72%);
 }
 a { color: inherit; }
 ::selection { background: rgba(var(--primary-rgb), 0.4); }

@@ -1,22 +1,25 @@
 /* ═══ PREISE (/preise/) ═══
-   Entwurf vom 16.10.2026: inaktive Paywall. Bildsprache des Berichtshefts (Wunsch des
-   Nutzers: Papier, Kuli-Blau, Rotstift, Stempel auf dunkler Buehne — generischer
-   SaaS-Look war dort abgelehnt). Die Bezahl-Tarife sind versiegelte Blaetter: lesbar,
-   aber ausgegraut, Preis sichtbar (seit 18.10.2026, vorher geschwaerzt). EIN Effekt (Stapel faechert beim Laden auf),
-   sonst nur Reaktionen auf Zeiger und Fokus.
-   Laedt KEIN core.css: eigener Reset, eigener :root — Werte wie in
-   Assets/css/berichtsheft/basis.css, damit beide Seiten gleich aussehen. */
+   Seit 28.11.2026 schlichter (Wunsch des Nutzers): Grund und Grautoene wie
+   /rechte-checker/ und /berichtsheft-vorlage/ (Werte aus Assets/css/rechte-checker.css
+   :root — dort aendern heisst hier mitziehen). Papier nur noch, wo es etwas ZEIGT:
+   der Stapel im Kopf und die zwei Beispielwochen. Tarife und Vergleich sind ruhige
+   dunkle Flaechen — dort sollen Preise und Haken lesbar sein, nicht Papier.
+   Vorher: violetter Buehnenverlauf, alle Tarife als Blaetter, Band ueber Plus.
+   EIN Effekt (Stapel faechert beim Laden auf), sonst nur Reaktionen auf Zeiger und Fokus.
+   Laedt KEIN core.css: eigener Reset, eigener :root. */
 
 :root {
-    --buehne-1: #131428;
-    --buehne-2: #1a1830;
-    --buehne-3: #23182b;
-    --primary: #6d7fd1;
-    --primary-rgb: 109, 127, 209;
-    --text-main: #f1f0f7;
-    --text-2: #b9b6cb;
-    --text-3: #8b87a2;
-    --linie: rgba(255, 255, 255, 0.1);
+    --bg-grund: #08090d;
+    --bg-card: #0d0e12;
+    --bg-elevated: #17181e;
+    --primary: #5578a8;
+    --primary-rgb: 85, 120, 168;
+    --text-main: #f8fafc;
+    --text-2: #a3afc0;
+    --text-3: #8b98ad;
+    --linie: rgba(255, 255, 255, 0.07);
+    --linie-2: rgba(255, 255, 255, 0.14);
+    --haken: color-mix(in srgb, var(--primary) 62%, #fff);
     --papier: #ecebf4;
     --papier-2: #dedcea;
     --papier-tinte: #15131d;
@@ -26,6 +29,7 @@
     --papier-schatten: 0 1px 0 rgba(5, 4, 10, 0.1), 0 28px 60px -26px rgba(5, 4, 10, 0.75);
     --kuli: color-mix(in srgb, var(--primary) 74%, #16235e);
     --rotstift: #c8463c;
+    --rotstift-hell: color-mix(in srgb, var(--rotstift) 78%, #fff);   /* Rotstift auf DUNKLEM Grund — #c8463c allein war dort zu dunkel */
     --font-main: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-display: 'Bricolage Grotesque', 'Geist', sans-serif;
     --font-vordruck: 'Martian Mono', ui-monospace, monospace;
@@ -41,13 +45,29 @@ html { scroll-behavior: smooth; }
 body {
     margin: 0;
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--buehne-1) 0%, var(--buehne-2) 55%, var(--buehne-3) 100%) fixed;
+    background:
+        radial-gradient(64rem 38rem at 14% -10rem, rgba(var(--primary-rgb), 0.26), transparent 72%) fixed,
+        radial-gradient(52rem 40rem at 100% 112%, rgba(var(--primary-rgb), 0.11), transparent 70%) fixed,
+        var(--bg-grund);
     color: var(--text-main);
     font-family: var(--font-main);
     font-size: 16px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     overflow-x: clip;
+}
+/* Grund seit 28.11.2026 nicht mehr ganz schwarz (Wunsch des Nutzers: „man soll sehen,
+   dass da einer existiert“): #08090d statt #030305, zwei Lichtscheine im Akzent und
+   feine Heftlinien oben, die nach unten auslaufen. Fest, ohne Zeiger, hinter dem Inhalt. */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: repeating-linear-gradient(180deg, transparent 0 31px, rgba(255, 255, 255, 0.045) 31px 32px);
+    -webkit-mask-image: radial-gradient(80rem 46rem at 28% -4rem, #000 0%, transparent 72%);
+    mask-image: radial-gradient(80rem 46rem at 28% -4rem, #000 0%, transparent 72%);
 }
 a { color: inherit; }
 
@@ -205,8 +225,8 @@ a { color: inherit; }
 .pr-h2 { margin: 0; font-family: var(--font-display); font-size: clamp(1.8rem, 1.2rem + 1.8vw, 2.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; }
 .pr-h2-unter { margin: 12px 0 0; max-width: 60ch; color: var(--text-2); }
 
-/* ── Die Hefte ────────────────────────────────────────────────── */
-.pr-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; margin-top: 40px; align-items: stretch; }
+/* ── Blaetter (Papier) ─────────────────────────────────────────
+   Nur noch die zwei Beispielwochen (.pr-probe-blatt). */
 .pr-blatt {
     position: relative;
     display: flex;
@@ -232,107 +252,96 @@ a { color: inherit; }
     font-size: 0.6rem;
     color: var(--papier-tinte-2);
 }
-.pr-blatt-t { margin: 4px 0 0; font-family: var(--font-display); font-size: 1.7rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
-.pr-preis { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0; }
-.pr-preis b { font-family: var(--font-display); font-size: 2.3rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
-.pr-preis > span { font-size: 0.86rem; color: var(--papier-tinte-2); }
-/* Staffel des Passes: drei Zeilen auf den Heftlinien, Laufzeit links in der
-   Vordruck-Schrift, Preis rechts. */
-.pr-staffel { margin: 0; display: grid; }
-.pr-staffel > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--papier-linie); }
-.pr-staffel dt { font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.66rem; font-weight: 300; color: var(--papier-tinte-2); }
-.pr-staffel dd { margin: 0; font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; text-align: right; }
-.pr-staffel .pr-monat { display: block; font-family: var(--font-main); font-size: 0.68rem; font-weight: 400; letter-spacing: 0; color: var(--papier-tinte-2); }
-.pr-liste { list-style: none; margin: 4px 0 8px; padding: 0; flex: 1 1 auto; }
-/* Platz fuer Band + Siegel zwischen Liste und Knopf */
-.pr-blatt.is-zu .pr-liste { margin-bottom: 118px; }
-.pr-liste li { position: relative; padding: 9px 0 9px 22px; border-bottom: 1px solid var(--papier-linie); font-size: 0.95rem; line-height: 1.4; }
-.pr-liste li::before { content: ''; position: absolute; left: 2px; top: 15px; width: 10px; height: 6px; border-left: 2px solid var(--kuli); border-bottom: 2px solid var(--kuli); transform: rotate(-45deg); }
 
-/* Versiegelt: ausgegraut, Liste lesbar, Band + Siegel darueber. Das Band hebt sich bei
-   Zeiger oder Fokus ein Stueck an (Kind-Element — das Blatt selbst bleibt liegen). */
-.pr-blatt.is-zu { background: var(--papier-2); color: var(--papier-tinte-2); }
-.pr-blatt.is-zu .pr-liste li::before { border-color: rgba(21, 19, 29, 0.35); }
-.pr-band {
-    position: absolute;
-    left: -12%;
-    right: -12%;
-    bottom: 92px;
-    height: 38px;
-    background:
-        linear-gradient(90deg, transparent 0 1px, rgba(255, 255, 255, 0.25) 1px 2px, transparent 2px) 0 0 / 7px 100%,
-        color-mix(in srgb, var(--rotstift) 22%, var(--papier-2));
-    box-shadow: 0 6px 14px -8px rgba(21, 19, 29, 0.5);
-    opacity: 0.92;
-    transform: rotate(-7deg);
-    transform-origin: 0 50%;
-    transition: transform 0.45s var(--spring);
-    pointer-events: none;
+/* ── Die Tarife ──────────────────────────────────────────────────
+   Dunkle Flaechen, eine Linie, keine Schatten. Der Pass ist der Weg,
+   den die Seite empfiehlt: als einziger hell umrandet und mit dem
+   hellen Knopf; Kostenlos und Plus haben Umrissknoepfe. */
+.pr-reihe { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 40px; align-items: stretch; }
+.pr-tarif {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 28px;
+    border: 1px solid var(--linie);
+    border-radius: 16px;
+    background: var(--bg-card);
 }
-.pr-blatt.is-zu:hover .pr-band, .pr-blatt.is-zu:focus-within .pr-band { transform: rotate(-11deg) translateY(-10px); }
-@media (hover: none) { .pr-band { transform: rotate(-9deg) translateY(-6px); } }
-/* Siegel AUF dem Band, im freien Raum ueber dem Knopf: Liste und Titel bleiben lesbar
-   (erste Fassung: Band ueber einer Funktionszeile, Siegel ueber dem Titel). */
-.pr-siegel.is-gross { top: auto; right: 22px; bottom: 64px; width: 92px; height: 92px; opacity: 0.9; background: color-mix(in srgb, var(--rotstift) 8%, var(--papier-2)); }
-/* Hauptweg AUF Papier: Kuli-Blau, nicht Papierweiss (das verschwand auf dem Blatt). */
-.pr-blatt .pr-knopf.is-haupt { background: var(--kuli); border-color: var(--kuli); color: #fff; }
-.pr-blatt .pr-knopf.is-haupt:hover { background: color-mix(in srgb, var(--kuli) 88%, #000); border-color: transparent; }
-.pr-vormerken { background: var(--papier-tinte); border-color: var(--papier-tinte); color: var(--papier); position: relative; }
-.pr-vormerken:hover { background: #000; border-color: #000; }
-.pr-vormerken.is-gemerkt { background: transparent; border-color: var(--kuli); color: var(--kuli); cursor: default; }
+.pr-tarif.is-fertig { border-color: rgba(var(--primary-rgb), 0.55); background: var(--bg-elevated); }
+.pr-tarif-kopf { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.pr-tarif-nr { font-size: 0.8rem; color: var(--text-3); }
+.pr-tarif-marke { font-size: 0.78rem; font-weight: 600; color: var(--haken); }
+.pr-blatt-t { margin: 0; font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; line-height: 1.1; }
+.pr-preis { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; margin: 0; }
+.pr-preis b { font-family: var(--font-display); font-size: 2.4rem; font-weight: 800; letter-spacing: -0.035em; line-height: 1; font-variant-numeric: tabular-nums; }
+.pr-preis > span { font-size: 0.86rem; color: var(--text-3); }
+/* Staffel des Passes: Laufzeit links, Preis rechts, Monatswert darunter */
+.pr-staffel { margin: 0; display: grid; border-top: 1px solid var(--linie); }
+.pr-staffel > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--linie); }
+.pr-staffel dt { font-size: 0.88rem; color: var(--text-2); }
+.pr-staffel dd { margin: 0; font-family: var(--font-display); font-size: 1.08rem; font-weight: 700; letter-spacing: -0.01em; text-align: right; font-variant-numeric: tabular-nums; }
+.pr-staffel .pr-monat { display: block; font-family: var(--font-main); font-size: 0.7rem; font-weight: 400; letter-spacing: 0; color: var(--text-3); }
+.pr-liste { list-style: none; margin: 0 0 8px; padding: 0; flex: 1 1 auto; }
+.pr-liste li { position: relative; padding: 8px 0 8px 24px; font-size: 0.94rem; line-height: 1.45; color: var(--text-2); }
+.pr-liste li::before { content: ''; position: absolute; left: 3px; top: 14px; width: 10px; height: 5px; border-left: 1.8px solid var(--haken); border-bottom: 1.8px solid var(--haken); transform: rotate(-45deg); }
+
+/* Plus: noch zu — leiser gesetzt, das Siegel (Rotstift) sagt es. */
+.pr-tarif.is-zu .pr-blatt-t, .pr-tarif.is-zu .pr-preis b { color: var(--text-2); }
+.pr-tarif.is-zu .pr-liste li { color: var(--text-3); }
+.pr-tarif.is-zu .pr-liste li::before { border-color: var(--text-3); }
+.pr-siegel.is-gross { border-color: var(--rotstift-hell); color: var(--rotstift-hell); top: auto; right: 28px; bottom: 84px; width: 74px; height: 74px; opacity: 0.85; font-size: 0.56rem; }
+
+/* Knoepfe in den Tarifen: hell nur beim Pass */
+.pr-tarif .pr-knopf.is-haupt { background: transparent; border-color: var(--linie-2); color: var(--text-main); }
+.pr-tarif .pr-knopf.is-haupt:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.28); }
+.pr-tarif.is-fertig .pr-knopf.is-haupt { background: var(--papier); border-color: var(--papier); color: var(--papier-tinte); }
+.pr-tarif.is-fertig .pr-knopf.is-haupt:hover { background: #fff; border-color: #fff; }
+.pr-vormerken { position: relative; }
+.pr-vormerken.is-gemerkt { border-color: var(--haken); color: var(--haken); cursor: default; }
 .pr-vormerken svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-/* Pass fertig, aber nicht kaeuflich: Knopf in Bleistiftgrau, nicht anklickbar. Kein
-   Siegel, kein Band — das Blatt liegt wie das offene Heft, nur der Weg zur Kasse fehlt. */
-.pr-bald-unter { margin: -6px 0 0; font-size: 0.8rem; color: var(--papier-tinte-2); text-align: center; }
+.pr-bald-unter { margin: -6px 0 0; font-size: 0.8rem; color: var(--text-3); text-align: center; }
 .pr-fuss-hinweis { margin: 22px 0 0; font-size: 0.86rem; color: var(--text-3); }
 
 /* ── Alles nebeneinander ─────────────────────────────────────────
-   EIN Bogen Papier wie die Hefte darueber: Rand links, Linien in Kuli-Blau, Haken
-   in derselben Form wie in .pr-liste. Die Bezahl-Spalten liegen leicht ausgegraut
-   (wie .pr-blatt.is-zu), "neu" ist ein Rotstift-Vermerk. Kein Effekt. */
+   Eine dunkle Flaeche wie die Tarife, Haken in derselben Form wie in
+   .pr-liste. Die Plus-Spalte liegt leicht abgesetzt, "neu" ist ein
+   Rotstift-Vermerk (der einzige Rest Handschrift hier). Kein Effekt. */
 .pr-bogen {
-    position: relative;
     margin-top: 36px;
     max-width: 920px;
-    padding: 14px 18px 10px 50px;
-    border-radius: 5px;
-    background: var(--papier);
-    color: var(--papier-tinte);
-    box-shadow: var(--papier-schatten);
+    padding: 8px 24px 6px;
+    border: 1px solid var(--linie);
+    border-radius: 16px;
+    background: var(--bg-card);
     overflow-x: auto;
 }
-.pr-bogen::before { content: ''; position: absolute; left: 34px; top: 0; bottom: 0; width: 1.5px; background: var(--papier-rand); }
 .pr-vgl { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
-.pr-vgl th, .pr-vgl td { padding: 11px 10px; border-bottom: 1px solid var(--papier-linie); text-align: left; vertical-align: middle; font-weight: 400; }
-.pr-vgl tbody th { line-height: 1.35; }
-.pr-vgl thead th { padding-top: 6px; padding-bottom: 12px; border-bottom: 1px solid rgba(21, 19, 29, 0.2); vertical-align: bottom; }
-.pr-vgl thead th > span { display: block; font-family: var(--font-display); font-size: 1.12rem; font-weight: 700; letter-spacing: -0.02em; }
-.pr-vgl thead th:first-child > span { font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.6rem; font-weight: 300; letter-spacing: 0; color: var(--papier-tinte-2); }
-.pr-vgl thead small { display: block; margin-top: 2px; font-family: var(--font-vordruck); font-stretch: 112.5%; font-size: 0.58rem; font-weight: 300; color: var(--papier-tinte-2); }
-.pr-vgl thead th.is-zu small { color: var(--rotstift); }
-.pr-vgl thead th.is-fertig small { color: var(--kuli); }
+.pr-vgl th, .pr-vgl td { padding: 11px 10px; border-bottom: 1px solid var(--linie); text-align: left; vertical-align: middle; font-weight: 400; }
+.pr-vgl tbody tr:last-child th, .pr-vgl tbody tr:last-child td { border-bottom: 0; }
+.pr-vgl tbody th { line-height: 1.35; color: var(--text-main); }
+.pr-vgl thead th { padding-top: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--linie-2); vertical-align: bottom; }
+.pr-vgl thead th > span { display: block; font-family: var(--font-display); font-size: 1.08rem; font-weight: 700; letter-spacing: -0.02em; }
+.pr-vgl thead th:first-child > span { font-family: var(--font-main); font-size: 0.8rem; font-weight: 400; letter-spacing: 0; color: var(--text-3); }
+.pr-vgl thead small { display: block; margin-top: 2px; font-size: 0.72rem; color: var(--text-3); }
+.pr-vgl thead th.is-zu small { color: var(--rotstift-hell); }
+.pr-vgl thead th.is-fertig small { color: var(--haken); }
 .pr-vgl th:not(:first-child), .pr-vgl td { width: 7.5rem; text-align: center; }
-.pr-vgl td { font-size: 0.84rem; color: var(--papier-tinte); }
-/* Bezahl-Spalten ausgegraut — Zeile 2 und 3 der Spalten, ueber nth-child, damit
-   das Markup jeder Zelle schlank bleibt. */
+.pr-vgl td { font-size: 0.84rem; color: var(--text-2); }
 .pr-vgl td:nth-child(4),
-.pr-vgl thead th:nth-child(4) { background: rgba(21, 19, 29, 0.035); }
+.pr-vgl thead th:nth-child(4) { background: rgba(255, 255, 255, 0.02); }
 .pr-vgl-gruppe th {
-    padding-top: 22px;
+    padding-top: 24px;
     padding-bottom: 8px;
-    font-family: var(--font-vordruck);
-    font-stretch: 112.5%;
-    font-size: 0.62rem;
-    font-weight: 500;
-    color: var(--papier-tinte-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-3);
     text-align: left !important;
     background: none !important;
 }
-/* Haken wie .pr-liste li::before, Strich fuer "nicht drin" */
 .pr-vgl td.is-ja::before, .pr-vgl td.is-nein::before { content: ''; display: inline-block; vertical-align: middle; }
-.pr-vgl td.is-ja::before { width: 11px; height: 6px; margin-top: -4px; border-left: 2px solid var(--kuli); border-bottom: 2px solid var(--kuli); transform: rotate(-45deg); }
-.pr-vgl td.is-nein::before { width: 12px; height: 1.5px; background: rgba(21, 19, 29, 0.3); }
-.pr-vgl td:nth-child(4).is-ja::before { border-color: color-mix(in srgb, var(--kuli) 70%, var(--papier-2)); }
+.pr-vgl td.is-ja::before { width: 11px; height: 6px; margin-top: -4px; border-left: 1.8px solid var(--haken); border-bottom: 1.8px solid var(--haken); transform: rotate(-45deg); }
+.pr-vgl td.is-nein::before { width: 12px; height: 1.5px; background: rgba(255, 255, 255, 0.18); }
 .pr-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .pr-neu {
     display: inline-block;
@@ -342,12 +351,12 @@ a { color: inherit; }
     font-style: normal;
     font-weight: 600;
     line-height: 1;
-    color: var(--rotstift);
+    color: var(--rotstift-hell);
     transform: rotate(-4deg);
     white-space: nowrap;
 }
-/* "geplant" = gibt es noch nicht: Bleistift statt Rotstift, damit es nicht wie ein Angebot leuchtet */
-.pr-neu.is-geplant { color: var(--papier-tinte-2); }
+/* "geplant" = gibt es noch nicht: Bleistiftgrau statt Rotstift, damit es nicht wie ein Angebot leuchtet */
+.pr-neu.is-geplant { color: var(--text-3); }
 
 /* ── Wuensche ────────────────────────────────────────────────── */
 .pr-balken { list-style: none; margin: 34px 0 0; padding: 0; display: grid; gap: 4px; max-width: 900px; }
@@ -411,8 +420,7 @@ a { color: inherit; }
        Vordruck-Schrift setzte die Spaltenbreite. Der Zusatz faellt weg — die Toenung
        der Spalten und der Satz ueber der Tabelle sagen dasselbe. */
     .pr-vgl thead small { display: none; }
-    .pr-bogen { padding: 10px 8px 6px 28px; }
-    .pr-bogen::before { left: 18px; }
+    .pr-bogen { padding: 6px 8px 4px; }
     .pr-vgl { font-size: 0.86rem; }
     .pr-vgl th, .pr-vgl td { padding: 10px 5px; }
     .pr-vgl th:not(:first-child), .pr-vgl td { width: 3.9rem; }
@@ -422,6 +430,7 @@ a { color: inherit; }
     .pr-mini { width: 200px; height: 270px; margin: -135px 0 0 -100px; }
     .pr-blatt { padding: 22px 18px 22px 40px; }
     .pr-blatt::before { left: 26px; }
+    .pr-tarif { padding: 22px 20px; }
     .pr-cta .pr-knopf { flex: 1 1 100%; }
 }
 @media (max-width: 360px) {
@@ -429,6 +438,6 @@ a { color: inherit; }
     .pr-stapel { height: 300px; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .pr-mini, .pr-band { transition: none; }
+    .pr-mini { transition: none; }
     .pr-stapel.is-auf .pr-siegel { animation: none; opacity: 0.88; }
 }
