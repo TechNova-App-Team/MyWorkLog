@@ -22,6 +22,14 @@ document.documentElement.className += ' js';</script>
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
     <script defer src="/Assets/js/touch-mobile-optimizations.js?v=b0d9b92a00"></script>
     <link href="/Assets/fonts/bricolage-grotesque-geist-c01377dd.css?v=8f683a9f48" rel="stylesheet">
+    <!-- Zweite Schriftdatei nur fuer Caveat (Handschrift auf dem Heftblatt der Demo);
+         Geist/Bricolage darin zeigen auf dieselben woff2 und laden nicht doppelt. -->
+    <link href="/Assets/fonts/bricolage-grotesque-caveat-67495892.css?v=946b7172ef" rel="stylesheet">
+    <link rel="stylesheet" href="/Assets/css/about-erlebnis.css?v=c00b87b28f">
+    <!-- about-erlebnis.js liest das ?v= dieses Links fuer den import() der
+         3D-Buehne — so stempelt stamp-assets auch das dynamisch geladene Modul. -->
+    <link rel="modulepreload" href="/Assets/js/about-buehne.js?v=ec279535a7">
+    <script defer src="/Assets/js/about-erlebnis.js?v=e48cdf6c06"></script>
     <script defer src="/Assets/js/version-loader.js?v=38a158e014"></script>
     <!-- Bewusst OHNE defer: das Inline-Skript vor </body> ist ein klassisches
          Skript und laeuft, sobald der Parser es erreicht — also VOR jedem
@@ -116,8 +124,9 @@ document.documentElement.className += ' js';</script>
            REVEAL — genau EIN Schreiber pro Element.
            Die Klasse `.is-in` setzt den Zielzustand; sonst fasst niemand
            transform/opacity dieser Elemente an. Der rAF-Lauf schreibt nur
-           auf Schiene, Fortschrittsbalken und die Neigung INNERHALB des
-           Hero-Geraets (.device-tilt) — nie auf ein [data-reveal].
+           auf Schiene und Fortschrittsbalken, about-erlebnis.js nur auf
+           Buehne, Film und das Innere der Demo-Karten — nie auf ein
+           [data-reveal] selbst.
            ═══════════════════════════════════════════════════════════════ */
         .js [data-reveal] {
             opacity: 0;
@@ -300,204 +309,6 @@ document.documentElement.className += ' js';</script>
         }
         .btn-primary:active, .btn-secondary:active, .btn-cta-primary:active, .btn-cta-outline:active { transform: scale(.97); }
 
-        /* ═══ HERO ═══ */
-        .hero {
-            position: relative; z-index: 1;
-            padding: 9.5rem 24px 0; overflow: hidden;
-        }
-        /* Ein Licht von oben, eines unter dem Geraet — sonst nichts. */
-        .hero::before {
-            content: ''; position: absolute; inset: 0; pointer-events: none;
-            background:
-                radial-gradient(60% 45% at 50% -8%, rgba(var(--primary-rgb),.26), transparent 70%),
-                radial-gradient(40% 30% at 85% 12%, rgba(var(--primary-rgb),.08), transparent 70%);
-        }
-        .hero-top { position: relative; z-index: 2; }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: .6rem;
-            padding: .38rem .9rem .38rem .5rem; margin-bottom: 2.25rem;
-            background: rgba(255,255,255,.035); border: 1px solid var(--rule-mid); border-radius: 999px;
-            font-size: .8rem; color: var(--ink-soft); font-weight: 500;
-        }
-        .hero-badge [data-version] { font-variant-numeric: tabular-nums; }
-        .hero-badge-dot {
-            width: 7px; height: 7px; border-radius: 50%; background: var(--good);
-            box-shadow: 0 0 0 3px rgba(var(--good-rgb),.18);
-            animation: pulse 2.6s var(--ease-io) infinite;
-        }
-        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(var(--good-rgb),.18); } 50% { box-shadow: 0 0 0 6px rgba(var(--good-rgb),.05); } }
-        .hero-title {
-            font-family: var(--fd); font-variation-settings: 'opsz' 96;
-            font-size: clamp(2.9rem, 7.4vw, 6.5rem); font-weight: 600;
-            line-height: .95; letter-spacing: -.042em; color: var(--ink);
-            margin-bottom: 2.75rem; max-width: 12.5ch;
-        }
-        /* Zeilenweiser Masken-Aufzug: jede Zeile ist ein eigener Block mit
-           overflow:hidden, das Kind faehrt darunter hervor. padding-bottom
-           haelt Unterlaengen (g, p) innerhalb der Maske. */
-        .tl-line { display: block; overflow: hidden; padding-bottom: .1em; margin-bottom: -.1em; }
-        .tl-line > span { display: block; }
-        .js .tl-line > span {
-            transform: translate3d(0, 110%, 0);
-            transition: transform 1100ms var(--ease-spring);
-            transition-delay: calc(var(--i, 0) * 110ms);
-        }
-        .js .hero.ready .tl-line > span { transform: none; }
-        .hero-title em { font-style: normal; }
-        .hero-row {
-            display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem 4rem; align-items: end;
-        }
-        .hero-description {
-            font-size: 1.14rem; line-height: 1.65; color: var(--text-muted);
-            max-width: 46ch; text-wrap: pretty;
-        }
-        .hero-buttons { display: flex; gap: .6rem; flex-wrap: wrap; justify-content: flex-end; }
-
-        /* ── Das Geraet: echte Aufnahme, kippt beim Scrollen flach.
-              --hp (0…1) schreibt der rAF-Lauf auf .device-tilt; der Reveal
-              gehoert dem Elternteil .hero-device. Zwei Schreiber, zwei
-              Elemente — nie beide auf einem. ── */
-        .hero-device {
-            position: relative; z-index: 2;
-            margin-top: 4rem; perspective: 2200px;
-        }
-        .hero-device::before {
-            content: ''; position: absolute; left: 8%; right: 8%; top: 12%; height: 70%;
-            background: radial-gradient(50% 50% at 50% 50%, rgba(var(--primary-rgb),.38), transparent 70%);
-            filter: blur(60px); pointer-events: none;
-        }
-        /* Teil des Anlaufs, nicht des Scroll-Reveals: das Geraet steht beim
-           Laden halb im Bild, ein IntersectionObserver mit Schwelle wuerde
-           es dort unsichtbar stehen lassen. */
-        .js .hero-device { opacity: 0; transform: translate3d(0, 80px, 0); transition: opacity 1200ms var(--ease-out) 450ms, transform 1400ms var(--ease-spring) 450ms; }
-        .js .hero.ready .hero-device { opacity: 1; transform: none; }
-        .device-tilt {
-            --hp: 0;
-            position: relative;
-            transform-origin: 50% 0%;
-            transform: rotateX(calc((1 - var(--hp)) * 24deg)) scale(calc(.9 + var(--hp) * .1));
-            will-change: transform;
-        }
-        .screen {
-            position: relative; margin: 0; padding: 9px; min-width: 0;
-            border-radius: var(--r-xl);
-            background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
-            border: 1px solid rgba(255,255,255,.1);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.12),
-                        0 50px 140px -40px rgba(0,0,0,.9),
-                        0 0 0 1px rgba(0,0,0,.6);
-        }
-        .screen-in {
-            position: relative; border-radius: calc(var(--r-xl) - 9px); overflow: hidden; background: var(--surface);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
-        }
-        /* Glanz auf dem Glas: wandert mit der Neigung mit, damit der Rahmen
-           nach Material aussieht und nicht nach einer Box mit Schatten. */
-        .device-tilt .screen-in::after {
-            content: ''; position: absolute; inset: 0; pointer-events: none;
-            background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.07) 45%, transparent 60%);
-            background-size: 250% 100%;
-            background-position: calc(100% - var(--hp) * 100%) 0;
-        }
-        .screen img, .phone img { display: block; width: 100%; height: auto; }
-
-        .phone {
-            position: absolute; right: -2.5%; bottom: -9%; width: 19%; margin: 0; padding: 6px; z-index: 3;
-            border-radius: 34px;
-            background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.03));
-            border: 1px solid rgba(255,255,255,.12);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.15), 0 40px 90px -20px rgba(0,0,0,.95);
-        }
-        .phone-in { border-radius: 28px; overflow: hidden; background: var(--surface); }
-
-        /* ── Tageskarte: liegt ueber der linken unteren Ecke des Geraets ── */
-        .daycard {
-            position: absolute; left: -3%; bottom: -6%; width: min(360px, 34%); z-index: 4;
-            padding: 1.35rem 1.4rem 1.2rem; border-radius: var(--r-lg);
-            background: linear-gradient(180deg, rgba(28,26,38,.97), rgba(16,15,23,.97));
-            border: 1px solid rgba(255,255,255,.1);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 40px 90px -20px rgba(0,0,0,.9),
-                        0 0 0 6px rgba(255,255,255,.02);
-        }
-        .daycard-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; }
-        .daycard-date { font-size: .82rem; font-weight: 600; color: var(--ink-soft); }
-        .daycard-live {
-            display: inline-flex; align-items: center; gap: .4rem;
-            font-size: .72rem; font-weight: 500; color: var(--good);
-        }
-        .daycard-live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--good); }
-        .daycard-scale {
-            display: flex; justify-content: space-between;
-            font-family: var(--fm); font-size: .68rem; color: var(--text-faint);
-            margin-bottom: .45rem; font-variant-numeric: tabular-nums;
-        }
-        /* display:block ist Pflicht — ein inline-Kasten traegt weder Groesse
-           noch absolute Kinder (siehe .mc-bar / .yv-month__fill). */
-        .daybar {
-            position: relative; display: block; height: 34px; border-radius: 9px;
-            background: rgba(255,255,255,.04); overflow: hidden; border: 1px solid var(--rule);
-        }
-        .daybar-fill {
-            position: absolute; inset: 0; border-radius: 8px;
-            background: linear-gradient(90deg, rgba(var(--primary-rgb),.95), rgba(var(--primary-rgb),.5));
-            transform: scaleX(0); transform-origin: left;
-            transition: transform 1500ms var(--ease-io) 900ms;
-        }
-        .hero.ready .daybar-fill { transform: scaleX(1); }
-        .daybar-break {
-            position: absolute; top: 0; bottom: 0; left: 50%; width: 5.55%;
-            background: repeating-linear-gradient(45deg, rgba(7,6,11,.88) 0 4px, rgba(7,6,11,.55) 4px 8px);
-            opacity: 0; transition: opacity 500ms var(--ease-out) 2100ms;
-        }
-        .hero.ready .daybar-break { opacity: 1; }
-        .daybar-label {
-            position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
-            font-size: .64rem; color: var(--text-faint); white-space: nowrap;
-            opacity: 0; transition: opacity 500ms var(--ease-out) 2250ms;
-        }
-        .hero.ready .daybar-label { opacity: 1; }
-        .daycard-rows { margin-top: 1rem; display: grid; }
-        .daycard-row {
-            display: flex; justify-content: space-between; align-items: baseline;
-            padding: .5rem 0; border-top: 1px solid var(--rule);
-        }
-        .daycard-row:first-child { border-top: 0; }
-        .daycard-key { font-size: .8rem; color: var(--text-muted); }
-        .daycard-val { font-family: var(--fm); font-size: .9rem; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
-        .daycard-row.is-balance .daycard-val { color: var(--good); }
-        .daycard-note {
-            margin-top: .6rem; padding-top: .75rem; border-top: 1px solid var(--rule);
-            font-size: .7rem; line-height: 1.55; color: var(--text-faint);
-        }
-        .hero-device-cap {
-            position: relative; z-index: 4; margin: 5.5rem 0 0 auto; max-width: 42ch;
-            font-size: .88rem; line-height: 1.6; color: var(--text-muted); text-wrap: pretty;
-        }
-        .hero-device-cap b { color: var(--ink); font-weight: 600; }
-
-        @media (max-width: 1100px) {
-            .hero-row { grid-template-columns: 1fr; }
-            .hero-buttons { justify-content: flex-start; }
-        }
-        /* Unter 900 px steht die Tageskarte UNTER dem Geraet: ueberlappend
-           verdeckt sie dort die halbe Aufnahme. Das Handy bleibt, es ist
-           ein Bild ohne Bedienelemente — kein Touch-Konflikt. */
-        @media (max-width: 900px) {
-            .hero { padding-top: 8.5rem; }
-            .hero-device { margin-top: 3.5rem; }
-            .phone { width: 26%; right: -1%; bottom: -12%; border-radius: 22px; padding: 4px; }
-            .phone-in { border-radius: 18px; }
-            .daycard { position: relative; left: auto; bottom: auto; width: 100%; margin-top: 4rem; }
-            .hero-device-cap { margin: 1.5rem 0 0; max-width: none; }
-            .screen { padding: 5px; border-radius: 16px; }
-            .screen-in { border-radius: 12px; }
-        }
-        @media (max-width: 560px) {
-            .hero-buttons > a { flex: 1 1 100%; }
-            .btn-secondary { justify-content: center; }
-            .btn-primary { justify-content: space-between; }
-        }
-
         /* ═══ FAKTEN — fuenf Belege als Zeile, nicht als fuenf Karten. ═══ */
         .facts { position: relative; z-index: 4; padding: 4rem 24px 1rem; }
         .facts-grid {
@@ -511,137 +322,6 @@ document.documentElement.className += ' js';</script>
         @media (max-width: 1000px) { .facts-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.75rem; } }
         @media (max-width: 620px)  { .facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 400px)  { .facts-grid { grid-template-columns: 1fr; } }
-
-        /* ═══════════════════════════════════════════════════════════════
-           DER AKT — „Ein Tag mit MyWorkLog"
-           Linke Spalte klebt, rechte Spalte scrollt durch vier Schritte.
-           Der aktive Schritt steht als data-step am Container; alles andere
-           haengt in CSS daran. Die Nummerierung 01–04 ist echte Reihenfolge
-           (Kommen, Pause, Gehen, Berichtsheft) — kein Dekor.
-           ═══════════════════════════════════════════════════════════════ */
-        .act { position: relative; z-index: 1; padding: 9rem 24px 6rem; }
-        .act-grid {
-            display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-            gap: 6rem; align-items: start;
-        }
-        .act-sticky { position: sticky; top: max(120px, calc(50vh - 230px)); }
-        .act-stage {
-            position: relative; padding: 1.6rem; border-radius: var(--r-xl);
-            background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015));
-            border: 1px solid var(--rule-mid);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 40px 100px -30px rgba(0,0,0,.8),
-                        0 0 80px -30px rgba(var(--primary-rgb),.35);
-        }
-        .act-stage-head {
-            display: flex; justify-content: space-between; align-items: center;
-            padding-bottom: 1.1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--rule);
-        }
-        .act-stage-title { font-size: .86rem; font-weight: 600; color: var(--ink-soft); }
-        .act-stage-step {
-            position: relative; display: inline-block; min-width: 76px; height: 1.2em;
-            font-family: var(--fm); font-size: .72rem; color: var(--accent);
-        }
-        .act-stage-step > span {
-            position: absolute; right: 0; top: 0; white-space: nowrap;
-            opacity: 0; transition: opacity 300ms var(--ease-out);
-        }
-        .act[data-step="1"] .act-stage-step > span[data-s="1"],
-        .act[data-step="2"] .act-stage-step > span[data-s="2"],
-        .act[data-step="3"] .act-stage-step > span[data-s="3"],
-        .act[data-step="4"] .act-stage-step > span[data-s="4"] { opacity: 1; }
-        .act-bar {
-            position: relative; display: block; height: 52px; border-radius: 12px;
-            background: rgba(255,255,255,.04); border: 1px solid var(--rule); overflow: hidden;
-        }
-        .act-bar-fill {
-            position: absolute; inset: 0; border-radius: 11px;
-            background: linear-gradient(90deg, rgba(var(--primary-rgb),.95), rgba(var(--primary-rgb),.5));
-            transform: scaleX(0); transform-origin: left;
-            transition: transform 800ms var(--ease-spring);
-        }
-        .act-bar-break {
-            position: absolute; top: 0; bottom: 0; left: 50%; width: 5.55%;
-            background: repeating-linear-gradient(45deg, rgba(7,6,11,.88) 0 4px, rgba(7,6,11,.55) 4px 8px);
-            opacity: 0; transition: opacity 420ms var(--ease-out);
-        }
-        .act[data-step="1"] .act-bar-fill { transform: scaleX(.06); }
-        .act[data-step="2"] .act-bar-fill { transform: scaleX(.56); }
-        .act[data-step="3"] .act-bar-fill { transform: scaleX(1); }
-        .act[data-step="4"] .act-bar-fill { transform: scaleX(1); }
-        .act[data-step="2"] .act-bar-break,
-        .act[data-step="3"] .act-bar-break,
-        .act[data-step="4"] .act-bar-break { opacity: 1; }
-        .act-scale {
-            display: flex; justify-content: space-between; margin-top: .55rem;
-            font-family: var(--fm); font-size: .68rem; color: var(--text-faint);
-            font-variant-numeric: tabular-nums;
-        }
-        /* Vier Ablesungen liegen alle im DOM (i18n-tauglich), sichtbar ist
-           immer genau eine. Kein ::after-content — der Extraktor sieht das nicht. */
-        .act-reads { position: relative; margin-top: 1.5rem; min-height: 208px; }
-        .act-read {
-            position: absolute; inset: 0; opacity: 0;
-            transform: translate3d(0, 12px, 0); pointer-events: none;
-            transition: opacity 400ms var(--ease-out), transform 500ms var(--ease-spring);
-        }
-        .act[data-step="1"] .act-read[data-read="1"],
-        .act[data-step="2"] .act-read[data-read="2"],
-        .act[data-step="3"] .act-read[data-read="3"],
-        .act[data-step="4"] .act-read[data-read="4"] { opacity: 1; transform: none; pointer-events: auto; }
-        .act-read-row {
-            display: flex; justify-content: space-between; align-items: baseline;
-            padding: .6rem 0; border-top: 1px solid var(--rule);
-        }
-        .act-read-row:first-child { border-top: 0; }
-        .act-read-key { font-size: .84rem; color: var(--text-muted); }
-        .act-read-val { font-family: var(--fm); font-size: .95rem; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
-        .act-read-row.is-balance .act-read-val { color: var(--good); }
-        .act-read-note { margin-top: .8rem; font-size: .78rem; line-height: 1.6; color: var(--text-faint); }
-        .act-sheet {
-            margin-top: .9rem; padding: .9rem 1rem; border-radius: 12px;
-            background: rgba(var(--primary-rgb),.08); border: 1px solid var(--accent-brd);
-            font-size: .8rem; line-height: 1.6; color: var(--ink-soft);
-        }
-        .act-sheet-label { display: block; font-size: .7rem; font-weight: 600; color: var(--accent); margin-bottom: .35rem; }
-
-        .act-steps { display: flex; flex-direction: column; }
-        .act-step {
-            min-height: min(64vh, 540px); display: flex; flex-direction: column; justify-content: center;
-            padding: 2rem 0;
-        }
-        .act-step-num {
-            font-family: var(--fm); font-size: .78rem; font-weight: 500;
-            color: var(--text-faint); margin-bottom: 1rem;
-            font-variant-numeric: tabular-nums;
-            transition: color 400ms var(--ease-out);
-        }
-        .act-step.on .act-step-num { color: var(--accent); }
-        .act-step-title {
-            font-family: var(--fd); font-variation-settings: 'opsz' 96;
-            font-size: clamp(2.4rem, 4.4vw, 3.8rem); font-weight: 600;
-            letter-spacing: -.05em; line-height: 1; color: rgba(255,255,255,.14);
-            margin-bottom: 1.1rem; transition: color 500ms var(--ease-out);
-        }
-        .act-step.on .act-step-title { color: var(--ink); }
-        .act-step-desc {
-            font-size: 1.02rem; line-height: 1.7; color: var(--text-faint);
-            max-width: 44ch; text-wrap: pretty; transition: color 500ms var(--ease-out);
-        }
-        .act-step.on .act-step-desc { color: var(--text-muted); }
-        .act-step-rule { width: 100%; height: 1px; background: var(--rule); margin-bottom: 1.8rem; position: relative; overflow: hidden; }
-        .act-step-rule::after {
-            content: ''; position: absolute; inset: 0; background: var(--accent);
-            transform: scaleX(0); transform-origin: left; transition: transform 700ms var(--ease-spring);
-        }
-        .act-step.on .act-step-rule::after { transform: scaleX(1); }
-
-        @media (max-width: 980px) {
-            .act { padding: 6rem 24px 4rem; }
-            .act-grid { grid-template-columns: 1fr; gap: 2.5rem; }
-            .act-sticky { position: sticky; top: 80px; z-index: 2; }
-            .act-stage { padding: 1.1rem; border-radius: var(--r-lg); background: linear-gradient(180deg, #16141f, #0f0e16); }
-            .act-step { min-height: min(58vh, 440px); }
-        }
 
         /* ═══ BENTO — jede Aussage genau einmal, Gewichtung ueber Flaeche. ═══ */
         .bento { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
@@ -717,9 +397,25 @@ document.documentElement.className += ' js';</script>
         }
 
         /* ═══ SO SIEHT ES AUS: zwei weitere Aufnahmen ═══
-           Dashboard und Handy stehen im Hero. Die Bilder haben width/height
+           Dashboard und Handy stehen in der Buehne. Die Bilder haben width/height
            im Markup, damit nichts springt; min-width:0 an den Rasterkindern,
-           weil ein Rasterkind sonst nie schmaler wird als sein Bild. */
+           weil ein Rasterkind sonst nie schmaler wird als sein Bild.
+           🔴 .screen/.screen-in standen frueher im Hero-Block — beim Neubau
+           mitgeloescht, danach lagen die Aufnahmen hier 2179 px breit. */
+        .screen {
+            position: relative; margin: 0; padding: 9px; min-width: 0;
+            border-radius: var(--r-xl);
+            background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.025));
+            border: 1px solid rgba(255,255,255,.1);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.12),
+                        0 50px 140px -40px rgba(0,0,0,.9),
+                        0 0 0 1px rgba(0,0,0,.6);
+        }
+        .screen-in {
+            position: relative; border-radius: calc(var(--r-xl) - 9px); overflow: hidden; background: var(--surface);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+        }
+        .screen img { display: block; width: 100%; height: auto; }
         .stage { position: relative; }
         .stage-cap {
             margin: 1.1rem 0 0; font-size: .9rem; line-height: 1.6; color: var(--text-muted);
@@ -1130,7 +826,7 @@ document.documentElement.className += ' js';</script>
         @media (max-width: 700px) {
             .section { padding: 5.5rem 20px; }
             .section.tight { padding: 4rem 20px; }
-            .hero, .facts, .act, .cta-outer { padding-left: 20px; padding-right: 20px; }
+            .facts, .cta-outer { padding-left: 20px; padding-right: 20px; }
         }
 
         /* ═══════════════════════════════════════════════════════════════
@@ -1147,13 +843,6 @@ document.documentElement.className += ' js';</script>
                 transform: none; filter: none;
                 transition: opacity 260ms ease; transition-delay: 0ms;
             }
-            .js .tl-line > span { transform: none; transition: none; }
-            .device-tilt { transform: none; }
-            .js .hero-device { transform: none; transition: opacity 260ms ease; }
-            .daybar-fill, .act-bar-fill { transition: none; transform: scaleX(1); }
-            .daybar-break, .daybar-label { transition: none; opacity: 1; }
-            .hero-badge-dot { animation: none; }
-            .act-read { transition: opacity 260ms ease; transform: none; }
             .jr-pane { transition: opacity 260ms ease; transform: none; }
             .stat-metric-bar { transition: none; }
         }
@@ -1172,7 +861,8 @@ document.documentElement.className += ' js';</script>
     <div class="nav-content">
         <div class="logo">My<span>Work</span>Log</div>
         <ul class="nav-links">
-            <li><a href="#showcase">Produkt</a></li>
+            <li><a href="#film">Produkt</a></li>
+            <li><a href="#demos">Ausprobieren</a></li>
             <li><a href="#features">Features</a></li>
             <li><a href="#datenfluss">Datenfluss</a></li>
             <li><a href="#journey">Journey</a></li>
@@ -1191,7 +881,8 @@ document.documentElement.className += ' js';</script>
     <!-- Beschriftungen stehen als Text im Markup, damit die i18n-Pipeline
          sie ueberhaupt sieht — JS setzt hier nur `top` und `.on`. -->
     <div class="rail-ticks" id="railTicks">
-        <div class="rail-tick" data-for="showcase"><span class="rail-tick-label">Ein Tag</span></div>
+        <div class="rail-tick" data-for="film"><span class="rail-tick-label">Ein Blick</span></div>
+        <div class="rail-tick" data-for="demos"><span class="rail-tick-label">Ausprobieren</span></div>
         <div class="rail-tick" data-for="features"><span class="rail-tick-label">Features</span></div>
         <div class="rail-tick" data-for="stats"><span class="rail-tick-label">Kennzahlen</span></div>
         <div class="rail-tick" data-for="values"><span class="rail-tick-label">Grundsätze</span></div>
@@ -1208,80 +899,185 @@ document.documentElement.className += ' js';</script>
 
 <main id="main">
 
-<!-- ═══ HERO ═══
-     Oben die Aussage, darunter die echte Aufnahme im Geraeterahmen. Das
-     Geraet kippt beim Scrollen aus der Schraeglage flach (--hp am
-     .device-tilt, Block 10 der Motion-Engine). Handy und Tageskarte liegen
-     ueberlappend davor; unter 900 px steht die Karte darunter. -->
-<section class="hero" id="hero">
-    <div class="shell hero-top">
-        <div class="hero-badge" data-reveal style="--i:5">
-            <span class="hero-badge-dot"></span>
-            <span>Version <span data-version translate="no">9.8.16</span> — Live</span>
+<!-- ═══ AKT 1: BUEHNE ═══
+     3D-Auftakt (Assets/js/about-buehne.js): Laptop, Handy und Heftblaetter
+     vor der Riesentypo; Scrollen loest die Gruppe auf und holt das Handy nach
+     vorn, wo der Film uebernimmt. Ohne WebGL oder mit reduzierter Bewegung
+     setzt about-erlebnis.js .bu-flach: dann stehen die zwei Aufnahmen als
+     Bilder da und die Buehne klebt nicht. Die Bildquellen liest das Modul aus
+     den Aufnahmen hier (src/data-src), damit stamp-assets sie stempelt. -->
+<section class="bu" id="buehne">
+    <div class="bu-stick">
+        <p class="bu-typo" aria-hidden="true"><span>Ausbildung,</span><span>erfasst.</span></p>
+        <canvas class="bu-cv" aria-hidden="true"></canvas>
+        <div class="bu-flachbild">
+            <figure class="bu-screen">
+                <img data-rolle="laptop" src="/Grafiken/about/dashboard.webp?v=d4254ad2cc" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Dashboard von MyWorkLog am Rechner: Begrüßung, Wochenstunden und Gleitzeit, darunter der Verlauf der Woche, Heute, Urlaub und Kalender">
+            </figure>
+            <figure class="bu-phone">
+                <img data-rolle="handy" src="/Grafiken/about/handy.webp?v=1530a7faa5" width="780" height="1688" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Handy: Begrüßung, Wochenstunden und Gleitzeit nebeneinander, darunter die Woche, unten die Leiste mit Dashboard, Bilanz, Bericht, Verlauf und Mehr">
+            </figure>
         </div>
-        <h1 class="hero-title">
-            <span class="tl-line" style="--i:0"><span>Zeiterfassung &amp; Berichtsheft</span></span>
-            <span class="tl-line" style="--i:1"><span>für <em>Auszubildende.</em></span></span>
-        </h1>
-        <div class="hero-row">
-            <p class="hero-description" data-reveal style="--i:6">
-                Gleitzeitkonto, digitales Berichtsheft, Überstundenrechner &amp; Arbeitszeitnachweis.
-                100% offline, DSGVO-konform, und designed für deine Ausbildung.
-            </p>
-            <div class="hero-buttons" data-reveal style="--i:7">
-                <a href="/" class="btn-primary"><span>Jetzt starten</span><span class="btn-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                <a href="#features" class="btn-secondary"><span>Features ansehen</span></a>
-                <a href="/ausbilder/" class="btn-secondary"><span>Für Ausbilder</span></a>
+        <img hidden alt="" data-rolle="blatt" data-src="/Grafiken/intro/blatt-klassisch.webp?v=367037d911">
+        <img hidden alt="" data-rolle="blatt" data-src="/Grafiken/intro/blatt-form.webp?v=67e009ad7c">
+        <img hidden alt="" data-rolle="blatt" data-src="/Grafiken/intro/blatt-klar.webp?v=83cd606a36">
+
+        <div class="bu-foot shell">
+            <div class="bu-badge">
+                <span class="bu-badge-dot"></span>
+                <span>Version <span data-version translate="no">9.8.17</span> — Live</span>
+            </div>
+            <h1 class="bu-title">Zeiterfassung &amp; Berichtsheft für Auszubildende.</h1>
+            <div class="bu-row">
+                <p class="bu-lede">Gleitzeitkonto, digitales Berichtsheft, Überstundenrechner &amp; Arbeitszeitnachweis. 100% offline, DSGVO-konform, und designed für deine Ausbildung.</p>
+                <div class="bu-knoepfe">
+                    <a href="/" class="btn-primary"><span>Jetzt starten</span><span class="btn-arrow" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                    <a href="#demos" class="btn-secondary"><span>Ausprobieren</span></a>
+                    <a href="/ausbilder/" class="btn-secondary"><span>Für Ausbilder</span></a>
+                </div>
             </div>
         </div>
+        <div class="bu-hint" aria-hidden="true"><i></i><span>Scrollen</span></div>
     </div>
+</section>
 
-    <div class="shell hero-device">
-        <div class="device-tilt" id="deviceTilt">
-            <figure class="screen">
-                <div class="screen-in">
-                    <img src="/Grafiken/about/dashboard.webp?v=d4254ad2cc" width="2880" height="1800" fetchpriority="high" decoding="async" alt="Dashboard von MyWorkLog am Rechner: Begrüßung, Wochenstunden und Gleitzeit, darunter der Verlauf der Woche, Heute, Urlaub und Kalender">
-                </div>
-            </figure>
-            <figure class="phone">
-                <div class="phone-in">
-                    <img src="/Grafiken/about/handy.webp?v=1530a7faa5" width="780" height="1688" loading="lazy" decoding="async" alt="Dashboard von MyWorkLog am Handy: Begrüßung, Wochenstunden und Gleitzeit nebeneinander, darunter die Woche, unten die Leiste mit Dashboard, Bilanz, Bericht, Verlauf und Mehr">
-                </div>
-            </figure>
+<!-- ═══ AKT 2: FILM ═══
+     Bildfolge aus Grafiken/intro/handy.mp4 (Originalbilder 15–149, jedes
+     zweite, WebP q62 = 68 Bilder, 1,7 MB — dicht genug, dass es ohne
+     Ueberblenden laeuft; Ueberblenden gab Doppelbilder). data-von = erstes Bild eines Kapitels (1-basiert, wie die Dateinamen):
+     Stand 1–14, Woche 15–26, Heute 27–41, Urlaub 42–56, Kalender 57–68.
+     .fi-phone hat dieselben Masse wie das 3D-Handy am Ende der Buehne. -->
+<section class="fi" id="film" data-frames="/Grafiken/about/film-1/" data-count="68">
+    <div class="fi-stick">
+        <div class="fi-kopf">
+            <span class="section-eyebrow">Ein Blick in die App</span>
+            <h2 class="section-title">Morgens aufmachen, und alles steht da.</h2>
+        </div>
+        <ol class="fi-caps">
+            <li class="fi-cap on" data-von="1"><b>Dein Stand</b><span>Wochenstunden und Gleitzeit ganz oben. Kein Rechnen, kein Suchen.</span></li>
+            <li class="fi-cap" data-von="15"><b>Deine Woche</b><span>Jeder Tag ein Punkt auf der Linie, heute hervorgehoben, darunter die Stunden je Tag.</span></li>
+            <li class="fi-cap" data-von="27"><b>Heute</b><span>Der Ring füllt sich mit dem Tag. Arbeit, Schule und Sonstiges zählen getrennt.</span></li>
+            <li class="fi-cap" data-von="42"><b>Urlaub</b><span>Anspruch, genommen, geplant und der Übertrag aus dem Vorjahr.</span></li>
+            <li class="fi-cap" data-von="57"><b>Kalender</b><span>Der Monat mit den Stunden je Tag, Feiertage markiert.</span></li>
+        </ol>
+        <div class="fi-phone">
+            <canvas aria-label="Die App am Handy, beim Scrollen von oben nach unten: Stand, Woche, Heute, Urlaub, Kalender" role="img"></canvas>
+        </div>
+        <div class="fi-bar" aria-hidden="true"><i></i></div>
+    </div>
+</section>
+
+<!-- ═══ AKT 3: AUSPROBIEREN ═══
+     Drei bedienbare Ausschnitte. Rechenregeln wie in der App: Schultag zaehlt
+     das volle Tagessoll (Saldo 0), Pausenhinweis nach § 4 ArbZG — die App
+     MELDET die fehlende Pause, sie zieht sie nicht ab. Beispielwerte
+     (8 h Soll, 30 min Pause) stehen als Satz im Kopf, nicht versteckt. -->
+<section class="section de" id="demos">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Ausprobieren</span>
+            <h2 class="section-title">Probier es aus, bevor du es installierst.</h2>
+            <p class="section-description">Drei Ausschnitte aus der App, direkt hier auf der Seite. Beispielwerte: 8 Stunden Tagessoll, 30 Minuten Pause.</p>
         </div>
 
-        <!-- Tageskarte: ein vollstaendiger Arbeitstag, wie ihn die App zeigt -->
-        <div class="daycard">
-            <div class="daycard-head">
-                <span class="daycard-date">Mittwoch — Beispieltag</span>
-                <span class="daycard-live">Erfasst</span>
-            </div>
-            <div class="daycard-scale">
-                <span>07:30</span>
-                <span>16:30</span>
-            </div>
-            <div class="daybar">
-                <div class="daybar-fill"></div>
-                <div class="daybar-break"><span class="daybar-label">30 min Pause</span></div>
-            </div>
-            <div class="daycard-rows">
-                <div class="daycard-row">
-                    <span class="daycard-key">Gearbeitet</span>
-                    <span class="daycard-val">8:30 h</span>
+        <div class="de-grid">
+            <article class="de-karte de-uhr" id="deUhr" data-z="aus" data-reveal style="--i:0">
+                <div class="de-in">
+                    <header class="de-kopf">
+                        <h3>Stempeluhr</h3>
+                        <span class="du-status"><span data-s="aus">Bereit</span><span data-s="an">Läuft</span><span data-s="pause">Pause</span><span data-s="fertig">Feierabend</span></span>
+                    </header>
+                    <p class="de-text">Ein Tap auf „Kommen“ startet den Tag. Hier läuft er im Zeitraffer: eine Sekunde sind 24 Minuten.</p>
+                    <div class="du-zeit" translate="no">07:30</div>
+                    <div class="du-track" aria-hidden="true"></div>
+                    <div class="du-skala" aria-hidden="true"><span>07:30</span><span>13:15</span><span>19:00</span></div>
+                    <div class="du-knoepfe">
+                        <button type="button" class="du-btn du-haupt" data-a="kommen">Kommen</button>
+                        <button type="button" class="du-btn" data-a="pause"><span class="du-p1">Pause</span><span class="du-p2">Weiter</span></button>
+                        <button type="button" class="du-btn" data-a="gehen">Gehen</button>
+                        <button type="button" class="du-btn du-leise" data-a="neu">Neuer Tag</button>
+                    </div>
+                    <dl class="de-werte">
+                        <div><dt>Gearbeitet</dt><dd data-v="arbeit" translate="no">0:00 h</dd></div>
+                        <div><dt>Pause</dt><dd data-v="pause" translate="no">0:00 h</dd></div>
+                        <div><dt>Gleitzeit</dt><dd data-v="saldo" translate="no">0:00 h</dd></div>
+                    </dl>
+                    <p class="du-warnung">Über 6 Stunden ohne 30 Minuten Pause: Die App weist dich darauf hin (§ 4 ArbZG).</p>
                 </div>
-                <div class="daycard-row">
-                    <span class="daycard-key">Tagessoll</span>
-                    <span class="daycard-val">8:00 h</span>
-                </div>
-                <div class="daycard-row is-balance">
-                    <span class="daycard-key">Gleitzeit</span>
-                    <span class="daycard-val">+0:30 h</span>
-                </div>
-            </div>
-            <p class="daycard-note">Beispielwerte. Soll-Stunden, Pausen und Rundung kommen aus deinen eigenen Einstellungen.</p>
-        </div>
+            </article>
 
-        <p class="hero-device-cap"><b>Dashboard.</b> <span>Woche, Monat, Gleitzeit und Urlaub — jede Abweichung an einer sichtbaren Nulllinie. Am Handy dieselbe App, installierbar, offline.</span></p>
+            <article class="de-karte de-woche" id="deWoche" data-reveal style="--i:1">
+                <div class="de-in">
+                    <header class="de-kopf"><h3>Deine Woche</h3></header>
+                    <p class="de-text">Zieh den Feierabend nach links oder rechts. Der Saldo rechnet mit.</p>
+                    <div class="dw-tage">
+                        <div class="dw-tag" data-a="450" data-e="990" data-p="30">
+                            <span class="dw-name">Mo</span>
+                            <div class="dw-spur"><i class="dw-bar"></i><span class="dw-griff" role="slider" tabindex="0" aria-label="Feierabend Montag" aria-valuemin="510" aria-valuemax="1200" aria-valuenow="990"></span></div>
+                            <span class="dw-ende" translate="no">16:30</span><span class="dw-wert" translate="no">8:30 h</span>
+                        </div>
+                        <div class="dw-tag" data-a="450" data-e="960" data-p="30">
+                            <span class="dw-name">Di</span>
+                            <div class="dw-spur"><i class="dw-bar"></i><span class="dw-griff" role="slider" tabindex="0" aria-label="Feierabend Dienstag" aria-valuemin="510" aria-valuemax="1200" aria-valuenow="960"></span></div>
+                            <span class="dw-ende" translate="no">16:00</span><span class="dw-wert" translate="no">8:00 h</span>
+                        </div>
+                        <div class="dw-tag is-schule" data-schule data-a="480" data-e="930" data-p="45">
+                            <span class="dw-name">Mi</span>
+                            <div class="dw-spur"><i class="dw-bar"></i><span class="dw-schule">Berufsschule, zählt das volle Tagessoll</span></div>
+                            <span class="dw-ende"></span><span class="dw-wert" translate="no">8:00 h</span>
+                        </div>
+                        <div class="dw-tag" data-a="450" data-e="1035" data-p="30">
+                            <span class="dw-name">Do</span>
+                            <div class="dw-spur"><i class="dw-bar"></i><span class="dw-griff" role="slider" tabindex="0" aria-label="Feierabend Donnerstag" aria-valuemin="510" aria-valuemax="1200" aria-valuenow="1035"></span></div>
+                            <span class="dw-ende" translate="no">17:15</span><span class="dw-wert" translate="no">9:15 h</span>
+                        </div>
+                        <div class="dw-tag" data-a="450" data-e="870" data-p="30">
+                            <span class="dw-name">Fr</span>
+                            <div class="dw-spur"><i class="dw-bar"></i><span class="dw-griff" role="slider" tabindex="0" aria-label="Feierabend Freitag" aria-valuemin="510" aria-valuemax="1200" aria-valuenow="870"></span></div>
+                            <span class="dw-ende" translate="no">14:30</span><span class="dw-wert" translate="no">6:30 h</span>
+                        </div>
+                    </div>
+                    <dl class="de-werte">
+                        <div><dt>Woche</dt><dd data-v="summe" translate="no">40:15 h</dd></div>
+                        <div><dt>Soll</dt><dd translate="no">40:00 h</dd></div>
+                        <div><dt>Saldo</dt><dd data-v="saldo" translate="no">+0:15 h</dd></div>
+                    </dl>
+                </div>
+            </article>
+
+            <article class="de-karte de-heft" id="deHeft" data-form-an="stich" data-reveal style="--i:2">
+                <div class="de-in">
+                    <div class="dh-links">
+                        <header class="de-kopf"><h3>Berichtsheft</h3></header>
+                        <p class="de-text">Aus den Einträgen der Woche entsteht der Ausbildungsnachweis, als PDF im amtlichen Vordruck deiner Kammer. Die Schreibform wählst du selbst.</p>
+                        <div class="dh-formen" role="group" aria-label="Schreibform">
+                            <button type="button" class="du-btn" data-form="stich" aria-pressed="true">Stichpunkte</button>
+                            <button type="button" class="du-btn" data-form="fliess" aria-pressed="false">Fließtext</button>
+                        </div>
+                    </div>
+                    <div class="dh-blatt">
+                        <div class="dh-blattkopf"><span>Ausbildungsnachweis Nr. 26</span><span>Woche vom 22. bis 26. Juni</span></div>
+                        <div class="dh-text" data-form-text="stich">
+                            <span class="dh-z">Mo: Clients im 2. OG gewartet, Updates eingespielt</span>
+                            <span class="dh-z">Di: Image-Rollout für 14 Rechner vorbereitet</span>
+                            <span class="dh-z">Mi: Berufsschule, Lernfeld 3, Subnetting</span>
+                            <span class="dh-z">Do: Netzwerkdosen im Lager gepatcht und dokumentiert</span>
+                            <span class="dh-z">Fr: Ticket-Rückstand abgearbeitet</span>
+                        </div>
+                        <div class="dh-text" data-form-text="fliess" hidden>
+                            <span class="dh-z">Am Montag habe ich die Clients im zweiten</span>
+                            <span class="dh-z">Obergeschoss gewartet und Updates eingespielt.</span>
+                            <span class="dh-z">Am Dienstag habe ich den Image-Rollout für</span>
+                            <span class="dh-z">14 Rechner vorbereitet. Mittwoch war Berufsschule</span>
+                            <span class="dh-z">mit Subnetting im Lernfeld 3. Am Donnerstag habe</span>
+                            <span class="dh-z">ich Netzwerkdosen im Lager gepatcht.</span>
+                        </div>
+                        <div class="dh-fuss"><span>Auszubildende/r</span><span>Ausbilder/in</span></div>
+                        <span class="dh-stempel">Abgezeichnet</span>
+                    </div>
+                </div>
+            </article>
+        </div>
     </div>
 </section>
 
@@ -1315,101 +1111,6 @@ document.documentElement.className += ' js';</script>
         </div>
     </div>
 </div>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     DER AKT — der Tag laeuft mit dem Scrollen ab.
-     Links klebt die Karte, rechts wandern die vier Schritte durch.
-     ═══════════════════════════════════════════════════════════════════ -->
-<section class="act" id="showcase" data-step="1">
-    <div class="shell">
-        <div class="section-header" data-reveal>
-            <span class="section-eyebrow">Ein Tag mit MyWorkLog</span>
-            <h2 class="section-title">Vier Handgriffe, und der Tag ist erfasst.</h2>
-            <p class="section-description">Kommen, Pause, Gehen — den Rest rechnet die App. Am Ende der Woche steht das Berichtsheft schon fast fertig da.</p>
-        </div>
-
-        <div class="act-grid">
-            <div class="act-sticky">
-                <div class="act-stage" data-reveal="left">
-                    <div class="act-stage-head">
-                        <span class="act-stage-title">Mittwoch, 25. Juni</span>
-                        <!-- Alle vier Beschriftungen stehen im Markup; CSS zeigt die
-                             zum aktiven Schritt. Ein per JS gesetzter Text waere fuer
-                             die i18n-Extraktion unsichtbar. -->
-                        <span class="act-stage-step">
-                            <span data-s="1">Schritt 01</span>
-                            <span data-s="2">Schritt 02</span>
-                            <span data-s="3">Schritt 03</span>
-                            <span data-s="4">Schritt 04</span>
-                        </span>
-                    </div>
-                    <div class="act-bar">
-                        <div class="act-bar-fill"></div>
-                        <div class="act-bar-break"></div>
-                    </div>
-                    <div class="act-scale">
-                        <span>07:30</span>
-                        <span>12:00</span>
-                        <span>16:30</span>
-                    </div>
-
-                    <div class="act-reads">
-                        <div class="act-read" data-read="1">
-                            <div class="act-read-row"><span class="act-read-key">Gestempelt</span><span class="act-read-val">07:30</span></div>
-                            <div class="act-read-row"><span class="act-read-key">Erfasst</span><span class="act-read-val">0:00 h</span></div>
-                            <p class="act-read-note">Ein Tap auf „Kommen" — oder ein NFC-Tag am Arbeitsplatz. Mehr braucht der Start nicht.</p>
-                        </div>
-                        <div class="act-read" data-read="2">
-                            <div class="act-read-row"><span class="act-read-key">Pause</span><span class="act-read-val">12:00 – 12:30</span></div>
-                            <div class="act-read-row"><span class="act-read-key">Erfasst</span><span class="act-read-val">4:30 h</span></div>
-                            <p class="act-read-note">Die Pause wird abgezogen, nicht geschätzt. Die gesetzliche Mindestpause kennt die App.</p>
-                        </div>
-                        <div class="act-read" data-read="3">
-                            <div class="act-read-row"><span class="act-read-key">Gearbeitet</span><span class="act-read-val">8:30 h</span></div>
-                            <div class="act-read-row"><span class="act-read-key">Tagessoll</span><span class="act-read-val">8:00 h</span></div>
-                            <div class="act-read-row is-balance"><span class="act-read-key">Gleitzeit</span><span class="act-read-val">+0:30 h</span></div>
-                        </div>
-                        <div class="act-read" data-read="4">
-                            <div class="act-read-row"><span class="act-read-key">Woche</span><span class="act-read-val">42:30 h</span></div>
-                            <div class="act-read-row is-balance"><span class="act-read-key">Saldo</span><span class="act-read-val">+2:30 h</span></div>
-                            <div class="act-sheet">
-                                <span class="act-sheet-label">Berichtsheft, Woche 26</span>
-                                <span class="act-sheet-text">Mi — Wartung der Clients im 2. OG, Image-Rollout vorbereitet. 8:30 h</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="act-steps" id="actSteps">
-                <article class="act-step" data-step-index="1">
-                    <div class="act-step-rule"></div>
-                    <span class="act-step-num">01 — 07:30</span>
-                    <h3 class="act-step-title">Kommen</h3>
-                    <p class="act-step-desc">Ein Tap startet den Live-Tracker. Kein Formular, keine Anmeldung, kein Warten auf einen Server. Wer lieber tippt, trägt Anfang und Ende von Hand nach.</p>
-                </article>
-                <article class="act-step" data-step-index="2">
-                    <div class="act-step-rule"></div>
-                    <span class="act-step-num">02 — 12:00</span>
-                    <h3 class="act-step-title">Pause</h3>
-                    <p class="act-step-desc">Pausen zieht MyWorkLog nach deinen Einstellungen ab — nicht nach einer festen Zahl im Code. Die gesetzliche Mindestpause ist hinterlegt und meldet sich, wenn sie fehlt.</p>
-                </article>
-                <article class="act-step" data-step-index="3">
-                    <div class="act-step-rule"></div>
-                    <span class="act-step-num">03 — 16:30</span>
-                    <h3 class="act-step-title">Gehen</h3>
-                    <p class="act-step-desc">Der Tag wird gegen dein Tagessoll gerechnet, die Differenz wandert ins Gleitzeitkonto. Überstunden und Minusstunden stehen sofort da — mit Rundung, wenn dein Betrieb rundet.</p>
-                </article>
-                <article class="act-step" data-step-index="4">
-                    <div class="act-step-rule"></div>
-                    <span class="act-step-num">04 — Freitag</span>
-                    <h3 class="act-step-title">Berichtsheft</h3>
-                    <p class="act-step-desc">Aus den Einträgen der Woche entsteht der Ausbildungsnachweis — als PDF im amtlichen Vordruck deiner Kammer. Was du täglich notiert hast, steht schon drin.</p>
-                </article>
-            </div>
-        </div>
-    </div>
-</section>
 
 <!-- ═══ SO SIEHT ES AUS ═══
      Echte Aufnahmen der App (tools/screenshot.mjs mit Beispieldaten, 2x,
@@ -1899,8 +1600,8 @@ document.documentElement.className += ' js';</script>
                     </div>
                 </div>
                 <dl class="maker-facts">
-                    <div><dt>Releases</dt><dd id="makerReleases" data-release-count translate="no">405</dd></div>
-                    <div><dt>aktuelle Version</dt><dd data-version translate="no">9.8.16</dd></div>
+                    <div><dt>Releases</dt><dd id="makerReleases" data-release-count translate="no">406</dd></div>
+                    <div><dt>aktuelle Version</dt><dd data-version translate="no">9.8.17</dd></div>
                     <div><dt>Personen im Team</dt><dd translate="no">1</dd></div>
                 </dl>
             </div>
@@ -1966,54 +1667,6 @@ document.documentElement.className += ' js';</script>
     }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
     document.querySelectorAll('[data-reveal]').forEach(function (el) { revObs.observe(el); });
 
-    /* ── 2. Hero-Anlauf: Zeilen fahren aus ihrer Maske, danach der Tagesbalken ── */
-    var hero = document.getElementById('hero');
-    function startHero() { if (hero) hero.classList.add('ready'); }
-    if (document.readyState === 'complete') requestAnimationFrame(startHero);
-    else window.addEventListener('load', function () { requestAnimationFrame(startHero); });
-    setTimeout(startHero, 900);   /* Fallback, falls load nie feuert */
-
-    /* ── 3. Der Akt: welcher Schritt steht in der Mitte? ─────────────── */
-    /* Bewusst KEIN IntersectionObserver: der aktive Schritt haengt an einer
-       Leselinie, und die liegt nicht in der Bildschirmmitte. Einspaltig
-       (<=980px) klebt die Tageskarte oben und verdeckt die Mitte — ein
-       mittiges Band aktiviert dort immer den Schritt NACH dem gelesenen.
-       Mit rootMargin ist das nur ueber Prozentbaender nachzubauen, deren
-       Verhalten von der Bandhoehe abhaengt; die Leselinie ist direkt
-       ablesbar und an beiden Layouts nachpruefbar. Die Messung laeuft in
-       der Lesephase von frame(), vor allen Schreibzugriffen. */
-    var act = document.querySelector('.act');
-    var steps = Array.prototype.slice.call(document.querySelectorAll('.act-step'));
-    var mqNarrow = window.matchMedia('(max-width: 980px)');
-    var curStep = -1;
-    if (steps.length) steps[0].classList.add('on');
-
-    var actStage = document.querySelector('.act-stage');
-    function readStep() {
-        if (!act || !steps.length) return;
-        /* Einspaltig liegt die Leselinie mittig im FREIEN Bereich unter der
-           klebenden Karte, nicht bei einem geratenen Prozentwert: bei hohen
-           Fenstern stehen sonst zwei Schritte gleichzeitig im Bild und die
-           Karte zeigt den unteren, waehrend der Leser den oberen liest. */
-        var line;
-        if (mqNarrow.matches && actStage) {
-            var sb = actStage.getBoundingClientRect().bottom;
-            line = Math.min(sb + (window.innerHeight - sb) * 0.35, window.innerHeight * 0.9);
-        } else {
-            line = window.innerHeight * 0.5;
-        }
-        var best = 0, bestD = Infinity;
-        for (var q = 0; q < steps.length; q++) {
-            var r = steps[q].getBoundingClientRect();
-            var dd = Math.abs(r.top + r.height / 2 - line);
-            if (dd < bestD) { bestD = dd; best = q; }
-        }
-        if (best === curStep) return;
-        curStep = best;
-        act.setAttribute('data-step', best + 1);
-        for (var z = 0; z < steps.length; z++) steps[z].classList.toggle('on', z === best);
-    }
-
     /* ── 4. Journey-Reiter ──────────────────────────────────────────── */
     var jrNodes = document.querySelectorAll('.jr-node');
     jrNodes.forEach(function (btn) {
@@ -2039,21 +1692,6 @@ document.documentElement.className += ' js';</script>
                 card.style.setProperty('--my', (e.clientY - r.top) + 'px');
             });
         });
-    }
-
-    /* ── 6. Hero-Geraet: Neigung aus der Lage im Bildschirm ─────────── */
-    /* 0 = Oberkante am unteren Bildrand (voll geneigt), 1 = Oberkante bei
-       12 % der Hoehe (flach). Gemessen in der Lesephase von frame(),
-       geschrieben wird nur --hp, und nur wenn sich der Wert aendert. */
-    var tilt = document.getElementById('deviceTilt');
-    var tiltP = -1, tiltNext = 0;
-    function readTilt() {
-        if (!tilt) return;
-        if (reduce) { tiltNext = 1; return; }
-        var vh = window.innerHeight;
-        var top = tilt.getBoundingClientRect().top;
-        tiltNext = clamp((vh - top) / (vh * 0.88), 0, 1);
-        tiltNext = Math.round(tiltNext * 1000) / 1000;
     }
 
     /* ── 8. Tages-Schiene: Marken aus den Abschnitten ────────────────── */
@@ -2094,11 +1732,6 @@ document.documentElement.className += ' js';</script>
         var y     = window.pageYOffset;
         var docH  = document.documentElement.scrollHeight - window.innerHeight;
         var t     = docH > 0 ? clamp(y / docH, 0, 1) : 0;
-
-        readTilt();
-        readStep();   /* letzte Messung — ab hier wird nur noch geschrieben */
-
-        if (tilt && tiltNext !== tiltP) { tiltP = tiltNext; tilt.style.setProperty('--hp', tiltP); }
 
         if (progress) progress.style.transform = 'scaleX(' + t + ')';
         if (navbar) navbar.classList.toggle('scrolled', y > 24);
